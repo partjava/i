@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>清理Cookies - 解决HTTP 431错误</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .error-info {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .error-info h3 {
+            color: #856404;
+            margin: 0 0 10px 0;
+        }
+        .button {
+            background: #007bff;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 10px 10px 0;
+            transition: background 0.3s;
+        }
+        .button:hover {
+            background: #0056b3;
+        }
+        .button.danger {
+            background: #dc3545;
+        }
+        .button.danger:hover {
+            background: #c82333;
+        }
+        .button.success {
+            background: #28a745;
+        }
+        .button.success:hover {
+            background: #218838;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            display: none;
+        }
+        .result.success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .result.error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .cookie-info {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+        .cookie-list {
+            max-height: 200px;
+            overflow-y: auto;
+            background: white;
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 3px;
+        }
+        .cookie-item {
+            padding: 5px 0;
+            border-bottom: 1px solid #eee;
+            word-break: break-all;
+        }
+        .cookie-item:last-child {
+            border-bottom: none;
+        }
+        .instructions {
+            background: #e7f3ff;
+            border: 1px solid #b8daff;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+        .instructions h3 {
+            color: #004085;
+            margin: 0 0 10px 0;
+        }
+        .instructions ol {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        .instructions li {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🍪 Cookies清理工具</h1>
+        
+        <div class="error-info">
+            <h3>HTTP 431错误说明</h3>
+            <p>您遇到的HTTP 431错误表示请求头字段过大，通常是因为浏览器cookies过多或过大导致的。这个工具可以帮助您清理cookies来解决这个问题。</p>
+        </div>
+
+        <div class="cookie-info">
+            <h3>当前Cookies信息</h3>
+            <p>当前域名的cookies数量: <span id="cookieCount">0</span></p>
+            <p>预估总大小: <span id="cookieSize">0</span> bytes</p>
+            <div class="cookie-list" id="cookieList"></div>
+        </div>
+
+        <div style="text-align: center; margin: 30px 0;">
+            <button class="button" onclick="showCookies()">🔍 显示所有Cookies</button>
+            <button class="button danger" onclick="clearAllCookies()">🗑️ 清理所有Cookies</button>
+            <button class="button" onclick="clearAuthCookies()">🔐 只清理登录Cookies</button>
+            <button class="button success" onclick="checkAndRedirect()">✅ 完成并返回</button>
+        </div>
+
+        <div id="result" class="result"></div>
+
+        <div class="instructions">
+            <h3>使用说明</h3>
+            <ol>
+                <li><strong>显示所有Cookies</strong>: 查看当前存储的所有cookies</li>
+                <li><strong>清理所有Cookies</strong>: 删除所有cookies（需要重新登录）</li>
+                <li><strong>只清理登录Cookies</strong>: 只删除登录相关的cookies</li>
+                <li><strong>完成并返回</strong>: 清理完成后返回网站首页</li>
+            </ol>
+            <p><strong>建议</strong>: 如果遇到HTTP 431错误，建议先尝试"只清理登录Cookies"，如果还是不行，再使用"清理所有Cookies"。</p>
+        </div>
+    </div>
+
+    <script>
+        // 显示结果消息
+        function showResult(message, isSuccess = true) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.className = 'result ' + (isSuccess ? 'success' : 'error');
+            resultDiv.textContent = message;
+            resultDiv.style.display = 'block';
+            
+            // 3秒后自动隐藏
+            setTimeout(() => {
+                resultDiv.style.display = 'none';
+            }, 3000);
+        }
+
+        // 获取所有cookies
+        function getAllCookies() {
+            const cookies = document.cookie.split(';');
+            const cookieArray = [];
+            
+            cookies.forEach(cookie => {
+                const [name, value] = cookie.split('=');
+                if (name && name.trim()) {
+                    cookieArray.push({
+                        name: name.trim(),
+                        value: value ? value.trim() : ''
+                    });
+                }
+            });
+            
+            return cookieArray;
+        }
+
+        // 计算cookies大小
+        function calculateCookieSize(cookies) {
+            let totalSize = 0;
+            cookies.forEach(cookie => {
+                totalSize += cookie.name.length + cookie.value.length + 2; // +2 for '=' and ';'
+            });
+            return totalSize;
+        }
+
+        // 更新cookie信息显示
+        function updateCookieInfo() {
+            const cookies = getAllCookies();
+            const totalSize = calculateCookieSize(cookies);
+            
+            document.getElementById('cookieCount').textContent = cookies.length;
+            document.getElementById('cookieSize').textContent = totalSize;
+            
+            return cookies;
+        }
+
+        // 显示所有cookies
+        function showCookies() {
+            const cookies = updateCookieInfo();
+            const cookieList = document.getElementById('cookieList');
+            
+            if (cookies.length === 0) {
+                cookieList.innerHTML = '<div class="cookie-item">没有发现cookies</div>';
+                return;
+            }
+            
+            cookieList.innerHTML = '';
+            cookies.forEach(cookie => {
+                const div = document.createElement('div');
+                div.className = 'cookie-item';
+                div.innerHTML = `<strong>${cookie.name}</strong>: ${cookie.value.substring(0, 100)}${cookie.value.length > 100 ? '...' : ''} (${cookie.value.length} chars)`;
+                cookieList.appendChild(div);
+            });
+            
+            showResult('已显示所有cookies信息');
+        }
+
+        // 清理所有cookies
+        function clearAllCookies() {
+            if (!confirm('确定要清理所有cookies吗？这将会注销您的登录状态。')) {
+                return;
+            }
+            
+            const cookies = getAllCookies();
+            let clearedCount = 0;
+            
+            cookies.forEach(cookie => {
+                // 删除cookie的多种方式，确保清理干净
+                const expires = 'expires=Thu, 01 Jan 1970 00:00:00 GMT';
+                const paths = ['/', '/app', '/api'];
+                const domains = [window.location.hostname, '.' + window.location.hostname];
+                
+                paths.forEach(path => {
+                    domains.forEach(domain => {
+                        document.cookie = `${cookie.name}=; ${expires}; path=${path}; domain=${domain}`;
+                        document.cookie = `${cookie.name}=; ${expires}; path=${path}`;
+                    });
+                });
+                
+                clearedCount++;
+            });
+            
+            // 额外清理常见的认证cookies
+            const authCookies = ['next-auth.session-token', 'next-auth.csrf-token', 'next-auth.callback-url'];
+            authCookies.forEach(cookieName => {
+                document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
+            });
+            
+            updateCookieInfo();
+            showResult(`已清理 ${clearedCount} 个cookies`);
+        }
+
+        // 只清理登录相关的cookies
+        function clearAuthCookies() {
+            const authCookies = [
+                'next-auth.session-token',
+                'next-auth.csrf-token', 
+                'next-auth.callback-url',
+                'next-auth.pkce.code_verifier',
+                '__Secure-next-auth.session-token',
+                '__Host-next-auth.session-token'
+            ];
+            
+            let clearedCount = 0;
+            const expires = 'expires=Thu, 01 Jan 1970 00:00:00 GMT';
+            
+            authCookies.forEach(cookieName => {
+                // 尝试多种路径和域名删除
+                const paths = ['/', '/app', '/api'];
+                const domains = [window.location.hostname, '.' + window.location.hostname];
+                
+                paths.forEach(path => {
+                    domains.forEach(domain => {
+                        document.cookie = `${cookieName}=; ${expires}; path=${path}; domain=${domain}`;
+                        document.cookie = `${cookieName}=; ${expires}; path=${path}`;
+                    });
+                });
+                
+                clearedCount++;
+            });
+            
+            updateCookieInfo();
+            showResult(`已清理 ${clearedCount} 个登录相关cookies`);
+        }
+
+        // 检查并跳转
+        function checkAndRedirect() {
+            const cookies = updateCookieInfo();
+            const totalSize = calculateCookieSize(cookies);
+            
+            if (totalSize > 8192) { // 8KB
+                if (confirm('Cookies总大小仍然很大，建议清理所有cookies。是否继续清理？')) {
+                    clearAllCookies();
+                    return;
+                }
+            }
+            
+            showResult('清理完成，即将跳转到首页...', true);
+            setTimeout(() => {
+                window.location.href = '/';
+            }, 2000);
+        }
+
+        // 页面加载时更新cookie信息
+        window.onload = function() {
+            updateCookieInfo();
+        };
+    </script>
+</body>
+</html> 

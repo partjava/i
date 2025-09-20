@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>猜谜游戏</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body { background: #f4f6fa; margin: 0; font-family: 'Segoe UI', Arial, sans-serif; }
+    h2 { text-align: center; margin-top: 20px; color: #4f8cff; font-size: 24px; }
+    .game-container { width: 500px; height: 600px; padding: 20px; box-sizing: border-box; margin: 0 auto; }
+    #game-canvas { display: block; margin: 20px auto 0 auto; background: #fff; border-radius: 10px; box-shadow: 0 4px 16px rgba(0,0,0,0.2); padding: 20px; height: 410px; width: 410px; }
+    #score { text-align: center; font-size: 1.4em; color: #333; margin-top: 15px; font-weight: bold; }
+    #tip { text-align: center; color: #666; margin-top: 10px; font-size: 1.1em; }
+    .controls { text-align: center; margin-top: 15px; }
+    .btn { background: #4f8cff; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; margin: 0 5px; font-size: 1em; }
+    .btn:hover { background: #3a7ced; }
+    .riddle-container { display: flex; flex-direction: column; height: 100%; }
+    .riddle-text { font-size: 1.2em; line-height: 1.6; background: #f5f7fb; padding: 20px; border-radius: 10px; margin-bottom: 15px; height: 150px; overflow-y: auto; }
+    .answer-container { margin-top: 15px; }
+    .answer-input { width: 100%; padding: 15px; box-sizing: border-box; font-size: 1.2em; border: 2px solid #ddd; border-radius: 6px; margin-bottom: 15px; }
+    .answer-input:focus { outline: none; border-color: #4f8cff; }
+    .hint-container { background: #fffde7; padding: 15px; border-radius: 6px; margin-bottom: 15px; display: none; }
+    .hint-title { font-weight: bold; margin-bottom: 5px; }
+    .hint-content { color: #666; }
+    .result-message { margin-top: 10px; font-size: 1.1em; font-weight: bold; height: 20px; }
+    .correct { color: #4CAF50; }
+    .incorrect { color: #F44336; }
+    .progress-container { display: flex; justify-content: space-between; margin-bottom: 15px; }
+    .category { font-weight: bold; color: #4f8cff; }
+    .progress-circles { display: flex; }
+    .progress-circle { width: 15px; height: 15px; border-radius: 50%; margin: 0 3px; border: 1px solid #4f8cff; }
+    .progress-circle.filled { background-color: #4f8cff; }
+    .category-selector { display: flex; justify-content: center; margin-bottom: 15px; flex-wrap: wrap; }
+    .category-option { padding: 8px 15px; margin: 5px; background: #edf3ff; border-radius: 15px; cursor: pointer; }
+    .category-option.active { background: #4f8cff; color: white; }
+  </style>
+</head>
+<body>
+  <div class="game-container">
+    <h2>猜谜游戏</h2>
+    <div id="game-canvas">
+      <div class="riddle-container">
+        <div class="progress-container">
+          <span class="category" id="category-display">词语谜语</span>
+          <div class="progress-circles" id="progress-circles"></div>
+        </div>
+        <div class="riddle-text" id="riddle-text"></div>
+        <div class="hint-container" id="hint-container">
+          <div class="hint-title">提示：</div>
+          <div class="hint-content" id="hint-content"></div>
+        </div>
+        <div class="answer-container">
+          <input type="text" class="answer-input" id="answer-input" placeholder="请输入你的答案..." autocomplete="off">
+          <div class="result-message" id="result-message"></div>
+        </div>
+      </div>
+    </div>
+    <div id="score">得分: 0</div>
+    <div id="tip">解答谜题获得分数，使用提示会减少得分</div>
+    <div class="category-selector" id="category-selector"></div>
+    <div class="controls">
+      <button class="btn" id="hint-btn">提示</button>
+      <button class="btn" id="skip-btn">跳过</button>
+      <button class="btn" id="submit-btn">提交</button>
+    </div>
+  </div>
+  <script>
+    // 游戏代码
+    const riddleText = document.getElementById('riddle-text');
+    const answerInput = document.getElementById('answer-input');
+    const resultMessage = document.getElementById('result-message');
+    const scoreDisplay = document.getElementById('score');
+    const hintContainer = document.getElementById('hint-container');
+    const hintContent = document.getElementById('hint-content');
+    const categoryDisplay = document.getElementById('category-display');
+    const progressCircles = document.getElementById('progress-circles');
+    const categorySelector = document.getElementById('category-selector');
+    const hintBtn = document.getElementById('hint-btn');
+    const skipBtn = document.getElementById('skip-btn');
+    const submitBtn = document.getElementById('submit-btn');
+    
+    // 谜题数据
+    const RIDDLES = {
+      'wordRiddles': [
+        {
+          question: "什么东西越热越爱出来？",
+          answer: ["汗水", "汗"],
+          hint: "身体的自然反应"
+        },
+        {
+          question: "什么东西从来没人敲打却千疮百孔？",
+          answer: ["海绵"],
+          hint: "日常用品，常用于洗澡时"
+        },
+        {
+          question: "什么东西无脚能行，有翅难飞？",
+          answer: ["鱼", "鱼儿"],
+          hint: "水中生物"
+        },
+        {
+          question: "什么东西有头无脚？",
+          answer: ["蒜", "大蒜"],
+          hint: "厨房中的调味品"
+        },
+        {
+          question: "什么东西可以提但提不起来？",
+          answer: ["问题", "建议"],
+          hint: "我们经常在会议上做这件事"
+        }
+      ],
+      'mathRiddles': [
+        {
+          question: "有一种数，加上5就变成了它原来的一半，这个数是多少？",
+          answer: ["-10"],
+          hint: "可以是负数"
+        },
+        {
+          question: "一个数的4倍比这个数多21，这个数是多少？",
+          answer: ["7"],
+          hint: "设这个数为x，可以列方程4x - x = 21"
+        },
+        {
+          question: "一筐鸡蛋，如果2个2个拿，会多1个；如果3个3个拿，会多1个；如果4个4个拿，会多1个；如果5个5个拿，会多1个；如果6个6个拿，正好拿完。问筐里有多少鸡蛋？",
+          answer: ["61"],
+          hint: "这个数除以2、3、4、5的余数都是1，除以6的余数是0"
+        },
+        {
+          question: "有一个两位数，它的个位数字比十位数字大4，而且这两个数字之和为10，这个两位数是多少？",
+          answer: ["37"],
+          hint: "设十位数字为x，则个位数字为x+4，且x+(x+4)=10"
+        },
+        {
+          question: "8个人，每人挖一条沟需要6天，现在如果只有6个人，挖两条沟需要几天？",
+          answer: ["16"],
+          hint: "先计算一个人一天能挖多少沟，再计算6个人挖2条沟需要几天"
+        }
+      ],
+      'logicRiddles': [
+        {
+          question: "有三盏灯在阁楼上，相应的开关在一楼。你只能上楼一次，如何确定哪个开关控制哪盏灯？",
+          answer: ["打开第一个开关等一会儿，关闭，再打开第二个开关，上楼检查", "打开一个开关等待，然后关闭，再打开另一个开关上楼"],
+          hint: "利用灯泡的热度"
+        },
+        {
+          question: "有两根不均匀的绳子，每根绳子燃烧完恰好需要1小时。如何用这两根绳子测量45分钟？",
+          answer: ["点燃第一根绳子的两端和第二根绳子的一端，当第一根烧完时，点燃第二根绳子的另一端", "一根绳子两头点燃，另一根一头点燃"],
+          hint: "同时点燃绳子的两端会加快燃烧速度"
+        },
+        {
+          question: "有三个盒子，分别标着“苹果“，“橙子“，“苹果和橙子“，但是所有的标签都是错的。你只能打开一个盒子，如何确定每个盒子里装的是什么？",
+          answer: ["打开标有苹果和橙子的盒子", "打开混合水果的盒子"],
+          hint: "既然所有标签都是错的，那么标有混合水果的盒子里不可能装有混合水果"
+        },
+        {
+          question: "一个人要过河，带着一只狼、一只羊和一棵白菜。船很小，除了他自己外每次只能带一种东西过河。如果狼和羊在一起，狼会吃掉羊；如果羊和白菜在一起，羊会吃掉白菜。如何把所有东西安全带到对岸？",
+          answer: ["先带羊过河，返回，带狼过河，带羊回来，带白菜过河，返回，再带羊过河"],
+          hint: "先考虑把最有冲突的物品带走"
+        },
+        {
+          question: "有9个看起来完全相同的球，其中1个比其他的重。如果只能使用天平称重两次，如何找出这个重球？",
+          answer: ["把9个球分成3组，每组3个，先称两组，如果平衡，则重球在第三组，再将第三组的3个球分别称重；如果不平衡，取较重的一组3个球再次分组称重"],
+          hint: "分组，排除法"
+        }
+      ]
+    };
+    
+    // 游戏状态
+    let score = 0;
+    let currentCategory = 'wordRiddles';
+    let currentRiddleIndex = 0;
+    let usedHint = false;
+    let completedRiddles = new Set();
+    
+    // 初始化游戏
+    function initGame() {
+      // 创建分类选择器
+      createCategorySelector();
+      
+      // 加载第一个谜题
+      loadRiddle();
+      
+      // 更新得分
+      updateScore();
+    }
+    
+    // 创建分类选择器
+    function createCategorySelector() {
+      categorySelector.innerHTML = '';
+      
+      const categories = {
+        'wordRiddles': '词语谜语',
+        'mathRiddles': '数学谜题',
+        'logicRiddles': '逻辑谜题'
+      };
+      
+      for (const [key, value] of Object.entries(categories)) {
+        const option = document.createElement('div');
+        option.className = 'category-option';
+        option.textContent = value;
+        option.dataset.category = key;
+        
+        if (key === currentCategory) {
+          option.classList.add('active');
+        }
+        
+        option.addEventListener('click', () => {
+          // 移除所有活动状态
+          document.querySelectorAll('.category-option').forEach(opt => {
+            opt.classList.remove('active');
+          });
+          
+          // 设置新分类
+          currentCategory = key;
+          option.classList.add('active');
+          currentRiddleIndex = 0;
+          
+          // 重置提示状态
+          resetHint();
+          
+          // 加载新谜题
+          loadRiddle();
+          
+          // 更新分类显示
+          categoryDisplay.textContent = value;
+        });
+        
+        categorySelector.appendChild(option);
+      }
+    }
+    
+    // 加载谜题
+    function loadRiddle() {
+      // 获取当前分类的谜题
+      const riddles = RIDDLES[currentCategory];
+      
+      // 确保索引有效
+      if (currentRiddleIndex >= riddles.length) {
+        currentRiddleIndex = 0;
+      }
+      
+      // 加载谜题内容
+      const riddle = riddles[currentRiddleIndex];
+      riddleText.textContent = riddle.question;
+      
+      // 清空输入框和结果消息
+      answerInput.value = '';
+      resultMessage.textContent = '';
+      resultMessage.className = 'result-message';
+      
+      // 重置提示状态
+      resetHint();
+      
+      // 更新进度圆圈
+      updateProgressCircles();
+    }
+    
+    // 更新进度圆圈
+    function updateProgressCircles() {
+      progressCircles.innerHTML = '';
+      
+      const riddles = RIDDLES[currentCategory];
+      for (let i = 0; i < riddles.length; i++) {
+        const circle = document.createElement('div');
+        circle.className = 'progress-circle';
+        
+        if (completedRiddles.has(`${currentCategory}-${i}`)) {
+          circle.classList.add('filled');
+        }
+        
+        if (i === currentRiddleIndex) {
+          circle.style.transform = 'scale(1.2)';
+          circle.style.border = '2px solid #4f8cff';
+        }
+        
+        progressCircles.appendChild(circle);
+      }
+    }
+    
+    // 检查答案
+    function checkAnswer() {
+      // 获取玩家的答案和当前谜题
+      const playerAnswer = answerInput.value.trim().toLowerCase();
+      const riddle = RIDDLES[currentCategory][currentRiddleIndex];
+      
+      // 检查答案是否正确
+      const isCorrect = riddle.answer.some(ans => 
+        playerAnswer === ans.toLowerCase() || 
+        (playerAnswer.length >= 2 && ans.toLowerCase().includes(playerAnswer))
+      );
+      
+      if (isCorrect) {
+        // 答案正确
+        resultMessage.textContent = '正确！';
+        resultMessage.className = 'result-message correct';
+        
+        // 标记为已完成
+        completedRiddles.add(`${currentCategory}-${currentRiddleIndex}`);
+        
+        // 更新得分
+        if (usedHint) {
+          // 如果使用了提示，得分较少
+          score += 1;
+        } else {
+          score += 2;
+        }
+        
+        updateScore();
+        
+        // 延迟加载下一个谜题
+        setTimeout(() => {
+          currentRiddleIndex++;
+          loadRiddle();
+        }, 1500);
+      } else {
+        // 答案错误
+        resultMessage.textContent = '不正确，请再试一次。';
+        resultMessage.className = 'result-message incorrect';
+      }
+    }
+    
+    // 更新得分显示
+    function updateScore() {
+      scoreDisplay.textContent = `得分: ${score}`;
+    }
+    
+    // 显示提示
+    function showHint() {
+      const riddle = RIDDLES[currentCategory][currentRiddleIndex];
+      hintContent.textContent = riddle.hint;
+      hintContainer.style.display = 'block';
+      
+      // 标记为已使用提示
+      usedHint = true;
+    }
+    
+    // 重置提示状态
+    function resetHint() {
+      hintContainer.style.display = 'none';
+      usedHint = false;
+    }
+    
+    // 跳过当前谜题
+    function skipRiddle() {
+      currentRiddleIndex++;
+      loadRiddle();
+    }
+    
+    // 提交答案按钮点击事件
+    submitBtn.addEventListener('click', checkAnswer);
+    
+    // 回车提交答案
+    answerInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        checkAnswer();
+      }
+    });
+    
+    // 提示按钮点击事件
+    hintBtn.addEventListener('click', showHint);
+    
+    // 跳过按钮点击事件
+    skipBtn.addEventListener('click', skipRiddle);
+    
+    // 初始化游戏
+    initGame();
+  </script>
+</body>
+</html> 

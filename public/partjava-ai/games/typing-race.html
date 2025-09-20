@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>打字竞速</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body { background: #f4f6fa; margin: 0; font-family: 'Segoe UI', Arial, sans-serif; }
+    h2 { text-align: center; margin-top: 20px; color: #4f8cff; font-size: 24px; }
+    #game-canvas { display: block; margin: 20px auto 0 auto; background: #fff; border-radius: 10px; box-shadow: 0 4px 16px rgba(0,0,0,0.2); padding: 20px; width: 410px; height: 410px; }
+    #score { text-align: center; font-size: 1.4em; color: #333; margin-top: 15px; font-weight: bold; }
+    #tip { text-align: center; color: #666; margin-top: 10px; font-size: 1.1em; }
+    .game-container { width: 500px; height: 600px; padding: 20px; box-sizing: border-box; margin: 0 auto; }
+    .controls { text-align: center; margin-top: 15px; }
+    .btn { background: #4f8cff; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; margin: 0 5px; font-size: 1em; }
+    .btn:hover { background: #3a7ced; }
+    .difficulty { display: flex; justify-content: center; margin-top: 10px; }
+    .difficulty label { margin: 0 10px; cursor: pointer; }
+    #target-text { background: #f8f9fa; padding: 20px; border-radius: 10px; font-size: 1.2em; line-height: 1.6; margin-bottom: 20px; min-height: 200px; }
+    #input-field { width: 100%; padding: 15px; box-sizing: border-box; font-size: 1.2em; border: 2px solid #ddd; border-radius: 6px; margin-bottom: 15px; }
+    #input-field:focus { outline: none; border-color: #4f8cff; }
+    .metrics { display: flex; justify-content: space-between; margin-top: 10px; }
+    .metric { background: #edf3ff; padding: 10px; border-radius: 6px; width: 48%; text-align: center; }
+    .highlight-correct { background-color: #e6ffe6; }
+    .highlight-error { background-color: #ffe6e6; }
+    .current-char { border-bottom: 2px solid #4f8cff; }
+  </style>
+</head>
+<body>
+  <div class="game-container">
+    <h2>打字竞速</h2>
+    <div id="game-canvas">
+      <div id="target-text"></div>
+      <input type="text" id="input-field" placeholder="准备好后点击这里开始..." autocomplete="off">
+      <div class="metrics">
+        <div class="metric">速度: <span id="wpm">0 WPM</span></div>
+        <div class="metric">准确率: <span id="accuracy">100%</span></div>
+      </div>
+    </div>
+    <div id="score">时间: 0秒</div>
+    <div id="tip">输入上方显示的文本，越快越好！</div>
+    <div class="controls">
+      <div class="difficulty">
+        <label><input type="radio" name="difficulty" value="easy" checked> 简单</label>
+        <label><input type="radio" name="difficulty" value="medium"> 中等</label>
+        <label><input type="radio" name="difficulty" value="hard"> 困难</label>
+      </div>
+      <button class="btn" id="reset-btn">重新开始</button>
+    </div>
+  </div>
+  <script>
+    // 游戏代码
+    const targetTextElement = document.getElementById('target-text');
+    const inputField = document.getElementById('input-field');
+    const scoreDisplay = document.getElementById('score');
+    const wpmDisplay = document.getElementById('wpm');
+    const accuracyDisplay = document.getElementById('accuracy');
+    const resetBtn = document.getElementById('reset-btn');
+    const difficultyRadios = document.querySelectorAll('input[name="difficulty"]');
+    
+    // 文本库
+    const textBank = {
+      easy: [
+        "编程是一种创造性的活动，通过它，我们可以创建软件、应用和网站。",
+        "学习编程语言是进入计算机科学领域的第一步，选择一种适合自己的语言很重要。",
+        "计算机科学是研究计算和信息处理的科学，包括理论、实验和工程等方面。",
+        "互联网已经彻底改变了我们的生活方式，它连接了全球的人们并提供了无限的信息。"
+      ],
+      medium: [
+        "人工智能是计算机科学的一个分支，它尝试理解智能的本质，并创造出智能的实体。机器学习是人工智能的一个子集，它让系统从数据中学习，而不需要明确的编程。",
+        "虚拟现实技术为用户创造了一个完全沉浸式的环境，用户可以与之互动。增强现实则是将虚拟元素叠加到现实世界中，增强用户的体验和感知。",
+        "云计算是一种按需提供计算资源（如服务器、存储、数据库、网络、软件等）的模式，通常通过互联网提供，根据使用量收费。",
+        "区块链是一种分布式的数据库技术，它允许在没有中央权威的情况下安全地记录交易。它通常与加密货币联系在一起，但其应用远不止于此。"
+      ],
+      hard: [
+        "量子计算是一种利用量子力学特性（如叠加和纠缠）来处理信息的计算形式。量子计算机使用量子比特（qubits）而不是传统的二进制位，这使它们能够在某些算法上表现出优越的性能。然而，量子计算仍然面临许多技术挑战，包括量子退相干问题。",
+        "深度学习是机器学习的一个子集，它使用多层神经网络来模拟人脑的学习过程。这些网络可以从大量数据中自动提取特征，并用于各种任务，如图像识别、自然语言处理和自动驾驶。随着计算能力的增强和数据的增多，深度学习已经在许多领域取得了突破性的进展。",
+        "物联网（IoT）指的是将物理设备连接到互联网的网络，这些设备可以收集和共享数据，实现智能控制和监控。物联网的应用范围从智能家居到工业自动化，它正在改变我们与周围环境互动的方式。然而，物联网也带来了安全和隐私方面的挑战。",
+        "边缘计算是一种将计算和数据存储更靠近数据源的位置的计算模式，旨在减少延迟并节省带宽。与将所有处理工作发送到云或数据中心不同，边缘计算允许数据在更接近生成它们的地方进行处理。这对于需要实时响应的应用（如自动驾驶汽车或工业控制系统）特别重要。"
+      ]
+    };
+    
+    // 游戏状态
+    let targetText = '';
+    let startTime = null;
+    let gameTime = 0;
+    let gameTimer = null;
+    let gameActive = false;
+    let correctChars = 0;
+    let errorChars = 0;
+    let totalKeystrokes = 0;
+    
+    // 初始化游戏
+    function initGame() {
+      // 停止计时器
+      if (gameTimer) {
+        clearInterval(gameTimer);
+      }
+      
+      // 重置游戏状态
+      startTime = null;
+      gameTime = 0;
+      gameActive = false;
+      correctChars = 0;
+      errorChars = 0;
+      totalKeystrokes = 0;
+      scoreDisplay.textContent = '时间: 0秒';
+      wpmDisplay.textContent = '0 WPM';
+      accuracyDisplay.textContent = '100%';
+      
+      // 清空输入框
+      inputField.value = '';
+      inputField.disabled = false;
+      
+      // 根据难度选择文本
+      const difficulty = document.querySelector('input[name="difficulty"]:checked').value;
+      const texts = textBank[difficulty];
+      targetText = texts[Math.floor(Math.random() * texts.length)];
+      
+      // 显示目标文本
+      renderTargetText();
+    }
+    
+    // 渲染目标文本
+    function renderTargetText(inputValue = '') {
+      targetTextElement.innerHTML = '';
+      
+      // 将文本拆分为字符
+      const characters = targetText.split('');
+      
+      for (let i = 0; i < characters.length; i++) {
+        const charSpan = document.createElement('span');
+        charSpan.textContent = characters[i];
+        
+        // 如果有输入，标记正确和错误
+        if (i < inputValue.length) {
+          if (inputValue[i] === characters[i]) {
+            charSpan.classList.add('highlight-correct');
+          } else {
+            charSpan.classList.add('highlight-error');
+          }
+        }
+        
+        // 标记当前字符
+        if (i === inputValue.length) {
+          charSpan.classList.add('current-char');
+        }
+        
+        targetTextElement.appendChild(charSpan);
+      }
+    }
+    
+    // 开始游戏
+    function startGame() {
+      if (!gameActive) {
+        gameActive = true;
+        startTime = new Date();
+        
+        // 开始计时
+        gameTimer = setInterval(() => {
+          gameTime = Math.floor((new Date() - startTime) / 1000);
+          scoreDisplay.textContent = `时间: ${gameTime}秒`;
+          updateWPM();
+        }, 1000);
+      }
+    }
+    
+    // 结束游戏
+    function endGame() {
+      gameActive = false;
+      clearInterval(gameTimer);
+      inputField.disabled = true;
+      
+      // 计算最终分数
+      const finalTime = Math.max(1, gameTime); // 防止除以0
+      const finalWPM = Math.round((correctChars / 5) / (finalTime / 60));
+      const finalAccuracy = Math.round((correctChars / totalKeystrokes) * 100) || 100;
+      
+      // 显示结果
+      setTimeout(() => {
+        alert(`完成！\n速度：${finalWPM} WPM\n准确率：${finalAccuracy}%\n总时间：${finalTime}秒`);
+      }, 100);
+    }
+    
+    // 更新WPM (每分钟单词数)
+    function updateWPM() {
+      if (!gameActive || !startTime) return;
+      
+      const elapsedMinutes = (new Date() - startTime) / 60000;
+      const wordsTyped = correctChars / 5; // 假设平均每个单词5个字符
+      const wpm = Math.round(wordsTyped / Math.max(0.01, elapsedMinutes));
+      
+      wpmDisplay.textContent = `${wpm} WPM`;
+      
+      // 更新准确率
+      const accuracy = Math.round((correctChars / totalKeystrokes) * 100) || 100;
+      accuracyDisplay.textContent = `${accuracy}%`;
+    }
+    
+    // 输入事件
+    inputField.addEventListener('input', (e) => {
+      if (!gameActive && e.target.value.length > 0) {
+        startGame();
+      }
+      
+      const inputValue = e.target.value;
+      renderTargetText(inputValue);
+      
+      // 计算正确和错误的字符数
+      correctChars = 0;
+      errorChars = 0;
+      
+      for (let i = 0; i < inputValue.length; i++) {
+        if (i < targetText.length) {
+          if (inputValue[i] === targetText[i]) {
+            correctChars++;
+          } else {
+            errorChars++;
+          }
+        }
+      }
+      
+      // 更新总按键数
+      totalKeystrokes = correctChars + errorChars;
+      
+      // 更新WPM和准确率
+      updateWPM();
+      
+      // 检查是否完成
+      if (inputValue === targetText) {
+        endGame();
+      }
+    });
+    
+    // 处理粘贴事件（禁止粘贴）
+    inputField.addEventListener('paste', (e) => {
+      e.preventDefault();
+      alert('请手动输入，不要粘贴！');
+    });
+    
+    // 重置按钮
+    resetBtn.addEventListener('click', initGame);
+    
+    // 难度选择
+    for (const radio of difficultyRadios) {
+      radio.addEventListener('change', initGame);
+    }
+    
+    // 初始化游戏
+    initGame();
+  </script>
+</body>
+</html>

@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>填色游戏</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body { background: #f4f6fa; margin: 0; font-family: 'Segoe UI', Arial, sans-serif; }
+    h2 { text-align: center; margin-top: 20px; color: #4f8cff; font-size: 24px; }
+    .game-container { width: 500px; height: 600px; padding: 20px; box-sizing: border-box; margin: 0 auto; }
+    #game-canvas { display: block; margin: 20px auto 0 auto; background: #fff; border-radius: 10px; box-shadow: 0 4px 16px rgba(0,0,0,0.2); }
+    #score { text-align: center; font-size: 1.4em; color: #333; margin-top: 15px; font-weight: bold; }
+    #tip { text-align: center; color: #666; margin-top: 10px; font-size: 1.1em; }
+    .color-palette { display: flex; justify-content: center; margin-top: 15px; flex-wrap: wrap; max-width: 450px; margin-left: auto; margin-right: auto; }
+    .color-option { width: 30px; height: 30px; margin: 5px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; }
+    .color-option.active { border-color: #333; transform: scale(1.2); }
+    .pattern-selector { display: flex; justify-content: center; margin-top: 15px; }
+    .pattern-option { padding: 8px 15px; margin: 0 5px; background: #edf3ff; border-radius: 15px; cursor: pointer; }
+    .pattern-option.active { background: #4f8cff; color: white; }
+    .controls { text-align: center; margin-top: 15px; }
+    .btn { background: #4f8cff; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; margin: 0 5px; font-size: 1em; }
+    .btn:hover { background: #3a7ced; }
+    .legend { display: flex; justify-content: center; flex-wrap: wrap; margin-top: 10px; max-width: 450px; margin-left: auto; margin-right: auto; }
+    .legend-item { display: flex; align-items: center; margin: 5px 10px; }
+    .legend-color { width: 15px; height: 15px; margin-right: 5px; border: 1px solid #ddd; }
+  </style>
+</head>
+<body>
+  <div class="game-container">
+    <h2>填色游戏</h2>
+    <canvas id="game-canvas" width="450" height="450"></canvas>
+    <div id="score">进度: 0%</div>
+    <div id="tip">根据数字提示在网格中填充颜色</div>
+    <div class="color-palette" id="color-palette"></div>
+    <div class="legend" id="legend"></div>
+    <div class="pattern-selector" id="pattern-selector"></div>
+    <div class="controls">
+      <button class="btn" id="reset-btn">重置</button>
+      <button class="btn" id="next-btn">下一个</button>
+    </div>
+  </div>
+  <script>
+    // 游戏代码
+    const canvas = document.getElementById('game-canvas');
+    const ctx = canvas.getContext('2d');
+    const scoreDisplay = document.getElementById('score');
+    const colorPalette = document.getElementById('color-palette');
+    const legendEl = document.getElementById('legend');
+    const patternSelector = document.getElementById('pattern-selector');
+    const resetBtn = document.getElementById('reset-btn');
+    const nextBtn = document.getElementById('next-btn');
+    
+    // 颜色定义
+    const COLORS = [
+      { id: 0, value: '#FFFFFF', name: '白色' },
+      { id: 1, value: '#000000', name: '黑色' },
+      { id: 2, value: '#FF0000', name: '红色' },
+      { id: 3, value: '#00FF00', name: '绿色' },
+      { id: 4, value: '#0000FF', name: '蓝色' },
+      { id: 5, value: '#FFFF00', name: '黄色' },
+      { id: 6, value: '#FF00FF', name: '紫色' },
+      { id: 7, value: '#00FFFF', name: '青色' },
+      { id: 8, value: '#FFA500', name: '橙色' },
+      { id: 9, value: '#A52A2A', name: '棕色' }
+    ];
+    
+    // 图案定义
+    const PATTERNS = [
+      {
+        name: '花朵',
+        grid: [
+          [0, 0, 9, 9, 9, 0, 0, 0, 0, 0],
+          [0, 9, 9, 5, 9, 9, 0, 0, 0, 0],
+          [9, 9, 5, 5, 5, 9, 9, 0, 0, 0],
+          [9, 5, 5, 8, 5, 5, 9, 0, 0, 0],
+          [9, 5, 5, 5, 5, 5, 9, 0, 3, 0],
+          [9, 9, 5, 5, 5, 9, 9, 3, 3, 0],
+          [0, 9, 9, 5, 9, 9, 3, 3, 0, 0],
+          [0, 0, 9, 9, 9, 3, 3, 0, 0, 0],
+          [0, 0, 0, 0, 3, 3, 0, 0, 0, 0],
+          [0, 0, 0, 0, 3, 0, 0, 0, 0, 0]
+        ]
+      },
+      {
+        name: '小房子',
+        grid: [
+          [0, 0, 0, 2, 2, 2, 0, 0, 0, 0],
+          [0, 0, 2, 2, 2, 2, 2, 0, 0, 0],
+          [0, 2, 2, 2, 2, 2, 2, 2, 0, 0],
+          [2, 2, 2, 2, 2, 2, 2, 2, 2, 0],
+          [9, 9, 9, 9, 9, 9, 9, 9, 9, 9],
+          [9, 1, 9, 9, 9, 9, 9, 1, 9, 9],
+          [9, 1, 9, 9, 1, 1, 9, 1, 9, 9],
+          [9, 1, 9, 9, 1, 1, 9, 1, 9, 9],
+          [9, 1, 1, 1, 1, 1, 1, 1, 9, 9],
+          [9, 9, 9, 9, 9, 9, 9, 9, 9, 9]
+        ]
+      },
+      {
+        name: '小猫',
+        grid: [
+          [0, 0, 1, 0, 0, 0, 1, 0, 0, 0],
+          [0, 1, 9, 1, 0, 1, 9, 1, 0, 0],
+          [0, 1, 9, 1, 1, 1, 9, 1, 0, 0],
+          [0, 1, 1, 1, 9, 1, 1, 1, 0, 0],
+          [0, 0, 1, 9, 9, 9, 1, 0, 0, 0],
+          [0, 0, 1, 9, 9, 9, 1, 0, 0, 0],
+          [0, 0, 1, 9, 9, 9, 1, 0, 0, 0],
+          [0, 1, 9, 9, 9, 9, 9, 1, 0, 0],
+          [1, 9, 9, 9, 9, 9, 9, 9, 1, 0],
+          [0, 1, 1, 1, 1, 1, 1, 1, 0, 0]
+        ]
+      },
+      {
+        name: '爱心',
+        grid: [
+          [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+          [0, 0, 2, 2, 0, 0, 2, 2, 0, 0],
+          [0, 2, 2, 2, 2, 2, 2, 2, 2, 0],
+          [2, 2, 2, 2, 2, 2, 2, 2, 2, 2],
+          [2, 2, 2, 2, 2, 2, 2, 2, 2, 2],
+          [0, 2, 2, 2, 2, 2, 2, 2, 2, 0],
+          [0, 0, 2, 2, 2, 2, 2, 2, 0, 0],
+          [0, 0, 0, 2, 2, 2, 2, 0, 0, 0],
+          [0, 0, 0, 0, 2, 2, 0, 0, 0, 0],
+          [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        ]
+      }
+    ];
+    
+    // 游戏状态
+    let currentPattern = 0;
+    let selectedColor = 1; // 默认选中黑色
+    let cellSize = 0;
+    let playerGrid = [];
+    let originalNumbers = [];
+    
+    // 初始化游戏
+    function initGame() {
+      loadPattern(currentPattern);
+      createColorPalette();
+      createPatternSelector();
+      drawGrid();
+    }
+    
+    // 加载图案
+    function loadPattern(patternIndex) {
+      const pattern = PATTERNS[patternIndex];
+      
+      // 计算单元格大小
+      const gridSize = pattern.grid.length;
+      cellSize = Math.min(canvas.width, canvas.height) / gridSize;
+      
+      // 创建玩家的网格（初始为空）
+      playerGrid = Array(gridSize).fill().map(() => Array(gridSize).fill(0));
+      
+      // 计算每个单元格应该显示的数字
+      calculateNumbersForCells(pattern.grid);
+      
+      // 创建图例
+      createLegend(pattern.grid);
+      
+      // 更新进度
+      updateProgress();
+    }
+    
+    // 计算每个单元格的数字
+    function calculateNumbersForCells(patternGrid) {
+      originalNumbers = [];
+      
+      // 复制数字到显示网格
+      for (let y = 0; y < patternGrid.length; y++) {
+        originalNumbers[y] = [];
+        for (let x = 0; x < patternGrid[y].length; x++) {
+          originalNumbers[y][x] = patternGrid[y][x];
+        }
+      }
+    }
+    
+    // 创建颜色选择器
+    function createColorPalette() {
+      colorPalette.innerHTML = '';
+      
+      for (const color of COLORS) {
+        if (color.id === 0) continue; // 跳过白色（空白）
+        
+        const colorOption = document.createElement('div');
+        colorOption.className = 'color-option';
+        colorOption.style.backgroundColor = color.value;
+        colorOption.dataset.colorId = color.id;
+        
+        if (color.id === selectedColor) {
+          colorOption.classList.add('active');
+        }
+        
+        colorOption.addEventListener('click', () => {
+          // 移除所有活动状态
+          document.querySelectorAll('.color-option').forEach(option => {
+            option.classList.remove('active');
+          });
+          
+          // 设置选中的颜色
+          selectedColor = parseInt(colorOption.dataset.colorId);
+          colorOption.classList.add('active');
+        });
+        
+        colorPalette.appendChild(colorOption);
+      }
+    }
+    
+    // 创建图案选择器
+    function createPatternSelector() {
+      patternSelector.innerHTML = '';
+      
+      for (let i = 0; i < PATTERNS.length; i++) {
+        const pattern = PATTERNS[i];
+        const patternOption = document.createElement('div');
+        patternOption.className = 'pattern-option';
+        patternOption.textContent = pattern.name;
+        patternOption.dataset.patternIndex = i;
+        
+        if (i === currentPattern) {
+          patternOption.classList.add('active');
+        }
+        
+        patternOption.addEventListener('click', () => {
+          // 移除所有活动状态
+          document.querySelectorAll('.pattern-option').forEach(option => {
+            option.classList.remove('active');
+          });
+          
+          // 加载新图案
+          currentPattern = parseInt(patternOption.dataset.patternIndex);
+          patternOption.classList.add('active');
+          
+          loadPattern(currentPattern);
+          drawGrid();
+        });
+        
+        patternSelector.appendChild(patternOption);
+      }
+    }
+    
+    // 创建颜色图例
+    function createLegend(patternGrid) {
+      legendEl.innerHTML = '';
+      
+      // 统计使用的颜色
+      const usedColors = new Set();
+      for (const row of patternGrid) {
+        for (const cell of row) {
+          if (cell !== 0) { // 跳过空白
+            usedColors.add(cell);
+          }
+        }
+      }
+      
+      // 创建图例项
+      for (const colorId of usedColors) {
+        const color = COLORS.find(c => c.id === colorId);
+        if (!color) continue;
+        
+        const legendItem = document.createElement('div');
+        legendItem.className = 'legend-item';
+        
+        const colorSwatch = document.createElement('div');
+        colorSwatch.className = 'legend-color';
+        colorSwatch.style.backgroundColor = color.value;
+        
+        const colorName = document.createElement('span');
+        colorName.textContent = `${colorId}: ${color.name}`;
+        
+        legendItem.appendChild(colorSwatch);
+        legendItem.appendChild(colorName);
+        legendEl.appendChild(legendItem);
+      }
+    }
+    
+    // 绘制网格
+    function drawGrid() {
+      // 清空画布
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      const pattern = PATTERNS[currentPattern];
+      const gridSize = pattern.grid.length;
+      
+      // 计算偏移量使网格居中
+      const gridWidth = gridSize * cellSize;
+      const gridHeight = gridSize * cellSize;
+      const offsetX = (canvas.width - gridWidth) / 2;
+      const offsetY = (canvas.height - gridHeight) / 2;
+      
+      // 绘制网格和内容
+      for (let y = 0; y < gridSize; y++) {
+        for (let x = 0; x < gridSize; x++) {
+          const cellX = offsetX + x * cellSize;
+          const cellY = offsetY + y * cellSize;
+          
+          // 填充单元格颜色
+          if (playerGrid[y][x] !== 0) {
+            const color = COLORS.find(c => c.id === playerGrid[y][x]);
+            ctx.fillStyle = color ? color.value : '#FFFFFF';
+          } else {
+            ctx.fillStyle = '#FFFFFF';
+          }
+          ctx.fillRect(cellX, cellY, cellSize, cellSize);
+          
+          // 绘制单元格边框
+          ctx.strokeStyle = '#ddd';
+          ctx.strokeRect(cellX, cellY, cellSize, cellSize);
+          
+          // 绘制单元格中的数字
+          if (originalNumbers[y][x] !== 0 && playerGrid[y][x] === 0) {
+            ctx.fillStyle = '#333';
+            ctx.font = `${cellSize * 0.4}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(
+              originalNumbers[y][x],
+              cellX + cellSize / 2,
+              cellY + cellSize / 2
+            );
+          }
+        }
+      }
+    }
+    
+    // 填充颜色
+    function fillCell(x, y) {
+      const pattern = PATTERNS[currentPattern];
+      const targetColor = pattern.grid[y][x];
+      
+      // 只能填充数字对应的颜色
+      if (selectedColor === targetColor) {
+        playerGrid[y][x] = selectedColor;
+        
+        // 重绘网格并更新进度
+        drawGrid();
+        updateProgress();
+        
+        // 检查是否完成
+        checkCompletion();
+      } else if (playerGrid[y][x] !== 0) {
+        // 如果单元格已经填充，点击可以清除
+        playerGrid[y][x] = 0;
+        drawGrid();
+        updateProgress();
+      }
+    }
+    
+    // 更新进度
+    function updateProgress() {
+      const pattern = PATTERNS[currentPattern];
+      let totalCells = 0;
+      let filledCells = 0;
+      
+      for (let y = 0; y < pattern.grid.length; y++) {
+        for (let x = 0; x < pattern.grid[y].length; x++) {
+          if (pattern.grid[y][x] !== 0) {
+            totalCells++;
+            if (playerGrid[y][x] === pattern.grid[y][x]) {
+              filledCells++;
+            }
+          }
+        }
+      }
+      
+      const progress = Math.round((filledCells / totalCells) * 100);
+      scoreDisplay.textContent = `进度: ${progress}%`;
+    }
+    
+    // 检查是否完成
+    function checkCompletion() {
+      const pattern = PATTERNS[currentPattern];
+      
+      for (let y = 0; y < pattern.grid.length; y++) {
+        for (let x = 0; x < pattern.grid[y].length; x++) {
+          if (pattern.grid[y][x] !== 0 && playerGrid[y][x] !== pattern.grid[y][x]) {
+            return false;
+          }
+        }
+      }
+      
+      // 所有单元格都正确填充
+      setTimeout(() => {
+        alert('恭喜！你完成了这幅图案！');
+      }, 100);
+      
+      return true;
+    }
+    
+    // 重置当前图案
+    function resetPattern() {
+      const pattern = PATTERNS[currentPattern];
+      
+      for (let y = 0; y < pattern.grid.length; y++) {
+        for (let x = 0; x < pattern.grid[y].length; x++) {
+          playerGrid[y][x] = 0;
+        }
+      }
+      
+      drawGrid();
+      updateProgress();
+    }
+    
+    // 下一个图案
+    function nextPattern() {
+      currentPattern = (currentPattern + 1) % PATTERNS.length;
+      
+      // 更新图案选择器
+      document.querySelectorAll('.pattern-option').forEach(option => {
+        option.classList.remove('active');
+        if (parseInt(option.dataset.patternIndex) === currentPattern) {
+          option.classList.add('active');
+        }
+      });
+      
+      loadPattern(currentPattern);
+      drawGrid();
+    }
+    
+    // 点击事件处理
+    canvas.addEventListener('click', (e) => {
+      const pattern = PATTERNS[currentPattern];
+      const gridSize = pattern.grid.length;
+      
+      // 计算偏移量
+      const gridWidth = gridSize * cellSize;
+      const gridHeight = gridSize * cellSize;
+      const offsetX = (canvas.width - gridWidth) / 2;
+      const offsetY = (canvas.height - gridHeight) / 2;
+      
+      // 获取点击的单元格坐标
+      const rect = canvas.getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+      const clickY = e.clientY - rect.top;
+      
+      // 转换为网格坐标
+      const gridX = Math.floor((clickX - offsetX) / cellSize);
+      const gridY = Math.floor((clickY - offsetY) / cellSize);
+      
+      // 检查是否点击有效网格单元格
+      if (gridX >= 0 && gridX < gridSize && gridY >= 0 && gridY < gridSize) {
+        fillCell(gridX, gridY);
+      }
+    });
+    
+    // 绑定按钮事件
+    resetBtn.addEventListener('click', resetPattern);
+    nextBtn.addEventListener('click', nextPattern);
+    
+    // 初始化游戏
+    initGame();
+  </script>
+</body>
+</html> 

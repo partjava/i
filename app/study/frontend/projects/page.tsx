@@ -192,7 +192,7 @@ server {
         </Card>
         <Card title="环境变量与多环境" size="small">
           <pre style={codeBlockStyle}>{`// .env.development
-API_URL=http://localhost:3000
+API_URL=https://api.example.com
 // .env.production
 API_URL=https://api.example.com`}</pre>
         </Card>
@@ -283,4 +283,4 @@ export default function FrontendProjectsPage() {
       </div>
     </div>
   );
-} 
+}

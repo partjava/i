@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>单词搜索</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body { background: #f4f6fa; margin: 0; font-family: 'Segoe UI', Arial, sans-serif; }
+    h2 { text-align: center; margin-top: 20px; color: #4f8cff; font-size: 24px; }
+    .game-container { width: 500px; height: 600px; padding: 20px; box-sizing: border-box; margin: 0 auto; }
+    #game-canvas { display: block; margin: 20px auto 0 auto; background: #fff; border-radius: 10px; box-shadow: 0 4px 16px rgba(0,0,0,0.2); }
+    #score { text-align: center; font-size: 1.4em; color: #333; margin-top: 15px; font-weight: bold; }
+    #tip { text-align: center; color: #666; margin-top: 10px; font-size: 1.1em; }
+    .word-list { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 15px; max-width: 450px; margin-left: auto; margin-right: auto; }
+    .word-item { background: #edf3ff; padding: 5px 10px; border-radius: 15px; font-size: 14px; transition: all 0.3s; }
+    .word-item.found { background: #4CAF50; color: white; text-decoration: line-through; }
+    .controls { text-align: center; margin-top: 15px; }
+    .btn { background: #4f8cff; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; margin: 0 5px; font-size: 1em; }
+    .btn:hover { background: #3a7ced; }
+    .difficulty { display: flex; justify-content: center; margin-top: 10px; }
+    .difficulty label { margin: 0 10px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <div class="game-container">
+    <h2>单词搜索</h2>
+    <canvas id="game-canvas" width="450" height="450"></canvas>
+    <div id="score">已找到: 0/10</div>
+    <div id="tip">在网格中寻找单词，可以水平、垂直或对角线排列</div>
+    <div class="word-list" id="word-list"></div>
+    <div class="controls">
+      <div class="difficulty">
+        <label><input type="radio" name="difficulty" value="easy" checked> 简单</label>
+        <label><input type="radio" name="difficulty" value="medium"> 中等</label>
+        <label><input type="radio" name="difficulty" value="hard"> 困难</label>
+      </div>
+      <button class="btn" id="reset-btn">重新开始</button>
+    </div>
+  </div>
+  <script>
+    // 游戏代码
+    const canvas = document.getElementById('game-canvas');
+    const ctx = canvas.getContext('2d');
+    const scoreDisplay = document.getElementById('score');
+    const wordListElement = document.getElementById('word-list');
+    const resetBtn = document.getElementById('reset-btn');
+    const difficultyRadios = document.querySelectorAll('input[name="difficulty"]');
+    
+    // 游戏参数
+    let gridSize = 10; // 默认简单难度
+    let cellSize = 40;
+    let wordCount = 10;
+    
+    // 单词库 (根据实际需要扩展)
+    const wordBank = {
+      easy: ["CAT", "DOG", "SUN", "RUN", "HAT", "MAP", "BOX", "FOX", "PEN", "CUP", 
+             "BUG", "FAN", "JAR", "LEG", "TOY", "DAY", "EGG", "FUN", "JOB", "KEY"],
+      medium: ["APPLE", "BREAD", "CHAIR", "DANCE", "EAGLE", "FLAME", "GRAPE", "HAPPY", 
+               "INPUT", "LEMON", "MUSIC", "OCEAN", "PIANO", "QUIET", "RIVER", "SNAKE", 
+               "TABLE", "WATER", "YOUTH", "ZEBRA"],
+      hard: ["AMAZING", "BREWERY", "CHAMPION", "DAUGHTER", "ELEPHANT", "FESTIVAL", 
+             "GRADUATE", "HOMEPAGE", "INVENTORY", "KEYBOARD", "LANGUAGE", "MEDICINE", 
+             "NEIGHBOR", "OVERVIEW", "POWERFUL", "QUESTION", "RELATION", "SHOULDER", 
+             "TOMORROW", "UNIVERSE"]
+    };
+    
+    // 游戏状态
+    let grid = [];
+    let words = [];
+    let foundWords = [];
+    let selection = {
+      startX: -1,
+      startY: -1,
+      endX: -1,
+      endY: -1,
+      isSelecting: false
+    };
+    
+    // 初始化游戏
+    function initGame() {
+      // 根据难度设置参数
+      const difficulty = document.querySelector('input[name="difficulty"]:checked').value;
+      if (difficulty === 'easy') {
+        gridSize = 10;
+        cellSize = 40;
+        wordCount = 8;
+      } else if (difficulty === 'medium') {
+        gridSize = 15;
+        cellSize = 28;
+        wordCount = 12;
+      } else {
+        gridSize = 20;
+        cellSize = 20;
+        wordCount = 15;
+      }
+      
+      // 重置游戏状态
+      foundWords = [];
+      selection = { startX: -1, startY: -1, endX: -1, endY: -1, isSelecting: false };
+      
+      // 创建网格并放置单词
+      createGrid();
+      placeWords(difficulty);
+      
+      // 更新分数显示
+      updateScore();
+      
+      // 绘制网格
+      drawGrid();
+    }
+    
+    // 创建空网格
+    function createGrid() {
+      grid = [];
+      for (let i = 0; i < gridSize; i++) {
+        grid[i] = [];
+        for (let j = 0; j < gridSize; j++) {
+          grid[i][j] = '';
+        }
+      }
+    }
+    
+    // 放置单词
+    function placeWords(difficulty) {
+      // 清空单词列表
+      wordListElement.innerHTML = '';
+      words = [];
+      
+      // 随机选择单词
+      const availableWords = [...wordBank[difficulty]];
+      shuffleArray(availableWords);
+      
+      const selectedWords = availableWords.slice(0, wordCount);
+      
+      // 尝试放置每个单词
+      for (const word of selectedWords) {
+        let placed = false;
+        let attempts = 0;
+        
+        // 尝试100次放置单词
+        while (!placed && attempts < 100) {
+          attempts++;
+          
+          // 随机方向 (0-7 分别代表8个方向)
+          const direction = Math.floor(Math.random() * 8);
+          
+          // 根据方向计算步长
+          let dx = 0, dy = 0;
+          if (direction === 0 || direction === 1 || direction === 7) dx = 1;  // 右
+          if (direction === 3 || direction === 4 || direction === 5) dx = -1; // 左
+          if (direction === 1 || direction === 2 || direction === 3) dy = 1;  // 下
+          if (direction === 5 || direction === 6 || direction === 7) dy = -1; // 上
+          
+          // 计算可能的起始位置范围
+          const startX = dx < 0 ? gridSize - 1 - (word.length - 1) * Math.abs(dx) : 0;
+          const endX = dx <= 0 ? gridSize - 1 : gridSize - 1 - (word.length - 1) * dx;
+          const startY = dy < 0 ? gridSize - 1 - (word.length - 1) * Math.abs(dy) : 0;
+          const endY = dy <= 0 ? gridSize - 1 : gridSize - 1 - (word.length - 1) * dy;
+          
+          // 随机起始位置
+          const x = startX + Math.floor(Math.random() * (endX - startX + 1));
+          const y = startY + Math.floor(Math.random() * (endY - startY + 1));
+          
+          // 检查单词是否可以放置
+          if (canPlaceWord(word, x, y, dx, dy)) {
+            // 放置单词
+            placeWord(word, x, y, dx, dy);
+            words.push({
+              word,
+              startX: x,
+              startY: y,
+              endX: x + (word.length - 1) * dx,
+              endY: y + (word.length - 1) * dy
+            });
+            
+            // 添加到单词列表
+            const wordElement = document.createElement('div');
+            wordElement.className = 'word-item';
+            wordElement.textContent = word;
+            wordElement.dataset.word = word;
+            wordListElement.appendChild(wordElement);
+            
+            placed = true;
+          }
+        }
+      }
+      
+      // 填充空格
+      fillEmptySpaces();
+    }
+    
+    // 检查单词是否可以放置
+    function canPlaceWord(word, x, y, dx, dy) {
+      for (let i = 0; i < word.length; i++) {
+        const posX = x + i * dx;
+        const posY = y + i * dy;
+        
+        if (posX < 0 || posX >= gridSize || posY < 0 || posY >= gridSize) {
+          return false;
+        }
+        
+        if (grid[posY][posX] !== '' && grid[posY][posX] !== word[i]) {
+          return false;
+        }
+      }
+      return true;
+    }
+    
+    // 放置单词
+    function placeWord(word, x, y, dx, dy) {
+      for (let i = 0; i < word.length; i++) {
+        const posX = x + i * dx;
+        const posY = y + i * dy;
+        grid[posY][posX] = word[i];
+      }
+    }
+    
+    // 填充空格
+    function fillEmptySpaces() {
+      const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+      for (let y = 0; y < gridSize; y++) {
+        for (let x = 0; x < gridSize; x++) {
+          if (grid[y][x] === '') {
+            grid[y][x] = letters[Math.floor(Math.random() * letters.length)];
+          }
+        }
+      }
+    }
+    
+    // 绘制网格
+    function drawGrid() {
+      // 清空画布
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      // 计算偏移量使网格居中
+      const offsetX = (canvas.width - cellSize * gridSize) / 2;
+      const offsetY = (canvas.height - cellSize * gridSize) / 2;
+      
+      // 绘制单元格和字母
+      for (let y = 0; y < gridSize; y++) {
+        for (let x = 0; x < gridSize; x++) {
+          // 绘制单元格背景
+          ctx.fillStyle = '#f0f0f0';
+          ctx.fillRect(
+            offsetX + x * cellSize,
+            offsetY + y * cellSize,
+            cellSize,
+            cellSize
+          );
+          
+          // 绘制单元格边框
+          ctx.strokeStyle = '#ddd';
+          ctx.strokeRect(
+            offsetX + x * cellSize,
+            offsetY + y * cellSize,
+            cellSize,
+            cellSize
+          );
+          
+          // 绘制字母
+          ctx.fillStyle = '#333';
+          ctx.font = `${cellSize * 0.6}px Arial`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(
+            grid[y][x],
+            offsetX + x * cellSize + cellSize / 2,
+            offsetY + y * cellSize + cellSize / 2
+          );
+        }
+      }
+      
+      // 绘制已找到的单词
+      for (const word of foundWords) {
+        drawFoundWord(word, offsetX, offsetY);
+      }
+      
+      // 绘制当前选择
+      if (selection.isSelecting && selection.startX !== -1 && selection.endX !== -1) {
+        drawSelection(offsetX, offsetY);
+      }
+    }
+    
+    // 绘制已找到的单词
+    function drawFoundWord(word, offsetX, offsetY) {
+      const startX = word.startX;
+      const startY = word.startY;
+      const endX = word.endX;
+      const endY = word.endY;
+      
+      // 绘制连线
+      ctx.beginPath();
+      ctx.moveTo(
+        offsetX + startX * cellSize + cellSize / 2,
+        offsetY + startY * cellSize + cellSize / 2
+      );
+      ctx.lineTo(
+        offsetX + endX * cellSize + cellSize / 2,
+        offsetY + endY * cellSize + cellSize / 2
+      );
+      ctx.strokeStyle = 'rgba(76, 175, 80, 0.7)';
+      ctx.lineWidth = cellSize / 3;
+      ctx.stroke();
+      
+      // 高亮单元格
+      const dx = endX > startX ? 1 : endX < startX ? -1 : 0;
+      const dy = endY > startY ? 1 : endY < startY ? -1 : 0;
+      const wordLength = word.word.length;
+      
+      for (let i = 0; i < wordLength; i++) {
+        const x = startX + i * dx;
+        const y = startY + i * dy;
+        
+        ctx.fillStyle = 'rgba(76, 175, 80, 0.3)';
+        ctx.fillRect(
+          offsetX + x * cellSize,
+          offsetY + y * cellSize,
+          cellSize,
+          cellSize
+        );
+      }
+    }
+    
+    // 绘制当前选择
+    function drawSelection(offsetX, offsetY) {
+      ctx.beginPath();
+      ctx.moveTo(
+        offsetX + selection.startX * cellSize + cellSize / 2,
+        offsetY + selection.startY * cellSize + cellSize / 2
+      );
+      ctx.lineTo(
+        offsetX + selection.endX * cellSize + cellSize / 2,
+        offsetY + selection.endY * cellSize + cellSize / 2
+      );
+      ctx.strokeStyle = 'rgba(33, 150, 243, 0.7)';
+      ctx.lineWidth = cellSize / 3;
+      ctx.stroke();
+    }
+    
+    // 更新分数
+    function updateScore() {
+      scoreDisplay.textContent = `已找到: ${foundWords.length}/${words.length}`;
+    }
+    
+    // 检查所选单词
+    function checkSelection() {
+      if (!selection.isSelecting || selection.startX === -1 || selection.endX === -1) return;
+      
+      // 计算方向
+      const dx = Math.sign(selection.endX - selection.startX);
+      const dy = Math.sign(selection.endY - selection.startY);
+      
+      // 如果选择没有明确方向，则忽略
+      if (dx === 0 && dy === 0) return;
+      
+      // 计算选择的长度
+      let length;
+      if (dx !== 0 && dy !== 0) {
+        // 对角线
+        length = Math.max(
+          Math.abs(selection.endX - selection.startX),
+          Math.abs(selection.endY - selection.startY)
+        ) + 1;
+      } else {
+        // 水平或垂直
+        length = Math.max(
+          Math.abs(selection.endX - selection.startX),
+          Math.abs(selection.endY - selection.startY)
+        ) + 1;
+      }
+      
+      // 构建所选单词
+      let selectedWord = '';
+      for (let i = 0; i < length; i++) {
+        const x = selection.startX + i * dx;
+        const y = selection.startY + i * dy;
+        
+        if (x >= 0 && x < gridSize && y >= 0 && y < gridSize) {
+          selectedWord += grid[y][x];
+        }
+      }
+      
+      // 检查是否匹配单词列表中的任何单词
+      for (const word of words) {
+        if (selectedWord === word.word && !foundWords.includes(word)) {
+          foundWords.push(word);
+          
+          // 更新单词列表显示
+          const wordElement = document.querySelector(`.word-item[data-word="${word.word}"]`);
+          if (wordElement) {
+            wordElement.classList.add('found');
+          }
+          
+          // 更新分数
+          updateScore();
+          
+          // 检查是否找到所有单词
+          if (foundWords.length === words.length) {
+            setTimeout(() => {
+              alert('恭喜！你找到了所有单词！');
+            }, 100);
+          }
+          
+          break;
+        }
+      }
+      
+      // 重绘网格
+      drawGrid();
+    }
+    
+    // 随机打乱数组
+    function shuffleArray(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+    }
+    
+    // 获取单元格坐标
+    function getCellCoords(e) {
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      
+      const offsetX = (canvas.width - cellSize * gridSize) / 2;
+      const offsetY = (canvas.height - cellSize * gridSize) / 2;
+      
+      const cellX = Math.floor((x - offsetX) / cellSize);
+      const cellY = Math.floor((y - offsetY) / cellSize);
+      
+      if (cellX >= 0 && cellX < gridSize && cellY >= 0 && cellY < gridSize) {
+        return { x: cellX, y: cellY };
+      }
+      
+      return null;
+    }
+    
+    // 鼠标和触摸事件
+    canvas.addEventListener('mousedown', (e) => {
+      const coords = getCellCoords(e);
+      if (coords) {
+        selection.startX = coords.x;
+        selection.startY = coords.y;
+        selection.endX = coords.x;
+        selection.endY = coords.y;
+        selection.isSelecting = true;
+        drawGrid();
+      }
+    });
+    
+    canvas.addEventListener('mousemove', (e) => {
+      if (selection.isSelecting) {
+        const coords = getCellCoords(e);
+        if (coords) {
+          selection.endX = coords.x;
+          selection.endY = coords.y;
+          drawGrid();
+        }
+      }
+    });
+    
+    canvas.addEventListener('mouseup', () => {
+      if (selection.isSelecting) {
+        checkSelection();
+        selection.isSelecting = false;
+      }
+    });
+    
+    // 触摸事件支持
+    canvas.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      const touch = e.touches[0];
+      const coords = getCellCoords(touch);
+      if (coords) {
+        selection.startX = coords.x;
+        selection.startY = coords.y;
+        selection.endX = coords.x;
+        selection.endY = coords.y;
+        selection.isSelecting = true;
+        drawGrid();
+      }
+    });
+    
+    canvas.addEventListener('touchmove', (e) => {
+      e.preventDefault();
+      if (selection.isSelecting) {
+        const touch = e.touches[0];
+        const coords = getCellCoords(touch);
+        if (coords) {
+          selection.endX = coords.x;
+          selection.endY = coords.y;
+          drawGrid();
+        }
+      }
+    });
+    
+    canvas.addEventListener('touchend', () => {
+      if (selection.isSelecting) {
+        checkSelection();
+        selection.isSelecting = false;
+      }
+    });
+    
+    // 重置按钮
+    resetBtn.addEventListener('click', initGame);
+    
+    // 难度选择
+    for (const radio of difficultyRadios) {
+      radio.addEventListener('change', initGame);
+    }
+    
+    // 初始化游戏
+    initGame();
+  </script>
+</body>
+</html> 

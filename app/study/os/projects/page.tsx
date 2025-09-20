@@ -9,9 +9,16 @@ export default function OSProjectsPage() {
   return (
     <div className="container mx-auto py-8 px-4">
       <Title level={2}>操作系统实战与面试</Title>
-      <Tabs defaultActiveKey="interview" type="card" size="large">
-        {/* Tab 1: 高频面试真题 */}
-        <Tabs.TabPane tab="高频面试真题" key="interview">
+      <Tabs
+        defaultActiveKey="interview"
+        type="card"
+        size="large"
+        items={[
+          {
+            key: 'interview',
+            label: '高频面试真题',
+            children: (
+          <>
           <Paragraph style={{fontWeight: 600, fontSize: 16}}>选择题</Paragraph>
           <Paragraph><b>1.</b> 下列关于进程和线程的说法正确的是：</Paragraph>
           <ul>
@@ -22,7 +29,6 @@ export default function OSProjectsPage() {
           </ul>
           <Paragraph style={{color: '#388e3c'}}><b>答案：</b>C</Paragraph>
           <Paragraph style={{color: '#666', marginBottom: 18}}><b>解析：</b>线程是CPU调度的基本单位，进程是资源分配单位，线程间切换开销小，进程可包含多个线程。</Paragraph>
-
           <Paragraph><b>2.</b> 关于虚拟内存，下列说法错误的是：</Paragraph>
           <ul>
             <li>A. 虚拟内存可让程序使用比物理内存更大的空间</li>
@@ -67,9 +73,14 @@ export default function OSProjectsPage() {
           <Paragraph><b>6.</b> 某服务器频繁出现高CPU占用和大量I/O等待，分析可能原因及排查思路。</Paragraph>
           <Paragraph style={{color: '#388e3c'}}><b>答案要点：</b>可能有死锁、进程饥饿、I/O瓶颈、内存泄漏等。应检查进程状态、资源分配、磁盘/内存使用、系统日志等。</Paragraph>
           <Paragraph style={{color: '#666', marginBottom: 18}}><b>解析：</b>结合系统监控和日志，定位瓶颈和异常进程，逐步排查。</Paragraph>
-        </Tabs.TabPane>
-        {/* Tab 2: 易错点与答题技巧 */}
-        <Tabs.TabPane tab="易错点与答题技巧" key="tips">
+        </>
+        ),
+      },
+      {
+        key: 'tips',
+        label: '易错点与答题技巧',
+        children: (
+          <>
           <Paragraph style={{fontWeight: 600, fontSize: 16}}>各知识点常见易错点</Paragraph>
           <Table
             bordered
@@ -108,9 +119,14 @@ export default function OSProjectsPage() {
             <li>画图能加分，流程图/结构图辅助说明</li>
             <li>计算题步骤要写全，公式、过程、结论分开</li>
           </ul>
-        </Tabs.TabPane>
-        {/* Tab 3: 操作系统实战案例 */}
-        <Tabs.TabPane tab="操作系统实战案例" key="cases">
+          </>
+        ),
+      },
+      {
+        key: 'cases',
+        label: '操作系统实战案例',
+        children: (
+          <>
           <Paragraph style={{fontWeight: 600, fontSize: 16}}>典型实战案例</Paragraph>
           <Paragraph><b>1. 死锁定位与分析</b></Paragraph>
           <Card style={{marginBottom: 16}}>
@@ -152,9 +168,14 @@ export default function OSProjectsPage() {
 4. 启用审计和入侵检测
 `}</pre>
           </Card>
-        </Tabs.TabPane>
-        {/* Tab 4: 复习建议与自测 */}
-        <Tabs.TabPane tab="复习建议与自测" key="review">
+          </>
+        ),
+      },
+      {
+        key: 'review',
+        label: '复习建议与自测',
+        children: (
+          <>
           <Paragraph style={{fontWeight: 600, fontSize: 16}}>复习路线与重点清单</Paragraph>
           <ul style={{fontSize: 15}}>
             <li>先掌握基本概念，再攻克难点与算法</li>
@@ -176,8 +197,6 @@ export default function OSProjectsPage() {
 4. RBAC基于角色，DAC自主分配，MAC强制策略。例：RBAC如企业权限，DAC如文件属主，MAC如军事分级。
 `}</pre>
           </Card>
-        </Tabs.TabPane>
-      </Tabs>
       <Alert
         message="学习建议"
         description={
@@ -198,6 +217,11 @@ export default function OSProjectsPage() {
           返回目录
         </Button>
       </div>
+      </>
+  ),
+}
+        ]}
+      />
     </div>
   );
-} 
+}

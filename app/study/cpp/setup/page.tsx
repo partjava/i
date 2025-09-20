@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Card, Tabs, Steps, Button, Alert, Progress } from 'antd';
-import { CodeBlock } from '@/components/ui/CodeBlock';
+import { CodeBlock } from '@/app/components/ui/CodeBlock';
 import { 
   DesktopOutlined, 
   CodeOutlined, 

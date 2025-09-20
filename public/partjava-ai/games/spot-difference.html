@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>找茬游戏</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body { background: #f4f6fa; margin: 0; font-family: 'Segoe UI', Arial, sans-serif; }
+    h2 { text-align: center; margin-top: 20px; color: #4f8cff; font-size: 24px; }
+    #game-canvas { display: block; margin: 20px auto 0 auto; background: #fff; border-radius: 10px; box-shadow: 0 4px 16px rgba(0,0,0,0.2); }
+    #score { text-align: center; font-size: 1.4em; color: #333; margin-top: 15px; font-weight: bold; }
+    #tip { text-align: center; color: #666; margin-top: 10px; font-size: 1.1em; }
+    .game-container { width: 500px; height: 600px; padding: 20px; box-sizing: border-box; margin: 0 auto; }
+    .controls { text-align: center; margin-top: 15px; }
+    .btn { background: #4f8cff; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; margin: 0 5px; font-size: 1em; }
+    .btn:hover { background: #3a7ced; }
+    .images-container { display: flex; justify-content: space-between; max-width: 450px; margin: 0 auto; }
+    .image-wrapper { position: relative; width: 220px; height: 220px; border: 1px solid #ddd; }
+    .image { width: 100%; height: 100%; object-fit: cover; }
+    .difference-spot { position: absolute; width: 20px; height: 20px; border-radius: 50%; background-color: rgba(255, 0, 0, 0.5); transform: translate(-50%, -50%); pointer-events: none; }
+  </style>
+</head>
+<body>
+  <div class="game-container">
+    <h2>找茬游戏</h2>
+    <div id="game-canvas">
+      <div class="images-container">
+        <div class="image-wrapper" id="left-image">
+          <img src="" alt="左图" class="image" id="img-left">
+        </div>
+        <div class="image-wrapper" id="right-image">
+          <img src="" alt="右图" class="image" id="img-right">
+        </div>
+      </div>
+    </div>
+    <div id="score">找到: 0/5</div>
+    <div id="tip">点击找出两张图片之间的差异</div>
+    <div class="controls">
+      <button class="btn" id="hint-btn">提示</button>
+      <button class="btn" id="reset-btn">下一关</button>
+    </div>
+  </div>
+  <script>
+    // 游戏代码
+    const leftImage = document.getElementById('left-image');
+    const rightImage = document.getElementById('right-image');
+    const imgLeft = document.getElementById('img-left');
+    const imgRight = document.getElementById('img-right');
+    const scoreDisplay = document.getElementById('score');
+    const hintBtn = document.getElementById('hint-btn');
+    const resetBtn = document.getElementById('reset-btn');
+    
+    // 图片和差异点数据 (示例数据，实际应用中可能需要更多的图片对)
+    const levels = [
+      {
+        leftImg: "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220' viewBox='0 0 220 220'%3E%3Crect width='220' height='220' fill='%23f0f0f0'/%3E%3Ccircle cx='70' cy='80' r='30' fill='%234f8cff'/%3E%3Crect x='130' y='50' width='40' height='40' fill='%23ff7043'/%3E%3Cpath d='M40,140 L180,140 L110,180 Z' fill='%234caf50'/%3E%3C/svg%3E",
+        rightImg: "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220' viewBox='0 0 220 220'%3E%3Crect width='220' height='220' fill='%23f0f0f0'/%3E%3Ccircle cx='70' cy='80' r='30' fill='%234f8cff'/%3E%3Crect x='130' y='50' width='40' height='40' fill='%23ff7043'/%3E%3Cpath d='M40,140 L180,140 L110,190 Z' fill='%234caf50'/%3E%3C/svg%3E",
+        differences: [
+          { x: 110, y: 185, radius: 10 }
+        ]
+      },
+      {
+        leftImg: "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220' viewBox='0 0 220 220'%3E%3Crect width='220' height='220' fill='%23f0f0f0'/%3E%3Ccircle cx='60' cy='60' r='20' fill='%234f8cff'/%3E%3Ccircle cx='160' cy='60' r='20' fill='%23ff7043'/%3E%3Ccircle cx='60' cy='160' r='20' fill='%23ff7043'/%3E%3Ccircle cx='160' cy='160' r='20' fill='%234f8cff'/%3E%3C/svg%3E",
+        rightImg: "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220' viewBox='0 0 220 220'%3E%3Crect width='220' height='220' fill='%23f0f0f0'/%3E%3Ccircle cx='60' cy='60' r='20' fill='%234f8cff'/%3E%3Ccircle cx='160' cy='60' r='30' fill='%23ff7043'/%3E%3Ccircle cx='60' cy='160' r='20' fill='%23ff7043'/%3E%3Ccircle cx='160' cy='160' r='20' fill='%234f8cff'/%3E%3C/svg%3E",
+        differences: [
+          { x: 160, y: 60, radius: 30 }
+        ]
+      },
+      {
+        leftImg: "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220' viewBox='0 0 220 220'%3E%3Crect width='220' height='220' fill='%23f0f0f0'/%3E%3Crect x='40' y='40' width='140' height='140' fill='%23fff' stroke='%23333' stroke-width='2'/%3E%3Cline x1='40' y1='40' x2='180' y2='180' stroke='%23333' stroke-width='2'/%3E%3Cline x1='40' y1='180' x2='180' y2='40' stroke='%23333' stroke-width='2'/%3E%3Ccircle cx='110' cy='110' r='30' fill='%234caf50'/%3E%3C/svg%3E",
+        rightImg: "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220' viewBox='0 0 220 220'%3E%3Crect width='220' height='220' fill='%23f0f0f0'/%3E%3Crect x='40' y='40' width='140' height='140' fill='%23fff' stroke='%23333' stroke-width='2'/%3E%3Cline x1='40' y1='40' x2='180' y2='180' stroke='%23333' stroke-width='2'/%3E%3Cline x1='40' y1='180' x2='180' y2='40' stroke='%23333' stroke-width='2'/%3E%3Ccircle cx='110' cy='110' r='30' fill='%23ff7043'/%3E%3C/svg%3E",
+        differences: [
+          { x: 110, y: 110, radius: 30 }
+        ]
+      },
+      {
+        leftImg: "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220' viewBox='0 0 220 220'%3E%3Crect width='220' height='220' fill='%23f0f0f0'/%3E%3Cpolygon points='110,40 150,100 130,180 90,180 70,100' fill='%23fff' stroke='%23333' stroke-width='2'/%3E%3Ccircle cx='110' cy='70' r='10' fill='%23333'/%3E%3Crect x='90' y='100' width='40' height='5' fill='%23333'/%3E%3C/svg%3E",
+        rightImg: "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220' viewBox='0 0 220 220'%3E%3Crect width='220' height='220' fill='%23f0f0f0'/%3E%3Cpolygon points='110,40 150,100 130,180 90,180 70,100' fill='%23fff' stroke='%23333' stroke-width='2'/%3E%3Ccircle cx='110' cy='70' r='10' fill='%23333'/%3E%3Crect x='90' y='100' width='40' height='5' fill='%23333'/%3E%3Ccircle cx='100' cy='130' r='5' fill='%23333'/%3E%3Ccircle cx='120' cy='130' r='5' fill='%23333'/%3E%3C/svg%3E",
+        differences: [
+          { x: 100, y: 130, radius: 5 },
+          { x: 120, y: 130, radius: 5 }
+        ]
+      },
+      {
+        leftImg: "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220' viewBox='0 0 220 220'%3E%3Crect width='220' height='220' fill='%23f0f0f0'/%3E%3Ccircle cx='110' cy='110' r='80' fill='%23fff' stroke='%23333' stroke-width='2'/%3E%3Cpolygon points='110,50 130,90 175,90 140,115 155,160 110,135 65,160 80,115 45,90 90,90' fill='%23ffeb3b'/%3E%3C/svg%3E",
+        rightImg: "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220' viewBox='0 0 220 220'%3E%3Crect width='220' height='220' fill='%23f0f0f0'/%3E%3Ccircle cx='110' cy='110' r='80' fill='%23fff' stroke='%23333' stroke-width='2'/%3E%3Cpolygon points='110,50 130,90 175,90 140,115 155,160 110,135 65,160 80,115 45,90 90,90' fill='%23ffeb3b'/%3E%3Ccircle cx='110' cy='110' r='10' fill='%23333'/%3E%3C/svg%3E",
+        differences: [
+          { x: 110, y: 110, radius: 10 }
+        ]
+      }
+    ];
+    
+    // 游戏状态
+    let currentLevel = 0;
+    let foundDifferences = [];
+    let totalDifferences = 0;
+    let hintTimeout = null;
+    
+    // 初始化游戏
+    function initGame() {
+      // 清除提示计时器
+      if (hintTimeout) {
+        clearTimeout(hintTimeout);
+        hintTimeout = null;
+      }
+      
+      // 清除已找到的差异点
+      const spots = document.querySelectorAll('.difference-spot');
+      spots.forEach(spot => spot.remove());
+      
+      // 重置游戏状态
+      foundDifferences = [];
+      
+      // 加载当前关卡
+      loadLevel(currentLevel);
+    }
+    
+    // 加载关卡
+    function loadLevel(levelIndex) {
+      if (levelIndex >= levels.length) {
+        // 所有关卡完成，重新开始
+        currentLevel = 0;
+        levelIndex = 0;
+      }
+      
+      const level = levels[levelIndex];
+      
+      // 设置图片
+      imgLeft.src = level.leftImg;
+      imgRight.src = level.rightImg;
+      
+      // 更新差异点总数
+      totalDifferences = level.differences.length;
+      updateScore();
+    }
+    
+    // 更新分数
+    function updateScore() {
+      scoreDisplay.textContent = `找到: ${foundDifferences.length}/${totalDifferences}`;
+    }
+    
+    // 创建差异点标记
+    function createDifferenceSpot(x, y, target) {
+      const spot = document.createElement('div');
+      spot.className = 'difference-spot';
+      spot.style.left = x + 'px';
+      spot.style.top = y + 'px';
+      target.appendChild(spot);
+      return spot;
+    }
+    
+    // 检查点击是否在差异点上
+    function checkDifference(x, y, isLeftImage) {
+      const level = levels[currentLevel];
+      
+      for (let i = 0; i < level.differences.length; i++) {
+        const diff = level.differences[i];
+        
+        // 计算点击点与差异点之间的距离
+        const distance = Math.sqrt(Math.pow(x - diff.x, 2) + Math.pow(y - diff.y, 2));
+        
+        // 如果点击在差异点附近且该差异点尚未找到
+        if (distance <= diff.radius * 2 && !foundDifferences.includes(i)) {
+          foundDifferences.push(i);
+          
+          // 在两张图片上都创建标记
+          createDifferenceSpot(diff.x, diff.y, leftImage);
+          createDifferenceSpot(diff.x, diff.y, rightImage);
+          
+          // 更新分数
+          updateScore();
+          
+          // 检查是否完成当前关卡
+          if (foundDifferences.length === totalDifferences) {
+            setTimeout(() => {
+              alert('恭喜！你找到了所有差异点！');
+              currentLevel++;
+              initGame();
+            }, 500);
+          }
+          
+          return true;
+        }
+      }
+      
+      return false;
+    }
+    
+    // 提示功能
+    function showHint() {
+      const level = levels[currentLevel];
+      
+      // 找出尚未找到的差异点
+      const remainingDiffs = level.differences.filter((_, index) => !foundDifferences.includes(index));
+      
+      if (remainingDiffs.length === 0) return;
+      
+      // 随机选择一个未找到的差异点
+      const diff = remainingDiffs[Math.floor(Math.random() * remainingDiffs.length)];
+      
+      // 创建临时提示标记
+      const hintSpotLeft = createDifferenceSpot(diff.x, diff.y, leftImage);
+      const hintSpotRight = createDifferenceSpot(diff.x, diff.y, rightImage);
+      
+      // 设置提示样式
+      hintSpotLeft.style.backgroundColor = 'rgba(255, 255, 0, 0.5)';
+      hintSpotRight.style.backgroundColor = 'rgba(255, 255, 0, 0.5)';
+      
+      // 3秒后移除提示
+      hintTimeout = setTimeout(() => {
+        hintSpotLeft.remove();
+        hintSpotRight.remove();
+      }, 3000);
+    }
+    
+    // 图片点击事件
+    leftImage.addEventListener('click', (e) => {
+      const rect = leftImage.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      
+      checkDifference(x, y, true);
+    });
+    
+    rightImage.addEventListener('click', (e) => {
+      const rect = rightImage.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      
+      checkDifference(x, y, false);
+    });
+    
+    // 提示按钮
+    hintBtn.addEventListener('click', showHint);
+    
+    // 重置按钮
+    resetBtn.addEventListener('click', () => {
+      currentLevel++;
+      initGame();
+    });
+    
+    // 初始化游戏
+    initGame();
+  </script>
+</body>
+</html>

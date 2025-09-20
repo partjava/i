@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>水管连接</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body { background: #f4f6fa; margin: 0; font-family: 'Segoe UI', Arial, sans-serif; }
+    h2 { text-align: center; margin-top: 20px; color: #4f8cff; font-size: 24px; }
+    #game-canvas { display: block; margin: 20px auto 0 auto; background: #fff; border-radius: 10px; box-shadow: 0 4px 16px rgba(0,0,0,0.2); }
+    #score { text-align: center; font-size: 1.4em; color: #333; margin-top: 15px; font-weight: bold; }
+    #tip { text-align: center; color: #666; margin-top: 10px; font-size: 1.1em; }
+    .game-container { width: 500px; height: 600px; padding: 20px; box-sizing: border-box; margin: 0 auto; }
+    .controls { text-align: center; margin-top: 15px; }
+    .btn { background: #4f8cff; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; margin: 0 5px; font-size: 1em; }
+    .btn:hover { background: #3a7ced; }
+    .grid-container { display: grid; grid-template-columns: repeat(6, 1fr); grid-gap: 2px; max-width: 450px; margin: 0 auto; }
+    .pipe { width: 70px; height: 70px; background-color: #f0f0f0; border-radius: 5px; cursor: pointer; transition: transform 0.3s ease; }
+    .pipe.start { background-color: #4CAF50; }
+    .pipe.end { background-color: #F44336; }
+    .pipe.connected { background-color: #e1f5fe; }
+    .level-indicator { text-align: center; margin-top: 10px; }
+    .level-bubble { display: inline-block; width: 15px; height: 15px; background-color: #ddd; border-radius: 50%; margin: 0 5px; cursor: pointer; }
+    .level-bubble.active { background-color: #4f8cff; }
+    .level-bubble.completed { background-color: #4CAF50; }
+  </style>
+</head>
+<body>
+  <div class="game-container">
+    <h2>水管连接</h2>
+    <canvas id="game-canvas" width="450" height="450"></canvas>
+    <div id="score">关卡: 1/5</div>
+    <div id="tip">点击管道旋转，创建从起点(绿色)到终点(红色)的连接</div>
+    <div class="controls">
+      <button class="btn" id="hint-btn">提示</button>
+      <button class="btn" id="reset-btn">重置</button>
+    </div>
+    <div class="level-indicator" id="level-indicator"></div>
+  </div>
+  <script>
+    // 游戏代码
+    const canvas = document.getElementById('game-canvas');
+    const ctx = canvas.getContext('2d');
+    const scoreDisplay = document.getElementById('score');
+    const hintBtn = document.getElementById('hint-btn');
+    const resetBtn = document.getElementById('reset-btn');
+    const levelIndicator = document.getElementById('level-indicator');
+    
+    // 管道类型
+    const PIPE_TYPES = {
+      EMPTY: 0,      // 空白
+      STRAIGHT_H: 1, // 水平直管
+      STRAIGHT_V: 2, // 垂直直管
+      CORNER_TL: 3,  // 左上角
+      CORNER_TR: 4,  // 右上角
+      CORNER_BL: 5,  // 左下角
+      CORNER_BR: 6,  // 右下角
+      START: 7,      // 起点
+      END: 8         // 终点
+    };
+    
+    // 连接方向
+    const DIRECTIONS = {
+      TOP: 0,
+      RIGHT: 1,
+      BOTTOM: 2,
+      LEFT: 3
+    };
+    
+    // 管道连接定义 (哪些方向是连接的)
+    const PIPE_CONNECTIONS = {
+      [PIPE_TYPES.EMPTY]: [],
+      [PIPE_TYPES.STRAIGHT_H]: [DIRECTIONS.LEFT, DIRECTIONS.RIGHT],
+      [PIPE_TYPES.STRAIGHT_V]: [DIRECTIONS.TOP, DIRECTIONS.BOTTOM],
+      [PIPE_TYPES.CORNER_TL]: [DIRECTIONS.TOP, DIRECTIONS.LEFT],
+      [PIPE_TYPES.CORNER_TR]: [DIRECTIONS.TOP, DIRECTIONS.RIGHT],
+      [PIPE_TYPES.CORNER_BL]: [DIRECTIONS.BOTTOM, DIRECTIONS.LEFT],
+      [PIPE_TYPES.CORNER_BR]: [DIRECTIONS.BOTTOM, DIRECTIONS.RIGHT],
+      [PIPE_TYPES.START]: [DIRECTIONS.RIGHT],
+      [PIPE_TYPES.END]: [DIRECTIONS.LEFT]
+    };
+    
+    // 关卡数据
+    const LEVELS = [
+      {
+        grid: [
+          [7, 1, 1, 8],
+          [0, 0, 0, 0],
+          [0, 0, 0, 0],
+          [0, 0, 0, 0]
+        ],
+        solution: [
+          [7, 1, 1, 8],
+          [0, 0, 0, 0],
+          [0, 0, 0, 0],
+          [0, 0, 0, 0]
+        ]
+      },
+      {
+        grid: [
+          [7, 0, 0, 0],
+          [0, 0, 0, 0],
+          [0, 0, 0, 0],
+          [0, 0, 0, 8]
+        ],
+        solution: [
+          [7, 1, 1, 6],
+          [0, 0, 0, 2],
+          [0, 0, 0, 2],
+          [0, 0, 0, 8]
+        ]
+      },
+      {
+        grid: [
+          [0, 7, 0, 0, 0],
+          [0, 0, 0, 0, 0],
+          [0, 0, 0, 0, 0],
+          [0, 0, 0, 0, 0],
+          [0, 0, 0, 8, 0]
+        ],
+        solution: [
+          [0, 7, 6, 0, 0],
+          [0, 2, 3, 0, 0],
+          [0, 2, 5, 1, 0],
+          [0, 2, 0, 0, 0],
+          [0, 5, 1, 8, 0]
+        ]
+      },
+      {
+        grid: [
+          [0, 0, 7, 0, 0, 0],
+          [0, 0, 0, 0, 0, 0],
+          [0, 0, 0, 0, 0, 0],
+          [0, 0, 0, 0, 0, 0],
+          [0, 0, 0, 0, 0, 0],
+          [0, 0, 0, 0, 8, 0]
+        ],
+        solution: [
+          [0, 0, 7, 6, 0, 0],
+          [0, 0, 2, 3, 0, 0],
+          [0, 0, 2, 5, 1, 0],
+          [0, 0, 2, 0, 0, 0],
+          [0, 0, 5, 1, 1, 0],
+          [0, 0, 0, 0, 8, 0]
+        ]
+      },
+      {
+        grid: [
+          [0, 0, 0, 0, 0, 0],
+          [0, 7, 0, 0, 0, 0],
+          [0, 0, 0, 0, 0, 0],
+          [0, 0, 0, 0, 0, 0],
+          [0, 0, 0, 0, 8, 0],
+          [0, 0, 0, 0, 0, 0]
+        ],
+        solution: [
+          [0, 0, 0, 0, 0, 0],
+          [0, 7, 1, 1, 6, 0],
+          [0, 0, 0, 0, 2, 0],
+          [0, 0, 0, 0, 2, 0],
+          [0, 0, 0, 0, 8, 0],
+          [0, 0, 0, 0, 0, 0]
+        ]
+      }
+    ];
+    
+    // 游戏状态
+    let currentLevel = 0;
+    let grid = [];
+    let cellSize = 0;
+    let completedLevels = new Set();
+    let hintTimeout = null;
+    let startPos = { x: 0, y: 0 };
+    let endPos = { x: 0, y: 0 };
+    
+    // 初始化游戏
+    function initGame() {
+      // 清除提示计时器
+      if (hintTimeout) {
+        clearTimeout(hintTimeout);
+      }
+      
+      loadLevel(currentLevel);
+      createLevelIndicators();
+      drawGrid();
+    }
+    
+    // 加载关卡
+    function loadLevel(levelIndex) {
+      if (levelIndex >= LEVELS.length) {
+        // 所有关卡完成，重新开始
+        currentLevel = 0;
+        levelIndex = 0;
+        completedLevels = new Set();
+      }
+      
+      // 复制关卡数据到游戏网格
+      grid = JSON.parse(JSON.stringify(LEVELS[levelIndex].grid));
+      
+      // 计算单元格大小
+      const maxDimension = Math.max(grid.length, grid[0].length);
+      cellSize = Math.min(canvas.width, canvas.height) / maxDimension;
+      
+      // 找到起点和终点位置
+      findStartAndEnd();
+      
+      // 更新关卡显示
+      scoreDisplay.textContent = `关卡: ${levelIndex + 1}/${LEVELS.length}`;
+      
+      // 更新关卡指示器
+      updateLevelIndicators();
+    }
+    
+    // 创建关卡指示器
+    function createLevelIndicators() {
+      levelIndicator.innerHTML = '';
+      for (let i = 0; i < LEVELS.length; i++) {
+        const bubble = document.createElement('div');
+        bubble.className = 'level-bubble';
+        bubble.dataset.level = i;
+        bubble.addEventListener('click', () => {
+          currentLevel = i;
+          loadLevel(currentLevel);
+          drawGrid();
+        });
+        levelIndicator.appendChild(bubble);
+      }
+    }
+    
+    // 更新关卡指示器
+    function updateLevelIndicators() {
+      const bubbles = document.querySelectorAll('.level-bubble');
+      bubbles.forEach((bubble, index) => {
+        bubble.classList.remove('active', 'completed');
+        if (index === currentLevel) {
+          bubble.classList.add('active');
+        }
+        if (completedLevels.has(index)) {
+          bubble.classList.add('completed');
+        }
+      });
+    }
+    
+    // 找到起点和终点位置
+    function findStartAndEnd() {
+      for (let y = 0; y < grid.length; y++) {
+        for (let x = 0; x < grid[y].length; x++) {
+          if (grid[y][x] === PIPE_TYPES.START) {
+            startPos = { x, y };
+          } else if (grid[y][x] === PIPE_TYPES.END) {
+            endPos = { x, y };
+          }
+        }
+      }
+    }
+    
+    // 绘制网格
+    function drawGrid() {
+      // 清空画布
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      // 计算偏移量使网格居中
+      const gridWidth = grid[0].length * cellSize;
+      const gridHeight = grid.length * cellSize;
+      const offsetX = (canvas.width - gridWidth) / 2;
+      const offsetY = (canvas.height - gridHeight) / 2;
+      
+      // 计算连接路径
+      const connectedPipes = findConnectedPipes();
+      
+      // 绘制每个管道单元格
+      for (let y = 0; y < grid.length; y++) {
+        for (let x = 0; x < grid[y].length; x++) {
+          const pipeType = grid[y][x];
+          const cellX = offsetX + x * cellSize;
+          const cellY = offsetY + y * cellSize;
+          
+          // 绘制单元格背景
+          if (pipeType === PIPE_TYPES.START) {
+            ctx.fillStyle = '#4CAF50';
+          } else if (pipeType === PIPE_TYPES.END) {
+            ctx.fillStyle = '#F44336';
+          } else if (connectedPipes.some(p => p.x === x && p.y === y)) {
+            ctx.fillStyle = '#e1f5fe';
+          } else {
+            ctx.fillStyle = '#f0f0f0';
+          }
+          
+          ctx.fillRect(cellX, cellY, cellSize, cellSize);
+          ctx.strokeStyle = '#ddd';
+          ctx.strokeRect(cellX, cellY, cellSize, cellSize);
+          
+          // 绘制管道
+          drawPipe(pipeType, cellX, cellY);
+        }
+      }
+    }
+    
+    // 绘制管道
+    function drawPipe(pipeType, x, y) {
+      if (pipeType === PIPE_TYPES.EMPTY) return;
+      
+      const padding = cellSize * 0.1;
+      const pipeWidth = cellSize * 0.2;
+      
+      ctx.save();
+      ctx.translate(x + cellSize / 2, y + cellSize / 2);
+      
+      switch (pipeType) {
+        case PIPE_TYPES.STRAIGHT_H: // 水平直管
+          drawStraightPipe(pipeWidth, padding, true);
+          break;
+        case PIPE_TYPES.STRAIGHT_V: // 垂直直管
+          drawStraightPipe(pipeWidth, padding, false);
+          break;
+        case PIPE_TYPES.CORNER_TL: // 左上角
+          drawCornerPipe(pipeWidth, padding, -Math.PI / 2, -Math.PI);
+          break;
+        case PIPE_TYPES.CORNER_TR: // 右上角
+          drawCornerPipe(pipeWidth, padding, 0, -Math.PI / 2);
+          break;
+        case PIPE_TYPES.CORNER_BL: // 左下角
+          drawCornerPipe(pipeWidth, padding, Math.PI, -Math.PI / 2);
+          break;
+        case PIPE_TYPES.CORNER_BR: // 右下角
+          drawCornerPipe(pipeWidth, padding, Math.PI / 2, -Math.PI / 2);
+          break;
+        case PIPE_TYPES.START: // 起点
+          drawEndpoint(pipeWidth, padding, 0);
+          break;
+        case PIPE_TYPES.END: // 终点
+          drawEndpoint(pipeWidth, padding, Math.PI);
+          break;
+      }
+      
+      ctx.restore();
+    }
+    
+    // 绘制直管
+    function drawStraightPipe(pipeWidth, padding, isHorizontal) {
+      const length = cellSize - padding * 2;
+      
+      ctx.beginPath();
+      if (isHorizontal) {
+        ctx.rect(-length / 2, -pipeWidth / 2, length, pipeWidth);
+      } else {
+        ctx.rect(-pipeWidth / 2, -length / 2, pipeWidth, length);
+      }
+      ctx.fillStyle = '#3f51b5';
+      ctx.fill();
+    }
+    
+    // 绘制弯管
+    function drawCornerPipe(pipeWidth, padding, startAngle, angle) {
+      const radius = (cellSize - padding * 2 - pipeWidth) / 2;
+      
+      ctx.beginPath();
+      ctx.arc(0, 0, radius, startAngle, startAngle + angle, angle < 0);
+      ctx.lineTo(0, 0);
+      ctx.closePath();
+      ctx.fillStyle = '#3f51b5';
+      ctx.fill();
+      
+      // 内圆
+      ctx.beginPath();
+      ctx.arc(0, 0, radius - pipeWidth, startAngle, startAngle + angle, angle < 0);
+      ctx.lineTo(0, 0);
+      ctx.closePath();
+      ctx.fillStyle = '#f0f0f0';
+      ctx.fill();
+    }
+    
+    // 绘制端点
+    function drawEndpoint(pipeWidth, padding, angle) {
+      const length = (cellSize - padding * 2) / 2;
+      
+      ctx.rotate(angle);
+      
+      // 绘制半个直管
+      ctx.beginPath();
+      ctx.rect(0, -pipeWidth / 2, length, pipeWidth);
+      ctx.fillStyle = '#3f51b5';
+      ctx.fill();
+      
+      // 绘制圆端
+      ctx.beginPath();
+      ctx.arc(0, 0, cellSize / 4, -Math.PI / 2, Math.PI / 2);
+      ctx.closePath();
+      ctx.fillStyle = angle === 0 ? '#4CAF50' : '#F44336';
+      ctx.fill();
+    }
+    
+    // 旋转管道
+    function rotatePipe(x, y) {
+      const pipeType = grid[y][x];
+      
+      // 不能旋转起点、终点和空白
+      if (pipeType === PIPE_TYPES.START || pipeType === PIPE_TYPES.END || pipeType === PIPE_TYPES.EMPTY) {
+        return;
+      }
+      
+      // 水平直管变垂直直管，反之亦然
+      if (pipeType === PIPE_TYPES.STRAIGHT_H) {
+        grid[y][x] = PIPE_TYPES.STRAIGHT_V;
+      } else if (pipeType === PIPE_TYPES.STRAIGHT_V) {
+        grid[y][x] = PIPE_TYPES.STRAIGHT_H;
+      }
+      // 弯管旋转 (TL->TR->BR->BL->TL)
+      else if (pipeType === PIPE_TYPES.CORNER_TL) {
+        grid[y][x] = PIPE_TYPES.CORNER_TR;
+      } else if (pipeType === PIPE_TYPES.CORNER_TR) {
+        grid[y][x] = PIPE_TYPES.CORNER_BR;
+      } else if (pipeType === PIPE_TYPES.CORNER_BR) {
+        grid[y][x] = PIPE_TYPES.CORNER_BL;
+      } else if (pipeType === PIPE_TYPES.CORNER_BL) {
+        grid[y][x] = PIPE_TYPES.CORNER_TL;
+      }
+      
+      // 重绘网格并检查是否完成关卡
+      drawGrid();
+      checkCompletion();
+    }
+    
+    // 找出从起点连接的所有管道
+    function findConnectedPipes() {
+      const connected = [];
+      const visited = new Set();
+      const queue = [{ pos: startPos, fromDir: null }];
+      
+      while (queue.length > 0) {
+        const { pos, fromDir } = queue.shift();
+        const key = `${pos.x},${pos.y}`;
+        
+        if (visited.has(key)) continue;
+        visited.add(key);
+        
+        // 添加到已连接列表
+        connected.push({ x: pos.x, y: pos.y });
+        
+        // 检查当前位置的管道类型
+        const pipeType = grid[pos.y][pos.x];
+        const connections = PIPE_CONNECTIONS[pipeType];
+        
+        // 检查每个方向是否有连接
+        for (const dir of connections) {
+          // 如果这个方向是我们来的方向，跳过
+          if (dir === fromDir) continue;
+          
+          // 计算下一个位置
+          const nextPos = getNextPosition(pos, dir);
+          if (!isValidPosition(nextPos)) continue;
+          
+          // 计算从下一个位置看回来的方向
+          const oppositeDir = (dir + 2) % 4;
+          
+          // 检查下一个管道是否可以连接
+          const nextPipeType = grid[nextPos.y][nextPos.x];
+          const nextConnections = PIPE_CONNECTIONS[nextPipeType];
+          
+          if (nextConnections.includes(oppositeDir)) {
+            queue.push({ pos: nextPos, fromDir: oppositeDir });
+          }
+        }
+      }
+      
+      return connected;
+    }
+    
+    // 获取指定方向的下一个位置
+    function getNextPosition(pos, dir) {
+      switch (dir) {
+        case DIRECTIONS.TOP: return { x: pos.x, y: pos.y - 1 };
+        case DIRECTIONS.RIGHT: return { x: pos.x + 1, y: pos.y };
+        case DIRECTIONS.BOTTOM: return { x: pos.x, y: pos.y + 1 };
+        case DIRECTIONS.LEFT: return { x: pos.x - 1, y: pos.y };
+      }
+    }
+    
+    // 检查位置是否有效
+    function isValidPosition(pos) {
+      return pos && pos.y >= 0 && pos.y < grid.length && pos.x >= 0 && pos.x < grid[pos.y].length;
+    }
+    
+    // 检查是否完成关卡
+    function checkCompletion() {
+      const connected = findConnectedPipes();
+      const isEndConnected = connected.some(p => p.x === endPos.x && p.y === endPos.y);
+      
+      if (isEndConnected) {
+        // 标记为已完成
+        completedLevels.add(currentLevel);
+        updateLevelIndicators();
+        
+        // 显示完成提示
+        setTimeout(() => {
+          alert('恭喜！你完成了管道连接！');
+          currentLevel++;
+          loadLevel(currentLevel);
+          drawGrid();
+        }, 300);
+      }
+    }
+    
+    // 提示功能
+    function showHint() {
+      const solution = LEVELS[currentLevel].solution;
+      
+      // 找出第一个与解决方案不同的管道
+      for (let y = 0; y < grid.length; y++) {
+        for (let x = 0; x < grid[y].length; x++) {
+          // 跳过起点和终点
+          if (grid[y][x] === PIPE_TYPES.START || grid[y][x] === PIPE_TYPES.END) continue;
+          
+          if (grid[y][x] !== solution[y][x]) {
+            // 临时显示正确的管道
+            const originalPipe = grid[y][x];
+            grid[y][x] = solution[y][x];
+            drawGrid();
+            
+            // 3秒后恢复
+            hintTimeout = setTimeout(() => {
+              grid[y][x] = originalPipe;
+              drawGrid();
+            }, 3000);
+            
+            return;
+          }
+        }
+      }
+    }
+    
+    // 重置当前关卡
+    function resetLevel() {
+      loadLevel(currentLevel);
+      drawGrid();
+    }
+    
+    // 点击事件处理
+    canvas.addEventListener('click', (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+      const clickY = e.clientY - rect.top;
+      
+      // 计算网格偏移量
+      const gridWidth = grid[0].length * cellSize;
+      const gridHeight = grid.length * cellSize;
+      const offsetX = (canvas.width - gridWidth) / 2;
+      const offsetY = (canvas.height - gridHeight) / 2;
+      
+      // 转换为网格坐标
+      const gridX = Math.floor((clickX - offsetX) / cellSize);
+      const gridY = Math.floor((clickY - offsetY) / cellSize);
+      
+      // 检查是否点击有效网格单元格
+      if (gridX >= 0 && gridX < grid[0].length && gridY >= 0 && gridY < grid.length) {
+        rotatePipe(gridX, gridY);
+      }
+    });
+    
+    // 绑定按钮事件
+    hintBtn.addEventListener('click', showHint);
+    resetBtn.addEventListener('click', resetLevel);
+    
+    // 初始化游戏
+    initGame();
+  </script>
+</body>
+</html> 
