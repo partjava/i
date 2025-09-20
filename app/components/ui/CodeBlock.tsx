@@ -1,8 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { vscDarkPlus } from 'react-syntax-highlighter/dist/cjs/styles/prism';
+import SyntaxHighlighter from 'react-syntax-highlighter';
 
 interface CodeBlockProps {
   language: string;
@@ -14,7 +13,7 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({ language, children }) => {
     <div className="code-block">
       <SyntaxHighlighter
         language={language}
-        style={vscDarkPlus}
+        style={{}}
         customStyle={{
           margin: 0,
           borderRadius: '4px',

@@ -3,15 +3,14 @@
 @tailwind utilities;
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
+  --background: #050b1f;
+  --foreground: #e0e0e0;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-primary: #00c6ff;
+  --color-secondary: #7928ca;
+  --color-accent: #ff3366;
+  --color-success: #00ff80;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -21,8 +20,557 @@
   }
 }
 
+/* 基础样式 */
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+  /* 防止移动端缩放 */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  /* 平滑滚动 */
+  scroll-behavior: smooth;
+}
+
+/* PWA 安全区域适配 */
+@supports (padding: max(0px)) {
+  .safe-area-inset {
+    padding-left: max(0px, env(safe-area-inset-left));
+    padding-right: max(0px, env(safe-area-inset-right));
+  }
+  
+  .safe-area-inset-top {
+    padding-top: max(0px, env(safe-area-inset-top));
+  }
+  
+  .safe-area-inset-bottom {
+    padding-bottom: max(0px, env(safe-area-inset-bottom));
+  }
+}
+
+/* 移动端触摸优化 */
+@media (max-width: 768px) {
+  /* 更大的触摸目标 */
+  button, 
+  a[href], 
+  input[type="button"], 
+  input[type="submit"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* 表单元素优化 */
+  input, 
+  textarea, 
+  select {
+    font-size: 16px; /* 防止iOS Safari缩放 */
+  }
+  
+  /* 滚动优化 */
+  .scroll-container {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+  
+  /* 移动端专用类 */
+  .mobile-padding {
+    padding: 1rem;
+  }
+  
+  .mobile-text-sm {
+    font-size: 0.875rem;
+  }
+  
+  .mobile-gap-2 {
+    gap: 0.5rem;
+  }
+  
+  /* 移动端卡片优化 */
+  .mobile-card {
+    border-radius: 0.5rem;
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+  }
+  
+  /* 移动端按钮优化 */
+  .mobile-button {
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+    border-radius: 0.5rem;
+    font-weight: 500;
+  }
+}
+
+/* 触摸设备优化 */
+@media (hover: none) and (pointer: coarse) {
+  /* 移除hover效果，使用active状态 */
+  .hover-effect:hover {
+    /* 移除hover效果 */
+  }
+  
+  .hover-effect:active {
+    background-color: rgba(59, 130, 246, 0.1);
+    transform: scale(0.98);
+  }
+}
+
+/* 聚焦可见性 */
+.focus-visible:focus-visible {
+  outline: 2px solid #3B82F6;
+  outline-offset: 2px;
+}
+
+/* 加载动画 */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.loading-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* 渐变背景 */
+.gradient-bg {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+/* 卡片样式 */
+.card {
+  background: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  transition: box-shadow 0.15s ease-in-out;
+}
+
+.card:hover {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+/* 响应式文本 */
+.responsive-text {
+  font-size: clamp(0.875rem, 2.5vw, 1.125rem);
+  line-height: 1.6;
+}
+
+/* 容器查询支持 */
+@container (max-width: 768px) {
+  .container-responsive {
+    padding: 1rem;
+  }
+}
+
+/* 自定义滚动条 */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* 隐藏滚动条但保持功能 */
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* 打印样式 */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  
+  body {
+    background: white !important;
+    color: black !important;
+  }
+}
+
+/* 高对比度模式支持 */
+@media (prefers-contrast: high) {
+  .card {
+    border: 2px solid #000;
+  }
+  
+  button {
+    border: 2px solid currentColor;
+  }
+}
+
+/* 减少动画（用户偏好） */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* PWA 启动画面 */
+.pwa-splash {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+/* 移动端底部安全区域 */
+.mobile-safe-bottom {
+  padding-bottom: calc(1rem + env(safe-area-inset-bottom));
+}
+
+/* 状态栏适配 */
+.status-bar-safe {
+  padding-top: calc(1rem + env(safe-area-inset-top));
+}
+
+/* 网络状态指示器动画 */
+@keyframes slideDown {
+  from {
+    transform: translateY(-100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+/* 移动端视口优化 */
+@media (max-width: 768px) {
+  /* 防止横屏时内容被遮挡 */
+  @media (orientation: landscape) {
+    .mobile-landscape-padding {
+      padding-left: max(1rem, env(safe-area-inset-left));
+      padding-right: max(1rem, env(safe-area-inset-right));
+    }
+  }
+  
+  /* 移动端导航优化 */
+  .mobile-nav-item {
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+    transition: all 0.2s ease;
+  }
+  
+  .mobile-nav-item:active {
+    transform: scale(0.95);
+    background-color: rgba(59, 130, 246, 0.1);
+  }
+  
+  /* 移动端输入框优化 */
+  .mobile-input {
+    padding: 0.875rem;
+    border-radius: 0.5rem;
+    font-size: 1rem;
+    border: 2px solid #e5e7eb;
+  }
+  
+  .mobile-input:focus {
+    border-color: #3b82f6;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  }
+  
+  /* 移动端模态框优化 */
+  .mobile-modal {
+    margin: 1rem;
+    border-radius: 1rem;
+    max-height: calc(100vh - 2rem);
+    overflow-y: auto;
+  }
+}
+
+.network-indicator {
+  animation: slideDown 0.3s ease-out;
+}
+
+/* 触觉反馈样式 */
+.haptic-feedback:active {
+  transform: scale(0.97);
+  transition: transform 0.1s ease-in-out;
+}
+
+/* 响应式间距 */
+.responsive-padding {
+  padding: clamp(1rem, 4vw, 2rem);
+}
+
+.responsive-margin {
+  margin: clamp(1rem, 4vw, 2rem);
+}
+
+/* 移动端导航高度调整 */
+@media (max-width: 1024px) {
+  .mobile-nav-height {
+    height: calc(100vh - 4rem);
+  }
+}
+
+/* 深色模式支持 */
+@media (prefers-color-scheme: dark) {
+  .dark-mode-card {
+    background-color: #1f2937;
+    color: #f9fafb;
+  }
+  
+  .dark-mode-border {
+    border-color: #374151;
+  }
+}
+
+/* 全局搜索样式优化 */
+.global-search .ant-input-search {
+  @apply transition-all duration-200;
+}
+
+.global-search .ant-input-search:hover {
+  @apply shadow-sm;
+}
+
+.global-search .ant-input-search-enter-button {
+  @apply bg-blue-600 border-blue-600 hover:bg-blue-700 hover:border-blue-700;
+}
+
+.global-search .ant-input-affix-wrapper {
+  @apply border-gray-300 hover:border-blue-400 focus:border-blue-500;
+}
+
+.global-search .ant-input-affix-wrapper-focused {
+  @apply border-blue-500 shadow-md;
+}
+
+/* 搜索下拉菜单样式 */
+.global-search-dropdown {
+  @apply rounded-lg shadow-lg border-gray-200;
+}
+
+.global-search-dropdown .ant-dropdown-menu {
+  @apply p-0;
+}
+
+/* 搜索结果项悬停效果 */
+.search-result-item {
+  @apply transition-all duration-150 rounded-md;
+}
+
+.search-result-item:hover {
+  @apply bg-gray-50 shadow-sm;
+}
+
+/* 搜索历史项样式 */
+.search-history-item {
+  @apply flex items-center justify-between transition-all duration-150;
+}
+
+.search-history-item:hover {
+  @apply bg-gray-50;
+}
+
+.search-history-item .delete-btn {
+  @apply opacity-0 group-hover:opacity-100 transition-opacity duration-150;
+}
+
+/* 搜索建议标签样式 */
+.search-suggestion-tag {
+  @apply cursor-pointer transition-all duration-150;
+}
+
+.search-suggestion-tag:hover {
+  @apply scale-105 shadow-sm;
+}
+
+/* 移动端搜索优化 */
+@media (max-width: 640px) {
+  .global-search .ant-input-search {
+    @apply text-sm;
+  }
+  
+  .global-search-dropdown {
+    @apply max-w-sm mx-auto;
+  }
+  
+  .search-result-item {
+    @apply px-2 py-2;
+  }
+  
+  .search-result-item .ant-tag {
+    @apply text-xs;
+  }
+}
+
+/* 加载状态样式 */
+.search-loading {
+  @apply flex items-center justify-center p-4;
+}
+
+.search-loading .ant-spin {
+  @apply mr-2;
+}
+
+/* 空状态样式 */
+.search-empty {
+  @apply text-center py-8;
+}
+
+.search-empty .ant-empty-description {
+  @apply text-gray-500;
+}
+
+/* 搜索高亮显示 */
+.search-highlight {
+  @apply bg-yellow-200 px-1 rounded;
+}
+
+/* 搜索结果类型标识 */
+.search-type-course {
+  @apply text-blue-600;
+}
+
+.search-type-tool {
+  @apply text-green-600;
+}
+
+.search-type-note {
+  @apply text-purple-600;
+}
+
+/* 搜索分类标签 */
+.search-category-tag {
+  @apply text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded;
+}
+
+/* 搜索统计信息 */
+.search-stats {
+  @apply text-sm text-gray-600 bg-blue-50 border border-blue-200 rounded p-3;
+}
+
+/* 搜索过滤器样式 */
+.search-filters {
+  @apply flex flex-wrap gap-2 items-center;
+}
+
+.search-filters .ant-radio-group {
+  @apply flex-wrap;
+}
+
+.search-filters .ant-radio-button-wrapper {
+  @apply text-sm;
+}
+
+/* 搜索页面布局优化 */
+.search-page-header {
+  @apply bg-white shadow-sm sticky top-0 z-30;
+}
+
+.search-page-content {
+  @apply max-w-none;
+}
+
+.search-result-card {
+  @apply transition-all duration-200 hover:shadow-md hover:border-blue-200;
+}
+
+.search-result-card:hover {
+  @apply transform scale-[1.01];
+}
+
+/* 响应式搜索布局 */
+@media (max-width: 768px) {
+  .search-filters {
+    @apply flex-col items-stretch;
+  }
+  
+  .search-filters .ant-radio-group {
+    @apply w-full;
+  }
+  
+  .search-filters .ant-radio-button-wrapper {
+    @apply flex-1 text-center;
+  }
+  
+  .search-result-card {
+    @apply mx-2;
+  }
+}
+
+/* 深色模式支持 */
+@media (prefers-color-scheme: dark) {
+  .global-search .ant-input-affix-wrapper {
+    @apply bg-gray-800 border-gray-600 text-white;
+  }
+  
+  .global-search .ant-input {
+    @apply bg-gray-800 text-white;
+  }
+  
+  .global-search-dropdown {
+    @apply bg-gray-800 border-gray-600;
+  }
+  
+  .search-result-item:hover {
+    @apply bg-gray-700;
+  }
+  
+  .search-history-item:hover {
+    @apply bg-gray-700;
+  }
+}
+
+/* 搜索动画 */
+@keyframes search-pulse {
+  0%, 100% {
+    @apply opacity-100;
+  }
+  50% {
+    @apply opacity-50;
+  }
+}
+
+.search-loading-pulse {
+  animation: search-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* 搜索成功提示 */
+.search-success-indicator {
+  @apply text-green-600 text-sm flex items-center;
+}
+
+.search-success-indicator::before {
+  content: "✓";
+  @apply mr-1;
+}
+
+/* 搜索失败提示 */
+.search-error-indicator {
+  @apply text-red-600 text-sm flex items-center;
+}
+
+.search-error-indicator::before {
+  content: "✗";
+  @apply mr-1;
 }

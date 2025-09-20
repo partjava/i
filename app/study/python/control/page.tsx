@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Card, Tabs, Progress, Alert } from 'antd';
 import { LeftOutlined, RightOutlined } from '@ant-design/icons';
-import { CodeBlock } from '@/components/ui/CodeBlock';
+import { CodeBlock } from '@/app/components/ui/CodeBlock';
 import Link from 'next/link';
 import React from 'react';
 import { 

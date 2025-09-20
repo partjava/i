@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>PyScript 五子棋小游戏</title>
+  <link rel="stylesheet" href="https://pyscript.net/latest/pyscript.css" />
+  <script defer src="https://pyscript.net/latest/pyscript.js"></script>
+  <style>
+    body { background: #f4f6fa; margin: 0; }
+    #gomoku-canvas { background: #fff; margin: 40px auto; display: block; border-radius: 8px; box-shadow: 0 2px 8px #aaa2; }
+    #gomoku-status { color: #333; text-align: center; font-size: 1.2em; margin-top: 16px; }
+  </style>
+</head>
+<body>
+  <h2 style="text-align:center;">PyScript 五子棋</h2>
+  <canvas id="gomoku-canvas" width="360" height="360"></canvas>
+  <div id="gomoku-status">黑子先手，点击棋盘落子</div>
+  <py-script>
+import js
+canvas = js.document.getElementById('gomoku-canvas')
+ctx = canvas.getContext('2d')
+size = 15
+cell = 24
+board = [[0]*size for _ in range(size)]
+turn = 1  # 1:黑, 2:白
+winner = 0
+
+def draw_board():
+    ctx.fillStyle = '#fff'
+    ctx.fillRect(0, 0, canvas.width, canvas.height)
+    ctx.strokeStyle = '#aaa'
+    for i in range(size):
+        ctx.beginPath()
+        ctx.moveTo(cell, cell + i*cell)
+        ctx.lineTo(cell*size, cell + i*cell)
+        ctx.stroke()
+        ctx.beginPath()
+        ctx.moveTo(cell + i*cell, cell)
+        ctx.lineTo(cell + i*cell, cell*size)
+        ctx.stroke()
+    for y in range(size):
+        for x in range(size):
+            if board[y][x]:
+                ctx.beginPath()
+                ctx.arc(cell + x*cell, cell + y*cell, 9, 0, 6.28)
+                ctx.fillStyle = '#222' if board[y][x]==1 else '#eee'
+                ctx.fill()
+                ctx.strokeStyle = '#888'
+                ctx.stroke()
+
+def check_win(x, y):
+    color = board[y][x]
+    for dx, dy in [(1,0),(0,1),(1,1),(1,-1)]:
+        cnt = 1
+        for d in [1,-1]:
+            nx, ny = x, y
+            while True:
+                nx += dx*d
+                ny += dy*d
+                if 0<=nx<size and 0<=ny<size and board[ny][nx]==color:
+                    cnt += 1
+                else:
+                    break
+        if cnt >= 5:
+            return True
+    return False
+
+def click(evt):
+    global turn, winner
+    if winner:
+        return
+    rect = canvas.getBoundingClientRect()
+    mx = int((evt.clientX - rect.left) // cell)
+    my = int((evt.clientY - rect.top) // cell)
+    if 0<=mx<size and 0<=my<size and board[my][mx]==0:
+        board[my][mx] = turn
+        if check_win(mx, my):
+            js.document.getElementById('gomoku-status').innerText = ('黑子' if turn==1 else '白子') + '获胜！'
+            winner = turn
+        else:
+            turn = 3 - turn
+            js.document.getElementById('gomoku-status').innerText = ('黑子' if turn==1 else '白子') + '落子'
+        draw_board()
+
+draw_board()
+canvas.addEventListener('click', click)
+  </py-script>
+</body>
+</html> 

@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  ai-chat:
+    build: .
+    container_name: ai-chat-app
+    ports:
+      - "8000:8000"
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - OPENAI_MODEL=${OPENAI_MODEL:-gpt-3.5-turbo}
+      - HOST=0.0.0.0
+      - PORT=8000
+      - DEBUG=False
+    # volumes:
+    #   - ./logs:/app/logs
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "https://www.partjava.com/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - ai-network
+
+  # 可选：添加Redis用于缓存（如果需要）
+  # redis:
+  #   image: redis:7-alpine
+  #   container_name: ai-chat-redis
+  #   ports:
+  #     - "6379:6379"
+  #   volumes:
+  #     - redis_data:/data
+  #   restart: unless-stopped
+  #   networks:
+  #     - ai-network
+
+networks:
+  ai-network:
+    driver: bridge
+
+# 如果需要Redis，取消注释以下内容
+# volumes:
+#   redis_data:

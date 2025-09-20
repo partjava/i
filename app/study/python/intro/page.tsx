@@ -28,29 +28,31 @@ export default function PythonIntroPage() {
         </span>
       ),
       children: (
-        <Card title="Python语言特点" className="mb-6">
-          <div className="space-y-4 mt-4">
-            <h3 className="text-xl font-semibold mb-4">Python简介</h3>
-            <p>Python是一种简单易学、功能强大的编程语言。它具有高效的高级数据结构，能够简单有效地实现面向对象编程。</p>
-            
-            <Alert
-              className="mt-4"
-              message="Python主要特点"
-              description={
-                <ul className="list-disc pl-6">
-                  <li>简单易学：Python有着相对较少的关键字，结构简单，学习起来更加容易</li>
-                  <li>可读性好：Python代码定义独特的缩进风格，使得代码更易于阅读和理解</li>
-                  <li>解释型语言：无需编译，可立即执行</li>
-                  <li>面向对象：支持面向对象的编程思想</li>
-                  <li>丰富的库：标准库和第三方库非常丰富，几乎任何任务都有相应的库支持</li>
-                </ul>
-              }
-              type="info"
-              showIcon
-            />
-            
-            <h3 className="text-xl font-semibold mt-6">Python版本</h3>
-            <p>目前Python有两个主要的版本：</p>
+        <div className="space-y-6">
+          <div>
+            <h3 className="text-xl font-semibold mb-3">Python简介</h3>
+            <p className="text-gray-700 leading-relaxed">Python是一种简单易学、功能强大的编程语言。它具有高效的高级数据结构，能够简单有效地实现面向对象编程。</p>
+          </div>
+          
+          <Alert
+            message="Python主要特点"
+            description={
+              <ul className="list-disc pl-5 mt-2 space-y-1">
+                <li>简单易学：Python有着相对较少的关键字，结构简单，学习起来更加容易</li>
+                <li>可读性好：Python代码定义独特的缩进风格，使得代码更易于阅读和理解</li>
+                <li>解释型语言：无需编译，可立即执行</li>
+                <li>面向对象：支持面向对象的编程思想</li>
+                <li>丰富的库：标准库和第三方库非常丰富，几乎任何任务都有相应的库支持</li>
+              </ul>
+            }
+            type="info"
+            showIcon
+            className="border-l-4 border-blue-500"
+          />
+          
+          <div>
+            <h3 className="text-xl font-semibold mb-3">Python版本</h3>
+            <p className="text-gray-700 mb-3">目前Python有两个主要的版本：</p>
             <CodeBlock language="bash">
               {`# Python 3.x（推荐使用的版本）
 $ python --version
@@ -61,7 +63,7 @@ $ python2 --version
 Python 2.7.18`}
             </CodeBlock>
           </div>
-        </Card>
+        </div>
       ),
     },
     {
@@ -73,10 +75,10 @@ Python 2.7.18`}
         </span>
       ),
       children: (
-        <Card title="Python开发环境" className="mb-6">
-          <div className="space-y-4 mt-4">
-            <h3 className="text-xl font-semibold mb-4">安装Python</h3>
-            <p>从官方网站下载并安装Python：</p>
+        <div className="space-y-6">
+          <div>
+            <h3 className="text-xl font-semibold mb-3">安装Python</h3>
+            <p className="text-gray-700 mb-3">从官方网站下载并安装Python：</p>
             <Alert
               message="下载链接"
               description={
@@ -91,17 +93,21 @@ Python 2.7.18`}
               type="info"
               showIcon
             />
-            
-            <h3 className="text-xl font-semibold mt-6">集成开发环境(IDE)</h3>
-            <p>推荐的Python IDE和编辑器：</p>
-            <ul className="list-disc pl-6">
+          </div>
+          
+          <div>
+            <h3 className="text-xl font-semibold mb-3">集成开发环境(IDE)</h3>
+            <p className="text-gray-700 mb-3">推荐的Python IDE和编辑器：</p>
+            <ul className="list-disc pl-5 space-y-1 text-gray-700">
               <li>PyCharm: 功能全面的Python IDE</li>
               <li>Visual Studio Code: 轻量级且功能强大的编辑器</li>
               <li>Jupyter Notebook: 适合数据科学和机器学习</li>
             </ul>
-            
-            <h3 className="text-xl font-semibold mt-6">虚拟环境</h3>
-            <p>使用虚拟环境管理依赖：</p>
+          </div>
+          
+          <div>
+            <h3 className="text-xl font-semibold mb-3">虚拟环境</h3>
+            <p className="text-gray-700 mb-3">使用虚拟环境管理依赖：</p>
             <CodeBlock language="bash">
               {`# 创建虚拟环境
 python -m venv myenv
@@ -116,7 +122,7 @@ source myenv/bin/activate
 pip install package_name`}
             </CodeBlock>
           </div>
-        </Card>
+        </div>
       ),
     },
     {
@@ -128,9 +134,9 @@ pip install package_name`}
         </span>
       ),
       children: (
-        <Card title="Python基础语法" className="mb-6">
-          <div className="space-y-4 mt-4">
-            <h3 className="text-xl font-semibold mb-4">基本语法示例</h3>
+        <div className="space-y-6">
+          <div>
+            <h3 className="text-xl font-semibold mb-3">基本语法示例</h3>
             <CodeBlock language="python">
               {`# 注释以 # 开头
 
@@ -182,23 +188,22 @@ print(person["name"])
 person["location"] = "New York"
 `}
             </CodeBlock>
-            
-            <Alert
-              className="mt-4"
-              message="Python语法特点"
-              description={
-                <ul className="list-disc pl-6">
-                  <li>使用缩进表示代码块，而不是花括号</li>
-                  <li>变量无需声明类型</li>
-                  <li>字符串可以用单引号或双引号</li>
-                  <li>列表、元组、字典是核心数据结构</li>
-                </ul>
-              }
-              type="info"
-              showIcon
-            />
           </div>
-        </Card>
+          
+          <Alert
+            message="Python语法特点"
+            description={
+              <ul className="list-disc pl-5 mt-2 space-y-1">
+                <li>使用缩进表示代码块，而不是花括号</li>
+                <li>变量无需声明类型</li>
+                <li>字符串可以用单引号或双引号</li>
+                <li>列表、元组、字典是核心数据结构</li>
+              </ul>
+            }
+            type="info"
+            showIcon
+          />
+        </div>
       ),
     },
     {
@@ -210,22 +215,21 @@ person["location"] = "New York"
         </span>
       ),
       children: (
-        <Card title="Python练习例题" className="mb-6">
-          <div className="space-y-4">
-            <div>
-              <h3 className="text-lg font-medium">题目：创建一个简单的计算器</h3>
-              <p className="mt-2">实现一个可以进行基本数学运算的计算器：</p>
-              <ul className="list-disc pl-6 mt-2">
-                <li>支持加减乘除四种运算</li>
-                <li>处理输入错误</li>
-                <li>允许用户连续计算</li>
-              </ul>
-            </div>
+        <div className="space-y-6">
+          <div>
+            <h3 className="text-lg font-medium mb-2">题目：创建一个简单的计算器</h3>
+            <p className="text-gray-700 mb-3">实现一个可以进行基本数学运算的计算器：</p>
+            <ul className="list-disc pl-5 space-y-1 text-gray-700">
+              <li>支持加减乘除四种运算</li>
+              <li>处理输入错误</li>
+              <li>允许用户连续计算</li>
+            </ul>
+          </div>
 
-            <div>
-              <h3 className="text-lg font-medium">参考代码</h3>
-              <CodeBlock language="python">
-                {`def calculator():
+          <div>
+            <h3 className="text-lg font-medium mb-3">参考代码</h3>
+            <CodeBlock language="python">
+              {`def calculator():
     """简单的计算器函数，支持加减乘除"""
     
     print("欢迎使用Python计算器！")
@@ -278,24 +282,26 @@ person["location"] = "New York"
 if __name__ == "__main__":
     calculator()
 `}
-              </CodeBlock>
-            </div>
-            
-            <h3 className="text-lg font-medium mt-6">知识点</h3>
-            <ul className="list-disc pl-6 mt-2">
+            </CodeBlock>
+          </div>
+          
+          <div>
+            <h3 className="text-lg font-medium mb-3">知识点</h3>
+            <ul className="list-disc pl-5 space-y-1 text-gray-700">
               <li>函数定义和调用</li>
               <li>条件语句和循环</li>
               <li>异常处理</li>
               <li>用户输入和类型转换</li>
               <li>字符串格式化</li>
             </ul>
-            
-            <div className="bg-blue-50 p-4 rounded-md mt-4">
-              <div className="flex items-center text-blue-700 font-medium mb-2">
-                <span className="bg-blue-500 text-white rounded-full w-6 h-6 flex items-center justify-center mr-2">i</span>
-                运行示例
-              </div>
-              <pre className="text-sm text-gray-800 whitespace-pre-wrap">
+          </div>
+          
+          <div className="bg-blue-50 p-4 rounded-md border-l-4 border-blue-500">
+            <div className="flex items-center text-blue-700 font-medium mb-2">
+              <span className="bg-blue-500 text-white rounded-full w-6 h-6 flex items-center justify-center mr-2">i</span>
+              运行示例
+            </div>
+            <pre className="text-sm text-gray-800 whitespace-pre-wrap">
 {`欢迎使用Python计算器！
 输入'q'退出
 
@@ -311,19 +317,18 @@ if __name__ == "__main__":
 
 请输入第一个数字: q
 谢谢使用！`}
-              </pre>
-            </div>
+            </pre>
           </div>
-        </Card>
+        </div>
       ),
     },
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50 py-6">
+      <div>
         {/* 页面标题 */}
-        <div className="bg-white rounded-lg shadow-md p-6 mb-8">
+        <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
           <div className="flex justify-between items-center">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">Python编程入门</h1>
@@ -334,12 +339,12 @@ if __name__ == "__main__":
         </div>
 
         {/* 课程内容 */}
-        <div className="bg-white rounded-lg shadow-md p-8">
-          <Tabs activeKey={activeTab} onChange={setActiveTab} className="p-6" items={tabItems} />
+        <div className="bg-white rounded-lg shadow-sm p-6">
+          <Tabs activeKey={activeTab} onChange={setActiveTab} items={tabItems} />
         </div>
 
         {/* 底部导航 */}
-        <div className="flex justify-between mt-8">
+        <div className="flex justify-between mt-6">
           <Link 
             href="/study" 
             className="inline-flex items-center px-4 py-2 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"

@@ -1,0 +1,111 @@
+{
+  "timestamp": "2025-07-06T13:00:23.532Z",
+  "platform": "win32",
+  "nodeVersion": "v22.17.0",
+  "basic": [
+    {
+      "name": "Node.js",
+      "command": "node --version",
+      "required": true,
+      "status": "ok",
+      "version": "v22.17.0"
+    },
+    {
+      "name": "npm",
+      "command": "npm --version",
+      "required": true,
+      "status": "ok",
+      "version": "10.9.2"
+    },
+    {
+      "name": "MySQL",
+      "command": "mysql --version",
+      "required": true,
+      "status": "error",
+      "error": "Command failed: mysql --version\n'mysql' �����ڲ����ⲿ���Ҳ���ǿ����еĳ���\r\n���������ļ���\r\n"
+    },
+    {
+      "name": "Git",
+      "command": "git --version",
+      "required": false,
+      "status": "ok",
+      "version": "git version 2.50.0.windows.1"
+    }
+  ],
+  "languages": [
+    {
+      "name": "Python",
+      "commands": [
+        "python3 --version",
+        "python --version"
+      ],
+      "required": false,
+      "status": "ok",
+      "version": "Python 3.13.5"
+    },
+    {
+      "name": "Java",
+      "commands": [
+        "java -version",
+        "javac -version"
+      ],
+      "required": false,
+      "status": "missing"
+    },
+    {
+      "name": "C/C++",
+      "commands": [
+        "gcc --version",
+        "g++ --version"
+      ],
+      "required": false,
+      "status": "missing"
+    },
+    {
+      "name": "Go",
+      "commands": [
+        "go version"
+      ],
+      "required": false,
+      "status": "missing"
+    },
+    {
+      "name": "PHP",
+      "commands": [
+        "php --version"
+      ],
+      "required": false,
+      "status": "missing"
+    }
+  ],
+  "system": {
+    "error": "Command failed: df -h .\n'df' �����ڲ����ⲿ���Ҳ���ǿ����еĳ���\r\n���������ļ���\r\n"
+  },
+  "network": [
+    {
+      "port": 3000,
+      "status": "occupied",
+      "details": "TCP    192.168.0.101:56057    103.212.12.47:3000     ESTABLISHED"
+    },
+    {
+      "port": 3306,
+      "status": "occupied",
+      "details": "TCP    0.0.0.0:3306           0.0.0.0:0              LISTENING\r\n  TCP    0.0.0.0:33060          0.0.0.0:0              LISTENING\r\n  TCP    [::]:3306              [::]:0                 LISTENING\r\n  TCP    [::]:33060             [::]:0                 LISTENING\r\n  TCP    [::1]:3306             [::1]:51138            ESTABLISHED\r\n  TCP    [::1]:3306             [::1]:59397            ESTABLISHED\r\n  TCP    [::1]:51138            [::1]:3306             ESTABLISHED\r\n  TCP    [::1]:59397            [::1]:3306             ESTABLISHED"
+    }
+  ],
+  "project": {
+    "package": {
+      "name": "partjava",
+      "version": "0.1.0"
+    },
+    "env": {
+      "status": "exists"
+    },
+    "nextConfig": {
+      "status": "exists"
+    },
+    "nodeModules": {
+      "status": "exists"
+    }
+  }
+}

@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>PyScript 贪吃蛇小游戏</title>
+  <link rel="stylesheet" href="https://pyscript.net/latest/pyscript.css" />
+  <script defer src="https://pyscript.net/latest/pyscript.js"></script>
+  <style>
+    body { background: #f4f6fa; margin: 0; }
+    #game-area { background: #222; margin: 40px auto; display: block; border-radius: 8px; }
+    #score { color: #333; text-align: center; font-size: 1.2em; margin-top: 16px; }
+  </style>
+</head>
+<body>
+  <h2 style="text-align:center;">PyScript 贪吃蛇</h2>
+  <canvas id="game-area" width="320" height="320"></canvas>
+  <div id="score">分数: 0</div>
+  <py-script>
+import js
+import random
+canvas = js.document.getElementById('game-area')
+ctx = canvas.getContext('2d')
+cell = 20
+width = 16
+height = 16
+snake = [[8, 8]]
+dx, dy = 0, 0
+food = [random.randint(0, width-1), random.randint(0, height-1)]
+score = 0
+game_over = False
+
+def draw():
+    ctx.fillStyle = '#222'
+    ctx.fillRect(0, 0, canvas.width, canvas.height)
+    for x, y in snake:
+        ctx.fillStyle = '#4f8cff'
+        ctx.fillRect(x*cell, y*cell, cell-2, cell-2)
+    ctx.fillStyle = '#fbbf24'
+    ctx.fillRect(food[0]*cell, food[1]*cell, cell-2, cell-2)
+
+def move():
+    global game_over, score
+    if dx == 0 and dy == 0:
+        return
+    head = [snake[0][0] + dx, snake[0][1] + dy]
+    if (head in snake) or not (0 <= head[0] < width and 0 <= head[1] < height):
+        game_over = True
+        js.document.getElementById('score').innerText = f'游戏结束！分数: {score}'
+        return
+    snake.insert(0, head)
+    if head == food:
+        global food
+        score += 1
+        js.document.getElementById('score').innerText = f'分数: {score}'
+        while True:
+            food = [random.randint(0, width-1), random.randint(0, height-1)]
+            if food not in snake:
+                break
+    else:
+        snake.pop()
+
+def game_loop(*args):
+    if not game_over:
+        move()
+        draw()
+        js.setTimeout(game_loop, 120)
+
+def keydown(evt):
+    global dx, dy
+    key = evt.key
+    if key == 'ArrowUp' and dy != 1:
+        dx, dy = 0, -1
+    elif key == 'ArrowDown' and dy != -1:
+        dx, dy = 0, 1
+    elif key == 'ArrowLeft' and dx != 1:
+        dx, dy = -1, 0
+    elif key == 'ArrowRight' and dx != -1:
+        dx, dy = 1, 0
+
+js.document.addEventListener('keydown', keydown)
+draw()
+js.setTimeout(game_loop, 300)
+  </py-script>
+</body>
+</html> 

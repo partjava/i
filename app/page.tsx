@@ -2,12 +2,13 @@
 import {
   SiPycharm, SiIntellijidea, SiEclipseide, SiClion, SiGoland, SiPhpstorm, SiWebstorm, SiDevdotto, SiXcode, SiAndroidstudio, SiNotepadplusplus, SiVim, SiGit, SiGithub, SiGitee, SiNodedotjs, SiPython, SiMysql, SiPostgresql, SiMongodb, SiRedis, SiSqlite, SiDbeaver, SiDocker, SiLinux, SiUbuntu, SiCentos, SiFedora, SiShell, SiMobx, SiVmware, SiVirtualbox, SiAnaconda, SiJupyter, SiTensorflow, SiPytorch, SiKeras, SiScikitlearn, SiGooglecolab, SiLeetcode, SiCodeforces, SiFigma, SiTypeorm, SiNotion, SiMarkdown, SiMdbook, SiJsfiddle, SiWireshark, SiBurpsuite, SiMamp, SiKagi, SiOpenssl, SiArduino, SiRaspberrypi, SiLogitech, SiOpenai, SiComposer, SiXampp, SiPhp, SiGo, SiCmake, SiCplusplus, SiJavascript, SiReact, SiVuedotjs, SiWebpack, SiBabel, SiTypescript, SiGradle, SiSpring, SiFlutter, SiDart, SiAltiumdesigner, SiProteus, SiMultisim, SiStmicroelectronics, SiGooglechrome, SiFirefoxbrowser, SiDedge, SiOpera, SiSafari, SiSourceforge, SiIcloud, SiWebex, SiGitlab, SiFiles, SiCoder, SiRocket, SiLightburn, SiStarz, SiQuest
 } from 'react-icons/si';
+import { VscVscode } from 'react-icons/vsc';
 
 const groupedSoftware = [
   {
     group: '编程开发',
     items: [
-      { name: 'VS Code', icon: SiVuedotjs, url: 'https://code.visualstudio.com/', desc: '主流免费代码编辑器' },
+      { name: 'VS Code', icon: VscVscode, url: 'https://code.visualstudio.com/', desc: '主流免费代码编辑器' },
       { name: 'PyCharm', icon: SiPycharm, url: 'https://www.jetbrains.com/pycharm/', desc: 'Python开发IDE' },
       { name: 'IntelliJ IDEA', icon: SiIntellijidea, url: 'https://www.jetbrains.com/idea/', desc: 'Java/Kotlin等开发IDE' },
       { name: 'Eclipse', icon: SiEclipseide, url: 'https://www.eclipse.org/', desc: '经典Java开发IDE' },
@@ -209,15 +210,15 @@ const brandColors: { [key: string]: string } = {
 export default function Home() {
   return (
     <div className="min-h-screen bg-gray-50">
-      <main className="max-w-6xl mx-auto py-10 px-4">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">常用软件/工具官网直达（按知识点分组）</h1>
-        <div className="space-y-10">
+      <main className="py-3 md:py-4 px-3 md:px-6">
+        <h1 className="text-xl md:text-3xl font-bold text-gray-900 mb-4 md:mb-6">常用软件/工具官网直达（按知识点分组）</h1>
+        <div className="space-y-4 md:space-y-6">
           {groupedSoftware.map(group => (
             <div key={group.group}>
-              <h2 className="text-2xl font-bold mb-4 text-blue-700 border-l-4 border-blue-400 pl-3 bg-blue-50 py-1 rounded-r">
+              <h2 className="text-lg md:text-2xl font-bold mb-2 md:mb-3 text-blue-700 border-l-4 border-blue-400 pl-2 md:pl-3 bg-blue-50 py-1 rounded-r">
                 {group.group}
               </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-2 md:gap-4">
                 {group.items.map(item => {
                   const Icon = item.icon;
                   const color = brandColors[item.name] || '#3B82F6'; // 默认蓝色
@@ -227,13 +228,13 @@ export default function Home() {
                       href={item.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center bg-white rounded-xl shadow-md hover:shadow-2xl transition-all p-5 border border-gray-100 transform hover:-translate-y-1 hover:scale-105 duration-200 group"
-                      style={{ borderTop: `4px solid ${color}` }}
+                      className="flex items-center bg-white rounded-lg md:rounded-xl shadow-sm md:shadow-md hover:shadow-lg md:hover:shadow-2xl transition-all p-3 md:p-4 border border-gray-100 hover:border-gray-200 active:scale-95 md:transform md:hover:-translate-y-1 md:hover:scale-105 duration-200 group mobile-nav-item"
+                      style={{ borderTop: `3px solid ${color}` }}
                     >
-                      <Icon className="text-4xl mr-4 flex-shrink-0" style={{ color }} />
-                      <div>
-                        <div className="text-lg font-semibold mb-1" style={{ color }}>{item.name}</div>
-                        <div className="text-gray-600 text-sm">{item.desc}</div>
+                      <Icon className="text-2xl md:text-3xl mr-2 md:mr-3 flex-shrink-0" style={{ color }} />
+                      <div className="min-w-0 flex-1">
+                        <div className="text-sm md:text-lg font-semibold mb-0.5 md:mb-1 truncate" style={{ color }}>{item.name}</div>
+                        <div className="text-gray-600 text-xs md:text-sm line-clamp-2">{item.desc}</div>
                       </div>
                     </a>
                   );
@@ -242,7 +243,7 @@ export default function Home() {
             </div>
           ))}
         </div>
-        <div className="mt-10 text-center text-gray-500 text-sm">
+        <div className="mt-6 md:mt-8 text-center text-gray-500 text-xs md:text-sm">
           如有更多常用软件建议，欢迎补充！
         </div>
       </main>
