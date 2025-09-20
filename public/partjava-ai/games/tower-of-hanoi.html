@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>汉诺塔</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body { background: #f4f6fa; margin: 0; font-family: 'Segoe UI', Arial, sans-serif; }
+    h2 { text-align: center; margin-top: 20px; color: #4f8cff; font-size: 24px; }
+    #game-canvas { display: block; margin: 20px auto 0 auto; background: #fff; border-radius: 10px; box-shadow: 0 4px 16px rgba(0,0,0,0.2); }
+    #score { text-align: center; font-size: 1.4em; color: #333; margin-top: 15px; font-weight: bold; }
+    #tip { text-align: center; color: #666; margin-top: 10px; font-size: 1.1em; }
+    .game-container { width: 500px; height: 600px; padding: 20px; box-sizing: border-box; margin: 0 auto; }
+    .controls { text-align: center; margin-top: 15px; }
+    .btn { background: #4f8cff; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; margin: 0 5px; font-size: 1em; }
+    .btn:hover { background: #3a7ced; }
+    .difficulty { display: flex; justify-content: center; margin-top: 10px; }
+    .difficulty label { margin: 0 10px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <div class="game-container">
+    <h2>汉诺塔</h2>
+    <canvas id="game-canvas" width="450" height="450"></canvas>
+    <div id="score">移动次数: 0</div>
+    <div id="tip">将所有圆盘从左侧移至右侧，不能将大圆盘放在小圆盘上面</div>
+    <div class="controls">
+      <div class="difficulty">
+        <label><input type="radio" name="disks" value="3" checked> 3圆盘</label>
+        <label><input type="radio" name="disks" value="4"> 4圆盘</label>
+        <label><input type="radio" name="disks" value="5"> 5圆盘</label>
+      </div>
+      <button class="btn" id="reset-btn">重新开始</button>
+    </div>
+  </div>
+  <script>
+    // 游戏代码
+    const canvas = document.getElementById('game-canvas');
+    const ctx = canvas.getContext('2d');
+    const scoreDisplay = document.getElementById('score');
+    const resetBtn = document.getElementById('reset-btn');
+    const diskRadios = document.querySelectorAll('input[name="disks"]');
+    
+    // 游戏参数
+    let diskCount = 3;  // 默认3个圆盘
+    const rodWidth = 20;
+    const rodHeight = 250;
+    const rodBaseHeight = 20;
+    const rodBaseWidth = 350;
+    const diskHeight = 30;
+    const diskMaxWidth = 100;
+    const diskMinWidth = 40;
+    
+    // 游戏状态
+    let moves = 0;
+    let selectedRod = null;
+    let selectedDisk = null;
+    let rods = [[], [], []]; // 柱子上的圆盘
+    
+    // 柱子位置
+    const rodPositions = [
+      { x: 125, y: 100 },
+      { x: 225, y: 100 },
+      { x: 325, y: 100 }
+    ];
+    
+    // 初始化游戏
+    function initGame() {
+      moves = 0;
+      scoreDisplay.textContent = '移动次数: 0';
+      rods = [[], [], []];
+      
+      // 在第一根柱子上放置圆盘
+      for (let i = diskCount; i > 0; i--) {
+        rods[0].push(i);
+      }
+      
+      draw();
+    }
+    
+    // 绘制游戏
+    function draw() {
+      // 清空画布
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      // 绘制底座
+      ctx.fillStyle = '#8B4513';
+      ctx.fillRect((canvas.width - rodBaseWidth) / 2, rodPositions[0].y + rodHeight, rodBaseWidth, rodBaseHeight);
+      
+      // 绘制柱子
+      for (let i = 0; i < 3; i++) {
+        ctx.fillStyle = '#8B4513';
+        ctx.fillRect(rodPositions[i].x - rodWidth/2, rodPositions[i].y, rodWidth, rodHeight);
+        
+        // 绘制圆盘
+        for (let j = 0; j < rods[i].length; j++) {
+          const diskSize = rods[i][j];
+          const diskWidth = diskMinWidth + (diskMaxWidth - diskMinWidth) * ((diskSize - 1) / (diskCount - 1));
+          
+          ctx.fillStyle = getDiscColor(diskSize);
+          ctx.fillRect(
+            rodPositions[i].x - diskWidth/2,
+            rodPositions[i].y + rodHeight - (j+1) * diskHeight,
+            diskWidth,
+            diskHeight
+          );
+        }
+      }
+      
+      // 绘制选中的圆盘
+      if (selectedDisk !== null && selectedRod !== null) {
+        const diskSize = rods[selectedRod][rods[selectedRod].length - 1];
+        const diskWidth = diskMinWidth + (diskMaxWidth - diskMinWidth) * ((diskSize - 1) / (diskCount - 1));
+        
+        ctx.fillStyle = getDiscColor(diskSize);
+        ctx.fillRect(
+          mouseX - diskWidth/2,
+          mouseY - diskHeight/2,
+          diskWidth,
+          diskHeight
+        );
+      }
+    }
+    
+    // 获取圆盘颜色
+    function getDiscColor(size) {
+      const hue = (size / diskCount) * 320; // 色相范围 0-320
+      return `hsl(${hue}, 80%, 50%)`;
+    }
+    
+    // 鼠标位置
+    let mouseX = 0;
+    let mouseY = 0;
+    
+    // 鼠标事件
+    canvas.addEventListener('mousemove', (e) => {
+      const rect = canvas.getBoundingClientRect();
+      mouseX = e.clientX - rect.left;
+      mouseY = e.clientY - rect.top;
+      
+      if (selectedDisk !== null) {
+        draw();
+      }
+    });
+    
+    canvas.addEventListener('mousedown', (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      
+      if (selectedDisk === null) {
+        // 尝试选择一个圆盘
+        for (let i = 0; i < 3; i++) {
+          if (rods[i].length > 0 && isClickOnTopDisk(x, y, i)) {
+            selectedRod = i;
+            selectedDisk = rods[i][rods[i].length - 1];
+            break;
+          }
+        }
+      } else {
+        // 尝试放置圆盘
+        for (let i = 0; i < 3; i++) {
+          if (isClickOnRod(x, y, i)) {
+            // 检查是否可以移动
+            if (i !== selectedRod && (rods[i].length === 0 || rods[i][rods[i].length - 1] > selectedDisk)) {
+              // 移动圆盘
+              rods[i].push(rods[selectedRod].pop());
+              moves++;
+              scoreDisplay.textContent = `移动次数: ${moves}`;
+              
+              // 检查游戏是否胜利
+              if (rods[2].length === diskCount) {
+                setTimeout(() => {
+                  alert(`恭喜！你用了${moves}步完成了游戏。最优解需要${Math.pow(2, diskCount) - 1}步。`);
+                }, 100);
+              }
+            }
+            
+            selectedRod = null;
+            selectedDisk = null;
+            break;
+          }
+        }
+      }
+      
+      draw();
+    });
+    
+    // 检查点击是否在顶部圆盘上
+    function isClickOnTopDisk(x, y, rodIndex) {
+      const rod = rods[rodIndex];
+      if (rod.length === 0) return false;
+      
+      const diskSize = rod[rod.length - 1];
+      const diskWidth = diskMinWidth + (diskMaxWidth - diskMinWidth) * ((diskSize - 1) / (diskCount - 1));
+      const diskY = rodPositions[rodIndex].y + rodHeight - rod.length * diskHeight;
+      
+      return (
+        x >= rodPositions[rodIndex].x - diskWidth/2 &&
+        x <= rodPositions[rodIndex].x + diskWidth/2 &&
+        y >= diskY &&
+        y <= diskY + diskHeight
+      );
+    }
+    
+    // 检查点击是否在柱子上
+    function isClickOnRod(x, y, rodIndex) {
+      return (
+        x >= rodPositions[rodIndex].x - 30 &&
+        x <= rodPositions[rodIndex].x + 30 &&
+        y >= rodPositions[rodIndex].y &&
+        y <= rodPositions[rodIndex].y + rodHeight
+      );
+    }
+    
+    // 重置游戏
+    resetBtn.addEventListener('click', initGame);
+    
+    // 难度选择
+    for (const radio of diskRadios) {
+      radio.addEventListener('change', () => {
+        diskCount = parseInt(radio.value);
+        initGame();
+      });
+    }
+    
+    // 初始化
+    initGame();
+  </script>
+</body>
+</html> 

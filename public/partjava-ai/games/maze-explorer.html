@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>迷宫探险</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body { background: #f4f6fa; margin: 0; font-family: 'Segoe UI', Arial, sans-serif; }
+    h2 { text-align: center; margin-top: 20px; color: #4f8cff; font-size: 24px; }
+    #game-canvas { display: block; margin: 20px auto 0 auto; background: #eef2ff; border-radius: 10px; box-shadow: 0 4px 16px rgba(0,0,0,0.2); }
+    #score { text-align: center; font-size: 1.4em; color: #333; margin-top: 15px; font-weight: bold; }
+    #tip { text-align: center; color: #666; margin-top: 10px; font-size: 1.1em; }
+    .game-container { width: 500px; height: 600px; padding: 20px; box-sizing: border-box; margin: 0 auto; }
+    .controls { text-align: center; margin-top: 15px; }
+    .btn { background: #4f8cff; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; margin: 0 5px; font-size: 1em; }
+    .btn:hover { background: #3a7ced; }
+    .difficulty { display: flex; justify-content: center; margin-top: 10px; }
+    .difficulty label { margin: 0 10px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <div class="game-container">
+    <h2>迷宫探险</h2>
+    <canvas id="game-canvas" width="450" height="450"></canvas>
+    <div id="score">时间: 0秒</div>
+    <div id="tip">使用方向键或WASD移动角色，从起点到终点</div>
+    <div class="controls">
+      <div class="difficulty">
+        <label><input type="radio" name="size" value="small" checked> 简单</label>
+        <label><input type="radio" name="size" value="medium"> 中等</label>
+        <label><input type="radio" name="size" value="large"> 困难</label>
+      </div>
+      <button class="btn" id="reset-btn">重新开始</button>
+    </div>
+  </div>
+  <script>
+    // 游戏代码
+    const canvas = document.getElementById('game-canvas');
+    const ctx = canvas.getContext('2d');
+    const scoreDisplay = document.getElementById('score');
+    const resetBtn = document.getElementById('reset-btn');
+    const sizeRadios = document.querySelectorAll('input[name="size"]');
+    
+    // 游戏参数
+    let mazeSize = 15; // 默认简单难度
+    let cellSize = 30;
+    let playerX = 1;
+    let playerY = 1;
+    let exitX, exitY;
+    let gameStarted = false;
+    let gameTime = 0;
+    let gameTimer = null;
+    let maze = [];
+    
+    // 初始化游戏
+    function initGame() {
+      // 根据难度设置迷宫大小
+      const size = document.querySelector('input[name="size"]:checked').value;
+      if (size === 'small') {
+        mazeSize = 15;
+        cellSize = 30;
+      } else if (size === 'medium') {
+        mazeSize = 21;
+        cellSize = 21;
+      } else {
+        mazeSize = 31;
+        cellSize = 14;
+      }
+      
+      // 停止计时器
+      if (gameTimer) {
+        clearInterval(gameTimer);
+      }
+      
+      // 重置游戏状态
+      gameTime = 0;
+      gameStarted = true;
+      scoreDisplay.textContent = '时间: 0秒';
+      
+      // 生成迷宫
+      generateMaze();
+      
+      // 设置玩家位置和出口位置
+      playerX = 1;
+      playerY = 1;
+      exitX = mazeSize - 2;
+      exitY = mazeSize - 2;
+      
+      // 开始计时
+      gameTimer = setInterval(() => {
+        gameTime++;
+        scoreDisplay.textContent = `时间: ${gameTime}秒`;
+      }, 1000);
+      
+      // 绘制迷宫
+      drawMaze();
+    }
+    
+    // 生成迷宫 (使用深度优先搜索)
+    function generateMaze() {
+      // 初始化迷宫为全墙
+      maze = Array(mazeSize).fill().map(() => Array(mazeSize).fill(1));
+      
+      // 创建通道
+      carvePassagesFrom(1, 1);
+      
+      // 确保出口位置无墙
+      maze[mazeSize-2][mazeSize-2] = 0;
+    }
+    
+    // 使用深度优先搜索挖通道
+    function carvePassagesFrom(x, y) {
+      // 标记当前单元格为通道
+      maze[y][x] = 0;
+      
+      // 方向: 北, 东, 南, 西
+      const directions = [
+        [0, -2], [2, 0], [0, 2], [-2, 0]
+      ];
+      
+      // 随机排序方向
+      shuffleArray(directions);
+      
+      // 尝试每个方向
+      for (const [dx, dy] of directions) {
+        const nx = x + dx;
+        const ny = y + dy;
+        
+        // 检查是否在边界内且未访问
+        if (nx > 0 && nx < mazeSize-1 && ny > 0 && ny < mazeSize-1 && maze[ny][nx] === 1) {
+          // 将墙壁变为通道
+          maze[y + dy/2][x + dx/2] = 0;
+          carvePassagesFrom(nx, ny);
+        }
+      }
+    }
+    
+    // 随机打乱数组
+    function shuffleArray(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+    }
+    
+    // 绘制迷宫
+    function drawMaze() {
+      // 清空画布
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      // 偏移以居中
+      const offsetX = (canvas.width - cellSize * mazeSize) / 2;
+      const offsetY = (canvas.height - cellSize * mazeSize) / 2;
+      
+      // 绘制墙壁和通道
+      for (let y = 0; y < mazeSize; y++) {
+        for (let x = 0; x < mazeSize; x++) {
+          if (maze[y][x] === 1) {
+            // 墙
+            ctx.fillStyle = '#333';
+            ctx.fillRect(
+              offsetX + x * cellSize,
+              offsetY + y * cellSize,
+              cellSize,
+              cellSize
+            );
+          } else {
+            // 通道
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(
+              offsetX + x * cellSize,
+              offsetY + y * cellSize,
+              cellSize,
+              cellSize
+            );
+          }
+          
+          // 绘制起点
+          if (x === 1 && y === 1) {
+            ctx.fillStyle = '#4CAF50';
+            ctx.fillRect(
+              offsetX + x * cellSize,
+              offsetY + y * cellSize,
+              cellSize,
+              cellSize
+            );
+          }
+          
+          // 绘制终点
+          if (x === exitX && y === exitY) {
+            ctx.fillStyle = '#F44336';
+            ctx.fillRect(
+              offsetX + x * cellSize,
+              offsetY + y * cellSize,
+              cellSize,
+              cellSize
+            );
+          }
+        }
+      }
+      
+      // 绘制玩家
+      ctx.fillStyle = '#2196F3';
+      ctx.beginPath();
+      ctx.arc(
+        offsetX + playerX * cellSize + cellSize/2,
+        offsetY + playerY * cellSize + cellSize/2,
+        cellSize * 0.4,
+        0,
+        2 * Math.PI
+      );
+      ctx.fill();
+    }
+    
+    // 检查移动是否有效
+    function canMoveTo(x, y) {
+      return x >= 0 && x < mazeSize && y >= 0 && y < mazeSize && maze[y][x] === 0;
+    }
+    
+    // 移动玩家
+    function movePlayer(dx, dy) {
+      if (!gameStarted) return;
+      
+      const newX = playerX + dx;
+      const newY = playerY + dy;
+      
+      if (canMoveTo(newX, newY)) {
+        playerX = newX;
+        playerY = newY;
+        drawMaze();
+        
+        // 检查是否到达终点
+        if (playerX === exitX && playerY === exitY) {
+          gameStarted = false;
+          clearInterval(gameTimer);
+          setTimeout(() => {
+            alert(`恭喜！你用了${gameTime}秒完成迷宫！`);
+          }, 100);
+        }
+      }
+    }
+    
+    // 键盘控制
+    window.addEventListener('keydown', (e) => {
+      switch (e.key) {
+        case 'ArrowUp':
+        case 'w':
+        case 'W':
+          movePlayer(0, -1);
+          break;
+        case 'ArrowRight':
+        case 'd':
+        case 'D':
+          movePlayer(1, 0);
+          break;
+        case 'ArrowDown':
+        case 's':
+        case 'S':
+          movePlayer(0, 1);
+          break;
+        case 'ArrowLeft':
+        case 'a':
+        case 'A':
+          movePlayer(-1, 0);
+          break;
+      }
+    });
+    
+    // 触摸控制
+    let touchStartX = 0;
+    let touchStartY = 0;
+    
+    canvas.addEventListener('touchstart', (e) => {
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+    });
+    
+    canvas.addEventListener('touchend', (e) => {
+      if (!gameStarted) return;
+      
+      const touchEndX = e.changedTouches[0].clientX;
+      const touchEndY = e.changedTouches[0].clientY;
+      
+      const dx = touchEndX - touchStartX;
+      const dy = touchEndY - touchStartY;
+      
+      // 判断主要的移动方向
+      if (Math.abs(dx) > Math.abs(dy)) {
+        // 水平移动
+        movePlayer(dx > 0 ? 1 : -1, 0);
+      } else {
+        // 垂直移动
+        movePlayer(0, dy > 0 ? 1 : -1);
+      }
+    });
+    
+    // 重置按钮
+    resetBtn.addEventListener('click', initGame);
+    
+    // 难度选择
+    for (const radio of sizeRadios) {
+      radio.addEventListener('change', initGame);
+    }
+    
+    // 初始化游戏
+    initGame();
+  </script>
+</body>
+</html> 

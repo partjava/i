@@ -1,8 +1,7 @@
 'use client';
-
 import React from 'react';
 import { Typography, Card, Alert, Tabs, Table, Space, Tag, Collapse } from 'antd';
-import { CodeBlock } from '../../../components/CodeBlock';
+import { CodeBlock } from '@/app/components/ui/CodeBlock';
 
 const { Title, Paragraph, Text } = Typography;
 const { Panel } = Collapse;
@@ -14,15 +13,19 @@ export default function InterviewPage() {
       <Paragraph className="mb-8">
         本页面集合了数据结构与算法面试中的重点专题，包括排序算法、查找算法、图论算法、动态规划以及系统设计。每个专题都包含了基本原理、C++实现、复杂度分析以及典型面试题目。
       </Paragraph>
-      
-      <Tabs defaultActiveKey="sorting" className="mt-4">
-        <Tabs.TabPane tab="排序算法专题" key="sorting">
-          <div className="space-y-6">
-            <Title level={3}>排序算法全解析</Title>
-            <Paragraph>
-              排序算法是算法面试的基础，也是理解算法复杂度与设计思想的良好入口。本专题详细介绍常见排序算法的原理、实现与应用。
-            </Paragraph>
-            
+      <Tabs
+        defaultActiveKey="sorting"
+        className="mt-4"
+        items={[
+          {
+            key: 'sorting',
+            label: '排序算法专题',
+            children: (
+              <div className="space-y-6">
+                <Title level={3}>排序算法全解析</Title>
+                <Paragraph>
+                  排序算法是算法面试的基础，也是理解算法复杂度与设计思想的良好入口。本专题详细介绍常见排序算法的原理、实现与应用。
+                </Paragraph>
             <Card className="mb-6">
               <Title level={4}>排序算法对比</Title>
               <Table 
@@ -185,9 +188,8 @@ export default function InterviewPage() {
                 className="mt-4"
               />
             </Card>
-          </div>
-          
-          <Collapse className="mt-6" accordion>
+            
+            <Collapse className="mt-6" accordion>
             <Panel header="冒泡排序（Bubble Sort）" key="bubble">
               <Paragraph>
                 <b>原理：</b> 每次遍历将未排序区间中最大的元素"冒泡"到末尾，重复n-1轮即可完成排序。
@@ -351,8 +353,13 @@ void heapSort(vector<int>& arr) {
               </Paragraph>
             </Panel>
           </Collapse>
-        </Tabs.TabPane>
-        <Tabs.TabPane tab="查找算法专题" key="searching">
+          </div>
+        ),
+      },
+      {
+        key: 'searching',
+        label: '查找算法专题',
+        children: (
           <div className="space-y-6">
             <Title level={3}>查找算法全解析</Title>
             <Paragraph>
@@ -372,7 +379,7 @@ void heapSort(vector<int>& arr) {
                   { title: '时间复杂度', dataIndex: 'time', key: 'time' },
                   { title: '空间复杂度', dataIndex: 'space', key: 'space' },
                   { title: '适用场景', dataIndex: 'scene', key: 'scene' },
-                  { title: '特点', dataIndex: 'features', key: 'features', render: (features: string[]) => (<>{features.map(f => <Tag color="blue" key={f}>{f}</Tag>)}</>) },
+                  { title: '特点', dataIndex: 'features', key: 'features', render: (features: string[],record:any,index:number) => (<>{features.map((f,index) => <Tag color="blue" key={index}>{f}</Tag>)}</>) },
                 ]}
                 size="small"
                 pagination={false}
@@ -474,8 +481,12 @@ set<int> s;
               </Panel>
             </Collapse>
           </div>
-        </Tabs.TabPane>
-        <Tabs.TabPane tab="图论算法专题" key="graph">
+        ),
+      },
+      {
+        key: 'graph',
+        label: '图论算法专题',
+        children: (
           <div className="space-y-6">
             <Title level={3}>图论算法全解析</Title>
             <Paragraph>
@@ -497,7 +508,7 @@ set<int> s;
                   { title: '时间复杂度', dataIndex: 'time', key: 'time' },
                   { title: '空间复杂度', dataIndex: 'space', key: 'space' },
                   { title: '适用场景', dataIndex: 'scene', key: 'scene' },
-                  { title: '特点', dataIndex: 'features', key: 'features', render: (features: string[]) => (<>{features.map(f => <Tag color="blue" key={f}>{f}</Tag>)}</>) },
+                  { title: '特点', dataIndex: 'features', key: 'features', render: (features: string[],record:any,index:number) => (<>{features.map((f,index) => <Tag color="blue" key={index}>{f}</Tag>)}</>) },
                 ]}
                 size="small"
                 pagination={false}
@@ -629,8 +640,12 @@ int kruskal(int n, vector<Edge>& edges) {
               </Panel>
             </Collapse>
           </div>
-        </Tabs.TabPane>
-        <Tabs.TabPane tab="动态规划专题" key="dp">
+        ),
+      },
+      {
+        key: 'dp',
+        label: '动态规划专题',
+        children: (
           <div className="space-y-6">
             <Title level={3}>动态规划全解析</Title>
             <Paragraph>
@@ -652,7 +667,7 @@ int kruskal(int n, vector<Edge>& edges) {
                   { title: '转移方程', dataIndex: 'transfer', key: 'transfer' },
                   { title: '复杂度', dataIndex: 'complexity', key: 'complexity' },
                   { title: '场景', dataIndex: 'scene', key: 'scene' },
-                  { title: '特点', dataIndex: 'features', key: 'features', render: (features: string[]) => (<>{features.map(f => <Tag color="blue" key={f}>{f}</Tag>)}</>) },
+                  { title: '特点', dataIndex: 'features', key: 'features', render: (features: string[],record:any,index:number) => (<>{features.map((f,index) => <Tag color="blue" key={index}>{f}</Tag>)}</>) },
                 ]}
                 size="small"
                 pagination={false}
@@ -797,8 +812,12 @@ int mergeStones(vector<int>& stones) {
               </Panel>
             </Collapse>
           </div>
-        </Tabs.TabPane>
-        <Tabs.TabPane tab="系统设计专题" key="system">
+        ),
+      },
+      {
+        key: 'system',
+        label: '系统设计专题',
+        children: (
           <div className="space-y-6">
             <Title level={3}>系统设计全解析</Title>
             <Paragraph>
@@ -941,8 +960,11 @@ public:
               </Panel>
             </Collapse>
           </div>
-        </Tabs.TabPane>
-      </Tabs>
+        ),
+      },
+    ]}
+  />
     </div>
+
   );
 }

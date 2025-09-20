@@ -13,18 +13,32 @@ export default function CategoryDisplay() {
                 {category}
               </h3>
               <div className="grid grid-cols-1 gap-y-4">
-                {items.map((item: NavigationItem) => (
-                  <Link
-                    key={item.code}
-                    href={item.subitems ? `/study/cpp/${item.code}` : `/study/${category}/${item.code}`}
-                    className="group flex items-center space-x-3 text-gray-600 hover:text-blue-600"
-                  >
-                    <span className="flex-shrink-0 w-6 h-6 flex items-center justify-center bg-gray-100 text-sm text-gray-500 group-hover:bg-blue-50 group-hover:text-blue-600 rounded">
-                      {item.code}
-                    </span>
-                    <span className="text-sm">{item.name}</span>
-                  </Link>
-                ))}
+                {items.map((item: NavigationItem) => {
+                  let homepage = '';
+                  if (item.subitems && item.subitems.length > 0) {
+                    // 取第一个子项的href，提取目录路径
+                    const firstHref = item.subitems[0].href;
+                    const parts = firstHref.split('/');
+                    // 移除最后一个部分（页面名称），保留目录路径
+                    // 例如：/study/ai/ml/basic -> /study/ai/ml
+                    //      /study/cpp/setup -> /study/cpp
+                    homepage = parts.slice(0, -1).join('/');
+                  } else {
+                    homepage = `/study/${item.name.toLowerCase()}`;
+                  }
+                  return (
+                    <Link
+                      key={item.code}
+                      href={homepage}
+                      className="group flex items-center space-x-3 text-gray-600 hover:text-blue-600"
+                    >
+                      <span className="flex-shrink-0 w-6 h-6 flex items-center justify-center bg-gray-100 text-sm text-gray-500 group-hover:bg-blue-50 group-hover:text-blue-600 rounded">
+                        {item.code}
+                      </span>
+                      <span className="text-sm">{item.name}</span>
+                    </Link>
+                  );
+                })}
               </div>
             </div>
           ))}

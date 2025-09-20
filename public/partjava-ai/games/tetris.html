@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>俄罗斯方块小游戏</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body { background: #f4f6fa; margin: 0; font-family: 'Segoe UI', Arial, sans-serif; }
+    h2 { text-align: center; margin-top: 20px; color: #4f8cff; font-size: 24px; }
+    #tetris-canvas { display: block; margin: 20px auto 0 auto; background: #111; border-radius: 10px; box-shadow: 0 4px 16px rgba(0,0,0,0.2); }
+    #score { text-align: center; font-size: 1.4em; color: #333; margin-top: 15px; font-weight: bold; }
+    #tip { text-align: center; color: #666; margin-top: 10px; font-size: 1.1em; }
+    .game-container { width: 500px; height: 600px; padding: 20px; box-sizing: border-box; margin: 0 auto; }
+  </style>
+</head>
+<body>
+  <div class="game-container">
+    <h2>俄罗斯方块小游戏</h2>
+    <canvas id="tetris-canvas" width="320" height="480"></canvas>
+    <div id="score">分数: 0</div>
+    <div id="tip">方向键控制，空格键旋转</div>
+  </div>
+  <script>
+    const canvas = document.getElementById('tetris-canvas');
+    const ctx = canvas.getContext('2d');
+    const COLS = 10, ROWS = 18, BLOCK = 26;
+    const COLORS = ['#f94144', '#f3722c', '#f8961e', '#f9c74f', '#90be6d', '#43aa8b', '#577590'];
+    const SHAPES = [
+      [[1,1,1,1]],
+      [[1,1,1], [0,1,0]],
+      [[1,1,1], [1,0,0]],
+      [[1,1,1], [0,0,1]],
+      [[1,1], [1,1]],
+      [[0,1,1], [1,1,0]],
+      [[1,1,0], [0,1,1]]
+    ];
+    
+    let board = Array(ROWS).fill().map(() => Array(COLS).fill(0));
+    let score = 0;
+    let currentPiece = null;
+    let currentX = 0;
+    let currentY = 0;
+    let currentColor = 0;
+    let gameOver = false;
+    let interval = null;
+    
+    function newPiece() {
+      const shapeIndex = Math.floor(Math.random() * SHAPES.length);
+      const shape = SHAPES[shapeIndex];
+      currentPiece = shape;
+      currentColor = shapeIndex;
+      currentX = Math.floor(COLS / 2) - Math.floor(shape[0].length / 2);
+      currentY = 0;
+      
+      if (collision(0, 0)) {
+        gameOver = true;
+        clearInterval(interval);
+        document.getElementById('score').innerText = `游戏结束！分数: ${score}`;
+      }
+    }
+    
+    function collision(offsetX, offsetY, rotatedPiece = null) {
+      const piece = rotatedPiece || currentPiece;
+      for (let y = 0; y < piece.length; y++) {
+        for (let x = 0; x < piece[y].length; x++) {
+          if (piece[y][x]) {
+            const newX = x + currentX + offsetX;
+            const newY = y + currentY + offsetY;
+            if (newX < 0 || newX >= COLS || newY >= ROWS || (newY >= 0 && board[newY][newX])) {
+              return true;
+            }
+          }
+        }
+      }
+      return false;
+    }
+    
+    function rotate() {
+      const rotated = [];
+      for (let x = 0; x < currentPiece[0].length; x++) {
+        const row = [];
+        for (let y = currentPiece.length - 1; y >= 0; y--) {
+          row.push(currentPiece[y][x]);
+        }
+        rotated.push(row);
+      }
+      if (!collision(0, 0, rotated)) {
+        currentPiece = rotated;
+      }
+    }
+    
+    function clearLines() {
+      let linesCleared = 0;
+      for (let y = ROWS - 1; y >= 0; y--) {
+        let rowFilled = true;
+        for (let x = 0; x < COLS; x++) {
+          if (board[y][x] === 0) {
+            rowFilled = false;
+            break;
+          }
+        }
+        if (rowFilled) {
+          linesCleared++;
+          for (let yy = y; yy > 0; yy--) {
+            for (let x = 0; x < COLS; x++) {
+              board[yy][x] = board[yy-1][x];
+            }
+          }
+          for (let x = 0; x < COLS; x++) {
+            board[0][x] = 0;
+          }
+          y++; // Check the same row again
+        }
+      }
+      if (linesCleared > 0) {
+        score += [40, 100, 300, 1200][linesCleared - 1];
+        document.getElementById('score').innerText = `分数: ${score}`;
+      }
+    }
+    
+    function lock() {
+      for (let y = 0; y < currentPiece.length; y++) {
+        for (let x = 0; x < currentPiece[y].length; x++) {
+          if (currentPiece[y][x]) {
+            board[y + currentY][x + currentX] = currentColor + 1;
+          }
+        }
+      }
+      clearLines();
+      newPiece();
+    }
+    
+    function moveDown() {
+      if (!collision(0, 1)) {
+        currentY++;
+      } else {
+        lock();
+      }
+    }
+    
+    function moveLeft() {
+      if (!collision(-1, 0)) {
+        currentX--;
+      }
+    }
+    
+    function moveRight() {
+      if (!collision(1, 0)) {
+        currentX++;
+      }
+    }
+    
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      // Draw board
+      for (let y = 0; y < ROWS; y++) {
+        for (let x = 0; x < COLS; x++) {
+          if (board[y][x]) {
+            ctx.fillStyle = COLORS[board[y][x] - 1];
+            ctx.fillRect(x * BLOCK, y * BLOCK, BLOCK - 1, BLOCK - 1);
+          }
+        }
+      }
+      
+      // Draw current piece
+      if (currentPiece) {
+        for (let y = 0; y < currentPiece.length; y++) {
+          for (let x = 0; x < currentPiece[y].length; x++) {
+            if (currentPiece[y][x]) {
+              ctx.fillStyle = COLORS[currentColor];
+              ctx.fillRect((currentX + x) * BLOCK, (currentY + y) * BLOCK, BLOCK - 1, BLOCK - 1);
+            }
+          }
+        }
+      }
+    }
+    
+    function gameLoop() {
+      if (!gameOver) {
+        moveDown();
+        draw();
+      }
+    }
+    
+    document.addEventListener('keydown', e => {
+      if (gameOver) return;
+      
+      switch(e.key) {
+        case 'ArrowLeft':
+          moveLeft();
+          break;
+        case 'ArrowRight':
+          moveRight();
+          break;
+        case 'ArrowDown':
+          moveDown();
+          break;
+        case 'ArrowUp':
+        case ' ':
+          rotate();
+          break;
+      }
+      draw();
+    });
+    
+    newPiece();
+    draw();
+    interval = setInterval(gameLoop, 500);
+  </script>
+</body>
+</html>

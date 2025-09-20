@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>弹球小游戏</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body { background: #f4f6fa; margin: 0; font-family: 'Segoe UI', Arial, sans-serif; }
+    h2 { text-align: center; margin-top: 20px; color: #4f8cff; font-size: 24px; }
+    #game-canvas { display: block; margin: 20px auto 0 auto; background: #222; border-radius: 10px; box-shadow: 0 4px 16px rgba(0,0,0,0.2); }
+    #score { text-align: center; font-size: 1.4em; color: #333; margin-top: 15px; font-weight: bold; }
+    #tip { text-align: center; color: #666; margin-top: 10px; font-size: 1.1em; }
+    .game-container { width: 500px; height: 600px; padding: 20px; box-sizing: border-box; margin: 0 auto; }
+  </style>
+</head>
+<body>
+  <div class="game-container">
+    <h2>弹球小游戏</h2>
+    <canvas id="game-canvas" width="450" height="450"></canvas>
+    <div id="score">分数: 0</div>
+    <div id="tip">左右方向键控制挡板，空格键发射</div>
+  </div>
+  <script>
+    const canvas = document.getElementById('game-canvas');
+    const ctx = canvas.getContext('2d');
+    const WIDTH = canvas.width;
+    const HEIGHT = canvas.height;
+    
+    // 游戏参数
+    const FLIPPER_WIDTH = 85;
+    const FLIPPER_HEIGHT = 20;
+    const FLIPPER_SPEED = 8;
+    const BALL_RADIUS = 14;
+    const GRAVITY = 0.2;
+    const BOUNCE_FACTOR = 0.7;
+    const BUMPER_COUNT = 5;
+    
+    // 游戏状态
+    let score = 0;
+    let lives = 3;
+    let gameOver = false;
+    let ballLaunched = false;
+    let launchPower = 0;
+    let isCharging = false;
+    
+    // 挡板（左右两个）
+    const leftFlipper = {
+      x: WIDTH / 2 - FLIPPER_WIDTH - 20,
+      y: HEIGHT - 40,
+      width: FLIPPER_WIDTH,
+      height: FLIPPER_HEIGHT,
+      angle: 0,
+      maxAngle: Math.PI / 4,
+      isFlipping: false,
+      
+      draw() {
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.rotate(-this.angle);
+        ctx.fillStyle = '#4f8cff';
+        ctx.fillRect(-this.width / 4, -this.height / 2, this.width, this.height);
+        ctx.restore();
+      },
+      
+      update() {
+        if (this.isFlipping && this.angle < this.maxAngle) {
+          this.angle += 0.2;
+        } else if (!this.isFlipping && this.angle > 0) {
+          this.angle -= 0.1;
+        }
+        
+        if (this.angle > this.maxAngle) this.angle = this.maxAngle;
+        if (this.angle < 0) this.angle = 0;
+      },
+      
+      flip() {
+        this.isFlipping = true;
+      },
+      
+      release() {
+        this.isFlipping = false;
+      },
+      
+      // 碰撞检测
+      checkCollision(ball) {
+        // 简化的碰撞检测
+        const flipperCenterX = this.x - (this.width / 2) * Math.sin(this.angle);
+        const flipperCenterY = this.y - (this.width / 2) * Math.cos(this.angle);
+        
+        const distance = Math.sqrt(
+          (ball.x - flipperCenterX) ** 2 + 
+          (ball.y - flipperCenterY) ** 2
+        );
+        
+        if (distance < this.width / 2 + ball.radius) {
+          const angle = Math.atan2(ball.y - flipperCenterY, ball.x - flipperCenterX);
+          const power = this.isFlipping ? 10 : 5;
+          
+          ball.dx = Math.cos(angle) * power;
+          ball.dy = Math.sin(angle) * power;
+          
+          if (this.isFlipping) {
+            score += 10;
+            document.getElementById('score').innerText = `分数: ${score}`;
+          }
+          
+          return true;
+        }
+        
+        return false;
+      }
+    };
+    
+    const rightFlipper = {
+      x: WIDTH / 2 + 20,
+      y: HEIGHT - 40,
+      width: FLIPPER_WIDTH,
+      height: FLIPPER_HEIGHT,
+      angle: 0,
+      maxAngle: Math.PI / 4,
+      isFlipping: false,
+      
+      draw() {
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.rotate(this.angle);
+        ctx.fillStyle = '#4f8cff';
+        ctx.fillRect(-this.width * 3/4, -this.height / 2, this.width, this.height);
+        ctx.restore();
+      },
+      
+      update() {
+        if (this.isFlipping && this.angle < this.maxAngle) {
+          this.angle += 0.2;
+        } else if (!this.isFlipping && this.angle > 0) {
+          this.angle -= 0.1;
+        }
+        
+        if (this.angle > this.maxAngle) this.angle = this.maxAngle;
+        if (this.angle < 0) this.angle = 0;
+      },
+      
+      flip() {
+        this.isFlipping = true;
+      },
+      
+      release() {
+        this.isFlipping = false;
+      },
+      
+      // 碰撞检测
+      checkCollision(ball) {
+        // 简化的碰撞检测
+        const flipperCenterX = this.x + (this.width / 2) * Math.sin(this.angle);
+        const flipperCenterY = this.y - (this.width / 2) * Math.cos(this.angle);
+        
+        const distance = Math.sqrt(
+          (ball.x - flipperCenterX) ** 2 + 
+          (ball.y - flipperCenterY) ** 2
+        );
+        
+        if (distance < this.width / 2 + ball.radius) {
+          const angle = Math.atan2(ball.y - flipperCenterY, ball.x - flipperCenterX);
+          const power = this.isFlipping ? 10 : 5;
+          
+          ball.dx = Math.cos(angle) * power;
+          ball.dy = Math.sin(angle) * power;
+          
+          if (this.isFlipping) {
+            score += 10;
+            document.getElementById('score').innerText = `分数: ${score}`;
+          }
+          
+          return true;
+        }
+        
+        return false;
+      }
+    };
+    
+    // 弹球
+    const ball = {
+      x: WIDTH / 2,
+      y: HEIGHT - 60,
+      radius: BALL_RADIUS,
+      dx: 0,
+      dy: 0,
+      
+      draw() {
+        ctx.fillStyle = '#fff';
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // 添加高光效果
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+        ctx.beginPath();
+        ctx.arc(this.x - this.radius / 3, this.y - this.radius / 3, this.radius / 3, 0, Math.PI * 2);
+        ctx.fill();
+      },
+      
+      update() {
+        if (!ballLaunched) {
+          this.x = WIDTH / 2;
+          this.y = HEIGHT - 60;
+          return;
+        }
+        
+        // 应用重力
+        this.dy += GRAVITY;
+        
+        // 更新位置
+        this.x += this.dx;
+        this.y += this.dy;
+        
+        // 墙壁碰撞
+        if (this.x - this.radius < 0) {
+          this.x = this.radius;
+          this.dx = -this.dx * BOUNCE_FACTOR;
+        } else if (this.x + this.radius > WIDTH) {
+          this.x = WIDTH - this.radius;
+          this.dx = -this.dx * BOUNCE_FACTOR;
+        }
+        
+        if (this.y - this.radius < 0) {
+          this.y = this.radius;
+          this.dy = -this.dy * BOUNCE_FACTOR;
+        }
+        
+        // 底部碰撞（失去生命）
+        if (this.y + this.radius > HEIGHT) {
+          lives--;
+          if (lives <= 0) {
+            gameOver = true;
+          } else {
+            ballLaunched = false;
+          }
+        }
+        
+        // 挡板碰撞
+        leftFlipper.checkCollision(this);
+        rightFlipper.checkCollision(this);
+        
+        // 碰撞检测与弹珠台元素
+        for (const bumper of bumpers) {
+          if (this.checkBumperCollision(bumper)) {
+            score += 50;
+            document.getElementById('score').innerText = `分数: ${score}`;
+          }
+        }
+        
+        // 摩擦力
+        this.dx *= 0.99;
+        this.dy *= 0.99;
+      },
+      
+      launch(power) {
+        this.dy = -power;
+        this.dx = (Math.random() - 0.5) * 2;
+        ballLaunched = true;
+      },
+      
+      checkBumperCollision(bumper) {
+        const distance = Math.sqrt(
+          (this.x - bumper.x) ** 2 + 
+          (this.y - bumper.y) ** 2
+        );
+        
+        if (distance < this.radius + bumper.radius) {
+          // 计算碰撞角度
+          const angle = Math.atan2(this.y - bumper.y, this.x - bumper.x);
+          
+          // 应用反弹力
+          const power = 8;
+          this.dx = Math.cos(angle) * power;
+          this.dy = Math.sin(angle) * power;
+          
+          // 防止球卡在碰撞体内
+          const overlap = this.radius + bumper.radius - distance;
+          this.x += Math.cos(angle) * overlap;
+          this.y += Math.sin(angle) * overlap;
+          
+          bumper.hit = true;
+          setTimeout(() => { bumper.hit = false; }, 100);
+          
+          return true;
+        }
+        
+        return false;
+      }
+    };
+    
+    // 弹珠台元素（碰撞点）
+    const bumpers = [];
+    
+    function createBumpers() {
+      const colors = ['#f94144', '#f3722c', '#f8961e', '#f9c74f', '#90be6d'];
+      
+      for (let i = 0; i < BUMPER_COUNT; i++) {
+        const radius = 15 + Math.random() * 10;
+        const x = radius + Math.random() * (WIDTH - radius * 2);
+        const y = radius + Math.random() * (HEIGHT / 2);
+        
+        bumpers.push({
+          x,
+          y,
+          radius,
+          color: colors[i % colors.length],
+          hit: false
+        });
+      }
+    }
+    
+    function drawBumpers() {
+      for (const bumper of bumpers) {
+        ctx.fillStyle = bumper.hit ? '#fff' : bumper.color;
+        ctx.beginPath();
+        ctx.arc(bumper.x, bumper.y, bumper.radius, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // 添加高光效果
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+        ctx.beginPath();
+        ctx.arc(bumper.x - bumper.radius / 3, bumper.y - bumper.radius / 3, bumper.radius / 3, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+    
+    // 发射器
+    function drawLauncher() {
+      if (!ballLaunched) {
+        ctx.fillStyle = '#666';
+        ctx.fillRect(WIDTH / 2 - 5, HEIGHT - 20, 10, 20);
+        
+        if (isCharging) {
+          const height = Math.min(launchPower / 2, 50);
+          ctx.fillStyle = '#f94144';
+          ctx.fillRect(WIDTH / 2 - 3, HEIGHT - 18, 6, height);
+        }
+      }
+    }
+    
+    // 键盘控制
+    const keys = {};
+    
+    document.addEventListener('keydown', (e) => {
+      keys[e.key] = true;
+      
+      if (e.key === ' ' && !ballLaunched && !gameOver) {
+        isCharging = true;
+      }
+      
+      if (e.key === 'ArrowLeft') {
+        leftFlipper.flip();
+      }
+      
+      if (e.key === 'ArrowRight') {
+        rightFlipper.flip();
+      }
+      
+      if ((e.key === 'Enter') && gameOver) {
+        resetGame();
+      }
+    });
+    
+    document.addEventListener('keyup', (e) => {
+      keys[e.key] = false;
+      
+      if (e.key === ' ' && isCharging) {
+        ball.launch(launchPower);
+        isCharging = false;
+        launchPower = 0;
+      }
+      
+      if (e.key === 'ArrowLeft') {
+        leftFlipper.release();
+      }
+      
+      if (e.key === 'ArrowRight') {
+        rightFlipper.release();
+      }
+    });
+    
+    // 重置游戏
+    function resetGame() {
+      score = 0;
+      lives = 3;
+      gameOver = false;
+      ballLaunched = false;
+      launchPower = 0;
+      isCharging = false;
+      document.getElementById('score').innerText = `分数: ${score}`;
+      
+      // 重新创建碰撞点
+      bumpers.length = 0;
+      createBumpers();
+    }
+    
+    // 游戏循环
+    function gameLoop() {
+      // 清除画布
+      ctx.clearRect(0, 0, WIDTH, HEIGHT);
+      
+      // 更新发射器充能
+      if (isCharging && launchPower < 20) {
+        launchPower += 0.5;
+      }
+      
+      // 更新游戏对象
+      leftFlipper.update();
+      rightFlipper.update();
+      ball.update();
+      
+      // 绘制游戏元素
+      drawBumpers();
+      leftFlipper.draw();
+      rightFlipper.draw();
+      ball.draw();
+      drawLauncher();
+      
+      // 绘制生命值
+      drawLives();
+      
+      // 游戏结束提示
+      if (gameOver) {
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+        ctx.fillRect(0, 0, WIDTH, HEIGHT);
+        
+        ctx.fillStyle = '#fff';
+        ctx.font = '24px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('游戏结束', WIDTH / 2, HEIGHT / 2 - 20);
+        ctx.font = '16px Arial';
+        ctx.fillText('按回车键重新开始', WIDTH / 2, HEIGHT / 2 + 20);
+      }
+      
+      requestAnimationFrame(gameLoop);
+    }
+    
+    // 绘制生命值
+    function drawLives() {
+      ctx.fillStyle = '#fff';
+      ctx.font = '16px Arial';
+      ctx.textAlign = 'left';
+      ctx.fillText(`生命: ${lives}`, 10, 20);
+    }
+    
+    // 初始化游戏
+    createBumpers();
+    gameLoop();
+  </script>
+</body>
+</html> 

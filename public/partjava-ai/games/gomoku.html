@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>五子棋小游戏</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body { background: #f4f6fa; margin: 0; font-family: 'Segoe UI', Arial, sans-serif; }
+    h2 { text-align: center; margin-top: 20px; color: #4f8cff; font-size: 24px; }
+    #gomoku-canvas { display: block; margin: 20px auto 0 auto; background: #f9e4b7; border-radius: 10px; box-shadow: 0 4px 16px rgba(0,0,0,0.2); }
+    #gomoku-status { text-align: center; font-size: 1.4em; color: #333; margin-top: 15px; font-weight: bold; }
+    #tip { text-align: center; color: #666; margin-top: 10px; font-size: 1.1em; }
+    .game-container { width: 500px; height: 600px; padding: 20px; box-sizing: border-box; margin: 0 auto; }
+  </style>
+</head>
+<body>
+  <div class="game-container">
+    <h2>五子棋小游戏</h2>
+    <canvas id="gomoku-canvas" width="450" height="450"></canvas>
+    <div id="gomoku-status">黑子先手，点击棋盘落子</div>
+    <div id="tip">双人对战，刷新可重开</div>
+  </div>
+  <script>
+    const canvas = document.getElementById('gomoku-canvas');
+    const ctx = canvas.getContext('2d');
+    const size = 15, cell = 30;
+    let board = Array.from({length:size},()=>Array(size).fill(0));
+    let turn = 1, winner = 0;
+    function drawBoard() {
+      ctx.fillStyle = '#f9e4b7';
+      ctx.fillRect(0,0,canvas.width,canvas.height);
+      ctx.strokeStyle = '#8a6d3b';
+      for(let i=0;i<size;i++) {
+        ctx.beginPath(); ctx.moveTo(cell, cell+i*cell); ctx.lineTo(cell*size, cell+i*cell); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(cell+i*cell, cell); ctx.lineTo(cell+i*cell, cell*size); ctx.stroke();
+      }
+      for(let y=0;y<size;y++) for(let x=0;x<size;x++) if(board[y][x]) {
+        ctx.beginPath();
+        ctx.arc(cell+x*cell, cell+y*cell, 12, 0, 2*Math.PI);
+        ctx.fillStyle = board[y][x]==1?'#222':'#eee';
+        ctx.fill();
+        ctx.strokeStyle = '#888';
+        ctx.stroke();
+      }
+    }
+    function checkWin(x, y) {
+      const color = board[y][x];
+      for(const [dx,dy] of [[1,0],[0,1],[1,1],[1,-1]]) {
+        let cnt=1;
+        for(const d of [1,-1]) {
+          let nx=x, ny=y;
+          while(1) {
+            nx+=dx*d; ny+=dy*d;
+            if(nx>=0&&nx<size&&ny>=0&&ny<size&&board[ny][nx]==color) cnt++;
+            else break;
+          }
+        }
+        if(cnt>=5) return true;
+      }
+      return false;
+    }
+    canvas.addEventListener('click', e => {
+      if(winner) return;
+      const rect = canvas.getBoundingClientRect();
+      const mx = Math.floor((e.clientX-rect.left)/cell);
+      const my = Math.floor((e.clientY-rect.top)/cell);
+      if(mx>=0&&mx<size&&my>=0&&my<size&&board[my][mx]==0) {
+        board[my][mx]=turn;
+        if(checkWin(mx,my)) {
+          document.getElementById('gomoku-status').innerText = (turn==1?'黑子':'白子')+'获胜！';
+          winner=turn;
+        } else {
+          turn=3-turn;
+          document.getElementById('gomoku-status').innerText = (turn==1?'黑子':'白子')+'落子';
+        }
+        drawBoard();
+      }
+    });
+    drawBoard();
+  </script>
+</body>
+</html> 

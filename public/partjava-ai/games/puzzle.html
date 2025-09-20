@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>拼图小游戏</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body { background: #f4f6fa; margin: 0; font-family: 'Segoe UI', Arial, sans-serif; }
+    h2 { text-align: center; margin-top: 20px; color: #4f8cff; font-size: 24px; }
+    #puzzle-board { width: 450px; height: 450px; margin: 20px auto 0 auto; display: grid; grid-template-columns: repeat(3, 1fr); grid-gap: 8px; position: relative; }
+    .tile { background: linear-gradient(135deg, #4f8cff 0%, #6ea8fe 100%); border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 36px; color: white; box-shadow: 0 4px 16px rgba(0,0,0,0.2); transition: all 0.2s; }
+    .tile:hover { transform: scale(0.98); }
+    .tile.empty { background: transparent; box-shadow: none; cursor: default; }
+    #moves { text-align: center; font-size: 1.4em; color: #333; margin-top: 20px; font-weight: bold; }
+    #restart { display: block; margin: 20px auto 0; padding: 12px 24px; background: #4f8cff; color: white; border: none; border-radius: 24px; cursor: pointer; font-size: 16px; font-weight: bold; }
+    #restart:hover { background: #3576f5; }
+    .game-container { width: 500px; height: 600px; padding: 20px; box-sizing: border-box; margin: 0 auto; }
+  </style>
+</head>
+<body>
+  <div class="game-container">
+    <h2>拼图小游戏</h2>
+    <div id="puzzle-board"></div>
+    <div id="moves">移动次数: 0</div>
+    <button id="restart">重新开始</button>
+  </div>
+  <script>
+    const board = document.getElementById('puzzle-board');
+    const movesDisplay = document.getElementById('moves');
+    const restartBtn = document.getElementById('restart');
+    const SIZE = 3;
+    let tiles = [];
+    let emptyPos = { row: SIZE - 1, col: SIZE - 1 };
+    let moves = 0;
+    let solved = false;
+    
+    // 创建拼图
+    function createPuzzle() {
+      board.innerHTML = '';
+      tiles = [];
+      moves = 0;
+      solved = false;
+      movesDisplay.textContent = `移动次数: ${moves}`;
+      
+      // 创建有序拼图
+      for (let i = 0; i < SIZE; i++) {
+        for (let j = 0; j < SIZE; j++) {
+          const num = i * SIZE + j + 1;
+          if (num < SIZE * SIZE) {
+            const tile = document.createElement('div');
+            tile.className = 'tile';
+            tile.textContent = num;
+            tile.style.height = '145px';
+            tile.dataset.row = i;
+            tile.dataset.col = j;
+            tile.addEventListener('click', () => moveTile(i, j));
+            board.appendChild(tile);
+            tiles.push({ element: tile, value: num, row: i, col: j });
+          } else {
+            // 空白格
+            const tile = document.createElement('div');
+            tile.className = 'tile empty';
+            tile.style.height = '145px';
+            board.appendChild(tile);
+            emptyPos = { row: i, col: j };
+          }
+        }
+      }
+      
+      // 打乱拼图
+      shufflePuzzle();
+    }
+    
+    // 打乱拼图
+    function shufflePuzzle() {
+      // 随机移动100次
+      for (let i = 0; i < 100; i++) {
+        const possibleMoves = [];
+        
+        // 检查上方
+        if (emptyPos.row > 0) {
+          possibleMoves.push({ row: emptyPos.row - 1, col: emptyPos.col });
+        }
+        // 检查下方
+        if (emptyPos.row < SIZE - 1) {
+          possibleMoves.push({ row: emptyPos.row + 1, col: emptyPos.col });
+        }
+        // 检查左侧
+        if (emptyPos.col > 0) {
+          possibleMoves.push({ row: emptyPos.row, col: emptyPos.col - 1 });
+        }
+        // 检查右侧
+        if (emptyPos.col < SIZE - 1) {
+          possibleMoves.push({ row: emptyPos.row, col: emptyPos.col + 1 });
+        }
+        
+        // 随机选择一个可能的移动
+        const randomMove = possibleMoves[Math.floor(Math.random() * possibleMoves.length)];
+        
+        // 找到对应的方块
+        const tileToMove = tiles.find(t => t.row === randomMove.row && t.col === randomMove.col);
+        
+        // 交换位置
+        if (tileToMove) {
+          const oldRow = tileToMove.row;
+          const oldCol = tileToMove.col;
+          
+          tileToMove.row = emptyPos.row;
+          tileToMove.col = emptyPos.col;
+          tileToMove.element.dataset.row = emptyPos.row;
+          tileToMove.element.dataset.col = emptyPos.col;
+          
+          emptyPos.row = oldRow;
+          emptyPos.col = oldCol;
+          
+          // 更新视觉位置
+          updateTilePosition(tileToMove);
+        }
+      }
+      
+      // 重置移动次数
+      moves = 0;
+      movesDisplay.textContent = `移动次数: ${moves}`;
+    }
+    
+    // 移动方块
+    function moveTile(row, col) {
+      if (solved) return;
+      
+      // 检查是否可以移动
+      const canMove = 
+        (row === emptyPos.row && Math.abs(col - emptyPos.col) === 1) || 
+        (col === emptyPos.col && Math.abs(row - emptyPos.row) === 1);
+      
+      if (canMove) {
+        // 找到要移动的方块
+        const tileToMove = tiles.find(t => t.row === row && t.col === col);
+        
+        // 交换位置
+        const oldEmptyPos = { ...emptyPos };
+        emptyPos.row = row;
+        emptyPos.col = col;
+        
+        tileToMove.row = oldEmptyPos.row;
+        tileToMove.col = oldEmptyPos.col;
+        tileToMove.element.dataset.row = oldEmptyPos.row;
+        tileToMove.element.dataset.col = oldEmptyPos.col;
+        
+        // 更新视觉位置
+        updateTilePosition(tileToMove);
+        
+        // 增加移动次数
+        moves++;
+        movesDisplay.textContent = `移动次数: ${moves}`;
+        
+        // 检查是否完成
+        checkSolution();
+      }
+    }
+    
+    // 更新方块位置
+    function updateTilePosition(tile) {
+      const position = tile.row * SIZE + tile.col;
+      board.appendChild(tile.element);
+    }
+    
+    // 检查是否完成
+    function checkSolution() {
+      const isSolved = tiles.every(tile => {
+        const correctPos = tile.value - 1;
+        const correctRow = Math.floor(correctPos / SIZE);
+        const correctCol = correctPos % SIZE;
+        return tile.row === correctRow && tile.col === correctCol;
+      });
+      
+      if (isSolved) {
+        solved = true;
+        movesDisplay.textContent = `恭喜！完成拼图，共 ${moves} 步`;
+      }
+    }
+    
+    // 重新开始
+    restartBtn.addEventListener('click', createPuzzle);
+    
+    // 初始化
+    createPuzzle();
+  </script>
+</body>
+</html> 

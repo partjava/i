@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>记忆翻牌小游戏</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body { background: #f4f6fa; margin: 0; font-family: 'Segoe UI', Arial, sans-serif; }
+    h2 { text-align: center; margin-top: 20px; color: #4f8cff; font-size: 24px; }
+    #memory-board { width: 450px; height: 450px; margin: 20px auto 0 auto; display: grid; grid-template-columns: repeat(4, 1fr); grid-gap: 15px; }
+    .card { background: #4f8cff; border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 36px; color: white; box-shadow: 0 4px 16px rgba(0,0,0,0.2); transition: all 0.3s; }
+    .card.flipped { background: white; transform: rotateY(180deg); }
+    .card.matched { background: #90be6d; cursor: default; }
+    #score { text-align: center; font-size: 1.4em; color: #333; margin-top: 15px; font-weight: bold; }
+    #tip { text-align: center; color: #666; margin-top: 10px; font-size: 1.1em; }
+    .game-container { width: 500px; height: 600px; padding: 20px; box-sizing: border-box; margin: 0 auto; }
+  </style>
+</head>
+<body>
+  <div class="game-container">
+    <h2>记忆翻牌小游戏</h2>
+    <div id="memory-board"></div>
+    <div id="score">配对: 0</div>
+    <div id="tip">点击卡片，找出相同的配对</div>
+  </div>
+  <script>
+    const emojis = ['🐱', '🐶', '🐰', '🦊', '🐼', '🐨', '🦁', '🐯'];
+    const gameEmojis = [...emojis, ...emojis];
+    let flippedCards = [];
+    let matchedPairs = 0;
+    let isProcessing = false;
+    
+    // 打乱数组
+    function shuffle(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+      return array;
+    }
+    
+    // 创建游戏板
+    function createBoard() {
+      const board = document.getElementById('memory-board');
+      const shuffledEmojis = shuffle(gameEmojis);
+      
+      for (let i = 0; i < shuffledEmojis.length; i++) {
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.dataset.value = shuffledEmojis[i];
+        card.dataset.index = i;
+        card.style.height = '100px';
+        
+        card.addEventListener('click', flipCard);
+        board.appendChild(card);
+      }
+    }
+    
+    // 翻转卡片
+    function flipCard() {
+      if (isProcessing || this.classList.contains('flipped') || this.classList.contains('matched')) {
+        return;
+      }
+      
+      this.classList.add('flipped');
+      this.textContent = this.dataset.value;
+      
+      flippedCards.push(this);
+      
+      if (flippedCards.length === 2) {
+        isProcessing = true;
+        checkForMatch();
+      }
+    }
+    
+    // 检查是否匹配
+    function checkForMatch() {
+      const [card1, card2] = flippedCards;
+      
+      if (card1.dataset.value === card2.dataset.value) {
+        card1.classList.add('matched');
+        card2.classList.add('matched');
+        matchedPairs++;
+        document.getElementById('score').textContent = `配对: ${matchedPairs}`;
+        
+        if (matchedPairs === emojis.length) {
+          setTimeout(() => {
+            document.getElementById('score').textContent = `恭喜！全部配对成功！`;
+          }, 500);
+        }
+      } else {
+        setTimeout(() => {
+          card1.classList.remove('flipped');
+          card2.classList.remove('flipped');
+          card1.textContent = '';
+          card2.textContent = '';
+        }, 1000);
+      }
+      
+      flippedCards = [];
+      setTimeout(() => {
+        isProcessing = false;
+      }, 1000);
+    }
+    
+    // 初始化游戏
+    createBoard();
+  </script>
+</body>
+</html> 

@@ -151,8 +151,9 @@ fetch('/api/data', { cache: 'reload' });`}</pre>
         <Card title="Service Worker与PWA" size="small">
           <pre style={codeBlockStyle}>{`// 注册Service Worker，实现离线缓存
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js').then(reg => {
-    console.log('SW注册成功', reg);
+  // Service Worker注册示例代码（生产环境会自动注册）
+  // navigator.serviceWorker.register('/sw.js').then(reg => {
+  //   console.log('SW注册成功', reg);
   });
 }
 // sw.js示例
