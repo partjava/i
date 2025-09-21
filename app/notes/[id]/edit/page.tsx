@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter, useParams } from 'next/navigation';
+import MarkdownEditor from '@/app/components/MarkdownEditor';
 
 interface Note {
   _id: string;
@@ -223,13 +224,11 @@ export default function EditNotePage() {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 内容 *
               </label>
-              <textarea
-                required
-                rows={15}
-                value={note.content}
-                onChange={(e) => updateNote('content', e.target.value)}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              <MarkdownEditor 
+                value={note.content} 
+                onChange={(value) => updateNote('content', value)}
                 placeholder="请输入笔记内容..."
+                className="border border-gray-300 rounded-md"
               />
             </div>
 

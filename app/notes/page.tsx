@@ -56,7 +56,11 @@ export default function NotesPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<Note[]>([]);
   const [isSearching, setIsSearching] = useState(false);
-  const [viewMode, setViewMode] = useState<'my' | 'public'>('my');
+  const [viewMode, setViewMode] = useState<'my' | 'public'>('public');
+  // 多选相关状态
+  const [isMultiSelectMode, setIsMultiSelectMode] = useState(false);
+  const [selectedNotes, setSelectedNotes] = useState<{[key: string]: boolean}>({});
+  const [isDeleting, setIsDeleting] = useState(false);
   const [newNote, setNewNote] = useState({
     title: '',
     content: '',
@@ -70,14 +74,16 @@ export default function NotesPage() {
   // 检查登录状态 - 允许未登录用户查看公开笔记
   useEffect(() => {
     if (status === 'unauthenticated') {
-      // 设置为公开模式
+      // 未登录用户强制设置为公开模式
       setViewMode('public');
-      // 不再重定向到登录页
-    } else if (status === 'authenticated') {
+    } else if (status === 'authenticated' && session?.user) {
+      // 已登录用户默认查看"我的笔记"
+      setViewMode('my');
       // 确保会话有效
       checkSession();
     }
-  }, [status]);
+    // status === 'loading' 时不改变 viewMode，保持当前状态
+  }, [status, session]); // 添加 session 依赖
   
   // 检查会话状态
   const checkSession = async () => {
@@ -115,22 +121,23 @@ export default function NotesPage() {
 
   // 获取笔记列表
   useEffect(() => {
-    // 无论登录状态如何，都尝试获取笔记
-    fetchNotes(1);
+    // 无论登录状态如何，都尝试获取笔记，并强制忽略缓存
+    fetchNotes(1, true);
   }, [status]);
   
   // 当视图模式切换时获取笔记
   useEffect(() => {
-    if (viewMode === 'public' && status !== 'loading') {
-      fetchNotes(1);
+    if (status !== 'loading') {
+      fetchNotes(1, true);
     }
   }, [viewMode]);
 
   // 获取笔记列表 - 简化版本
-  const fetchNotes = useCallback(async (page: number = pagination?.page || 1, _ignoreCache: boolean = false) => {
+  const fetchNotes = useCallback(async (page: number = pagination?.page || 1, ignoreCache: boolean = false) => {
     try {
       setLoading(true);
       const limit = pagination?.limit || 10; // 使用默认值10，避免undefined
+      
       
       // 统一使用一个API端点
       let url = `/api/notes?page=${page}&limit=${limit}`;
@@ -140,20 +147,24 @@ export default function NotesPage() {
         url = `/api/public-notes?page=${page}&limit=${limit}`;
       }
       
+      // 始终添加时间戳以避免缓存问题
+      url += `&_t=${new Date().getTime()}`;
+      
       // 设置正确的凭证和请求头
       const response = await fetch(url, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
         },
         credentials: 'include', // 包含凭证
+        cache: 'no-store' // 禁用缓存
       });
       
       if (response.ok) {
         const data = await response.json();
-        
-        // 增加调试输出，查看实际数据格式
-        console.log('获取到的数据:', data);
         
         // 灵活处理不同格式的数据
         let notesData = [];
@@ -179,7 +190,6 @@ export default function NotesPage() {
           notesData = data;
         }
         
-        console.log('处理后的笔记数据:', notesData);
         setNotes(notesData);
         setPagination(paginationData || {
           page: page,
@@ -224,7 +234,7 @@ export default function NotesPage() {
     }
   };
 
-  // 搜索功能 - 优化版本
+  // 搜索功能 - 优化版本，支持未登录用户搜索公开笔记
   const handleSearch = useCallback(async (query: string) => {
     if (!query.trim()) {
       setSearchResults([]);
@@ -236,15 +246,23 @@ export default function NotesPage() {
       return;
     }
 
-    // 确保用户已登录再搜索
-    if (status !== 'authenticated' || !session?.user) {
-      return;
-    }
+    // 始终允许搜索公开笔记，无论在哪个视图下
+    // 如果用户已登录且在"我的笔记"视图，则同时搜索个人笔记
+    const searchPublic = true; // 始终搜索公开笔记
+    const searchPersonal = status === 'authenticated' && viewMode === 'my';
 
     setIsSearching(true);
     try {
-      const filterParam = viewMode === 'public' ? '&filter=public' : '';
-      const response = await fetch(`/api/notes/search?q=${encodeURIComponent(query)}${filterParam}`, {
+      // 构建搜索参数
+      let searchParams = `q=${encodeURIComponent(query)}&searchPublic=${searchPublic}`;
+      if (searchPersonal) {
+        searchParams += '&searchPersonal=true';
+      }
+      
+      // 添加时间戳避免缓存问题
+      searchParams += `&_t=${new Date().getTime()}`;
+      
+      const response = await fetch(`/api/notes/search?${searchParams}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -253,31 +271,55 @@ export default function NotesPage() {
       });
       if (response.ok) {
         const data = await response.json();
-        setSearchResults(data.notes);
+        if (data.notes && Array.isArray(data.notes)) {
+          setSearchResults(data.notes);
+        } else {
+          setSearchResults([]);
+        }
+      } else {
+        console.error('搜索请求失败:', response.status);
+        // 尝试读取错误信息
+        try {
+          const errorData = await response.json();
+          console.error('搜索错误:', errorData);
+        } catch (e) {
+          console.error('无法解析错误响应');
+        }
       }
     } catch (error) {
-      // 搜索出错
+      console.error('搜索出错:', error);
     } finally {
       setIsSearching(false);
     }
-  }, [status, session, viewMode]);
+  }, [status, viewMode]);
 
-  // 搜索输入处理 - 优化防抖
+  // 搜索输入处理 - 优化防抖，支持未登录用户搜索公开笔记
   useEffect(() => {
-    // 只有在已登录状态下且搜索词不为空才进行搜索
-    if (status === 'authenticated' && session?.user && searchQuery.trim().length >= 2) {
-      const timer = setTimeout(() => {
-        handleSearch(searchQuery);
-      }, 800); // 增加防抖时间到800ms
-
-      return () => clearTimeout(timer);
-    } else if (searchQuery.trim().length === 0) {
-      // 清空搜索结果
+    // 如果搜索词为空，清空搜索结果
+    if (searchQuery.trim().length === 0) {
       setSearchResults([]);
       setIsSearching(false);
+      return;
     }
-    // 不包含handleSearch在依赖中
-  }, [searchQuery, viewMode, status, session?.user?.id]);
+    
+    // 搜索词长度至少为2
+    if (searchQuery.trim().length < 2) {
+      return;
+    }
+    
+    // 如果是"我的笔记"视图但用户未登录，不执行搜索
+    if (viewMode === 'my' && status !== 'authenticated') {
+      return;
+    }
+    
+    // 设置防抖定时器
+    const timer = setTimeout(() => {
+      handleSearch(searchQuery);
+    }, 800); // 增加防抖时间到800ms
+
+    return () => clearTimeout(timer);
+    
+  }, [searchQuery, viewMode, status, handleSearch]);
 
   const handleCreateNote = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -353,17 +395,80 @@ export default function NotesPage() {
   const handleDeleteNote = async (noteId: string) => {
     if (confirm('确定要删除这个笔记吗？')) {
       try {
+        console.log('尝试删除笔记:', noteId);
+        
         const response = await fetch(`/api/notes/${noteId}`, {
           method: 'DELETE',
           credentials: 'include',
         });
 
         if (response.ok) {
+          console.log('笔记删除成功');
           fetchNotes(pagination.page); // 重新获取当前页笔记
+          // 显示成功消息
+          alert('笔记已成功删除');
+        } else {
+          // 删除失败时显示错误信息
+          const errorData = await response.json();
+          console.error('删除笔记失败:', errorData);
+          alert(`删除失败: ${errorData.error || '未知错误'}`);
         }
       } catch (error) {
-        // 删除笔记失败
+        console.error('删除笔记错误:', error);
+        alert('删除笔记时发生错误，请重试');
       }
+    }
+  };
+  
+  // 批量删除笔记
+  const handleBatchDeleteNotes = async () => {
+    try {
+      setIsDeleting(true);
+      
+      // 获取所有选中的笔记ID
+      const noteIdsToDelete = Object.entries(selectedNotes)
+        .filter(([_, isSelected]) => isSelected)
+        .map(([noteId, _]) => noteId);
+      
+      if (noteIdsToDelete.length === 0) {
+        alert('请选择要删除的笔记');
+        setIsDeleting(false);
+        return;
+      }
+      
+      console.log('尝试批量删除笔记:', noteIdsToDelete);
+      
+      const response = await fetch('/api/notes/batch-delete', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ noteIds: noteIdsToDelete }),
+      });
+      
+      if (response.ok) {
+        const result = await response.json();
+        console.log('批量删除成功:', result);
+        
+        // 清除选择状态
+        setSelectedNotes({});
+        // 关闭多选模式
+        setIsMultiSelectMode(false);
+        // 重新获取笔记列表
+        fetchNotes(pagination.page);
+        
+        alert(`成功删除 ${result.data.deletedCount} 篇笔记`);
+      } else {
+        const errorData = await response.json();
+        console.error('批量删除失败:', errorData);
+        alert(`删除失败: ${errorData.error || '未知错误'}`);
+      }
+    } catch (error) {
+      console.error('批量删除错误:', error);
+      alert('批量删除时发生错误，请重试');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -392,25 +497,31 @@ export default function NotesPage() {
         </h1>
         <div className="flex items-center space-x-4">
           <div className="flex bg-gray-200 rounded-lg p-1" style={{ marginTop: '50px' }}>
+            {/* 只有登录用户才能看到"我的笔记"按钮 */}
+            {status === 'authenticated' && session?.user && (
+              <button
+                onClick={() => {
+                  setViewMode('my');
+                  // 切换视图时清除选择状态
+                  setIsMultiSelectMode(false);
+                  setSelectedNotes({});
+                }}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  viewMode === 'my'
+                    ? 'bg-white text-gray-900 shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                我的笔记
+              </button>
+            )}
             <button
               onClick={() => {
-                if (status === 'authenticated' && session?.user) {
-                  setViewMode('my');
-                } else {
-                  // 如果未登录，点击“我的笔记”应该提示登录
-                  alert('请先登录再查看个人笔记');
-                }
+                setViewMode('public');
+                // 切换到公开笔记时关闭多选模式
+                setIsMultiSelectMode(false);
+                setSelectedNotes({});
               }}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                viewMode === 'my'
-                  ? 'bg-white text-gray-900 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              我的笔记
-            </button>
-            <button
-              onClick={() => setViewMode('public')}
               className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                 viewMode === 'public'
                   ? 'bg-white text-gray-900 shadow-sm'
@@ -420,20 +531,48 @@ export default function NotesPage() {
               公开笔记
             </button>
           </div>
-          {viewMode === 'my' && (
-            <button
-              onClick={() => {
-                if (status === 'authenticated' && session?.user) {
-                  setShowCreateForm(true);
-                } else {
-                  alert('请先登录');
-                }
-              }}
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-              style={{ marginTop: '50px' }}
-            >
-              新建笔记
-            </button>
+          {viewMode === 'my' && status === 'authenticated' && session?.user && (
+            <div className="flex space-x-2" style={{ marginTop: '50px' }}>
+              <button
+                onClick={() => {
+                  if (status === 'authenticated' && session?.user) {
+                    setShowCreateForm(true);
+                  } else {
+                    alert('请先登录');
+                  }
+                }}
+                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                新建笔记
+              </button>
+              <button
+                onClick={() => {
+                  setIsMultiSelectMode(!isMultiSelectMode);
+                  setSelectedNotes({});
+                }}
+                className={`px-4 py-2 rounded-lg transition-colors ${
+                  isMultiSelectMode 
+                    ? 'bg-gray-600 text-white hover:bg-gray-700' 
+                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                }`}
+              >
+                {isMultiSelectMode ? '取消多选' : '多选'}
+              </button>
+              {isMultiSelectMode && Object.keys(selectedNotes).filter(id => selectedNotes[id]).length > 0 && (
+                <button
+                  onClick={() => {
+                    const selectedCount = Object.keys(selectedNotes).filter(id => selectedNotes[id]).length;
+                    if (confirm(`确定要删除选中的 ${selectedCount} 篇笔记吗？`)) {
+                      handleBatchDeleteNotes();
+                    }
+                  }}
+                  disabled={isDeleting}
+                  className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
+                >
+                  {isDeleting ? '删除中...' : '删除所选'}
+                </button>
+              )}
+            </div>
           )}
         </div>
       </div>
@@ -456,10 +595,10 @@ export default function NotesPage() {
         </div>
       </div>
 
-      {/* 统计信息 */}
-      {!searchQuery.trim() && (
-        <div className="mb-4 text-sm text-gray-600 note-count" data-notes-count={pagination?.total || 0}>
-          共 {pagination?.total || 0} 篇笔记，第 {pagination?.page || 1} / {pagination?.totalPages || 1} 页
+      {/* 显示笔记统计信息 */}
+      {!searchQuery.trim() && pagination?.total > 0 && (
+        <div className="mb-4 text-sm text-gray-600 note-count" data-notes-count={pagination?.total || 0} data-view-mode={viewMode}>
+          共 {pagination?.total || 0} 篇{viewMode === 'my' ? '我的' : '公开'}笔记，第 {pagination?.page || 1} / {pagination?.totalPages || 1} 页
         </div>
       )}
 
@@ -469,13 +608,35 @@ export default function NotesPage() {
         {!displayNotes || displayNotes.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-gray-500 text-lg">
-              {searchQuery.trim() ? '没有找到相关笔记' : '还没有笔记，快去创建一个吧！'}
+              {searchQuery.trim() ? '没有找到相关笔记' : 
+                viewMode === 'my' && status === 'authenticated' ? 
+                  '还没有笔记，快去创建一个吧！' : 
+                  '暂时没有公开笔记可以查看'
+              }
             </p>
           </div>
         ) : (
           displayNotes.map((note) => (
-            <div key={note.id || note._id} className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
+            <div key={note.id || note._id} className={`bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow ${
+              isMultiSelectMode && viewMode === 'my' ? 'border-2 ' + (selectedNotes[note.id || note._id || ''] ? 'border-blue-500' : 'border-transparent') : ''
+            }`}>
               <div className="flex justify-between items-start mb-4">
+                {isMultiSelectMode && viewMode === 'my' && (
+                  <div className="mr-3 mt-1">
+                    <input
+                      type="checkbox"
+                      checked={!!selectedNotes[note.id || note._id || '']}
+                      onChange={(e) => {
+                        const noteId = note.id || note._id || '';
+                        setSelectedNotes(prev => ({
+                          ...prev,
+                          [noteId]: e.target.checked
+                        }));
+                      }}
+                      className="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
+                  </div>
+                )}
                 <div className="flex-1">
                   <h3 className="text-xl font-semibold mb-2">
                     <Link href={`/notes/${note.id || note._id}`} className="text-blue-600 hover:text-blue-800">
@@ -499,7 +660,7 @@ export default function NotesPage() {
                     )}
                   </div>
                 </div>
-                {viewMode === 'my' && (
+                {viewMode === 'my' && !isMultiSelectMode && (
                   <div className="flex space-x-2">
                     <Link 
                       href={`/notes/${note.id || note._id}/edit`}
@@ -508,7 +669,15 @@ export default function NotesPage() {
                       编辑
                     </Link>
                     <button
-                      onClick={() => handleDeleteNote(String(note._id || note.id || '') )}
+                      onClick={() => {
+                        // 优先使用数字ID，因为API期望数字ID
+                        const numericId = note.id || (note._id ? parseInt(note._id.toString(), 10) : null);
+                        if (numericId) {
+                          handleDeleteNote(numericId.toString());
+                        } else {
+                          alert('无法删除笔记：无效的笔记ID');
+                        }
+                      }}
                       className="text-red-600 hover:text-red-800 text-sm"
                     >
                       删除
@@ -630,7 +799,7 @@ export default function NotesPage() {
                     type="text"
                     value={newNote.title}
                     onChange={(e) => setNewNote({ ...newNote, title: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
                     required
                   />
                 </div>
@@ -642,7 +811,7 @@ export default function NotesPage() {
                       type="text"
                       value={newNote.category}
                       onChange={(e) => setNewNote({ ...newNote, category: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
                     />
                   </div>
                   <div>
@@ -651,7 +820,7 @@ export default function NotesPage() {
                       type="text"
                       value={newNote.technology}
                       onChange={(e) => setNewNote({ ...newNote, technology: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
                     />
                   </div>
                 </div>
@@ -662,7 +831,7 @@ export default function NotesPage() {
                     type="text"
                     value={newNote.subcategory}
                     onChange={(e) => setNewNote({ ...newNote, subcategory: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
                   />
                 </div>
 
@@ -672,7 +841,7 @@ export default function NotesPage() {
                     type="text"
                     value={newNote.tags}
                     onChange={(e) => setNewNote({ ...newNote, tags: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
                     placeholder="例如：JavaScript, React, 前端"
                   />
                 </div>
@@ -691,7 +860,7 @@ export default function NotesPage() {
                     id="isPublic"
                     checked={newNote.isPublic}
                     onChange={(e) => setNewNote({ ...newNote, isPublic: e.target.checked })}
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded bg-white"
                   />
                   <label htmlFor="isPublic" className="ml-2 block text-sm text-gray-900">
                     公开笔记（其他用户可以查看）

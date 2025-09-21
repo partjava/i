@@ -72,12 +72,13 @@ export default function NoteDetailPage() {
     }
   }, [noteId]);
 
-  // 检查登录状态
+  // 检查登录状态 - 只有访问非公开笔记时才需要登录
   useEffect(() => {
-    if (status === 'unauthenticated') {
+    // 获取笔记后再检查权限，而不是立即重定向
+    if (status === 'unauthenticated' && note && !note.isPublic) {
       router.push('/login');
     }
-  }, [status, router]);
+  }, [status, router, note]);
 
   // 点赞功能
   const handleLike = async () => {
@@ -127,11 +128,18 @@ export default function NoteDetailPage() {
     );
   }
 
-  if (!session || !note) {
+  // 允许未登录用户查看公开笔记
+  if (!note) {
+    return null;
+  }
+  
+  // 未登录用户只能查看公开笔记
+  if (!session && (!note.isPublic)) {
+    router.push('/login');
     return null;
   }
 
-  const isOwner = session.user?.id === note.author_id?.toString();
+  const isOwner = session?.user?.id === note.author_id?.toString();
 
   return (
     <div className="flex min-h-screen">
@@ -241,7 +249,7 @@ export default function NoteDetailPage() {
             )}
           </div>
 
-          {note.tags.length > 0 && (
+          {note.tags && note.tags.length > 0 && (
             <div className="flex flex-wrap gap-2">
               {note.tags.map((tag, index) => (
                 <span key={index} className="bg-gray-100 text-gray-700 px-2 py-1 rounded text-sm">

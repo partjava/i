@@ -10,7 +10,7 @@ module.exports = {
         PORT: 3000,
         NODE_ENV: 'production',
         NEXTAUTH_URL: 'https://www.partjava.com',
-        NEXTAUTH_SECRET: 'your-super-secret-key-here-change-this-in-production',
+        NEXTAUTH_SECRET: 'REDACTED-NEXTAUTH-SECRET=',
         DB_HOST: 'localhost',
         DB_USER: 'dbuser',
         DB_PASSWORD: 'REDACTED',

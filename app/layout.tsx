@@ -16,8 +16,8 @@ export const metadata: Metadata = {
     title: 'PartJava',
   },
   icons: {
-    icon: '/icons/icon-192x192.png',
-    apple: '/icons/icon-192x192.png',
+    icon: '/favicon.ico',
+    apple: '/favicon.ico',
   },
 }
 
@@ -26,7 +26,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-  themeColor: '#3B82F6',
+  themeColor: '#6366f1',
 }
 
 export default function RootLayout({
@@ -44,7 +44,7 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-title" content="PartJava" />
         <meta name="format-detection" content="telephone=no" />
         <meta name="mobile-web-app-capable" content="yes" />
-        <meta name="msapplication-TileColor" content="#3B82F6" />
+        <meta name="msapplication-TileColor" content="#6366f1" />
         <meta name="msapplication-tap-highlight" content="no" />
 
         {/* Apple Touch Icons */}
