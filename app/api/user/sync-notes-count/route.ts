@@ -44,35 +44,15 @@ export async function POST(request: NextRequest) {
       console.log(`用户 ${userId} 的笔记数量不一致：数据库 ${dbNoteCount}，前端 ${totalNotes}`);
       
       if (dbNoteCount < totalNotes) {
-        // 数据库中笔记数量少于前端，需要添加笔记
-        const notesToAdd = totalNotes - dbNoteCount;
-        const now = new Date().toISOString().slice(0, 19).replace('T', ' ');
-        
-        // 批量添加笔记
-        for (let i = 0; i < notesToAdd; i++) {
-          // 随机决定是否为公开笔记
-          const isPublic = Math.random() > 0.5 ? 1 : 0;
-          
-          await executeQuery(
-            `INSERT INTO notes 
-              (author_id, title, content, is_public, created_at, updated_at) 
-            VALUES (?, ?, ?, ?, ?, ?)`,
-            [
-              userId, 
-              `笔记 ${dbNoteCount + i + 1}`, 
-              `这是从前端同步的笔记 ${dbNoteCount + i + 1}`, 
-              isPublic, 
-              now, 
-              now
-            ]
-          );
-        }
+        // 数据库中笔记数量少于前端，但我们不应该自动创建笔记
+        // 这很可能是因为前端显示了所有公开笔记的数量，而不仅仅是用户自己的笔记
+        console.log(`前端显示的笔记数量(${totalNotes})大于用户实际拥有的笔记数量(${dbNoteCount})，不自动创建笔记`);
         
         return NextResponse.json({
           success: true,
-          message: '笔记数量已同步',
-          added: notesToAdd,
-          current: totalNotes
+          message: '笔记数量不同步，但不自动创建笔记',
+          dbCount: dbNoteCount,
+          frontendCount: totalNotes
         });
       } else {
         // 数据库中笔记数量多于前端，这种情况通常不处理

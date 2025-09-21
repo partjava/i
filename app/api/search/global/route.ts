@@ -200,48 +200,45 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // 搜索笔记（如果用户已登录）
+    // 搜索笔记
     if (!type || type === 'all' || type === 'note') {
       try {
         const session = await getServerSession(authOptions);
+        
+        // 构建查询条件：未登录用户只能搜索公开笔记，登录用户可以搜索公开笔记和个人笔记
+        let whereCondition = 'n.is_public = 1';
+        let queryParams = [`%${query}%`, `%${query}%`, `%${query}%`, `%${query}%`];
+        
         if (session?.user?.id) {
-          // 先获取笔记总数
-          const countResult = await executeQuery(`
-            SELECT COUNT(*) as total
-            FROM notes n
-            WHERE (n.is_public = true OR n.author_id = ?) 
-              AND (n.title LIKE ? OR n.content LIKE ? OR n.category LIKE ? OR n.technology LIKE ?)
-          `, [
-            parseInt(session.user.id),
-            `%${query}%`,
-            `%${query}%`,
-            `%${query}%`,
-            `%${query}%`
-          ]) as any[];
+          whereCondition = '(n.is_public = 1 OR n.author_id = ?)';
+          queryParams = [session.user.id, `%${query}%`, `%${query}%`, `%${query}%`, `%${query}%`];
+        }
+        
+        // 先获取笔记总数
+        const countResult = await executeQuery(`
+          SELECT COUNT(*) as total
+          FROM notes n
+          WHERE ${whereCondition} 
+            AND (n.title LIKE ? OR n.content LIKE ? OR n.category LIKE ? OR n.technology LIKE ?)
+        `, queryParams) as any[];
 
-          const noteCount = countResult[0].total;
+        const noteCount = countResult[0].total;
 
-          // 获取笔记数据（分页）
-          const notes = await executeQuery(`
-            SELECT n.id, n.title, n.content, n.category, n.technology, n.subcategory, n.tags, 
-                   n.is_public, n.created_at, n.updated_at, u.name as author_name
-            FROM notes n
-            LEFT JOIN users u ON n.author_id = u.id 
-            WHERE (n.is_public = true OR n.author_id = ?) 
-              AND (n.title LIKE ? OR n.content LIKE ? OR n.category LIKE ? OR n.technology LIKE ?)
-            ORDER BY n.updated_at DESC
-            LIMIT ? OFFSET ?
-          `, [
-            parseInt(session.user.id),
-            `%${query}%`,
-            `%${query}%`,
-            `%${query}%`,
-            `%${query}%`,
-            Math.min(20, limit), // 限制笔记数量
-            0 // 笔记从第一条开始，不受分页影响（因为和其他类型混合排序）
-          ]) as any[];
+        // 获取笔记数据（分页）
+        const notesQuery = `
+          SELECT n.id, n.title, n.content, n.category, n.technology, n.subcategory, n.tags, 
+                 n.is_public, n.created_at, n.updated_at, u.name as author_name
+          FROM notes n
+          LEFT JOIN users u ON n.author_id = u.id 
+          WHERE ${whereCondition} 
+            AND (n.title LIKE ? OR n.content LIKE ? OR n.category LIKE ? OR n.technology LIKE ?)
+          ORDER BY n.updated_at DESC
+          LIMIT ${Math.min(20, limit)} OFFSET 0
+        `;
+        
+        const notes = await executeQuery(notesQuery, queryParams) as any[];
 
-          notes.forEach((note) => {
+        notes.forEach((note) => {
             const titleScore = searchInText(note.title, query);
             const contentScore = searchInText(note.content, query) * 0.6;
             const categoryScore = searchInText(note.category, query) * 0.8;
@@ -261,9 +258,8 @@ export async function GET(request: NextRequest) {
               });
             }
           });
-        }
       } catch (error) {
-        console.error('搜索笔记出错:', error);
+        // 静默处理笔记搜索错误
       }
     }
 
@@ -272,7 +268,7 @@ export async function GET(request: NextRequest) {
       try {
         // 只查公开用户（可根据需求调整）
         const users = await executeQuery(
-          `SELECT id, name, email, github, bio, image
+          `SELECT id, name, email, github, bio
            FROM users
            WHERE 
              (name LIKE ? OR email LIKE ? OR github LIKE ? OR bio LIKE ?)
@@ -300,7 +296,7 @@ export async function GET(request: NextRequest) {
               description: user.bio || user.email,
               category: '用户',
               type: 'user',
-              avatar: user.image,
+              avatar: undefined,
               email: user.email,
               github: user.github,
               path: `/profile/${user.id}`,
@@ -309,7 +305,7 @@ export async function GET(request: NextRequest) {
           }
         });
       } catch (error) {
-        console.error('搜索用户出错:', error);
+        // 静默处理用户搜索错误
       }
     }
 
@@ -342,7 +338,6 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('全局搜索失败:', error);
     return NextResponse.json(
       { 
         success: false, 

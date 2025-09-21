@@ -209,6 +209,9 @@ export class NoteRepository extends BaseRepository {
           'SELECT COUNT(*) as total FROM notes WHERE is_public = 1'
         )
       ]);
+      
+      // 添加日志，确认公开笔记数量
+      console.log('公开笔记数量查询结果:', countResult);
 
 
       const totalCount = countResult[0]?.total || 0;

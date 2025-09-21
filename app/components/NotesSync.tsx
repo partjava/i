@@ -61,12 +61,18 @@ export default function NotesSync() {
       // 尝试多种方式获取笔记数量
       let notesCount = 0;
       
-      // 方法1：查找特定的笔记数量元素
+      // 方法1：查找特定的笔记数量元素，但仅在"我的笔记"视图下
       const notesCountElement = document.querySelector('.note-count');
       if (notesCountElement) {
-        const count = parseInt(notesCountElement.textContent || '0', 10);
-        if (!isNaN(count) && count > 0) {
-          notesCount = count;
+        // 检查是否在"我的笔记"视图
+        const viewMode = notesCountElement.getAttribute('data-view-mode');
+        if (viewMode === 'my') {
+          const count = parseInt(notesCountElement.textContent || '0', 10);
+          if (!isNaN(count) && count > 0) {
+            notesCount = count;
+          }
+        } else {
+          console.log('当前不是"我的笔记"视图，跳过从note-count元素提取笔记数量');
         }
       }
       
@@ -78,15 +84,23 @@ export default function NotesSync() {
         }
       }
       
-      // 方法3：从文本内容中提取笔记数量
+      // 方法3：从文本内容中提取笔记数量 - 但仅在"我的笔记"视图下
       if (notesCount === 0) {
-        const pageContent = document.body.textContent || '';
-        const match = pageContent.match(/共\s*(\d+)\s*篇笔记/);
-        if (match && match[1]) {
-          const count = parseInt(match[1], 10);
-          if (!isNaN(count) && count > 0) {
-            notesCount = count;
+        // 检查当前是否在"我的笔记"视图
+        const isMyNotesView = document.querySelector('h1')?.textContent?.includes('我的笔记') || false;
+        
+        // 只有在"我的笔记"视图下才从文本中提取数量
+        if (isMyNotesView) {
+          const pageContent = document.body.textContent || '';
+          const match = pageContent.match(/共\s*(\d+)\s*篇笔记/);
+          if (match && match[1]) {
+            const count = parseInt(match[1], 10);
+            if (!isNaN(count) && count > 0) {
+              notesCount = count;
+            }
           }
+        } else {
+          console.log('当前不是"我的笔记"视图，跳过从文本中提取笔记数量');
         }
       }
       

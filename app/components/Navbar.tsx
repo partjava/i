@@ -20,6 +20,7 @@ import {
 import GlobalSearch from './GlobalSearch';
 import { useSidebar } from './Sidebar';
 import SettingModal from './SettingModal';
+import AI3DRobot from './AI3DRobot';
 
 export default function Navbar() {
   const { data: session, status, update } = useSession();
@@ -27,6 +28,8 @@ export default function Navbar() {
   const router = useRouter();
   const { setIsOpen } = useSidebar();
   const [settingOpen, setSettingOpen] = useState(false);
+  const [showRobot, setShowRobot] = useState(false);
+  const [robotPreloaded, setRobotPreloaded] = useState(false);
 
   // 强制检查session状态
   useEffect(() => {
@@ -48,6 +51,18 @@ export default function Navbar() {
       checkSession();
     }
   }, [session, status, router]);
+
+  // 预加载机器人资源
+  useEffect(() => {
+    const preloadRobot = () => {
+      // 模拟预加载完成
+      setTimeout(() => {
+        setRobotPreloaded(true);
+      }, 1000);
+    };
+
+    preloadRobot();
+  }, []);
 
   const handleSignOut = async () => {
     try {
@@ -171,21 +186,21 @@ export default function Navbar() {
             <div className="hidden md:flex items-center space-x-6 ml-8">
               <Link 
                 href="/" 
-                className="flex flex-col items-center text-gray-600 hover:text-blue-600 transition-colors"
+                className="flex flex-col items-center text-gray-600 hover:text-purple-600 transition-colors"
               >
                 <HomeOutlined className="text-lg mb-1" />
                 <span className="text-xs">首页</span>
               </Link>
               <Link 
                 href="/study" 
-                className="flex flex-col items-center text-gray-600 hover:text-blue-600 transition-colors"
+                className="flex flex-col items-center text-gray-600 hover:text-purple-600 transition-colors"
               >
                 <BookOutlined className="text-lg mb-1" />
                 <span className="text-xs">学习</span>
               </Link>
               <Link 
                 href="/notes" 
-                className="flex flex-col items-center text-gray-600 hover:text-blue-600 transition-colors"
+                className="flex flex-col items-center text-gray-600 hover:text-purple-600 transition-colors"
               >
                 <EditOutlined className="text-lg mb-1" />
                 <span className="text-xs">笔记</span>
@@ -193,7 +208,7 @@ export default function Navbar() {
               {session && (
                 <Link 
                   href="/profile" 
-                  className="flex flex-col items-center text-gray-600 hover:text-blue-600 transition-colors"
+                  className="flex flex-col items-center text-gray-600 hover:text-purple-600 transition-colors"
                 >
                   <UserOutlined className="text-lg mb-1" />
                   <span className="text-xs">资料</span>
@@ -201,14 +216,14 @@ export default function Navbar() {
               )}
               <Link 
                 href="/code-editor" 
-                className="flex flex-col items-center text-gray-600 hover:text-blue-600 transition-colors"
+                className="flex flex-col items-center text-gray-600 hover:text-purple-600 transition-colors"
               >
                 <CodeOutlined className="text-lg mb-1" />
                 <span className="text-xs">代码</span>
               </Link>
               <Link 
                 href="/challenges" 
-                className="flex flex-col items-center text-gray-600 hover:text-blue-600 transition-colors"
+                className="flex flex-col items-center text-gray-600 hover:text-purple-600 transition-colors"
               >
                 <svg className="w-5 h-5 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -217,7 +232,7 @@ export default function Navbar() {
               </Link>
               <Link 
                 href="/search" 
-                className="flex flex-col items-center text-gray-600 hover:text-blue-600 transition-colors"
+                className="flex flex-col items-center text-gray-600 hover:text-purple-600 transition-colors"
               >
                 <svg className="w-5 h-5 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -226,13 +241,23 @@ export default function Navbar() {
               </Link>
               <Link 
                 href="/ai-chat" 
-                className="flex flex-col items-center text-gray-600 hover:text-blue-600 transition-colors"
+                className="flex flex-col items-center text-gray-600 hover:text-purple-600 transition-colors"
               >
                 <svg className="w-5 h-5 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path d="M12 2a7 7 0 017 7v2a7 7 0 01-7 7 7 7 0 01-7-7V9a7 7 0 017-7zm0 2a5 5 0 00-5 5v2a5 5 0 005 5 5 5 0 005-5V9a5 5 0 00-5-5zm0 7a2 2 0 110-4 2 2 0 010 4z" />
                 </svg>
                 <span className="text-xs">AI</span>
               </Link>
+              <button 
+                onClick={() => setShowRobot(true)}
+                className={`flex flex-col items-center transition-all duration-200 transform hover:scale-105 text-gray-600 hover:text-purple-600`}
+                title={robotPreloaded ? "机器人已就绪" : "正在加载机器人..."}
+              >
+                <svg className="w-5 h-5 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                </svg>
+                <span className="text-xs">机器人</span>
+              </button>
             </div>
           </div>
 
@@ -258,7 +283,7 @@ export default function Navbar() {
                     </svg>
                   }
                   onClick={() => router.push('/search')}
-                  className="text-gray-600 hover:text-blue-600"
+                  className="text-gray-600 hover:text-purple-600"
                 />
               </Tooltip>
             </div>
@@ -277,7 +302,7 @@ export default function Navbar() {
                     <Button
                       type="text"
                       icon={<BellOutlined />}
-                      className="text-gray-600 hover:text-blue-600"
+                      className="text-gray-600 hover:text-purple-600"
                     />
                   </Badge>
                 </Tooltip>
@@ -306,7 +331,7 @@ export default function Navbar() {
                 <Button
                   type="text"
                   onClick={() => router.push('/login')}
-                  className="text-gray-600 hover:text-blue-600"
+                  className="text-gray-600 hover:text-purple-600"
                 >
                   登录
                 </Button>
@@ -332,6 +357,11 @@ export default function Navbar() {
         />
       </div>
       <SettingModal open={settingOpen} onClose={() => setSettingOpen(false)} />
+      
+      {/* AI 3D机器人 */}
+      {showRobot && (
+        <AI3DRobot onClose={() => setShowRobot(false)} />
+      )}
     </nav>
   );
 }

@@ -71,7 +71,7 @@ function SearchContent() {
       const params = new URLSearchParams({
         q: query,
         type,
-        limit: '20'
+        limit: '50'
       });
       
       if (category) {
@@ -86,12 +86,10 @@ function SearchContent() {
         setTotal(data.total);
         setSuggestions(data.suggestions || []);
       } else {
-        console.error('搜索失败:', data.message);
         setSearchResults([]);
         setTotal(0);
       }
     } catch (error) {
-      console.error('搜索请求失败:', error);
       setSearchResults([]);
       setTotal(0);
     } finally {
@@ -160,6 +158,7 @@ function SearchContent() {
     tool: searchResults.filter(r => r.type === 'tool'),
     note: searchResults.filter(r => r.type === 'note')
   };
+
 
   const categories = Array.from(new Set(searchResults.map(r => r.category))).filter(Boolean);
 

@@ -2,18 +2,10 @@ export const dynamic = 'force-dynamic'
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { executeQuery } from '@/lib/database'
+import { executeQuery } from '@/app/lib/database'
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: '请先登录' },
-        { status: 401 }
-      )
-    }
-
     const { searchParams } = request.nextUrl
     const query = searchParams.get('q')
     const category = searchParams.get('category')
@@ -21,6 +13,29 @@ export async function GET(request: NextRequest) {
     const filter = searchParams.get('filter')
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '10')
+    
+    // 获取用户会话
+    const session = await getServerSession(authOptions)
+    
+    // 获取搜索范围参数
+    const searchPublic = searchParams.get('searchPublic') === 'true'
+    const searchPersonal = searchParams.get('searchPersonal') === 'true'
+    
+    // 如果要搜索个人笔记但未登录，则返回错误
+    if (searchPersonal && !session?.user?.id) {
+      return NextResponse.json(
+        { error: '请先登录以搜索个人笔记' },
+        { status: 401 }
+      )
+    }
+    
+    // 如果既不搜索公开笔记也不搜索个人笔记，默认搜索公开笔记
+    if (!searchPublic && !searchPersonal) {
+      return NextResponse.json(
+        { error: '请指定搜索范围' },
+        { status: 400 }
+      )
+    }
 
     if (!query || query.trim().length < 2) {
       return NextResponse.json(
@@ -29,22 +44,43 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    let searchQuery = `
-      SELECT n.id, n.title, n.content, n.category, n.technology, n.subcategory, n.tags, 
-             n.is_public, n.created_at, n.updated_at${filter === 'public' ? ', u.name as author_name' : ''}
-      FROM notes n
-      ${filter === 'public' ? 'JOIN users u ON n.author_id = u.id' : ''}
-      WHERE ${filter === 'public' ? 'n.is_public = true' : 'n.author_id = ?'}
-        AND (n.title LIKE ? OR n.content LIKE ? OR JSON_SEARCH(n.tags, 'one', ?, NULL, '$[*]') IS NOT NULL)
-    `
-
-    const queryParams = []
-    if (filter !== 'public') {
-      queryParams.push(parseInt(session.user.id))
+    // 构建WHERE条件
+    let whereConditions = [];
+    const queryParams = [];
+    
+    // 添加搜索范围条件
+    if (searchPublic && searchPersonal && session?.user?.id) {
+      // 同时搜索公开笔记和个人笔记
+      whereConditions.push('(n.is_public = 1 OR n.author_id = ?)');
+      queryParams.push(parseInt(session.user.id));
+    } else if (searchPublic) {
+      // 只搜索公开笔记
+      whereConditions.push('n.is_public = 1');
+    } else if (searchPersonal && session?.user?.id) {
+      // 只搜索个人笔记
+      whereConditions.push('n.author_id = ?');
+      queryParams.push(parseInt(session.user.id));
     }
     
+    // 添加搜索内容条件 - 简化版本
+    whereConditions.push(`(
+      n.title LIKE ? 
+      OR n.content LIKE ? 
+      OR n.category LIKE ?
+      OR n.technology LIKE ?
+    )`);
+    
+    // 构建完整查询
+    let searchQuery = `
+      SELECT n.id, n.title, n.content, n.category, n.technology, n.subcategory, n.tags, 
+             n.is_public, n.created_at, n.updated_at, u.name as author_name, n.author_id
+      FROM notes n
+      JOIN users u ON n.author_id = u.id
+      WHERE ${whereConditions.join(' AND ')}
+    `
+    
     const searchTerm = `%${query}%`
-    queryParams.push(searchTerm, searchTerm, `%${query}%`)
+    queryParams.push(searchTerm, searchTerm, searchTerm, searchTerm)
 
     if (category) {
       searchQuery += ' AND n.category = ?'
@@ -56,8 +92,8 @@ export async function GET(request: NextRequest) {
       queryParams.push(technology)
     }
 
-    searchQuery += ' ORDER BY n.updated_at DESC LIMIT ? OFFSET ?'
-    queryParams.push(limit, (page - 1) * limit)
+    const offset = (page - 1) * limit
+    searchQuery += ` ORDER BY n.updated_at DESC LIMIT ${Number(limit)} OFFSET ${Number(offset)}`
 
     const searchResults = await executeQuery(searchQuery, queryParams) as any[]
 

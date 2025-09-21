@@ -8,6 +8,14 @@ const nextConfig = {
   experimental: {
     optimizeCss: true,         // 优化CSS加载性能
     optimizePackageImports: ['antd'], // 针对antd的导入优化（如果使用antd）
+    turbo: {
+      rules: {
+        '*.svg': {
+          loaders: ['@svgr/webpack'],
+          as: '*.js',
+        },
+      },
+    },
   },
   
   // 允许的开发环境来源
@@ -59,7 +67,8 @@ const nextConfig = {
   
   // 代码质量控制（保留严格模式）
   typescript: { ignoreBuildErrors: false },
-  eslint: { ignoreDuringBuilds: false }
+  eslint: { ignoreDuringBuilds: false },
+  
 };
 
 module.exports = nextConfig;
