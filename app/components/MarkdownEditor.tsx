@@ -13,7 +13,7 @@ interface MarkdownEditorProps {
 }
 
 export default function MarkdownEditor({ value, onChange, placeholder, className }: MarkdownEditorProps) {
-  const [mode, setMode] = useState<'edit' | 'preview' | 'split'>('split');
+  const [mode, setMode] = useState<'edit' | 'preview' | 'split'>('edit');
 
   return (
     <div className={`border border-gray-300 rounded-lg overflow-hidden ${className}`}>
@@ -63,8 +63,8 @@ export default function MarkdownEditor({ value, onChange, placeholder, className
               value={value}
               onChange={(e) => onChange(e.target.value)}
               placeholder={placeholder || '请输入Markdown格式的内容...\n\n示例：\n# 标题\n## 子标题\n**粗体** *斜体*\n\n```javascript\nconsole.log("代码块");\n```\n\n- 列表项1\n- 列表项2'}
-              className="w-full h-full p-4 resize-none border-none outline-none font-mono text-sm"
-              style={{ fontFamily: 'Consolas, Monaco, "Courier New", monospace' }}
+              className="w-full h-full p-4 resize-none border-none outline-none font-mono text-sm bg-white text-gray-900"
+              style={{ fontFamily: 'Consolas, Monaco, "Courier New", monospace', lineHeight: '1.6' }}
             />
           </div>
         )}

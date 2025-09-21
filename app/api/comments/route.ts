@@ -11,10 +11,6 @@ const commentService = new CommentService()
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session?.user?.id) {
-      return createErrorResponse('请先登录', undefined, 401)
-    }
-
     const { searchParams } = request.nextUrl
     const noteId = searchParams.get('noteId')
 

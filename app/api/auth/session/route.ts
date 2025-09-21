@@ -26,7 +26,12 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ 
         authenticated: false,
         message: '用户未登录'
-      }, { status: 401 });
+      }, { 
+        status: 200, // 改为200状态码，避免401错误
+        headers: {
+          'Cache-Control': 'no-store, max-age=0',
+        }
+      });
     }
     
     // 会话有效，返回会话信息（不包含敏感数据）

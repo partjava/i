@@ -102,6 +102,12 @@ export const authOptions: NextAuthOptions = {
         }
       }
       return session
+    },
+    async redirect({ url, baseUrl }) {
+      // 确保重定向到正确的域名
+      if (url.startsWith("/")) return `${baseUrl}${url}`
+      else if (new URL(url).origin === baseUrl) return url
+      return baseUrl
     }
   },
   cookies: {
@@ -116,5 +122,5 @@ export const authOptions: NextAuthOptions = {
       }
     }
   },
-  debug: process.env.NODE_ENV === 'development'
+  debug: true
 }

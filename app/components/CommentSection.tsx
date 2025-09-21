@@ -34,7 +34,7 @@ export default function CommentSection({ noteId, isPublic = false }: CommentSect
       const response = await fetch(`/api/comments?noteId=${noteId}`);
       if (response.ok) {
         const data = await response.json();
-        setComments(data.comments);
+        setComments(data.comments || []);
       }
     } catch (error) {
       console.error('获取评论失败:', error);

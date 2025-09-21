@@ -99,11 +99,11 @@ export async function GET(
 
     if (!session?.user?.id) {
       // 未登录用户只能查看公开笔记
-      query += ' AND n.is_public = true'
+      query += ' AND n.is_public = 1'
     } else {
       // 已登录用户可以查看自己的笔记或公开笔记
       const userId = parseInt(session.user.id, 10)
-      query += ` AND (n.is_public = true OR n.author_id = ?)`
+      query += ` AND (n.is_public = 1 OR n.author_id = ?)`
     }
 
     const queryParams = [noteId]
