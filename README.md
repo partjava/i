@@ -1,12 +1,52 @@
 # PartJava 个人学习网站
 
-![PartJava Logo](public/logo.png)
+![网站主页导航](https://github.com/partjava/i/blob/main/public/images/sad/tools-direct-access.png)
+**主页是专业软件官网，方便查询**
 
 **个人学习项目，仅供学习参考，禁止商业用途**
 
-## 项目简介
+## 🌟 项目亮点
 
-PartJava 是一个综合性的个人学习平台，专注于编程知识学习、笔记管理和技能提升。该平台集成了笔记系统、学习路径、编程挑战和AI辅助功能，帮助用户系统化地学习编程知识并记录学习过程。
+### ✨ 为什么选择 PartJava？
+
+- **🎯 一站式学习平台**：集成笔记管理、学习路径、编程挑战和AI助手于一体
+- **📚 结构化学习**：提供系统化的学习路径，从基础到进阶，循序渐进
+- **🤖 AI智能辅助**：内置AI聊天助手，随时解答学习疑问，提供代码建议
+- **💻 实战编程**：在线代码编辑器支持多语言，实时测试和调试
+- **📊 学习可视化**：学习热力图、进度追踪，让学习过程一目了然
+- **🏆 成就系统**：通过完成学习任务解锁成就，激发学习动力
+- **👥 社区互动**：笔记分享、点赞评论，与其他学习者交流经验
+
+### 🚀 技术特色
+
+- **响应式设计**：完美适配桌面端和移动端
+- **组件化架构**：高度模块化，易于维护和扩展
+- **数据库优化**：MySQL + 自定义ORM，查询效率高
+- **安全认证**：NextAuth.js 提供完整的用户认证体系
+- **在线代码执行**：集成Judge0 API，支持多语言在线编译运行
+
+## 📖 项目简介
+
+PartJava 是一个专为程序员打造的全方位学习平台，旨在帮助开发者建立系统化的知识体系，提升编程技能。无论你是初学者还是资深开发者，都能在这里找到适合自己的学习内容和挑战。
+
+平台的核心价值在于将**理论学习**与**实践应用**完美结合，通过笔记管理记录学习心得，通过编程挑战验证技能掌握，通过AI助手解决疑难问题，最终形成完整的学习闭环。
+
+## 🎯 适用人群
+
+- **编程初学者**：通过结构化学习路径快速入门，建立编程思维
+- **在校学生**：系统学习编程知识，为求职和项目开发做准备
+- **职场开发者**：持续学习新技术，提升技能水平
+- **技术爱好者**：记录学习心得，分享技术见解
+- **自学者**：需要系统化学习资源和学习进度管理
+
+## 💡 使用场景
+
+- **📝 知识整理**：将学习过程中的知识点系统化记录和整理
+- **🔄 技能提升**：通过编程挑战和实战项目提升编程能力
+- **🤔 问题解决**：遇到技术难题时，AI助手提供即时帮助
+- **📈 进度跟踪**：可视化学习进度，保持学习动力
+- **👥 经验分享**：与其他开发者交流学习心得和技术见解
+- **🎓 求职准备**：通过系统学习和项目实践为技术面试做准备
 
 ## 主要功能
 
@@ -58,6 +98,8 @@ PartJava 是一个综合性的个人学习平台，专注于编程知识学习�
 - **认证**：NextAuth.js
 - **数据库**：MySQL
 - **ORM**：自定义数据库操作封装
+- **代码执行**：Judge0 API 集成
+- **文件处理**：Node.js 文件系统操作
 
 ### 数据库设计
 - **用户表**：用户信息和认证数据
@@ -122,7 +164,7 @@ yarn build
 yarn start
 ```
 
-## 项目结构
+## 📁 项目结构
 
 ```
 partjava/
@@ -137,10 +179,31 @@ partjava/
 │   ├── providers/          # React Context 提供者
 │   ├── types/              # TypeScript 类型定义
 │   └── [各页面目录]/       # 页面组件
-├── public/                 # 静态资源
-├── styles/                 # 全局样式
+├── docs/                   # 项目文档
+│   ├── CODE_EDITOR_SETUP.md
+│   ├── DEPLOYMENT_GUIDE.md
+│   ├── FEATURES.md
+│   ├── HOW_TO_USE.md
+│   ├── JUDGE0_SETUP.md
+│   ├── MYSQL_SETUP.md
+│   └── ONLINE_CODE_EXECUTION.md
+├── scripts/                # 数据库和工具脚本
+│   ├── init-database.js
+│   ├── setup-database.js
+│   ├── check-*.js          # 数据检查脚本
+│   └── *.sql               # SQL 脚本文件
+├── lib/                    # 共享库文件
+├── types/                  # TypeScript 类型定义
+├── public/                 # 静态资源和项目介绍图集
+├── logs/                   # 日志文件
+├── partjava-ai/            # AI 相关功能
+├── middleware.ts           # Next.js 中间件
 ├── next.config.js          # Next.js 配置
+├── tailwind.config.js      # Tailwind CSS 配置
+├── tsconfig.json           # TypeScript 配置
 ├── package.json            # 项目依赖
+├── mysql.md                # 数据库文档
+├── 项目说明文档.md         # 详细项目说明
 └── README.md               # 项目文档
 ```
 
@@ -165,10 +228,14 @@ partjava/
 
 ## 项目截图
 
-![笔记页面](screenshots/notes.png)
-![学习路径](screenshots/learning-path.png)
-![个人资料](screenshots/profile.png)
-![编程挑战](screenshots/challenges.png)
+
+![学习内容页面](https://github.com/partjava/i/blob/main/public/images/sad/study-content.png)
+![主页截图](https://github.com/partjava/i/blob/main/public/images/sad/user-profile.png)
+![学习页面截图](https://github.com/partjava/i/blob/main/public/images/sad/study-page.png)
+![笔记管理截图](https://github.com/partjava/i/blob/main/public/images/sad/notes-management.png)
+![编程挑战截图](https://github.com/partjava/i/blob/main/public/images/sad/coding-challenges.png)
+![3D机器人展示](https://github.com/partjava/i/blob/main/public/images/sad/ai-3d-robot.png)
+![项目实战教学](https://github.com/partjava/i/blob/main/public/images/sad/project-practice.png)
 
 ## 未来计划
 
@@ -182,4 +249,4 @@ partjava/
 
 **本项目为个人学习项目，仅供学习和参考使用。未经作者明确许可，禁止用于商业目的。**
 
-Copyright © 2023-2025 PartJava
+Copyright © 2024-2025 PartJava
