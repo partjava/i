@@ -31,12 +31,25 @@ export default function Navbar() {
   const [showRobot, setShowRobot] = useState(false);
   const [robotPreloaded, setRobotPreloaded] = useState(false);
 
+  // 调试：打印 session 和 user 状态
+  useEffect(() => {
+    console.log('Navbar - Session状态:', { 
+      status, 
+      hasSession: !!session, 
+      hasUser: !!session?.user,
+      userEmail: session?.user?.email,
+      userName: session?.user?.name,
+      userFromContext: user?.name || user?.email
+    });
+  }, [session, status, user]);
+
   // 强制检查session状态
   useEffect(() => {
     const checkSession = async () => {
       try {
         const response = await fetch('/api/auth/session');
         const sessionData = await response.json();
+        console.log('Navbar - API Session检查:', sessionData);
         if (!sessionData.user && session?.user) {
           // 前端有session但后端没有，强制退出登录
           await signOut({ redirect: false });
