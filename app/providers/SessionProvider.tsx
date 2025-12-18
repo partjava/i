@@ -9,7 +9,7 @@ export default function NextAuthSessionProvider({
 }) {
   return (
     <SessionProvider 
-      refetchInterval={30} // 每30秒检查一次session状态
+      refetchInterval={0} // 禁用自动刷新，手动控制
       refetchOnWindowFocus={true} // 窗口获得焦点时刷新
       refetchWhenOffline={false} // 离线时不刷新
     >

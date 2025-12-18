@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react';
 import { useSession } from 'next-auth/react';
 
 interface UserData {
@@ -25,12 +25,12 @@ interface UserContextType {
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export function UserProvider({ children }: { children: ReactNode }) {
-  const { data: session, update: updateSession } = useSession();
+  const { data: session, update: updateSession, status } = useSession();
   const [user, setUser] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
 
   // 从API获取用户数据
-  const fetchUserData = async () => {
+  const fetchUserData = useCallback(async () => {
     // 检查session是否有效
     if (!session || !session.user || !session.user.email) {
       setUser(null);
@@ -42,9 +42,9 @@ export function UserProvider({ children }: { children: ReactNode }) {
     setLoading(true);
     try {
       // 使用session中的用户数据
-      const userData = {
-        id: session.user.id || '',
-        name: session.user.name || '',
+      const userData: UserData = {
+        id: session.user.id || session.user.email || '',
+        name: session.user.name || session.user.email?.split('@')[0] || '用户',
         email: session.user.email || '',
         image: session.user.image || null,
         bio: '',
@@ -53,13 +53,14 @@ export function UserProvider({ children }: { children: ReactNode }) {
         github: ''
       };
       setUser(userData);
+      console.log('用户数据已设置:', userData);
     } catch (error) {
       setUser(null);
       console.error('设置用户数据失败:', error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [session]);
 
   // 刷新用户数据
   const refreshUser = async () => {
@@ -86,15 +87,25 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
   // 监听session变化
   useEffect(() => {
-    // 只有当session状态确定后再进行操作
-    if (session === undefined) {
-      // session还在加载中，不执行任何操作
+    console.log('UserProvider - Session状态变化:', { 
+      status, 
+      hasSession: !!session, 
+      hasUser: !!session?.user,
+      userEmail: session?.user?.email,
+      userName: session?.user?.name 
+    });
+    
+    // 等待 session 状态确定
+    if (status === 'loading') {
+      console.log('UserProvider - Session加载中，等待...');
       return;
     }
     
-    if (session?.user) {
+    if (status === 'authenticated' && session?.user) {
+      console.log('UserProvider - 检测到已认证，获取用户数据...');
       fetchUserData();
     } else {
+      console.log('UserProvider - 未认证，清除用户数据');
       // 清除用户数据
       setUser(null);
       setLoading(false);
@@ -105,7 +116,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
         sessionStorage.removeItem('user_data');
       }
     }
-  }, [session]);
+  }, [session, status, fetchUserData]);
 
   return (
     <UserContext.Provider value={{ user, updateUser, refreshUser, loading }}>

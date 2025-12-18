@@ -62,9 +62,43 @@ export default function LoginPage() {
       if (result?.error) {
         setError(result.error);
         message.error('登录失败：' + result.error);
-      } else if (result?.url) {
+      } else if (result?.ok) {
         message.success('登录成功！');
-        router.push('/');
+        
+        // 清理浏览器缓存和存储
+        if (typeof window !== 'undefined') {
+          try {
+            // 清理 localStorage（保留必要的系统数据）
+            const keysToKeep: string[] = []; // 可以添加需要保留的键
+            const allKeys = Object.keys(localStorage);
+            allKeys.forEach(key => {
+              if (!keysToKeep.includes(key)) {
+                localStorage.removeItem(key);
+              }
+            });
+            
+            // 清理 sessionStorage
+            sessionStorage.clear();
+            
+            // 清理 Cache Storage（Service Worker 缓存）
+            if ('caches' in window) {
+              caches.keys().then(cacheNames => {
+                cacheNames.forEach(cacheName => {
+                  caches.delete(cacheName);
+                });
+              });
+            }
+            
+            console.log('✅ 浏览器缓存已清理');
+          } catch (error) {
+            console.error('清理缓存时出错:', error);
+          }
+        }
+        
+        // 等待 session 更新
+        await new Promise(resolve => setTimeout(resolve, 500));
+        // 强制刷新页面以更新 session 和用户信息
+        window.location.href = '/';
       }
     } catch (error) {
       setError('登录过程中发生错误');
