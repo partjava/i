@@ -1,8 +1,9 @@
-'use client';
 import {
   SiPycharm, SiIntellijidea, SiEclipseide, SiClion, SiGoland, SiPhpstorm, SiWebstorm, SiDevdotto, SiXcode, SiAndroidstudio, SiNotepadplusplus, SiVim, SiGit, SiGithub, SiGitee, SiNodedotjs, SiPython, SiMysql, SiPostgresql, SiMongodb, SiRedis, SiSqlite, SiDbeaver, SiDocker, SiLinux, SiUbuntu, SiCentos, SiFedora, SiShell, SiMobx, SiVmware, SiVirtualbox, SiAnaconda, SiJupyter, SiTensorflow, SiPytorch, SiKeras, SiScikitlearn, SiGooglecolab, SiLeetcode, SiCodeforces, SiFigma, SiTypeorm, SiNotion, SiMarkdown, SiMdbook, SiJsfiddle, SiWireshark, SiBurpsuite, SiMamp, SiKagi, SiOpenssl, SiArduino, SiRaspberrypi, SiLogitech, SiOpenai, SiComposer, SiXampp, SiPhp, SiGo, SiCmake, SiCplusplus, SiJavascript, SiReact, SiVuedotjs, SiWebpack, SiBabel, SiTypescript, SiGradle, SiSpring, SiFlutter, SiDart, SiAltiumdesigner, SiProteus, SiMultisim, SiStmicroelectronics, SiGooglechrome, SiFirefoxbrowser, SiDedge, SiOpera, SiSafari, SiSourceforge, SiIcloud, SiWebex, SiGitlab, SiFiles, SiCoder, SiRocket, SiLightburn, SiStarz, SiQuest
 } from 'react-icons/si';
 import { VscVscode } from 'react-icons/vsc';
+import Link from 'next/link';
+import { navigationItems } from './data/navigation';
 // import { AIBot } from '../ai-bot';
 
 const groupedSoftware = [
@@ -70,6 +71,13 @@ const groupedSoftware = [
       { name: 'Codeforces', icon: SiCodeforces, url: 'https://codeforces.com/', desc: '国际算法竞赛平台' },
       { name: '牛客网', icon: SiLeetcode, url: 'https://www.nowcoder.com/', desc: '国内算法/面试平台' },
       { name: 'VisuAlgo', icon: SiLeetcode, url: 'https://visualgo.net/', desc: '算法可视化学习' },
+      { name: '洛谷', icon: SiLeetcode, url: 'https://www.luogu.com.cn/', desc: '国内算法竞赛平台' },
+      { name: 'AcWing', icon: SiLeetcode, url: 'https://www.acwing.com/', desc: '算法学习平台' },
+      { name: 'CodeChef', icon: SiLeetcode, url: 'https://www.codechef.com/', desc: '国际算法竞赛平台' },
+      { name: 'AtCoder', icon: SiLeetcode, url: 'https://atcoder.jp/', desc: '日本算法竞赛平台' },
+      { name: 'Topcoder', icon: SiLeetcode, url: 'https://www.topcoder.com/', desc: '国际算法竞赛平台' },
+      { name: 'HackerRank', icon: SiLeetcode, url: 'https://www.hackerrank.com/', desc: '编程技能评估平台' },
+      { name: 'HackerEarth', icon: SiLeetcode, url: 'https://www.hackerearth.com/', desc: '编程竞赛平台' },
     ]
   },
   {
@@ -82,6 +90,10 @@ const groupedSoftware = [
       { name: 'Kali Linux', icon: SiKagi, url: 'https://www.kali.org/', desc: '渗透测试系统' },
       { name: 'OpenSSL', icon: SiOpenssl, url: 'https://www.openssl.org/', desc: '加密工具' },
       { name: 'Fiddler', icon: SiJsfiddle, url: 'https://www.telerik.com/fiddler', desc: '网络调试代理' },
+      { name: 'Charles', icon: SiJsfiddle, url: 'https://www.charlesproxy.com/', desc: '网络调试代理' },
+      { name: 'OWASP ZAP', icon: SiJsfiddle, url: 'https://owasp.org/www-project-zap/', desc: '开源安全测试工具' },
+      { name: 'Metasploit', icon: SiJsfiddle, url: 'https://www.metasploit.com/', desc: '渗透测试框架' },
+      { name: 'Shodan', icon: SiJsfiddle, url: 'https://www.shodan.io/', desc: '网络设备搜索引擎' },
     ]
   },
   {
@@ -107,6 +119,9 @@ const groupedSoftware = [
       { name: 'Multisim', icon: SiMultisim, url: 'https://www.ni.com/zh-cn/support/downloads/software-products/download.multisim.html', desc: '电路仿真' },
       { name: 'Logisim', icon: SiLogitech, url: 'http://www.cburch.com/logisim/', desc: '数字电路仿真' },
       { name: 'Raspberry Pi', icon: SiRaspberrypi, url: 'https://www.raspberrypi.org/', desc: '树莓派开发' },
+      { name: 'Altium Designer', icon: SiAltiumdesigner, url: 'https://www.altium.com/altium-designer', desc: 'PCB设计工具' },
+      { name: 'MATLAB', icon: SiPython, url: 'https://www.mathworks.com/products/matlab.html', desc: '数学建模与仿真' },
+      { name: 'LabVIEW', icon: SiVirtualbox, url: 'https://www.ni.com/en-us/shop/labview.html', desc: '图形化编程环境' },
     ]
   },
   {
@@ -120,6 +135,11 @@ const groupedSoftware = [
       { name: 'Markdown', icon: SiMarkdown, url: 'https://markdown.com.cn/', desc: '标记语言' },
       { name: 'Figma', icon: SiFigma, url: 'https://www.figma.com/', desc: 'UI设计工具' },
       { name: 'ChatGPT', icon: SiOpenai, url: 'https://chat.openai.com/', desc: 'AI助手' },
+      { name: 'GitBook', icon: SiGitlab, url: 'https://www.gitbook.com/', desc: '文档协作平台' },
+      { name: 'Confluence', icon: SiGitlab, url: 'https://www.atlassian.com/software/confluence', desc: '团队协作平台' },
+      { name: 'Slack', icon: SiRocket, url: 'https://slack.com/', desc: '团队沟通工具' },
+      { name: 'Microsoft Teams', icon: SiWebex, url: 'https://www.microsoft.com/en-us/microsoft-teams', desc: '团队协作工具' },
+      { name: 'Discord', icon: SiRocket, url: 'https://discord.com/', desc: '社区沟通工具' },
     ]
   },
 ];
@@ -206,11 +226,88 @@ const brandColors: { [key: string]: string } = {
   'Markdown': '#000000',
   'Figma': '#F24E1E',
   'ChatGPT': '#10A37F',
+  '洛谷': '#FF7D00',
+  'AcWing': '#00A1D6',
+  'CodeChef': '#5B4638',
+  'AtCoder': '#1E88E5',
+  'Topcoder': '#FF6600',
+  'HackerRank': '#2EC866',
+  'HackerEarth': '#2C3454',
+  'Charles': '#4B8BF5',
+  'OWASP ZAP': '#005571',
+  'Metasploit': '#990000',
+  'Shodan': '#FD6925',
+  'Altium Designer': '#0098D4',
+  'MATLAB': '#0076A8',
+  'LabVIEW': '#FF9900',
+  'GitBook': '#3884FF',
+  'Confluence': '#172B4D',
+  'Slack': '#4A154B',
+  'Microsoft Teams': '#6264A7',
+  'Discord': '#7289DA',
 };
 
 export default function Home() {
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* 学习分类悬停菜单 */}
+      <div className="relative">
+        <div className="bg-white shadow-md py-4 px-3 md:px-6">
+          <div className="max-w-[1400px] mx-auto">
+            <h1 className="text-xl md:text-3xl font-bold text-gray-900 mb-4 md:mb-6">PartJava 学习平台</h1>
+            
+            {/* 学习分类导航 */}
+            <div className="relative group">
+              <button className="flex items-center text-blue-700 font-semibold text-lg hover:text-blue-900 transition-colors py-2 px-4 rounded-md hover:bg-blue-50">
+                🏫 学习中心
+                <svg className="ml-2 w-5 h-5 transition-transform group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              
+              {/* 悬停显示的学习分类菜单 */}
+              <div className="absolute left-0 top-full mt-2 bg-white shadow-xl rounded-lg p-6 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 w-full max-w-[1400px]">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                  {Object.entries(navigationItems).map(([category, items]) => (
+                    <div key={category} className="col-span-1">
+                      <h3 className="text-base font-medium text-gray-900 mb-4 pb-2 border-b">
+                        {category}
+                      </h3>
+                      <div className="grid grid-cols-1 gap-y-3">
+                        {items.map((item) => {
+                          let homepage = '';
+                          if (item.subitems && item.subitems.length > 0) {
+                            // 取第一个子项的href，提取目录路径
+                            const firstHref = item.subitems[0].href;
+                            const parts = firstHref.split('/');
+                            // 移除最后一个部分（页面名称），保留目录路径
+                            homepage = parts.slice(0, -1).join('/');
+                          } else {
+                            homepage = `/study/${item.name.toLowerCase()}`;
+                          }
+                          return (
+                            <Link
+                              key={item.code}
+                              href={homepage}
+                              className="flex items-center space-x-2 text-gray-600 hover:text-blue-600 text-sm transition-colors py-1 px-2 rounded hover:bg-blue-50"
+                            >
+                              <span className="flex-shrink-0 w-6 h-6 flex items-center justify-center bg-gray-100 text-sm text-gray-500 hover:bg-blue-50 hover:text-blue-600 rounded">
+                                {item.code}
+                              </span>
+                              <span>{item.name}</span>
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
       <main className="py-3 md:py-4 px-3 md:px-6">
         <h1 className="text-xl md:text-3xl font-bold text-gray-900 mb-4 md:mb-6">常用软件/工具官网直达（按知识点分组）</h1>
         <div className="space-y-4 md:space-y-6">
