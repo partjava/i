@@ -204,6 +204,7 @@ export default function Navbar() {
                 <HomeOutlined className="text-lg mb-1" />
                 <span className="text-xs">首页</span>
               </Link>
+
               <Link 
                 href="/study" 
                 className="flex flex-col items-center text-gray-600 hover:text-purple-600 transition-colors"
@@ -211,6 +212,7 @@ export default function Navbar() {
                 <BookOutlined className="text-lg mb-1" />
                 <span className="text-xs">学习</span>
               </Link>
+
               <Link 
                 href="/notes" 
                 className="flex flex-col items-center text-gray-600 hover:text-purple-600 transition-colors"
