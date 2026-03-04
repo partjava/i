@@ -1,7 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
 import CountUp from 'react-countup';
-import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
 
 interface Stats {
@@ -91,28 +90,21 @@ export default function StatsSection() {
   return (
     <div ref={ref} className="py-16 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={inView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.6 }}
-          className="text-center mb-12"
-        >
+        <div className={`text-center mb-12 transition-all duration-600 ${inView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'}`}>
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
             平台数据一览
           </h2>
           <p className="text-lg text-gray-600">
             与千万学习者一起成长
           </p>
-        </motion.div>
+        </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
           {statsData.map((stat, index) => (
-            <motion.div
+            <div
               key={stat.label}
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={inView ? { opacity: 1, scale: 1 } : {}}
-              transition={{ duration: 0.5, delay: index * 0.1 }}
-              className="relative group"
+              className={`relative group transition-all duration-500 ${inView ? 'opacity-100 scale-100' : 'opacity-0 scale-80'}`}
+              style={{ transitionDelay: `${index * 100}ms` }}
             >
               <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2">
                 {/* 渐变背景 */}
@@ -144,7 +136,7 @@ export default function StatsSection() {
                   {stat.label}
                 </div>
               </div>
-            </motion.div>
+            </div>
           ))}
         </div>
       </div>

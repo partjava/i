@@ -4,11 +4,13 @@ import {
 } from 'react-icons/si';
 import { VscVscode } from 'react-icons/vsc';
 import Link from 'next/link';
+import { useState, useMemo } from 'react';
 import { navigationItems } from './data/navigation';
 import HeroSection from './components/HeroSection';
 import StatsSection from './components/StatsSection';
 import FlipCard from './components/FlipCard';
-import ParticlesBackground from './components/ParticlesBackground';
+import BackToTop from './components/BackToTop';
+import QuickSearch from './components/QuickSearch';
 
 const groupedSoftware = [
   {
@@ -252,13 +254,34 @@ const brandColors: { [key: string]: string } = {
 };
 
 export default function Home() {
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // 过滤软件列表
+  const filteredSoftware = useMemo(() => {
+    if (!searchQuery) return groupedSoftware;
+    
+    const query = searchQuery.toLowerCase();
+    return groupedSoftware.map(group => ({
+      ...group,
+      items: group.items.filter(item => 
+        item.name.toLowerCase().includes(query) ||
+        item.desc.toLowerCase().includes(query) ||
+        group.group.toLowerCase().includes(query)
+      )
+    })).filter(group => group.items.length > 0);
+  }, [searchQuery]);
+
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+    // 滚动到软件列表区域
+    const mainElement = document.querySelector('main');
+    if (mainElement) {
+      mainElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* 粒子背景 */}
-      <div className="fixed inset-0 pointer-events-none">
-        <ParticlesBackground />
-      </div>
-
       {/* Hero区域 */}
       <HeroSection />
 
@@ -324,36 +347,66 @@ export default function Home() {
       </div>
       
       <main className="py-3 md:py-4 px-3 md:px-6">
+        {/* 快速搜索 */}
+        <div className="max-w-[1400px] mx-auto mb-8">
+          <QuickSearch onSearch={handleSearch} />
+          {searchQuery && (
+            <div className="text-center mb-4">
+              <span className="text-gray-600">
+                搜索 "<span className="font-semibold text-blue-600">{searchQuery}</span>" 
+                找到 {filteredSoftware.reduce((acc, group) => acc + group.items.length, 0)} 个结果
+              </span>
+              <button
+                onClick={() => setSearchQuery('')}
+                className="ml-4 text-blue-600 hover:text-blue-800 underline"
+              >
+                清除搜索
+              </button>
+            </div>
+          )}
+        </div>
+
         <h1 className="text-xl md:text-3xl font-bold text-gray-900 mb-4 md:mb-6">常用软件/工具官网直达（按知识点分组）</h1>
         <div className="space-y-4 md:space-y-6">
-          {groupedSoftware.map(group => (
-            <div key={group.group}>
-              <h2 className="text-lg md:text-2xl font-bold mb-2 md:mb-3 text-blue-700 border-l-4 border-blue-400 pl-2 md:pl-3 bg-blue-50 py-1 rounded-r">
-                {group.group}
-              </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-2 md:gap-4">
-                {group.items.map(item => {
-                  const Icon = item.icon;
-                  const color = brandColors[item.name] || '#3B82F6'; // 默认蓝色
-                  return (
-                    <FlipCard
-                      key={item.name}
-                      name={item.name}
-                      icon={Icon}
-                      url={item.url}
-                      desc={item.desc}
-                      color={color}
-                    />
-                  );
-                })}
+          {filteredSoftware.length > 0 ? (
+            filteredSoftware.map(group => (
+              <div key={group.group}>
+                <h2 className="text-lg md:text-2xl font-bold mb-2 md:mb-3 text-blue-700 border-l-4 border-blue-400 pl-2 md:pl-3 bg-blue-50 py-1 rounded-r">
+                  {group.group} ({group.items.length})
+                </h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-2 md:gap-4">
+                  {group.items.map(item => {
+                    const Icon = item.icon;
+                    const color = brandColors[item.name] || '#3B82F6';
+                    return (
+                      <FlipCard
+                        key={item.name}
+                        name={item.name}
+                        icon={Icon}
+                        url={item.url}
+                        desc={item.desc}
+                        color={color}
+                      />
+                    );
+                  })}
+                </div>
               </div>
+            ))
+          ) : (
+            <div className="text-center py-16">
+              <div className="text-6xl mb-4">🔍</div>
+              <h3 className="text-2xl font-bold text-gray-700 mb-2">未找到匹配的工具</h3>
+              <p className="text-gray-500">试试其他关键词吧</p>
             </div>
-          ))}
+          )}
         </div>
         <div className="mt-6 md:mt-8 text-center text-gray-500 text-xs md:text-sm">
           如有更多常用软件建议，欢迎补充！
         </div>
       </main>
+
+      {/* 回到顶部按钮 */}
+      <BackToTop />
       
     </div>
   );
