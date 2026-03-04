@@ -1,10 +1,14 @@
+'use client';
 import {
   SiPycharm, SiIntellijidea, SiEclipseide, SiClion, SiGoland, SiPhpstorm, SiWebstorm, SiDevdotto, SiXcode, SiAndroidstudio, SiNotepadplusplus, SiVim, SiGit, SiGithub, SiGitee, SiNodedotjs, SiPython, SiMysql, SiPostgresql, SiMongodb, SiRedis, SiSqlite, SiDbeaver, SiDocker, SiLinux, SiUbuntu, SiCentos, SiFedora, SiShell, SiMobx, SiVmware, SiVirtualbox, SiAnaconda, SiJupyter, SiTensorflow, SiPytorch, SiKeras, SiScikitlearn, SiGooglecolab, SiLeetcode, SiCodeforces, SiFigma, SiTypeorm, SiNotion, SiMarkdown, SiMdbook, SiJsfiddle, SiWireshark, SiBurpsuite, SiMamp, SiKagi, SiOpenssl, SiArduino, SiRaspberrypi, SiLogitech, SiOpenai, SiComposer, SiXampp, SiPhp, SiGo, SiCmake, SiCplusplus, SiJavascript, SiReact, SiVuedotjs, SiWebpack, SiBabel, SiTypescript, SiGradle, SiSpring, SiFlutter, SiDart, SiAltiumdesigner, SiProteus, SiMultisim, SiStmicroelectronics, SiGooglechrome, SiFirefoxbrowser, SiDedge, SiOpera, SiSafari, SiSourceforge, SiIcloud, SiWebex, SiGitlab, SiFiles, SiCoder, SiRocket, SiLightburn, SiStarz, SiQuest
 } from 'react-icons/si';
 import { VscVscode } from 'react-icons/vsc';
 import Link from 'next/link';
 import { navigationItems } from './data/navigation';
-// import { AIBot } from '../ai-bot';
+import HeroSection from './components/HeroSection';
+import StatsSection from './components/StatsSection';
+import FlipCard from './components/FlipCard';
+import ParticlesBackground from './components/ParticlesBackground';
 
 const groupedSoftware = [
   {
@@ -250,6 +254,17 @@ const brandColors: { [key: string]: string } = {
 export default function Home() {
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* 粒子背景 */}
+      <div className="fixed inset-0 pointer-events-none">
+        <ParticlesBackground />
+      </div>
+
+      {/* Hero区域 */}
+      <HeroSection />
+
+      {/* 数据统计区域 */}
+      <StatsSection />
+
       {/* 学习分类悬停菜单 */}
       <div className="relative">
         <div className="bg-white shadow-md py-4 px-3 md:px-6">
@@ -321,20 +336,14 @@ export default function Home() {
                   const Icon = item.icon;
                   const color = brandColors[item.name] || '#3B82F6'; // 默认蓝色
                   return (
-                    <a
+                    <FlipCard
                       key={item.name}
-                      href={item.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center bg-white rounded-lg md:rounded-xl shadow-sm md:shadow-md hover:shadow-lg md:hover:shadow-2xl transition-all p-3 md:p-4 border border-gray-100 hover:border-gray-200 active:scale-95 md:transform md:hover:-translate-y-1 md:hover:scale-105 duration-200 group mobile-nav-item"
-                      style={{ borderTop: `3px solid ${color}` }}
-                    >
-                      <Icon className="text-2xl md:text-3xl mr-2 md:mr-3 flex-shrink-0" style={{ color }} />
-                      <div className="min-w-0 flex-1">
-                        <div className="text-sm md:text-lg font-semibold mb-0.5 md:mb-1 truncate" style={{ color }}>{item.name}</div>
-                        <div className="text-gray-600 text-xs md:text-sm line-clamp-2">{item.desc}</div>
-                      </div>
-                    </a>
+                      name={item.name}
+                      icon={Icon}
+                      url={item.url}
+                      desc={item.desc}
+                      color={color}
+                    />
                   );
                 })}
               </div>

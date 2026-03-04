@@ -2,6 +2,26 @@
 @tailwind components;
 @tailwind utilities;
 
+/* 渐变背景动画 */
+@keyframes gradient-shift {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+.animate-gradient-shift {
+  background-size: 200% 200%;
+  animation: gradient-shift 15s ease infinite;
+}
+
+/* 3D翻转效果 */
+.perspective-1000 {
+  perspective: 1000px;
+}
+
 /* 机器人模态框动画优化 */
 @keyframes fadeIn {
   from {
