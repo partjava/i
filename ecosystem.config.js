@@ -1,50 +1,24 @@
 module.exports = {
   apps: [
     {
-      // Next.js 前端服务 - Standalone 模式（正确配置）
-      name: 'frontend',
-      script: 'bash',
-      args: 'start-standalone.sh',
-      cwd: '/home/ecs-user/i',
-      env: {
-        NODE_ENV: 'production',
-        NEXTAUTH_URL: 'https://www.partjava.com',
-        NEXTAUTH_SECRET: 'RZ7oSkZsSRDy2lps0apRw1/9Qh7ZSuBhCWf4N84ibKE=',
-        DB_HOST: 'localhost',
-        DB_USER: 'ecs-user',
-        DB_PASSWORD: '123456',
-        DB_NAME: 'partjava_notes',
-        RAPIDAPI_KEY: '039e43b537msh40765032398a95ep1f61aajsn0321e61fa9d0',
-        RAPIDAPI_HOST: 'judge0-ce.p.rapidapi.com',
-        NEXT_PUBLIC_AI_API_URL: 'https://www.partjava.com/ai'
-      },
+      name: 'partjava',
+      script: 'node_modules/next/dist/bin/next',
+      args: 'start -p 3000',
       instances: 1,
-      autorestart: true,
+      exec_mode: 'cluster',
       watch: false,
       max_memory_restart: '1G',
-      log_file: '/home/ecs-user/i/logs/frontend.log',
-      error_file: '/home/ecs-user/i/logs/frontend-error.log',
-      out_file: '/home/ecs-user/i/logs/frontend-out.log',
-      time: true
-    },
-    {
-      // Python AI 后端服务
-      name: 'backend',
-      script: '/home/ecs-user/i/partjava-ai/venv/bin/python',
-      args: '-m uvicorn main:app --host 0.0.0.0 --port 8000',
-      cwd: '/home/ecs-user/i/partjava-ai',
       env: {
-        PYTHONPATH: '/home/ecs-user/i/partjava-ai',
-        PORT: 8000
+        NODE_ENV: 'production',
+        PORT: 3000
       },
-      instances: 1,
+      error_file: './logs/pm2-error.log',
+      out_file: './logs/pm2-out.log',
+      log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
+      merge_logs: true,
       autorestart: true,
-      watch: false,
-      max_memory_restart: '512M',
-      log_file: '/home/ecs-user/i/logs/backend.log',
-      error_file: '/home/ecs-user/i/logs/backend-error.log',
-      out_file: '/home/ecs-user/i/logs/backend-out.log',
-      time: true
+      max_restarts: 10,
+      min_uptime: '10s'
     }
   ]
 };
