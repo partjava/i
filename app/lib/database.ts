@@ -17,17 +17,31 @@ const dbConfig = {
   }
 }
 
-// 创建连接池
+// 创建连接池 - 优化配置
 const pool = mysql.createPool({
   ...dbConfig,
   waitForConnections: true,
-  connectionLimit: 20,
+  connectionLimit: process.env.NODE_ENV === 'production' ? 10 : 5, // 生产环境更多连接
   queueLimit: 0,
   idleTimeout: 60000,
-  maxIdle: 5,
+  maxIdle: process.env.NODE_ENV === 'production' ? 3 : 2,
   enableKeepAlive: true,
-  keepAliveInitialDelay: 0
+  keepAliveInitialDelay: 0,
+  // 添加连接池事件监听
+  ...(process.env.NODE_ENV === 'development' && {
+    debug: false // 开发环境可选调试
+  })
 })
+
+// 监控连接池状态（仅开发环境）
+if (process.env.NODE_ENV === 'development') {
+  pool.on('connection', () => {
+    console.log('📊 新数据库连接已建立')
+  })
+  pool.on('release', () => {
+    console.log('📊 数据库连接已释放')
+  })
+}
 
 // 跟踪已初始化的表
 const initializedTables = new Set<string>();
@@ -58,19 +72,33 @@ export async function getConnection() {
   }
 }
 
-// 执行查询（带重试机制）
+// 执行查询（带重试机制和性能监控）
 export async function executeQuery(sql: string, params: any[] = [], retries: number = 3) {
   let lastError: any;
+  const startTime = Date.now();
   
   for (let attempt = 1; attempt <= retries; attempt++) {
     let connection;
     try {
       connection = await getConnection()
       const [results] = await connection.execute(sql, params)
+      
+      // 性能监控（仅开发环境）
+      if (process.env.NODE_ENV === 'development') {
+        const duration = Date.now() - startTime;
+        if (duration > 1000) {
+          console.warn(`⚠️ 慢查询 (${duration}ms):`, sql.substring(0, 100))
+        }
+      }
+      
       return results
     } catch (error) {
       lastError = error;
-      console.error(`SQL查询失败 (尝试 ${attempt}/${retries}):`, sql, params, error)
+      
+      // 仅在开发环境或首次失败时记录详细错误
+      if (process.env.NODE_ENV === 'development' || attempt === 1) {
+        console.error(`SQL查询失败 (尝试 ${attempt}/${retries}):`, sql.substring(0, 100), error)
+      }
       
       // 如果是连接错误且还有重试次数，等待后重试
       if (attempt < retries && (
