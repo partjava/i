@@ -403,6 +403,42 @@ export default function Home() {
         <div className="mt-6 md:mt-8 text-center text-gray-500 text-xs md:text-sm">
           如有更多常用软件建议，欢迎补充！
         </div>
+
+        {/* 算法可视化入口 */}
+        <div className="mt-12 mb-8">
+          <Link href="/code-editor">
+            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 p-1 hover:shadow-2xl transition-all duration-300 transform hover:scale-[1.02]">
+              <div className="bg-slate-900 rounded-xl p-8 text-center">
+                <div className="text-6xl mb-4">🎨</div>
+                <h3 className="text-3xl font-bold text-white mb-3">
+                  编程实验室 - 代码编辑 + 3D 算法可视化
+                </h3>
+                <p className="text-gray-300 text-lg mb-6">
+                  在线编写代码，沉浸式体验算法的魅力
+                </p>
+                <div className="flex justify-center gap-4 flex-wrap">
+                  <span className="px-4 py-2 bg-blue-600/30 text-blue-300 rounded-full text-sm">
+                    💻 在线编辑
+                  </span>
+                  <span className="px-4 py-2 bg-purple-600/30 text-purple-300 rounded-full text-sm">
+                    🫧 冒泡排序
+                  </span>
+                  <span className="px-4 py-2 bg-pink-600/30 text-pink-300 rounded-full text-sm">
+                    ⚡ 快速排序
+                  </span>
+                  <span className="px-4 py-2 bg-green-600/30 text-green-300 rounded-full text-sm">
+                    🔍 二分查找
+                  </span>
+                </div>
+                <div className="mt-6">
+                  <span className="inline-block px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-full font-semibold hover:shadow-lg transition-all">
+                    立即体验 →
+                  </span>
+                </div>
+              </div>
+            </div>
+          </Link>
+        </div>
       </main>
 
       {/* 回到顶部按钮 */}
