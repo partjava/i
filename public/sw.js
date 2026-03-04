@@ -1,5 +1,6 @@
-// Service Worker版本
-const CACHE_NAME = 'partjava-v2';
+// Service Worker版本 - 每次更新时修改这个版本号！
+const CACHE_VERSION = 'v3.0.0';
+const CACHE_NAME = `partjava-${CACHE_VERSION}`;
 const urlsToCache = [
   '/',
   '/offline',
@@ -9,15 +10,17 @@ const urlsToCache = [
 
 // 安装事件 - 缓存资源
 self.addEventListener('install', (event) => {
+  console.log('🔧 Service Worker 安装中...', CACHE_VERSION);
+  
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => {
-        console.log('缓存已打开');
+        console.log('✅ 缓存已打开:', CACHE_VERSION);
         // 逐个缓存资源，避免一个失败导致整个过程失败
         return Promise.all(
           urlsToCache.map(url => {
             return cache.add(url).catch(error => {
-              console.error(`缓存资源失败: ${url}`, error);
+              console.error(`❌ 缓存资源失败: ${url}`, error);
               // 继续处理其他资源
               return Promise.resolve();
             });
@@ -25,25 +28,32 @@ self.addEventListener('install', (event) => {
         );
       })
       .catch(error => {
-        console.error('Service Worker安装失败:', error);
+        console.error('❌ Service Worker安装失败:', error);
       })
   );
-  // 立即激活
+  // 立即激活新的 Service Worker
   self.skipWaiting();
 });
 
 // 激活事件 - 清理旧缓存
 self.addEventListener('activate', (event) => {
+  console.log('🚀 Service Worker 激活中...', CACHE_VERSION);
+  
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
+          // 删除所有旧版本的缓存
           if (cacheName !== CACHE_NAME) {
-            console.log('删除旧缓存:', cacheName);
+            console.log('🗑️ 删除旧缓存:', cacheName);
             return caches.delete(cacheName);
           }
         })
       );
+    }).then(() => {
+      // 立即接管所有页面
+      console.log('✅ Service Worker 已激活并接管页面');
+      return self.clients.claim();
     })
   );
 });
