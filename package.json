@@ -9,6 +9,9 @@
     "lint:next": "next lint",
     "db:init": "node scripts/init-database.js",
     "db:test": "node scripts/test-db.js",
+    "db:optimize": "node scripts/add-indexes.js",
+    "db:benchmark": "node scripts/benchmark.js",
+    "cache:check": "node scripts/check-cache-config.js",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "start:standalone": "node .next/standalone/server.js"
@@ -38,6 +41,7 @@
     "framer-motion": "^12.23.15",
     "highlight.js": "^11.11.1",
     "lil-gui": "^0.20.0",
+    "lru-cache": "^11.2.6",
     "lucide-react": "^0.544.0",
     "mongodb": "^6.3.0",
     "mongoose": "^8.0.3",

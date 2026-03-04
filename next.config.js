@@ -4,6 +4,12 @@ const nextConfig = {
   reactStrictMode: true,       // 开发环境下启用React严格模式，帮助发现问题
   swcMinify: true,             // 生产环境使用SWC压缩，提升构建速度
   
+  // 生成构建ID（每次构建都不同，强制刷新缓存）
+  generateBuildId: async () => {
+    // 使用时间戳作为构建ID，确保每次构建都不同
+    return `build-${Date.now()}`;
+  },
+  
   // 实用的实验性优化（保留经过验证的优化项）
   experimental: {
     optimizeCss: true,         // 优化CSS加载性能
@@ -23,13 +29,29 @@ const nextConfig = {
 
   // 关键的HTTP头配置
   async headers() {
+    const isDev = process.env.NODE_ENV === 'development';
+    
     return [
-      // 静态资源缓存策略（显著提升重复访问性能）
+      // 静态资源缓存策略
       {
         source: '/_next/static/(.*)',
         headers: [{
           key: 'Cache-Control',
-          value: 'public, max-age=31536000, immutable'
+          // 开发环境：不缓存，生产环境：长期缓存
+          value: isDev 
+            ? 'no-cache, no-store, must-revalidate'
+            : 'public, max-age=31536000, immutable'
+        }]
+      },
+      // 页面缓存策略（重要！）
+      {
+        source: '/((?!api|_next/static|_next/image|favicon.ico).*)',
+        headers: [{
+          key: 'Cache-Control',
+          // 开发环境：不缓存，生产环境：短期缓存
+          value: isDev
+            ? 'no-cache, no-store, must-revalidate'
+            : 'public, max-age=0, must-revalidate'
         }]
       },
       // API请求不缓存（确保数据实时性）
@@ -37,7 +59,7 @@ const nextConfig = {
         source: '/api/(.*)',
         headers: [{
           key: 'Cache-Control',
-          value: 'no-store, max-age=0'
+          value: 'no-store, no-cache, must-revalidate, max-age=0'
         }]
       },
       // 基础安全策略（根据实际资源调整）
