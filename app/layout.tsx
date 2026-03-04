@@ -7,8 +7,10 @@ import 'antd/dist/reset.css'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: '学习笔记分享平台',
-  description: '一个用于学习和分享技术知识的平台',
+  title: 'PartJava - 编程学习与开发工具导航平台',
+  description: '集成笔记管理、学习路径、编程挑战和AI助手的一站式学习平台。提供200+开发工具官网直达、算法刷题、技术文档等资源，让编程学习更高效。',
+  keywords: ['编程学习', '开发工具', '算法刷题', 'LeetCode', 'VS Code', 'Python', 'Java', 'JavaScript', '技术笔记', 'AI助手'],
+  authors: [{ name: 'PartJava Team' }],
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
@@ -18,6 +20,12 @@ export const metadata: Metadata = {
   icons: {
     icon: '/favicon.ico',
     apple: '/favicon.ico',
+  },
+  openGraph: {
+    title: 'PartJava - 编程学习与开发工具导航平台',
+    description: '集成笔记管理、学习路径、编程挑战和AI助手的一站式学习平台',
+    type: 'website',
+    locale: 'zh_CN',
   },
 }
 
