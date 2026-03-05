@@ -180,112 +180,159 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
     rightEarInner.rotation.z = 0.3;
     robotGroup.add(rightEarInner);
 
-    // 超大动漫眼睛
-    const eyeWhiteGeometry = new THREE.SphereGeometry(0.15, 24, 24);
+    // 超大动漫眼睛 - 更大更圆，几乎占据整个脸
+    const eyeWhiteGeometry = new THREE.SphereGeometry(0.22, 32, 32);
     const eyeWhiteMaterial = new THREE.MeshToonMaterial({ 
       color: 0xffffff,
       emissive: 0xffffff,
-      emissiveIntensity: 0.2
+      emissiveIntensity: 0.3
     });
     
     const leftEyeWhite = new THREE.Mesh(eyeWhiteGeometry, eyeWhiteMaterial);
-    leftEyeWhite.scale.set(0.9, 1.3, 0.5);
-    leftEyeWhite.position.set(-0.18, 1.4, 0.38);
+    leftEyeWhite.scale.set(1.1, 1.4, 0.6);
+    leftEyeWhite.position.set(-0.15, 1.35, 0.42);
     robotGroup.add(leftEyeWhite);
     
     const rightEyeWhite = new THREE.Mesh(eyeWhiteGeometry, eyeWhiteMaterial);
-    rightEyeWhite.scale.set(0.9, 1.3, 0.5);
-    rightEyeWhite.position.set(0.18, 1.4, 0.38);
+    rightEyeWhite.scale.set(1.1, 1.4, 0.6);
+    rightEyeWhite.position.set(0.15, 1.35, 0.42);
     robotGroup.add(rightEyeWhite);
 
-    // 深棕色瞳孔
-    const pupilGeometry = new THREE.SphereGeometry(0.09, 20, 20);
+    // 深棕色瞳孔 - 更大更圆
+    const pupilGeometry = new THREE.SphereGeometry(0.12, 24, 24);
     const pupilMaterial = new THREE.MeshToonMaterial({ 
       color: 0x2d1810,
       emissive: 0x1a0e09,
-      emissiveIntensity: 0.1
+      emissiveIntensity: 0.2
     });
     
     const leftPupil = new THREE.Mesh(pupilGeometry, pupilMaterial);
-    leftPupil.scale.set(1, 1.2, 0.8);
-    leftPupil.position.set(-0.18, 1.42, 0.45);
+    leftPupil.scale.set(1, 1.3, 0.8);
+    leftPupil.position.set(-0.15, 1.37, 0.5);
     robotGroup.add(leftPupil);
     
     const rightPupil = new THREE.Mesh(pupilGeometry, pupilMaterial);
-    rightPupil.scale.set(1, 1.2, 0.8);
-    rightPupil.position.set(0.18, 1.42, 0.45);
+    rightPupil.scale.set(1, 1.3, 0.8);
+    rightPupil.position.set(0.15, 1.37, 0.5);
     robotGroup.add(rightPupil);
 
-    // 大高光点
-    const highlightGeometry = new THREE.SphereGeometry(0.04, 12, 12);
+    // 超大高光点 - 让眼睛更有神
+    const highlightGeometry = new THREE.SphereGeometry(0.06, 16, 16);
     const highlightMaterial = new THREE.MeshBasicMaterial({ 
       color: 0xffffff,
       transparent: true,
-      opacity: 0.95
+      opacity: 1
     });
     
     const leftHighlight = new THREE.Mesh(highlightGeometry, highlightMaterial);
-    leftHighlight.position.set(-0.15, 1.48, 0.48);
+    leftHighlight.position.set(-0.12, 1.44, 0.52);
     robotGroup.add(leftHighlight);
     
     const rightHighlight = new THREE.Mesh(highlightGeometry, highlightMaterial);
-    rightHighlight.position.set(0.21, 1.48, 0.48);
+    rightHighlight.position.set(0.18, 1.44, 0.52);
     robotGroup.add(rightHighlight);
 
     // 小高光点
-    const smallHighlightGeometry = new THREE.SphereGeometry(0.02, 8, 8);
+    const smallHighlightGeometry = new THREE.SphereGeometry(0.03, 12, 12);
     const leftSmallHighlight = new THREE.Mesh(smallHighlightGeometry, highlightMaterial);
-    leftSmallHighlight.position.set(-0.21, 1.45, 0.48);
+    leftSmallHighlight.position.set(-0.19, 1.4, 0.52);
     robotGroup.add(leftSmallHighlight);
     
     const rightSmallHighlight = new THREE.Mesh(smallHighlightGeometry, highlightMaterial);
-    rightSmallHighlight.position.set(0.15, 1.45, 0.48);
+    rightSmallHighlight.position.set(0.11, 1.4, 0.52);
     robotGroup.add(rightSmallHighlight);
 
-    // 大鼻子
-    const noseGeometry = new THREE.SphereGeometry(0.12, 20, 20);
-    noseGeometry.scale(1, 0.9, 1.1);
+    // 超大鼻子 - 在眼睛中间
+    const noseGeometry = new THREE.SphereGeometry(0.16, 24, 24);
+    noseGeometry.scale(1, 0.85, 1.2);
     const noseMaterial = new THREE.MeshToonMaterial({ 
-      color: 0x4a5f8a,
+      color: 0x3a5f8a,
+      emissive: 0x2d4a6f,
+      emissiveIntensity: 0.2,
       gradientMap: createToonGradient()
     });
     const nose = new THREE.Mesh(noseGeometry, noseMaterial);
-    nose.position.set(0, 1.25, 0.48);
+    nose.position.set(0, 1.2, 0.52);
     robotGroup.add(nose);
+    
+    // 鼻孔
+    const nostrilGeometry = new THREE.SphereGeometry(0.03, 12, 12);
+    const nostrilMaterial = new THREE.MeshToonMaterial({ 
+      color: 0x1a0e09,
+      emissive: 0x000000,
+      emissiveIntensity: 0.1
+    });
+    
+    const leftNostril = new THREE.Mesh(nostrilGeometry, nostrilMaterial);
+    leftNostril.position.set(-0.05, 1.18, 0.62);
+    robotGroup.add(leftNostril);
+    
+    const rightNostril = new THREE.Mesh(nostrilGeometry, nostrilMaterial);
+    rightNostril.position.set(0.05, 1.18, 0.62);
+    robotGroup.add(rightNostril);
 
-    // 大嘴巴
+    // 超大嘴巴 - 更夸张的笑容
     const mouthCurve = new THREE.EllipseCurve(
       0, 0,
-      0.25, 0.15,
-      Math.PI * 0.1, Math.PI * 0.9,
+      0.32, 0.2,
+      Math.PI * 0.05, Math.PI * 0.95,
       false,
       0
     );
-    const mouthPoints = mouthCurve.getPoints(40);
+    const mouthPoints = mouthCurve.getPoints(50);
     const mouthGeometry = new THREE.BufferGeometry().setFromPoints(mouthPoints);
     const mouthMaterial = new THREE.LineBasicMaterial({ 
       color: 0x2d1810, 
-      linewidth: 4
+      linewidth: 5
     });
     const mouth = new THREE.Line(mouthGeometry, mouthMaterial);
-    mouth.position.set(0, 1.05, 0.45);
+    mouth.position.set(0, 0.98, 0.48);
     mouth.rotation.x = Math.PI;
     robotGroup.add(mouth);
+    
+    // 粉色舌头
+    const tongueGeometry = new THREE.SphereGeometry(0.18, 20, 20);
+    tongueGeometry.scale(1.2, 0.6, 0.8);
+    const tongueMaterial = new THREE.MeshToonMaterial({ 
+      color: 0xff6b9d,
+      emissive: 0xff4081,
+      emissiveIntensity: 0.2,
+      gradientMap: createToonGradient()
+    });
+    const tongue = new THREE.Mesh(tongueGeometry, tongueMaterial);
+    tongue.position.set(0, 0.92, 0.46);
+    robotGroup.add(tongue);
 
-    // 牙齿
-    const toothGeometry = new THREE.BoxGeometry(0.04, 0.06, 0.02);
+    // 更多更大的牙齿
+    const toothGeometry = new THREE.BoxGeometry(0.05, 0.08, 0.03);
     const toothMaterial = new THREE.MeshToonMaterial({ 
       color: 0xffffff,
+      emissive: 0xffffff,
+      emissiveIntensity: 0.2,
       gradientMap: createToonGradient()
     });
     
+    // 上排牙齿
+    for (let i = 0; i < 8; i++) {
+      const tooth = new THREE.Mesh(toothGeometry, toothMaterial);
+      const angle = (i / 7) * Math.PI * 0.7 + Math.PI * 0.15;
+      tooth.position.set(
+        Math.cos(angle) * 0.28,
+        1.02,
+        0.47 + Math.sin(angle) * 0.06
+      );
+      tooth.rotation.y = -angle;
+      robotGroup.add(tooth);
+    }
+    
+    // 下排牙齿
     for (let i = 0; i < 6; i++) {
       const tooth = new THREE.Mesh(toothGeometry, toothMaterial);
       const angle = (i / 5) * Math.PI * 0.6 + Math.PI * 0.2;
       tooth.position.set(
-        Math.cos(angle) * 0.22,
-        1.08,
-        0.44 + Math.sin(angle) * 0.05
+        Math.cos(angle) * 0.25,
+        0.88,
+        0.46 + Math.sin(angle) * 0.05
       );
       tooth.rotation.y = -angle;
       robotGroup.add(tooth);
@@ -528,53 +575,65 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
           }
         });
         
-        // 眨眼
+        // 眨眼 - 更频繁更生动
         const eyeWhites = robotGroup.children.filter(child => 
           child instanceof THREE.Mesh && 
-          child.position.y > 1.35 && 
-          child.position.y < 1.45 &&
-          child.scale.y > 1
+          child.position.y > 1.3 && 
+          child.position.y < 1.4 &&
+          child.scale.y > 1.3
         );
         
-        const blinkCycle = (time * 0.5) % 4;
-        if (blinkCycle < 0.15) {
-          const blinkScale = 1 - (blinkCycle / 0.15) * 0.85;
+        const blinkCycle = (time * 0.8) % 3; // 更频繁的眨眼
+        if (blinkCycle < 0.12) {
+          const blinkScale = 1 - (blinkCycle / 0.12) * 0.9;
           eyeWhites.forEach(eye => {
-            eye.scale.y = 1.3 * blinkScale;
+            eye.scale.y = 1.4 * blinkScale;
           });
-        } else if (blinkCycle < 0.3) {
-          const blinkScale = ((blinkCycle - 0.15) / 0.15) * 0.85;
+        } else if (blinkCycle < 0.24) {
+          const blinkScale = ((blinkCycle - 0.12) / 0.12) * 0.9;
           eyeWhites.forEach(eye => {
-            eye.scale.y = 1.3 * (0.15 + blinkScale);
+            eye.scale.y = 1.4 * (0.1 + blinkScale);
           });
         } else {
           eyeWhites.forEach(eye => {
-            eye.scale.y = 1.3;
+            eye.scale.y = 1.4;
           });
         }
         
-        // 瞳孔移动
+        // 瞳孔移动 - 更大幅度的移动
         const pupils = robotGroup.children.filter(child => 
           child instanceof THREE.Mesh && 
-          child.position.y > 1.4 && 
-          child.position.y < 1.45 &&
-          child.position.z > 0.44
+          child.position.y > 1.35 && 
+          child.position.y < 1.4 &&
+          child.position.z > 0.48
         );
         pupils.forEach((pupil, index) => {
-          const baseX = index === 0 ? -0.18 : 0.18;
-          pupil.position.x = baseX + Math.sin(time * 0.6) * 0.025;
-          pupil.position.y = 1.42 + Math.cos(time * 0.8) * 0.015;
+          const baseX = index === 0 ? -0.15 : 0.15;
+          pupil.position.x = baseX + Math.sin(time * 0.5) * 0.04;
+          pupil.position.y = 1.37 + Math.cos(time * 0.7) * 0.025;
         });
         
-        // 鼻子动画
+        // 鼻子呼吸动画
         const nose = robotGroup.children.find(child => 
           child instanceof THREE.Mesh && 
-          child.position.y > 1.2 && 
-          child.position.y < 1.3 &&
-          child.position.z > 0.45
+          child.position.y > 1.15 && 
+          child.position.y < 1.25 &&
+          child.position.z > 0.5
         );
         if (nose instanceof THREE.Mesh) {
-          nose.scale.setScalar(1 + Math.sin(time * 2) * 0.03);
+          nose.scale.setScalar(1 + Math.sin(time * 2.5) * 0.05);
+        }
+        
+        // 舌头动画
+        const tongue = robotGroup.children.find(child => 
+          child instanceof THREE.Mesh && 
+          child.position.y > 0.9 && 
+          child.position.y < 0.95 &&
+          child.position.z > 0.45
+        );
+        if (tongue instanceof THREE.Mesh) {
+          tongue.position.y = 0.92 + Math.sin(time * 1.5) * 0.02;
+          tongue.scale.x = 1.2 + Math.sin(time * 2) * 0.05;
         }
         
         // 手臂摆动
