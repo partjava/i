@@ -66,7 +66,7 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
       0.1,
       1000
     );
-    camera.position.set(0, 1.6, 4);
+    camera.position.set(0, 2, 8); // 调整相机位置以适应更大的机器人
 
     const renderer = new THREE.WebGLRenderer({ 
       canvas: canvasRef.current,
@@ -470,6 +470,10 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
     }
 
     scene.add(robotGroup);
+    
+    // 放大机器人并调整位置
+    robotGroup.scale.set(2.5, 2.5, 2.5); // 放大 2.5 倍
+    robotGroup.position.y = 0.5; // 稍微抬高一点
 
     // 存储引用
     sceneRef.current = scene;
