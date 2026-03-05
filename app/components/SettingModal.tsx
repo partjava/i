@@ -38,7 +38,16 @@ export default function SettingModal({ open, onClose }: SettingModalProps) {
     const nextTheme = checked ? 'dark' : 'light';
     setTheme(nextTheme);
     localStorage.setItem('theme', nextTheme);
-    document.body.classList.toggle('dark', nextTheme === 'dark');
+    
+    // 立即应用主题
+    if (nextTheme === 'dark') {
+      document.body.classList.add('dark');
+    } else {
+      document.body.classList.remove('dark');
+    }
+    
+    // 给用户反馈
+    message.success(`已切换到${nextTheme === 'dark' ? '深色' : '浅色'}模式`);
   };
 
   const handleLanguageChange = (value: string) => {

@@ -81,6 +81,141 @@
   --color-success: #10b981;
 }
 
+/* 深色模式支持 - 手动切换 */
+body.dark {
+  --background: #111827;
+  --foreground: #f9fafb;
+  --color-primary: #818cf8;
+  --color-secondary: #a78bfa;
+  --color-accent: #fbbf24;
+  --color-success: #34d399;
+  background: #111827;
+  color: #f9fafb;
+}
+
+body.dark .card {
+  background-color: #1f2937;
+  color: #f9fafb;
+  border-color: #374151;
+}
+
+body.dark .dark-mode-card {
+  background-color: #1f2937;
+  color: #f9fafb;
+}
+
+body.dark .dark-mode-border {
+  border-color: #374151;
+}
+
+body.dark .custom-scrollbar::-webkit-scrollbar-track {
+  background: #1f2937;
+}
+
+body.dark .custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #4b5563;
+}
+
+body.dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #6b7280;
+}
+
+/* Ant Design 深色模式覆盖 */
+body.dark .ant-card {
+  background-color: #1f2937 !important;
+  color: #f9fafb !important;
+  border-color: #374151 !important;
+}
+
+body.dark .ant-card-head {
+  background-color: #111827 !important;
+  color: #f9fafb !important;
+  border-color: #374151 !important;
+}
+
+body.dark .ant-card-body {
+  background-color: #1f2937 !important;
+  color: #f9fafb !important;
+}
+
+body.dark .ant-statistic-title {
+  color: #9ca3af !important;
+}
+
+body.dark .ant-statistic-content {
+  color: #f9fafb !important;
+}
+
+body.dark .ant-timeline-item-content {
+  color: #f9fafb !important;
+}
+
+body.dark .ant-progress-text {
+  color: #f9fafb !important;
+}
+
+body.dark .ant-tag {
+  background-color: #374151 !important;
+  color: #f9fafb !important;
+  border-color: #4b5563 !important;
+}
+
+body.dark .ant-divider {
+  border-color: #374151 !important;
+}
+
+body.dark .ant-typography {
+  color: #f9fafb !important;
+}
+
+body.dark .ant-form-item-label > label {
+  color: #f9fafb !important;
+}
+
+body.dark .ant-input,
+body.dark .ant-input-textarea {
+  background-color: #374151 !important;
+  color: #f9fafb !important;
+  border-color: #4b5563 !important;
+}
+
+body.dark .ant-input:hover,
+body.dark .ant-input-textarea:hover {
+  border-color: #6b7280 !important;
+}
+
+body.dark .ant-input:focus,
+body.dark .ant-input-textarea:focus {
+  border-color: #818cf8 !important;
+  box-shadow: 0 0 0 2px rgba(129, 140, 248, 0.2) !important;
+}
+
+body.dark .ant-select-selector {
+  background-color: #374151 !important;
+  color: #f9fafb !important;
+  border-color: #4b5563 !important;
+}
+
+body.dark .ant-modal-content {
+  background-color: #1f2937 !important;
+  color: #f9fafb !important;
+}
+
+body.dark .ant-modal-header {
+  background-color: #111827 !important;
+  color: #f9fafb !important;
+  border-color: #374151 !important;
+}
+
+body.dark .ant-modal-title {
+  color: #f9fafb !important;
+}
+
+body.dark .ant-modal-footer {
+  background-color: #1f2937 !important;
+  border-color: #374151 !important;
+}
+
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #111827;

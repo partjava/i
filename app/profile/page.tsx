@@ -11,18 +11,15 @@ import {
   Button, 
   Form, 
   Avatar, 
-  Badge, 
-  Statistic, 
+  Progress,
+  Timeline,
+  Tag,
   Row, 
   Col, 
   Space,
   Typography,
   Divider,
-  message,
-  Progress,
-  Timeline,
-  Tooltip,
-  Tag
+  message
 } from 'antd';
 import { 
   UserOutlined, 
@@ -31,18 +28,15 @@ import {
   TrophyOutlined, 
   CalendarOutlined,
   GithubOutlined,
-  TwitterOutlined,
   GlobalOutlined,
   EnvironmentOutlined,
   HeartOutlined,
   CommentOutlined,
   FireOutlined,
   ClockCircleOutlined,
-  BarChartOutlined,
-  CameraOutlined
+  BarChartOutlined
 } from '@ant-design/icons';
 import LearningHeatmap from '@/app/components/LearningHeatmap';
-import { HeatmapData } from '@/app/types/achievement';
 import { UnifiedUserStats, UnifiedHeatmapData } from '@/app/lib/api/dataAdapter';
 
 const { Title, Text, Paragraph } = Typography;
@@ -81,6 +75,7 @@ export default function ProfilePage() {
   const [heatmapData, setHeatmapData] = useState<UnifiedHeatmapData[]>([]);
   const [heatmapLoading, setHeatmapLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [isGuest, setIsGuest] = useState(false);
 
   // 添加刷新数据的函数
   const refreshData = async () => {
@@ -171,14 +166,275 @@ export default function ProfilePage() {
     }
   };
 
+  // 加载平台总体统计数据（未登录用户）
+  const loadPlatformStats = async () => {
+    try {
+      console.log('正在加载平台统计数据...');
+      
+      const response = await fetch('/api/stats/platform', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        cache: 'no-store'
+      });
+      
+      if (!response.ok) {
+        throw new Error(`API错误: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      console.log('成功获取平台统计数据:', data);
+      
+      // 如果有真实数据，使用真实数据
+      if (data && data.totalUsers > 0) {
+        const platformStats: UserStats = {
+          notes: {
+            total: data.totalNotes || 0,
+            public: data.publicNotes || 0,
+            private: data.privateNotes || 0,
+            firstNoteDate: data.firstNoteDate || '',
+            lastActivityDate: data.lastActivityDate || new Date().toISOString()
+          },
+          engagement: {
+            likesReceived: data.totalLikes || 0,
+            bookmarksReceived: data.totalBookmarks || 0,
+            commentsReceived: data.totalComments || 0
+          },
+          learning: {
+            categoriesStudied: data.totalCategories || 0,
+            technologiesStudied: data.totalTechnologies || 0,
+            totalStudyTime: data.totalStudyTime || 0,
+            studyDays: data.totalStudyDays || 0,
+            studyDaysTotal: data.totalStudyDays || 0
+          },
+          achievements: {
+            total: 10,
+            earned: Math.floor((data.totalUsers || 0) * 0.6) // 平均60%的成就完成率
+          },
+          recentActivity: data.recentActivity || [],
+          monthlyStats: data.monthlyStats || []
+        };
+        
+        setStats(platformStats);
+        
+        // 设置平台热力图数据
+        if (data.heatmapData && Array.isArray(data.heatmapData)) {
+          setHeatmapData(data.heatmapData);
+        } else {
+          setHeatmapData([]);
+        }
+        
+        // 设置平台信息
+        const platformProfile = {
+          name: '平台总览',
+          bio: `${data.totalUsers || 0} 位学习者正在使用本平台，共创建了 ${data.totalNotes || 0} 篇学习笔记，累计学习 ${Math.floor((data.totalStudyTime || 0) / 60)} 小时。${data.todayNotes > 0 ? `今日新增 ${data.todayNotes} 篇笔记，` : ''}${data.weeklyActiveUsers > 0 ? `本周 ${data.weeklyActiveUsers} 位用户活跃。` : ''}加入我们，开始你的学习之旅！`,
+          location: '全球',
+          github: '',
+          website: '',
+          image: ''
+        };
+        
+        setProfileForm(platformProfile);
+        form.setFieldsValue(platformProfile);
+        
+        setHeatmapLoading(false);
+        setStatsLoading(false);
+        return;
+      }
+      
+      // 如果没有数据，使用示例数据
+      throw new Error('暂无平台数据');
+      
+    } catch (error) {
+      console.error('获取平台统计数据失败，使用示例数据:', error);
+      generateDemoData();
+    }
+  };
+
+  // 生成示例数据供未登录用户查看 - 当平台还没有真实数据时使用
+  const generateDemoData = () => {
+    console.log('使用示例数据展示功能...');
+    
+    // 生成过去一年的学习热力图数据 - 模拟真实学习模式
+    const demoHeatmap: UnifiedHeatmapData[] = [];
+    const today = new Date();
+    const oneYearAgo = new Date(today.getFullYear() - 1, today.getMonth(), today.getDate());
+    
+    // 模拟学习习惯：工作日学习多，周末少，有学习周期和间断期
+    let studyStreak = 0;
+    let breakDays = 0;
+    
+    for (let d = new Date(oneYearAgo); d <= today; d.setDate(d.getDate() + 1)) {
+      const dateStr = new Date(d).toISOString().split('T')[0];
+      const dayOfWeek = d.getDay();
+      const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+      
+      // 模拟学习周期：连续学习后会有休息期
+      if (breakDays > 0) {
+        breakDays--;
+        if (Math.random() > 0.8) breakDays = 0; // 有20%概率提前结束休息
+        continue;
+      }
+      
+      // 工作日学习概率80%，周末40%
+      const studyProbability = isWeekend ? 0.4 : 0.8;
+      
+      if (Math.random() < studyProbability) {
+        studyStreak++;
+        
+        // 工作日学习强度更高
+        let maxCount = isWeekend ? 8 : 15;
+        
+        // 模拟学习强度波动
+        const intensity = Math.random();
+        let count: number;
+        if (intensity < 0.3) {
+          count = Math.floor(Math.random() * 3) + 1; // 轻度学习 1-3
+        } else if (intensity < 0.7) {
+          count = Math.floor(Math.random() * 5) + 4; // 中度学习 4-8
+        } else {
+          count = Math.floor(Math.random() * 7) + 9; // 高强度学习 9-15
+        }
+        
+        count = Math.min(count, maxCount);
+        
+        let level: 0 | 1 | 2 | 3 | 4 = 0;
+        if (count <= 2) level = 1;
+        else if (count <= 5) level = 2;
+        else if (count <= 10) level = 3;
+        else level = 4;
+        
+        demoHeatmap.push({ date: dateStr, count, level });
+        
+        // 连续学习7-14天后，有概率进入休息期
+        if (studyStreak >= 7 && Math.random() > 0.7) {
+          breakDays = Math.floor(Math.random() * 4) + 2; // 休息2-5天
+          studyStreak = 0;
+        }
+      } else {
+        studyStreak = 0;
+      }
+    }
+    
+    // 计算真实的学习天数
+    const totalStudyDays = demoHeatmap.length;
+    const totalStudyCount = demoHeatmap.reduce((sum, day) => sum + day.count, 0);
+    
+    // 生成示例统计数据 - 基于热力图数据计算
+    const demoStats: UserStats = {
+      notes: {
+        total: 87,
+        public: 63,
+        private: 24,
+        firstNoteDate: new Date(today.getFullYear() - 1, 8, 15).toISOString(), // 去年9月开始
+        lastActivityDate: new Date(Date.now() - Math.floor(Math.random() * 3) * 24 * 60 * 60 * 1000).toISOString()
+      },
+      engagement: {
+        likesReceived: 234,
+        bookmarksReceived: 156,
+        commentsReceived: 67
+      },
+      learning: {
+        categoriesStudied: 6,
+        technologiesStudied: 15,
+        totalStudyTime: Math.floor(totalStudyCount * 25), // 每次学习约25分钟
+        studyDays: totalStudyDays,
+        studyDaysTotal: totalStudyDays
+      },
+      achievements: {
+        total: 10,
+        earned: 6
+      },
+      recentActivity: [
+        {
+          id: '1',
+          type: 'note',
+          title: 'React性能优化',
+          content: '创建了新笔记：React性能优化最佳实践 - useMemo和useCallback的使用场景',
+          date: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString()
+        },
+        {
+          id: '2',
+          type: 'note',
+          title: 'Next.js服务端渲染',
+          content: '创建了新笔记：Next.js 14 App Router完全指南',
+          date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString()
+        },
+        {
+          id: '3',
+          type: 'study',
+          title: '算法练习',
+          content: '完成了LeetCode动态规划专题 - 背包问题系列',
+          date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString()
+        },
+        {
+          id: '4',
+          type: 'note',
+          title: 'TypeScript泛型',
+          content: '创建了新笔记：TypeScript高级泛型技巧与实战',
+          date: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000).toISOString()
+        },
+        {
+          id: '5',
+          type: 'study',
+          title: '数据库优化',
+          content: '学习了MongoDB索引优化和查询性能调优',
+          date: new Date(Date.now() - 12 * 24 * 60 * 60 * 1000).toISOString()
+        },
+        {
+          id: '6',
+          type: 'note',
+          title: 'Tailwind CSS',
+          content: '创建了新笔记：Tailwind CSS响应式设计实践',
+          date: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString()
+        },
+        {
+          id: '7',
+          type: 'study',
+          title: '系统设计',
+          content: '完成了分布式系统设计课程 - CAP理论与一致性',
+          date: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString()
+        }
+      ],
+      monthlyStats: [
+        { month: '2025-12', notes: 15, studyTime: 1680 },
+        { month: '2026-01', notes: 18, studyTime: 2040 },
+        { month: '2026-02', notes: 21, studyTime: 2280 },
+        { month: '2026-03', notes: 12, studyTime: 1560 }
+      ]
+    };
+    
+    setHeatmapData(demoHeatmap);
+    setStats(demoStats);
+    setHeatmapLoading(false);
+    setStatsLoading(false);
+    
+    // 设置示例用户资料 - 说明这是示例数据
+    const demoProfile = {
+      name: '功能演示',
+      bio: '这是示例数据，用于展示平台的学习追踪和数据可视化功能。注册登录后，您可以记录自己的学习历程，查看个性化的学习统计和热力图。',
+      location: '示例数据',
+      github: '',
+      website: '',
+      image: ''
+    };
+    
+    setProfileForm(demoProfile);
+    form.setFieldsValue(demoProfile);
+  };
+
   // 初始加载数据
   useEffect(() => {
     if (status === 'unauthenticated') {
-      router.push('/login');
+      // 未登录用户显示平台总体数据
+      setIsGuest(true);
+      loadPlatformStats();
       return;
     }
     
     if (status === 'authenticated') {
+      setIsGuest(false);
       // 先检查会话状态
       checkSession().then(isAuthenticated => {
         if (isAuthenticated) {
@@ -707,13 +963,14 @@ export default function ProfilePage() {
   };
 
   if (status === 'loading') {
-    return <div>加载中...</div>;
-  }
-  if (status === 'unauthenticated') {
-    return null;
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-500"></div>
+      </div>
+    );
   }
 
-  if (statsLoading) {
+  if (statsLoading && !isGuest) {
     return (
       <div className="flex justify-center items-center h-screen">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-500"></div>
@@ -723,8 +980,40 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* 添加学习时间同步组件 */}
-      <StudyTimeSync />
+      {/* 添加学习时间同步组件 - 仅登录用户 */}
+      {!isGuest && <StudyTimeSync />}
+      
+      {/* 未登录提示横幅 */}
+      {isGuest && (
+        <div className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white py-4 px-6 shadow-lg">
+          <div className="max-w-4xl mx-auto flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                <BarChartOutlined className="text-xl" />
+              </div>
+              <div>
+                <p className="font-semibold text-lg">
+                  {(stats?.notes?.total || 0) > 0 ? '平台数据总览' : '功能演示'}
+                </p>
+                <p className="text-sm opacity-90">
+                  {(stats?.notes?.total || 0) > 0 
+                    ? '展示所有用户的学习数据汇总 · 登录后查看您的个人学习统计'
+                    : '这是示例数据，展示平台的学习追踪功能 · 注册登录开始记录您的学习历程'
+                  }
+                </p>
+              </div>
+            </div>
+            <Button 
+              type="default"
+              size="large"
+              onClick={() => router.push('/login')}
+              className="bg-white text-blue-600 border-0 hover:bg-blue-50 font-semibold px-6"
+            >
+              立即登录
+            </Button>
+          </div>
+        </div>
+      )}
       
       <div className="max-w-4xl mx-auto px-4 py-8">
         {/* 主要个人信息卡片 - 作为页面头部 */}
@@ -757,7 +1046,7 @@ export default function ProfilePage() {
                       className="w-full h-full"
                     />
                   </div>
-                  {editMode && (
+                  {editMode && !isGuest && (
                     <div className="absolute bottom-2 right-2">
                       <input
                         ref={fileInputRef}
@@ -782,12 +1071,26 @@ export default function ProfilePage() {
               
               {/* 用户信息 */}
               <div className="mb-6">
-                <Title level={1} className="mb-2" style={{ color: 'white', margin: 0, fontSize: '2.5rem' }}>
-                  {profileForm.name || session?.user?.name || '未设置用户名'}
-                </Title>
-                <Text className="block mb-4 text-lg opacity-90" style={{ color: 'white' }}>
-                  {session?.user?.email}
-                </Text>
+                <div className="flex items-center justify-center gap-3 mb-2">
+                  <Title level={1} className="mb-0" style={{ color: 'white', margin: 0, fontSize: '2.5rem' }}>
+                    {profileForm.name || session?.user?.name || '未设置用户名'}
+                  </Title>
+                  {isGuest && (stats?.notes?.total || 0) > 0 && (
+                    <span className="px-3 py-1 bg-white bg-opacity-20 rounded-full text-sm font-semibold">
+                      平台数据
+                    </span>
+                  )}
+                  {isGuest && (stats?.notes?.total || 0) === 0 && (
+                    <span className="px-3 py-1 bg-yellow-400 bg-opacity-30 rounded-full text-sm font-semibold">
+                      演示数据
+                    </span>
+                  )}
+                </div>
+                {!isGuest && session?.user?.email && (
+                  <Text className="block mb-4 text-lg opacity-90" style={{ color: 'white' }}>
+                    {session.user.email}
+                  </Text>
+                )}
                 
                 {profileForm.bio && (
                   <Paragraph className="mb-6 text-lg opacity-90 max-w-2xl mx-auto" style={{ color: 'white' }}>
@@ -824,43 +1127,56 @@ export default function ProfilePage() {
 
                 {/* 操作按钮 */}
                 <Space size="large">
-                  <Button 
-                    type="default"
-                    size="large"
-                    icon={<EditOutlined />}
-                    onClick={() => setEditMode(!editMode)}
-                    className="bg-white bg-opacity-20 text-white border-white border-opacity-30 hover:bg-white hover:bg-opacity-30 px-6 py-2 h-auto"
-                  >
-                    {editMode ? '取消编辑' : '编辑资料'}
-                  </Button>
-                  <Button 
-                    type="default"
-                    size="large"
-                    icon={<svg viewBox="0 0 24 24" className="w-5 h-5 inline-block" fill="none" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                    </svg>}
-                    onClick={refreshData}
-                    loading={refreshing}
-                    className="bg-green-500 bg-opacity-20 text-white border-green-300 border-opacity-30 hover:bg-green-500 hover:bg-opacity-30 px-6 py-2 h-auto"
-                  >
-                    刷新数据
-                  </Button>
-                  <Button 
-                    danger 
-                    size="large"
-                    onClick={handleSignOut}
-                    className="bg-red-500 bg-opacity-20 text-white border-red-300 border-opacity-30 hover:bg-red-500 hover:bg-opacity-30 px-6 py-2 h-auto"
-                  >
-                    退出登录
-                  </Button>
+                  {!isGuest ? (
+                    <>
+                      <Button 
+                        type="default"
+                        size="large"
+                        icon={<EditOutlined />}
+                        onClick={() => setEditMode(!editMode)}
+                        className="bg-white bg-opacity-20 text-white border-white border-opacity-30 hover:bg-white hover:bg-opacity-30 px-6 py-2 h-auto"
+                      >
+                        {editMode ? '取消编辑' : '编辑资料'}
+                      </Button>
+                      <Button 
+                        type="default"
+                        size="large"
+                        icon={<svg viewBox="0 0 24 24" className="w-5 h-5 inline-block" fill="none" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>}
+                        onClick={refreshData}
+                        loading={refreshing}
+                        className="bg-green-500 bg-opacity-20 text-white border-green-300 border-opacity-30 hover:bg-green-500 hover:bg-opacity-30 px-6 py-2 h-auto"
+                      >
+                        刷新数据
+                      </Button>
+                      <Button 
+                        danger 
+                        size="large"
+                        onClick={handleSignOut}
+                        className="bg-red-500 bg-opacity-20 text-white border-red-300 border-opacity-30 hover:bg-red-500 hover:bg-opacity-30 px-6 py-2 h-auto"
+                      >
+                        退出登录
+                      </Button>
+                    </>
+                  ) : (
+                    <Button 
+                      type="default"
+                      size="large"
+                      onClick={() => router.push('/login')}
+                      className="bg-white text-blue-600 border-0 hover:bg-blue-50 px-8 py-2 h-auto font-semibold"
+                    >
+                      登录查看真实数据
+                    </Button>
+                  )}
                 </Space>
               </div>
             </div>
           </div>
         </Card>
 
-        {editMode ? (
-          /* 编辑模式 */
+        {editMode && !isGuest ? (
+          /* 编辑模式 - 仅登录用户可用 */
           <Card 
             title={
               <div className="flex items-center text-xl">
@@ -960,8 +1276,8 @@ export default function ProfilePage() {
             {!statsLoading && stats && (
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <Card 
-                  className="text-center shadow-lg border-0 bg-gradient-to-br from-blue-50 to-blue-100 cursor-pointer hover:shadow-xl transition-all duration-300 hover:scale-105"
-                  onClick={() => router.push('/notes')}
+                  className={`text-center shadow-lg border-0 bg-gradient-to-br from-blue-50 to-blue-100 ${!isGuest ? 'cursor-pointer hover:shadow-xl transition-all duration-300 hover:scale-105' : ''}`}
+                  onClick={() => !isGuest && router.push('/notes')}
                 >
                   <div className="p-2">
                     <BookOutlined className="text-2xl text-blue-500 mb-2" />
@@ -972,8 +1288,8 @@ export default function ProfilePage() {
                   </div>
                 </Card>
                 <Card 
-                  className="text-center shadow-lg border-0 bg-gradient-to-br from-green-50 to-green-100 cursor-pointer hover:shadow-xl transition-all duration-300 hover:scale-105"
-                  onClick={() => router.push('/study')}
+                  className={`text-center shadow-lg border-0 bg-gradient-to-br from-green-50 to-green-100 ${!isGuest ? 'cursor-pointer hover:shadow-xl transition-all duration-300 hover:scale-105' : ''}`}
+                  onClick={() => !isGuest && router.push('/study')}
                 >
                   <div className="p-2">
                     <CalendarOutlined className="text-2xl text-green-500 mb-2" />
@@ -984,8 +1300,8 @@ export default function ProfilePage() {
                   </div>
                 </Card>
                 <Card 
-                  className="text-center shadow-lg border-0 bg-gradient-to-br from-pink-50 to-pink-100 cursor-pointer hover:shadow-xl transition-all duration-300 hover:scale-105"
-                  onClick={() => router.push('/notes')}
+                  className={`text-center shadow-lg border-0 bg-gradient-to-br from-pink-50 to-pink-100 ${!isGuest ? 'cursor-pointer hover:shadow-xl transition-all duration-300 hover:scale-105' : ''}`}
+                  onClick={() => !isGuest && router.push('/notes')}
                 >
                   <div className="p-2">
                     <HeartOutlined className="text-2xl text-pink-500 mb-2" />
@@ -996,8 +1312,8 @@ export default function ProfilePage() {
                   </div>
                 </Card>
                 <Card 
-                  className="text-center shadow-lg border-0 bg-gradient-to-br from-orange-50 to-orange-100 cursor-pointer hover:shadow-xl transition-all duration-300 hover:scale-105"
-                  onClick={() => router.push('/study')}
+                  className={`text-center shadow-lg border-0 bg-gradient-to-br from-orange-50 to-orange-100 ${!isGuest ? 'cursor-pointer hover:shadow-xl transition-all duration-300 hover:scale-105' : ''}`}
+                  onClick={() => !isGuest && router.push('/study')}
                 >
                   <div className="p-2">
                     <FireOutlined className="text-2xl text-orange-500 mb-2" />
