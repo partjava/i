@@ -141,15 +141,6 @@ export default function Navbar() {
       ),
     },
     {
-      key: 'dashboard',
-      icon: <BarChartOutlined />,
-      label: (
-        <Link href="/dashboard">
-          数据大屏
-        </Link>
-      ),
-    },
-    {
       key: 'notes',
       icon: <EditOutlined />,
       label: (
@@ -236,13 +227,6 @@ export default function Navbar() {
               >
                 <UserOutlined className="text-lg mb-1" />
                 <span className="text-xs">{session ? '资料' : '数据'}</span>
-              </Link>
-              <Link 
-                href="/dashboard" 
-                className="flex flex-col items-center text-gray-600 hover:text-purple-600 transition-colors"
-              >
-                <BarChartOutlined className="text-lg mb-1" />
-                <span className="text-xs">大屏</span>
               </Link>
               <Link 
                 href="/code-editor" 

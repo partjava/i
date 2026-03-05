@@ -2,6 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
+/* 引入移动端优化样式 */
+@import './styles/mobile.css';
+
 /* 渐变背景动画 */
 @keyframes gradient-shift {
   0%, 100% {

@@ -1,7 +1,18 @@
 'use client';
 import React, { useState, useEffect, useRef } from 'react';
-import { Button } from 'antd';
+import { Button, Input } from 'antd';
+import { SendOutlined, CloseOutlined } from '@ant-design/icons';
 import * as THREE from 'three';
+import ReactMarkdown from 'react-markdown';
+import SyntaxHighlighter from 'react-syntax-highlighter';
+import remarkGfm from 'remark-gfm';
+
+interface Message {
+  id: string;
+  text: string;
+  sender: 'user' | 'ai';
+  timestamp: Date;
+}
 
 // 优化的AI 3D机器人组件
 export default function AI3DRobot({ onClose }: { onClose: () => void }) {
@@ -11,9 +22,113 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
   const cameraRef = useRef<THREE.PerspectiveCamera>();
   const animationIdRef = useRef<number>();
   const robotGroupRef = useRef<THREE.Group>();
+  const messagesEndRef = useRef<HTMLDivElement>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [isWaving, setIsWaving] = useState(false);
+  const [showChat, setShowChat] = useState(false);
+  const [messages, setMessages] = useState<Message[]>([
+    {
+      id: '1',
+      text: '你好！我是史迪奇，你的AI学习助手！有什么我可以帮助你的吗？😊',
+      sender: 'ai',
+      timestamp: new Date()
+    }
+  ]);
+  const [inputValue, setInputValue] = useState('');
+  const [isTyping, setIsTyping] = useState(false);
+
+  // 自动滚动到最新消息
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  // AI回复函数
+  const getAIResponse = async (userMessage: string): Promise<string> => {
+    try {
+      // 使用本地API代理，避免CORS问题
+      const response = await fetch('/api/ai/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: userMessage }),
+      });
+
+      if (!response.ok) {
+        throw new Error('AI服务响应失败');
+      }
+
+      const data = await response.json();
+      return data.reply || data.answer || '抱歉，我现在有点累了，稍后再聊吧~';
+    } catch (error) {
+      console.error('AI对话失败:', error);
+      return getPresetResponse(userMessage);
+    }
+  };
+
+  // 预设回复
+  const getPresetResponse = (userMessage: string): string => {
+    const msg = userMessage.toLowerCase();
+    
+    if (msg.includes('你好') || msg.includes('hi') || msg.includes('hello')) {
+      return '你好呀！我是史迪奇，很高兴见到你！有什么我可以帮助你的吗？😊';
+    }
+    if (msg.includes('学习') || msg.includes('怎么学')) {
+      return '学习编程最重要的是多练习！建议你从基础开始，每天坚持写代码，遇到问题多思考。我可以帮你解答具体的技术问题哦！💪';
+    }
+    if (msg.includes('笔记')) {
+      return '做笔记是个好习惯！你可以在"笔记"页面创建新笔记，记录学习心得。支持Markdown格式，还能设置公开/私密哦！📝';
+    }
+    if (msg.includes('挑战') || msg.includes('练习')) {
+      return '想提升编程能力？去"挑战"页面试试吧！那里有各种难度的编程题目，还有排行榜系统，快来挑战自己吧！🏆';
+    }
+    if (msg.includes('代码') || msg.includes('编辑器')) {
+      return '我们有在线代码编辑器！支持多种编程语言，可以实时运行和测试代码。去"代码"页面试试吧！💻';
+    }
+    if (msg.includes('谢谢') || msg.includes('感谢')) {
+      return '不客气！能帮到你我很开心！有其他问题随时问我哦~😄';
+    }
+    if (msg.includes('再见') || msg.includes('拜拜')) {
+      return '再见！记得常来找我玩哦！祝你学习愉快！👋';
+    }
+    
+    return '嗯嗯，我明白了！你还想了解什么呢？我可以帮你解答学习、笔记、挑战等方面的问题哦！🤔';
+  };
+
+  // 发送消息
+  const handleSendMessage = async () => {
+    if (!inputValue.trim() || isTyping) return;
+
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      text: inputValue.trim(),
+      sender: 'user',
+      timestamp: new Date()
+    };
+
+    setMessages(prev => [...prev, userMessage]);
+    setInputValue('');
+    setIsTyping(true);
+
+    setTimeout(async () => {
+      const aiResponse = await getAIResponse(userMessage.text);
+      
+      const aiMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        text: aiResponse,
+        sender: 'ai',
+        timestamp: new Date()
+      };
+
+      setMessages(prev => [...prev, aiMessage]);
+      setIsTyping(false);
+    }, 800);
+  };
+
+  // 快捷回复
+  const handleQuickReply = (text: string) => {
+    setInputValue(text);
+    setTimeout(() => handleSendMessage(), 100);
+  };
 
   // 创建卡通渲染渐变纹理 - 史迪奇蓝色
   const createToonGradient = () => {
@@ -721,7 +836,7 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
         <div className="flex-1 relative bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 overflow-hidden">
           <canvas 
             ref={canvasRef} 
-            className="w-full h-full block"
+            className={`w-full h-full block transition-all duration-500 ${showChat ? 'opacity-20 blur-sm scale-90' : 'opacity-100'}`}
             style={{ background: 'linear-gradient(to bottom, #87CEEB 0%, #98FB98 100%)' }}
           />
           
@@ -746,7 +861,7 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
             </div>
           )}
           
-          {!isLoading && (
+          {!isLoading && !showChat && (
             <div className="absolute bottom-2 sm:bottom-6 left-1/2 transform -translate-x-1/2 w-full max-w-lg px-3 sm:px-4">
               <div className="bg-white bg-opacity-95 backdrop-blur-md rounded-2xl p-4 sm:p-6 shadow-2xl border border-gray-200">
                 <div className="flex items-center justify-between mb-3 sm:mb-4">
@@ -755,7 +870,7 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
                       <span className="text-white text-xl sm:text-2xl">🤖</span>
                     </div>
                     <div>
-                      <h3 className="text-base sm:text-lg font-bold text-gray-800">AI 3D 机器人</h3>
+                      <h3 className="text-base sm:text-lg font-bold text-gray-800">史迪奇 AI助手</h3>
                       <div className="flex items-center space-x-2 mt-1">
                         <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse shadow-lg shadow-green-500/50"></div>
                         <span className="text-xs text-gray-500 font-medium">在线服务中</span>
@@ -766,41 +881,292 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
                 </div>
                 
                 <p className="text-gray-600 mb-4 text-xs sm:text-sm leading-relaxed">
-                  你好！我是你的智能学习助手，随时准备帮助你解答问题、提供建议。
+                  你好！我是史迪奇，你的智能学习助手，随时准备帮助你解答问题、提供建议。
                 </p>
                 
-                <div className="grid grid-cols-2 gap-2 sm:gap-3 mb-3">
+                <div className="grid grid-cols-2 gap-2 sm:gap-3">
                   <button 
                     className="group bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl transition-all duration-300 transform hover:scale-105 hover:shadow-lg text-xs sm:text-sm font-medium flex items-center justify-center space-x-2"
-                    onClick={() => {/* 开始对话逻辑 */}}
+                    onClick={() => setShowChat(true)}
                   >
                     <span className="text-base sm:text-lg">💬</span>
                     <span>开始对话</span>
                   </button>
                   <button 
-                    className="group bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl transition-all duration-300 transform hover:scale-105 hover:shadow-lg text-xs sm:text-sm font-medium flex items-center justify-center space-x-2"
-                    onClick={() => {/* 自定义外观逻辑 */}}
-                  >
-                    <span className="text-base sm:text-lg">🎨</span>
-                    <span>自定义外观</span>
-                  </button>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-2 sm:gap-3">
-                  <button 
                     className="group bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl transition-all duration-300 transform hover:scale-105 hover:shadow-lg text-xs sm:text-sm font-medium flex items-center justify-center space-x-2"
-                    onClick={() => {/* 学习建议逻辑 */}}
+                    onClick={() => handleQuickReply('我想学习编程，有什么建议吗？')}
                   >
                     <span className="text-base sm:text-lg">📚</span>
                     <span>学习建议</span>
                   </button>
-                  <button 
-                    className="group bg-gradient-to-r from-pink-500 to-pink-600 hover:from-pink-600 hover:to-pink-700 text-white px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl transition-all duration-300 transform hover:scale-105 hover:shadow-lg text-xs sm:text-sm font-medium flex items-center justify-center space-x-2"
-                    onClick={() => {/* 代码助手逻辑 */}}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {!isLoading && showChat && (
+            <div className="absolute inset-4 sm:inset-8 flex items-center justify-center">
+              <div className="bg-white rounded-2xl shadow-2xl border border-gray-200 flex flex-col w-full h-full max-w-4xl">
+                {/* 聊天头部 */}
+                <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-purple-50 rounded-t-2xl flex-shrink-0">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center shadow-lg">
+                      <span className="text-white text-xl">🤖</span>
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-bold text-gray-800">史迪奇 AI助手</h3>
+                      <div className="flex items-center space-x-1">
+                        <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                        <span className="text-xs text-gray-500">在线 · 智能对话中</span>
+                      </div>
+                    </div>
+                  </div>
+                  <Button 
+                    size="small" 
+                    onClick={() => setShowChat(false)}
+                    className="text-gray-500 hover:text-gray-700 hover:bg-gray-100"
                   >
-                    <span className="text-base sm:text-lg">💻</span>
-                    <span>代码助手</span>
-                  </button>
+                    <CloseOutlined /> 最小化
+                  </Button>
+                </div>
+
+                <style jsx global>{`
+                  .scrollbar-hide::-webkit-scrollbar {
+                    display: none;
+                  }
+                  .scrollbar-hide {
+                    -ms-overflow-style: none;
+                    scrollbar-width: none;
+                  }
+                  .prose {
+                    color: inherit;
+                  }
+                  .prose code {
+                    background-color: rgba(0, 0, 0, 0.05);
+                    padding: 0.2em 0.4em;
+                    border-radius: 3px;
+                    font-size: 0.85em;
+                  }
+                  .prose pre {
+                    margin: 0.5em 0;
+                    padding: 0;
+                    background: transparent;
+                  }
+                  .prose pre code {
+                    background: transparent;
+                    padding: 0;
+                  }
+                  .prose p {
+                    margin: 0.5em 0;
+                  }
+                  .prose ul, .prose ol {
+                    margin: 0.5em 0;
+                    padding-left: 1.5em;
+                  }
+                  .prose li {
+                    margin: 0.25em 0;
+                  }
+                  .prose h1, .prose h2, .prose h3 {
+                    margin-top: 1em;
+                    margin-bottom: 0.5em;
+                  }
+                  .prose blockquote {
+                    margin: 0.5em 0;
+                    padding-left: 1em;
+                    border-left: 3px solid #d1d5db;
+                    color: #6b7280;
+                  }
+                  .prose a {
+                    color: #3b82f6;
+                    text-decoration: none;
+                  }
+                  .prose a:hover {
+                    text-decoration: underline;
+                  }
+                  .prose strong {
+                    font-weight: 600;
+                  }
+                  .prose table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    margin: 0.5em 0;
+                  }
+                  .prose th, .prose td {
+                    border: 1px solid #d1d5db;
+                    padding: 0.5em;
+                    text-align: left;
+                  }
+                  .prose th {
+                    background-color: #f3f4f6;
+                    font-weight: 600;
+                  }
+                `}</style>
+
+                {/* 消息列表 */}
+                <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 bg-gray-50">
+                  {messages.map((msg) => (
+                    <div
+                      key={msg.id}
+                      className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'} animate-fadeIn`}
+                    >
+                      {msg.sender === 'ai' && (
+                        <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center mr-2 flex-shrink-0 shadow-md">
+                          <span className="text-white text-sm">🤖</span>
+                        </div>
+                      )}
+                      <div
+                        className={`max-w-[85%] px-4 py-3 rounded-2xl shadow-sm ${
+                          msg.sender === 'user'
+                            ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white'
+                            : 'bg-white text-gray-800 border border-gray-200'
+                        }`}
+                      >
+                        {msg.sender === 'user' ? (
+                          <p className="text-sm whitespace-pre-wrap break-words">{msg.text}</p>
+                        ) : (
+                          <div className="text-sm prose prose-sm max-w-none">
+                            <ReactMarkdown
+                              remarkPlugins={[remarkGfm]}
+                              components={{
+                                code({ className, children, ...props }: any) {
+                                  const match = /language-(\w+)/.exec(className || '');
+                                  const isInline = !match;
+                                  
+                                  return !isInline && match ? (
+                                    <div className="my-2 rounded-lg overflow-hidden">
+                                      <SyntaxHighlighter
+                                        language={match[1]}
+                                        PreTag="div"
+                                        className="text-xs"
+                                        customStyle={{
+                                          margin: 0,
+                                          borderRadius: '0.5rem',
+                                          background: '#1e1e1e',
+                                          padding: '1rem',
+                                        }}
+                                        {...props}
+                                      >
+                                        {String(children).replace(/\n$/, '')}
+                                      </SyntaxHighlighter>
+                                    </div>
+                                  ) : (
+                                    <code className="bg-gray-200 px-1.5 py-0.5 rounded text-xs font-mono text-red-600" {...props}>
+                                      {children}
+                                    </code>
+                                  );
+                                },
+                                p({ children }) {
+                                  return <p className="mb-2 last:mb-0 leading-relaxed">{children}</p>;
+                                },
+                                ul({ children }) {
+                                  return <ul className="list-disc list-inside mb-2 space-y-1">{children}</ul>;
+                                },
+                                ol({ children }) {
+                                  return <ol className="list-decimal list-inside mb-2 space-y-1">{children}</ol>;
+                                },
+                                li({ children }) {
+                                  return <li className="ml-2">{children}</li>;
+                                },
+                                h1({ children }) {
+                                  return <h1 className="text-lg font-bold mb-2 mt-3">{children}</h1>;
+                                },
+                                h2({ children }) {
+                                  return <h2 className="text-base font-bold mb-2 mt-2">{children}</h2>;
+                                },
+                                h3({ children }) {
+                                  return <h3 className="text-sm font-bold mb-1 mt-2">{children}</h3>;
+                                },
+                                blockquote({ children }) {
+                                  return <blockquote className="border-l-4 border-gray-300 pl-3 italic my-2">{children}</blockquote>;
+                                },
+                                a({ href, children }) {
+                                  return <a href={href} className="text-blue-600 hover:underline" target="_blank" rel="noopener noreferrer">{children}</a>;
+                                },
+                                strong({ children }) {
+                                  return <strong className="font-bold">{children}</strong>;
+                                },
+                                em({ children }) {
+                                  return <em className="italic">{children}</em>;
+                                },
+                              }}
+                            >
+                              {msg.text}
+                            </ReactMarkdown>
+                          </div>
+                        )}
+                        <span className={`text-xs opacity-70 mt-1 block ${msg.sender === 'user' ? 'text-white' : 'text-gray-500'}`}>
+                          {msg.timestamp.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                  {isTyping && (
+                    <div className="flex justify-start">
+                      <div className="bg-gray-100 px-4 py-2 rounded-2xl">
+                        <div className="flex space-x-2">
+                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  <div ref={messagesEndRef} />
+                </div>
+
+                {/* 快捷回复 */}
+                <div className="px-4 sm:px-6 py-3 border-t border-gray-200 bg-white flex-shrink-0">
+                  <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+                    <button
+                      onClick={() => handleQuickReply('如何学习编程？')}
+                      className="px-4 py-2 text-xs bg-blue-50 text-blue-600 rounded-full hover:bg-blue-100 whitespace-nowrap transition-all hover:shadow-md flex-shrink-0"
+                    >
+                      💡 如何学习编程？
+                    </button>
+                    <button
+                      onClick={() => handleQuickReply('推荐学习资源')}
+                      className="px-4 py-2 text-xs bg-purple-50 text-purple-600 rounded-full hover:bg-purple-100 whitespace-nowrap transition-all hover:shadow-md flex-shrink-0"
+                    >
+                      📚 推荐学习资源
+                    </button>
+                    <button
+                      onClick={() => handleQuickReply('代码编辑器怎么用？')}
+                      className="px-4 py-2 text-xs bg-green-50 text-green-600 rounded-full hover:bg-green-100 whitespace-nowrap transition-all hover:shadow-md flex-shrink-0"
+                    >
+                      💻 代码编辑器
+                    </button>
+                    <button
+                      onClick={() => handleQuickReply('如何做笔记？')}
+                      className="px-4 py-2 text-xs bg-orange-50 text-orange-600 rounded-full hover:bg-orange-100 whitespace-nowrap transition-all hover:shadow-md flex-shrink-0"
+                    >
+                      📝 如何做笔记
+                    </button>
+                  </div>
+                </div>
+
+                {/* 输入框 */}
+                <div className="px-4 sm:px-6 py-4 border-t border-gray-200 bg-white rounded-b-2xl flex-shrink-0">
+                  <div className="flex items-center space-x-3">
+                    <Input
+                      value={inputValue}
+                      onChange={(e) => setInputValue(e.target.value)}
+                      onPressEnter={handleSendMessage}
+                      placeholder="输入消息，按回车发送..."
+                      disabled={isTyping}
+                      className="flex-1 rounded-full"
+                      size="large"
+                    />
+                    <Button
+                      type="primary"
+                      icon={<SendOutlined />}
+                      onClick={handleSendMessage}
+                      disabled={!inputValue.trim() || isTyping}
+                      size="large"
+                      className="bg-gradient-to-r from-blue-500 to-blue-600 border-0 rounded-full px-6 hover:shadow-lg"
+                    >
+                      发送
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>

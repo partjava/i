@@ -126,6 +126,7 @@ export async function GET(request: NextRequest) {
       let categoriesStudied = 0;
       let technologiesStudied = 0;
       let studyDays = 0;
+      let categoryStats: { category: string; count: number }[] = [];
       
       try {
         // 查询学习分类数量
@@ -139,6 +140,23 @@ export async function GET(request: NextRequest) {
         if (Array.isArray(categoriesResult) && categoriesResult.length > 0 && 
             categoriesResult[0] && 'count' in categoriesResult[0]) {
           categoriesStudied = categoriesResult[0].count || 0;
+        }
+        
+        // 查询笔记分类统计（真实数据）
+        const categoryStatsResult = await executeQuery(
+          `SELECT category, COUNT(*) as count 
+           FROM notes 
+           WHERE author_id = ? AND category IS NOT NULL AND category != ''
+           GROUP BY category
+           ORDER BY count DESC`,
+          [userId]
+        );
+        
+        if (Array.isArray(categoryStatsResult) && categoryStatsResult.length > 0) {
+          categoryStats = categoryStatsResult.map((row: any) => ({
+            category: row.category || '未分类',
+            count: row.count || 0
+          }));
         }
         
         // 查询学习技术数量
@@ -195,7 +213,8 @@ export async function GET(request: NextRequest) {
         },
         achievements: { total: 10, earned: 0 },
         recentActivity: [],
-        monthlyStats: []
+        monthlyStats: [],
+        categoryStats: categoryStats  // 添加真实的分类统计数据
       };
     } catch (dbError) {
       console.error('主数据库查询失败:', dbError);
