@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Navbar from './Navbar';
 import Sidebar, { SidebarProvider } from './Sidebar';
 import BottomNavigation from './BottomNavigation';
@@ -16,8 +16,12 @@ interface RootLayoutClientProps {
 }
 
 export default function RootLayoutClient({ children }: RootLayoutClientProps) {
-  // 初始化主题
+  const [mounted, setMounted] = useState(false);
+
+  // 初始化主题 - 只在客户端执行
   useEffect(() => {
+    setMounted(true);
+    
     // 从 localStorage 读取主题设置
     const savedTheme = localStorage.getItem('theme');
     

@@ -51,10 +51,11 @@ export async function GET() {
     let totalComments = 0;
     
     try {
-      const likesResult: any = await executeQuery('SELECT SUM(like_count) as total FROM notes');
+      // 修正：直接从关联表统计，而不是从notes表的不存在字段
+      const likesResult: any = await executeQuery('SELECT COUNT(*) as total FROM note_likes');
       totalLikes = likesResult[0]?.total || 0;
       
-      const bookmarksResult: any = await executeQuery('SELECT SUM(bookmark_count) as total FROM notes');
+      const bookmarksResult: any = await executeQuery('SELECT COUNT(*) as total FROM note_bookmarks');
       totalBookmarks = bookmarksResult[0]?.total || 0;
       
       const commentsResult: any = await executeQuery('SELECT COUNT(*) as count FROM comments');
@@ -123,8 +124,9 @@ export async function GET() {
     // 获取本周活跃用户
     let weeklyActiveUsers = 0;
     try {
+      // 修正：notes表使用author_id而不是user_id
       const weeklyResult: any = await executeQuery(
-        'SELECT COUNT(DISTINCT user_id) as count FROM notes WHERE created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)'
+        'SELECT COUNT(DISTINCT author_id) as count FROM notes WHERE created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)'
       );
       weeklyActiveUsers = weeklyResult[0]?.count || 0;
     } catch (error) {
@@ -137,7 +139,7 @@ export async function GET() {
       const activityResult: any = await executeQuery(
         `SELECT n.id, n.title, n.content, n.created_at as date, u.name as author
          FROM notes n
-         LEFT JOIN users u ON n.user_id = u.id
+         LEFT JOIN users u ON n.author_id = u.id
          WHERE n.is_public = 1
          ORDER BY n.created_at DESC
          LIMIT 10`
