@@ -41,6 +41,8 @@
     "critters": "^0.0.23",
     "d3": "^7.9.0",
     "dotenv": "^16.6.0",
+    "echarts": "^6.0.0",
+    "echarts-for-react": "^3.0.6",
     "framer-motion": "^12.23.15",
     "highlight.js": "^11.11.1",
     "lil-gui": "^0.20.0",
