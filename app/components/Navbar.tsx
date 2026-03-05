@@ -220,15 +220,13 @@ export default function Navbar() {
                 <EditOutlined className="text-lg mb-1" />
                 <span className="text-xs">笔记</span>
               </Link>
-              {session && (
-                <Link 
-                  href="/profile" 
-                  className="flex flex-col items-center text-gray-600 hover:text-purple-600 transition-colors"
-                >
-                  <UserOutlined className="text-lg mb-1" />
-                  <span className="text-xs">资料</span>
-                </Link>
-              )}
+              <Link 
+                href="/profile" 
+                className="flex flex-col items-center text-gray-600 hover:text-purple-600 transition-colors"
+              >
+                <UserOutlined className="text-lg mb-1" />
+                <span className="text-xs">{session ? '资料' : '数据'}</span>
+              </Link>
               <Link 
                 href="/code-editor" 
                 className="flex flex-col items-center text-gray-600 hover:text-purple-600 transition-colors"

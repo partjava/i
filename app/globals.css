@@ -128,7 +128,7 @@ body.dark .ant-card {
 }
 
 body.dark .ant-card-head {
-  background-color: #111827 !important;
+  background-color: #1f2937 !important;
   color: #f9fafb !important;
   border-color: #374151 !important;
 }
@@ -311,10 +311,6 @@ body {
 /* 触摸设备优化 */
 @media (hover: none) and (pointer: coarse) {
   /* 移除hover效果，使用active状态 */
-  .hover-effect:hover {
-    /* 移除hover效果 */
-  }
-  
   .hover-effect:active {
     background-color: rgba(59, 130, 246, 0.1);
     transform: scale(0.98);
