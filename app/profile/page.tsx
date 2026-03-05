@@ -979,7 +979,7 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* 添加学习时间同步组件 - 仅登录用户 */}
       {!isGuest && <StudyTimeSync />}
       
