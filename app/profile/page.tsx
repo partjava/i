@@ -37,6 +37,7 @@ import {
   BarChartOutlined
 } from '@ant-design/icons';
 import LearningHeatmap from '@/app/components/LearningHeatmap';
+import DataVisualization from '@/app/components/DataVisualization';
 import { UnifiedUserStats, UnifiedHeatmapData } from '@/app/lib/api/dataAdapter';
 
 const { Title, Text, Paragraph } = Typography;
@@ -79,7 +80,11 @@ export default function ProfilePage() {
 
   // 添加刷新数据的函数
   const refreshData = async () => {
-    if (status !== 'authenticated') return;
+    // 只有已登录用户才刷新数据
+    if (status !== 'authenticated') {
+      console.log('非登录状态，跳过数据刷新');
+      return;
+    }
     
     setRefreshing(true);
     try {
@@ -142,6 +147,12 @@ export default function ProfilePage() {
 
   // 检查会话状态
   const checkSession = async () => {
+    // 如果是访客模式，不需要检查会话
+    if (status === 'unauthenticated') {
+      console.log('访客模式，跳过会话检查');
+      return true;
+    }
+    
     try {
       const response = await fetch('/api/auth/session', {
         method: 'GET',
@@ -153,12 +164,12 @@ export default function ProfilePage() {
       });
       
       if (!response.ok) {
-        console.log('会话已过期，重定向到登录页面');
-        router.push('/login');
+        console.log('会话检查API返回错误:', response.status);
         return false;
       }
       
       const data = await response.json();
+      console.log('会话检查结果:', data);
       return data.authenticated;
     } catch (error) {
       console.error('会话检查失败:', error);
@@ -426,14 +437,18 @@ export default function ProfilePage() {
 
   // 初始加载数据
   useEffect(() => {
+    console.log('Profile页面 - 当前状态:', { status, isGuest });
+    
     if (status === 'unauthenticated') {
       // 未登录用户显示平台总体数据
+      console.log('未登录用户，显示平台数据');
       setIsGuest(true);
       loadPlatformStats();
       return;
     }
     
     if (status === 'authenticated') {
+      console.log('已登录用户，加载个人数据');
       setIsGuest(false);
       // 先检查会话状态
       checkSession().then(isAuthenticated => {
@@ -444,6 +459,7 @@ export default function ProfilePage() {
           refreshData();
         } else {
           // 会话无效，尝试重新登录
+          console.log('会话无效，重定向到登录页');
           router.push('/login');
         }
       });
@@ -452,8 +468,10 @@ export default function ProfilePage() {
   
   // 每次页面获得焦点时刷新数据
   useEffect(() => {
-    if (typeof window !== 'undefined' && status === 'authenticated') {
+    // 只有已登录用户才监听焦点事件
+    if (typeof window !== 'undefined' && status === 'authenticated' && !isGuest) {
       const handleFocus = () => {
+        console.log('页面获得焦点，刷新数据');
         // 同步笔记数量
         syncNotesCount();
         // 刷新数据
@@ -465,7 +483,7 @@ export default function ProfilePage() {
         window.removeEventListener('focus', handleFocus);
       };
     }
-  }, [status]);
+  }, [status, isGuest]);
   
   // 同步笔记数量
   const syncNotesCount = async () => {
@@ -963,6 +981,7 @@ export default function ProfilePage() {
   };
 
   if (status === 'loading') {
+    console.log('Profile页面 - 状态加载中...');
     return (
       <div className="flex justify-center items-center h-screen">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-500"></div>
@@ -971,12 +990,15 @@ export default function ProfilePage() {
   }
 
   if (statsLoading && !isGuest) {
+    console.log('Profile页面 - 统计数据加载中...', { statsLoading, isGuest });
     return (
       <div className="flex justify-center items-center h-screen">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-500"></div>
       </div>
     );
   }
+
+  console.log('Profile页面 - 渲染主内容', { status, isGuest, statsLoading });
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -1651,6 +1673,18 @@ export default function ProfilePage() {
                   ))}
                 </Timeline>
               </Card>
+            )}
+
+            {/* 数据可视化图表区域 */}
+            {!statsLoading && stats && (
+              <>
+                <Divider className="my-8">
+                  <BarChartOutlined className="mr-2" />
+                  数据可视化分析
+                </Divider>
+                
+                <DataVisualization stats={stats} isGuest={isGuest} />
+              </>
             )}
           </div>
         )}

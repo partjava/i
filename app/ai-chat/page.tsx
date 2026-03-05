@@ -3,6 +3,64 @@ import { useState, useRef, useEffect } from "react";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_AI_API_URL || "http://www.partjava.com/ai";
 
+// 简单的Markdown渲染函数
+const renderMarkdown = (text: string) => {
+  // 处理代码块
+  const codeBlockRegex = /```(\w+)?\n([\s\S]*?)```/g;
+  const parts: JSX.Element[] = [];
+  let lastIndex = 0;
+  let match;
+  let key = 0;
+
+  while ((match = codeBlockRegex.exec(text)) !== null) {
+    // 添加代码块之前的文本
+    if (match.index > lastIndex) {
+      const textBefore = text.substring(lastIndex, match.index);
+      parts.push(<span key={`text-${key++}`}>{textBefore}</span>);
+    }
+
+    // 添加代码块
+    const language = match[1] || 'text';
+    const code = match[2];
+    parts.push(
+      <pre key={`code-${key++}`} style={{
+        background: '#1e1e1e',
+        color: '#d4d4d4',
+        padding: '12px',
+        borderRadius: '6px',
+        overflow: 'auto',
+        margin: '10px 0',
+        fontSize: '14px',
+        lineHeight: '1.5'
+      }}>
+        <div style={{ color: '#888', fontSize: '12px', marginBottom: '8px' }}>{language}</div>
+        <code>{code}</code>
+      </pre>
+    );
+
+    lastIndex = match.index + match[0].length;
+  }
+
+  // 添加剩余的文本
+  if (lastIndex < text.length) {
+    const remainingText = text.substring(lastIndex);
+    // 处理换行
+    const lines = remainingText.split('\n');
+    parts.push(
+      <span key={`text-${key++}`}>
+        {lines.map((line, i) => (
+          <span key={i}>
+            {line}
+            {i < lines.length - 1 && <br />}
+          </span>
+        ))}
+      </span>
+    );
+  }
+
+  return parts.length > 0 ? <>{parts}</> : text;
+};
+
 export default function AIChatPage() {
   const [messages, setMessages] = useState([
     { role: "assistant", content: "你好！我是AI助手，有什么可以帮助你的吗？" },
@@ -72,7 +130,21 @@ export default function AIChatPage() {
       console.log("API响应数据:", data);
       
       if (data.conversation_id && !conversationId) setConversationId(data.conversation_id);
-      setMessages((msgs) => [...msgs, { role: "assistant", content: data.answer }]);
+      
+      // 处理结构化内容，替换代码块占位符
+      let displayContent = data.answer;
+      
+      if (data.content_blocks && Array.isArray(data.content_blocks)) {
+        data.content_blocks.forEach((block: any, index: number) => {
+          if (block.type === 'code' && block.content) {
+            const placeholder = `[CODE_BLOCK_${index}]`;
+            const codeBlock = `\`\`\`${block.content.language || 'python'}\n${block.content.code}\n\`\`\``;
+            displayContent = displayContent.replace(placeholder, codeBlock);
+          }
+        });
+      }
+      
+      setMessages((msgs) => [...msgs, { role: "assistant", content: displayContent }]);
     } catch (e) {
       console.error("发送消息失败:", e);
       const errorMessage = e instanceof Error ? e.message : "未知错误";
@@ -195,11 +267,11 @@ export default function AIChatPage() {
                       <div className="message-avatar bot-avatar">
                         🤖
                       </div>
-                      <div className="message-content">{msg.content}</div>
+                      <div className="message-content">{renderMarkdown(msg.content)}</div>
                     </>
                   ) : (
                     <div className="user-message-container">
-                      <div className="message-content">{msg.content}</div>
+                      <div className="message-content">{renderMarkdown(msg.content)}</div>
                       <div className="message-avatar user-avatar">
                         👤
                       </div>
