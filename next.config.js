@@ -79,8 +79,8 @@ const nextConfig = {
     formats: ['image/webp', 'image/avif'],  // 自动转换为现代图片格式
   },
   
-  // 字体优化（默认开启，提升字体加载性能）
-  optimizeFonts: true,
+  // 字体优化（禁用，避免访问Google Fonts）
+  optimizeFonts: false,
 
   // 生产环境优化
   compress: true,              // 启用Gzip压缩
