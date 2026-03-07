@@ -595,8 +595,10 @@ export default function ProfilePage() {
       const { fetchWithUnifiedResponse } = await import('@/app/lib/api/dataAdapter');
       
       try {
+        // 添加时间戳避免缓存
+        const timestamp = new Date().getTime();
         const profileData = await fetchWithUnifiedResponse<Record<string, any>>(
-          '/api/user/profile', 
+          `/api/user/profile?t=${timestamp}`, 
           {
             method: 'GET',
             headers: {
@@ -898,46 +900,92 @@ export default function ProfilePage() {
         try {
           const base64 = reader.result as string;
           
-          const response = await fetch('/api/user/avatar', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ image: base64 })
-          });
+          // 压缩图片
+          const img = new Image();
+          img.onload = async () => {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            // 限制最大尺寸为400x400
+            let width = img.width;
+            let height = img.height;
+            const maxSize = 400;
+            
+            if (width > height) {
+              if (width > maxSize) {
+                height = (height * maxSize) / width;
+                width = maxSize;
+              }
+            } else {
+              if (height > maxSize) {
+                width = (width * maxSize) / height;
+                height = maxSize;
+              }
+            }
+            
+            canvas.width = width;
+            canvas.height = height;
+            ctx?.drawImage(img, 0, 0, width, height);
+            
+            // 转换为base64，质量0.7
+            const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
+            
+            console.log('原始图片大小:', base64.length, '压缩后:', compressedBase64.length);
+            
+            const response = await fetch('/api/user/avatar', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ image: compressedBase64 }),
+              credentials: 'include',
+              cache: 'no-store'
+            });
 
-          if (!response.ok) {
-            throw new Error('上传失败');
-          }
+            if (!response.ok) {
+              const errorData = await response.json();
+              throw new Error(errorData.error || '上传失败');
+            }
 
-          const data = await response.json();
-          
-          // 立即更新本地状态
-          const updatedFormData = {
-            ...profileForm,
-            image: data.image
+            const data = await response.json();
+            
+            // 立即更新本地状态
+            const updatedFormData = {
+              ...profileForm,
+              image: data.image
+            };
+            
+            setProfileForm(updatedFormData);
+            form.setFieldsValue(updatedFormData);
+            
+            // 更新全局用户状态
+            updateUser({ image: data.image });
+            
+            // 更新session
+            await update({
+              ...session,
+              user: {
+                ...session?.user,
+                image: data.image
+              }
+            });
+            
+            // 重新加载用户资料
+            await loadUserProfile();
+
+            message.success('头像上传成功');
+            setUploading(false);
           };
           
-          setProfileForm(updatedFormData);
-          form.setFieldsValue(updatedFormData);
+          img.onerror = () => {
+            message.error('图片加载失败');
+            setUploading(false);
+          };
           
-          // 更新全局用户状态
-          updateUser({ image: data.image });
-          
-          // 更新session
-          await update({
-            ...session,
-            user: {
-              ...session?.user,
-              image: data.image
-            }
-          });
-
-          message.success('头像上传成功');
+          img.src = base64;
         } catch (error) {
           console.error('头像上传失败:', error);
-          message.error('头像上传失败，请重试');
-        } finally {
+          message.error(error instanceof Error ? error.message : '头像上传失败，请重试');
           setUploading(false);
         }
       };

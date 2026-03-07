@@ -20,39 +20,20 @@ export default function StudyTimeSync() {
     // 初次加载时同步一次
     syncStudyTime();
     
-    // 设置定时器，每15秒同步一次
+    // 设置定时器，每60秒（1分钟）同步一次
     const timer = setInterval(() => {
       syncStudyTime();
-    }, 15000);
-    
-    // 监听DOM变化，当学习时间更新时同步
-    const observer = new MutationObserver((mutations) => {
-      for (const mutation of mutations) {
-        if (mutation.type === 'childList' || mutation.type === 'characterData') {
-          // 检查是否有时间显示变化
-          const timeElements = document.querySelectorAll('.study-time, .timer-display');
-          if (timeElements && timeElements.length > 0) {
-            syncStudyTime();
-            break;
-          }
-        }
-      }
-    });
-    
-    // 开始观察文档变化
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true,
-      characterData: true
-    });
+    }, 60000); // 改为60秒
     
     // 页面关闭前同步一次
-    window.addEventListener('beforeunload', syncStudyTime);
+    const handleBeforeUnload = () => {
+      syncStudyTime();
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
     
     return () => {
       clearInterval(timer);
-      observer.disconnect();
-      window.removeEventListener('beforeunload', syncStudyTime);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
     };
   }, [status]);
   

@@ -19,6 +19,31 @@ export async function GET(request: NextRequest) {
     try {
       const { executeQuery } = await import('@/app/lib/database');
       
+      // 先从users表获取基础信息（包括头像）
+      const userResult = await executeQuery(
+        `SELECT id, name, email, image, bio, location, github, website FROM users WHERE id = ?`,
+        [userId]
+      );
+      
+      let userImage = session.user.image || '';
+      let userName = session.user.name || '';
+      let userBio = '';
+      let userLocation = '';
+      let userGithub = '';
+      let userWebsite = '';
+      
+      if (Array.isArray(userResult) && userResult.length > 0) {
+        const user = userResult[0] as any;
+        userImage = user.image || userImage;
+        userName = user.name || userName;
+        userBio = user.bio || '';
+        userLocation = user.location || '';
+        userGithub = user.github || '';
+        userWebsite = user.website || '';
+        console.log('GET /api/user/profile - 从users表读取基础信息, image长度:', userImage?.length || 0);
+      }
+      
+      // 再从user_profiles表获取扩展信息
       const userProfileResult = await executeQuery(
         `SELECT * FROM user_profiles WHERE user_id = ?`,
         [userId]
@@ -28,24 +53,44 @@ export async function GET(request: NextRequest) {
       if (Array.isArray(userProfileResult) && userProfileResult.length > 0) {
         const userProfile = userProfileResult[0] as any;
         
-        console.log('GET /api/user/profile - 从数据库读取资料:', userProfile);
+        console.log('GET /api/user/profile - 从user_profiles表读取扩展信息');
         
         const profile = {
           id: session.user.id,
-          name: (userProfile.name as string) || session.user.name || '',
+          name: (userProfile.name as string) || userName,
           email: session.user.email,
-          image: (userProfile.avatar as string) || session.user.image || '',
+          image: (userProfile.avatar as string) || userImage,
           jobTitle: (userProfile.job_title as string) || '',
           company: (userProfile.company as string) || '',
-          bio: (userProfile.bio as string) || '',
-          location: (userProfile.location as string) || '',
-          github: (userProfile.github as string) || '',
-          website: (userProfile.website as string) || '',
+          bio: (userProfile.bio as string) || userBio,
+          location: (userProfile.location as string) || userLocation,
+          github: (userProfile.github as string) || userGithub,
+          website: (userProfile.website as string) || userWebsite,
           skills: userProfile.skills ? (typeof userProfile.skills === 'string' ? JSON.parse(userProfile.skills) : userProfile.skills) : [],
           socialLinks: userProfile.social_links ? (typeof userProfile.social_links === 'string' ? JSON.parse(userProfile.social_links) : userProfile.social_links) : {}
         };
         
-        console.log('GET /api/user/profile - 返回资料:', profile);
+        console.log('GET /api/user/profile - 返回资料, image长度:', profile.image?.length || 0);
+        
+        return NextResponse.json(profile);
+      } else {
+        // 如果没有user_profiles记录，使用users表的数据
+        const profile = {
+          id: session.user.id,
+          name: userName,
+          email: session.user.email,
+          image: userImage,
+          jobTitle: '',
+          company: '',
+          bio: userBio,
+          location: userLocation,
+          github: userGithub,
+          website: userWebsite,
+          skills: [],
+          socialLinks: {}
+        };
+        
+        console.log('GET /api/user/profile - 仅使用users表数据, image长度:', profile.image?.length || 0);
         
         return NextResponse.json(profile);
       }
