@@ -79,7 +79,7 @@ export async function executeQuery(sql: string, params: any[] = []) {
 // 初始化数据库表
 export async function initDatabase() {
   try {
-    // 创建用户表
+    // 创建用户表（与主应用保持一致，统一使用 avatar 字段）
     await executeQuery(`
       CREATE TABLE IF NOT EXISTS users (
         id INT AUTO_INCREMENT PRIMARY KEY,
@@ -90,9 +90,31 @@ export async function initDatabase() {
         location VARCHAR(255),
         website VARCHAR(500),
         github VARCHAR(255),
-        image VARCHAR(500),
+        avatar VARCHAR(500),
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    `)
+
+    // 创建用户扩展资料表（与 app/lib/database.ts 保持一致）
+    await executeQuery(`
+      CREATE TABLE IF NOT EXISTS user_profiles (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NOT NULL,
+        name VARCHAR(255),
+        job_title VARCHAR(255),
+        company VARCHAR(255),
+        bio TEXT,
+        location VARCHAR(255),
+        website VARCHAR(500),
+        github VARCHAR(255),
+        skills JSON,
+        social_links JSON,
+        avatar VARCHAR(500),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        UNIQUE KEY unique_user_id (user_id),
+        INDEX idx_user_id (user_id)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
     `)
 

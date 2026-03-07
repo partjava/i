@@ -21,16 +21,9 @@ pm2 delete all 2>/dev/null || true
 # 等待进程完全停止
 sleep 2
 
-# 启动前端服务 (Next.js Standalone)
-echo "🌐 启动前端服务..."
-pm2 start .next/standalone/server.js --name frontend
-
-# 等待前端启动
-sleep 2
-
-# 启动后端服务 (Python FastAPI)
-echo "🤖 启动后端服务..."
-pm2 start partjava-ai/venv/bin/python --name backend --cwd partjava-ai -- -m uvicorn main:app --host 0.0.0.0 --port 8000
+# 启动所有服务（使用 ecosystem.config.js 配置）
+echo "🌐 启动前端和后端服务..."
+pm2 start ecosystem.config.js
 
 # 等待后端启动
 sleep 3

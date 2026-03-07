@@ -19,7 +19,8 @@ export default function UserProfilePage() {
       .then(async (res) => {
         if (!res.ok) throw new Error("用户不存在");
         const data = await res.json();
-        setUser(data);
+        // API 返回 { success, user } 结构，这里只取 user 部分
+        setUser(data.user || data);
       })
       .catch(() => {
         message.error("用户不存在或已注销");
@@ -38,12 +39,13 @@ export default function UserProfilePage() {
     return <div className="text-center text-gray-500 mt-20">未找到该用户</div>;
   }
 
-  // 头像路径修正
+  // 头像路径修正（优先使用 avatar 字段）
   let avatarSrc = undefined;
-  if (user.image) {
-    avatarSrc = user.image.startsWith('http')
-      ? user.image
-      : `/avatars/${user.image.replace(/^.*[\\/]/, '')}`;
+  const rawAvatar = user.avatar || user.image;
+  if (rawAvatar) {
+    avatarSrc = rawAvatar.startsWith('http')
+      ? rawAvatar
+      : `/avatars/${rawAvatar.replace(/^.*[\\/]/, '')}`;
   }
 
   return (
@@ -60,7 +62,7 @@ export default function UserProfilePage() {
               />
             </div>
             <Title level={2} className="mb-2">
-              {user.name || "未设置用户名"}
+              {user.name || user.username || "未设置用户名"}
             </Title>
             <Space direction="vertical" size="middle" className="mb-4">
               {user.email && (
@@ -93,11 +95,11 @@ export default function UserProfilePage() {
             )}
             <Divider />
             <div className="flex flex-wrap justify-center gap-4 text-gray-500 text-sm">
-              {user.created_at && (
-                <span><CalendarOutlined /> 注册时间：{new Date(user.created_at).toLocaleDateString()}</span>
+              {user.createdAt && (
+                <span><CalendarOutlined /> 注册时间：{new Date(user.createdAt).toLocaleDateString()}</span>
               )}
-              {user.updated_at && (
-                <span><CalendarOutlined /> 最近更新：{new Date(user.updated_at).toLocaleDateString()}</span>
+              {user.updatedAt && (
+                <span><CalendarOutlined /> 最近更新：{new Date(user.updatedAt).toLocaleDateString()}</span>
               )}
             </div>
           </div>

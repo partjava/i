@@ -10,13 +10,13 @@
 
 ### 1. users - 用户表
 
-用户基本信息表，存储用户账号和个人资料。
+用户基本信息表，存储账号和基础资料（展示名、头像等），更详细的个人资料放在 `user_profiles` 表中。
 
 ```sql
 CREATE TABLE users (
   id INT AUTO_INCREMENT PRIMARY KEY,
-  email VARCHAR(255) UNIQUE NOT NULL,
   name VARCHAR(255) NOT NULL,
+  email VARCHAR(255) UNIQUE NOT NULL,
   password VARCHAR(255) NOT NULL,
   bio TEXT,
   location VARCHAR(255),
@@ -33,10 +33,10 @@ CREATE TABLE users (
 | 字段名 | 类型 | 说明 | 约束 |
 |-------|------|------|------|
 | id | INT | 主键，自增 | PRIMARY KEY |
-| email | VARCHAR(255) | 邮箱地址 | UNIQUE, NOT NULL |
 | name | VARCHAR(255) | 用户名称 | NOT NULL |
+| email | VARCHAR(255) | 邮箱地址 | UNIQUE, NOT NULL |
 | password | VARCHAR(255) | 密码（加密） | NOT NULL |
-| bio | TEXT | 个人简介 | |
+| bio | TEXT | 个人简介（用于公共资料） | |
 | location | VARCHAR(255) | 所在地 | |
 | website | VARCHAR(500) | 个人网站 | |
 | github | VARCHAR(255) | GitHub用户名 | |
@@ -47,6 +47,54 @@ CREATE TABLE users (
 **索引：**
 - `idx_email`: email字段索引
 - `idx_created_at`: created_at字段索引
+
+---
+
+### 1.1 user_profiles - 用户扩展资料表
+
+存放用户更详细的个人资料（职位、公司、技能标签、社交链接等），与 `users` 表通过 `user_id` 一一对应。
+
+```sql
+CREATE TABLE user_profiles (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL,
+  name VARCHAR(255),
+  job_title VARCHAR(255),
+  company VARCHAR(255),
+  bio TEXT,
+  location VARCHAR(255),
+  website VARCHAR(500),
+  github VARCHAR(255),
+  skills JSON,
+  social_links JSON,
+  avatar VARCHAR(500),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY unique_user_id (user_id),
+  INDEX idx_user_id (user_id)
+);
+```
+
+| 字段名 | 类型 | 说明 | 约束 |
+|-------|------|------|------|
+| id | INT | 主键，自增 | PRIMARY KEY |
+| user_id | INT | 关联的用户ID | NOT NULL, UNIQUE |
+| name | VARCHAR(255) | 显示名称（可覆盖 users.name） | |
+| job_title | VARCHAR(255) | 职位，如“后端工程师” | |
+| company | VARCHAR(255) | 公司/学校 | |
+| bio | TEXT | 个人简介（更长的介绍） | |
+| location | VARCHAR(255) | 所在地 | |
+| website | VARCHAR(500) | 个人网站 | |
+| github | VARCHAR(255) | GitHub 用户名 | |
+| skills | JSON | 技能标签数组 | |
+| social_links | JSON | 社交链接（微信、微博、LinkedIn 等） | |
+| avatar | VARCHAR(500) | 头像图片URL | |
+| created_at | TIMESTAMP | 创建时间 | DEFAULT CURRENT_TIMESTAMP |
+| updated_at | TIMESTAMP | 更新时间 | ON UPDATE CURRENT_TIMESTAMP |
+
+**索引：**
+- `unique_user_id`: 保证每个用户最多一条扩展资料
+- `idx_user_id`: user_id字段索引
 
 ---
 
@@ -665,4 +713,88 @@ LIMIT 10
 
 ---
 
-最后更新：2026年3月5日
+## 数据库性能优化
+
+### 索引优化
+- 为常用查询字段添加索引
+- 使用复合索引优化多字段查询
+- 定期分析和优化索引使用情况
+
+### 查询优化
+```sql
+-- 使用EXPLAIN分析查询性能
+EXPLAIN SELECT * FROM notes WHERE author_id = ? AND is_public = 1;
+
+-- 避免SELECT *，只查询需要的字段
+SELECT id, title, created_at FROM notes WHERE author_id = ?;
+
+-- 使用JOIN优化关联查询
+SELECT n.*, u.name as author_name 
+FROM notes n 
+INNER JOIN users u ON n.author_id = u.id 
+WHERE n.is_public = 1;
+```
+
+### 连接池配置
+```javascript
+// 数据库连接池配置
+const pool = mysql.createPool({
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0
+});
+```
+
+---
+
+## 数据库备份与恢复
+
+### 备份命令
+```bash
+# 备份整个数据库
+mysqldump -u ecs-user -p partjava_notes > backup_$(date +%Y%m%d).sql
+
+# 备份特定表
+mysqldump -u ecs-user -p partjava_notes users notes > backup_users_notes.sql
+
+# 压缩备份
+mysqldump -u ecs-user -p partjava_notes | gzip > backup_$(date +%Y%m%d).sql.gz
+```
+
+### 恢复命令
+```bash
+# 恢复数据库
+mysql -u ecs-user -p partjava_notes < backup_20260307.sql
+
+# 从压缩文件恢复
+gunzip < backup_20260307.sql.gz | mysql -u ecs-user -p partjava_notes
+```
+
+---
+
+## 数据库监控
+
+### 性能监控查询
+```sql
+-- 查看慢查询
+SHOW VARIABLES LIKE 'slow_query%';
+
+-- 查看连接数
+SHOW STATUS LIKE 'Threads_connected';
+
+-- 查看表大小
+SELECT 
+  table_name AS 'Table',
+  ROUND(((data_length + index_length) / 1024 / 1024), 2) AS 'Size (MB)'
+FROM information_schema.TABLES
+WHERE table_schema = 'partjava_notes'
+ORDER BY (data_length + index_length) DESC;
+```
+
+---
+
+最后更新：2026年3月7日

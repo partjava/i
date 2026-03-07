@@ -8,7 +8,6 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
 import CommentSection from '@/app/components/CommentSection';
-import 'highlight.js/styles/github.css';
 
 interface Note {
   _id: string;
