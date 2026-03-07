@@ -22,15 +22,15 @@ export async function GET(request: NextRequest) {
       // 获取用户ID
       const userId = session.user.id;
       
-      // 直接查询学习统计表 learning_stats (使用正确的字段名和聚合函数)
+      // 查询学习会话表 study_sessions 获取热力图数据
       const result = await executeQuery(
         `SELECT 
           DATE(created_at) as date,
           COUNT(*) as count,
-          SUM(points) as points
-        FROM learning_stats 
+          SUM(study_time) as total_time
+        FROM study_sessions 
         WHERE user_id = ? 
-        AND created_at >= DATE_SUB(NOW(), INTERVAL 180 DAY)
+        AND created_at >= DATE_SUB(NOW(), INTERVAL 365 DAY)
         GROUP BY DATE(created_at)
         ORDER BY date DESC`,
         [userId]
@@ -38,32 +38,34 @@ export async function GET(request: NextRequest) {
       
       // 如果有实际数据，转换为热力图格式
       if (Array.isArray(result) && result.length > 0) {
+        console.log(`找到 ${result.length} 条学习记录`);
         result.forEach((row: any) => {
           if (row && row.date) {
-            // 根据积分计算level (0-4)
+            // 根据学习时间计算level (0-4)
             let level: 0 | 1 | 2 | 3 | 4 = 0;
             const count = row.count || 0;
-            const points = row.points || 0;
+            const totalTime = row.total_time || 0; // 秒数
             
-            // 根据points值确定level
-            if (points > 0) {
-              if (points <= 3) level = 1;       // 3分以下
-              else if (points <= 10) level = 2;  // 10分以下
-              else if (points <= 20) level = 3; // 20分以下
-              else level = 4;                   // 20分以上
+            // 根据学习时间（分钟）确定level
+            const minutes = Math.floor(totalTime / 60);
+            if (minutes > 0) {
+              if (minutes <= 30) level = 1;       // 30分钟以下
+              else if (minutes <= 60) level = 2;  // 1小时以下
+              else if (minutes <= 120) level = 3; // 2小时以下
+              else level = 4;                     // 2小时以上
             }
             
             heatmapData.push({
-              date: row.date,
+              date: new Date(row.date).toISOString().split('T')[0], // 确保格式为 YYYY-MM-DD
               count: count,
               level: level
             });
           }
         });
+        console.log(`生成了 ${heatmapData.length} 条热力图数据`);
+      } else {
+        console.log('没有找到学习记录');
       }
-      
-      // 如果没有数据，返回空数组
-      console.log(`获取到 ${heatmapData.length} 条热力图数据`);
     } catch (dbError) {
       console.error('数据库查询失败:', dbError);
       // 如果查询失败，返回空数组

@@ -13,26 +13,28 @@ interface DataVisualizationProps {
 export default function DataVisualization({ stats, isGuest }: DataVisualizationProps) {
   const [fullscreen, setFullscreen] = useState(false);
 
-  // 生成周数据 - 只使用真实数据
+  // 生成周数据 - 优先使用真实的每日数据
   const generateWeeklyData = () => {
-    // 如果有月度统计数据，使用最近7天的数据
-    if (stats.monthlyStats && stats.monthlyStats.length > 0) {
-      const recentData = stats.monthlyStats.slice(-7);
-      return recentData.map((item: any) => {
-        // 从月份字符串中提取日期信息
-        const monthStr = item.month || '';
-        const parts = monthStr.split('-');
-        const dayLabel = parts.length >= 2 ? `${parts[1]}/${parts[2] || '01'}` : monthStr;
+    console.log('生成周数据，stats.dailyStats:', stats.dailyStats);
+    
+    // 如果有每日统计数据，直接使用
+    if (stats.dailyStats && Array.isArray(stats.dailyStats) && stats.dailyStats.length > 0) {
+      console.log('使用真实的每日数据:', stats.dailyStats.length, '条');
+      return stats.dailyStats.map((item: any) => {
+        // 格式化日期显示
+        const dateObj = new Date(item.date);
+        const dayLabel = `${dateObj.getMonth() + 1}/${dateObj.getDate()}`;
         
         return {
           date: dayLabel,
-          studyTime: Math.floor((item.studyTime || 0) / 60), // 转换为小时
+          studyTime: item.studyTime || 0, // API返回的是分钟，直接使用
           notes: item.notes || 0
         };
       });
     }
     
-    // 如果没有月度数据，返回空数据（全部为0）
+    console.log('没有每日数据，返回空数据');
+    // 如果没有数据，返回空的周数据
     const days = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
     return days.map(day => ({
       date: day,
@@ -105,7 +107,8 @@ export default function DataVisualization({ stats, isGuest }: DataVisualizationP
     title: {
       text: '学习时长趋势',
       left: 'center',
-      textStyle: { fontSize: 16 }
+      top: 10,
+      textStyle: { fontSize: 16, fontWeight: 'bold' }
     },
     tooltip: {
       trigger: 'axis',
@@ -113,7 +116,7 @@ export default function DataVisualization({ stats, isGuest }: DataVisualizationP
       formatter: (params: any) => {
         let result = `${params[0].axisValue}<br/>`;
         params.forEach((param: any) => {
-          const unit = param.seriesName === '学习时长' ? '小时' : '篇';
+          const unit = param.seriesName === '学习时长' ? '分钟' : '篇';
           result += `${param.marker}${param.seriesName}: ${param.value}${unit}<br/>`;
         });
         return result;
@@ -121,12 +124,13 @@ export default function DataVisualization({ stats, isGuest }: DataVisualizationP
     },
     legend: {
       data: ['学习时长', '笔记数量'],
-      top: 30
+      top: 40
     },
     grid: {
       left: '3%',
       right: '4%',
       bottom: '3%',
+      top: 80,
       containLabel: true
     },
     xAxis: {
@@ -137,14 +141,17 @@ export default function DataVisualization({ stats, isGuest }: DataVisualizationP
     yAxis: [
       {
         type: 'value',
-        name: '小时',
-        minInterval: 1,
+        name: '分钟',
         min: 0,
+        minInterval: 10,
         splitLine: {
           show: true,
           lineStyle: {
             type: 'dashed'
           }
+        },
+        axisLabel: {
+          formatter: '{value}'
         }
       },
       {

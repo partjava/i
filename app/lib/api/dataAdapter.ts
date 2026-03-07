@@ -1,4 +1,3 @@
-'use server';
 /**
  * 数据适配器 - 统一处理各种API响应格式
  * 解决数据格式不一致的问题
@@ -265,7 +264,15 @@ export async function fetchWithUnifiedResponse<T>(
   normalizer?: (data: any) => T
 ): Promise<T> {
   try {
-    const response = await fetch(url, {
+    // 在服务器端，将相对路径转换为完整URL
+    let fullUrl = url;
+    if (typeof window === 'undefined' && url.startsWith('/')) {
+      // 服务器端渲染时使用环境变量或默认值
+      const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+      fullUrl = `${baseUrl}${url}`;
+    }
+    
+    const response = await fetch(fullUrl, {
       ...options,
       credentials: 'include',
       cache: 'no-store',

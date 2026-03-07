@@ -5,6 +5,7 @@ import { useSession, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@/app/providers/UserProvider';
 import StudyTimeSync from '@/app/components/StudyTimeSync';
+import StudyTimeTracker from '@/app/components/StudyTimeTracker';
 import { 
   Card, 
   Input, 
@@ -44,11 +45,20 @@ const { Title, Text, Paragraph } = Typography;
 
 interface ProfileFormData {
   name: string;
+  jobTitle: string;
+  company: string;
   bio: string;
   location: string;
   github: string;
   website: string;
   image: string;
+  skills: string[];
+  socialLinks: {
+    wechat?: string;
+    weibo?: string;
+    linkedin?: string;
+    twitter?: string;
+  };
 }
 
 // 使用从dataAdapter导入的统一接口
@@ -62,11 +72,15 @@ export default function ProfilePage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [profileForm, setProfileForm] = useState<ProfileFormData>({
     name: '',
+    jobTitle: '',
+    company: '',
     bio: '',
     location: '',
     github: '',
     website: '',
     image: '',
+    skills: [],
+    socialLinks: {}
   });
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -239,11 +253,15 @@ export default function ProfilePage() {
         // 设置平台信息
         const platformProfile = {
           name: '平台总览',
+          jobTitle: '',
+          company: '',
           bio: `${data.totalUsers || 0} 位学习者正在使用本平台，共创建了 ${data.totalNotes || 0} 篇学习笔记，累计学习 ${Math.floor((data.totalStudyTime || 0) / 60)} 小时。${data.todayNotes > 0 ? `今日新增 ${data.todayNotes} 篇笔记，` : ''}${data.weeklyActiveUsers > 0 ? `本周 ${data.weeklyActiveUsers} 位用户活跃。` : ''}加入我们，开始你的学习之旅！`,
           location: '全球',
           github: '',
           website: '',
-          image: ''
+          image: '',
+          skills: [],
+          socialLinks: {}
         };
         
         setProfileForm(platformProfile);
@@ -424,11 +442,15 @@ export default function ProfilePage() {
     // 设置示例用户资料 - 说明这是示例数据
     const demoProfile = {
       name: '功能演示',
+      jobTitle: '',
+      company: '',
       bio: '这是示例数据，用于展示平台的学习追踪和数据可视化功能。注册登录后，您可以记录自己的学习历程，查看个性化的学习统计和热力图。',
       location: '示例数据',
       github: '',
       website: '',
-      image: ''
+      image: '',
+      skills: [],
+      socialLinks: {}
     };
     
     setProfileForm(demoProfile);
@@ -590,11 +612,15 @@ export default function ProfilePage() {
         // 标准化表单数据
         const formData = {
           name: profileData.name || session?.user?.name || '',
+          jobTitle: profileData.jobTitle || '',
+          company: profileData.company || '',
           bio: profileData.bio || '',
           location: profileData.location || '',
           github: profileData.github || '',
           website: profileData.website || '',
           image: profileData.image || session?.user?.image || '',
+          skills: profileData.skills || [],
+          socialLinks: profileData.socialLinks || {}
         };
         
         setProfileForm(formData);
@@ -632,11 +658,15 @@ export default function ProfilePage() {
         // 设置默认表单数据
         const defaultFormData = {
           name: defaultProfile.name,
+          jobTitle: '',
+          company: '',
           bio: '',
           location: '',
           github: '',
           website: '',
           image: defaultProfile.image,
+          skills: [],
+          socialLinks: {}
         };
         
         setProfileForm(defaultFormData);
@@ -755,11 +785,14 @@ export default function ProfilePage() {
       
       const data = await response.json();
       console.log('成功获取热力图数据:', data);
+      console.log('热力图数据数量:', data.heatmapData?.length);
       
       if (data && Array.isArray(data.heatmapData)) {
+        console.log('设置热力图数据:', data.heatmapData.length, '条');
         setHeatmapData(data.heatmapData);
         return data;
       } else {
+        console.log('热力图数据格式错误或为空');
         setHeatmapData([]);
         return { heatmapData: [] };
       }
@@ -775,38 +808,68 @@ export default function ProfilePage() {
   const handleFormSubmit = async (values: ProfileFormData) => {
     setSaving(true);
     try {
+      console.log('=== 表单提交开始 ===');
+      console.log('1. 表单原始值:', values);
+      console.log('2. 当前profileForm状态:', profileForm);
+      
+      // 处理技能标签 - 确保是数组格式
+      const submitData = {
+        ...values,
+        skills: Array.isArray(values.skills) ? values.skills : 
+                (typeof values.skills === 'string' ? (values.skills as string).split(',').map((s: string) => s.trim()).filter((s: string) => s) : [])
+      };
+      
+      console.log('3. 处理后准备提交的数据:', submitData);
+      
       const response = await fetch('/api/user/profile', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(values),
+        body: JSON.stringify(submitData),
+        credentials: 'include',
+        cache: 'no-store'
       });
 
       if (!response.ok) {
-        throw new Error('更新失败');
+        const errorData = await response.json();
+        console.error('4. API返回错误:', errorData);
+        throw new Error(errorData.error || '更新失败');
       }
 
       const updatedProfile = await response.json();
+      console.log('5. API返回成功:', updatedProfile);
+      
+      // 立即更新本地状态
+      setProfileForm(submitData);
+      form.setFieldsValue(submitData);
+      console.log('6. 已更新本地状态');
       
       // 更新session
       await update({
         ...session,
         user: {
           ...session?.user,
-          name: updatedProfile.user.name,
-          image: updatedProfile.user.image
+          name: updatedProfile.user?.name || submitData.name,
+          image: updatedProfile.user?.image || submitData.image
         }
       });
+      console.log('7. 已更新session');
 
       // 刷新全局用户状态
       await refreshUser();
+      console.log('8. 已刷新全局用户状态');
+      
+      // 强制重新加载用户资料
+      await loadUserProfile();
+      console.log('9. 已重新加载用户资料');
 
       message.success('个人资料更新成功');
       setEditMode(false);
+      console.log('=== 表单提交完成 ===');
     } catch (error) {
-      console.error('更新失败:', error);
-      message.error('更新失败，请重试');
+      console.error('表单提交失败:', error);
+      message.error(error instanceof Error ? error.message : '更新失败，请重试');
     } finally {
       setSaving(false);
     }
@@ -1003,7 +1066,18 @@ export default function ProfilePage() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* 添加学习时间同步组件 - 仅登录用户 */}
-      {!isGuest && <StudyTimeSync />}
+      {!isGuest && (
+        <>
+          <StudyTimeSync />
+          <div className="hidden">
+            <StudyTimeTracker 
+              category="个人中心" 
+              technology="个人资料" 
+              showControls={false}
+            />
+          </div>
+        </>
+      )}
       
       {/* 未登录提示横幅 */}
       {isGuest && (
@@ -1108,8 +1182,18 @@ export default function ProfilePage() {
                     </span>
                   )}
                 </div>
+                
+                {/* 职位和公司 */}
+                {(profileForm.jobTitle || profileForm.company) && (
+                  <Text className="block mb-2 text-lg opacity-90" style={{ color: 'white' }}>
+                    {profileForm.jobTitle && <span>{profileForm.jobTitle}</span>}
+                    {profileForm.jobTitle && profileForm.company && <span> @ </span>}
+                    {profileForm.company && <span>{profileForm.company}</span>}
+                  </Text>
+                )}
+                
                 {!isGuest && session?.user?.email && (
-                  <Text className="block mb-4 text-lg opacity-90" style={{ color: 'white' }}>
+                  <Text className="block mb-4 text-base opacity-80" style={{ color: 'white' }}>
                     {session.user.email}
                   </Text>
                 )}
@@ -1146,6 +1230,20 @@ export default function ProfilePage() {
                     </Tag>
                   )}
                 </div>
+                
+                {/* 技能标签 */}
+                {profileForm.skills && profileForm.skills.length > 0 && (
+                  <div className="flex flex-wrap justify-center gap-2 mb-6">
+                    {profileForm.skills.map((skill: string, index: number) => (
+                      <Tag 
+                        key={index}
+                        className="bg-gradient-to-r from-blue-400 to-cyan-400 text-white border-0 text-sm px-3 py-1"
+                      >
+                        {skill}
+                      </Tag>
+                    ))}
+                  </div>
+                )}
 
                 {/* 操作按钮 */}
                 <Space size="large">
@@ -1227,6 +1325,27 @@ export default function ProfilePage() {
                 />
               </Form.Item>
 
+              <Row gutter={16}>
+                <Col span={12}>
+                  <Form.Item label={<span className="text-base font-semibold">职位</span>} name="jobTitle">
+                    <Input 
+                      placeholder="如：全栈工程师" 
+                      size="large"
+                      className="rounded-lg"
+                    />
+                  </Form.Item>
+                </Col>
+                <Col span={12}>
+                  <Form.Item label={<span className="text-base font-semibold">公司/学校</span>} name="company">
+                    <Input 
+                      placeholder="如：某某科技公司" 
+                      size="large"
+                      className="rounded-lg"
+                    />
+                  </Form.Item>
+                </Col>
+              </Row>
+
               <Form.Item label={<span className="text-base font-semibold">个人简介</span>} name="bio">
                 <Input.TextArea 
                   rows={4} 
@@ -1264,6 +1383,17 @@ export default function ProfilePage() {
                 <Input 
                   prefix={<GlobalOutlined className="text-gray-400" />}
                   placeholder="https://yourwebsite.com" 
+                  size="large"
+                  className="rounded-lg"
+                />
+              </Form.Item>
+
+              <Form.Item 
+                label={<span className="text-base font-semibold">技能标签</span>} 
+                name="skills"
+              >
+                <Input 
+                  placeholder="用逗号分隔，如：Python, React, Node.js" 
                   size="large"
                   className="rounded-lg"
                 />
@@ -1650,7 +1780,7 @@ export default function ProfilePage() {
                 className="shadow-lg border-0"
               >
                 <Timeline>
-                  {stats?.recentActivity?.map((activity, index) => (
+                  {stats?.recentActivity?.map((activity: any, index: number) => (
                     <Timeline.Item 
                       key={index}
                       dot={

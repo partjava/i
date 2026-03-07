@@ -16,6 +16,8 @@ export default function LearningHeatmap({ data, year }: LearningHeatmapProps) {
   
   // 生成一年的日期格子
   const yearData = useMemo(() => {
+    console.log('LearningHeatmap - 生成年度数据，输入数据:', data.length, '条');
+    
     const startDate = new Date(detectedYear, 0, 1);
     const endDate = new Date(detectedYear, 11, 31);
     const days = [];
@@ -26,11 +28,30 @@ export default function LearningHeatmap({ data, year }: LearningHeatmapProps) {
       days.push(null);
     }
     
+    // 创建日期映射以提高查找效率
+    const dataMap = new Map();
+    data.forEach(d => {
+      if (d && d.date) {
+        // 标准化日期格式
+        const normalizedDate = d.date.split('T')[0];
+        dataMap.set(normalizedDate, d);
+      }
+    });
+    
+    console.log('LearningHeatmap - 数据映射创建完成，包含', dataMap.size, '个日期');
+    
     // 生成全年日期
     const current = new Date(startDate);
+    let matchCount = 0;
     while (current <= endDate) {
       const dateStr = current.toISOString().split('T')[0];
-      const dayData = data.find(d => d.date === dateStr);
+      const dayData = dataMap.get(dateStr);
+      
+      if (dayData) {
+        matchCount++;
+        console.log('LearningHeatmap - 匹配到数据:', dateStr, dayData);
+      }
+      
       days.push({
         date: dateStr,
         count: dayData?.count || 0,
@@ -38,6 +59,8 @@ export default function LearningHeatmap({ data, year }: LearningHeatmapProps) {
       });
       current.setDate(current.getDate() + 1);
     }
+    
+    console.log('LearningHeatmap - 生成完成，总天数:', days.length, '匹配数据:', matchCount);
     
     return days;
   }, [data, detectedYear]);
@@ -57,6 +80,25 @@ export default function LearningHeatmap({ data, year }: LearningHeatmapProps) {
   // 计算周数
   const weeks = Math.ceil(yearData.length / 7);
   
+  // 计算每个月的起始周位置
+  const monthPositions = useMemo(() => {
+    const positions: { month: string; left: number }[] = [];
+    const startDate = new Date(detectedYear, 0, 1);
+    const startDay = startDate.getDay();
+    
+    for (let month = 0; month < 12; month++) {
+      const monthStart = new Date(detectedYear, month, 1);
+      const daysSinceYearStart = Math.floor((monthStart.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+      const totalDays = daysSinceYearStart + startDay;
+      const weekIndex = Math.floor(totalDays / 7);
+      // 每周宽度 = 16px (格子3px + 间隔1px = 4px per day, 4px * 4 = 16px per week)
+      const left = weekIndex * 16 + 8; // 往右偏移8px
+      positions.push({ month: months[month], left });
+    }
+    
+    return positions;
+  }, [detectedYear, months]);
+  
   return (
     <div className="bg-white rounded-xl p-6 shadow-sm">
       <div className="mb-4">
@@ -65,29 +107,31 @@ export default function LearningHeatmap({ data, year }: LearningHeatmapProps) {
       </div>
       
       <div className="overflow-x-auto">
-        <div className="inline-block">
+        <div className="inline-block min-w-full">
           {/* 月份标签 */}
-          <div className="flex mb-1">
-            <div className="w-7"></div>
-            {months.map((month, index) => (
+          <div className="flex mb-2 relative" style={{ height: '20px', paddingLeft: '28px' }}>
+            {monthPositions.map((pos, index) => (
               <div
-                key={month}
-                className="text-xs text-gray-600"
-                style={{ width: `${(weeks / 12) * 14}px` }}
+                key={pos.month}
+                className="text-xs text-gray-600 absolute whitespace-nowrap"
+                style={{ left: `${pos.left}px` }}
               >
-                {month}
+                {pos.month}
               </div>
             ))}
           </div>
           
           <div className="flex">
             {/* 星期标签 */}
-            <div className="flex flex-col mr-1">
+            <div className="flex flex-col mr-2">
               {weekDays.map((day, index) => (
                 <div
                   key={day}
-                  className="text-xs text-gray-600 h-3 flex items-center justify-end pr-1"
-                  style={{ visibility: index % 2 === 0 ? 'visible' : 'hidden' }}
+                  className="text-xs text-gray-600 flex items-center justify-end pr-1"
+                  style={{ 
+                    height: '12px',
+                    visibility: index % 2 === 0 ? 'visible' : 'hidden' 
+                  }}
                 >
                   {day}
                 </div>

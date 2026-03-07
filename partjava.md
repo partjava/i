@@ -472,3 +472,216 @@ PartJava 是一个现代化的编程学习平台，旨在为程序员和编程�
 ---
 
 *PartJava - 让编程学习更简单、更高效、更有趣！* 🚀 
+
+
+## 🚀 生产环境部署指南
+
+### 服务器环境配置
+
+#### 1. 系统环境准备
+```bash
+# 更新系统
+sudo apt update && sudo apt upgrade -y
+
+# 安装Node.js 20
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt install -y nodejs
+
+# 安装MySQL 8.0
+sudo apt install -y mysql-server
+
+# 安装Nginx
+sudo apt install -y nginx
+
+# 安装PM2
+sudo npm install -g pm2
+
+# 安装Certbot (SSL证书)
+sudo apt install certbot python3-certbot-nginx -y
+```
+
+#### 2. 数据库初始化
+```bash
+# 创建数据库
+mysql -u root -p
+CREATE DATABASE partjava_notes CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE USER 'dbuser'@'localhost' IDENTIFIED BY 'your_password';
+GRANT ALL PRIVILEGES ON partjava_notes.* TO 'dbuser'@'localhost';
+FLUSH PRIVILEGES;
+EXIT;
+
+# 初始化表结构
+npm run db:init
+```
+
+#### 3. 环境变量配置
+创建 `.env.production` 文件：
+```env
+# NextAuth配置
+NEXTAUTH_URL=https://www.partjava.com
+NEXTAUTH_SECRET=your_secret_key
+
+# 数据库配置
+DB_HOST=localhost
+DB_USER=dbuser
+DB_PASSWORD=your_password
+DB_NAME=partjava_notes
+
+# RapidAPI Configuration
+RAPIDAPI_KEY=your_rapidapi_key
+RAPIDAPI_HOST=judge0-ce.p.rapidapi.com
+
+# AI API Configuration
+NEXT_PUBLIC_AI_API_URL=https://www.partjava.com/ai
+```
+
+#### 4. 构建和部署
+```bash
+# 构建项目
+npm run build
+
+# 复制静态文件
+cp -r public .next/standalone/
+cp -r .next/static .next/standalone/.next/
+
+# 使用PM2启动服务
+pm2 start ecosystem.config.js
+pm2 save
+pm2 startup
+```
+
+#### 5. Nginx配置
+```bash
+# 创建Nginx配置文件
+sudo nano /etc/nginx/sites-available/partjava.conf
+```
+
+配置内容：
+```nginx
+server {
+    listen 80;
+    server_name partjava.com www.partjava.com;
+
+    location / {
+        proxy_pass http://127.0.0.1:3000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+    
+    location /ai {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+}
+```
+
+```bash
+# 启用配置
+sudo ln -s /etc/nginx/sites-available/partjava.conf /etc/nginx/sites-enabled/
+sudo nginx -t
+sudo systemctl restart nginx
+```
+
+#### 6. SSL证书配置（免费HTTPS）
+```bash
+# 使用Let's Encrypt免费SSL证书
+sudo certbot --nginx -d www.partjava.com -d partjava.com
+
+# 证书会自动续期，测试续期
+sudo certbot renew --dry-run
+```
+
+**SSL证书特点**：
+- ✅ 完全免费
+- ✅ 自动续期（每3个月）
+- ✅ 浏览器信任
+- ✅ HTTPS安全访问
+
+### 部署脚本
+
+#### deploy.sh - 完整部署脚本
+```bash
+#!/bin/bash
+echo "🚀 开始部署 PartJava..."
+
+# 构建项目
+npm run build
+
+# 复制静态文件
+cp -r public .next/standalone/
+cp -r .next/static .next/standalone/.next/
+
+# 重启服务
+pm2 restart all
+
+echo "✅ 部署完成！"
+pm2 list
+```
+
+#### start-services.sh - 快速启动脚本
+```bash
+#!/bin/bash
+echo "🚀 正在启动 PartJava 服务..."
+
+# 停止现有进程
+pm2 delete all 2>/dev/null || true
+
+# 启动所有服务
+pm2 start ecosystem.config.js
+
+echo "✅ 服务启动完成！"
+pm2 list
+```
+
+### 常用运维命令
+
+```bash
+# 查看服务状态
+pm2 list
+
+# 查看日志
+pm2 logs frontend --lines 50
+pm2 logs backend --lines 50
+
+# 重启服务
+pm2 restart frontend
+pm2 restart backend
+pm2 restart all
+
+# 停止服务
+pm2 stop all
+pm2 delete all
+
+# 监控服务
+pm2 monit
+
+# 数据库备份
+mysqldump -u dbuser -p partjava_notes > backup_$(date +%Y%m%d).sql
+
+# 查看Nginx日志
+sudo tail -f /var/log/nginx/access.log
+sudo tail -f /var/log/nginx/error.log
+
+# 重启Nginx
+sudo systemctl restart nginx
+
+# 查看SSL证书状态
+sudo certbot certificates
+```
+
+### 生产环境状态
+
+- **域名**：https://www.partjava.com
+- **部署状态**：✅ 生产环境运行中
+- **HTTPS**：✅ SSL证书已配置（Let's Encrypt免费证书）
+- **服务器**：Linux + Nginx + PM2
+- **数据库**：MySQL 8.0
+- **AI服务**：Docker容器化部署
+- **自动续期**：SSL证书自动续期
+
+---
+
+*最后更新：2026年3月7日*

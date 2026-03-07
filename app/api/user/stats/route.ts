@@ -3,6 +3,38 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/lib/auth';
 
+// 计算已获得的成就数量
+function calculateEarnedAchievements(
+  studyDays: number,
+  totalNotes: number,
+  likesReceived: number,
+  technologiesStudied: number,
+  totalStudyTime: number,
+  commentsReceived: number
+): number {
+  let earned = 0;
+  
+  // 学习达人 - 连续学习7天
+  if (studyDays >= 7) earned++;
+  
+  // 笔记高手 - 创建10篇笔记
+  if (totalNotes >= 10) earned++;
+  
+  // 受欢迎作者 - 获得50个点赞
+  if (likesReceived >= 50) earned++;
+  
+  // 技术专家 - 学习5个技术栈
+  if (technologiesStudied >= 5) earned++;
+  
+  // 时间管理大师 - 累计学习100小时
+  if (Math.floor(totalStudyTime / 60) >= 100) earned++;
+  
+  // 活跃讨论者 - 收到20条评论
+  if (commentsReceived >= 20) earned++;
+  
+  return earned;
+}
+
 export async function GET(request: NextRequest) {
   try {
     // 检查用户会话
@@ -21,20 +53,19 @@ export async function GET(request: NextRequest) {
       // 获取用户ID
       const userId = session.user.id;
       
-      // 从learning_stats表中获取总积分数据作为学习时间
+      // 从study_sessions表中获取总学习时间（秒）
       const studyResult = await executeQuery(
-        `SELECT SUM(points) as total_points 
-        FROM learning_stats 
+        `SELECT SUM(study_time) as total_time 
+        FROM study_sessions 
         WHERE user_id = ?`,
         [userId]
       );
       
-      // 获取实际积分，没有记录就是0
+      // 获取实际学习时间（转换为分钟）
       let studyTime = 0;
-      if (Array.isArray(studyResult) && studyResult.length > 0 && studyResult[0] && 'total_points' in studyResult[0]) {
-        studyTime = studyResult[0].total_points || 0;
-        // 将积分转换为实际分钟 (不进行约分)
-        studyTime = Math.round(studyTime); // 保留原始分钟数，只取整
+      if (Array.isArray(studyResult) && studyResult.length > 0 && studyResult[0] && 'total_time' in studyResult[0]) {
+        const totalSeconds = studyResult[0].total_time || 0;
+        studyTime = Math.round(totalSeconds / 60); // 转换为分钟
       }
       
       // 查询笔记统计
@@ -129,11 +160,11 @@ export async function GET(request: NextRequest) {
       let categoryStats: { category: string; count: number }[] = [];
       
       try {
-        // 查询学习分类数量
+        // 查询学习分类数量（从笔记中统计）
         const categoriesResult = await executeQuery(
           `SELECT COUNT(DISTINCT category) as count 
-           FROM learning_stats 
-           WHERE user_id = ? AND category IS NOT NULL AND category != ''`,
+           FROM notes 
+           WHERE author_id = ? AND category IS NOT NULL AND category != ''`,
           [userId]
         );
         
@@ -159,11 +190,11 @@ export async function GET(request: NextRequest) {
           }));
         }
         
-        // 查询学习技术数量
+        // 查询学习技术数量（从笔记中统计）
         const technologiesResult = await executeQuery(
           `SELECT COUNT(DISTINCT technology) as count 
-           FROM learning_stats 
-           WHERE user_id = ? AND technology IS NOT NULL AND technology != ''`,
+           FROM notes 
+           WHERE author_id = ? AND technology IS NOT NULL AND technology != ''`,
           [userId]
         );
         
@@ -172,10 +203,10 @@ export async function GET(request: NextRequest) {
           technologiesStudied = technologiesResult[0].count || 0;
         }
         
-        // 查询学习天数 - 统计不同的日期
+        // 查询学习天数 - 从study_sessions统计不同的日期
         const studyDaysResult = await executeQuery(
           `SELECT COUNT(DISTINCT DATE(created_at)) as count 
-           FROM learning_stats 
+           FROM study_sessions 
            WHERE user_id = ?`,
           [userId]
         );
@@ -190,6 +221,82 @@ export async function GET(request: NextRequest) {
       
       // 使用实际数据，没有就是0
       const actualStudyTime = studyTime || 0;
+      
+      // 获取本周的学习数据用于趋势图（周一到今天）
+      let dailyStats: Array<{date: string, studyTime: number, notes: number}> = [];
+      try {
+        // 先查询study_sessions数据 - 本周数据
+        const studySessionsResult = await executeQuery(
+          `SELECT 
+            DATE(created_at) as date,
+            SUM(study_time) as study_time
+          FROM study_sessions 
+          WHERE user_id = ?
+          AND YEARWEEK(created_at, 1) = YEARWEEK(NOW(), 1)
+          GROUP BY DATE(created_at)
+          ORDER BY date ASC`,
+          [userId]
+        );
+        
+        console.log('本周学习会话查询结果:', studySessionsResult);
+        
+        // 再查询notes数据 - 本周数据
+        const notesResult = await executeQuery(
+          `SELECT 
+            DATE(created_at) as date,
+            COUNT(*) as notes
+          FROM notes 
+          WHERE author_id = ?
+          AND YEARWEEK(created_at, 1) = YEARWEEK(NOW(), 1)
+          GROUP BY DATE(created_at)
+          ORDER BY date ASC`,
+          [userId]
+        );
+        
+        console.log('本周笔记查询结果:', notesResult);
+        
+        // 合并两个查询结果
+        const dateMap = new Map();
+        
+        if (Array.isArray(studySessionsResult)) {
+          studySessionsResult.forEach((row: any) => {
+            if (row && row.date) {
+              const dateStr = new Date(row.date).toISOString().split('T')[0];
+              dateMap.set(dateStr, {
+                date: dateStr,
+                studyTime: Math.floor((row.study_time || 0) / 60), // 秒转分钟
+                notes: 0
+              });
+            }
+          });
+        }
+        
+        if (Array.isArray(notesResult)) {
+          notesResult.forEach((row: any) => {
+            if (row && row.date) {
+              const dateStr = new Date(row.date).toISOString().split('T')[0];
+              const existing = dateMap.get(dateStr);
+              if (existing) {
+                existing.notes = row.notes || 0;
+              } else {
+                dateMap.set(dateStr, {
+                  date: dateStr,
+                  studyTime: 0,
+                  notes: row.notes || 0
+                });
+              }
+            }
+          });
+        }
+        
+        dailyStats = Array.from(dateMap.values()).sort((a, b) => 
+          new Date(a.date).getTime() - new Date(b.date).getTime()
+        );
+        
+        console.log('本周合并后的每日统计:', dailyStats);
+      } catch (error) {
+        console.error('本周统计查询失败:', error);
+      }
       
       stats = {
         notes: { 
@@ -211,8 +318,12 @@ export async function GET(request: NextRequest) {
           studyDays: studyDays,
           studyDaysTotal: studyDays
         },
-        achievements: { total: 10, earned: 0 },
+        achievements: { 
+          total: 10, 
+          earned: calculateEarnedAchievements(studyDays, totalNotes, likesReceived, technologiesStudied, actualStudyTime, commentsReceived)
+        },
         recentActivity: [],
+        dailyStats: dailyStats,  // 添加每日统计数据
         monthlyStats: [],
         categoryStats: categoryStats  // 添加真实的分类统计数据
       };
