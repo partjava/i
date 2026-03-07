@@ -1,10 +1,7 @@
 import './globals.css'
 import type { Metadata, Viewport } from 'next'
-import { Inter } from 'next/font/google'
 import RootLayoutClient from './components/RootLayoutClient'
 import 'antd/dist/reset.css'
-
-const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
   title: 'PartJava - 编程学习与开发工具导航平台',
@@ -64,7 +61,7 @@ export default function RootLayout({
         {/* Splash Screens */}
         <link rel="apple-touch-startup-image" href="/icons/icon-512x512.png" />
       </head>
-      <body className={inter.className}>
+      <body className="font-sans antialiased">
         <RootLayoutClient>
           {children}
         </RootLayoutClient>
