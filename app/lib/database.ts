@@ -126,7 +126,7 @@ export async function executeQuery(sql: string, params: any[] = [], retries: num
 // 初始化数据库表
 export async function initDatabase() {
   try {
-    // 创建用户表
+    // 创建用户表（与初始化脚本和文档保持一致，统一使用 avatar 字段）
     await executeQuery(`
       CREATE TABLE IF NOT EXISTS users (
         id INT AUTO_INCREMENT PRIMARY KEY,
@@ -137,7 +137,7 @@ export async function initDatabase() {
         location VARCHAR(255),
         website VARCHAR(500),
         github VARCHAR(255),
-        image VARCHAR(500),
+        avatar VARCHAR(500),
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
@@ -223,16 +223,20 @@ export async function initDatabase() {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
     `)
 
-    // 创建用户资料表
+    // 创建用户资料表（扩展字段存放在这里）
     await executeQuery(`
       CREATE TABLE IF NOT EXISTS user_profiles (
         id INT AUTO_INCREMENT PRIMARY KEY,
         user_id INT NOT NULL,
         name VARCHAR(255),
+        job_title VARCHAR(255),
+        company VARCHAR(255),
         bio TEXT,
         location VARCHAR(255),
         website VARCHAR(500),
         github VARCHAR(255),
+        skills JSON,
+        social_links JSON,
         avatar VARCHAR(500),
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -240,6 +244,34 @@ export async function initDatabase() {
         INDEX idx_user_id (user_id)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
     `)
+
+    // 兼容已有数据库：如果 user_profiles 表还没有新增的扩展字段，则按需补充
+    const columnsToEnsure = [
+      { name: 'job_title', type: 'VARCHAR(255)' },
+      { name: 'company', type: 'VARCHAR(255)' },
+      { name: 'skills', type: 'JSON' },
+      { name: 'social_links', type: 'JSON' }
+    ]
+
+    for (const col of columnsToEnsure) {
+      try {
+        const existing = await executeQuery(
+          `SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS 
+           WHERE TABLE_SCHEMA = DATABASE() 
+             AND TABLE_NAME = 'user_profiles' 
+             AND COLUMN_NAME = ?`,
+          [col.name]
+        ) as any[]
+
+        if (!Array.isArray(existing) || existing.length === 0) {
+          await executeQuery(
+            'ALTER TABLE user_profiles ADD COLUMN ' + col.name + ' ' + col.type + ' NULL'
+          )
+        }
+      } catch (e) {
+        console.error('检查/补充 user_profiles 列失败:', col.name, e)
+      }
+    }
     
     // 创建学习会话表
     await executeQuery(`

@@ -17,7 +17,7 @@ async function initDatabase() {
     connection = await mysql.createConnection(dbConfig);
     console.log('✅ 数据库连接成功');
 
-    // 创建用户表
+    // 创建用户表（基础账号与公开资料）
     console.log('📋 创建用户表...');
     await connection.execute(`
       CREATE TABLE IF NOT EXISTS users (
@@ -34,6 +34,31 @@ async function initDatabase() {
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         INDEX idx_email (email),
         INDEX idx_created_at (created_at)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+
+    // 创建用户扩展资料表（职位、公司、技能、社交链接等）
+    console.log('📋 创建用户扩展资料表 user_profiles...');
+    await connection.execute(`
+      CREATE TABLE IF NOT EXISTS user_profiles (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NOT NULL,
+        name VARCHAR(255),
+        job_title VARCHAR(255),
+        company VARCHAR(255),
+        bio TEXT,
+        location VARCHAR(255),
+        website VARCHAR(500),
+        github VARCHAR(255),
+        skills JSON,
+        social_links JSON,
+        avatar VARCHAR(500),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        UNIQUE KEY unique_user_id (user_id),
+        INDEX idx_user_id (user_id),
+        CONSTRAINT fk_user_profiles_user 
+          FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     `);
 

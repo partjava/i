@@ -5,7 +5,7 @@ module.exports = {
       name: 'frontend',
       script: '.next/standalone/server.js',
       interpreter: 'node',
-      cwd: '/home/ecs-user/i',
+      cwd: '/root/i',
       env: {
         PORT: 3000,
         NODE_ENV: 'production',
@@ -23,28 +23,29 @@ module.exports = {
       autorestart: true,
       watch: false,
       max_memory_restart: '1G',
-      log_file: '/home/ecs-user/i/logs/frontend.log',
-      error_file: '/home/ecs-user/i/logs/frontend-error.log',
-      out_file: '/home/ecs-user/i/logs/frontend-out.log',
+      log_file: '/root/i/logs/frontend.log',
+      error_file: '/root/i/logs/frontend-error.log',
+      out_file: '/root/i/logs/frontend-out.log',
       time: true
     },
     {
       // Python AI 后端服务
       name: 'backend',
-      script: 'venv/bin/uvicorn',
-      args: 'main:app --host 0.0.0.0 --port 8000',
-      cwd: '/home/ecs-user/i/partjava-ai',
+      script: '/root/i/partjava-ai/venv/bin/python',
+      args: '-m uvicorn main:app --host 0.0.0.0 --port 8000',
+      cwd: '/root/i/partjava-ai',
+      interpreter: 'none',
       env: {
-        PYTHONPATH: '/home/ecs-user/i/partjava-ai',
+        PYTHONPATH: '/root/i/partjava-ai',
         PORT: 8000
       },
       instances: 1,
       autorestart: true,
       watch: false,
       max_memory_restart: '512M',
-      log_file: '/home/ecs-user/i/logs/backend.log',
-      error_file: '/home/ecs-user/i/logs/backend-error.log',
-      out_file: '/home/ecs-user/i/logs/backend-out.log',
+      log_file: '/root/i/logs/backend.log',
+      error_file: '/root/i/logs/backend-error.log',
+      out_file: '/root/i/logs/backend-out.log',
       time: true
     }
   ]

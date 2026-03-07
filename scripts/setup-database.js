@@ -34,6 +34,31 @@ async function setupDatabase() {
     `);
     console.log('✅ 用户表创建成功');
 
+    // 创建用户扩展资料表
+    await conn.execute(`
+      CREATE TABLE IF NOT EXISTS user_profiles (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NOT NULL,
+        name VARCHAR(255),
+        job_title VARCHAR(255),
+        company VARCHAR(255),
+        bio TEXT,
+        location VARCHAR(255),
+        website VARCHAR(500),
+        github VARCHAR(255),
+        skills JSON,
+        social_links JSON,
+        avatar VARCHAR(500),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        UNIQUE KEY unique_user_id (user_id),
+        INDEX idx_user_id (user_id),
+        CONSTRAINT fk_user_profiles_user 
+          FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+    console.log('✅ 用户扩展资料表创建成功');
+
     // 创建笔记表
     await conn.execute(`
       CREATE TABLE IF NOT EXISTS notes (
