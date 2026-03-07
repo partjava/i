@@ -55,4 +55,4 @@ logs
 .cache/
 
 # Build artifacts
-dist/
+dist/logs/
