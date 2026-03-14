@@ -1,188 +1,100 @@
-// Service Worker版本 - 每次更新时修改这个版本号！
-const CACHE_VERSION = 'v3.0.0';
+const CACHE_VERSION = 'v4.0.0';
 const CACHE_NAME = `partjava-${CACHE_VERSION}`;
-const urlsToCache = [
-  '/',
+
+// 只缓存真正的静态资源
+const STATIC_CACHE = [
   '/offline',
-  '/manifest.json'
-  // 移除可能不存在的资源，避免缓存失败
+  '/manifest.json',
+  '/styles/highlight-github.css'
 ];
 
-// 安装事件 - 缓存资源
+// 安装
 self.addEventListener('install', (event) => {
-  console.log('🔧 Service Worker 安装中...', CACHE_VERSION);
-  
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then((cache) => {
-        console.log('✅ 缓存已打开:', CACHE_VERSION);
-        // 逐个缓存资源，避免一个失败导致整个过程失败
-        return Promise.all(
-          urlsToCache.map(url => {
-            return cache.add(url).catch(error => {
-              console.error(`❌ 缓存资源失败: ${url}`, error);
-              // 继续处理其他资源
-              return Promise.resolve();
-            });
-          })
-        );
-      })
-      .catch(error => {
-        console.error('❌ Service Worker安装失败:', error);
-      })
+    caches.open(CACHE_NAME).then((cache) => {
+      return Promise.all(
+        STATIC_CACHE.map(url =>
+          cache.add(url).catch(() => {}) // 单个失败不影响整体
+        )
+      );
+    })
   );
-  // 立即激活新的 Service Worker
   self.skipWaiting();
 });
 
-// 激活事件 - 清理旧缓存
+// 激活，清理旧缓存
 self.addEventListener('activate', (event) => {
-  console.log('🚀 Service Worker 激活中...', CACHE_VERSION);
-  
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((cacheName) => {
-          // 删除所有旧版本的缓存
-          if (cacheName !== CACHE_NAME) {
-            console.log('🗑️ 删除旧缓存:', cacheName);
-            return caches.delete(cacheName);
-          }
-        })
-      );
-    }).then(() => {
-      // 立即接管所有页面
-      console.log('✅ Service Worker 已激活并接管页面');
-      return self.clients.claim();
-    })
+    caches.keys().then((keys) =>
+      Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
+    ).then(() => self.clients.claim())
   );
 });
 
-// 拦截请求 - 缓存优先策略
+// 请求拦截
 self.addEventListener('fetch', (event) => {
-  // 只处理GET请求，忽略其他类型的请求
-  if (event.request.method !== 'GET') {
+  if (event.request.method !== 'GET') return;
+
+  const url = new URL(event.request.url);
+
+  // API 请求：网络优先，失败不降级缓存
+  if (url.pathname.startsWith('/api/')) {
     return;
   }
-  
-  event.respondWith(
-    caches.match(event.request)
-      .then((response) => {
-        // 如果缓存中有，直接返回缓存
-        if (response) {
+
+  // Next.js 动态页面：网络优先
+  if (url.pathname.startsWith('/_next/data/')) {
+    return;
+  }
+
+  // Next.js 静态资源（JS/CSS chunks）：缓存优先，缓存没有再走网络并缓存
+  if (url.pathname.startsWith('/_next/static/')) {
+    event.respondWith(
+      caches.match(event.request).then((cached) => {
+        if (cached) return cached;
+        return fetch(event.request).then((response) => {
+          if (response.ok) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+          }
           return response;
-        }
-        
-        // 克隆请求
-        const fetchRequest = event.request.clone();
-        
-        return fetch(fetchRequest).then((response) => {
-          // 检查是否为有效响应
-          if (!response || response.status !== 200 || response.type !== 'basic') {
-            return response;
-          }
-          
-          // 克隆响应
-          const responseToCache = response.clone();
-          
-          // 缓存响应 - 只缓存GET请求
-          if (fetchRequest.method === 'GET') {
-            caches.open(CACHE_NAME)
-              .then((cache) => {
-                try {
-                  cache.put(event.request, responseToCache);
-                } catch (error) {
-                  console.error('缓存请求失败:', error);
-                }
-              });
-          }
-          
-          return response;
-        }).catch(() => {
-          // 网络失败时返回离线页面
-          if (event.request.destination === 'document') {
-            return caches.match('/offline');
-          }
         });
       })
-  );
-});
-
-// 后台同步 - 离线时的数据同步
-self.addEventListener('sync', (event) => {
-  console.log('后台同步事件:', event.tag);
-  
-  if (event.tag === 'background-sync') {
-    event.waitUntil(
-      // 这里可以添加离线时的数据同步逻辑
-      console.log('执行后台同步')
     );
+    return;
   }
-});
 
-// 推送通知
-self.addEventListener('push', (event) => {
-  let data = {};
-  
-  if (event.data) {
-    data = event.data.json();
+  // 图片：缓存优先
+  if (event.request.destination === 'image') {
+    event.respondWith(
+      caches.match(event.request).then((cached) => {
+        if (cached) return cached;
+        return fetch(event.request).then((response) => {
+          if (response.ok) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+          }
+          return response;
+        }).catch(() => cached);
+      })
+    );
+    return;
   }
-  
-  const options = {
-    body: data.body || '你有新的学习提醒！',
-    icon: '/icons/icon-192x192.png',
-    badge: '/icons/icon-72x72.png',
-    vibrate: [100, 50, 100],
-    data: {
-      dateOfArrival: Date.now(),
-      primaryKey: data.primaryKey || '1'
-    },
-    actions: [
-      {
-        action: 'explore',
-        title: '查看详情',
-        icon: '/icons/icon-192x192.png'
-      },
-      {
-        action: 'close',
-        title: '关闭',
-        icon: '/icons/icon-192x192.png'
-      }
-    ]
-  };
-  
-  event.waitUntil(
-    self.registration.showNotification(data.title || '学习提醒', options)
-  );
-});
 
-// 通知点击事件
-self.addEventListener('notificationclick', (event) => {
-  console.log('通知点击:', event.notification.tag);
-  
-  event.notification.close();
-  
-  if (event.action === 'explore') {
-    // 打开应用
-    event.waitUntil(
-      clients.openWindow('/')
+  // 页面导航：网络优先，离线时返回缓存或 /offline
+  if (event.request.destination === 'document') {
+    event.respondWith(
+      fetch(event.request).catch(() =>
+        caches.match(event.request).then(cached => cached || caches.match('/offline'))
+      )
     );
-  } else if (event.action === 'close') {
-    // 关闭通知
-    event.notification.close();
-  } else {
-    // 默认行为 - 打开应用
-    event.waitUntil(
-      clients.openWindow('/')
-    );
+    return;
   }
 });
 
 // 消息处理
 self.addEventListener('message', (event) => {
-  console.log('收到消息:', event.data);
-  
   if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();
   }
-}); 
+});

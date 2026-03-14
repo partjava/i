@@ -5,7 +5,7 @@ module.exports = {
       name: 'frontend',
       script: '.next/standalone/server.js',
       interpreter: 'node',
-      cwd: '/root/i',
+      cwd: '/root/aidnz/i',
       env: {
         PORT: 3000,
         NODE_ENV: 'production',
@@ -23,29 +23,29 @@ module.exports = {
       autorestart: true,
       watch: false,
       max_memory_restart: '1G',
-      log_file: '/root/i/logs/frontend.log',
-      error_file: '/root/i/logs/frontend-error.log',
-      out_file: '/root/i/logs/frontend-out.log',
+      log_file: '/root/aidnz/i/logs/frontend.log',
+      error_file: '/root/aidnz/i/logs/frontend-error.log',
+      out_file: '/root/aidnz/i/logs/frontend-out.log',
       time: true
     },
     {
       // Python AI 后端服务
       name: 'backend',
-      script: '/root/i/partjava-ai/venv/bin/python',
+      script: '/root/aidnz/i/partjava-ai/venv/bin/python',
       args: '-m uvicorn main:app --host 0.0.0.0 --port 8000',
-      cwd: '/root/i/partjava-ai',
+      cwd: '/root/aidnz/i/partjava-ai',
       interpreter: 'none',
       env: {
-        PYTHONPATH: '/root/i/partjava-ai',
+        PYTHONPATH: '/root/aidnz/i/partjava-ai',
         PORT: 8000
       },
       instances: 1,
       autorestart: true,
       watch: false,
       max_memory_restart: '512M',
-      log_file: '/root/i/logs/backend.log',
-      error_file: '/root/i/logs/backend-error.log',
-      out_file: '/root/i/logs/backend-out.log',
+      log_file: '/root/aidnz/i/logs/backend.log',
+      error_file: '/root/aidnz/i/logs/backend-error.log',
+      out_file: '/root/aidnz/i/logs/backend-out.log',
       time: true
     }
   ]

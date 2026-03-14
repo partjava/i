@@ -28,10 +28,14 @@ echo "🗄️  检查数据库字段..."
 mysql -u ecs-user -p'123456' -D partjava_notes -e "ALTER TABLE users MODIFY COLUMN image MEDIUMTEXT;" 2>/dev/null
 mysql -u ecs-user -p'123456' -D partjava_notes -e "ALTER TABLE user_profiles MODIFY COLUMN avatar MEDIUMTEXT;" 2>/dev/null
 
-# 5. 删除并重新启动 PM2 服务（确保使用新代码）
-echo "🔄 重启服务..."
-pm2 delete all 2>/dev/null
-pm2 start ecosystem.config.js
+# 5. 重启 PM2 前端服务（backend 不受影响）
+echo "🔄 重启前端服务..."
+pm2 describe frontend > /dev/null 2>&1
+if [ $? -eq 0 ]; then
+  pm2 restart frontend
+else
+  pm2 start ecosystem.config.js --only frontend
+fi
 
 # 6. 等待服务启动
 echo "⏳ 等待服务启动..."
