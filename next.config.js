@@ -75,7 +75,7 @@ const nextConfig = {
 
   // 资源优化配置
   images: {
-    domains: ['localhost', 'partjava.com'], // 根据实际使用的图片域名配置
+    domains: ['localhost', 'partjava.com', 'www.partjava.com'], // 根据实际使用的图片域名配置
     formats: ['image/webp', 'image/avif'],  // 自动转换为现代图片格式
   },
   
