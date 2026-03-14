@@ -43,21 +43,15 @@ if (process.env.NODE_ENV === 'development') {
   })
 }
 
-// 跟踪已初始化的表
-const initializedTables = new Set<string>();
+// 进程级标志位，确保 initDatabase 只执行一次
+let dbInitialized = false;
 
-// 确保表存在的通用函数
+// 确保表存在的通用函数（保留兼容性）
 export async function ensureTableExists(tableName: string, createTableSQL: string) {
-  if (initializedTables.has(tableName)) {
-    return;
-  }
-  
   try {
     await executeQuery(createTableSQL);
-    initializedTables.add(tableName);
   } catch (error) {
-    // 表可能已存在，标记为已初始化
-    initializedTables.add(tableName);
+    // 表已存在，忽略
   }
 }
 
@@ -123,8 +117,10 @@ export async function executeQuery(sql: string, params: any[] = [], retries: num
   throw lastError
 }
 
-// 初始化数据库表
+// 初始化数据库表（进程内只执行一次）
 export async function initDatabase() {
+  if (dbInitialized) return;
+  dbInitialized = true;
   try {
     // 创建用户表（image字段用于存储头像）
     await executeQuery(`
@@ -347,6 +343,7 @@ export async function initDatabase() {
     `)
 
   } catch (error) {
+    dbInitialized = false; // 失败时重置，允许下次重试
     console.error('❌ 数据库初始化失败:', error)
     throw error
   }
