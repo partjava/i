@@ -34,7 +34,9 @@ export default function CommentSection({ noteId, isPublic = false }: CommentSect
       const response = await fetch(`/api/comments?noteId=${noteId}`);
       if (response.ok) {
         const data = await response.json();
-        setComments(data.comments || []);
+        // API 用 createSuccessResponse 包装，结构是 { success, data: { comments } }
+        const comments = data.data?.comments ?? data.comments ?? [];
+        setComments(comments);
       }
     } catch (error) {
       console.error('获取评论失败:', error);
@@ -67,10 +69,10 @@ export default function CommentSection({ noteId, isPublic = false }: CommentSect
 
       if (response.ok) {
         setNewComment('');
-        fetchComments(); // 重新获取评论
+        fetchComments();
       } else {
         const data = await response.json();
-        console.error('发布评论失败:', data);
+        console.error('发布评论失败:', data.error || data);
       }
     } catch (error) {
       console.error('发布评论失败:', error);
