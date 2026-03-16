@@ -1,5 +1,6 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
+import { useSession } from "next-auth/react";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_AI_API_URL || "http://www.partjava.com/ai";
 
@@ -62,6 +63,7 @@ const renderMarkdown = (text: string) => {
 };
 
 export default function AIChatPage() {
+  const { data: session } = useSession();
   const [messages, setMessages] = useState([
     { role: "assistant", content: "你好！我是AI助手，有什么可以帮助你的吗？" },
   ]);
@@ -69,6 +71,8 @@ export default function AIChatPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [conversationId, setConversationId] = useState<string | null>(null);
+  const [dbConvId, setDbConvId] = useState<number | null>(null); // 数据库对话ID
+  const [historyList, setHistoryList] = useState<any[]>([]); // 对话历史列表
   const chatEndRef = useRef<HTMLDivElement>(null);
   const [showGameModal, setShowGameModal] = useState(false);
   const [currentGame, setCurrentGame] = useState("");
@@ -82,7 +86,28 @@ export default function AIChatPage() {
     return () => clearTimeout(timer);
   }, [messages.length, loading]);
 
-  // 健康检查
+  // 加载对话历史列表
+  useEffect(() => {
+    if (!session?.user?.id) return;
+    fetch('/api/ai/conversations', { credentials: 'include' })
+      .then(r => r.json())
+      .then(data => setHistoryList(data.conversations || []))
+      .catch(() => {});
+  }, [session]);
+
+  // 切换到某个历史对话
+  const loadConversation = async (conv: any) => {
+    setDbConvId(conv.id);
+    setConversationId(conv.conversation_id);
+    try {
+      const res = await fetch(`/api/ai/conversations/${conv.id}/messages`, { credentials: 'include' });
+      const data = await res.json();
+      const msgs = (data.messages || []).map((m: any) => ({ role: m.role, content: m.content }));
+      setMessages(msgs.length ? msgs : [{ role: "assistant", content: "你好！我是AI助手，有什么可以帮助你的吗？" }]);
+    } catch {
+      setMessages([{ role: "assistant", content: "你好！我是AI助手，有什么可以帮助你的吗？" }]);
+    }
+  };
   useEffect(() => {
     const checkHealth = async () => {
       try {
@@ -145,7 +170,31 @@ export default function AIChatPage() {
       }
       
       setMessages((msgs) => [...msgs, { role: "assistant", content: displayContent }]);
-    } catch (e) {
+
+      // 保存到数据库
+      if (session?.user?.id) {
+        let currentDbConvId = dbConvId;
+        if (!currentDbConvId) {
+          // 创建新对话记录
+          const convRes = await fetch('/api/ai/conversations', { method: 'POST', credentials: 'include' });
+          const convData = await convRes.json();
+          currentDbConvId = convData.id;
+          setDbConvId(convData.id);
+          // 刷新历史列表
+          fetch('/api/ai/conversations', { credentials: 'include' })
+            .then(r => r.json()).then(d => setHistoryList(d.conversations || []));
+        }
+        fetch(`/api/ai/conversations/${currentDbConvId}/messages`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ userMessage: userMsg, assistantMessage: displayContent }),
+        }).then(() => {
+          // 更新历史列表标题
+          fetch('/api/ai/conversations', { credentials: 'include' })
+            .then(r => r.json()).then(d => setHistoryList(d.conversations || []));
+        });
+      }    } catch (e) {
       console.error("发送消息失败:", e);
       const errorMessage = e instanceof Error ? e.message : "未知错误";
       setError(`发送消息失败: ${errorMessage}`);
@@ -166,21 +215,10 @@ export default function AIChatPage() {
     setError("");
     setLoading(false);
     setConversationId(null);
+    setDbConvId(null);
     setMessages([
       { role: "assistant", content: "你好！我是AI助手，有什么可以帮助你的吗？" },
     ]);
-    try {
-      const res = await fetch(`${API_BASE_URL}/conversations`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setConversationId(data.conversation_id);
-      }
-    } catch {
-      setError("创建新对话失败");
-    }
   };
 
   // 打开游戏
@@ -252,8 +290,25 @@ export default function AIChatPage() {
           <button className="new-chat-btn" onClick={startNewChat}>💬 新对话</button>
           <h3>对话历史</h3>
           <div className="conversation-list">
-            {conversationId && (
-              <div className="conversation-item active">当前对话</div>
+            {historyList.map((conv) => (
+              <div
+                key={conv.id}
+                className={`conversation-item ${dbConvId === conv.id ? 'active' : ''}`}
+                onClick={() => loadConversation(conv)}
+                title={conv.title}
+              >
+                <div style={{ fontWeight: 500, fontSize: '0.9em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {conv.title || '新对话'}
+                </div>
+                <div style={{ fontSize: '0.75em', color: '#999', marginTop: 2 }}>
+                  {new Date(conv.updated_at).toLocaleDateString('zh-CN')}
+                </div>
+              </div>
+            ))}
+            {historyList.length === 0 && (
+              <div style={{ color: '#aaa', fontSize: '0.85em', textAlign: 'center', marginTop: 20 }}>
+                暂无对话历史
+              </div>
             )}
           </div>
         </div>
