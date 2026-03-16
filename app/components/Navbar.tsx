@@ -22,6 +22,7 @@ import GlobalSearch from './GlobalSearch';
 import { useSidebar } from './Sidebar';
 import SettingModal from './SettingModal';
 import AI3DRobot from './AI3DRobot';
+import StitchLogo from './StitchLogo';
 
 export default function Navbar() {
   const { data: session, status, update } = useSession();
@@ -188,8 +189,8 @@ export default function Navbar() {
 
             {/* Logo */}
             <Link href="/" className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">PJ</span>
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center overflow-hidden bg-blue-100">
+                <StitchLogo size={32} />
               </div>
               <span className="font-semibold text-xl text-gray-900 hidden sm:block">
                 PartJava

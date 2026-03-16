@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import EyePet from '@/app/components/EyePet';
+import StitchLogo from '@/app/components/StitchLogo';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -75,7 +76,7 @@ export default function RegisterPage() {
         <div className="relative z-10 flex flex-col justify-center px-16 text-white">
           <div className="mb-8">
             <div className="w-16 h-16 bg-white bg-opacity-20 rounded-2xl flex items-center justify-center mb-6">
-              <span className="text-3xl font-bold">P</span>
+              <StitchLogo size={52} />
             </div>
             <h1 className="text-4xl font-bold mb-4">加入 PartJava</h1>
             <p className="text-xl text-cyan-100 mb-8">开启你的编程学习之旅</p>
@@ -106,13 +107,18 @@ export default function RegisterPage() {
         </div>
       </div>
 
+      {/* 手机端右上角灵宠 */}
+      <div className="lg:hidden fixed top-16 right-4 z-50">
+        <EyePet />
+      </div>
+
       {/* 右侧表单区 */}
       <div className="w-full lg:w-1/2 flex items-center justify-center px-6 py-12 bg-white">
         <div className="w-full max-w-md">
           {/* 移动端 Logo */}
           <div className="lg:hidden text-center mb-8">
-            <div className="w-12 h-12 bg-indigo-600 rounded-xl flex items-center justify-center mx-auto mb-3">
-              <span className="text-white text-xl font-bold">P</span>
+            <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-3">
+              <StitchLogo size={56} />
             </div>
             <h1 className="text-2xl font-bold text-gray-900">PartJava</h1>
           </div>
