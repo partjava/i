@@ -46,13 +46,14 @@ export async function GET(request: NextRequest) {
             const count = row.count || 0;
             const totalTime = row.total_time || 0; // 秒数
             
-            // 根据学习时间（分钟）确定level
-            const minutes = Math.floor(totalTime / 60);
-            if (minutes > 0) {
-              if (minutes <= 30) level = 1;       // 30分钟以下
-              else if (minutes <= 60) level = 2;  // 1小时以下
-              else if (minutes <= 120) level = 3; // 2小时以下
-              else level = 4;                     // 2小时以上
+            // 根据学习时间（秒）确定level
+            const seconds = totalTime || 0;
+            if (seconds > 0 || count > 0) {
+              const minutes = Math.floor(seconds / 60);
+              if (minutes < 10) level = 1;        // 10分钟以下
+              else if (minutes < 30) level = 2;   // 30分钟以下
+              else if (minutes < 60) level = 3;   // 1小时以下
+              else level = 4;                     // 1小时以上
             }
             
             heatmapData.push({

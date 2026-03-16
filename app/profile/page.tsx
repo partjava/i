@@ -20,6 +20,7 @@ import {
   Space,
   Typography,
   Divider,
+  Select,
   message
 } from 'antd';
 import { 
@@ -96,7 +97,6 @@ export default function ProfilePage() {
   const refreshData = async () => {
     // 只有已登录用户才刷新数据
     if (status !== 'authenticated') {
-      console.log('非登录状态，跳过数据刷新');
       return;
     }
     
@@ -113,7 +113,6 @@ export default function ProfilePage() {
       });
       
       if (!sessionResponse.ok) {
-        console.log('会话已过期，尝试刷新会话');
         // 尝试刷新会话
         const refreshSessionResponse = await fetch('/api/auth/session', {
           method: 'POST',
@@ -125,7 +124,6 @@ export default function ProfilePage() {
         });
         
         if (!refreshSessionResponse.ok) {
-          console.log('无法刷新会话，重定向到登录页面');
           message.error('会话已过期，请重新登录');
           setTimeout(() => {
             router.push('/login');
@@ -148,7 +146,6 @@ export default function ProfilePage() {
         console.warn('部分数据加载失败:', results);
         message.warning('部分数据加载失败，请稍后再试');
       } else {
-        console.log('所有数据加载成功');
         message.success('数据已刷新');
       }
     } catch (error) {
@@ -163,7 +160,6 @@ export default function ProfilePage() {
   const checkSession = async () => {
     // 如果是访客模式，不需要检查会话
     if (status === 'unauthenticated') {
-      console.log('访客模式，跳过会话检查');
       return true;
     }
     
@@ -178,12 +174,10 @@ export default function ProfilePage() {
       });
       
       if (!response.ok) {
-        console.log('会话检查API返回错误:', response.status);
         return false;
       }
       
       const data = await response.json();
-      console.log('会话检查结果:', data);
       return data.authenticated;
     } catch (error) {
       console.error('会话检查失败:', error);
@@ -194,7 +188,6 @@ export default function ProfilePage() {
   // 加载平台总体统计数据（未登录用户）
   const loadPlatformStats = async () => {
     try {
-      console.log('正在加载平台统计数据...');
       
       const response = await fetch('/api/stats/platform', {
         method: 'GET',
@@ -209,7 +202,6 @@ export default function ProfilePage() {
       }
       
       const data = await response.json();
-      console.log('成功获取平台统计数据:', data);
       
       // 如果有真实数据，使用真实数据
       if (data && data.totalUsers > 0) {
@@ -283,7 +275,6 @@ export default function ProfilePage() {
 
   // 生成示例数据供未登录用户查看 - 当平台还没有真实数据时使用
   const generateDemoData = () => {
-    console.log('使用示例数据展示功能...');
     
     // 生成过去一年的学习热力图数据 - 模拟真实学习模式
     const demoHeatmap: UnifiedHeatmapData[] = [];
@@ -459,18 +450,15 @@ export default function ProfilePage() {
 
   // 初始加载数据
   useEffect(() => {
-    console.log('Profile页面 - 当前状态:', { status, isGuest });
     
     if (status === 'unauthenticated') {
       // 未登录用户显示平台总体数据
-      console.log('未登录用户，显示平台数据');
       setIsGuest(true);
       loadPlatformStats();
       return;
     }
     
     if (status === 'authenticated') {
-      console.log('已登录用户，加载个人数据');
       setIsGuest(false);
       // 先检查会话状态
       checkSession().then(isAuthenticated => {
@@ -481,7 +469,6 @@ export default function ProfilePage() {
           refreshData();
         } else {
           // 会话无效，尝试重新登录
-          console.log('会话无效，重定向到登录页');
           router.push('/login');
         }
       });
@@ -493,7 +480,6 @@ export default function ProfilePage() {
     // 只有已登录用户才监听焦点事件
     if (typeof window !== 'undefined' && status === 'authenticated' && !isGuest) {
       const handleFocus = () => {
-        console.log('页面获得焦点，刷新数据');
         // 同步笔记数量
         syncNotesCount();
         // 刷新数据
@@ -516,7 +502,6 @@ export default function ProfilePage() {
         const notesCount = parseInt(notesCountElement.textContent || '0', 10);
         
         if (notesCount > 0) {
-          console.log(`检测到前端有${notesCount}条笔记，尝试同步到数据库...`);
           
           const response = await fetch('/api/user/sync-notes-count', {
             method: 'POST',
@@ -535,7 +520,6 @@ export default function ProfilePage() {
           }
           
           const result = await response.json();
-          console.log('同步笔记数量结果:', result);
           
           if (result.added > 0) {
             message.success(`已同步${result.added}条笔记数据`);
@@ -552,7 +536,6 @@ export default function ProfilePage() {
             const notesCount = parseInt(match[1], 10);
             
             if (notesCount > 0) {
-              console.log(`从URL检测到${notesCount}条笔记，尝试同步到数据库...`);
               
               const response = await fetch('/api/user/sync-notes-count', {
                 method: 'POST',
@@ -571,7 +554,6 @@ export default function ProfilePage() {
               }
               
               const result = await response.json();
-              console.log('同步笔记数量结果:', result);
               
               if (result.added > 0) {
                 message.success(`已同步${result.added}条笔记数据`);
@@ -589,13 +571,8 @@ export default function ProfilePage() {
 
   const loadUserProfile = async () => {
     try {
-      console.log('正在加载用户资料...');
-      
-      // 使用统一的数据适配器
       const { fetchWithUnifiedResponse } = await import('@/app/lib/api/dataAdapter');
-      
       try {
-        // 添加时间戳避免缓存
         const timestamp = new Date().getTime();
         const profileData = await fetchWithUnifiedResponse<Record<string, any>>(
           `/api/user/profile?t=${timestamp}`, 
@@ -609,9 +586,6 @@ export default function ProfilePage() {
           }
         );
         
-        console.log('成功获取用户资料:', profileData);
-        
-        // 标准化表单数据
         const formData = {
           name: profileData.name || session?.user?.name || '',
           jobTitle: profileData.jobTitle || '',
@@ -629,72 +603,36 @@ export default function ProfilePage() {
         form.setFieldsValue(formData);
         return profileData;
       } catch (fetchError) {
-        console.error('获取用户资料失败:', fetchError);
-        
         if ((fetchError as any).message?.includes('401')) {
-          console.log('用户未授权，使用默认资料');
-          
-          // 如果是未授权错误，尝试刷新会话
           try {
-            const refreshResponse = await fetch('/api/auth/session', {
-              method: 'POST',
-              credentials: 'include',
-              cache: 'no-store'
-            });
-            
-            if (refreshResponse.ok) {
-              console.log('会话已刷新，将在下次加载时重试');
-            }
-          } catch (refreshError) {
-            console.error('刷新会话失败:', refreshError);
-          }
+            await fetch('/api/auth/session', { method: 'POST', credentials: 'include', cache: 'no-store' });
+          } catch {}
         }
         
-        // 使用会话中的用户信息作为默认值
-        const defaultProfile = {
-          name: session?.user?.name || '',
-          email: session?.user?.email || '',
-          image: session?.user?.image || ''
-        };
-        
-        // 设置默认表单数据
         const defaultFormData = {
-          name: defaultProfile.name,
+          name: session?.user?.name || '',
           jobTitle: '',
           company: '',
           bio: '',
           location: '',
           github: '',
           website: '',
-          image: defaultProfile.image,
+          image: session?.user?.image || '',
           skills: [],
           socialLinks: {}
         };
         
         setProfileForm(defaultFormData);
         form.setFieldsValue(defaultFormData);
-        
-        return defaultProfile;
+        return { name: session?.user?.name || '', email: session?.user?.email || '', image: session?.user?.image || '' };
       }
     } catch (error) {
-      console.error('获取用户资料过程中发生错误:', error);
-      
-      // 返回默认值
-      const defaultProfile = {
-        name: session?.user?.name || '',
-        email: session?.user?.email || '',
-        image: session?.user?.image || ''
-      };
-      
-      return defaultProfile;
+      return { name: session?.user?.name || '', email: session?.user?.email || '', image: session?.user?.image || '' };
     }
   };
 
   const loadUserStats = async () => {
     try {
-      console.log('正在加载用户统计数据...');
-      
-      // 直接从API获取数据
       try {
         const response = await fetch('/api/user/stats', {
           method: 'GET',
@@ -710,32 +648,14 @@ export default function ProfilePage() {
         }
         
         const data = await response.json();
-        console.log('成功获取统计数据:', data);
         setStats(data);
         return data;
       } catch (fetchError) {
-        console.error('获取统计数据失败:', fetchError);
-        
         if ((fetchError as any).message?.includes('401')) {
-          console.log('用户未授权，使用默认空状态');
-          
-          // 尝试刷新会话
           try {
-            const refreshResponse = await fetch('/api/auth/session', {
-              method: 'POST',
-              credentials: 'include',
-              cache: 'no-store'
-            });
-            
-            if (refreshResponse.ok) {
-              console.log('会话已刷新，将在下次加载时重试');
-            }
-          } catch (refreshError) {
-            console.error('刷新会话失败:', refreshError);
-          }
+            await fetch('/api/auth/session', { method: 'POST', credentials: 'include', cache: 'no-store' });
+          } catch {}
         }
-        
-        // 创建空统计数据
         const emptyStats = {
           notes: { total: 0, public: 0, private: 0, firstNoteDate: '', lastActivityDate: '' },
           engagement: { likesReceived: 0, bookmarksReceived: 0, commentsReceived: 0 },
@@ -748,9 +668,6 @@ export default function ProfilePage() {
         return emptyStats;
       }
     } catch (error) {
-      console.error('获取统计数据过程中发生错误:', error);
-      
-      // 导入失败时使用内联创建的默认状态
       const emptyStats = {
         notes: { total: 0, public: 0, private: 0, firstNoteDate: '', lastActivityDate: '' },
         engagement: { likesReceived: 0, bookmarksReceived: 0, commentsReceived: 0 },
@@ -759,7 +676,6 @@ export default function ProfilePage() {
         recentActivity: [],
         monthlyStats: []
       };
-      
       setStats(emptyStats);
       return emptyStats;
     } finally {
@@ -769,37 +685,24 @@ export default function ProfilePage() {
 
   const loadHeatmapData = async () => {
     try {
-      console.log('正在加载热力图数据...');
-      
-      // 直接从API获取数据
       const response = await fetch('/api/user/learning-stats', {
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         cache: 'no-store'
       });
       
-      if (!response.ok) {
-        throw new Error(`API错误: ${response.status}`);
-      }
+      if (!response.ok) throw new Error(`API错误: ${response.status}`);
       
       const data = await response.json();
-      console.log('成功获取热力图数据:', data);
-      console.log('热力图数据数量:', data.heatmapData?.length);
-      
       if (data && Array.isArray(data.heatmapData)) {
-        console.log('设置热力图数据:', data.heatmapData.length, '条');
         setHeatmapData(data.heatmapData);
         return data;
       } else {
-        console.log('热力图数据格式错误或为空');
         setHeatmapData([]);
         return { heatmapData: [] };
       }
     } catch (error) {
-      console.error('生成热力图数据失败:', error);
       setHeatmapData([]);
       return { heatmapData: [] };
     } finally {
@@ -810,18 +713,12 @@ export default function ProfilePage() {
   const handleFormSubmit = async (values: ProfileFormData) => {
     setSaving(true);
     try {
-      console.log('=== 表单提交开始 ===');
-      console.log('1. 表单原始值:', values);
-      console.log('2. 当前profileForm状态:', profileForm);
-      
       // 处理技能标签 - 确保是数组格式
       const submitData = {
         ...values,
-        skills: Array.isArray(values.skills) ? values.skills : 
-                (typeof values.skills === 'string' ? (values.skills as string).split(',').map((s: string) => s.trim()).filter((s: string) => s) : [])
+        image: profileForm.image,
+        skills: Array.isArray(values.skills) ? values.skills : []
       };
-      
-      console.log('3. 处理后准备提交的数据:', submitData);
       
       const response = await fetch('/api/user/profile', {
         method: 'PUT',
@@ -835,17 +732,14 @@ export default function ProfilePage() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        console.error('4. API返回错误:', errorData);
         throw new Error(errorData.error || '更新失败');
       }
 
       const updatedProfile = await response.json();
-      console.log('5. API返回成功:', updatedProfile);
       
       // 立即更新本地状态
       setProfileForm(submitData);
       form.setFieldsValue(submitData);
-      console.log('6. 已更新本地状态');
       
       // 更新session
       await update({
@@ -856,21 +750,16 @@ export default function ProfilePage() {
           image: updatedProfile.user?.image || submitData.image
         }
       });
-      console.log('7. 已更新session');
 
       // 刷新全局用户状态
       await refreshUser();
-      console.log('8. 已刷新全局用户状态');
       
       // 强制重新加载用户资料
       await loadUserProfile();
-      console.log('9. 已重新加载用户资料');
 
       message.success('个人资料更新成功');
       setEditMode(false);
-      console.log('=== 表单提交完成 ===');
     } catch (error) {
-      console.error('表单提交失败:', error);
       message.error(error instanceof Error ? error.message : '更新失败，请重试');
     } finally {
       setSaving(false);
@@ -930,7 +819,6 @@ export default function ProfilePage() {
             // 转换为base64，质量0.7
             const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
             
-            console.log('原始图片大小:', base64.length, '压缩后:', compressedBase64.length);
             
             const response = await fetch('/api/user/avatar', {
               method: 'POST',
@@ -999,16 +887,13 @@ export default function ProfilePage() {
 
   const handleSignOut = async () => {
     try {
-      console.log('开始退出登录流程...');
       message.loading('正在退出登录...', 1);
       
       // 1. 使用NextAuth库内置功能清除前端会话
       await signOut({ redirect: false });
-      console.log('前端会话已清除');
       
       // 2. 调用自定义API清除服务器端会话
       try {
-        console.log('正在调用退出API...');
         const res = await fetch('/api/auth/signout', {
           method: 'POST',
           headers: {
@@ -1019,36 +904,29 @@ export default function ProfilePage() {
         });
         
         const result = await res.json();
-        console.log('退出API响应:', result);
       } catch (apiError) {
         console.error('API调用失败，继续退出流程', apiError);
       }
       
       // 3. 清除所有存储和cookie
-      console.log('正在清除本地存储...');
       
       // 清除所有localStorage
       if (typeof localStorage !== 'undefined') {
         localStorage.clear();
-        console.log('localStorage已清除');
       }
       
       // 清除所有sessionStorage
       if (typeof sessionStorage !== 'undefined') {
         sessionStorage.clear();
-        console.log('sessionStorage已清除');
       }
       
       // 清除所有cookie
-      console.log('正在清除cookies...');
       document.cookie.split(";").forEach(function(c) {
         const cookieName = c.split('=')[0].trim();
         document.cookie = cookieName + "=;expires=" + new Date().toUTCString() + ";path=/";
-        console.log('已删除cookie:', cookieName);
       });
       
       // 4. 强制刷新页面，完全重新加载
-      console.log('正在重定向到登录页面...');
       message.success('已成功退出登录', 1);
       
       // 添加延迟确保消息显示
@@ -1092,7 +970,6 @@ export default function ProfilePage() {
   };
 
   if (status === 'loading') {
-    console.log('Profile页面 - 状态加载中...');
     return (
       <div className="flex justify-center items-center h-screen">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-500"></div>
@@ -1101,7 +978,6 @@ export default function ProfilePage() {
   }
 
   if (statsLoading && !isGuest) {
-    console.log('Profile页面 - 统计数据加载中...', { statsLoading, isGuest });
     return (
       <div className="flex justify-center items-center h-screen">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-500"></div>
@@ -1109,7 +985,6 @@ export default function ProfilePage() {
     );
   }
 
-  console.log('Profile页面 - 渲染主内容', { status, isGuest, statsLoading });
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -1282,14 +1157,18 @@ export default function ProfilePage() {
                 {/* 技能标签 */}
                 {profileForm.skills && profileForm.skills.length > 0 && (
                   <div className="flex flex-wrap justify-center gap-2 mb-6">
-                    {profileForm.skills.map((skill: string, index: number) => (
-                      <Tag 
-                        key={index}
-                        className="bg-gradient-to-r from-blue-400 to-cyan-400 text-white border-0 text-sm px-3 py-1"
-                      >
-                        {skill}
-                      </Tag>
-                    ))}
+                    {profileForm.skills.map((skill: string, index: number) => {
+                      const colors = ['#f5222d','#fa541c','#fa8c16','#faad14','#52c41a','#13c2c2','#1677ff','#722ed1','#eb2f96','#2f54eb','#08979c'];
+                      return (
+                        <Tag 
+                          key={index}
+                          style={{ backgroundColor: colors[index % colors.length], color: '#fff', border: 'none' }}
+                          className="text-sm px-3 py-1"
+                        >
+                          {skill}
+                        </Tag>
+                      );
+                    })}
                   </div>
                 )}
 
@@ -1440,10 +1319,12 @@ export default function ProfilePage() {
                 label={<span className="text-base font-semibold">技能标签</span>} 
                 name="skills"
               >
-                <Input 
-                  placeholder="用逗号分隔，如：Python, React, Node.js" 
+                <Select
+                  mode="tags"
                   size="large"
+                  placeholder="输入技能后按回车添加，如：Python、React、Node.js"
                   className="rounded-lg"
+                  tokenSeparators={[',']}
                 />
               </Form.Item>
 
@@ -1585,12 +1466,15 @@ export default function ProfilePage() {
                     </div>
                   </Col>
                   <Col xs={24} md={8}>
-                    <div className="text-center p-6 bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-lg">
+                    <div 
+                      className={`text-center p-6 bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-lg ${!isGuest ? 'cursor-pointer hover:shadow-md transition-all duration-200' : ''}`}
+                      onClick={() => !isGuest && router.push('/bookmarks')}
+                    >
                       <BookOutlined className="text-3xl text-yellow-500 mb-3" />
                       <div className="text-xl font-semibold text-gray-700 mb-1">
                         {stats?.engagement?.bookmarksReceived || 0}
                       </div>
-                      <div className="text-sm text-gray-500">收藏数</div>
+                      <div className="text-sm text-gray-500">我的收藏</div>
                     </div>
                   </Col>
                   <Col xs={24} md={8}>

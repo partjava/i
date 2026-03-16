@@ -82,7 +82,7 @@ export class CommentService {
       return (result as any).insertId;
     } catch (error) {
       console.error('发布评论失败:', error);
-      throw new Error('发布评论失败');
+      throw error; // 抛出原始错误，不要吞掉
     }
   }
 

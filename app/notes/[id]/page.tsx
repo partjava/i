@@ -7,6 +7,7 @@ import Link from 'next/link';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
+import 'highlight.js/styles/github.css';
 import CommentSection from '@/app/components/CommentSection';
 
 interface Note {
@@ -269,12 +270,17 @@ export default function NoteDetailPage() {
             components={{
               code({ node, inline, className, children, ...props }: any) {
                 const match = /language-(\w+)/.exec(className || '');
-                return !inline && match ? (
-                  <pre className={className} {...props}>
-                    <code className={className}>{children}</code>
-                  </pre>
-                ) : (
-                  <code className="bg-gray-100 px-1 py-0.5 rounded text-sm" {...props}>
+                if (!inline) {
+                  // 块级代码：有语言标识或没有，统一用浅色背景
+                  return (
+                    <pre style={{ background: '#f6f8fa', borderRadius: '6px', padding: '16px', overflowX: 'auto' }}>
+                      <code className={className} style={{ background: 'none', color: '#24292e', fontSize: '0.875em' }} {...props}>{children}</code>
+                    </pre>
+                  );
+                }
+                // 行内代码
+                return (
+                  <code className="bg-gray-100 px-1 py-0.5 rounded text-sm font-mono" {...props}>
                     {children}
                   </code>
                 );

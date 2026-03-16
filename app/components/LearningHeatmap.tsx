@@ -16,7 +16,6 @@ export default function LearningHeatmap({ data, year }: LearningHeatmapProps) {
   
   // 生成一年的日期格子
   const yearData = useMemo(() => {
-    console.log('LearningHeatmap - 生成年度数据，输入数据:', data.length, '条');
     
     const startDate = new Date(detectedYear, 0, 1);
     const endDate = new Date(detectedYear, 11, 31);
@@ -38,7 +37,6 @@ export default function LearningHeatmap({ data, year }: LearningHeatmapProps) {
       }
     });
     
-    console.log('LearningHeatmap - 数据映射创建完成，包含', dataMap.size, '个日期');
     
     // 生成全年日期
     const current = new Date(startDate);
@@ -49,7 +47,6 @@ export default function LearningHeatmap({ data, year }: LearningHeatmapProps) {
       
       if (dayData) {
         matchCount++;
-        console.log('LearningHeatmap - 匹配到数据:', dateStr, dayData);
       }
       
       days.push({
@@ -60,7 +57,6 @@ export default function LearningHeatmap({ data, year }: LearningHeatmapProps) {
       current.setDate(current.getDate() + 1);
     }
     
-    console.log('LearningHeatmap - 生成完成，总天数:', days.length, '匹配数据:', matchCount);
     
     return days;
   }, [data, detectedYear]);
@@ -68,11 +64,11 @@ export default function LearningHeatmap({ data, year }: LearningHeatmapProps) {
   // 获取颜色类
   const getLevelColor = (level: number) => {
     const colors = [
-      'bg-gray-100',
-      'bg-green-200',
-      'bg-green-300',
-      'bg-green-400',
-      'bg-green-500'
+      'bg-gray-100',   // 0: 无学习
+      'bg-green-300',  // 1: 少量
+      'bg-green-400',  // 2: 中等
+      'bg-green-500',  // 3: 较多
+      'bg-green-700',  // 4: 大量
     ];
     return colors[level] || colors[0];
   };

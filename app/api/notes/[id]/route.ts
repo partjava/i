@@ -123,6 +123,27 @@ export async function GET(
 
     const note = notes[0]
 
+    // 查询点赞数、收藏数
+    const [likeResult, bookmarkResult] = await Promise.all([
+      executeQuery('SELECT COUNT(*) as count FROM note_likes WHERE note_id = ?', [noteId]),
+      executeQuery('SELECT COUNT(*) as count FROM note_bookmarks WHERE note_id = ?', [noteId]),
+    ]) as any[][];
+    const likeCount = likeResult[0]?.count || 0;
+    const bookmarkCount = bookmarkResult[0]?.count || 0;
+
+    // 查询当前用户是否已点赞/收藏
+    let liked = false;
+    let bookmarked = false;
+    if (session?.user?.id) {
+      const userId = parseInt(session.user.id, 10);
+      const [likedResult, bookmarkedResult] = await Promise.all([
+        executeQuery('SELECT id FROM note_likes WHERE note_id = ? AND user_id = ?', [noteId, userId]),
+        executeQuery('SELECT id FROM note_bookmarks WHERE note_id = ? AND user_id = ?', [noteId, userId]),
+      ]) as any[][];
+      liked = likedResult.length > 0;
+      bookmarked = bookmarkedResult.length > 0;
+    }
+
     // 处理tags字段
     let tags = []
     try {
@@ -155,7 +176,11 @@ export async function GET(
         authorId: note.author_id,
         authorName: note.author_name,
         createdAt: note.created_at,
-        updatedAt: note.updated_at
+        updatedAt: note.updated_at,
+        liked,
+        bookmarked,
+        likeCount,
+        bookmarkCount,
       }
     })
 
