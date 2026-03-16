@@ -3,6 +3,7 @@
 import { usePathname, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { useState } from 'react';
+import dynamic from 'next/dynamic';
 import { 
   HomeOutlined, 
   BookOutlined, 
@@ -14,6 +15,8 @@ import {
   CloseOutlined
 } from '@ant-design/icons';
 import { Badge, Drawer } from 'antd';
+
+const AI3DRobot = dynamic(() => import('./AI3DRobot'), { ssr: false });
 
 interface NavItem {
   key: string;
@@ -30,6 +33,7 @@ export default function BottomNavigation() {
   const router = useRouter();
   const { data: session } = useSession();
   const [moreOpen, setMoreOpen] = useState(false);
+  const [showRobot, setShowRobot] = useState(false);
 
   // 主要导航项（显示在底部栏）
   const primaryNavItems: NavItem[] = [
@@ -164,6 +168,24 @@ export default function BottomNavigation() {
             );
           })}
           
+          {/* 袋子 AI 按钮 - 悬浮在中间 */}
+          <div className="relative flex flex-col items-center justify-center" style={{ minWidth: '60px' }}>
+            <button
+              onClick={() => {
+                if (navigator.vibrate) navigator.vibrate(10);
+                setShowRobot(true);
+              }}
+              className="absolute -top-7 flex flex-col items-center justify-center touch-manipulation"
+              style={{ transform: 'translateY(-50%)' }}
+            >
+              <div className="w-14 h-14 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center shadow-lg border-4 border-white"
+                style={{ boxShadow: '0 4px 20px rgba(99,102,241,0.5)' }}>
+                <span className="text-2xl">🤖</span>
+              </div>
+              <span className="text-xs mt-1 font-medium text-purple-600">袋子</span>
+            </button>
+          </div>
+
           {/* 更多按钮 */}
           <button
             onClick={() => {
@@ -265,6 +287,9 @@ export default function BottomNavigation() {
           </div>
         </div>
       </Drawer>
+
+      {/* 袋子 AI 机器人弹窗 */}
+      {showRobot && <AI3DRobot onClose={() => setShowRobot(false)} />}
 
       <style jsx global>{`
         .pb-safe {
