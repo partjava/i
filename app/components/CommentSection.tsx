@@ -58,6 +58,7 @@ export default function CommentSection({ noteId, isPublic = false }: CommentSect
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify({
           noteId: parseInt(noteId),
           content: newComment,
@@ -67,6 +68,9 @@ export default function CommentSection({ noteId, isPublic = false }: CommentSect
       if (response.ok) {
         setNewComment('');
         fetchComments(); // 重新获取评论
+      } else {
+        const data = await response.json();
+        console.error('发布评论失败:', data);
       }
     } catch (error) {
       console.error('发布评论失败:', error);
@@ -84,6 +88,7 @@ export default function CommentSection({ noteId, isPublic = false }: CommentSect
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify({
           noteId: parseInt(noteId),
           content: replyContent,
@@ -95,6 +100,9 @@ export default function CommentSection({ noteId, isPublic = false }: CommentSect
         setReplyContent('');
         setReplyTo(null);
         fetchComments(); // 重新获取评论
+      } else {
+        const data = await response.json();
+        console.error('回复评论失败:', data);
       }
     } catch (error) {
       console.error('回复评论失败:', error);

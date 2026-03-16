@@ -194,11 +194,29 @@ export async function initDatabase() {
         note_id INT NOT NULL,
         user_id INT NOT NULL,
         content TEXT NOT NULL,
+        parent_id INT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         INDEX idx_note_id (note_id),
-        INDEX idx_user_id (user_id)
+        INDEX idx_user_id (user_id),
+        INDEX idx_parent_id (parent_id)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
     `)
+
+    // 兼容已有数据库：确保 comments 表有 parent_id 字段
+    try {
+      const existingParentId = await executeQuery(
+        `SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS 
+         WHERE TABLE_SCHEMA = DATABASE() 
+           AND TABLE_NAME = 'comments' 
+           AND COLUMN_NAME = 'parent_id'`,
+        []
+      ) as any[]
+      if (!Array.isArray(existingParentId) || existingParentId.length === 0) {
+        await executeQuery('ALTER TABLE comments ADD COLUMN parent_id INT NULL, ADD INDEX idx_parent_id (parent_id)')
+      }
+    } catch (e) {
+      console.error('检查/补充 comments.parent_id 失败:', e)
+    }
 
     // 创建学习统计表
     await executeQuery(`

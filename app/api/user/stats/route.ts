@@ -145,12 +145,27 @@ export async function GET(request: NextRequest) {
           `SELECT COUNT(*) as count FROM note_likes WHERE note_id IN (SELECT id FROM notes WHERE author_id = ?)`,
           [userId]
         );
-        
         if (Array.isArray(likesResult) && likesResult.length > 0 && likesResult[0] && 'count' in likesResult[0]) {
           likesReceived = likesResult[0].count || 0;
         }
+
+        const bookmarksResult = await executeQuery(
+          `SELECT COUNT(*) as count FROM note_bookmarks WHERE user_id = ?`,
+          [userId]
+        );
+        if (Array.isArray(bookmarksResult) && bookmarksResult.length > 0 && bookmarksResult[0] && 'count' in bookmarksResult[0]) {
+          bookmarksReceived = bookmarksResult[0].count || 0;
+        }
+
+        const commentsResult = await executeQuery(
+          `SELECT COUNT(*) as count FROM comments WHERE note_id IN (SELECT id FROM notes WHERE author_id = ?)`,
+          [userId]
+        );
+        if (Array.isArray(commentsResult) && commentsResult.length > 0 && commentsResult[0] && 'count' in commentsResult[0]) {
+          commentsReceived = commentsResult[0].count || 0;
+        }
       } catch (error) {
-        console.error('点赞统计查询失败:', error);
+        console.error('互动统计查询失败:', error);
       }
       
       // 查询学习分类和技术
@@ -238,7 +253,6 @@ export async function GET(request: NextRequest) {
           [userId]
         );
         
-        console.log('本周学习会话查询结果:', studySessionsResult);
         
         // 再查询notes数据 - 本周数据
         const notesResult = await executeQuery(
@@ -253,7 +267,6 @@ export async function GET(request: NextRequest) {
           [userId]
         );
         
-        console.log('本周笔记查询结果:', notesResult);
         
         // 合并两个查询结果
         const dateMap = new Map();
@@ -293,7 +306,6 @@ export async function GET(request: NextRequest) {
           new Date(a.date).getTime() - new Date(b.date).getTime()
         );
         
-        console.log('本周合并后的每日统计:', dailyStats);
       } catch (error) {
         console.error('本周统计查询失败:', error);
       }

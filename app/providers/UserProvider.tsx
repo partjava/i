@@ -31,32 +31,48 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
   // 从API获取用户数据
   const fetchUserData = useCallback(async () => {
-    // 检查session是否有效
     if (!session || !session.user || !session.user.email) {
       setUser(null);
       setLoading(false);
       return;
     }
     
-    // 暂时禁用API调用，直接使用session数据
     setLoading(true);
     try {
-      // 使用session中的用户数据
-      const userData: UserData = {
+      const response = await fetch('/api/user/profile', {
+        credentials: 'include',
+        cache: 'no-store'
+      });
+      
+      if (response.ok) {
+        const profileData = await response.json();
+        const userData: UserData = {
+          id: session.user.id || session.user.email || '',
+          name: profileData.name || session.user.name || '',
+          email: session.user.email || '',
+          image: profileData.image || session.user.image || null,
+          bio: profileData.bio || '',
+          location: profileData.location || '',
+          website: profileData.website || '',
+          github: profileData.github || ''
+        };
+        setUser(userData);
+      } else {
+        // API 失败时降级用 session
+        setUser({
+          id: session.user.id || session.user.email || '',
+          name: session.user.name || '',
+          email: session.user.email || '',
+          image: session.user.image || null,
+        });
+      }
+    } catch (error) {
+      setUser({
         id: session.user.id || session.user.email || '',
-        name: session.user.name || session.user.email?.split('@')[0] || '用户',
+        name: session.user.name || '',
         email: session.user.email || '',
         image: session.user.image || null,
-        bio: '',
-        location: '',
-        website: '',
-        github: ''
-      };
-      setUser(userData);
-      console.log('用户数据已设置:', userData);
-    } catch (error) {
-      setUser(null);
-      console.error('设置用户数据失败:', error);
+      });
     } finally {
       setLoading(false);
     }

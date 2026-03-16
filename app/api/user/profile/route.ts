@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
         userLocation = user.location || '';
         userGithub = user.github || '';
         userWebsite = user.website || '';
-        console.log('GET /api/user/profile - 从users表读取基础信息, image长度:', userImage?.length || 0);
+
       }
       
       // 再从user_profiles表获取扩展信息
@@ -52,8 +52,6 @@ export async function GET(request: NextRequest) {
       // 如果找到用户资料，返回数据库中的资料
       if (Array.isArray(userProfileResult) && userProfileResult.length > 0) {
         const userProfile = userProfileResult[0] as any;
-        
-        console.log('GET /api/user/profile - 从user_profiles表读取扩展信息');
         
         const profile = {
           id: session.user.id,
@@ -69,8 +67,6 @@ export async function GET(request: NextRequest) {
           skills: userProfile.skills ? (typeof userProfile.skills === 'string' ? JSON.parse(userProfile.skills) : userProfile.skills) : [],
           socialLinks: userProfile.social_links ? (typeof userProfile.social_links === 'string' ? JSON.parse(userProfile.social_links) : userProfile.social_links) : {}
         };
-        
-        console.log('GET /api/user/profile - 返回资料, image长度:', profile.image?.length || 0);
         
         return NextResponse.json(profile);
       } else {
@@ -89,8 +85,6 @@ export async function GET(request: NextRequest) {
           skills: [],
           socialLinks: {}
         };
-        
-        console.log('GET /api/user/profile - 仅使用users表数据, image长度:', profile.image?.length || 0);
         
         return NextResponse.json(profile);
       }
@@ -136,9 +130,6 @@ export async function PUT(request: NextRequest) {
     const data = await request.json();
     const userId = session.user.id;
     
-    console.log('PUT /api/user/profile - 用户ID:', userId);
-    console.log('PUT /api/user/profile - 接收到的数据:', data);
-    
     // 更新数据库中的用户资料
     try {
       const { executeQuery } = await import('@/app/lib/database');
@@ -149,12 +140,9 @@ export async function PUT(request: NextRequest) {
         [userId]
       );
       
-      console.log('PUT /api/user/profile - 现有资料查询结果:', existingProfile);
-      
       if (Array.isArray(existingProfile) && existingProfile.length > 0) {
         // 更新现有资料
-        console.log('PUT /api/user/profile - 更新现有资料');
-        const updateResult = await executeQuery(
+        await executeQuery(
           `UPDATE user_profiles 
            SET name = ?, job_title = ?, company = ?, bio = ?, location = ?, github = ?, website = ?, 
                skills = ?, social_links = ?, avatar = ?, updated_at = NOW()
@@ -173,11 +161,9 @@ export async function PUT(request: NextRequest) {
             userId
           ]
         );
-        console.log('PUT /api/user/profile - user_profiles更新结果:', updateResult);
       } else {
         // 创建新资料
-        console.log('PUT /api/user/profile - 创建新资料');
-        const insertResult = await executeQuery(
+        await executeQuery(
           `INSERT INTO user_profiles (user_id, name, job_title, company, bio, location, github, website, skills, social_links, avatar, created_at, updated_at)
            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
           [
@@ -194,13 +180,10 @@ export async function PUT(request: NextRequest) {
             data.image || ''
           ]
         );
-        console.log('PUT /api/user/profile - user_profiles插入结果:', insertResult);
       }
       
       // 同时更新 users 表中的基础个人信息
-      // 注意：users 表使用 image 字段，不是 avatar
-      console.log('PUT /api/user/profile - 更新users表');
-      const usersUpdateResult = await executeQuery(
+      await executeQuery(
         `UPDATE users 
          SET name = ?, bio = ?, location = ?, github = ?, website = ?, image = ?, updated_at = NOW()
          WHERE id = ?`,
@@ -214,22 +197,16 @@ export async function PUT(request: NextRequest) {
           userId
         ]
       );
-      console.log('PUT /api/user/profile - users表更新结果:', usersUpdateResult);
-      
-      console.log('PUT /api/user/profile - 用户资料更新成功:', userId);
     } catch (dbError) {
-      console.error('PUT /api/user/profile - 数据库更新失败:', dbError);
+      console.error('数据库更新失败:', dbError);
       return NextResponse.json({ error: '数据库更新失败', details: String(dbError) }, { status: 500 });
     }
     
-    // 返回更新后的用户资料
     const updatedProfile = {
       ...data,
       id: session.user.id,
       email: session.user.email
     };
-    
-    console.log('PUT /api/user/profile - 返回更新后的资料:', updatedProfile);
     
     return NextResponse.json({
       success: true,
@@ -237,7 +214,7 @@ export async function PUT(request: NextRequest) {
       user: updatedProfile
     });
   } catch (error) {
-    console.error('PUT /api/user/profile - 更新用户资料失败:', error);
+    console.error('更新用户资料失败:', error);
     return NextResponse.json({ error: '服务器错误', details: String(error) }, { status: 500 });
   }
 }
