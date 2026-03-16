@@ -30,7 +30,7 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
-      text: '你好！我是史迪奇，你的AI学习助手！有什么我可以帮助你的吗？😊',
+      text: '你好！我是袋子，你的AI学习助手！有什么我可以帮助你的吗？😊',
       sender: 'ai',
       timestamp: new Date()
     }
@@ -70,7 +70,7 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
     const msg = userMessage.toLowerCase();
     
     if (msg.includes('你好') || msg.includes('hi') || msg.includes('hello')) {
-      return '你好呀！我是史迪奇，很高兴见到你！有什么我可以帮助你的吗？😊';
+      return '你好呀！我是袋子，很高兴见到你！有什么我可以帮助你的吗？😊';
     }
     if (msg.includes('学习') || msg.includes('怎么学')) {
       return '学习编程最重要的是多练习！建议你从基础开始，每天坚持写代码，遇到问题多思考。我可以帮你解答具体的技术问题哦！💪';
@@ -130,7 +130,7 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
     setTimeout(() => handleSendMessage(), 100);
   };
 
-  // 创建卡通渲染渐变纹理 - 史迪奇蓝色
+  // 创建卡通渲染渐变纹理 - 袋子蓝色
   const createToonGradient = () => {
     const canvas = document.createElement('canvas');
     canvas.width = 256;
@@ -213,11 +213,11 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
     fillLight.position.set(-5, 5, -5);
     scene.add(fillLight);
 
-    // 创建史迪奇风格的机器人模型
+    // 创建袋子风格的机器人模型
     const robotGroup = new THREE.Group();
     robotGroupRef.current = robotGroup;
 
-    // 史迪奇蓝色材质
+    // 袋子蓝色材质
     const toonBodyMaterial = new THREE.MeshToonMaterial({ 
       color: 0x5b9bd5,
       emissive: 0x4a7fb8,
@@ -258,7 +258,7 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
     head.castShadow = true;
     robotGroup.add(head);
 
-    // 史迪奇标志性大耳朵
+    // 袋子标志性大耳朵
     const earGeometry = new THREE.SphereGeometry(0.25, 16, 16);
     earGeometry.scale(0.6, 1.5, 0.4);
     const earMaterial = new THREE.MeshToonMaterial({ 
@@ -654,7 +654,7 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
       });
     }, 100);
 
-    // 动画循环 - 史迪奇风格动画
+    // 动画循环 - 袋子风格动画
     let time = 0;
     const animate = () => {
       animationIdRef.current = requestAnimationFrame(animate);
@@ -870,7 +870,7 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
                       <span className="text-white text-xl sm:text-2xl">🤖</span>
                     </div>
                     <div>
-                      <h3 className="text-base sm:text-lg font-bold text-gray-800">史迪奇 AI助手</h3>
+                      <h3 className="text-base sm:text-lg font-bold text-gray-800">袋子 AI助手</h3>
                       <div className="flex items-center space-x-2 mt-1">
                         <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse shadow-lg shadow-green-500/50"></div>
                         <span className="text-xs text-gray-500 font-medium">在线服务中</span>
@@ -881,7 +881,7 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
                 </div>
                 
                 <p className="text-gray-600 mb-4 text-xs sm:text-sm leading-relaxed">
-                  你好！我是史迪奇，你的智能学习助手，随时准备帮助你解答问题、提供建议。
+                  你好！我是袋子，你的智能学习助手，随时准备帮助你解答问题、提供建议。
                 </p>
                 
                 <div className="grid grid-cols-2 gap-2 sm:gap-3">
@@ -914,7 +914,7 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
                       <span className="text-white text-xl">🤖</span>
                     </div>
                     <div>
-                      <h3 className="text-sm font-bold text-gray-800">史迪奇 AI助手</h3>
+                      <h3 className="text-sm font-bold text-gray-800">袋子 AI助手</h3>
                       <div className="flex items-center space-x-1">
                         <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
                         <span className="text-xs text-gray-500">在线 · 智能对话中</span>

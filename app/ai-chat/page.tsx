@@ -6,60 +6,93 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_AI_API_URL || "http://www.partjava.
 
 // 简单的Markdown渲染函数
 const renderMarkdown = (text: string) => {
-  // 处理代码块
-  const codeBlockRegex = /```(\w+)?\n([\s\S]*?)```/g;
+  const codeBlockRegex = /```(\w+)?\n?([\s\S]*?)```/g;
   const parts: JSX.Element[] = [];
   let lastIndex = 0;
   let match;
   let key = 0;
 
-  while ((match = codeBlockRegex.exec(text)) !== null) {
-    // 添加代码块之前的文本
-    if (match.index > lastIndex) {
-      const textBefore = text.substring(lastIndex, match.index);
-      parts.push(<span key={`text-${key++}`}>{textBefore}</span>);
+  const renderInlineText = (line: string, k: number): JSX.Element => {
+    // 处理 **bold**
+    const boldParts = line.split(/(\*\*[^*]+\*\*)/g);
+    if (boldParts.length > 1) {
+      return (
+        <span key={k}>
+          {boldParts.map((p, i) =>
+            p.startsWith('**') && p.endsWith('**')
+              ? <strong key={i}>{p.slice(2, -2)}</strong>
+              : <span key={i}>{p}</span>
+          )}
+        </span>
+      );
     }
+    return <span key={k}>{line}</span>;
+  };
 
-    // 添加代码块
+  const renderTextBlock = (rawText: string, k: number): JSX.Element => {
+    const lines = rawText.split('\n');
+    const result: JSX.Element[] = [];
+    let i = 0;
+    while (i < lines.length) {
+      const line = lines[i];
+      if (!line.trim()) { result.push(<br key={`br-${i}`} />); i++; continue; }
+      // h2/h3
+      if (line.startsWith('### ')) {
+        result.push(<h3 key={i} style={{ fontSize: '1em', fontWeight: 700, margin: '10px 0 4px' }}>{line.slice(4)}</h3>);
+      } else if (line.startsWith('## ')) {
+        result.push(<h2 key={i} style={{ fontSize: '1.1em', fontWeight: 700, margin: '12px 0 6px' }}>{line.slice(3)}</h2>);
+      } else if (line.startsWith('# ')) {
+        result.push(<h2 key={i} style={{ fontSize: '1.2em', fontWeight: 700, margin: '12px 0 6px' }}>{line.slice(2)}</h2>);
+      } else if (/^[-*] /.test(line)) {
+        // 无序列表：收集连续的列表项
+        const items: string[] = [];
+        while (i < lines.length && /^[-*] /.test(lines[i])) {
+          items.push(lines[i].replace(/^[-*] /, ''));
+          i++;
+        }
+        result.push(<ul key={`ul-${i}`} style={{ paddingLeft: 20, margin: '6px 0' }}>{items.map((it, j) => <li key={j}>{renderInlineText(it, j)}</li>)}</ul>);
+        continue;
+      } else if (/^\d+\. /.test(line)) {
+        // 有序列表
+        const items: string[] = [];
+        while (i < lines.length && /^\d+\. /.test(lines[i])) {
+          items.push(lines[i].replace(/^\d+\. /, ''));
+          i++;
+        }
+        result.push(<ol key={`ol-${i}`} style={{ paddingLeft: 20, margin: '6px 0' }}>{items.map((it, j) => <li key={j}>{renderInlineText(it, j)}</li>)}</ol>);
+        continue;
+      } else {
+        result.push(<span key={i}>{renderInlineText(line, i)}<br /></span>);
+      }
+      i++;
+    }
+    return <span key={k}>{result}</span>;
+  };
+
+  while ((match = codeBlockRegex.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      parts.push(renderTextBlock(text.substring(lastIndex, match.index), key++));
+    }
     const language = match[1] || 'text';
     const code = match[2];
     parts.push(
       <pre key={`code-${key++}`} style={{
-        background: '#1e1e1e',
-        color: '#d4d4d4',
-        padding: '12px',
-        borderRadius: '6px',
-        overflow: 'auto',
-        margin: '10px 0',
-        fontSize: '14px',
-        lineHeight: '1.5'
+        background: '#1e1e1e', color: '#d4d4d4', padding: '12px',
+        borderRadius: '6px', overflow: 'auto', margin: '10px 0',
+        fontSize: '14px', lineHeight: '1.5'
       }}>
         <div style={{ color: '#888', fontSize: '12px', marginBottom: '8px' }}>{language}</div>
         <code>{code}</code>
       </pre>
     );
-
     lastIndex = match.index + match[0].length;
   }
 
-  // 添加剩余的文本
   if (lastIndex < text.length) {
-    const remainingText = text.substring(lastIndex);
-    // 处理换行
-    const lines = remainingText.split('\n');
-    parts.push(
-      <span key={`text-${key++}`}>
-        {lines.map((line, i) => (
-          <span key={i}>
-            {line}
-            {i < lines.length - 1 && <br />}
-          </span>
-        ))}
-      </span>
-    );
+    parts.push(renderTextBlock(text.substring(lastIndex), key++));
   }
 
-  return parts.length > 0 ? <>{parts}</> : text;
+  return parts.length > 0 ? <>{parts}</> : <span>{text}</span>;
 };
 
 export default function AIChatPage() {

@@ -15,7 +15,7 @@ class Settings(BaseSettings):
     OPENAI_BASE_URL: Optional[str] = None
     
     # DeepSeek 配置
-    DEEPSEEK_API_KEY: Optional[str] ="sk-4c17bb74c3454a54bf44487190def552" 
+    DEEPSEEK_API_KEY: Optional[str] = None
     DEEPSEEK_MODEL: str = "deepseek-chat"
     DEEPSEEK_BASE_URL: str = "https://api.deepseek.com"
     
@@ -23,7 +23,7 @@ class Settings(BaseSettings):
     AI_PROVIDER: str = "deepseek"  # "openai" 或 "deepseek"
     
     # 通用配置
-    MAX_TOKENS: int = 1000
+    MAX_TOKENS: int = 2048
     TEMPERATURE: float = 0.7
     TOP_P: float = 1.0
     FREQUENCY_PENALTY: float = 0.0
