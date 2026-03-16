@@ -4,8 +4,6 @@ import { useState, useEffect, useRef } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@/app/providers/UserProvider';
-import StudyTimeSync from '@/app/components/StudyTimeSync';
-import StudyTimeTracker from '@/app/components/StudyTimeTracker';
 import { 
   Card, 
   Input, 
@@ -463,9 +461,6 @@ export default function ProfilePage() {
       // 先检查会话状态
       checkSession().then(isAuthenticated => {
         if (isAuthenticated) {
-          // 先同步笔记数量
-          syncNotesCount();
-          // 然后刷新数据
           refreshData();
         } else {
           // 会话无效，尝试重新登录
@@ -480,9 +475,6 @@ export default function ProfilePage() {
     // 只有已登录用户才监听焦点事件
     if (typeof window !== 'undefined' && status === 'authenticated' && !isGuest) {
       const handleFocus = () => {
-        // 同步笔记数量
-        syncNotesCount();
-        // 刷新数据
         refreshData();
       };
       
@@ -494,80 +486,7 @@ export default function ProfilePage() {
   }, [status, isGuest]);
   
   // 同步笔记数量
-  const syncNotesCount = async () => {
-    try {
-      // 检查页面上是否显示了笔记数量
-      const notesCountElement = document.querySelector('.note-count');
-      if (notesCountElement) {
-        const notesCount = parseInt(notesCountElement.textContent || '0', 10);
-        
-        if (notesCount > 0) {
-          
-          const response = await fetch('/api/user/sync-notes-count', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              totalNotes: notesCount
-            }),
-            credentials: 'include',
-            cache: 'no-store'
-          });
-          
-          if (!response.ok) {
-            throw new Error(`同步笔记数量失败: ${response.status}`);
-          }
-          
-          const result = await response.json();
-          
-          if (result.added > 0) {
-            message.success(`已同步${result.added}条笔记数据`);
-          }
-        }
-      } else {
-        // 如果页面上没有显示笔记数量元素，尝试从URL中获取
-        try {
-          // 尝试从当前URL中获取信息
-          const currentUrl = window.location.href;
-          const match = currentUrl.match(/共\s*(\d+)\s*篇笔记/);
-          
-          if (match && match[1]) {
-            const notesCount = parseInt(match[1], 10);
-            
-            if (notesCount > 0) {
-              
-              const response = await fetch('/api/user/sync-notes-count', {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                  totalNotes: notesCount
-                }),
-                credentials: 'include',
-                cache: 'no-store'
-              });
-              
-              if (!response.ok) {
-                throw new Error(`同步笔记数量失败: ${response.status}`);
-              }
-              
-              const result = await response.json();
-              
-              if (result.added > 0) {
-                message.success(`已同步${result.added}条笔记数据`);
-              }
-            }
-          }
-        } catch (error) {
-          console.error('从URL获取笔记数量失败:', error);
-        }
-      }
-    } catch (error) {
-      console.error('同步笔记数量失败:', error);
-    }
-  };
+
 
   const loadUserProfile = async () => {
     try {
@@ -988,20 +907,6 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* 添加学习时间同步组件 - 仅登录用户 */}
-      {!isGuest && (
-        <>
-          <StudyTimeSync />
-          <div className="hidden">
-            <StudyTimeTracker 
-              category="个人中心" 
-              technology="个人资料" 
-              showControls={false}
-            />
-          </div>
-        </>
-      )}
-      
       {/* 未登录提示横幅 */}
       {isGuest && (
         <div className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white py-4 px-6 shadow-lg">

@@ -6,7 +6,6 @@ import Link from 'next/link';
 import MarkdownEditor from '@/app/components/MarkdownEditor';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import NotesSync from '@/app/components/NotesSync';
 
 interface Note {
   id?: string | number; // 后端返回的可能是数字id
@@ -324,7 +323,14 @@ export default function NotesPage() {
   const handleCreateNote = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // 先检查会话状态
+    if (!newNote.title.trim()) {
+      alert('请填写标题');
+      return;
+    }
+    if (!newNote.content.trim()) {
+      alert('请填写内容');
+      return;
+    }
     try {
       const sessionResponse = await fetch('/api/auth/session', {
         method: 'GET',
@@ -384,7 +390,7 @@ export default function NotesPage() {
       } else {
         const errorData = await response.json();
         console.error('创建笔记失败:', errorData);
-        alert(`创建笔记失败: ${errorData.message || '未知错误'}`);
+        alert(`创建笔记失败: ${errorData.error || errorData.message || '未知错误'}`);
       }
     } catch (error) {
       console.error('创建笔记错误:', error);
@@ -488,8 +494,6 @@ export default function NotesPage() {
 
   return (
     <div className="p-8">
-      {/* 添加笔记同步组件 */}
-      <NotesSync />
       
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">
