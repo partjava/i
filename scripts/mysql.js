@@ -305,6 +305,35 @@ async function init() {
     `);
     console.log('✅ challenge_submissions');
 
+    // AI 对话列表表
+    await conn.execute(`
+      CREATE TABLE IF NOT EXISTS ai_conversations (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NOT NULL,
+        title VARCHAR(255) DEFAULT '新对话',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        INDEX idx_user_id (user_id),
+        INDEX idx_updated_at (updated_at),
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+    console.log('✅ ai_conversations');
+
+    // AI 消息记录表
+    await conn.execute(`
+      CREATE TABLE IF NOT EXISTS ai_messages (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        conversation_id INT NOT NULL,
+        role ENUM('user','assistant') NOT NULL,
+        content TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_conversation_id (conversation_id),
+        FOREIGN KEY (conversation_id) REFERENCES ai_conversations(id) ON DELETE CASCADE
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+    console.log('✅ ai_messages');
+
     // 插入预定义成就数据
     await conn.execute(`
       INSERT IGNORE INTO achievements (id, name, description, icon, category, max_progress, sort_order) VALUES

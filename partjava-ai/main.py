@@ -155,7 +155,7 @@ async def ask_question(request: QuestionRequest):
             conversation_id = ai_service.create_conversation(request.user_id)
         
         # 生成AI响应
-        result = ai_service.generate_response(
+        result = await ai_service.generate_response(
             question=request.question,
             conversation_id=conversation_id,
             user_id=request.user_id,

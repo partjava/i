@@ -25,8 +25,12 @@ cp -r public .next/standalone/
 
 # 4. 确保数据库字段正确
 echo "🗄️  检查数据库字段..."
-mysql -u ecs-user -p'123456' -D partjava_notes -e "ALTER TABLE users MODIFY COLUMN image MEDIUMTEXT;" 2>/dev/null
-mysql -u ecs-user -p'123456' -D partjava_notes -e "ALTER TABLE user_profiles MODIFY COLUMN avatar MEDIUMTEXT;" 2>/dev/null
+source .env.production 2>/dev/null || true
+DB_PASS=${DB_PASSWORD:-123456}
+DB_USR=${DB_USER:-ecs-user}
+DB_NM=${DB_NAME:-partjava_notes}
+mysql -u "$DB_USR" -p"$DB_PASS" -D "$DB_NM" -e "ALTER TABLE users MODIFY COLUMN image MEDIUMTEXT;" 2>/dev/null
+mysql -u "$DB_USR" -p"$DB_PASS" -D "$DB_NM" -e "ALTER TABLE user_profiles MODIFY COLUMN avatar MEDIUMTEXT;" 2>/dev/null
 
 # 5. 重启 PM2 前端服务，确保后端也在运行
 echo "🔄 重启前端服务..."

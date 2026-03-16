@@ -1,16 +1,12 @@
 import openai
 import time
 import uuid
-import requests
+import httpx
 import json
 import warnings
 import re
-from urllib3.exceptions import InsecureRequestWarning
 from typing import List, Optional, Dict, Any, Tuple
 from datetime import datetime
-
-# 抑制不安全请求的警告
-warnings.simplefilter('ignore', InsecureRequestWarning)
 
 from config import settings
 from models import ConversationMessage, Conversation, ContentType, ContentBlock, MessageRole, CodeBlock
@@ -48,7 +44,7 @@ class AIService:
         # 内存缓存（可选，用于提高性能）
         self.cache = {}
     
-    def generate_response(self, question: str, conversation_id: Optional[str] = None, 
+    async def generate_response(self, question: str, conversation_id: Optional[str] = None, 
                          user_id: Optional[str] = None, context: Optional[str] = None) -> Dict[str, Any]:
         """
         生成AI响应
@@ -76,7 +72,7 @@ class AIService:
             else:
                 # 根据提供商调用不同的API
                 if self.ai_provider == "deepseek":
-                    answer, tokens_used = self._call_deepseek_api(messages)
+                    answer, tokens_used = await self._call_deepseek_api(messages)
                 elif self.ai_provider == "openai":
                     answer, tokens_used = self._call_openai_api(messages)
                 else:
@@ -289,8 +285,8 @@ public class HelloWorld {
         
         return formatted_text
     
-    def _call_deepseek_api(self, messages: List[Dict[str, str]]) -> tuple[str, int]:
-        """调用 DeepSeek API"""
+    async def _call_deepseek_api(self, messages: List[Dict[str, str]]) -> tuple[str, int]:
+        """调用 DeepSeek API（异步）"""
         if not self.deepseek_api_key:
             raise Exception("DeepSeek API Key 未设置")
         
@@ -310,8 +306,8 @@ public class HelloWorld {
             "presence_penalty": self.presence_penalty
         }
         
-        # 禁用SSL验证
-        response = requests.post(url, headers=headers, json=data, timeout=30, verify=False)
+        async with httpx.AsyncClient(timeout=60) as client:
+            response = await client.post(url, headers=headers, json=data)
         
         if response.status_code != 200:
             error_msg = f"DeepSeek API 错误: {response.status_code}"
@@ -377,20 +373,11 @@ public class HelloWorld {
         messages = []
         
         # 添加系统提示
-        system_prompt = """你是一个智能助手，请准确、有帮助地回答用户的问题。
+        system_prompt = """你是一个专业的编程助手，擅长 Java、Python、大数据等技术领域。请用中文回答，格式清晰。
 
-格式要求：
-1. 使用适当的段落分隔不同主题，每个段落之间空一行
-2. 使用清晰的换行增强可读性
-3. 代码块使用```language和```包裹，例如：
-   ```python
-   def hello_world():
-       print("Hello, World!")
-   ```
-4. 保持代码的原始格式和缩进，不要将所有代码挤在一行
-5. 列表项使用适当的缩进和换行
-
-请确保回复格式美观，便于阅读。特别是代码块，应该保持良好的缩进和格式。"""
+- 使用 Markdown 格式：标题用 ##，加粗用 **text**，列表用 - 或 1.
+- 代码块用 ```language ... ``` 包裹，保持缩进
+- 回答简洁准确，重点突出"""
 
         if context:
             system_prompt += f"\n\n上下文信息：{context}"
