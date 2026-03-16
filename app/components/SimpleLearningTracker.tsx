@@ -54,47 +54,29 @@ export default function SimpleLearningTracker() {
     return () => clearInterval(timer);
   }, []);
 
-  // 保存学习时间到数据库 - 带重试机制
-  const saveToDatabase = async (minutes: number, retries: number = 3) => {
+  // 保存学习时间到数据库
+  const saveToDatabase = async (minutes: number) => {
     if (!session?.user?.id || minutes < 1) return;
 
-    // 更新今日总时长（无论API是否成功）
+    // 更新今日总时长
     const newTotal = todayTotal + minutes;
     setTodayTotal(newTotal);
     localStorage.setItem(getTodayKey(), newTotal.toString());
 
-    // 只在学习时间超过3分钟时才调用API
-    if (minutes < 3) {
-      startTimeRef.current = Date.now();
-      setSeconds(0);
-      return;
-    }
-
-    // 重试机制
-    for (let attempt = 1; attempt <= retries; attempt++) {
-      try {
-        const response = await fetch('/api/study/record', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify({
-            studyTime: minutes,
-            category: getPageCategory(pathname),
-            technology: getPageCategory(pathname),
-            description: `在线学习 ${minutes} 分钟`,
-          }),
-        });
-
-        if (response.ok) {
-          break;
-        } else if (attempt < retries) {
-          await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
-        }
-      } catch (error) {
-        if (attempt < retries) {
-          await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
-        }
-      }
+    try {
+      await fetch('/api/study/record', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          studyTime: minutes,
+          category: getPageCategory(pathname),
+          technology: getPageCategory(pathname),
+          description: `在线学习 ${minutes} 分钟`,
+        }),
+      });
+    } catch (error) {
+      // 静默失败，不影响用户体验
     }
 
     // 重置计时器
@@ -102,14 +84,13 @@ export default function SimpleLearningTracker() {
     setSeconds(0);
   };
 
-  // 自动保存 - 每5分钟，减少频率
+  // 自动保存 - 每分钟保存一次
   useEffect(() => {
     const saveTimer = setInterval(() => {
-      if (isActive && seconds >= 300) { // 5分钟才保存
-        const minutes = Math.floor(seconds / 60);
-        saveToDatabase(minutes);
+      if (isActive && seconds >= 60) {
+        saveToDatabase(1); // 每次存 1 分钟
       }
-    }, 300000); // 5分钟
+    }, 60000); // 1分钟
 
     return () => clearInterval(saveTimer);
   }, [isActive, seconds, todayTotal]);

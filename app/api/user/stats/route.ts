@@ -53,20 +53,17 @@ export async function GET(request: NextRequest) {
       // 获取用户ID
       const userId = session.user.id;
       
-      // 从study_sessions表中获取总学习时间（秒）
-      const studyResult = await executeQuery(
-        `SELECT SUM(study_time) as total_time 
-        FROM study_sessions 
-        WHERE user_id = ?`,
-        [userId]
-      );
-      
-      // 获取实际学习时间（转换为分钟）
-      let studyTime = 0;
-      if (Array.isArray(studyResult) && studyResult.length > 0 && studyResult[0] && 'total_time' in studyResult[0]) {
-        const totalSeconds = studyResult[0].total_time || 0;
-        studyTime = Math.round(totalSeconds / 60); // 转换为分钟
-      }
+      // 从study_sessions表中获取总学习时间（分钟，study_time字段存的就是分钟）
+      let studyTimeFromSessions = 0;
+      try {
+        const studyResult = await executeQuery(
+          `SELECT SUM(study_time) as total_time FROM study_sessions WHERE user_id = ?`,
+          [userId]
+        );
+        if (Array.isArray(studyResult) && studyResult.length > 0 && studyResult[0] && 'total_time' in studyResult[0]) {
+          studyTimeFromSessions = Math.round(studyResult[0].total_time || 0); // 已经是分钟，不需要除以60
+        }
+      } catch (_) {}
       
       // 查询笔记统计
       let totalNotes = 0;
@@ -218,56 +215,66 @@ export async function GET(request: NextRequest) {
           technologiesStudied = technologiesResult[0].count || 0;
         }
         
-        // 查询学习天数 - 从study_sessions统计不同的日期
-        const studyDaysResult = await executeQuery(
-          `SELECT COUNT(DISTINCT DATE(created_at)) as count 
-           FROM study_sessions 
-           WHERE user_id = ?`,
-          [userId]
-        );
-        
-        if (Array.isArray(studyDaysResult) && studyDaysResult.length > 0 && 
-            studyDaysResult[0] && 'count' in studyDaysResult[0]) {
-          studyDays = studyDaysResult[0].count || 0;
-        }
+        // 查询学习天数 - 合并 notes 创建日期 + study_sessions 日期
+        let studyDaysFromNotes = 0;
+        let studyDaysFromSessions = 0;
+        try {
+          const notesDaysResult = await executeQuery(
+            `SELECT COUNT(DISTINCT DATE(created_at)) as count FROM notes WHERE author_id = ?`,
+            [userId]
+          );
+          if (Array.isArray(notesDaysResult) && notesDaysResult[0] && 'count' in notesDaysResult[0]) {
+            studyDaysFromNotes = notesDaysResult[0].count || 0;
+          }
+        } catch (_) {}
+
+        try {
+          const studyDaysResult = await executeQuery(
+            `SELECT COUNT(DISTINCT DATE(created_at)) as count FROM study_sessions WHERE user_id = ?`,
+            [userId]
+          );
+          if (Array.isArray(studyDaysResult) && studyDaysResult[0] && 'count' in studyDaysResult[0]) {
+            studyDaysFromSessions = studyDaysResult[0].count || 0;
+          }
+        } catch (_) {}
+
+        // 取两者中较大的（实际上应该合并去重，但近似用 max 也够用）
+        studyDays = Math.max(studyDaysFromNotes, studyDaysFromSessions);
       } catch (error) {
         console.error('学习统计查询失败:', error);
       }
       
-      // 使用实际数据，没有就是0
-      const actualStudyTime = studyTime || 0;
+      // 总学习时间 = 在线计时（分钟，来自 study_sessions）
+      const studyTime = studyTimeFromSessions;
       
-      // 获取本周的学习数据用于趋势图（周一到今天）
+      // 获取最近 60 天的学习数据用于趋势图
       let dailyStats: Array<{date: string, studyTime: number, notes: number}> = [];
       try {
-        // 先查询study_sessions数据 - 本周数据
+        // 查询 study_sessions 数据 - 最近60天
         const studySessionsResult = await executeQuery(
           `SELECT 
             DATE(created_at) as date,
             SUM(study_time) as study_time
           FROM study_sessions 
           WHERE user_id = ?
-          AND YEARWEEK(created_at, 1) = YEARWEEK(NOW(), 1)
+          AND created_at >= DATE_SUB(NOW(), INTERVAL 60 DAY)
           GROUP BY DATE(created_at)
           ORDER BY date ASC`,
           [userId]
         );
-        
-        
-        // 再查询notes数据 - 本周数据
+
+        // 查询 notes 数据 - 最近60天
         const notesResult = await executeQuery(
           `SELECT 
             DATE(created_at) as date,
             COUNT(*) as notes
           FROM notes 
           WHERE author_id = ?
-          AND YEARWEEK(created_at, 1) = YEARWEEK(NOW(), 1)
+          AND created_at >= DATE_SUB(NOW(), INTERVAL 60 DAY)
           GROUP BY DATE(created_at)
           ORDER BY date ASC`,
           [userId]
         );
-        
-        
         // 合并两个查询结果
         const dateMap = new Map();
         
@@ -326,13 +333,13 @@ export async function GET(request: NextRequest) {
         learning: { 
           categoriesStudied: categoriesStudied,  // 实际数据，没有就是0
           technologiesStudied: technologiesStudied, 
-          totalStudyTime: actualStudyTime, // 实际学习时间
+          totalStudyTime: studyTime,
           studyDays: studyDays,
           studyDaysTotal: studyDays
         },
         achievements: { 
           total: 10, 
-          earned: calculateEarnedAchievements(studyDays, totalNotes, likesReceived, technologiesStudied, actualStudyTime, commentsReceived)
+          earned: calculateEarnedAchievements(studyDays, totalNotes, likesReceived, technologiesStudied, studyTime, commentsReceived)
         },
         recentActivity: [],
         dailyStats: dailyStats,  // 添加每日统计数据
