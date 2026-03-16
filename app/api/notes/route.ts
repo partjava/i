@@ -107,7 +107,7 @@ export async function POST(request: NextRequest) {
     
     const validationError = validateRequiredFields(body, ['title', 'content'])
     if (validationError) {
-      return createErrorResponse(validationError)
+      return createErrorResponse(validationError === 'title 不能为空' ? '标题不能为空' : validationError === 'content 不能为空' ? '内容不能为空' : validationError)
     }
 
     const noteId = await noteService.createNote(body, userId)

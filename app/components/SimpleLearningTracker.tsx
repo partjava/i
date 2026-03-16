@@ -73,33 +73,25 @@ export default function SimpleLearningTracker() {
     // 重试机制
     for (let attempt = 1; attempt <= retries; attempt++) {
       try {
-        const response = await fetch('/api/user/track-learning', {
+        const response = await fetch('/api/study/record', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
           body: JSON.stringify({
-            activity: `学习${minutes}分钟`,
-            points: Math.floor(minutes / 5), // 每5分钟1积分
+            studyTime: minutes,
             category: getPageCategory(pathname),
+            technology: getPageCategory(pathname),
+            description: `在线学习 ${minutes} 分钟`,
           }),
         });
 
         if (response.ok) {
-          console.log('学习记录保存成功');
           break;
-        } else {
-          const errorData = await response.json().catch(() => ({}));
-          console.warn(`保存学习记录失败 (尝试 ${attempt}/${retries}):`, errorData.error || '未知错误');
-          
-          if (attempt < retries) {
-            // 等待后重试
-            await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
-          }
+        } else if (attempt < retries) {
+          await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
         }
       } catch (error) {
-        console.error(`保存学习记录失败 (尝试 ${attempt}/${retries}):`, error);
-        
         if (attempt < retries) {
-          // 等待后重试
           await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
         }
       }
@@ -124,13 +116,12 @@ export default function SimpleLearningTracker() {
 
   // 获取页面类别
   const getPageCategory = (path: string): string => {
-    if (path.includes('/study/')) {
-      const parts = path.split('/');
-      return parts[2] || 'study';
-    }
-    if (path.includes('/notes')) return 'notes';
-    if (path.includes('/profile')) return 'profile';
-    return 'general';
+    if (path.includes('/notes')) return '笔记';
+    if (path.includes('/profile')) return '个人中心';
+    if (path.includes('/code-editor')) return '代码编辑';
+    if (path.includes('/challenges')) return '编程挑战';
+    if (path.includes('/ai')) return 'AI助手';
+    return '学习';
   };
 
   // 活动检测
@@ -167,10 +158,11 @@ export default function SimpleLearningTracker() {
       if (isActive && seconds >= 60) {
         const minutes = Math.floor(seconds / 60);
         // 同步保存（可能不完全可靠，但尽力而为）
-        navigator.sendBeacon('/api/user/track-learning', JSON.stringify({
-          duration: minutes,
+        navigator.sendBeacon('/api/study/record', JSON.stringify({
+          studyTime: minutes,
           category: getPageCategory(pathname),
-          page_url: pathname,
+          technology: getPageCategory(pathname),
+          description: `在线学习 ${minutes} 分钟`,
         }));
       }
     };

@@ -55,7 +55,10 @@ export default function SettingModal({ open, onClose }: SettingModalProps) {
   useEffect(() => {
     setTheme(localStorage.getItem('theme') || 'light');
     setLanguage(localStorage.getItem('language') || 'zh');
-    setStudyReminder(localStorage.getItem('studyReminder') !== 'false');
+    // 学习提醒：同时检查浏览器通知权限
+    const savedReminder = localStorage.getItem('studyReminder') !== 'false';
+    const notifPermission = 'Notification' in window ? Notification.permission : 'denied';
+    setStudyReminder(savedReminder && notifPermission === 'granted');
     setEmailNotification(localStorage.getItem('emailNotification') !== 'false');
     setPublicProfile(localStorage.getItem('publicProfile') !== 'false');
     setAutoSave(localStorage.getItem('autoSave') !== 'false');
@@ -161,10 +164,36 @@ export default function SettingModal({ open, onClose }: SettingModalProps) {
     });
   };
 
-  const handleStudyReminderChange = (checked: boolean) => {
-    setStudyReminder(checked);
-    localStorage.setItem('studyReminder', String(checked));
-    message.success(checked ? '已开启学习提醒' : '已关闭学习提醒');
+  const handleStudyReminderChange = async (checked: boolean) => {
+    if (checked) {
+      // 请求浏览器通知权限
+      if ('Notification' in window) {
+        const permission = await Notification.requestPermission();
+        if (permission === 'granted') {
+          setStudyReminder(true);
+          localStorage.setItem('studyReminder', 'true');
+          message.success('已开启学习提醒，每天会提醒您打卡学习');
+          // 立即发一条测试通知
+          new Notification('学习提醒已开启 🎉', {
+            body: '每天坚持学习，进步看得见！',
+            icon: '/favicon.ico',
+          });
+        } else if (permission === 'denied') {
+          message.warning('浏览器通知权限被拒绝，请在浏览器设置中手动开启');
+          setStudyReminder(false);
+        } else {
+          // dismissed
+          setStudyReminder(false);
+        }
+      } else {
+        message.warning('您的浏览器不支持通知功能');
+        setStudyReminder(false);
+      }
+    } else {
+      setStudyReminder(false);
+      localStorage.setItem('studyReminder', 'false');
+      message.success('已关闭学习提醒');
+    }
   };
 
   const handleEmailNotificationChange = (checked: boolean) => {
