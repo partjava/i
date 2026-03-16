@@ -105,7 +105,7 @@ export default function DataVisualization({ stats, isGuest }: DataVisualizationP
   // 学习时长趋势图
   const getStudyTrendOption = () => ({
     title: {
-      text: '学习时长趋势',
+      text: '学习成长趋势（近60天）',
       left: 'center',
       top: 10,
       textStyle: { fontSize: 16, fontWeight: 'bold' }

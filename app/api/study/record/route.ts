@@ -30,12 +30,15 @@ export async function POST(request: NextRequest) {
     // 获取用户ID
     const userId = session.user.id;
     
-    // 记录学习时间
+    // 按天累加学习时间，每天只有一条记录
     await executeQuery(
-      `INSERT INTO study_sessions 
-        (user_id, study_time, category, technology, activity, created_at) 
-      VALUES (?, ?, ?, ?, ?, NOW())`,
-      [userId, studyTime, category || '编程', technology || 'JavaScript', description || '在线学习']
+      `INSERT INTO study_sessions (user_id, study_time, category, technology, activity, created_at)
+       VALUES (?, ?, ?, ?, ?, CURDATE())
+       ON DUPLICATE KEY UPDATE
+         study_time = study_time + VALUES(study_time),
+         category = VALUES(category),
+         technology = VALUES(technology)`,
+      [userId, studyTime, category || '学习', technology || '综合', description || '在线学习']
     );
     
     // 获取用户总学习时间

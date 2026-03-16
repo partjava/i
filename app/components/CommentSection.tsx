@@ -5,10 +5,10 @@ import { useSession } from 'next-auth/react';
 interface Comment {
   id: number;
   content: string;
-  author_name: string;
-  author_id: number;
-  created_at: string;
-  parent_id?: number;
+  authorName: string;
+  userId: number;
+  createdAt: string;
+  parentId?: number;
   replies: Comment[];
   liked?: boolean;
   likeCount?: number;
@@ -141,9 +141,9 @@ export default function CommentSection({ noteId, isPublic = false }: CommentSect
       <div className="bg-gray-50 rounded-lg p-4">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center space-x-2">
-            <span className="font-medium text-gray-900">{comment.author_name}</span>
+            <span className="font-medium text-gray-900">{comment.authorName}</span>
             <span className="text-sm text-gray-500">
-              {new Date(comment.created_at).toLocaleString()}
+              {new Date(comment.createdAt).toLocaleString()}
             </span>
           </div>
         </div>
@@ -189,7 +189,7 @@ export default function CommentSection({ noteId, isPublic = false }: CommentSect
             <textarea
               value={replyContent}
               onChange={(e) => setReplyContent(e.target.value)}
-              placeholder={`回复 ${comment.author_name}...`}
+              placeholder={`回复 ${comment.authorName}...`}
               className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
               rows={3}
             />

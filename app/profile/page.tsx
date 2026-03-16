@@ -1468,10 +1468,10 @@ export default function ProfilePage() {
                           </div>
                         </div>
                         <div className="text-xs text-gray-600">
-                          当前进度: {Math.min(stats?.learning?.studyDaysTotal || 0, 7)}/7 天
+                          当前进度: {stats?.learning?.studyDaysTotal || 0}/7 天
                         </div>
                         <Progress 
-                          percent={(Math.min(stats?.learning?.studyDaysTotal || 0, 7) / 7) * 100} 
+                          percent={Math.min((( stats?.learning?.studyDaysTotal || 0) / 7) * 100, 100)} 
                           size="small" 
                           strokeColor="#3b82f6"
                           className="mt-2"
@@ -1487,14 +1487,14 @@ export default function ProfilePage() {
                           </div>
                           <div>
                             <h4 className="font-semibold text-green-800">笔记高手</h4>
-                            <p className="text-sm text-green-600">创建 10 篇笔记</p>
+                            <p className="text-sm text-green-600">创建 {Math.max(10, stats?.notes?.total || 0)} 篇笔记</p>
                           </div>
                         </div>
                         <div className="text-xs text-gray-600">
-                          当前进度: {Math.min(stats?.notes?.total || 0, 10)}/10 篇
+                          当前进度: {stats?.notes?.total || 0}/{Math.max(10, stats?.notes?.total || 0)} 篇
                         </div>
                         <Progress 
-                          percent={(Math.min(stats?.notes?.total || 0, 10) / 10) * 100} 
+                          percent={100} 
                           size="small" 
                           strokeColor="#10b981"
                           className="mt-2"
@@ -1514,10 +1514,10 @@ export default function ProfilePage() {
                           </div>
                         </div>
                         <div className="text-xs text-gray-600">
-                          当前进度: {Math.min(stats?.engagement?.likesReceived || 0, 50)}/50 个
+                          当前进度: {stats?.engagement?.likesReceived || 0}/50 个
                         </div>
                         <Progress 
-                          percent={(Math.min(stats?.engagement?.likesReceived || 0, 50) / 50) * 100} 
+                          percent={Math.min(((stats?.engagement?.likesReceived || 0) / 50) * 100, 100)} 
                           size="small" 
                           strokeColor="#8b5cf6"
                           className="mt-2"
@@ -1537,10 +1537,10 @@ export default function ProfilePage() {
                           </div>
                         </div>
                         <div className="text-xs text-gray-600">
-                          当前进度: {Math.min(stats?.learning?.technologiesStudied || 0, 5)}/5 个
+                          当前进度: {stats?.learning?.technologiesStudied || 0}/5 个
                         </div>
                         <Progress 
-                          percent={(Math.min(stats?.learning?.technologiesStudied || 0, 5) / 5) * 100} 
+                          percent={Math.min(((stats?.learning?.technologiesStudied || 0) / 5) * 100, 100)} 
                           size="small" 
                           strokeColor="#f97316"
                           className="mt-2"
@@ -1560,10 +1560,10 @@ export default function ProfilePage() {
                           </div>
                         </div>
                         <div className="text-xs text-gray-600">
-                          当前进度: {Math.min(Math.floor((stats?.learning?.totalStudyTime || 0) / 60), 100)}/100 小时
+                          当前进度: {Math.floor((stats?.learning?.totalStudyTime || 0) / 60)}/100 小时
                         </div>
                         <Progress 
-                          percent={(Math.min(Math.floor((stats?.learning?.totalStudyTime || 0) / 60), 100) / 100) * 100} 
+                          percent={Math.min((Math.floor((stats?.learning?.totalStudyTime || 0) / 60) / 100) * 100, 100)} 
                           size="small" 
                           strokeColor="#06b6d4"
                           className="mt-2"
@@ -1583,10 +1583,10 @@ export default function ProfilePage() {
                           </div>
                         </div>
                         <div className="text-xs text-gray-600">
-                          当前进度: {Math.min(stats?.engagement?.commentsReceived || 0, 20)}/20 条
+                          当前进度: {stats?.engagement?.commentsReceived || 0}/20 条
                         </div>
                         <Progress 
-                          percent={(Math.min(stats?.engagement?.commentsReceived || 0, 20) / 20) * 100} 
+                          percent={Math.min(((stats?.engagement?.commentsReceived || 0) / 20) * 100, 100)} 
                           size="small" 
                           strokeColor="#ec4899"
                           className="mt-2"

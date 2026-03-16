@@ -64,10 +64,6 @@ export class CommentService {
         throw new Error('笔记不存在');
       }
 
-      if (!notes[0].is_public) {
-        throw new Error('只能对公开笔记发表评论');
-      }
-
       // 验证评论内容
       if (!content || content.trim().length === 0) {
         throw new Error('评论内容不能为空');
