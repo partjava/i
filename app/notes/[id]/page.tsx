@@ -160,15 +160,15 @@ export default function NoteDetailPage() {
         {!sidebarCollapsed && (
           <div className="p-6">
             <div className="mt-12">
-              <Link 
-                href="/notes"
+              <button
+                onClick={() => router.back()}
                 className="text-blue-600 hover:text-blue-800 flex items-center mb-6 text-lg font-medium"
               >
                 <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                 </svg>
                 返回笔记列表
-              </Link>
+              </button>
             </div>
             
             {/* 操作按钮 */}

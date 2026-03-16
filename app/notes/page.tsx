@@ -83,6 +83,21 @@ export default function NotesPage() {
     }
     // status === 'loading' 时不改变 viewMode，保持当前状态
   }, [status, session]); // 添加 session 依赖
+
+  // 恢复滚动位置
+  useEffect(() => {
+    const savedY = sessionStorage.getItem('notes_scroll_y');
+    if (savedY) {
+      setTimeout(() => {
+        window.scrollTo({ top: parseInt(savedY), behavior: 'instant' });
+        sessionStorage.removeItem('notes_scroll_y');
+      }, 300);
+    }
+    // 离开时保存滚动位置
+    const saveScroll = () => sessionStorage.setItem('notes_scroll_y', String(window.scrollY));
+    window.addEventListener('beforeunload', saveScroll);
+    return () => window.removeEventListener('beforeunload', saveScroll);
+  }, []);
   
   // 检查会话状态
   const checkSession = async () => {
@@ -643,7 +658,7 @@ export default function NotesPage() {
                 )}
                 <div className="flex-1">
                   <h3 className="text-xl font-semibold mb-2">
-                    <Link href={`/notes/${note.id || note._id}`} className="text-blue-600 hover:text-blue-800">
+                    <Link href={`/notes/${note.id || note._id}`} className="text-blue-600 hover:text-blue-800" onClick={() => sessionStorage.setItem('notes_scroll_y', String(window.scrollY))}>
                       {note.title}
                     </Link>
                   </h3>
