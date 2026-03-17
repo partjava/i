@@ -198,7 +198,9 @@ async function init() {
         technology VARCHAR(255),
         activity VARCHAR(255),
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        study_date DATE GENERATED ALWAYS AS (DATE(created_at)) STORED,
         INDEX idx_user_id (user_id),
+        UNIQUE KEY unique_user_date (user_id, study_date),
         FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     `);
