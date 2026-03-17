@@ -363,14 +363,6 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* 移动端搜索栏 */}
-      <div className="sm:hidden border-t border-gray-200 p-3">
-        <GlobalSearch 
-          className="w-full"
-          placeholder="搜索课程、工具、笔记..."
-          size="small"
-        />
-      </div>
       <SettingModal open={settingOpen} onClose={() => setSettingOpen(false)} />
       
       {/* AI 3D机器人 */}

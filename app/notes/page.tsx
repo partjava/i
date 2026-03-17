@@ -84,20 +84,17 @@ export default function NotesPage() {
     // status === 'loading' 时不改变 viewMode，保持当前状态
   }, [status, session]); // 添加 session 依赖
 
-  // 恢复滚动位置
+  // 恢复滚动位置（等笔记加载完再恢复）
   useEffect(() => {
+    if (notes.length === 0) return;
     const savedY = sessionStorage.getItem('notes_scroll_y');
     if (savedY) {
       setTimeout(() => {
         window.scrollTo({ top: parseInt(savedY), behavior: 'instant' });
         sessionStorage.removeItem('notes_scroll_y');
-      }, 300);
+      }, 100);
     }
-    // 离开时保存滚动位置
-    const saveScroll = () => sessionStorage.setItem('notes_scroll_y', String(window.scrollY));
-    window.addEventListener('beforeunload', saveScroll);
-    return () => window.removeEventListener('beforeunload', saveScroll);
-  }, []);
+  }, [notes]);
   
   // 检查会话状态
   const checkSession = async () => {
@@ -809,6 +806,37 @@ export default function NotesPage() {
                 >
                   ✕
                 </button>
+              </div>
+
+              {/* 模板选择区域 */}
+              <div className="mb-4">
+                <p className="text-sm font-medium text-gray-700 mb-2">选择模板（可选）</p>
+                <div className="flex gap-2 overflow-x-auto pb-2">
+                  {[
+                    { label: '📚 学习笔记', icon: '📚', category: '学习', technology: '', subcategory: '', tags: '学习,笔记', content: '## 学习目标\n\n\n## 核心知识点\n\n\n## 示例代码\n\n```\n\n```\n\n## 总结\n\n' },
+                    { label: '🐛 Bug记录', icon: '🐛', category: '开发', technology: '', subcategory: 'Bug', tags: 'bug,调试', content: '## 问题描述\n\n\n## 复现步骤\n\n1. \n2. \n\n## 原因分析\n\n\n## 解决方案\n\n\n## 预防措施\n\n' },
+                    { label: '📖 读书笔记', icon: '📖', category: '阅读', technology: '', subcategory: '', tags: '读书,总结', content: '## 书名\n\n\n## 核心观点\n\n\n## 精彩摘录\n\n> \n\n## 个人感悟\n\n' },
+                    { label: '🧮 算法题解', icon: '🧮', category: '算法', technology: '', subcategory: '', tags: '算法,LeetCode', content: '## 题目\n\n\n## 思路分析\n\n\n## 代码实现\n\n```\n\n```\n\n## 复杂度分析\n\n- 时间复杂度：O()\n- 空间复杂度：O()\n\n## 总结\n\n' },
+                    { label: '🚀 项目总结', icon: '🚀', category: '项目', technology: '', subcategory: '', tags: '项目,总结', content: '## 项目背景\n\n\n## 技术栈\n\n\n## 实现功能\n\n- \n- \n\n## 遇到的问题\n\n\n## 收获与反思\n\n' },
+                    { label: '📝 会议记录', icon: '📝', category: '工作', technology: '', subcategory: '会议', tags: '会议,记录', content: '## 会议主题\n\n\n## 参与人员\n\n\n## 讨论内容\n\n\n## 决议事项\n\n- [ ] \n- [ ] \n\n## 下次跟进\n\n' },
+                  ].map((tpl) => (
+                    <button
+                      key={tpl.label}
+                      type="button"
+                      onClick={() => setNewNote(prev => ({
+                        ...prev,
+                        category: tpl.category,
+                        technology: tpl.technology,
+                        subcategory: tpl.subcategory,
+                        tags: tpl.tags,
+                        content: tpl.content,
+                      }))}
+                      className="flex-shrink-0 px-3 py-2 text-sm border border-gray-200 rounded-lg hover:border-blue-400 hover:bg-blue-50 hover:text-blue-700 transition-colors whitespace-nowrap"
+                    >
+                      {tpl.label}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               <form onSubmit={handleCreateNote} className="space-y-4">

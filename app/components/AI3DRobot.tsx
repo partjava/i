@@ -5,6 +5,7 @@ import { SendOutlined, CloseOutlined } from '@ant-design/icons';
 import * as THREE from 'three';
 import ReactMarkdown from 'react-markdown';
 import SyntaxHighlighter from 'react-syntax-highlighter';
+import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import remarkGfm from 'remark-gfm';
 
 interface Message {
@@ -1035,14 +1036,16 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
                                   return !isInline && match ? (
                                     <div className="my-2 rounded-lg overflow-hidden">
                                       <SyntaxHighlighter
+                                        style={vscDarkPlus}
                                         language={match[1]}
                                         PreTag="div"
-                                        className="text-xs"
                                         customStyle={{
                                           margin: 0,
                                           borderRadius: '0.5rem',
                                           background: '#1e1e1e',
                                           padding: '1rem',
+                                          fontSize: '13px',
+                                          lineHeight: '1.6',
                                         }}
                                         {...props}
                                       >
