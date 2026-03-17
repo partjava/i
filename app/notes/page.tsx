@@ -84,17 +84,22 @@ export default function NotesPage() {
     // status === 'loading' 时不改变 viewMode，保持当前状态
   }, [status, session]); // 添加 session 依赖
 
-  // 恢复滚动位置（等笔记加载完再恢复）
+  // 恢复滚动位置（等笔记加载完且 loading 结束后恢复）
   useEffect(() => {
-    if (notes.length === 0) return;
+    if (loading || notes.length === 0) return;
     const savedY = sessionStorage.getItem('notes_scroll_y');
     if (savedY) {
-      setTimeout(() => {
-        window.scrollTo({ top: parseInt(savedY), behavior: 'instant' });
-        sessionStorage.removeItem('notes_scroll_y');
-      }, 100);
+      const y = parseInt(savedY);
+      sessionStorage.removeItem('notes_scroll_y');
+      const tryScroll = (attempts: number) => {
+        window.scrollTo({ top: y, behavior: 'instant' });
+        if (attempts > 0 && Math.abs(window.scrollY - y) > 10) {
+          setTimeout(() => tryScroll(attempts - 1), 150);
+        }
+      };
+      setTimeout(() => tryScroll(5), 100);
     }
-  }, [notes]);
+  }, [loading, notes]);
   
   // 检查会话状态
   const checkSession = async () => {

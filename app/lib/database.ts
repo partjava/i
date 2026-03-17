@@ -387,6 +387,20 @@ export async function initDatabase() {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
     `)
 
+    // 创建图片存储表
+    await executeQuery(`
+      CREATE TABLE IF NOT EXISTS note_images (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NOT NULL,
+        filename VARCHAR(255) NOT NULL,
+        mime_type VARCHAR(50) NOT NULL,
+        data LONGBLOB NOT NULL,
+        size INT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_user_id (user_id)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    `)
+
   } catch (error) {
     dbInitialized = false; // 失败时重置，允许下次重试
     console.error('❌ 数据库初始化失败:', error)

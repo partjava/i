@@ -4,6 +4,13 @@
 
 echo "🚀 开始部署..."
 
+# 0. 备份用户上传的图片
+echo "💾 备份上传图片..."
+if [ -d ".next/standalone/public/uploads" ]; then
+  cp -r .next/standalone/public/uploads /tmp/uploads_backup
+  echo "   已备份到 /tmp/uploads_backup"
+fi
+
 # 1. 清理旧的构建文件
 echo "🧹 清理旧构建..."
 rm -rf .next
@@ -22,6 +29,14 @@ echo "📁 复制静态文件..."
 mkdir -p .next/standalone/.next
 cp -r .next/static .next/standalone/.next/
 cp -r public .next/standalone/
+
+# 恢复用户上传的图片
+if [ -d "/tmp/uploads_backup" ]; then
+  mkdir -p .next/standalone/public/uploads
+  cp -r /tmp/uploads_backup/. .next/standalone/public/uploads/
+  rm -rf /tmp/uploads_backup
+  echo "   图片已恢复"
+fi
 
 # 4. 确保数据库字段正确
 echo "🗄️  检查数据库字段..."
