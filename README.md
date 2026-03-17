@@ -1,119 +1,148 @@
-# PartJava 个人学习网站
+# PartJava 智能学习平台
 
-![网站主页导航](https://github.com/partjava/i/blob/main/public/images/sad/tools-direct-access.png)
-**主页是专业软件官网，方便查询**
+![平台首页全貌](https://github.com/partjava/i/blob/main/public/images/images/homepage-overview.png)
 
 **个人学习项目，仅供学习参考，禁止商业用途**
 
+## 🔑 测试账号
+
+- **账号**：example@qq.com
+- **密码**：******
+- **在线地址**：[https://partjava.com](https://partjava.com)
+
+---
+
 ## 🌟 项目亮点
 
-### ✨ 为什么选择 PartJava？
+- **🤖 AI 3D 机器人**：基于 Three.js + WebGL 自主开发，袋子学长风格，通过代码构建
+- **� 原创 EyePet 虚拟宠物**：纯 SVG + CSS 实现，眼睛实时追踪鼠标，随机眨眼，三种心情状态自动切换
+- **📊 3D 算法可视化**：覆盖排序/搜索、数学曲线、AI/ML 共 20+ 种算法的 Three.js 3D 动态演示
+- **� 真实在线代码执行**：集成 Judge0 CE，支持 Python、Java、C++、Go 等 10 种语言真实沙箱运行
+- **🏆 成就徽章系统**：15 个成就，数据驱动自动解锁，覆盖笔记、打卡、社交多维度
+- **📱 移动端手势交互**：左滑开菜单、右滑返回、双击回顶、触觉反馈，PWA 支持
+- **📈 数据可视化大屏**：ECharts 实时统计 + 学习热力图（类 GitHub 贡献图风格）
+- **🃏 翻转卡片工具导航**：桌面悬停/移动端点击翻转，15+ 技术领域工具直达
 
-- **🎯 一站式学习平台**：集成笔记管理、学习路径、编程挑战和AI助手于一体
-- **📚 结构化学习**：提供系统化的学习路径，从基础到进阶，循序渐进
-- **🤖 AI智能辅助**：内置AI聊天助手，随时解答学习疑问，提供代码建议
-- **💻 实战编程**：在线代码编辑器支持多语言，实时测试和调试
-- **📊 学习可视化**：学习热力图、进度追踪，让学习过程一目了然
-- **🏆 成就系统**：通过完成学习任务解锁成就，激发学习动力
-- **👥 社区互动**：笔记分享、点赞评论，与其他学习者交流经验
-
-### 🚀 技术特色
-
-- **响应式设计**：完美适配桌面端和移动端
-- **组件化架构**：高度模块化，易于维护和扩展
-- **数据库优化**：MySQL + 自定义ORM，查询效率高
-- **安全认证**：NextAuth.js 提供完整的用户认证体系
-- **在线代码执行**：集成Judge0 API，支持多语言在线编译运行
+---
 
 ## 📖 项目简介
 
-PartJava 是一个专为程序员打造的全方位学习平台，旨在帮助开发者建立系统化的知识体系，提升编程技能。无论你是初学者还是资深开发者，都能在这里找到适合自己的学习内容和挑战。
+PartJava 智能学习平台是一个面向计算机学习者的综合性在线学习平台，集成了 AI 智能助手、3D 可视化、在线代码执行、智能笔记管理等核心功能，覆盖 15 个技术领域，通过现代化 Web 技术和人工智能为学习者提供系统化、沉浸式的编程学习体验。
 
-平台的核心价值在于将**理论学习**与**实践应用**完美结合，通过笔记管理记录学习心得，通过编程挑战验证技能掌握，通过AI助手解决疑难问题，最终形成完整的学习闭环。
-
-## 🎯 适用人群
-
-- **编程初学者**：通过结构化学习路径快速入门，建立编程思维
-- **在校学生**：系统学习编程知识，为求职和项目开发做准备
-- **职场开发者**：持续学习新技术，提升技能水平
-- **技术爱好者**：记录学习心得，分享技术见解
-- **自学者**：需要系统化学习资源和学习进度管理
-
-## 💡 使用场景
-
-- **📝 知识整理**：将学习过程中的知识点系统化记录和整理
-- **🔄 技能提升**：通过编程挑战和实战项目提升编程能力
-- **🤔 问题解决**：遇到技术难题时，AI助手提供即时帮助
-- **📈 进度跟踪**：可视化学习进度，保持学习动力
-- **👥 经验分享**：与其他开发者交流学习心得和技术见解
-- **🎓 求职准备**：通过系统学习和项目实践为技术面试做准备
+---
 
 ## 主要功能
 
-### 1. 笔记系统
+### 1. 原创 AI 3D 机器人 & EyePet 虚拟宠物
 
-- **个人笔记管理**：创建、编辑、删除和组织个人学习笔记
-- **公开/私有设置**：控制笔记的可见性，选择性分享知识
-- **分类与标签**：按技术、类别等多维度组织笔记
-- **互动功能**：支持点赞、收藏和评论功能
+![3D机器人展示](https://github.com/partjava/i/blob/main/public/images/images/robot-3d.png)
 
-### 2. 学习路径
+![EyePet虚拟宠物](https://github.com/partjava/i/blob/main/public/images/images/eyepet.png)
 
-- **结构化学习内容**：按主题和难度级别组织的学习材料
-- **多领域覆盖**：包括Java、Python、前端、后端、AI等多个技术领域
-- **进度追踪**：记录学习时间和完成情况
-- **学习热力图**：可视化学习活跃度和持续性
+- AI 3D 机器人：Three.js + WebGL 原创实现，史迪奇风格，流畅动画与交互控制面板
+- EyePet：纯 SVG 原创，眼睛追踪鼠标、随机眨眼、三种心情（开心/好奇/困倦）、弹跳漂浮动画
 
-### 3. 编程挑战
+### 2. 3D 算法可视化系统
 
-- **实战编程题**：各种难度的编程挑战
-- **在线代码编辑器**：支持多种编程语言的在线编码和测试
-- **排行榜系统**：展示挑战完成情况和排名
-- **解题分析**：提供详细的解题思路和优化方案
+![算法可视化](https://github.com/partjava/i/blob/main/public/images/images/algo-3d-demo.png)
 
-### 4. 用户系统
+- **排序与搜索**：冒泡、快速、归并、堆排序、插入、选择排序，二分搜索、线性搜索、斐波那契
+- **数学与几何**：正弦波、螺旋线、Mandelbrot 集、Lorenz 吸引子、3D 波浪、环面、Klein 瓶
+- **AI / ML 算法**：K-Means 聚类、线性回归、神经网络、梯度下降、决策树
 
-- **个人资料管理**：自定义用户信息和头像
-- **学习统计**：展示学习时间、笔记数量等统计数据
-- **成就系统**：基于学习活动解锁各种成就
-- **社区互动**：与其他学习者交流和分享
+### 3. 在线代码执行
 
-### 5. AI 辅助功能
+![在线代码编辑器](https://github.com/partjava/i/blob/main/public/images/images/code-editor.png)
 
-- **AI 聊天助手**：解答学习过程中的问题
-- **代码辅助**：提供代码建议和优化方案
-- **学习推荐**：基于学习历史推荐相关内容
+![代码执行结果](https://github.com/partjava/i/blob/main/public/images/images/code-execution-result.png)
+
+集成 Judge0 CE 云端代码执行引擎，Monaco Editor（VS Code 同款内核），支持 Python、JavaScript、Java、C++、C、Go、PHP、Rust、C#、TypeScript 共 10 种语言，支持标准输入，返回运行时间与内存占用。
+
+### 4. 智能笔记系统
+
+![笔记管理](https://github.com/partjava/i/blob/main/public/images/images/notes-management.png)
+
+- 三级分类系统（主分类 → 技术分类 → 子分类）+ 多标签管理
+- Markdown 富文本编辑、公开/私有设置、实时搜索（防抖优化 + 结果高亮）
+- 收藏、评论、批量删除、笔记同步
+
+### 5. AI 智能助手
+
+![AI聊天助手](https://github.com/partjava/i/blob/main/public/images/images/ai-chat.png)
+
+集成 DeepSeek API，支持多轮对话，历史会话数据库持久化，Python FastAPI 服务 Docker 容器化独立部署。
+
+### 6. 数据可视化大屏
+
+![数据可视化大屏](https://github.com/partjava/i/blob/main/public/images/images/data-dashboard.png)
+
+ECharts 实时数据大屏 + 学习热力图，多维度展示平台统计数据与用户学习行为。
+
+### 7. 成就徽章系统
+
+![成就系统](https://github.com/partjava/i/blob/main/public/images/images/achievements.png)
+
+15 个成就，覆盖笔记（1/10/50/100篇）、连续打卡（7/30/100天）、早起鸟儿、夜猫子、社交互动、特殊成就，后端自动分析行为数据解锁。
+
+### 8. 编程挑战
+
+![编程挑战](https://github.com/partjava/i/blob/main/public/images/images/coding-challenges.png)
+
+![排行榜](https://github.com/partjava/i/blob/main/public/images/images/leaderboard.png)
+
+在线编程挑战题目 + 排行榜系统，激励持续学习。
+
+### 9. 个人中心
+
+![个人中心](https://github.com/partjava/i/blob/main/public/images/images/user-profile.png)
+
+学习时长统计、成就徽章、笔记数量、学习热力图，支持头像上传（自动压缩）、资料修改、数据导出。
+
+### 10. 移动端体验
+
+![移动端界面](https://github.com/partjava/i/blob/main/public/images/images/mobile-view.png)
+
+手势操作（左边缘右滑开菜单、右滑返回、双击顶部回顶）+ 触觉反馈 + 底部导航栏 + PWA 支持。
+
+### 11. 15 个技术领域学习内容
+
+![学习内容导航](https://github.com/partjava/i/blob/main/public/images/images/study-navigation.png)
+
+Java、Python、C++、Go、PHP、前端、后端、数据库、人工智能、网络安全、软件工程、操作系统、网络技术、物联网、数据结构，每个领域配备独立学习页面与项目实战。
+
+---
 
 ## 技术栈
 
 ### 前端
-- **框架**：Next.js 14 (React)
-- **UI 组件**：Ant Design
-- **样式**：Tailwind CSS
-- **状态管理**：React Context API
-- **动画**：Framer Motion
+- **框架**：Next.js 14 App Router、React 18、TypeScript
+- **UI**：Ant Design + Tailwind CSS
+- **3D 渲染**：Three.js + WebGL
+- **代码编辑器**：Monaco Editor
+- **数据可视化**：ECharts
+- **PWA**：Service Worker + Web App Manifest
 
 ### 后端
-- **API 路由**：Next.js API Routes
-- **认证**：NextAuth.js
-- **数据库**：MySQL
-- **ORM**：自定义数据库操作封装
-- **代码执行**：Judge0 API 集成
-- **文件处理**：Node.js 文件系统操作
+- **认证**：NextAuth.js（JWT 30天、bcrypt 加密）
+- **数据库**：MySQL 8.0 + 连接池
+- **缓存**：Redis
+- **AI 服务**：Python FastAPI + DeepSeek API（Docker 容器化）
+- **代码执行**：Judge0 CE API（RapidAPI）
 
-### 数据库设计
-- **用户表**：用户信息和认证数据
-- **笔记表**：笔记内容和元数据
-- **交互表**：点赞、收藏、评论等用户交互
-- **学习统计表**：记录学习时间和活动
-- **成就表**：用户成就系统
+### 部署
+- **Web 服务器**：Nginx 反向代理
+- **进程管理**：PM2
+- **容器化**：Docker（AI 服务）
+- **SSL**：Let's Encrypt 自动续期
+
+---
 
 ## 安装与运行
 
 ### 前提条件
-- Node.js 18+ 
+- Node.js 18+
 - MySQL 8.0+
-- npm 或 yarn
+- Python 3.9+（AI 服务）
 
 ### 安装步骤
 
@@ -126,156 +155,67 @@ cd i
 2. 安装依赖
 ```bash
 npm install
-# 或
-yarn install
 ```
 
-3. 配置环境变量
-创建 `.env.local` 文件，添加以下内容：
-```
-DB_HOST=localhost
-DB_USER=your_db_user
-DB_PASSWORD=your_db_password
-DB_NAME=partjava_notes
-DB_PORT=3306
-NEXTAUTH_SECRET=your_nextauth_secret
-NEXTAUTH_URL=http://localhost:3000
+3. 配置环境变量，创建 `.env.local`：
+```env
+DATABASE_URL="mysql://username:password@localhost:3306/partjava"
+NEXTAUTH_URL="http://localhost:3000"
+NEXTAUTH_SECRET="your-secret-key"
+DEEPSEEK_API_KEY="your-deepseek-api-key"
+RAPIDAPI_KEY="your-rapidapi-key"
 ```
 
 4. 初始化数据库
 ```bash
-# 使用数据库初始化脚本
-mysql -u your_db_user -p your_db_password < init_db.sql
+node scripts/init-database.js
 ```
 
-5. 运行开发服务器
+5. 启动开发服务器
 ```bash
 npm run dev
-# 或
-yarn dev
 ```
 
-6. 构建生产版本
+6. 启动 AI 服务（新终端）
 ```bash
-npm run build
-npm start
-# 或
-yarn build
-yarn start
+cd partjava-ai
+pip install -r requirements.txt
+python main.py
 ```
+
+---
 
 ## 📁 项目结构
 
 ```
 partjava/
-├── app/                    # Next.js 应用主目录
+├── app/
 │   ├── api/                # API 路由
 │   ├── components/         # 共享组件
-│   ├── lib/                # 工具函数和服务
-│   │   ├── auth.ts         # 认证配置
-│   │   ├── database.ts     # 数据库连接
+│   ├── lib/
 │   │   ├── repositories/   # 数据访问层
 │   │   └── services/       # 业务逻辑层
-│   ├── providers/          # React Context 提供者
-│   ├── types/              # TypeScript 类型定义
-│   └── [各页面目录]/       # 页面组件
-├── docs/                   # 项目文档
-│   ├── CODE_EDITOR_SETUP.md
-│   ├── DEPLOYMENT_GUIDE.md
-│   ├── FEATURES.md
-│   ├── HOW_TO_USE.md
-│   ├── JUDGE0_SETUP.md
-│   ├── MYSQL_SETUP.md
-│   └── ONLINE_CODE_EXECUTION.md
-├── scripts/                # 数据库和工具脚本
-│   ├── init-database.js
-│   ├── setup-database.js
-│   ├── check-*.js          # 数据检查脚本
-│   └── *.sql               # SQL 脚本文件
-├── lib/                    # 共享库文件
-├── types/                  # TypeScript 类型定义
-├── public/                 # 静态资源和项目介绍图集
-├── logs/                   # 日志文件
-├── partjava-ai/            # AI 相关功能
-├── middleware.ts           # Next.js 中间件
-├── next.config.js          # Next.js 配置
-├── tailwind.config.js      # Tailwind CSS 配置
-├── tsconfig.json           # TypeScript 配置
-├── package.json            # 项目依赖
-├── mysql.md                # 数据库文档
-├── 项目说明文档.md         # 详细项目说明
-└── README.md               # 项目文档
+│   └── [各页面目录]/
+├── partjava-ai/            # AI 服务（Python FastAPI）
+├── public/                 # 静态资源
+├── scripts/                # 数据库脚本
+└── README.md
 ```
 
-## 数据库表结构
-
-项目使用MySQL数据库，包含以下主要表：
-
-1. **users** - 用户表
-2. **notes** - 笔记表
-3. **note_likes** - 笔记点赞表
-4. **note_bookmarks** - 笔记收藏表
-5. **comments** - 评论表
-6. **comment_likes** - 评论点赞表
-7. **learning_stats** - 学习统计表
-8. **study_sessions** - 学习会话表
-9. **user_profiles** - 用户资料表
-10. **search_history** - 搜索历史表
-11. **achievements** - 成就表
-12. **user_achievements** - 用户成就表
-
-详细表结构请参考 [mysql.md](mysql.md) 文件。
-
-## 项目截图
-
-
-![学习内容页面](https://github.com/partjava/i/blob/main/public/images/sad/study-content.png)
-![主页截图](https://github.com/partjava/i/blob/main/public/images/sad/user-profile.png)
-![学习页面截图](https://github.com/partjava/i/blob/main/public/images/sad/study-page.png)
-![笔记管理截图](https://github.com/partjava/i/blob/main/public/images/sad/notes-management.png)
-![编程挑战截图](https://github.com/partjava/i/blob/main/public/images/sad/coding-challenges.png)
-![3D机器人展示](https://github.com/partjava/i/blob/main/public/images/sad/ai-3d-robot.png)
-![项目实战教学](https://github.com/partjava/i/blob/main/public/images/sad/project-practice.png)
-
-## 最新更新 (v1.3.0 - 2026年3月8日)
-
-### ✨ 新增功能
-- ✅ **实时数据刷新**：头像上传、个人资料修改即时生效，无需手动刷新
-- ✅ **智能图片处理**：自动压缩图片到400x400，质量0.7，上传速度提升70%
-- ✅ **数据库优化**：支持MEDIUMTEXT字段，可存储更大的图片
-- ✅ **缓存清除机制**：API请求带时间戳参数，避免浏览器缓存问题
-- ✅ **学习时间优化**：改为60秒间隔统计，减少服务器压力
-
-### 🚀 性能提升
-- 图片上传速度提升70%
-- 数据库查询效率提升50%
-- 页面响应速度更快
-- 用户体验更流畅
-
-## 未来计划
-
-### 短期目标 (1-3个月)
-- [x] 生产环境部署（已完成）
-- [x] HTTPS安全访问（已完成）
-- [x] 实时数据更新（已完成）
-- [ ] 添加更多学习路径和内容
-- [ ] 改进AI助手功能
-- [ ] 添加社区讨论功能
-
-### 中长期目标 (3-12个月)
-- [ ] 支持更多编程语言
-- [ ] 移动端适配优化
-- [ ] 视频教程系统
-- [ ] 国际化支持
+---
 
 ## 生产环境
 
-- **在线访问**：https://www.partjava.com
-- **部署状态**：✅ 生产环境运行中
-- **HTTPS**：✅ SSL证书已配置（Let's Encrypt免费证书）
-- **服务器**：Linux + Nginx + PM2
-- **数据库**：MySQL 8.0
-- **版本**：v1.3.0
+| 项目 | 状态 |
+|------|------|
+| 在线地址 | https://www.partjava.com |
+| 部署状态 | ✅ 生产环境运行中 |
+| HTTPS | ✅ Let's Encrypt SSL（自动续期） |
+| 服务器 | Linux + Nginx + PM2 |
+| 数据库 | MySQL 8.0 |
+| 版本 | v1.3.0 |
+
+---
 
 ## 许可说明
 
@@ -285,4 +225,4 @@ Copyright © 2024-2026 PartJava
 
 ---
 
-*最后更新：2026年3月8日*
+*最后更新：2026年3月17日*
