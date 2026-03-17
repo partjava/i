@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -41,21 +41,38 @@ interface Pagination {
 export default function NotesPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const [notes, setNotes] = useState<Note[]>([]);
-  const [pagination, setPagination] = useState<Pagination>({
-    page: 1,
-    limit: 10,
-    total: 0,
-    totalPages: 0,
-    hasNext: false,
-    hasPrev: false
+
+  // 初始化时直接从缓存读数据，避免白屏
+  const [notes, setNotes] = useState<Note[]>(() => {
+    if (typeof window === 'undefined') return [];
+    try {
+      const c = sessionStorage.getItem('notes_cache_my') || sessionStorage.getItem('notes_cache_public');
+      if (c) return JSON.parse(c).notes || [];
+    } catch {}
+    return [];
   });
-  const [loading, setLoading] = useState(true);
+  const [pagination, setPagination] = useState<Pagination>(() => {
+    if (typeof window === 'undefined') return { page: 1, limit: 10, total: 0, totalPages: 0, hasNext: false, hasPrev: false };
+    try {
+      const c = sessionStorage.getItem('notes_cache_my') || sessionStorage.getItem('notes_cache_public');
+      if (c) return JSON.parse(c).pagination || { page: 1, limit: 10, total: 0, totalPages: 0, hasNext: false, hasPrev: false };
+    } catch {}
+    return { page: 1, limit: 10, total: 0, totalPages: 0, hasNext: false, hasPrev: false };
+  });
+  const [loading, setLoading] = useState(() => {
+    if (typeof window === 'undefined') return true;
+    try {
+      const c = sessionStorage.getItem('notes_cache_my') || sessionStorage.getItem('notes_cache_public');
+      return !c; // 有缓存就不显示 loading
+    } catch {}
+    return true;
+  });
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<Note[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [viewMode, setViewMode] = useState<'my' | 'public'>('public');
+  const isRestoringScroll = useRef(false); // 标记是否是返回操作，避免 fetch 完成后滚回顶部
   // 多选相关状态
   const [isMultiSelectMode, setIsMultiSelectMode] = useState(false);
   const [selectedNotes, setSelectedNotes] = useState<{[key: string]: boolean}>({});
@@ -70,38 +87,84 @@ export default function NotesPage() {
     isPublic: false,
   });
 
-  // viewMode 初始化完成标记
-  const [viewModeReady, setViewModeReady] = useState(false);
-
-  // 检查登录状态
+  // 合并：先确定 viewMode，再 fetch，避免两次 fetch 导致滚动恢复失败
   useEffect(() => {
+    if (status === 'loading') return;
+
+    let targetMode: 'my' | 'public' = 'public';
     if (status === 'unauthenticated') {
-      setViewMode('public');
-      setViewModeReady(true);
+      targetMode = 'public';
     } else if (status === 'authenticated' && session?.user) {
       const savedMode = sessionStorage.getItem('notes_view_mode') as 'my' | 'public' | null;
       if (savedMode) sessionStorage.removeItem('notes_view_mode');
-      setViewMode(savedMode || 'my');
-      setViewModeReady(true);
+      targetMode = savedMode || 'my';
       checkSession();
     }
-  }, [status, session]);
 
-  // viewMode 确定后才 fetch，返回时优先用缓存
-  useEffect(() => {
-    if (!viewModeReady) return;
+    setViewMode(targetMode);
+
     const savedY = sessionStorage.getItem('notes_scroll_y');
     if (savedY) {
-      // 有滚动位置说明是从详情页返回，用缓存数据 + 恢复滚动
-      fetchNotes(1, false); // false = 优先用缓存
+      // 返回操作：用缓存立即渲染，然后恢复滚动，不再触发 loading
+      isRestoringScroll.current = true;
       const y = parseInt(savedY);
       sessionStorage.removeItem('notes_scroll_y');
-      setTimeout(() => window.scrollTo({ top: y, behavior: 'instant' }), 50);
-      setTimeout(() => window.scrollTo({ top: y, behavior: 'instant' }), 300);
+
+      const cacheKeyForMode = `notes_cache_${targetMode}`;
+      const cached = sessionStorage.getItem(cacheKeyForMode);
+      if (cached) {
+        try {
+          const { notes: cachedNotes, pagination: cachedPagination } = JSON.parse(cached);
+          setNotes(cachedNotes);
+          setPagination(cachedPagination);
+          setLoading(false);
+        } catch {}
+      }
+
+      // 多次尝试滚动，确保 DOM 高度足够
+      requestAnimationFrame(() => {
+        window.scrollTo({ top: y, behavior: 'instant' });
+        setTimeout(() => window.scrollTo({ top: y, behavior: 'instant' }), 150);
+        setTimeout(() => {
+          window.scrollTo({ top: y, behavior: 'instant' });
+          isRestoringScroll.current = false;
+        }, 500);
+      });
     } else {
-      fetchNotes(1, true); // 正常进入，强制刷新
+      // 正常进入：直接用 targetMode fetch，避免闭包旧值
+      isRestoringScroll.current = false;
+      fetchNotesWithMode(targetMode, 1);
     }
-  }, [viewMode, viewModeReady]);
+  }, [status, session]);
+  // 用指定 mode 直接 fetch，避免 viewMode state 闭包旧值问题
+  const fetchNotesWithMode = async (mode: 'my' | 'public', page: number = 1) => {
+    try {
+      setLoading(true);
+      const limit = 10;
+      let url = mode === 'public' || status !== 'authenticated'
+        ? `/api/public-notes?page=${page}&limit=${limit}&_t=${Date.now()}`
+        : `/api/notes?page=${page}&limit=${limit}&_t=${Date.now()}`;
+
+      const response = await fetch(url, { credentials: 'include', cache: 'no-store' });
+      if (response.ok) {
+        const data = await response.json();
+        let notesData: Note[] = [];
+        let paginationData = { page, limit, total: 0, totalPages: 0, hasNext: false, hasPrev: false };
+        if (data?.data?.notes) { notesData = data.data.notes; paginationData = data.data.pagination || paginationData; }
+        else if (data?.notes) { notesData = data.notes; paginationData = data.pagination || paginationData; }
+        else if (Array.isArray(data)) { notesData = data; }
+        setNotes(notesData);
+        setPagination(paginationData);
+        if (page === 1) sessionStorage.setItem(`notes_cache_${mode}`, JSON.stringify({ notes: notesData, pagination: paginationData }));
+      } else {
+        setNotes([]);
+      }
+    } catch {
+      setNotes([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // 检查会话状态
   const checkSession = async () => {
@@ -500,7 +563,7 @@ export default function NotesPage() {
     }
   };
 
-  if (status === 'loading' || loading) {
+  if (status === 'loading' || (loading && notes.length === 0)) {
     return (
       <div className="p-8 flex justify-center">
         <div className="text-lg">加载中...</div>
@@ -528,9 +591,9 @@ export default function NotesPage() {
               <button
                 onClick={() => {
                   setViewMode('my');
-                  // 切换视图时清除选择状态
                   setIsMultiSelectMode(false);
                   setSelectedNotes({});
+                  fetchNotesWithMode('my', 1);
                 }}
                 className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                   viewMode === 'my'
@@ -544,9 +607,9 @@ export default function NotesPage() {
             <button
               onClick={() => {
                 setViewMode('public');
-                // 切换到公开笔记时关闭多选模式
                 setIsMultiSelectMode(false);
                 setSelectedNotes({});
+                fetchNotesWithMode('public', 1);
               }}
               className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                 viewMode === 'public'
@@ -625,6 +688,13 @@ export default function NotesPage() {
       {!searchQuery.trim() && pagination?.total > 0 && (
         <div className="mb-4 text-sm text-gray-600 note-count" data-notes-count={pagination?.total || 0} data-view-mode={viewMode}>
           共 {pagination?.total || 0} 篇{viewMode === 'my' ? '我的' : '公开'}笔记，第 {pagination?.page || 1} / {pagination?.totalPages || 1} 页
+        </div>
+      )}
+
+      {/* 刷新时的细 loading 条，不影响已有内容显示 */}
+      {loading && notes.length > 0 && (
+        <div className="fixed top-0 left-0 right-0 z-50 h-1 bg-blue-100">
+          <div className="h-full bg-blue-500 animate-pulse" style={{ width: '60%' }} />
         </div>
       )}
 
