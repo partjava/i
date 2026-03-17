@@ -192,3 +192,53 @@ export async function GET(
     )
   }
 }
+
+// 更新笔记
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: '请先登录' }, { status: 401 })
+    }
+
+    const noteId = parseInt(params.id, 10)
+    if (isNaN(noteId)) {
+      return NextResponse.json({ error: '笔记ID无效' }, { status: 400 })
+    }
+
+    const userId = parseInt(session.user.id, 10)
+
+    // 确认笔记属于当前用户
+    const existing = await executeQuery(
+      'SELECT id FROM notes WHERE id = ? AND author_id = ?',
+      [noteId, userId]
+    ) as any[]
+
+    if (existing.length === 0) {
+      return NextResponse.json({ error: '笔记不存在或无权修改' }, { status: 403 })
+    }
+
+    const body = await request.json()
+    const { title, content, category, technology, subcategory, tags, isPublic } = body
+
+    if (!title?.trim() || !content?.trim()) {
+      return NextResponse.json({ error: '标题和内容不能为空' }, { status: 400 })
+    }
+
+    const tagsJson = JSON.stringify(Array.isArray(tags) ? tags : [])
+
+    await executeQuery(
+      `UPDATE notes SET title=?, content=?, category=?, technology=?, subcategory=?, tags=?, is_public=?, updated_at=NOW()
+       WHERE id = ? AND author_id = ?`,
+      [title.trim(), content.trim(), category || '', technology || '', subcategory || '', tagsJson, isPublic ? 1 : 0, noteId, userId]
+    )
+
+    return NextResponse.json({ success: true, message: '保存成功' })
+  } catch (error) {
+    console.error('更新笔记失败:', error)
+    return NextResponse.json({ error: '更新笔记失败' }, { status: 500 })
+  }
+}

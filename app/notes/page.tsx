@@ -110,6 +110,31 @@ export default function NotesPage() {
     }
   };
 
+  // 滚动恢复：优先锚点，降级 Y 坐标
+  const doScrollRestore = (noteId: string | null, y: number) => {
+    const container = document.querySelector('main') as HTMLElement | null;
+    const scrollToY = (top: number) => {
+      if (container) container.scrollTo({ top, behavior: 'instant' as ScrollBehavior });
+      else window.scrollTo({ top, behavior: 'instant' as ScrollBehavior });
+    };
+    const tryAnchor = () => {
+      if (!noteId) return false;
+      const el = document.getElementById(`note-${noteId}`);
+      if (!el) return false;
+      el.scrollIntoView({ block: 'start', behavior: 'instant' as ScrollBehavior });
+      scrollToY(Math.max(0, (container ? container.scrollTop : window.scrollY) - 24));
+      return true;
+    };
+    requestAnimationFrame(() => {
+      if (!tryAnchor()) scrollToY(y);
+      setTimeout(() => { if (!tryAnchor()) scrollToY(y); }, 150);
+      setTimeout(() => {
+        if (!tryAnchor()) scrollToY(y);
+        isRestoringScroll.current = false;
+      }, 500);
+    });
+  };
+
   // 用指定 mode 直接 fetch，避免 viewMode state 闭包旧值问题
   const fetchNotesWithMode = async (mode: 'my' | 'public', page: number = 1) => {
     try {
@@ -157,54 +182,33 @@ export default function NotesPage() {
 
     const savedNoteId = sessionStorage.getItem(`notes_last_note_id_${targetMode}`);
     const savedY = sessionStorage.getItem(`notes_scroll_y_${targetMode}`);
+    const savedPage = sessionStorage.getItem(`notes_page_${targetMode}`);
     if (savedNoteId || savedY) {
-      // 返回操作：用缓存立即渲染，然后恢复滚动，不再触发 loading
+      // 返回操作：先 fetch 对应页，再恢复滚动
       isRestoringScroll.current = true;
       const y = savedY ? parseInt(savedY) : 0;
+      const page = savedPage ? parseInt(savedPage) : 1;
       if (savedNoteId) sessionStorage.removeItem(`notes_last_note_id_${targetMode}`);
       if (savedY) sessionStorage.removeItem(`notes_scroll_y_${targetMode}`);
+      if (savedPage) sessionStorage.removeItem(`notes_page_${targetMode}`);
 
+      // 先尝试用缓存（仅第1页有缓存），非第1页直接 fetch
       const cacheKeyForMode = `notes_cache_${targetMode}`;
-      const cached = sessionStorage.getItem(cacheKeyForMode);
+      const cached = page === 1 ? sessionStorage.getItem(cacheKeyForMode) : null;
       if (cached) {
         try {
           const { notes: cachedNotes, pagination: cachedPagination } = JSON.parse(cached);
           setNotes(cachedNotes);
           setPagination(cachedPagination);
           setLoading(false);
-        } catch {}
+          doScrollRestore(savedNoteId, y);
+        } catch {
+          fetchNotesWithMode(targetMode, page).then(() => doScrollRestore(savedNoteId, y));
+        }
+      } else {
+        // 非第1页或无缓存：fetch 对应页后再滚动
+        fetchNotesWithMode(targetMode, page).then(() => doScrollRestore(savedNoteId, y));
       }
-
-      // 多次尝试滚动，确保 DOM 高度足够
-      requestAnimationFrame(() => {
-        const container = document.querySelector('main') as HTMLElement | null;
-        const scrollToY = (top: number) => {
-          if (container) container.scrollTo({ top, behavior: 'instant' as ScrollBehavior });
-          else window.scrollTo({ top, behavior: 'instant' as ScrollBehavior });
-        };
-
-        const tryScrollToNote = () => {
-          if (!savedNoteId) return false;
-          const el = document.getElementById(`note-${savedNoteId}`);
-          if (!el) return false;
-          el.scrollIntoView({ block: 'start', behavior: 'instant' as ScrollBehavior });
-          scrollToY(Math.max(0, (container ? container.scrollTop : window.scrollY) - 24));
-          return true;
-        };
-
-        const didAnchor = tryScrollToNote();
-        if (!didAnchor) scrollToY(y);
-
-        setTimeout(() => {
-          const didAnchor2 = tryScrollToNote();
-          if (!didAnchor2) scrollToY(y);
-        }, 150);
-        setTimeout(() => {
-          const didAnchor3 = tryScrollToNote();
-          if (!didAnchor3) scrollToY(y);
-          isRestoringScroll.current = false;
-        }, 500);
-      });
     } else {
       // 正常进入：直接用 targetMode fetch，避免闭包旧值
       isRestoringScroll.current = false;
@@ -227,11 +231,13 @@ export default function NotesPage() {
       const y = container ? container.scrollTop : window.scrollY;
       sessionStorage.setItem(`notes_scroll_y_${viewMode}`, String(y));
       sessionStorage.setItem('notes_view_mode', viewMode);
+      // 额外存当前页码，返回时恢复到同一页
+      sessionStorage.setItem(`notes_page_${viewMode}`, String(pagination?.page || 1));
       if (noteId !== undefined && noteId !== null && String(noteId).length > 0) {
         sessionStorage.setItem(`notes_last_note_id_${viewMode}`, String(noteId));
       }
     } catch {}
-  }, [viewMode]);
+  }, [viewMode, pagination?.page]);
 
   // 获取笔记列表 - 简化版本
   const fetchNotes = useCallback(async (page: number = pagination?.page || 1, ignoreCache: boolean = false) => {
