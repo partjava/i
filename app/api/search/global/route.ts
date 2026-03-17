@@ -247,10 +247,21 @@ export async function GET(request: NextRequest) {
             const totalScore = Math.max(titleScore, contentScore, categoryScore, techScore);
             
             if (totalScore > 0) {
+              // 去掉 Markdown 符号再显示预览
+              const plainText = note.content
+                .replace(/#{1,6}\s+/g, '')
+                .replace(/\*\*(.+?)\*\*/g, '$1')
+                .replace(/\*(.+?)\*/g, '$1')
+                .replace(/`{1,3}[^`]*`{1,3}/g, '')
+                .replace(/\[(.+?)\]\(.+?\)/g, '$1')
+                .replace(/[-*+]\s+/g, '')
+                .replace(/>\s+/g, '')
+                .replace(/\n+/g, ' ')
+                .trim();
               results.push({
                 id: `note_${note.id}`,
                 title: note.title,
-                description: note.content.substring(0, 150) + '...',
+                description: plainText.substring(0, 150) + (plainText.length > 150 ? '...' : ''),
                 category: `${note.category} - ${note.technology}`,
                 type: 'note',
                 path: `/notes/${note.id}`,

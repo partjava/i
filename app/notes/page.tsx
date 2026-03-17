@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -73,35 +73,29 @@ export default function NotesPage() {
   // 检查登录状态 - 允许未登录用户查看公开笔记
   useEffect(() => {
     if (status === 'unauthenticated') {
-      // 未登录用户强制设置为公开模式
       setViewMode('public');
     } else if (status === 'authenticated' && session?.user) {
-      // 已登录用户默认查看"我的笔记"
-      setViewMode('my');
-      // 确保会话有效
+      // 如果有保存的 viewMode（从笔记详情页返回），恢复它；否则默认'my'
+      const savedMode = sessionStorage.getItem('notes_view_mode') as 'my' | 'public' | null;
+      if (savedMode) {
+        sessionStorage.removeItem('notes_view_mode');
+        setViewMode(savedMode);
+      } else {
+        setViewMode('my');
+      }
       checkSession();
     }
-    // status === 'loading' 时不改变 viewMode，保持当前状态
-  }, [status, session]); // 添加 session 依赖
+  }, [status, session]);
 
-  // 恢复滚动位置（等笔记加载完且 loading 结束后恢复）
+  // 恢复滚动位置 - 用 ref 存，只滚一次
+  const pendingScrollRef = useRef<number | null>(null);
   useEffect(() => {
-    if (loading || notes.length === 0) return;
-    const savedY = sessionStorage.getItem('notes_scroll_y');
-    if (!savedY) return;
-    const y = parseInt(savedY);
-    sessionStorage.removeItem('notes_scroll_y');
-    // 等 DOM 真正渲染完再滚动
-    const tryScroll = (attempts: number) => {
-      requestAnimationFrame(() => {
-        window.scrollTo({ top: y, behavior: 'instant' });
-        if (attempts > 0 && Math.abs(window.scrollY - y) > 20) {
-          setTimeout(() => tryScroll(attempts - 1), 200);
-        }
-      });
-    };
-    tryScroll(8);
-  }, [loading, notes]);
+    const saved = sessionStorage.getItem('notes_scroll_y');
+    if (saved) {
+      sessionStorage.removeItem('notes_scroll_y');
+      pendingScrollRef.current = parseInt(saved);
+    }
+  }, []);
   
   // 检查会话状态
   const checkSession = async () => {
@@ -137,18 +131,12 @@ export default function NotesPage() {
     }
   };
 
-  // 获取笔记列表
-  useEffect(() => {
-    // 无论登录状态如何，都尝试获取笔记，并强制忽略缓存
-    fetchNotes(1, true);
-  }, [status]);
-  
-  // 当视图模式切换时获取笔记
+  // 获取笔记列表（status 或 viewMode 变化时触发）
   useEffect(() => {
     if (status !== 'loading') {
       fetchNotes(1, true);
     }
-  }, [viewMode]);
+  }, [status, viewMode]);
 
   // 获取笔记列表 - 简化版本
   const fetchNotes = useCallback(async (page: number = pagination?.page || 1, ignoreCache: boolean = false) => {
@@ -242,6 +230,14 @@ export default function NotesPage() {
       });
     } finally {
       setLoading(false);
+      // 恢复滚动位置（只执行一次，执行后清空 ref）
+      if (pendingScrollRef.current !== null) {
+        const y = pendingScrollRef.current;
+        pendingScrollRef.current = null;
+        requestAnimationFrame(() => {
+          window.scrollTo({ top: y, behavior: 'instant' });
+        });
+      }
     }
   }, [status, viewMode, pagination?.limit]);
 
@@ -662,7 +658,10 @@ export default function NotesPage() {
                 )}
                 <div className="flex-1">
                   <h3 className="text-xl font-semibold mb-2">
-                    <Link href={`/notes/${note.id || note._id}`} className="text-blue-600 hover:text-blue-800" onClick={() => sessionStorage.setItem('notes_scroll_y', String(window.scrollY))}>
+                    <Link href={`/notes/${note.id || note._id}`} className="text-blue-600 hover:text-blue-800" onClick={() => {
+                      sessionStorage.setItem('notes_scroll_y', String(window.scrollY));
+                      sessionStorage.setItem('notes_view_mode', viewMode);
+                    }}>
                       {note.title}
                     </Link>
                   </h3>
