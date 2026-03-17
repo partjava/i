@@ -87,6 +87,58 @@ export default function NotesPage() {
     isPublic: false,
   });
 
+  // 检查会话状态
+  const checkSession = async () => {
+    try {
+      const response = await fetch('/api/auth/session', {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        cache: 'no-store'
+      });
+      if (!response.ok) {
+        const refreshResponse = await fetch('/api/auth/session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          cache: 'no-store'
+        });
+        if (!refreshResponse.ok) setViewMode('public');
+      }
+    } catch (error) {
+      console.error('会话检查失败:', error);
+    }
+  };
+
+  // 用指定 mode 直接 fetch，避免 viewMode state 闭包旧值问题
+  const fetchNotesWithMode = async (mode: 'my' | 'public', page: number = 1) => {
+    try {
+      setLoading(true);
+      const limit = 10;
+      const url = mode === 'public' || status !== 'authenticated'
+        ? `/api/public-notes?page=${page}&limit=${limit}&_t=${Date.now()}`
+        : `/api/notes?page=${page}&limit=${limit}&_t=${Date.now()}`;
+      const response = await fetch(url, { credentials: 'include', cache: 'no-store' });
+      if (response.ok) {
+        const data = await response.json();
+        let notesData: Note[] = [];
+        let paginationData = { page, limit, total: 0, totalPages: 0, hasNext: false, hasPrev: false };
+        if (data?.data?.notes) { notesData = data.data.notes; paginationData = data.data.pagination || paginationData; }
+        else if (data?.notes) { notesData = data.notes; paginationData = data.pagination || paginationData; }
+        else if (Array.isArray(data)) { notesData = data; }
+        setNotes(notesData);
+        setPagination(paginationData);
+        if (page === 1) sessionStorage.setItem(`notes_cache_${mode}`, JSON.stringify({ notes: notesData, pagination: paginationData }));
+      } else {
+        setNotes([]);
+      }
+    } catch {
+      setNotes([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // 合并：先确定 viewMode，再 fetch，避免两次 fetch 导致滚动恢复失败
   useEffect(() => {
     if (status === 'loading') return;
@@ -136,69 +188,6 @@ export default function NotesPage() {
       fetchNotesWithMode(targetMode, 1);
     }
   }, [status, session]);
-  // 用指定 mode 直接 fetch，避免 viewMode state 闭包旧值问题
-  const fetchNotesWithMode = async (mode: 'my' | 'public', page: number = 1) => {
-    try {
-      setLoading(true);
-      const limit = 10;
-      let url = mode === 'public' || status !== 'authenticated'
-        ? `/api/public-notes?page=${page}&limit=${limit}&_t=${Date.now()}`
-        : `/api/notes?page=${page}&limit=${limit}&_t=${Date.now()}`;
-
-      const response = await fetch(url, { credentials: 'include', cache: 'no-store' });
-      if (response.ok) {
-        const data = await response.json();
-        let notesData: Note[] = [];
-        let paginationData = { page, limit, total: 0, totalPages: 0, hasNext: false, hasPrev: false };
-        if (data?.data?.notes) { notesData = data.data.notes; paginationData = data.data.pagination || paginationData; }
-        else if (data?.notes) { notesData = data.notes; paginationData = data.pagination || paginationData; }
-        else if (Array.isArray(data)) { notesData = data; }
-        setNotes(notesData);
-        setPagination(paginationData);
-        if (page === 1) sessionStorage.setItem(`notes_cache_${mode}`, JSON.stringify({ notes: notesData, pagination: paginationData }));
-      } else {
-        setNotes([]);
-      }
-    } catch {
-      setNotes([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // 检查会话状态
-  const checkSession = async () => {
-    try {
-      const response = await fetch('/api/auth/session', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        cache: 'no-store'
-      });
-      
-      if (!response.ok) {
-        console.log('会话已过期，重新刷新会话');
-        // 尝试刷新会话
-        const refreshResponse = await fetch('/api/auth/session', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          credentials: 'include',
-          cache: 'no-store'
-        });
-        
-        if (!refreshResponse.ok) {
-          console.log('无法刷新会话，设置为公开模式');
-          setViewMode('public');
-        }
-      }
-    } catch (error) {
-      console.error('会话检查失败:', error);
-    }
-  };
 
   // 笔记列表缓存 key
   const cacheKey = `notes_cache_${viewMode}`;
