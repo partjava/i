@@ -54,6 +54,22 @@ export default function BookmarksPage() {
   const [search, setSearch] = useState('');
   const [removingId, setRemovingId] = useState<number | null>(null);
 
+  const getScrollContainer = () => {
+    if (typeof document === 'undefined') return null;
+    return document.querySelector('main') as HTMLElement | null;
+  };
+
+  const rememberBookmarksPosition = (noteId?: number) => {
+    try {
+      const container = getScrollContainer();
+      const y = container ? container.scrollTop : window.scrollY;
+      sessionStorage.setItem('bookmarks_scroll_y', String(y));
+      if (noteId !== undefined && noteId !== null) {
+        sessionStorage.setItem('bookmarks_last_note_id', String(noteId));
+      }
+    } catch {}
+  };
+
   useEffect(() => {
     if (status === 'unauthenticated') { router.push('/login'); return; }
     if (status === 'authenticated') {
@@ -64,6 +80,44 @@ export default function BookmarksPage() {
         .finally(() => setLoading(false));
     }
   }, [status, router]);
+
+  // 返回时恢复滚动位置（优先按 noteId 锚点）
+  useEffect(() => {
+    if (status !== 'authenticated' || loading) return;
+
+    const savedNoteId = sessionStorage.getItem('bookmarks_last_note_id');
+    const savedY = sessionStorage.getItem('bookmarks_scroll_y');
+    if (!savedNoteId && !savedY) return;
+
+    if (savedNoteId) sessionStorage.removeItem('bookmarks_last_note_id');
+    if (savedY) sessionStorage.removeItem('bookmarks_scroll_y');
+
+    const y = savedY ? parseInt(savedY) : 0;
+
+    requestAnimationFrame(() => {
+      const container = getScrollContainer();
+      const scrollToY = (top: number) => {
+        if (container) container.scrollTo({ top, behavior: 'auto' });
+        else window.scrollTo({ top, behavior: 'auto' });
+      };
+
+      const tryScrollToNote = () => {
+        if (!savedNoteId) return false;
+        const el = document.getElementById(`bookmark-note-${savedNoteId}`);
+        if (!el) return false;
+        el.scrollIntoView({ block: 'start', behavior: 'auto' });
+        scrollToY(Math.max(0, (container ? container.scrollTop : window.scrollY) - 24));
+        return true;
+      };
+
+      const did = tryScrollToNote();
+      if (!did) scrollToY(y);
+      setTimeout(() => {
+        const did2 = tryScrollToNote();
+        if (!did2) scrollToY(y);
+      }, 150);
+    });
+  }, [status, loading, notes.length]);
 
   const handleRemoveBookmark = async (noteId: number) => {
     setRemovingId(noteId);
@@ -155,7 +209,12 @@ export default function BookmarksPage() {
               return (
                 <div
                   key={note.id}
-                  className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col overflow-hidden group"
+                  id={`bookmark-note-${note.id}`}
+                  className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col overflow-hidden group cursor-pointer"
+                  onClick={() => {
+                    rememberBookmarksPosition(note.id);
+                    router.push(`/notes/${note.id}`);
+                  }}
                 >
                   {/* 卡片顶部色条 */}
                   <div className="h-1 bg-gradient-to-r from-blue-400 to-indigo-400" />
@@ -163,13 +222,23 @@ export default function BookmarksPage() {
                   <div className="p-5 flex flex-col flex-1">
                     {/* 标题行 */}
                     <div className="flex items-start justify-between gap-2">
-                      <Link href={`/notes/${note.id}`} className="flex-1 min-w-0">
+                      <Link
+                        href={`/notes/${note.id}`}
+                        className="flex-1 min-w-0"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          rememberBookmarksPosition(note.id);
+                        }}
+                      >
                         <h2 className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-2 leading-snug">
                           {note.title}
                         </h2>
                       </Link>
                       <button
-                        onClick={() => handleRemoveBookmark(note.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRemoveBookmark(note.id);
+                        }}
                         disabled={removingId === note.id}
                         className="shrink-0 text-yellow-400 hover:text-gray-300 transition-colors mt-0.5"
                         title="取消收藏"

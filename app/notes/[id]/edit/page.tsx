@@ -24,6 +24,14 @@ export default function EditNotePage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
+  const rememberReturnToMyNotes = () => {
+    try {
+      // 编辑页一定属于“我的笔记”语境
+      sessionStorage.setItem('notes_view_mode', 'my');
+      if (params.id) sessionStorage.setItem('notes_last_note_id_my', String(params.id));
+    } catch {}
+  };
+
   // 检查登录状态
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -75,6 +83,7 @@ export default function EditNotePage() {
       });
 
       if (response.ok) {
+        rememberReturnToMyNotes();
         router.push('/notes');
       } else {
         const data = await response.json();
@@ -112,7 +121,10 @@ export default function EditNotePage() {
           {error}
         </div>
         <button
-          onClick={() => router.push('/notes')}
+          onClick={() => {
+            rememberReturnToMyNotes();
+            router.push('/notes');
+          }}
           className="mt-4 text-indigo-600 hover:text-indigo-800"
         >
           返回笔记列表
@@ -135,7 +147,10 @@ export default function EditNotePage() {
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-3xl font-bold">编辑笔记</h1>
           <button
-            onClick={() => router.push('/notes')}
+            onClick={() => {
+              rememberReturnToMyNotes();
+              router.push('/notes');
+            }}
             className="text-gray-600 hover:text-gray-800"
           >
             返回列表

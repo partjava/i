@@ -155,12 +155,14 @@ export default function NotesPage() {
 
     setViewMode(targetMode);
 
-    const savedY = sessionStorage.getItem('notes_scroll_y');
-    if (savedY) {
+    const savedNoteId = sessionStorage.getItem(`notes_last_note_id_${targetMode}`);
+    const savedY = sessionStorage.getItem(`notes_scroll_y_${targetMode}`);
+    if (savedNoteId || savedY) {
       // 返回操作：用缓存立即渲染，然后恢复滚动，不再触发 loading
       isRestoringScroll.current = true;
-      const y = parseInt(savedY);
-      sessionStorage.removeItem('notes_scroll_y');
+      const y = savedY ? parseInt(savedY) : 0;
+      if (savedNoteId) sessionStorage.removeItem(`notes_last_note_id_${targetMode}`);
+      if (savedY) sessionStorage.removeItem(`notes_scroll_y_${targetMode}`);
 
       const cacheKeyForMode = `notes_cache_${targetMode}`;
       const cached = sessionStorage.getItem(cacheKeyForMode);
@@ -175,10 +177,31 @@ export default function NotesPage() {
 
       // 多次尝试滚动，确保 DOM 高度足够
       requestAnimationFrame(() => {
-        window.scrollTo({ top: y, behavior: 'instant' });
-        setTimeout(() => window.scrollTo({ top: y, behavior: 'instant' }), 150);
+        const container = document.querySelector('main') as HTMLElement | null;
+        const scrollToY = (top: number) => {
+          if (container) container.scrollTo({ top, behavior: 'instant' as ScrollBehavior });
+          else window.scrollTo({ top, behavior: 'instant' as ScrollBehavior });
+        };
+
+        const tryScrollToNote = () => {
+          if (!savedNoteId) return false;
+          const el = document.getElementById(`note-${savedNoteId}`);
+          if (!el) return false;
+          el.scrollIntoView({ block: 'start', behavior: 'instant' as ScrollBehavior });
+          scrollToY(Math.max(0, (container ? container.scrollTop : window.scrollY) - 24));
+          return true;
+        };
+
+        const didAnchor = tryScrollToNote();
+        if (!didAnchor) scrollToY(y);
+
         setTimeout(() => {
-          window.scrollTo({ top: y, behavior: 'instant' });
+          const didAnchor2 = tryScrollToNote();
+          if (!didAnchor2) scrollToY(y);
+        }, 150);
+        setTimeout(() => {
+          const didAnchor3 = tryScrollToNote();
+          if (!didAnchor3) scrollToY(y);
           isRestoringScroll.current = false;
         }, 500);
       });
@@ -191,6 +214,24 @@ export default function NotesPage() {
 
   // 笔记列表缓存 key
   const cacheKey = `notes_cache_${viewMode}`;
+
+  const getScrollContainer = () => {
+    if (typeof document === 'undefined') return null;
+    // `RootLayoutClient` 中 `main` 是 overflow-auto 的滚动容器
+    return document.querySelector('main') as HTMLElement | null;
+  };
+
+  const rememberListPosition = useCallback((noteId?: string | number) => {
+    try {
+      const container = getScrollContainer();
+      const y = container ? container.scrollTop : window.scrollY;
+      sessionStorage.setItem(`notes_scroll_y_${viewMode}`, String(y));
+      sessionStorage.setItem('notes_view_mode', viewMode);
+      if (noteId !== undefined && noteId !== null && String(noteId).length > 0) {
+        sessionStorage.setItem(`notes_last_note_id_${viewMode}`, String(noteId));
+      }
+    } catch {}
+  }, [viewMode]);
 
   // 获取笔记列表 - 简化版本
   const fetchNotes = useCallback(async (page: number = pagination?.page || 1, ignoreCache: boolean = false) => {
@@ -702,9 +743,19 @@ export default function NotesPage() {
           </div>
         ) : (
           displayNotes.map((note) => (
-            <div key={note.id || note._id} className={`bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow ${
+            <div
+              key={note.id || note._id}
+              id={`note-${note.id || note._id}`}
+              className={`bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow ${
               isMultiSelectMode && viewMode === 'my' ? 'border-2 ' + (selectedNotes[note.id || note._id || ''] ? 'border-blue-500' : 'border-transparent') : ''
-            }`}>
+              } ${!isMultiSelectMode ? 'cursor-pointer' : ''}`}
+              onClick={() => {
+                if (isMultiSelectMode) return;
+                const id = note.id || note._id;
+                rememberListPosition(id);
+                router.push(`/notes/${id}`);
+              }}
+            >
               <div className="flex justify-between items-start mb-4">
                 {isMultiSelectMode && viewMode === 'my' && (
                   <div className="mr-3 mt-1">
@@ -724,10 +775,14 @@ export default function NotesPage() {
                 )}
                 <div className="flex-1">
                   <h3 className="text-xl font-semibold mb-2">
-                    <Link href={`/notes/${note.id || note._id}`} className="text-blue-600 hover:text-blue-800" onClick={() => {
-                      sessionStorage.setItem('notes_scroll_y', String(window.scrollY));
-                      sessionStorage.setItem('notes_view_mode', viewMode);
-                    }}>
+                    <Link
+                      href={`/notes/${note.id || note._id}`}
+                      className="text-blue-600 hover:text-blue-800"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        rememberListPosition(note.id || note._id);
+                      }}
+                    >
                       {note.title}
                     </Link>
                   </h3>
@@ -753,11 +808,16 @@ export default function NotesPage() {
                     <Link 
                       href={`/notes/${note.id || note._id}/edit`}
                       className="text-blue-600 hover:text-blue-800 text-sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        rememberListPosition(note.id || note._id);
+                      }}
                     >
                       编辑
                     </Link>
                     <button
                       onClick={() => {
+                        // 避免触发卡片点击跳转
                         // 优先使用数字ID，因为API期望数字ID
                         const numericId = note.id || (note._id ? parseInt(note._id.toString(), 10) : null);
                         if (numericId) {
@@ -766,6 +826,8 @@ export default function NotesPage() {
                           alert('无法删除笔记：无效的笔记ID');
                         }
                       }}
+                      onMouseDown={(e) => e.stopPropagation()}
+                      onClickCapture={(e) => e.stopPropagation()}
                       className="text-red-600 hover:text-red-800 text-sm"
                     >
                       删除
