@@ -336,6 +336,22 @@ async function init() {
     `);
     console.log('✅ ai_messages');
 
+    // 图片存储表
+    await conn.execute(`
+      CREATE TABLE IF NOT EXISTS note_images (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NOT NULL,
+        filename VARCHAR(255) NOT NULL,
+        mime_type VARCHAR(50) NOT NULL,
+        data LONGBLOB NOT NULL,
+        size INT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_user_id (user_id),
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+    console.log('✅ note_images');
+
     // 插入预定义成就数据
     await conn.execute(`
       INSERT IGNORE INTO achievements (id, name, description, icon, category, max_progress, sort_order) VALUES
