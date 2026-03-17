@@ -9,6 +9,7 @@ import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
 import 'highlight.js/styles/github.css';
 import CommentSection from '@/app/components/CommentSection';
+import QRCode from 'qrcode';
 
 interface Note {
   _id: string;
@@ -42,6 +43,51 @@ export default function NoteDetailPage() {
   const [likeCount, setLikeCount] = useState(0);
   const [bookmarkCount, setBookmarkCount] = useState(0);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [qrDataUrl, setQrDataUrl] = useState('');
+  const [copyTip, setCopyTip] = useState('');
+
+  // 导出 Markdown
+  const handleExportMd = () => {
+    if (!note) return;
+    const blob = new Blob([note.content], { type: 'text/markdown;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${note.title}.md`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // 导出纯文本
+  const handleExportTxt = () => {
+    if (!note) return;
+    const text = `${note.title}\n${'='.repeat(note.title.length)}\n\n${note.content}`;
+    const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${note.title}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // 打开分享弹窗
+  const handleShare = async () => {
+    const shareUrl = `${window.location.origin}/notes/${noteId}`;
+    const dataUrl = await QRCode.toDataURL(shareUrl, { width: 200, margin: 2 });
+    setQrDataUrl(dataUrl);
+    setShowShareModal(true);
+  };
+
+  // 复制链接
+  const handleCopyLink = () => {
+    const shareUrl = `${window.location.origin}/notes/${noteId}`;
+    navigator.clipboard.writeText(shareUrl).then(() => {
+      setCopyTip('已复制！');
+      setTimeout(() => setCopyTip(''), 2000);
+    });
+  };
 
   // 获取笔记详情
   const fetchNote = async () => {
@@ -174,35 +220,34 @@ export default function NoteDetailPage() {
             {/* 操作按钮 */}
             {session && (
               <div className="space-y-3" style={{ marginTop: '30px', padding: '20px' }}>
-                <button
-                  onClick={handleLike}
-                  className={`w-full flex items-center justify-center space-x-2 px-4 py-3 rounded-lg text-base font-medium transition-colors ${
-                    liked 
-                      ? 'bg-red-100 text-red-700 border border-red-200' 
-                      : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
-                  }`}
-                >
-                  <svg className="w-5 h-5" fill={liked ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                  </svg>
+                <button onClick={handleLike} className={`w-full flex items-center justify-center space-x-2 px-4 py-3 rounded-lg text-base font-medium transition-colors ${liked ? 'bg-red-100 text-red-700 border border-red-200' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}`}>
+                  <svg className="w-5 h-5" fill={liked ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>
                   <span>{liked ? '已点赞' : '点赞'}</span>
                   {likeCount > 0 && <span className="bg-gray-200 px-2 py-1 rounded-full text-xs">{likeCount}</span>}
                 </button>
-                
-                <button
-                  onClick={handleBookmark}
-                  className={`w-full flex items-center justify-center space-x-2 px-4 py-3 rounded-lg text-base font-medium transition-colors ${
-                    bookmarked 
-                      ? 'bg-yellow-100 text-yellow-700 border border-yellow-200' 
-                      : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
-                  }`}
-                >
-                  <svg className="w-5 h-5" fill={bookmarked ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
-                  </svg>
+
+                <button onClick={handleBookmark} className={`w-full flex items-center justify-center space-x-2 px-4 py-3 rounded-lg text-base font-medium transition-colors ${bookmarked ? 'bg-yellow-100 text-yellow-700 border border-yellow-200' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}`}>
+                  <svg className="w-5 h-5" fill={bookmarked ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" /></svg>
                   <span>{bookmarked ? '已收藏' : '收藏'}</span>
                   {bookmarkCount > 0 && <span className="bg-gray-200 px-2 py-1 rounded-full text-xs">{bookmarkCount}</span>}
                 </button>
+
+                {/* 分享按钮 */}
+                <button onClick={handleShare} className="w-full flex items-center justify-center space-x-2 px-4 py-3 rounded-lg text-base font-medium bg-white text-gray-700 hover:bg-blue-50 hover:text-blue-600 border border-gray-200 transition-colors">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" /></svg>
+                  <span>分享</span>
+                </button>
+
+                {/* 导出按钮组 */}
+                <div className="border border-gray-200 rounded-lg overflow-hidden">
+                  <div className="px-3 py-2 bg-gray-50 text-xs text-gray-500 font-medium">导出笔记</div>
+                  <button onClick={handleExportMd} className="w-full flex items-center space-x-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors border-t border-gray-100">
+                    <span>📄</span><span>导出 Markdown</span>
+                  </button>
+                  <button onClick={handleExportTxt} className="w-full flex items-center space-x-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors border-t border-gray-100">
+                    <span>📝</span><span>导出纯文本</span>
+                  </button>
+                </div>
               </div>
             )}
           </div>
@@ -360,6 +405,42 @@ export default function NoteDetailPage() {
           <CommentSection noteId={noteId} isPublic={note.isPublic} />
         )}
       </div>
+
+      {/* 分享弹窗 */}
+      {showShareModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowShareModal(false)}>
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">分享笔记</h3>
+              <button onClick={() => setShowShareModal(false)} className="text-gray-400 hover:text-gray-600">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+
+            {/* 二维码 */}
+            {qrDataUrl && (
+              <div className="flex flex-col items-center mb-4">
+                <img src={qrDataUrl} alt="分享二维码" className="w-44 h-44 rounded-lg border border-gray-100" />
+                <p className="text-xs text-gray-400 mt-2">扫码访问笔记</p>
+              </div>
+            )}
+
+            {/* 链接复制 */}
+            <div className="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-2 border border-gray-200">
+              <span className="flex-1 text-sm text-gray-600 truncate">{typeof window !== 'undefined' ? `${window.location.origin}/notes/${noteId}` : ''}</span>
+              <button onClick={handleCopyLink} className="shrink-0 text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors">
+                {copyTip || '复制'}
+              </button>
+            </div>
+
+            {note.isPublic ? (
+              <p className="text-xs text-green-600 mt-2 text-center">✓ 此笔记已公开，任何人都可以访问</p>
+            ) : (
+              <p className="text-xs text-orange-500 mt-2 text-center">⚠ 此笔记未公开，仅登录用户可见</p>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
