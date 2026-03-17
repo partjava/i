@@ -88,17 +88,19 @@ export default function NotesPage() {
   useEffect(() => {
     if (loading || notes.length === 0) return;
     const savedY = sessionStorage.getItem('notes_scroll_y');
-    if (savedY) {
-      const y = parseInt(savedY);
-      sessionStorage.removeItem('notes_scroll_y');
-      const tryScroll = (attempts: number) => {
+    if (!savedY) return;
+    const y = parseInt(savedY);
+    sessionStorage.removeItem('notes_scroll_y');
+    // 等 DOM 真正渲染完再滚动
+    const tryScroll = (attempts: number) => {
+      requestAnimationFrame(() => {
         window.scrollTo({ top: y, behavior: 'instant' });
-        if (attempts > 0 && Math.abs(window.scrollY - y) > 10) {
-          setTimeout(() => tryScroll(attempts - 1), 150);
+        if (attempts > 0 && Math.abs(window.scrollY - y) > 20) {
+          setTimeout(() => tryScroll(attempts - 1), 200);
         }
-      };
-      setTimeout(() => tryScroll(5), 100);
-    }
+      });
+    };
+    tryScroll(8);
   }, [loading, notes]);
   
   // 检查会话状态
