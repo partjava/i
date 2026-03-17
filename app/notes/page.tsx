@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -70,33 +70,39 @@ export default function NotesPage() {
     isPublic: false,
   });
 
-  // 检查登录状态 - 允许未登录用户查看公开笔记
+  // viewMode 初始化完成标记
+  const [viewModeReady, setViewModeReady] = useState(false);
+
+  // 检查登录状态
   useEffect(() => {
     if (status === 'unauthenticated') {
       setViewMode('public');
+      setViewModeReady(true);
     } else if (status === 'authenticated' && session?.user) {
-      // 如果有保存的 viewMode（从笔记详情页返回），恢复它；否则默认'my'
       const savedMode = sessionStorage.getItem('notes_view_mode') as 'my' | 'public' | null;
-      if (savedMode) {
-        sessionStorage.removeItem('notes_view_mode');
-        setViewMode(savedMode);
-      } else {
-        setViewMode('my');
-      }
+      if (savedMode) sessionStorage.removeItem('notes_view_mode');
+      setViewMode(savedMode || 'my');
+      setViewModeReady(true);
       checkSession();
     }
   }, [status, session]);
 
-  // 恢复滚动位置 - 用 ref 存，只滚一次
-  const pendingScrollRef = useRef<number | null>(null);
+  // viewMode 确定后才 fetch，返回时优先用缓存
   useEffect(() => {
-    const saved = sessionStorage.getItem('notes_scroll_y');
-    if (saved) {
+    if (!viewModeReady) return;
+    const savedY = sessionStorage.getItem('notes_scroll_y');
+    if (savedY) {
+      // 有滚动位置说明是从详情页返回，用缓存数据 + 恢复滚动
+      fetchNotes(1, false); // false = 优先用缓存
+      const y = parseInt(savedY);
       sessionStorage.removeItem('notes_scroll_y');
-      pendingScrollRef.current = parseInt(saved);
+      setTimeout(() => window.scrollTo({ top: y, behavior: 'instant' }), 50);
+      setTimeout(() => window.scrollTo({ top: y, behavior: 'instant' }), 300);
+    } else {
+      fetchNotes(1, true); // 正常进入，强制刷新
     }
-  }, []);
-  
+  }, [viewMode, viewModeReady]);
+
   // 检查会话状态
   const checkSession = async () => {
     try {
@@ -131,15 +137,24 @@ export default function NotesPage() {
     }
   };
 
-  // 获取笔记列表（status 或 viewMode 变化时触发）
-  useEffect(() => {
-    if (status !== 'loading') {
-      fetchNotes(1, true);
-    }
-  }, [status, viewMode]);
+  // 笔记列表缓存 key
+  const cacheKey = `notes_cache_${viewMode}`;
 
   // 获取笔记列表 - 简化版本
   const fetchNotes = useCallback(async (page: number = pagination?.page || 1, ignoreCache: boolean = false) => {
+    // 第一页且有缓存时，先用缓存数据渲染（让滚动恢复能立即生效）
+    if (page === 1 && !ignoreCache) {
+      const cached = sessionStorage.getItem(cacheKey);
+      if (cached) {
+        try {
+          const { notes: cachedNotes, pagination: cachedPagination } = JSON.parse(cached);
+          setNotes(cachedNotes);
+          setPagination(cachedPagination);
+          setLoading(false);
+          return;
+        } catch {}
+      }
+    }
     try {
       setLoading(true);
       const limit = pagination?.limit || 10; // 使用默认值10，避免undefined
@@ -197,14 +212,14 @@ export default function NotesPage() {
         }
         
         setNotes(notesData);
-        setPagination(paginationData || {
-          page: page,
-          limit: limit,
-          total: 0,
-          totalPages: 0,
-          hasNext: false,
-          hasPrev: false
-        });
+        const finalPagination = paginationData || {
+          page: page, limit: limit, total: 0, totalPages: 0, hasNext: false, hasPrev: false
+        };
+        setPagination(finalPagination);
+        // 第一页时缓存数据，供返回时快速恢复
+        if (page === 1) {
+          sessionStorage.setItem(cacheKey, JSON.stringify({ notes: notesData, pagination: finalPagination }));
+        }
       } else {
         // 错误时设置空数据
         setNotes([]);
@@ -230,14 +245,6 @@ export default function NotesPage() {
       });
     } finally {
       setLoading(false);
-      // 恢复滚动位置（只执行一次，执行后清空 ref）
-      if (pendingScrollRef.current !== null) {
-        const y = pendingScrollRef.current;
-        pendingScrollRef.current = null;
-        requestAnimationFrame(() => {
-          window.scrollTo({ top: y, behavior: 'instant' });
-        });
-      }
     }
   }, [status, viewMode, pagination?.limit]);
 

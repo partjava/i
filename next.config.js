@@ -12,8 +12,9 @@ const nextConfig = {
   
   // 实用的实验性优化（保留经过验证的优化项）
   experimental: {
-    optimizeCss: true,         // 优化CSS加载性能
-    optimizePackageImports: ['antd'], // 针对antd的导入优化（如果使用antd）
+    optimizeCss: true,
+    optimizePackageImports: ['antd'],
+    scrollRestoration: true,   // 浏览器原生滚动位置恢复
     turbo: {
       rules: {
         '*.svg': {
