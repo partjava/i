@@ -5,7 +5,8 @@ import { SendOutlined, CloseOutlined } from '@ant-design/icons';
 import * as THREE from 'three';
 import ReactMarkdown from 'react-markdown';
 import SyntaxHighlighter from 'react-syntax-highlighter';
-import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const vscDarkPlus = require('react-syntax-highlighter/dist/styles/vs2015').default || require('react-syntax-highlighter/dist/styles/vs2015');
 import remarkGfm from 'remark-gfm';
 
 interface Message {

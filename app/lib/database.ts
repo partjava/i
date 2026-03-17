@@ -297,8 +297,10 @@ export async function initDatabase() {
         technology VARCHAR(100),
         activity VARCHAR(255),
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        study_date DATE GENERATED ALWAYS AS (DATE(created_at)) STORED,
         INDEX idx_user_id (user_id),
-        INDEX idx_created_at (created_at)
+        INDEX idx_created_at (created_at),
+        UNIQUE KEY unique_user_date (user_id, study_date)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
     `)
     
