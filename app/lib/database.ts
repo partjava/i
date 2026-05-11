@@ -36,10 +36,8 @@ const pool = mysql.createPool({
 // 监控连接池状态（仅开发环境）
 if (process.env.NODE_ENV === 'development') {
   pool.on('connection', () => {
-    console.log('📊 新数据库连接已建立')
   })
   pool.on('release', () => {
-    console.log('📊 数据库连接已释放')
   })
 }
 

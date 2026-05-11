@@ -18,10 +18,21 @@ export class UserRepository extends BaseRepository {
     name: string;
     email: string;
     password: string;
+    bio?: string;
+    location?: string;
+    website?: string;
+    github?: string;
   }): Promise<number> {
+    const fields = ['name', 'email', 'password'];
+    const values: any[] = [userData.name, userData.email, userData.password];
+    if (userData.bio !== undefined) { fields.push('bio'); values.push(userData.bio); }
+    if (userData.location !== undefined) { fields.push('location'); values.push(userData.location); }
+    if (userData.website !== undefined) { fields.push('website'); values.push(userData.website); }
+    if (userData.github !== undefined) { fields.push('github'); values.push(userData.github); }
+    const placeholders = fields.map(() => '?').join(', ');
     const result = await this.executeUpdate(
-      'INSERT INTO users (name, email, password) VALUES (?, ?, ?)',
-      [userData.name, userData.email, userData.password]
+      `INSERT INTO users (${fields.join(', ')}) VALUES (${placeholders})`,
+      values
     );
     return result.insertId!;
   }

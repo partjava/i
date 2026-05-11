@@ -103,25 +103,13 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
   // 监听session变化
   useEffect(() => {
-    console.log('UserProvider - Session状态变化:', { 
-      status, 
-      hasSession: !!session, 
-      hasUser: !!session?.user,
-      userEmail: session?.user?.email,
-      userName: session?.user?.name 
-    });
-    
-    // 等待 session 状态确定
     if (status === 'loading') {
-      console.log('UserProvider - Session加载中，等待...');
       return;
     }
     
     if (status === 'authenticated' && session?.user) {
-      console.log('UserProvider - 检测到已认证，获取用户数据...');
       fetchUserData();
     } else {
-      console.log('UserProvider - 未认证，清除用户数据');
       // 清除用户数据
       setUser(null);
       setLoading(false);

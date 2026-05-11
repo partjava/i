@@ -420,6 +420,7 @@ export default function NoteDetailPage() {
             {/* 二维码 */}
             {qrDataUrl && (
               <div className="flex flex-col items-center mb-4">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={qrDataUrl} alt="分享二维码" className="w-44 h-44 rounded-lg border border-gray-100" />
                 <p className="text-xs text-gray-400 mt-2">扫码访问笔记</p>
               </div>

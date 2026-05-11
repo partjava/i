@@ -16,18 +16,15 @@ export default function DevTools() {
     try {
       // 1. 清除 localStorage
       localStorage.clear();
-      console.log('✅ localStorage 已清除');
       
       // 2. 清除 sessionStorage
       sessionStorage.clear();
-      console.log('✅ sessionStorage 已清除');
       
       // 3. 清除所有 cookies
       document.cookie.split(";").forEach(function(c) {
         const cookieName = c.split('=')[0].trim();
         document.cookie = cookieName + "=;expires=" + new Date().toUTCString() + ";path=/";
       });
-      console.log('✅ Cookies 已清除');
       
       // 4. 清除 Service Worker 缓存
       if ('serviceWorker' in navigator) {
@@ -35,14 +32,12 @@ export default function DevTools() {
         for (const registration of registrations) {
           await registration.unregister();
         }
-        console.log('✅ Service Worker 已清除');
       }
       
       // 5. 清除 Cache Storage
       if ('caches' in window) {
         const cacheNames = await caches.keys();
         await Promise.all(cacheNames.map(name => caches.delete(name)));
-        console.log('✅ Cache Storage 已清除');
       }
       
       message.success('所有缓存已清除！页面将在3秒后刷新...');

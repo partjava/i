@@ -11,13 +11,11 @@ export default function PWAProvider() {
     if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
       if (process.env.NODE_ENV === 'production') {
         navigator.serviceWorker.register('/sw.js')
-          .then(reg => console.log('Service Worker 注册成功:', reg))
           .catch(err => console.error('Service Worker 注册失败:', err));
       } else {
         // 开发环境中注销所有 Service Worker，防止旧缓存干扰
         navigator.serviceWorker.getRegistrations().then(regs => {
           regs.forEach(reg => reg.unregister());
-          console.log('开发环境 - 已注销所有 Service Worker');
         });
       }
     }
@@ -43,7 +41,6 @@ export default function PWAProvider() {
 
     // 监听PWA安装成功
     const handleAppInstalled = () => {
-      console.log('PWA 安装成功');
       setIsInstallable(false);
       setDeferredPrompt(null);
     };
@@ -73,7 +70,6 @@ export default function PWAProvider() {
     if (deferredPrompt) {
       deferredPrompt.prompt();
       const { outcome } = await deferredPrompt.userChoice;
-      console.log('用户选择:', outcome);
       setDeferredPrompt(null);
       setIsInstallable(false);
     }

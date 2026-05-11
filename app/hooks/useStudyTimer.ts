@@ -77,13 +77,11 @@ export function useStudyTimer({
     
     // 如果未记录的时间小于最小记录时间，则不记录
     if (unrecordedSeconds < minRecordTime) {
-      console.log(`学习时间太短（${unrecordedSeconds}秒），不记录`);
       return false;
     }
     
     // 如果没有登录，则不记录
     if (!session?.user) {
-      console.log('用户未登录，不记录学习时间');
       return false;
     }
     
@@ -142,7 +140,6 @@ export function useStudyTimer({
       if (data.success) {
         // 更新最后记录的时间
         setLastRecordedTime(totalSeconds);
-        console.log(`成功记录学习时间: ${unrecordedMinutes}分钟`);
         return true;
       } else {
         throw new Error(data.error || '记录失败');
@@ -161,7 +158,6 @@ export function useStudyTimer({
     if (totalSeconds > 0 && totalSeconds % autoRecordInterval === 0 && totalSeconds > lastRecordedTime) {
       recordStudyTime().then(success => {
         if (success) {
-          console.log('自动记录学习时间成功');
         }
       });
     }

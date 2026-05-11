@@ -77,6 +77,7 @@ export default function NotesPage() {
   const [isMultiSelectMode, setIsMultiSelectMode] = useState(false);
   const [selectedNotes, setSelectedNotes] = useState<{[key: string]: boolean}>({});
   const [isDeleting, setIsDeleting] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [newNote, setNewNote] = useState({
     title: '',
     content: '',
@@ -490,7 +491,6 @@ export default function NotesPage() {
 
       if (response.ok) {
         const data = await response.json();
-        console.log('创建笔记成功:', data);
         
         setShowCreateForm(false);
         setNewNote({
@@ -522,7 +522,6 @@ export default function NotesPage() {
   const handleDeleteNote = async (noteId: string) => {
     if (confirm('确定要删除这个笔记吗？')) {
       try {
-        console.log('尝试删除笔记:', noteId);
         
         const response = await fetch(`/api/notes/${noteId}`, {
           method: 'DELETE',
@@ -530,7 +529,6 @@ export default function NotesPage() {
         });
 
         if (response.ok) {
-          console.log('笔记删除成功');
           fetchNotes(pagination.page); // 重新获取当前页笔记
           // 显示成功消息
           alert('笔记已成功删除');
@@ -563,7 +561,6 @@ export default function NotesPage() {
         return;
       }
       
-      console.log('尝试批量删除笔记:', noteIdsToDelete);
       
       const response = await fetch('/api/notes/batch-delete', {
         method: 'POST',
@@ -576,7 +573,6 @@ export default function NotesPage() {
       
       if (response.ok) {
         const result = await response.json();
-        console.log('批量删除成功:', result);
         
         // 清除选择状态
         setSelectedNotes({});
@@ -610,11 +606,55 @@ export default function NotesPage() {
   // 允许未登录用户查看公开笔记
   // 不再需要session检查，因为我们已经在useEffect中处理了未登录状态
 
-  // 显示的笔记列表（搜索结果或全部笔记）
-  const displayNotes = searchQuery.trim() ? searchResults : notes;
+  const allCategories = Array.from(new Set(notes.map(n => n.category).filter(Boolean)));
+
+  const displayNotes = (searchQuery.trim() ? searchResults : notes)
+    .filter(n => selectedCategory === 'all' || n.category === selectedCategory);
 
   return (
-    <div className="p-8">
+    <div className="flex p-8 gap-6">
+      {/* 左侧分类侧边栏 */}
+      <aside className="hidden md:block w-56 flex-shrink-0">
+        <div className="bg-white rounded-lg shadow-md p-4 sticky top-8">
+          <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">分类筛选</h3>
+          <div className="space-y-1">
+            <button
+              onClick={() => setSelectedCategory('all')}
+              className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                selectedCategory === 'all'
+                  ? 'bg-indigo-50 text-indigo-700'
+                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+              }`}
+            >
+              全部
+              <span className="ml-2 text-xs text-gray-400">{notes.length}</span>
+            </button>
+            {allCategories.map(cat => {
+              const count = notes.filter(n => n.category === cat).length;
+              return (
+                <button
+                  key={cat}
+                  onClick={() => setSelectedCategory(cat)}
+                  className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    selectedCategory === cat
+                      ? 'bg-indigo-50 text-indigo-700'
+                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                  }`}
+                >
+                  {cat}
+                  <span className="ml-2 text-xs text-gray-400">{count}</span>
+                </button>
+              );
+            })}
+          </div>
+          {allCategories.length === 0 && (
+            <p className="text-xs text-gray-400 mt-2">暂无分类</p>
+          )}
+        </div>
+      </aside>
+
+      {/* 右侧主内容区 */}
+      <div className="flex-1 min-w-0">
       
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">
@@ -629,6 +669,7 @@ export default function NotesPage() {
                   setViewMode('my');
                   setIsMultiSelectMode(false);
                   setSelectedNotes({});
+                  setSelectedCategory('all');
                   fetchNotesWithMode('my', 1);
                 }}
                 className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
@@ -645,6 +686,7 @@ export default function NotesPage() {
                 setViewMode('public');
                 setIsMultiSelectMode(false);
                 setSelectedNotes({});
+                setSelectedCategory('all');
                 fetchNotesWithMode('public', 1);
               }}
               className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
@@ -1074,6 +1116,7 @@ export default function NotesPage() {
           </div>
         </div>
       )}
+      </div>{/* /右侧主内容区 */}
     </div>
   );
 }
