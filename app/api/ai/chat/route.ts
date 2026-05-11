@@ -34,8 +34,10 @@ async function callGLM(message: string): Promise<string> {
   return data.choices?.[0]?.message?.content?.trim() || '';
 }
 
+const PYTHON_AI_URL = process.env.PYTHON_AI_URL || 'http://localhost:8000';
+
 async function callPythonAI(message: string): Promise<string> {
-  const response = await fetch('http://localhost:8000/ask', {
+  const response = await fetch(`${PYTHON_AI_URL}/ask`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ question: message, conversation_id: null }),
@@ -64,26 +66,33 @@ async function callPythonAI(message: string): Promise<string> {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { message } = body;
+    let { message } = body;
+    const { pageContext } = body;
 
     if (!message) {
       return NextResponse.json({ error: '消息不能为空' }, { status: 400 });
     }
 
-    // 优先用 GLM，失败降级到 Python 服务
-    try {
-      const reply = await callGLM(message);
-      if (reply) return NextResponse.json({ reply });
-    } catch (glmError) {
-      console.warn('GLM API 失败，降级到 Python 服务:', glmError);
+    if (pageContext) {
+      message = `${pageContext}\n\n---\n用户问题:\n${message}`;
     }
 
-    try {
-      const reply = await callPythonAI(message);
-      return NextResponse.json({ reply });
-    } catch (pyError) {
-      console.warn('Python AI 服务也失败:', pyError);
-    }
+    // 优先用 GLM，失败降级到 Python 服务
+      // 优先调用本地 Python 服务（partjava-ai），该服务可配置使用 DeepSeek
+      try {
+        const reply = await callPythonAI(message);
+        if (reply) return NextResponse.json({ reply });
+      } catch (pyError) {
+        console.warn('Python AI 服务失败，尝试回退到 GLM:', pyError);
+      }
+
+      // 如果本地服务不可用，再尝试调用 GLM（远端大模型）
+      try {
+        const reply = await callGLM(message);
+        if (reply) return NextResponse.json({ reply });
+      } catch (glmError) {
+        console.warn('GLM API 失败:', glmError);
+      }
 
     // 最终 fallback
     const lowerMessage = message.toLowerCase();

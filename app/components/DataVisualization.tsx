@@ -15,11 +15,9 @@ export default function DataVisualization({ stats, isGuest }: DataVisualizationP
 
   // 生成周数据 - 优先使用真实的每日数据
   const generateWeeklyData = () => {
-    console.log('生成周数据，stats.dailyStats:', stats.dailyStats);
     
     // 如果有每日统计数据，直接使用
     if (stats.dailyStats && Array.isArray(stats.dailyStats) && stats.dailyStats.length > 0) {
-      console.log('使用真实的每日数据:', stats.dailyStats.length, '条');
       return stats.dailyStats.map((item: any) => {
         // 格式化日期显示
         const dateObj = new Date(item.date);
@@ -33,7 +31,6 @@ export default function DataVisualization({ stats, isGuest }: DataVisualizationP
       });
     }
     
-    console.log('没有每日数据，返回空数据');
     // 如果没有数据，返回空的周数据
     const days = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
     return days.map(day => ({

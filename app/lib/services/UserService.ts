@@ -13,20 +13,26 @@ export class UserService {
     name: string;
     email: string;
     password: string;
+    bio?: string;
+    location?: string;
+    website?: string;
+    github?: string;
   }): Promise<number> {
-    // 验证邮箱是否已存在
     const existingUser = await this.userRepository.findByEmail(userData.email);
     if (existingUser) {
       throw new Error('邮箱已被注册');
     }
 
-    // 加密密码
     const hashedPassword = await bcrypt.hash(userData.password, 12);
 
     return this.userRepository.create({
       name: userData.name,
       email: userData.email,
-      password: hashedPassword
+      password: hashedPassword,
+      bio: userData.bio,
+      location: userData.location,
+      website: userData.website,
+      github: userData.github,
     });
   }
 

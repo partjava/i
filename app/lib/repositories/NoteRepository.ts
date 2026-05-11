@@ -211,7 +211,6 @@ export class NoteRepository extends BaseRepository {
       ]);
       
       // 添加日志，确认公开笔记数量
-      console.log('公开笔记数量查询结果:', countResult);
 
 
       const totalCount = countResult[0]?.total || 0;
@@ -304,6 +303,19 @@ export class NoteRepository extends BaseRepository {
           hasPrev: false
         }
       };
+    }
+  }
+
+  async getDistinctCategories(): Promise<string[]> {
+    try {
+      await this.ensureDatabaseInitialized();
+      const rows = await this.executeQuery(
+        `SELECT DISTINCT category FROM notes WHERE category IS NOT NULL AND category != '' ORDER BY category`
+      );
+      return rows.map((r: any) => r.category);
+    } catch (error) {
+      console.error('Failed to fetch categories:', error);
+      return [];
     }
   }
 

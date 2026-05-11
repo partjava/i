@@ -10,6 +10,7 @@ import { UserProvider } from '../providers/UserProvider';
 import SimpleLearningTracker from './SimpleLearningTracker';
 import PWAProvider from './PWAProvider';
 import DevTools from './DevTools';
+import AiChat from './AiChat';
 
 interface RootLayoutClientProps {
   children: React.ReactNode;
@@ -76,6 +77,7 @@ export default function RootLayoutClient({ children }: RootLayoutClientProps) {
                   </div>
                 </main>
               </div>
+              <AiChat />
               <BottomNavigation />
             </div>
           </MobileGestureHandler>

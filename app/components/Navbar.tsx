@@ -33,25 +33,12 @@ export default function Navbar() {
   const [showRobot, setShowRobot] = useState(false);
   const [robotPreloaded, setRobotPreloaded] = useState(false);
 
-  // 调试：打印 session 和 user 状态
-  useEffect(() => {
-    console.log('Navbar - Session状态:', { 
-      status, 
-      hasSession: !!session, 
-      hasUser: !!session?.user,
-      userEmail: session?.user?.email,
-      userName: session?.user?.name,
-      userFromContext: user?.name || user?.email
-    });
-  }, [session, status, user]);
-
   // 强制检查session状态
   useEffect(() => {
     const checkSession = async () => {
       try {
         const response = await fetch('/api/auth/session');
         const sessionData = await response.json();
-        console.log('Navbar - API Session检查:', sessionData);
         if (!sessionData.user && session?.user) {
           // 前端有session但后端没有，强制退出登录
           await signOut({ redirect: false });
@@ -255,13 +242,13 @@ export default function Navbar() {
                 <span className="text-xs">全局</span>
               </Link>
               <Link 
-                href="/ai-chat" 
+                href="/game" 
                 className="flex flex-col items-center text-gray-600 hover:text-purple-600 transition-colors"
               >
                 <svg className="w-5 h-5 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path d="M12 2a7 7 0 017 7v2a7 7 0 01-7 7 7 7 0 01-7-7V9a7 7 0 017-7zm0 2a5 5 0 00-5 5v2a5 5 0 005 5 5 5 0 005-5V9a5 5 0 00-5-5zm0 7a2 2 0 110-4 2 2 0 010 4z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 6h.01M6 12h.01M6 18h.01M12 6h.01M12 12h.01M12 18h.01M18 6h.01M18 12h.01M18 18h.01" />
                 </svg>
-                <span className="text-xs">AI</span>
+                <span className="text-xs">游戏</span>
               </Link>
               <button 
                 onClick={() => setShowRobot(true)}

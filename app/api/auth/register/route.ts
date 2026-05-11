@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
       return createErrorResponse(validationError)
     }
 
-    const { name, email, password } = body
+    const { name, email, password, bio, location, website, github } = body
 
     // 验证邮箱格式
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -32,7 +32,11 @@ export async function POST(request: NextRequest) {
     const userId = await userService.registerUser({
       name,
       email,
-      password
+      password,
+      bio: bio || '',
+      location: location || '',
+      website: website || '',
+      github: github || '',
     })
 
     return createSuccessResponse(
