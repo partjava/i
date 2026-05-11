@@ -97,13 +97,11 @@ export function withCache<T>(
       // 尝试从缓存获取
       const cached = cache.get<T>(key);
       if (cached !== null) {
-        console.log(`🔄 缓存命中: ${key}`);
         resolve(cached);
         return;
       }
 
       // 缓存未命中，执行函数
-      console.log(`🔍 缓存未命中，执行查询: ${key}`);
       const result = await fetchFunction();
       
       // 存入缓存
