@@ -1,40 +1,24 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { usePathname } from 'next/navigation';
 
 function useStudyCompletion() {
   const [completed, setCompleted] = useState(false);
   const [categoryProgress, setCategoryProgress] = useState({ total: 0, done: 0 });
   const [loading, setLoading] = useState(false);
-
-  const getCurrentPath = () => window.location.pathname;
-
-  const syncToServer = useCallback(async (pagePath: string, isCompleted: boolean) => {
-    try {
-      const res = await fetch('/api/study/progress', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pagePath, completed: isCompleted }),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.done !== undefined) {
-          setCategoryProgress(prev => ({ ...prev, done: data.done }));
-        }
-      }
-    } catch {}
-  }, []);
+  const pathname = usePathname();
 
   const loadFromServer = useCallback(async () => {
+    const path = pathname;
+    if (!path) return;
     try {
       const res = await fetch('/api/study/progress');
       if (!res.ok) return;
       const data = await res.json();
       const progress: Record<string, boolean> = data.progress || {};
-      const path = getCurrentPath();
       setCompleted(!!progress[path]);
 
-      // 本地也存一份，做乐观读取
       Object.entries(progress).forEach(([key, val]) => {
         if (val) localStorage.setItem('study_completed_' + key, '1');
         else localStorage.removeItem('study_completed_' + key);
@@ -48,31 +32,36 @@ function useStudyCompletion() {
         setCategoryProgress({ total: keys.length, done });
       }
     } catch {}
-  }, []);
+  }, [pathname]);
 
+  // 每次路由变化时重新加载
   useEffect(() => {
+    setCompleted(false);
+    setCategoryProgress({ total: 0, done: 0 });
     loadFromServer();
   }, [loadFromServer]);
 
   const toggleComplete = useCallback(async () => {
     if (loading) return;
     setLoading(true);
-    const path = getCurrentPath();
     const newCompleted = !completed;
-
-    // 乐观更新
     setCompleted(newCompleted);
     if (newCompleted) {
-      localStorage.setItem('study_completed_' + path, '1');
+      localStorage.setItem('study_completed_' + pathname, '1');
       setCategoryProgress(prev => ({ ...prev, done: prev.done + 1 }));
     } else {
-      localStorage.removeItem('study_completed_' + path);
+      localStorage.removeItem('study_completed_' + pathname);
       setCategoryProgress(prev => ({ ...prev, done: Math.max(0, prev.done - 1) }));
     }
-
-    await syncToServer(path, newCompleted);
+    try {
+      await fetch('/api/study/progress', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pagePath: pathname, completed: newCompleted }),
+      });
+    } catch {}
     setLoading(false);
-  }, [completed, loading, syncToServer]);
+  }, [completed, loading, pathname]);
 
   return { completed, toggleComplete, categoryProgress };
 }

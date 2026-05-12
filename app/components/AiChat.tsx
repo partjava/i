@@ -558,7 +558,11 @@ ${text}${contextHint}`;
                 <StitchLogo size={20} />
                 <span style={{ fontWeight: 600 }}>AI 学习助手</span>
               </div>
-              <div style={{ color: '#d1d5db' }}>点击我可帮你总结页面内容、创建笔记、解答问题</div>
+              <div style={{ color: '#d1d5db', fontSize: 12, lineHeight: 1.6 }}>
+                💬 问我任何编程问题<br />
+                📝 对话总结 → 创建笔记<br />
+                📄 识别当前页面内容
+              </div>
               <button
                 onClick={() => { setShowHint(false); localStorage.setItem('ai_hint_dismissed', '1'); }}
                 style={{ marginTop: 6, background: 'rgba(255,255,255,0.1)', border: 'none', color: '#9ca3af', fontSize: 11, padding: '3px 8px', borderRadius: 4, cursor: 'pointer' }}
