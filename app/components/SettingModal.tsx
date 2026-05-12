@@ -164,6 +164,30 @@ export default function SettingModal({ open, onClose }: SettingModalProps) {
     });
   };
 
+  const handleInstallPWA = () => {
+    // 触发 PWA 安装
+    window.dispatchEvent(new CustomEvent('pwa-install-request'));
+    message.info('正在尝试安装...');
+    // 如果是 iOS，会显示引导提示
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    if (isIOS) {
+      Modal.info({
+        title: 'iOS 安装指引',
+        content: (
+          <div>
+            <p>请按以下步骤将 PartJava 添加到主屏幕：</p>
+            <ol className="list-decimal pl-5 space-y-2 mt-2">
+              <li>点击浏览器底部的 <strong>分享</strong> 按钮（<span className="text-lg">⎋</span>）</li>
+              <li>向下滑动找到 <strong>添加到主屏幕</strong></li>
+              <li>点击右上角 <strong>添加</strong></li>
+            </ol>
+          </div>
+        ),
+        okText: '知道了',
+      });
+    }
+  };
+
   const handleStudyReminderChange = async (checked: boolean) => {
     if (checked) {
       // 请求浏览器通知权限
@@ -432,6 +456,21 @@ export default function SettingModal({ open, onClose }: SettingModalProps) {
               ),
               children: (
                 <Space direction="vertical" size="large" style={{ width: '100%' }}>
+                  <div>
+                    <div className="font-semibold mb-2">安装应用</div>
+                    <div className="text-sm text-gray-500 mb-3">
+                      将 PartJava 添加到桌面，像原生 App 一样使用
+                    </div>
+                    <Button 
+                      icon={<SettingOutlined />}
+                      onClick={handleInstallPWA}
+                      type="primary"
+                      block
+                    >
+                      添加到主屏幕
+                    </Button>
+                  </div>
+
                   <div>
                     <div className="font-semibold mb-2">导出数据</div>
                     <div className="text-sm text-gray-500 mb-3">

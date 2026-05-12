@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic'
 import { NextRequest } from 'next/server'
 import { CommentService } from '@/app/lib/services/CommentService'
 import { handleApiError, createSuccessResponse, createErrorResponse } from '@/app/lib/api/middleware'

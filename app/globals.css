@@ -99,6 +99,60 @@ body.dark {
   color: #f9fafb;
 }
 
+/* AI 助手提示动画 */
+@keyframes aiHintFade {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* 全局 Tailwind 暗黑模式等价类 */
+body.dark .bg-white { background-color: #1f2937; }
+body.dark .bg-gray-50 { background-color: #111827; }
+body.dark .bg-gray-100 { background-color: #1f2937; }
+body.dark .bg-gray-200 { background-color: #374151; }
+body.dark .bg-gray-900 { background-color: #f9fafb; }
+body.dark .bg-indigo-50 { background-color: #1e1b4b; }
+body.dark .bg-blue-50 { background-color: #172554; }
+body.dark .bg-blue-100 { background-color: #1e3a5f; }
+body.dark .bg-green-100 { background-color: #14532d; }
+body.dark .bg-red-50 { background-color: #450a0a; }
+
+body.dark .text-gray-300 { color: #d1d5db; }
+body.dark .text-gray-400 { color: #9ca3af; }
+body.dark .text-gray-500 { color: #9ca3af; }
+body.dark .text-gray-600 { color: #d1d5db; }
+body.dark .text-gray-700 { color: #e5e7eb; }
+body.dark .text-gray-800 { color: #f3f4f6; }
+body.dark .text-gray-900 { color: #f9fafb; }
+body.dark .text-indigo-700 { color: #a5b4fc; }
+body.dark .text-blue-800 { color: #93c5fd; }
+body.dark .text-green-800 { color: #86efac; }
+body.dark .text-green-600 { color: #4ade80; }
+body.dark .text-red-600 { color: #f87171; }
+
+body.dark .border-gray-100 { border-color: #374151; }
+body.dark .border-gray-200 { border-color: #374151; }
+body.dark .border-gray-300 { border-color: #4b5563; }
+body.dark .border-t-gray-100 { border-top-color: #374151; }
+
+body.dark .shadow-md { box-shadow: 0 4px 6px -1px rgba(0,0,0,0.4), 0 2px 4px -2px rgba(0,0,0,0.3); }
+body.dark .shadow-lg { box-shadow: 0 10px 15px -3px rgba(0,0,0,0.5); }
+body.dark .shadow-sm { box-shadow: 0 1px 2px 0 rgba(0,0,0,0.3); }
+body.dark .hover\:shadow-lg:hover { box-shadow: 0 10px 15px -3px rgba(0,0,0,0.5); }
+
+body.dark .hover\:bg-gray-50:hover { background-color: #374151; }
+body.dark .hover\:text-gray-900:hover { color: #f9fafb; }
+
+body.dark .prose { color: #e5e7eb; }
+body.dark .prose h1,
+body.dark .prose h2,
+body.dark .prose h3,
+body.dark .prose h4 { color: #f9fafb; }
+body.dark .prose strong { color: #f9fafb; }
+body.dark .prose code { background: #374151; color: #fbbf24; }
+body.dark .prose pre { background: #111827; }
+body.dark .prose blockquote { border-left-color: #4b5563; color: #9ca3af; }
+
 body.dark .card {
   background-color: #1f2937;
   color: #f9fafb;

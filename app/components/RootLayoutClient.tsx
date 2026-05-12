@@ -23,6 +23,15 @@ export default function RootLayoutClient({ children }: RootLayoutClientProps) {
   useEffect(() => {
     setMounted(true);
     
+    // 全局快捷键
+    const onKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        window.dispatchEvent(new CustomEvent('global-search-focus'));
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    
     // 从 localStorage 读取主题设置
     const savedTheme = localStorage.getItem('theme');
     
@@ -56,7 +65,10 @@ export default function RootLayoutClient({ children }: RootLayoutClientProps) {
     };
     
     mediaQuery.addEventListener('change', handleChange);
-    return () => mediaQuery.removeEventListener('change', handleChange);
+    return () => {
+      mediaQuery.removeEventListener('change', handleChange);
+      window.removeEventListener('keydown', onKeyDown);
+    };
   }, []);
 
   return (

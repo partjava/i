@@ -267,7 +267,7 @@ export default function Navbar() {
           <div className="hidden md:flex flex-1 max-w-md mx-4">
             <GlobalSearch 
               className="w-full"
-              placeholder="搜索课程、工具、笔记..."
+              placeholder="搜索... (Ctrl+K)"
               size="middle"
             />
           </div>

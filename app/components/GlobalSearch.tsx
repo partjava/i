@@ -76,6 +76,17 @@ export default function GlobalSearch({
 
   // 加载搜索历史
   useEffect(() => {
+    const onFocusSearch = () => {
+      if (searchRef.current) {
+        searchRef.current.focus();
+        setShowDropdown(true);
+      }
+    };
+    window.addEventListener('global-search-focus', onFocusSearch);
+    return () => window.removeEventListener('global-search-focus', onFocusSearch);
+  }, []);
+
+  useEffect(() => {
     if (session?.user?.email) {
       loadSearchHistory();
     } else {
