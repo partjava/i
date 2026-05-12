@@ -11,6 +11,7 @@ import {
 } from '@ant-design/icons';
 import Link from 'next/link';
 import { challengeCategories, difficultyColors, difficultyLabels } from '@/app/data/challenges';
+import InkWashDecoration from '@/app/components/InkWashDecoration';
 
 const { Search } = Input;
 
@@ -112,7 +113,12 @@ const ChallengePage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <>
+    <div className="min-h-screen bg-[#e5dfd0] py-8">
+      {/* 水墨画顶部装饰 */}
+      <InkWashDecoration variant="landscape" height={180} className="bg-[#e5dfd0] -mt-8" />
+      <InkWashDecoration variant="mist" height={50} className="bg-[#e5dfd0] -mt-4" />
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* 页面标题 */}
         <div className="text-center mb-8">
@@ -133,7 +139,7 @@ const ChallengePage: React.FC = () => {
         </div>
 
         {/* 筛选和搜索 */}
-        <div className="bg-white rounded-lg shadow-md p-6 mb-8">
+        <div className="bg-[#faf6f0] rounded-lg shadow-md p-6 mb-8 border border-[#d4c8b8]">
           <Row gutter={[16, 16]} align="middle">
             <Col xs={24} sm={12} md={6}>
               <div className="flex items-center gap-2">
@@ -195,7 +201,7 @@ const ChallengePage: React.FC = () => {
                     hoverable
                     className="h-full challenge-card"
                     cover={
-                      <div className="p-4 bg-gradient-to-r from-blue-500 to-purple-600 text-white">
+                      <div className="p-4 bg-gradient-to-r from-[#5c4033] to-[#8b7355] text-white">
                         <div className="flex justify-between items-start mb-2">
                           <Tag
                             color={difficultyColors[challenge.difficulty]}
@@ -290,6 +296,10 @@ const ChallengePage: React.FC = () => {
         )}
       </div>
 
+      {/* 水墨画底部装饰 */}
+      <InkWashDecoration variant="bamboo" height={100} className="bg-[#e5dfd0] mt-8" />
+      <InkWashDecoration variant="landscape" height={200} className="bg-[#e5dfd0]" />
+
       <style jsx>{`
         .challenge-card {
           transition: all 0.3s ease;
@@ -312,6 +322,7 @@ const ChallengePage: React.FC = () => {
         }
       `}</style>
     </div>
+    </>
   );
 };
 

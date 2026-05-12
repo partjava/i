@@ -124,7 +124,7 @@ export default function BottomNavigation() {
   return (
     <>
       {/* 底部导航栏 */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 lg:hidden shadow-lg">
+      <div className="fixed bottom-0 left-0 right-0 bg-[#faf6f0] border-t border-[#d4c8b8] z-50 lg:hidden shadow-lg">
         <div className="flex items-center justify-around px-1 py-2 pb-safe">
           {primaryNavItems.map((item) => {
             const active = isActive(item.href);
@@ -137,7 +137,7 @@ export default function BottomNavigation() {
                   flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-200
                   ${active 
                     ? 'text-blue-600 bg-blue-50 scale-105' 
-                    : 'text-gray-600 hover:text-gray-800 hover:bg-gray-50 active:bg-gray-100 active:scale-95'
+                    : 'text-gray-600 hover:text-gray-800 hover:bg-[#f5f0e8] active:bg-[#e8ddd0] active:scale-95'
                   }
                   min-w-0 flex-1 relative touch-manipulation
                 `}
@@ -192,7 +192,7 @@ export default function BottomNavigation() {
               if (navigator.vibrate) navigator.vibrate(10);
               setMoreOpen(true);
             }}
-            className="flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-200 text-gray-600 hover:text-gray-800 hover:bg-gray-50 active:bg-gray-100 active:scale-95 min-w-0 flex-1 touch-manipulation"
+            className="flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-200 text-gray-600 hover:text-gray-800 hover:bg-[#f5f0e8] active:bg-[#e8ddd0] active:scale-95 min-w-0 flex-1 touch-manipulation"
             style={{ minHeight: '60px', minWidth: '60px' }}
           >
             <div className="text-xl">
@@ -212,7 +212,7 @@ export default function BottomNavigation() {
             <span className="text-lg font-semibold">更多功能</span>
             <button
               onClick={() => setMoreOpen(false)}
-              className="p-2 rounded-lg hover:bg-gray-100 active:bg-gray-200 transition-colors"
+              className="p-2 rounded-lg hover:bg-[#e8ddd0] active:bg-[#c4b8a0] transition-colors"
             >
               <CloseOutlined />
             </button>
@@ -240,7 +240,7 @@ export default function BottomNavigation() {
                   flex flex-col items-center justify-center p-4 rounded-2xl transition-all duration-200
                   ${active 
                     ? 'text-blue-600 bg-blue-50 shadow-md' 
-                    : 'text-gray-700 bg-gray-50 hover:bg-gray-100 active:bg-gray-200 active:scale-95'
+                    : 'text-gray-700 bg-[#f5f0e8] hover:bg-[#e8ddd0] active:bg-[#c4b8a0] active:scale-95'
                   }
                   touch-manipulation
                 `}
@@ -278,7 +278,7 @@ export default function BottomNavigation() {
                   setMoreOpen(false);
                   router.push('/profile');
                 }}
-                className="w-full flex items-center justify-between p-3 rounded-xl bg-gray-100 text-gray-700 hover:bg-gray-200 active:scale-98 transition-all touch-manipulation"
+                className="w-full flex items-center justify-between p-3 rounded-xl bg-[#e8ddd0] text-gray-700 hover:bg-[#d4c8b8] active:scale-98 transition-all touch-manipulation"
               >
                 <span className="font-medium">查看学习统计</span>
                 <UserOutlined className="text-lg" />

@@ -176,7 +176,7 @@ export default function Sidebar() {
       
       {/* 侧边栏 */}
       <div className={`
-        fixed top-0 left-0 h-full w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out z-50
+        fixed top-0 left-0 h-full w-64 bg-[#faf6f0] shadow-lg transform transition-transform duration-300 ease-in-out z-50
         ${isOpen ? 'translate-x-0' : '-translate-x-full'}
         lg:translate-x-0 lg:static lg:shadow-none lg:z-auto
       `}>
@@ -185,7 +185,7 @@ export default function Sidebar() {
           <h2 className="text-lg font-medium text-gray-900">导航菜单</h2>
           <button
             onClick={() => setIsOpen(false)}
-            className="p-2 rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-100"
+            className="p-2 rounded-md text-gray-500 hover:text-gray-700 hover:bg-[#e8ddd0]"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -208,7 +208,7 @@ export default function Sidebar() {
             <div key={category} className="mb-4">
               <button
                 onClick={() => toggleCategory(category)}
-                className="w-full flex items-center justify-between px-2 py-2 text-sm font-medium text-gray-600 rounded-md hover:bg-gray-50 hover:text-gray-900"
+                className="w-full flex items-center justify-between px-2 py-2 text-sm font-medium text-gray-600 rounded-md hover:bg-[#f5f0e8] hover:text-gray-900"
               >
                 <span>{category}</span>
                 <span className="transform transition-transform duration-200">
@@ -221,7 +221,7 @@ export default function Sidebar() {
                     <div key={item.code}>
                       <button
                         onClick={() => toggleItem(item.name)}
-                        className="w-full flex items-center justify-between px-2 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded"
+                        className="w-full flex items-center justify-between px-2 py-1 text-sm text-gray-700 hover:bg-[#e8ddd0] rounded"
                         ref={(el: HTMLButtonElement | null) => {
                           if (el) {
                             itemRefs.current[item.name] = el;

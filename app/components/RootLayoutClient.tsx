@@ -79,7 +79,7 @@ export default function RootLayoutClient({ children }: RootLayoutClientProps) {
         <DevTools />
         <SidebarProvider>
           <MobileGestureHandler>
-            <div className="flex flex-col h-screen bg-gray-50 dark:bg-gray-900">
+            <div className="flex flex-col h-screen bg-[#e5dfd0] dark:bg-[#3d2e20]">
               <Navbar />
               <div className="flex flex-1 overflow-hidden">
                 <Sidebar />

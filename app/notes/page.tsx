@@ -6,6 +6,7 @@ import Link from 'next/link';
 import MarkdownEditor from '@/app/components/MarkdownEditor';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import InkWashDecoration from '@/app/components/InkWashDecoration';
 
 interface Note {
   id?: string | number; // 后端返回的可能是数字id
@@ -612,18 +613,23 @@ export default function NotesPage() {
     .filter(n => selectedCategory === 'all' || n.category === selectedCategory);
 
   return (
+    <div className="min-h-screen bg-[#e5dfd0]">
+      {/* 水墨画顶部装饰 */}
+      <InkWashDecoration variant="landscape" height={160} className="bg-[#e5dfd0]" />
+      <InkWashDecoration variant="mist" height={40} className="bg-[#e5dfd0] -mt-4" />
+
     <div className="flex p-8 gap-6">
       {/* 左侧分类侧边栏 */}
       <aside className="hidden md:block w-56 flex-shrink-0">
-        <div className="bg-white rounded-lg shadow-md p-4 sticky top-8">
+        <div className="bg-[#faf6f0] rounded-lg shadow-md p-4 sticky top-8">
           <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">分类筛选</h3>
           <div className="space-y-1">
             <button
               onClick={() => setSelectedCategory('all')}
               className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                 selectedCategory === 'all'
-                  ? 'bg-indigo-50 text-indigo-700'
-                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                  ? 'bg-[#e8ddd0] text-[#5c4033]'
+                  : 'text-gray-600 hover:bg-[#f5f0e8] hover:text-gray-900'
               }`}
             >
               全部
@@ -637,8 +643,8 @@ export default function NotesPage() {
                   onClick={() => setSelectedCategory(cat)}
                   className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                     selectedCategory === cat
-                      ? 'bg-indigo-50 text-indigo-700'
-                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                      ? 'bg-[#e8ddd0] text-[#5c4033]'
+                      : 'text-gray-600 hover:bg-[#f5f0e8] hover:text-gray-900'
                   }`}
                 >
                   {cat}
@@ -661,7 +667,7 @@ export default function NotesPage() {
           {viewMode === 'my' ? '我的笔记' : '公开笔记'}
         </h1>
         <div className="flex items-center space-x-4">
-          <div className="flex bg-gray-200 rounded-lg p-1" style={{ marginTop: '50px' }}>
+          <div className="flex bg-[#d4c8b8] rounded-lg p-1" style={{ marginTop: '50px' }}>
             {/* 只有登录用户才能看到"我的笔记"按钮 */}
             {status === 'authenticated' && session?.user && (
               <button
@@ -674,7 +680,7 @@ export default function NotesPage() {
                 }}
                 className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                   viewMode === 'my'
-                    ? 'bg-white text-gray-900 shadow-sm'
+                    ? 'bg-[#faf6f0] text-gray-900 shadow-sm'
                     : 'text-gray-600 hover:text-gray-900'
                 }`}
               >
@@ -691,7 +697,7 @@ export default function NotesPage() {
               }}
               className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                 viewMode === 'public'
-                  ? 'bg-white text-gray-900 shadow-sm'
+                  ? 'bg-[#faf6f0] text-gray-900 shadow-sm'
                   : 'text-gray-600 hover:text-gray-900'
               }`}
             >
@@ -708,7 +714,7 @@ export default function NotesPage() {
                     alert('请先登录');
                   }
                 }}
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                className="bg-[#8b7355] text-white px-4 py-2 rounded-lg hover:bg-[#6b5a45] transition-colors"
               >
                 新建笔记
               </button>
@@ -719,8 +725,8 @@ export default function NotesPage() {
                 }}
                 className={`px-4 py-2 rounded-lg transition-colors ${
                   isMultiSelectMode 
-                    ? 'bg-gray-600 text-white hover:bg-gray-700' 
-                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                    ? 'bg-[#5c4033] text-white hover:bg-gray-700' 
+                    : 'bg-[#d4c8b8] text-gray-700 hover:bg-[#c4b8a0]'
                 }`}
               >
                 {isMultiSelectMode ? '取消多选' : '多选'}
@@ -752,11 +758,11 @@ export default function NotesPage() {
             placeholder="搜索笔记..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-4 py-2 border border-[#d4c8b8] rounded-lg focus:ring-2 focus:ring-[#8b7355] focus:border-transparent"
           />
           {isSearching && (
             <div className="absolute right-3 top-2.5">
-              <div className="animate-spin h-5 w-5 border-2 border-gray-300 border-t-blue-600 rounded-full"></div>
+              <div className="animate-spin h-5 w-5 border-2 border-[#d4c8b8] border-t-blue-600 rounded-full"></div>
             </div>
           )}
         </div>
@@ -771,8 +777,8 @@ export default function NotesPage() {
 
       {/* 刷新时的细 loading 条，不影响已有内容显示 */}
       {loading && notes.length > 0 && (
-        <div className="fixed top-0 left-0 right-0 z-50 h-1 bg-blue-100">
-          <div className="h-full bg-blue-500 animate-pulse" style={{ width: '60%' }} />
+        <div className="fixed top-0 left-0 right-0 z-50 h-1 bg-[#e8ddd0]">
+          <div className="h-full bg-[#7a5c3e] animate-pulse" style={{ width: '60%' }} />
         </div>
       )}
 
@@ -794,8 +800,8 @@ export default function NotesPage() {
             <div
               key={note.id || note._id}
               id={`note-${note.id || note._id}`}
-              className={`bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow ${
-              isMultiSelectMode && viewMode === 'my' ? 'border-2 ' + (selectedNotes[note.id || note._id || ''] ? 'border-blue-500' : 'border-transparent') : ''
+              className={`bg-[#faf6f0] rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow ${
+              isMultiSelectMode && viewMode === 'my' ? 'border-2 ' + (selectedNotes[note.id || note._id || ''] ? 'border-[#8b7355]' : 'border-transparent') : ''
               } ${!isMultiSelectMode ? 'cursor-pointer' : ''}`}
               onClick={() => {
                 if (isMultiSelectMode) return;
@@ -817,7 +823,7 @@ export default function NotesPage() {
                           [noteId]: e.target.checked
                         }));
                       }}
-                      className="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      className="h-5 w-5 rounded border-[#d4c8b8] text-[#8b7355] focus:ring-[#8b7355]"
                     />
                   </div>
                 )}
@@ -825,7 +831,7 @@ export default function NotesPage() {
                   <h3 className="text-xl font-semibold mb-2">
                     <Link
                       href={`/notes/${note.id || note._id}`}
-                      className="text-blue-600 hover:text-blue-800"
+                      className="text-[#8b7355] hover:text-[#5c4033]"
                       onClick={(e) => {
                         e.stopPropagation();
                         rememberListPosition(note.id || note._id);
@@ -836,12 +842,12 @@ export default function NotesPage() {
                   </h3>
                   <div className="flex items-center space-x-4 text-sm text-gray-500 mb-2">
                     {note.category && (
-                      <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                      <span className="bg-[#e8ddd0] text-[#5c4033] px-2 py-1 rounded">
                         {note.category}
                       </span>
                     )}
                     {note.technology && (
-                      <span className="bg-green-100 text-green-800 px-2 py-1 rounded">
+                      <span className="bg-[#d4c8b8] text-[#4a6741] px-2 py-1 rounded">
                         {note.technology}
                       </span>
                     )}
@@ -855,7 +861,7 @@ export default function NotesPage() {
                   <div className="flex space-x-2">
                     <Link 
                       href={`/notes/${note.id || note._id}/edit`}
-                      className="text-blue-600 hover:text-blue-800 text-sm"
+                      className="text-[#8b7355] hover:text-[#5c4033] text-sm"
                       onClick={(e) => {
                         e.stopPropagation();
                         rememberListPosition(note.id || note._id);
@@ -894,7 +900,7 @@ export default function NotesPage() {
               {note.tags && note.tags.length > 0 && (
                 <div className="flex flex-wrap gap-2 mb-4">
                   {note.tags.map((tag, index) => (
-                    <span key={index} className="bg-gray-100 text-gray-800 px-2 py-1 text-xs rounded">
+                    <span key={index} className="bg-[#e8ddd0] text-gray-800 px-2 py-1 text-xs rounded">
                       #{tag}
                     </span>
                   ))}
@@ -921,8 +927,8 @@ export default function NotesPage() {
             disabled={!(pagination?.hasPrev || false)}
             className={`px-3 py-2 rounded-md text-sm font-medium ${
               (pagination?.hasPrev || false)
-                ? 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
-                : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                ? 'bg-[#faf6f0] border border-[#d4c8b8] text-gray-700 hover:bg-[#f5f0e8]'
+                : 'bg-[#e8ddd0] text-gray-400 cursor-not-allowed'
             }`}
           >
             上一页
@@ -951,8 +957,8 @@ export default function NotesPage() {
                   onClick={() => handlePageChange(pageNum)}
                   className={`px-3 py-2 rounded-md text-sm font-medium ${
                     pageNum === page
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+                      ? 'bg-[#8b7355] text-white'
+                      : 'bg-[#faf6f0] border border-[#d4c8b8] text-gray-700 hover:bg-[#f5f0e8]'
                   }`}
                 >
                   {pageNum}
@@ -966,8 +972,8 @@ export default function NotesPage() {
             disabled={!(pagination?.hasNext || false)}
             className={`px-3 py-2 rounded-md text-sm font-medium ${
               (pagination?.hasNext || false)
-                ? 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
-                : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                ? 'bg-[#faf6f0] border border-[#d4c8b8] text-gray-700 hover:bg-[#f5f0e8]'
+                : 'bg-[#e8ddd0] text-gray-400 cursor-not-allowed'
             }`}
           >
             下一页
@@ -978,7 +984,7 @@ export default function NotesPage() {
       {/* 创建笔记表单模态框 */}
       {showCreateForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="bg-[#faf6f0] rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-2xl font-bold">创建新笔记</h2>
@@ -1013,7 +1019,7 @@ export default function NotesPage() {
                         tags: tpl.tags,
                         content: tpl.content,
                       }))}
-                      className="flex-shrink-0 px-3 py-2 text-sm border border-gray-200 rounded-lg hover:border-blue-400 hover:bg-blue-50 hover:text-blue-700 transition-colors whitespace-nowrap"
+                      className="flex-shrink-0 px-3 py-2 text-sm border border-gray-200 rounded-lg hover:border-blue-400 hover:bg-[#e8ddd0] hover:text-[#5c4033] transition-colors whitespace-nowrap"
                     >
                       {tpl.label}
                     </button>
@@ -1028,7 +1034,7 @@ export default function NotesPage() {
                     type="text"
                     value={newNote.title}
                     onChange={(e) => setNewNote({ ...newNote, title: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
+                    className="w-full px-3 py-2 border border-[#d4c8b8] rounded-md focus:ring-[#8b7355] focus:border-[#8b7355] bg-[#faf6f0] text-gray-900"
                     required
                   />
                 </div>
@@ -1040,7 +1046,7 @@ export default function NotesPage() {
                       type="text"
                       value={newNote.category}
                       onChange={(e) => setNewNote({ ...newNote, category: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
+                      className="w-full px-3 py-2 border border-[#d4c8b8] rounded-md focus:ring-[#8b7355] focus:border-[#8b7355] bg-[#faf6f0] text-gray-900"
                     />
                   </div>
                   <div>
@@ -1049,7 +1055,7 @@ export default function NotesPage() {
                       type="text"
                       value={newNote.technology}
                       onChange={(e) => setNewNote({ ...newNote, technology: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
+                      className="w-full px-3 py-2 border border-[#d4c8b8] rounded-md focus:ring-[#8b7355] focus:border-[#8b7355] bg-[#faf6f0] text-gray-900"
                     />
                   </div>
                 </div>
@@ -1060,7 +1066,7 @@ export default function NotesPage() {
                     type="text"
                     value={newNote.subcategory}
                     onChange={(e) => setNewNote({ ...newNote, subcategory: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
+                    className="w-full px-3 py-2 border border-[#d4c8b8] rounded-md focus:ring-[#8b7355] focus:border-[#8b7355] bg-[#faf6f0] text-gray-900"
                   />
                 </div>
 
@@ -1070,7 +1076,7 @@ export default function NotesPage() {
                     type="text"
                     value={newNote.tags}
                     onChange={(e) => setNewNote({ ...newNote, tags: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
+                    className="w-full px-3 py-2 border border-[#d4c8b8] rounded-md focus:ring-[#8b7355] focus:border-[#8b7355] bg-[#faf6f0] text-gray-900"
                     placeholder="例如：JavaScript, React, 前端"
                   />
                 </div>
@@ -1089,7 +1095,7 @@ export default function NotesPage() {
                     id="isPublic"
                     checked={newNote.isPublic}
                     onChange={(e) => setNewNote({ ...newNote, isPublic: e.target.checked })}
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded bg-white"
+                    className="h-4 w-4 text-[#8b7355] focus:ring-[#8b7355] border-[#d4c8b8] rounded bg-[#faf6f0]"
                   />
                   <label htmlFor="isPublic" className="ml-2 block text-sm text-gray-900">
                     公开笔记（其他用户可以查看）
@@ -1100,13 +1106,13 @@ export default function NotesPage() {
                   <button
                     type="button"
                     onClick={() => setShowCreateForm(false)}
-                    className="px-4 py-2 text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300"
+                    className="px-4 py-2 text-gray-700 bg-[#d4c8b8] rounded-md hover:bg-[#c4b8a0]"
                   >
                     取消
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                    className="px-4 py-2 bg-[#8b7355] text-white rounded-md hover:bg-[#6b5a45]"
                   >
                     创建笔记
                   </button>
@@ -1117,6 +1123,11 @@ export default function NotesPage() {
         </div>
       )}
       </div>{/* /右侧主内容区 */}
+    </div>
+
+      {/* 水墨画底部装饰 */}
+      <InkWashDecoration variant="bamboo" height={80} className="bg-[#e5dfd0] mt-8" />
+      <InkWashDecoration variant="landscape" height={180} className="bg-[#e5dfd0]" />
     </div>
   );
 }
