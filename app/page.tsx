@@ -11,6 +11,7 @@ import StatsSection from './components/StatsSection';
 import FlipCard from './components/FlipCard';
 import BackToTop from './components/BackToTop';
 import QuickSearch from './components/QuickSearch';
+import InkWashDecoration from './components/InkWashDecoration';
 
 const groupedSoftware = [
   {
@@ -281,22 +282,26 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#e5dfd0]">
       {/* Hero区域 */}
       <HeroSection />
+
+      {/* 水墨山水过渡 */}
+      <InkWashDecoration variant="landscape" height={220} className="bg-[#e5dfd0]" />
+      <InkWashDecoration variant="mist" height={60} className="bg-[#e5dfd0] -mt-4" />
 
       {/* 数据统计区域 */}
       <StatsSection />
 
       {/* 学习分类悬停菜单 */}
       <div className="relative">
-        <div className="bg-white shadow-md py-4 px-3 md:px-6">
+        <div className="shadow-md py-4 px-3 md:px-6 border-b border-[#d4c8b8]" style={{ background: 'linear-gradient(180deg, #f5f0e8 0%, #f0ebe0 100%)' }}>
           <div className="max-w-[1400px] mx-auto">
-            <h1 className="text-xl md:text-3xl font-bold text-gray-900 mb-4 md:mb-6">PartJava 学习平台</h1>
+            <h1 className="text-xl md:text-3xl font-bold text-gray-800 mb-4 md:mb-6 tracking-wide">PartJava 学习平台</h1>
             
             {/* 学习分类导航 */}
             <div className="relative group">
-              <button className="flex items-center text-blue-700 font-semibold text-lg hover:text-blue-900 transition-colors py-2 px-4 rounded-md hover:bg-blue-50">
+              <button className="flex items-center text-gray-700 font-semibold text-lg hover:text-gray-900 transition-colors py-2 px-4 rounded-md hover:bg-[#e8e0d0]">
                 🏫 学习中心
                 <svg className="ml-2 w-5 h-5 transition-transform group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -304,21 +309,19 @@ export default function Home() {
               </button>
               
               {/* 悬停显示的学习分类菜单 */}
-              <div className="absolute left-0 top-full mt-2 bg-white shadow-xl rounded-lg p-6 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 w-full max-w-[1400px]">
+              <div className="absolute left-0 top-full mt-2 shadow-xl rounded-lg p-6 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 w-full max-w-[1400px] border border-[#d4c8b8]" style={{ background: 'linear-gradient(135deg, #faf6f0 0%, #f5efe6 50%, #faf6f0 100%)' }}>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                   {Object.entries(navigationItems).map(([category, items]) => (
                     <div key={category} className="col-span-1">
-                      <h3 className="text-base font-medium text-gray-900 mb-4 pb-2 border-b">
+                      <h3 className="text-base font-medium text-gray-800 mb-4 pb-2 border-b border-[#d4c8b8]">
                         {category}
                       </h3>
                       <div className="grid grid-cols-1 gap-y-3">
                         {items.map((item) => {
                           let homepage = '';
                           if (item.subitems && item.subitems.length > 0) {
-                            // 取第一个子项的href，提取目录路径
                             const firstHref = item.subitems[0].href;
                             const parts = firstHref.split('/');
-                            // 移除最后一个部分（页面名称），保留目录路径
                             homepage = parts.slice(0, -1).join('/');
                           } else {
                             homepage = `/study/${item.name.toLowerCase()}`;
@@ -327,9 +330,9 @@ export default function Home() {
                             <Link
                               key={item.code}
                               href={homepage}
-                              className="flex items-center space-x-2 text-gray-600 hover:text-blue-600 text-sm transition-colors py-1 px-2 rounded hover:bg-blue-50"
+                              className="flex items-center space-x-2 text-gray-600 hover:text-gray-800 text-sm transition-colors py-1 px-2 rounded hover:bg-[#e8e0d0]"
                             >
-                              <span className="flex-shrink-0 w-6 h-6 flex items-center justify-center bg-gray-100 text-sm text-gray-500 hover:bg-blue-50 hover:text-blue-600 rounded">
+                              <span className="flex-shrink-0 w-6 h-6 flex items-center justify-center bg-[#e8e0d0] text-sm text-gray-600 hover:bg-[#ddd5c5] hover:text-gray-800 rounded">
                                 {item.code}
                               </span>
                               <span>{item.name}</span>
@@ -353,12 +356,12 @@ export default function Home() {
           {searchQuery && (
             <div className="text-center mb-4">
               <span className="text-gray-600">
-                搜索 "<span className="font-semibold text-blue-600">{searchQuery}</span>" 
+                搜索 "<span className="font-semibold text-[#8b4513]">{searchQuery}</span>" 
                 找到 {filteredSoftware.reduce((acc, group) => acc + group.items.length, 0)} 个结果
               </span>
               <button
                 onClick={() => setSearchQuery('')}
-                className="ml-4 text-blue-600 hover:text-blue-800 underline"
+                className="ml-4 text-[#8b7355] hover:text-[#6b5a45] underline"
               >
                 清除搜索
               </button>
@@ -371,7 +374,7 @@ export default function Home() {
           {filteredSoftware.length > 0 ? (
             filteredSoftware.map(group => (
               <div key={group.group}>
-                <h2 className="text-lg md:text-2xl font-bold mb-2 md:mb-3 text-blue-700 border-l-4 border-blue-400 pl-2 md:pl-3 bg-blue-50 py-1 rounded-r">
+                <h2 className="text-lg md:text-2xl font-bold mb-2 md:mb-3 text-gray-800 border-l-4 border-[#8b7355] pl-2 md:pl-3 bg-[#e8e0d0] py-1 rounded-r">
                   {group.group} ({group.items.length})
                 </h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-2 md:gap-4">
@@ -404,11 +407,15 @@ export default function Home() {
           如有更多常用软件建议，欢迎补充！
         </div>
 
+        {/* 水墨分隔 */}
+        <InkWashDecoration variant="divider" height={80} className="mt-8 mb-4" />
+        <InkWashDecoration variant="birds" height={50} className="-mt-2 mb-2" />
+
         {/* 算法可视化入口 */}
         <div className="mt-12 mb-8">
           <Link href="/code-editor">
-            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 p-1 hover:shadow-2xl transition-all duration-300 transform hover:scale-[1.02]">
-              <div className="bg-slate-900 rounded-xl p-8 text-center">
+            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#4a3728] via-[#6b5a45] to-[#4a3728] p-1 hover:shadow-2xl transition-all duration-300 transform hover:scale-[1.02]">
+              <div className="bg-[#3d2e20] rounded-xl p-8 text-center">
                 <div className="text-6xl mb-4">🎨</div>
                 <h3 className="text-3xl font-bold text-white mb-3">
                   编程实验室 - 代码编辑 + 3D 算法可视化
@@ -417,21 +424,21 @@ export default function Home() {
                   在线编写代码，沉浸式体验算法的魅力
                 </p>
                 <div className="flex justify-center gap-4 flex-wrap">
-                  <span className="px-4 py-2 bg-blue-600/30 text-blue-300 rounded-full text-sm">
+                  <span className="px-4 py-2 bg-[#8b7355]/30 text-[#d4c8b8] rounded-full text-sm border border-[#8b7355]/30">
                     💻 在线编辑
                   </span>
-                  <span className="px-4 py-2 bg-purple-600/30 text-purple-300 rounded-full text-sm">
+                  <span className="px-4 py-2 bg-[#4a6741]/30 text-[#c4d4b8] rounded-full text-sm border border-[#4a6741]/30">
                     🫧 冒泡排序
                   </span>
-                  <span className="px-4 py-2 bg-pink-600/30 text-pink-300 rounded-full text-sm">
+                  <span className="px-4 py-2 bg-[#8b4513]/30 text-[#d4a888] rounded-full text-sm border border-[#8b4513]/30">
                     ⚡ 快速排序
                   </span>
-                  <span className="px-4 py-2 bg-green-600/30 text-green-300 rounded-full text-sm">
+                  <span className="px-4 py-2 bg-[#2c3e6b]/30 text-[#b8c8e8] rounded-full text-sm border border-[#2c3e6b]/30">
                     🔍 二分查找
                   </span>
                 </div>
                 <div className="mt-6">
-                  <span className="inline-block px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-full font-semibold hover:shadow-lg transition-all">
+                  <span className="inline-block px-6 py-3 bg-[#8b7355] text-white rounded-full font-semibold hover:shadow-lg transition-all hover:bg-[#6b5a45]">
                     立即体验 →
                   </span>
                 </div>
@@ -440,6 +447,10 @@ export default function Home() {
           </Link>
         </div>
       </main>
+
+      {/* 水墨山水底部装饰 */}
+      <InkWashDecoration variant="landscape" height={260} className="bg-[#e5dfd0]" />
+      <InkWashDecoration variant="bamboo" height={120} className="bg-[#e5dfd0] -mt-2" />
 
       {/* 回到顶部按钮 */}
       <BackToTop />

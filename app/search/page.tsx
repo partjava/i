@@ -13,6 +13,7 @@ import {
   FilterOutlined,
   ClockCircleOutlined
 } from '@ant-design/icons';
+import InkWashDecoration from '@/app/components/InkWashDecoration';
 
 const { Search } = Input;
 const { TabPane } = Tabs;
@@ -163,10 +164,14 @@ function SearchContent() {
   const categories = Array.from(new Set(searchResults.map(r => r.category))).filter(Boolean);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#e5dfd0]">
+      {/* 水墨画顶部装饰 */}
+      <InkWashDecoration variant="landscape" height={160} className="bg-[#e5dfd0]" />
+      <InkWashDecoration variant="mist" height={50} className="bg-[#e5dfd0] -mt-4" />
+
       <div className="py-6">
         {/* 搜索头部 */}
-        <div className="bg-white shadow-sm p-6 mb-6">
+        <div className="bg-[#faf6f0] shadow-sm p-6 mb-6 border-b border-[#d4c8b8]">
           <div className="max-w-4xl mx-auto">
             <h1 className="text-2xl font-bold text-gray-900 mb-4 flex items-center">
               <SearchOutlined className="mr-2" />
@@ -252,7 +257,7 @@ function SearchContent() {
           {!loading && currentQuery && (
             <div className="mb-4">
               <p className="text-sm text-gray-600">
-                找到 <span className="font-semibold text-blue-600">{total}</span> 条结果，
+                找到 <span className="font-semibold text-[#8b7355]">{total}</span> 条结果，
                 关键词 "<span className="font-semibold">{currentQuery}</span>"
               </p>
             </div>
@@ -462,13 +467,17 @@ function SearchContent() {
           )}
         </div>
       </div>
+
+      {/* 水墨画底部装饰 */}
+      <InkWashDecoration variant="bamboo" height={100} className="bg-[#e5dfd0] mt-8" />
+      <InkWashDecoration variant="landscape" height={200} className="bg-[#e5dfd0]" />
     </div>
   );
 }
 
 export default function SearchPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-gray-50 flex items-center justify-center">
+    <Suspense fallback={<div className="min-h-screen bg-[#e5dfd0] flex items-center justify-center">
       <Spin size="large" />
     </div>}>
       <SearchContent />

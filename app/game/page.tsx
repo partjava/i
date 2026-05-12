@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
+import InkWashDecoration from '@/app/components/InkWashDecoration';
 
 export default function GamePage() {
 	const [showGameModal, setShowGameModal] = useState(false);
@@ -17,6 +18,12 @@ export default function GamePage() {
 
 	return (
 		<div className="ai-container">
+			{/* 水墨画顶部装饰 */}
+			<div className="w-full overflow-hidden">
+				<InkWashDecoration variant="landscape" height={180} />
+			</div>
+			<InkWashDecoration variant="birds" height={50} className="-mt-2" />
+
 			<div className="header">
 				<div className="header-inner">
 					<h1>小游戏</h1>
@@ -121,7 +128,7 @@ export default function GamePage() {
 
 			<style jsx>{`
 				.header {
-					background: linear-gradient(90deg, #4f8cff 0%, #33d2ff 100%);
+					background: linear-gradient(90deg, #5c4033 0%, #8b7355 100%);
 					color: #fff;
 					padding: 20px 0;
 					text-align: center;
@@ -141,9 +148,10 @@ export default function GamePage() {
 				}
 				.game-card {
 					height: 120px;
-					background: #fff;
+					background: #faf6f0;
 					border-radius: 12px;
-					box-shadow: 0 2px 12px rgba(120,120,200,0.08);
+					box-shadow: 0 2px 12px rgba(139,115,85,0.1);
+					border: 1px solid #d4c8b8;
 					display: flex;
 					flex-direction: column;
 					align-items: center;
@@ -152,12 +160,12 @@ export default function GamePage() {
 					border: none;
 					transition: transform .15s, box-shadow .15s;
 				}
-				.game-card:hover { transform: translateY(-6px); box-shadow: 0 10px 30px rgba(79,140,255,0.14); }
+				.game-card:hover { transform: translateY(-6px); box-shadow: 0 10px 30px rgba(139,115,85,0.15); }
 				.game-icon { font-size: 2.2em; margin-bottom: 8px; }
-				.game-title { color: #4f8cff; font-weight: 600; }
+				.game-title { color: #8b7355; font-weight: 600; }
 
 				.game-modal-overlay { position: fixed; inset:0; background: rgba(0,0,0,0.7); display:flex; align-items:center; justify-content:center; z-index:1000; }
-				.game-modal { width: 900px; height: 640px; background: #fff; border-radius: 10px; overflow:hidden; position:relative; }
+				.game-modal { width: 900px; height: 640px; background: #faf6f0; border-radius: 10px; overflow:hidden; position:relative; }
 				.close-game-btn { position:absolute; right:10px; top:10px; background: rgba(255,255,255,0.9); border:none; width:36px; height:36px; border-radius:18px; cursor:pointer; }
 				.game-iframe { width:100%; height:100%; border:0; }
 
@@ -169,6 +177,12 @@ export default function GamePage() {
 					.games-grid { grid-template-columns: repeat(2, 1fr); }
 				}
 			`}</style>
+
+			{/* 水墨画底部装饰 */}
+			<div className="w-full overflow-hidden mt-8">
+				<InkWashDecoration variant="bamboo" height={100} />
+				<InkWashDecoration variant="landscape" height={200} />
+			</div>
 		</div>
 	);
 }

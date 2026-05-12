@@ -155,7 +155,7 @@ export default function Navbar() {
   ];
 
   return (
-    <nav className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-40">
+    <nav className="bg-[#faf6f0] shadow-sm border-b border-[#d4c8b8] sticky top-0 z-40">
       <div className="px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* 左侧：Logo + 移动端菜单按钮 */}
@@ -169,14 +169,14 @@ export default function Navbar() {
                   navigator.vibrate(10);
                 }
               }}
-              className="lg:hidden p-2 rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-100 active:scale-95 transition-transform"
+              className="lg:hidden p-2 rounded-md text-gray-500 hover:text-gray-700 hover:bg-[#e8ddd0] active:scale-95 transition-transform"
             >
               <MenuOutlined className="w-6 h-6" />
             </button>
 
             {/* Logo */}
             <Link href="/" className="flex items-center space-x-2">
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center overflow-hidden bg-blue-100">
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center overflow-hidden bg-[#e8ddd0]">
                 <StitchLogo size={32} />
               </div>
               <span className="font-semibold text-xl text-gray-900 hidden sm:block">
@@ -188,7 +188,7 @@ export default function Navbar() {
             <div className="hidden md:flex items-center space-x-6 ml-8">
               <Link 
                 href="/" 
-                className="flex flex-col items-center text-gray-600 hover:text-purple-600 transition-colors"
+                className="flex flex-col items-center text-gray-600 hover:text-[#8b7355] transition-colors"
               >
                 <HomeOutlined className="text-lg mb-1" />
                 <span className="text-xs">首页</span>
@@ -196,7 +196,7 @@ export default function Navbar() {
 
               <Link 
                 href="/study" 
-                className="flex flex-col items-center text-gray-600 hover:text-purple-600 transition-colors"
+                className="flex flex-col items-center text-gray-600 hover:text-[#8b7355] transition-colors"
               >
                 <BookOutlined className="text-lg mb-1" />
                 <span className="text-xs">学习</span>
@@ -204,28 +204,28 @@ export default function Navbar() {
 
               <Link 
                 href="/notes" 
-                className="flex flex-col items-center text-gray-600 hover:text-purple-600 transition-colors"
+                className="flex flex-col items-center text-gray-600 hover:text-[#8b7355] transition-colors"
               >
                 <EditOutlined className="text-lg mb-1" />
                 <span className="text-xs">笔记</span>
               </Link>
               <Link 
                 href="/profile" 
-                className="flex flex-col items-center text-gray-600 hover:text-purple-600 transition-colors"
+                className="flex flex-col items-center text-gray-600 hover:text-[#8b7355] transition-colors"
               >
                 <UserOutlined className="text-lg mb-1" />
                 <span className="text-xs">{session ? '资料' : '数据'}</span>
               </Link>
               <Link 
                 href="/code-editor" 
-                className="flex flex-col items-center text-gray-600 hover:text-purple-600 transition-colors"
+                className="flex flex-col items-center text-gray-600 hover:text-[#8b7355] transition-colors"
               >
                 <CodeOutlined className="text-lg mb-1" />
                 <span className="text-xs">代码</span>
               </Link>
               <Link 
                 href="/challenges" 
-                className="flex flex-col items-center text-gray-600 hover:text-purple-600 transition-colors"
+                className="flex flex-col items-center text-gray-600 hover:text-[#8b7355] transition-colors"
               >
                 <svg className="w-5 h-5 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -234,7 +234,7 @@ export default function Navbar() {
               </Link>
               <Link 
                 href="/search" 
-                className="flex flex-col items-center text-gray-600 hover:text-purple-600 transition-colors"
+                className="flex flex-col items-center text-gray-600 hover:text-[#8b7355] transition-colors"
               >
                 <svg className="w-5 h-5 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -243,7 +243,7 @@ export default function Navbar() {
               </Link>
               <Link 
                 href="/game" 
-                className="flex flex-col items-center text-gray-600 hover:text-purple-600 transition-colors"
+                className="flex flex-col items-center text-gray-600 hover:text-[#8b7355] transition-colors"
               >
                 <svg className="w-5 h-5 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 6h.01M6 12h.01M6 18h.01M12 6h.01M12 12h.01M12 18h.01M18 6h.01M18 12h.01M18 18h.01" />
@@ -252,7 +252,7 @@ export default function Navbar() {
               </Link>
               <button 
                 onClick={() => setShowRobot(true)}
-                className={`flex flex-col items-center transition-all duration-200 transform hover:scale-105 text-gray-600 hover:text-purple-600`}
+                className={`flex flex-col items-center transition-all duration-200 transform hover:scale-105 text-gray-600 hover:text-[#8b7355]`}
                 title={robotPreloaded ? "机器人已就绪" : "正在加载机器人..."}
               >
                 <svg className="w-5 h-5 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -285,7 +285,7 @@ export default function Navbar() {
                     </svg>
                   }
                   onClick={() => router.push('/search')}
-                  className="text-gray-600 hover:text-purple-600"
+                  className="text-gray-600 hover:text-[#8b7355]"
                 />
               </Tooltip>
             </div>
@@ -293,8 +293,8 @@ export default function Navbar() {
             {status === 'loading' ? (
               // 加载状态 - 显示占位符
               <div className="flex items-center space-x-2">
-                <div className="w-6 h-6 bg-gray-200 rounded-full animate-pulse"></div>
-                <div className="w-16 h-4 bg-gray-200 rounded animate-pulse hidden md:block"></div>
+                <div className="w-6 h-6 bg-[#d4c8b8] rounded-full animate-pulse"></div>
+                <div className="w-16 h-4 bg-[#d4c8b8] rounded animate-pulse hidden md:block"></div>
               </div>
             ) : session && session.user ? (
               <>
@@ -304,7 +304,7 @@ export default function Navbar() {
                     <Button
                       type="text"
                       icon={<BellOutlined />}
-                      className="text-gray-600 hover:text-purple-600"
+                      className="text-gray-600 hover:text-[#8b7355]"
                     />
                   </Badge>
                 </Tooltip>
@@ -315,12 +315,12 @@ export default function Navbar() {
                   placement="bottomRight"
                   trigger={['click']}
                 >
-                  <div className="flex items-center space-x-2 cursor-pointer p-1 rounded-lg hover:bg-gray-50">
+                  <div className="flex items-center space-x-2 cursor-pointer p-1 rounded-lg hover:bg-[#e8ddd0]">
                     <Avatar
                       size="small"
                       src={user?.image || session?.user?.image || undefined}
                       icon={!(user?.image || (session?.user?.image)) ? <UserOutlined /> : undefined}
-                      className="bg-blue-600"
+                      className="bg-[#8b7355]"
                     />
                     <span className="text-sm font-medium text-gray-700 hidden md:block">
                       {user?.name || session?.user?.name || session?.user?.email?.split('@')[0]}
@@ -333,7 +333,7 @@ export default function Navbar() {
                 <Button
                   type="text"
                   onClick={() => router.push('/login')}
-                  className="text-gray-600 hover:text-purple-600"
+                  className="text-gray-600 hover:text-[#8b7355]"
                 >
                   登录
                 </Button>
