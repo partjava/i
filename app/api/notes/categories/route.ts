@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic'
 import { NoteRepository } from '@/app/lib/repositories/NoteRepository'
 
 const noteRepository = new NoteRepository()

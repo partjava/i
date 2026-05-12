@@ -1,15 +1,16 @@
 {
-  "name": "PartJava",
+  "name": "PartJava - 编程学习平台",
   "short_name": "PartJava",
+  "description": "面向程序员的全栈学习平台，提供AI驱动的互动教学",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#000000",
+  "theme_color": "#4f8cff",
+  "orientation": "any",
+  "categories": ["education", "productivity"],
   "icons": [
-    {
-      "src": "/favicon.ico",
-      "sizes": "48x48",
-      "type": "image/x-icon"
-    }
+    { "src": "/icons/icon-192x192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icons/icon-512x512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/icons/icon-512x512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ]
-} 
+}

@@ -4,6 +4,9 @@ import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { UserOutlined } from '@ant-design/icons';
 import StitchLogo from './StitchLogo';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import rehypeHighlight from 'rehype-highlight';
 
 interface Message {
   id: string;
@@ -34,7 +37,17 @@ export default function AiChat() {
   const posRef = useRef(pos);
   const DRAG_THRESHOLD = 5;
 
+  const [showHint, setShowHint] = useState(false);
+
   useEffect(() => setMounted(true), []);
+
+  useEffect(() => {
+    const dismissed = localStorage.getItem('ai_hint_dismissed');
+    if (!dismissed) {
+      const t = setTimeout(() => setShowHint(true), 2000);
+      return () => clearTimeout(t);
+    }
+  }, []);
 
   useEffect(() => { posRef.current = pos; }, [pos]);
 
@@ -235,7 +248,24 @@ export default function AiChat() {
     setLoading(true);
     try {
       const contextHint = pageContent && conversationText.trim() ? `\n\n当前页面参考信息（优先基于对话内容总结，页面信息作为背景补充）:\n${pageContent}` : '';
-      const prompt = `请把下面的内容总结为一条笔记，返回 JSON 格式，包含字段：\n- title: 简短标题\n- content: 详细笔记内容（尽量保留关键点和示例）\n- category: 分类（例如：算法、前端、后端、工具）\n- technology: 涉及的技术（例如：React, Java, Python）\n- subcategory: 子分类（可选）\n- tags: 标签数组（例如：["算法","动态规划"]）\n- isPublic: 是否公开（true/false）\n只返回一个有效的 JSON 对象，不要包含多余的说明文字。\n\n内容：\n\n${text}${contextHint}`;
+      const contentKind = conversationText.trim() ? (
+        conversationText.trim() && pageContent ? '以下对话和页面内容' : '以下对话内容'
+      ) : '当前页面内容';
+      const prompt = `你是学习笔记助手。请把${contentKind}整理为一条高质量的学习笔记，使用 Markdown 格式，返回严格的JSON对象（不要包含\`\`\`json标记）。
+
+JSON字段要求：
+- title: 精准简短的标题（不超过30字）
+- content: 结构清晰的笔记正文（Markdown：用标题##分节、用列表、用代码块\`\`\`、用加粗强调重点）
+- category: 分类（如：算法、前端、后端、数据库、AI、工具、安全）
+- technology: 涉及的技术（如：React, Java, Python, SQL）
+- subcategory: 子分类（可选，留空字符串也行）
+- tags: 标签数组（如：["算法","动态规划"]）
+- isPublic: 是否公开（true或false）
+
+只返回一个JSON对象，不要extra文字。
+
+${contentKind}：
+${text}${contextHint}`;
       const res = await fetch('/api/ai/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -246,29 +276,78 @@ export default function AiChat() {
       const data = await res.json();
       const reply = data?.reply || '';
 
-      // 解析 JSON，期望包含全部笔记字段
+      // 解析 JSON，多重容错策略
       let parsed: any = null;
+      const tryParseJson = (s: string): any => {
+        // 1) 去掉 ```json ... ``` 包裹
+        let clean = s;
+        const mdJson = s.match(/```(?:json)?\s*\n?([\s\S]*?)```/);
+        if (mdJson) clean = mdJson[1].trim();
+
+        // 2) 找到最外层 { 的配对 }
+        const start = clean.indexOf('{');
+        if (start >= 0) {
+          let depth = 0, inStr = false, esc = false;
+          for (let i = start; i < clean.length; i++) {
+            const ch = clean[i];
+            if (esc) { esc = false; continue; }
+            if (ch === '\\') { esc = true; continue; }
+            if (ch === '"') { inStr = !inStr; continue; }
+            if (inStr) continue;
+            if (ch === '{') depth++;
+            else if (ch === '}') { depth--; if (depth === 0) { clean = clean.slice(start, i + 1); break; } }
+          }
+        }
+
+        // 3) 尝试直接 parse
+        try { return JSON.parse(clean); } catch {}
+
+        // 4) 替换中文引号再试
+        try { return JSON.parse(clean.replace(/\u201c/g, '"').replace(/\u201d/g, '"')); } catch {}
+
+        // 5) 修复常见 JSON 瑕疵：尾部多余逗号、未转义换行
+        try {
+          const fixed = clean
+            .replace(/,\s*}/g, '}')
+            .replace(/,\s*]/g, ']')
+            .replace(/\n/g, '\\n');
+          return JSON.parse(fixed);
+        } catch {}
+
+        throw new Error('all parse strategies failed');
+      };
+
       try {
-        const jsonStart = reply.indexOf('{');
-        const jsonStr = jsonStart >= 0 ? reply.slice(jsonStart) : reply;
-        parsed = JSON.parse(jsonStr);
-      } catch (e) {
-        // 解析失败，尝试简单抽取：第一行为title，其余为content
-        const lines = reply.split('\n').filter(Boolean);
+        parsed = tryParseJson(reply);
+      } catch {
+        // 最终兜底：用正则从原始回复中摘字段
+        const getStr = (key: string) => {
+          const m = reply.match(new RegExp(`"${key}"\\s*:\\s*"((?:[^"\\\\]|\\\\.)*)"`));
+          return m ? m[1].replace(/\\"/g, '"').replace(/\\n/g, '\n') : '';
+        };
+        const getBool = (key: string) => {
+          const m = reply.match(new RegExp(`"${key}"\\s*:\\s*(true|false)`));
+          return m ? m[1] === 'true' : false;
+        };
+        const getArr = (key: string) => {
+          const m = reply.match(new RegExp(`"${key}"\\s*:\\s*\\[([^\\]]*)\\]`));
+          if (!m) return [];
+          return m[1].split(',').map((s: string) => s.replace(/["\s]/g, '')).filter(Boolean);
+        };
         parsed = {
-          title: lines[0]?.slice(0, 60) || `笔记-${new Date().toLocaleString()}`,
-          content: reply,
-          category: '',
-          technology: '',
-          subcategory: '',
-          tags: [],
-          isPublic: false
+          title: getStr('title') || `笔记-${new Date().toLocaleString()}`,
+          content: getStr('content') || reply,
+          category: getStr('category') || '',
+          technology: getStr('technology') || '',
+          subcategory: getStr('subcategory') || '',
+          tags: getArr('tags'),
+          isPublic: getBool('isPublic'),
         };
       }
 
       // 填充默认字段并规范化
       const notePayload = {
-        title: (parsed.title || parsed.title === '' ? parsed.title : `笔记-${new Date().toLocaleString()}`) || `笔记-${new Date().toLocaleString()}`,
+        title: (parsed.title && String(parsed.title).trim()) || `笔记-${new Date().toLocaleString()}`,
         content: parsed.content || reply,
         category: parsed.category || '',
         technology: parsed.technology || '',
@@ -465,8 +544,29 @@ export default function AiChat() {
         }}
       >
       {!open && (
+        <div style={{ position: 'relative' }}>
+          {showHint && (
+            <div style={{
+              position: 'absolute', bottom: 64, right: 0, width: 180,
+              background: '#1f2937', color: '#fff', borderRadius: 10,
+              padding: '10px 14px', fontSize: 13, lineHeight: 1.5,
+              boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
+              animation: 'aiHintFade 0.4s ease',
+              zIndex: 11001,
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                <StitchLogo size={20} />
+                <span style={{ fontWeight: 600 }}>AI 学习助手</span>
+              </div>
+              <div style={{ color: '#d1d5db' }}>点击我可帮你总结页面内容、创建笔记、解答问题</div>
+              <button
+                onClick={() => { setShowHint(false); localStorage.setItem('ai_hint_dismissed', '1'); }}
+                style={{ marginTop: 6, background: 'rgba(255,255,255,0.1)', border: 'none', color: '#9ca3af', fontSize: 11, padding: '3px 8px', borderRadius: 4, cursor: 'pointer' }}
+              >知道了</button>
+            </div>
+          )}
         <button
-          onClick={() => setOpen(true)}
+          onClick={() => { setOpen(true); setShowHint(false); localStorage.setItem('ai_hint_dismissed', '1'); }}
           aria-label="打开AI助手"
           onMouseDown={(e) => startDrag(e.clientX, e.clientY)}
           onTouchStart={(e) => {
@@ -489,6 +589,7 @@ export default function AiChat() {
         >
           <StitchLogo size={28} />
         </button>
+        </div>
       )}
 
       {open && (
@@ -551,8 +652,14 @@ export default function AiChat() {
                     </div>
                     <div style={{ fontSize: 12, color: '#666' }}>{m.role === 'assistant' ? 'AI助手' : '我'}</div>
                   </div>
-                  <div style={{ background: m.role === 'assistant' ? '#fff' : '#4f8cff', color: m.role === 'assistant' ? '#111' : '#fff', padding: '10px 12px', borderRadius: 8, boxShadow: '0 2px 10px rgba(0,0,0,0.04)', whiteSpace: 'pre-wrap' }}>
-                    {m.content}
+                  <div style={{ background: m.role === 'assistant' ? '#fff' : '#4f8cff', color: m.role === 'assistant' ? '#111' : '#fff', padding: '10px 12px', borderRadius: 8, boxShadow: '0 2px 10px rgba(0,0,0,0.04)' }}>
+                    {m.role === 'assistant' ? (
+                      <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeHighlight]}>
+                        {m.content}
+                      </ReactMarkdown>
+                    ) : (
+                      <div style={{ whiteSpace: 'pre-wrap' }}>{m.content}</div>
+                    )}
                   </div>
                 </div>
               </div>

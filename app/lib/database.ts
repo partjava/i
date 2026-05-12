@@ -399,6 +399,21 @@ export async function initDatabase() {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
     `)
 
+    // 学习进度表
+    await executeQuery(`
+      CREATE TABLE IF NOT EXISTS study_progress (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NOT NULL,
+        page_path VARCHAR(500) NOT NULL,
+        completed TINYINT(1) NOT NULL DEFAULT 0,
+        completed_at TIMESTAMP NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        UNIQUE KEY unique_user_page (user_id, page_path),
+        INDEX idx_user_id (user_id)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    `)
+
   } catch (error) {
     dbInitialized = false; // 失败时重置，允许下次重试
     console.error('❌ 数据库初始化失败:', error)

@@ -7,6 +7,7 @@ import Link from 'next/link';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
+import html2canvas from 'html2canvas';
 import 'highlight.js/styles/github.css';
 import CommentSection from '@/app/components/CommentSection';
 import QRCode from 'qrcode';
@@ -59,7 +60,34 @@ export default function NoteDetailPage() {
     URL.revokeObjectURL(url);
   };
 
-  // 导出纯文本
+  // 导出 PDF（通过浏览器打印）
+  const handleExportPdf = () => {
+    if (!note) return;
+    const printWin = window.open('', '_blank', 'width=800,height=600');
+    if (!printWin) return;
+    const html = `<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>${note.title}</title>
+<style>
+  @page { size: A4; margin: 20mm; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.8; color: #111; max-width: 700px; margin: 0 auto; padding: 20px; }
+  h1 { font-size: 28px; border-bottom: 3px solid #4f8cff; padding-bottom: 10px; margin-bottom: 20px; }
+  pre { background: #f4f4f4; padding: 12px; border-radius: 6px; overflow-x: auto; font-size: 13px; }
+  code { background: #f4f4f4; padding: 2px 6px; border-radius: 4px; font-size: 13px; }
+  img { max-width: 100%; }
+  .meta { color: #888; font-size: 13px; margin-bottom: 24px; }
+  @media print { body { padding: 0; } }
+</style></head>
+<body>
+  <h1>${note.title.replace(/</g, '&lt;')}</h1>
+  <div class="meta">
+    ${note.category ? '分类: ' + note.category + ' | ' : ''}${note.technology ? '技术: ' + note.technology + ' | ' : ''}${new Date(note.createdAt).toLocaleDateString('zh-CN')}
+  </div>
+  <div>${note.content}</div>
+</body></html>`;
+    printWin.document.write(html);
+    printWin.document.close();
+    printWin.onload = () => setTimeout(() => { printWin.print(); }, 500);
+  };
   const handleExportTxt = () => {
     if (!note) return;
     const text = `${note.title}\n${'='.repeat(note.title.length)}\n\n${note.content}`;
@@ -70,6 +98,32 @@ export default function NoteDetailPage() {
     a.download = `${note.title}.txt`;
     a.click();
     URL.revokeObjectURL(url);
+  };
+
+  // 截图保存为 PNG
+  const handleScreenshot = async () => {
+    if (!note) return;
+    const el = document.getElementById('note-content-area');
+    if (!el) return;
+    try {
+      const canvas = await html2canvas(el, {
+        backgroundColor: '#ffffff',
+        scale: 2,
+        useCORS: true,
+        logging: false,
+      });
+      canvas.toBlob((blob) => {
+        if (!blob) return;
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${note.title}.png`;
+        a.click();
+        URL.revokeObjectURL(url);
+      }, 'image/png');
+    } catch {
+      // fallback
+    }
   };
 
   // 打开分享弹窗
@@ -241,6 +295,12 @@ export default function NoteDetailPage() {
                 {/* 导出按钮组 */}
                 <div className="border border-gray-200 rounded-lg overflow-hidden">
                   <div className="px-3 py-2 bg-gray-50 text-xs text-gray-500 font-medium">导出笔记</div>
+                  <button onClick={handleScreenshot} className="w-full flex items-center space-x-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors border-t border-gray-100">
+                    <span>📸</span><span>截图保存</span>
+                  </button>
+                  <button onClick={handleExportPdf} className="w-full flex items-center space-x-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors border-t border-gray-100">
+                    <span>📕</span><span>导出 PDF</span>
+                  </button>
                   <button onClick={handleExportMd} className="w-full flex items-center space-x-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors border-t border-gray-100">
                     <span>📄</span><span>导出 Markdown</span>
                   </button>
@@ -348,7 +408,7 @@ export default function NoteDetailPage() {
 
 
         {/* 笔记内容 - Markdown渲染 */}
-        <div className="prose prose-lg max-w-none">
+        <div id="note-content-area" className="prose prose-lg max-w-none">
           <ReactMarkdown
             remarkPlugins={[remarkGfm]}
             rehypePlugins={[rehypeHighlight]}
