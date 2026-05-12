@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { executeQuery } from '@/app/lib/database';
+import { challenges } from '@/app/data/challenges';
 
 // 标记为动态路由，避免构建时预渲染
 export const dynamic = 'force-dynamic';
@@ -224,6 +225,9 @@ export async function GET() {
       weeklyActiveUsers
     });
 
+    // 编程挑战总数
+    const totalChallenges = challenges.length;
+
     // 返回完整的平台统计数据
     return NextResponse.json({
       totalUsers,
@@ -249,7 +253,7 @@ export async function GET() {
       users: totalUsers,
       notes: totalNotes,
       studyHours: Math.floor(totalStudyTime / 60),
-      challenges: 0
+      challenges: totalChallenges
     }, {
       headers: {
         'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600',

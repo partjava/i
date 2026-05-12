@@ -38,6 +38,8 @@ export default function PWAProvider() {
 
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
+      // 本次访问已关闭过就不再弹出
+      if (sessionStorage.getItem('pwa_install_dismissed') === '1') return;
       deferredRef.current = e;
       setIsInstallable(true);
     };
@@ -96,7 +98,7 @@ export default function PWAProvider() {
           <div className="bg-white rounded-lg shadow-lg border p-4">
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-sm font-medium text-gray-900">安装到桌面</h3>
-              <button onClick={() => setIsInstallable(false)} className="text-gray-400 hover:text-gray-600">
+              <button onClick={() => { setIsInstallable(false); sessionStorage.setItem('pwa_install_dismissed', '1'); }} className="text-gray-400 hover:text-gray-600">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
