@@ -37,7 +37,8 @@ module.exports = {
       interpreter: 'none',
       env: {
         PYTHONPATH: '/root/aidnz/i/partjava-ai',
-        PORT: 8000
+        PORT: 8000,
+        DEEPSEEK_API_KEY: 'sk-da99bac1ebc9428e99077661f36abfd6'
       },
       instances: 1,
       autorestart: true,
