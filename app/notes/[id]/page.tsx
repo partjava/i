@@ -60,9 +60,13 @@ export default function NoteDetailPage() {
     URL.revokeObjectURL(url);
   };
 
-  // 导出 PDF（通过浏览器打印）
+  // 导出 PDF（通过浏览器打印，使用已渲染的HTML而非原始Markdown）
   const handleExportPdf = () => {
     if (!note) return;
+    const contentEl = document.getElementById('note-content-area');
+    const renderedHtml = contentEl?.innerHTML || note.content
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
     const printWin = window.open('', '_blank', 'width=800,height=600');
     if (!printWin) return;
     const html = `<!DOCTYPE html>
@@ -70,11 +74,24 @@ export default function NoteDetailPage() {
 <style>
   @page { size: A4; margin: 20mm; }
   body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.8; color: #111; max-width: 700px; margin: 0 auto; padding: 20px; }
-  h1 { font-size: 28px; border-bottom: 3px solid #4f8cff; padding-bottom: 10px; margin-bottom: 20px; }
-  pre { background: #f4f4f4; padding: 12px; border-radius: 6px; overflow-x: auto; font-size: 13px; }
+  h1 { font-size: 28px; border-bottom: 3px solid #8b7355; padding-bottom: 10px; margin-bottom: 20px; }
+  h2 { font-size: 22px; margin-top: 28px; margin-bottom: 12px; color: #5c4033; border-bottom: 1px solid #d4c8b8; padding-bottom: 6px; }
+  h3 { font-size: 18px; margin-top: 22px; margin-bottom: 10px; }
+  h4 { font-size: 16px; margin-top: 18px; margin-bottom: 8px; }
+  p { margin: 10px 0; }
+  pre { background: #f4f4f4; padding: 12px; border-radius: 6px; overflow-x: auto; font-size: 13px; white-space: pre-wrap; word-break: break-word; }
   code { background: #f4f4f4; padding: 2px 6px; border-radius: 4px; font-size: 13px; }
+  pre code { background: none; padding: 0; }
+  table { border-collapse: collapse; width: 100%; margin: 12px 0; }
+  th, td { border: 1px solid #d4c8b8; padding: 8px 12px; text-align: left; }
+  th { background: #f5f0e8; font-weight: 600; }
+  ul, ol { margin: 10px 0; padding-left: 24px; }
+  li { margin: 4px 0; }
+  blockquote { border-left: 4px solid #d4c8b8; padding-left: 16px; margin: 12px 0; color: #5c4033; }
   img { max-width: 100%; }
-  .meta { color: #888; font-size: 13px; margin-bottom: 24px; }
+  .meta { color: #888; font-size: 13px; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid #e8ddd0; }
+  strong { font-weight: 600; }
+  a { color: #8b7355; }
   @media print { body { padding: 0; } }
 </style></head>
 <body>
@@ -82,7 +99,7 @@ export default function NoteDetailPage() {
   <div class="meta">
     ${note.category ? '分类: ' + note.category + ' | ' : ''}${note.technology ? '技术: ' + note.technology + ' | ' : ''}${new Date(note.createdAt).toLocaleDateString('zh-CN')}
   </div>
-  <div>${note.content}</div>
+  <div>${renderedHtml}</div>
 </body></html>`;
     printWin.document.write(html);
     printWin.document.close();

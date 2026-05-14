@@ -8,6 +8,21 @@
 /* 引入移动端优化样式 */
 @import './styles/mobile.css';
 
+/* === 暖色背景对比度修复 ===
+   由于全站已切换为暖米色/宣纸色调背景(#e5dfd0~#faf6f0)，
+   原有的 text-gray-400/500/600 在暖色背景上对比度不足。
+   此处将灰色文字整体加深一档，确保手机端可读性。 */
+.text-gray-400 {
+  color: #6b7280 !important; /* gray-500 → 原 gray-400 */
+}
+.text-gray-500 {
+  color: #4b5563 !important; /* gray-600 → 原 gray-500 */
+}
+.text-gray-600 {
+  color: #374151 !important; /* gray-700 → 原 gray-600 */
+}
+/* ========================= */
+
 /* 渐变背景动画 */
 @keyframes gradient-shift {
   0%, 100% {
@@ -152,6 +167,19 @@ body.dark .prose strong { color: #f9fafb; }
 body.dark .prose code { background: #374151; color: #fbbf24; }
 body.dark .prose pre { background: #111827; }
 body.dark .prose blockquote { border-left-color: #4b5563; color: #9ca3af; }
+
+/* 修复：study安全类页面 .prose pre 被 bg-gray-200 覆盖背景后，
+   Tailwind Typography 的浅色文字(#e5e7eb)在浅灰背景上几乎不可见。
+   仅对明确使用浅色背景的 pre 强制深色文字 */
+.prose .bg-gray-100 pre,
+.prose .bg-gray-100 pre code,
+.prose pre.bg-gray-200,
+.prose pre.bg-gray-200 code,
+.prose pre.bg-gray-100,
+.prose pre.bg-gray-100 code {
+  color: #1f2937 !important;
+}
+
 
 body.dark .card {
   background-color: #1f2937;

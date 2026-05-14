@@ -16,7 +16,7 @@ class Settings(BaseSettings):
     
     # DeepSeek 配置
     DEEPSEEK_API_KEY: Optional[str] = None
-    DEEPSEEK_MODEL: str = "deepseek-chat"
+    DEEPSEEK_MODEL: str = "deepseek-v4-flash"
     DEEPSEEK_BASE_URL: str = "https://api.deepseek.com"
     
     # 默认使用哪个 AI 服务

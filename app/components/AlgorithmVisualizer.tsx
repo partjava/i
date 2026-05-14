@@ -25,9 +25,9 @@ export default function AlgorithmVisualizer({
     if (!canvasRef.current) return;
 
     const scene = new THREE.Scene();
-    // 更炫酷的渐变背景
-    scene.background = new THREE.Color(0x0a0e27);
-    scene.fog = new THREE.Fog(0x0a0e27, 10, 50);
+    // 深色渐变背景（暖色调适配）
+    scene.background = new THREE.Color(0x1a1a2e);
+    scene.fog = new THREE.Fog(0x1a1a2e, 10, 50);
     
     const camera = new THREE.PerspectiveCamera(
       60,
@@ -158,7 +158,7 @@ export default function AlgorithmVisualizer({
   };
 
   return (
-    <div className="w-full h-full bg-slate-900 rounded-xl overflow-hidden">
+    <div className="w-full h-full bg-amber-950/80 rounded-xl overflow-hidden">
       {/* 3D 画布 */}
       <canvas 
         ref={canvasRef} 
@@ -166,13 +166,13 @@ export default function AlgorithmVisualizer({
       />
 
       {/* 控制面板 */}
-      <div className="p-4 bg-slate-800 border-t border-slate-700">
+      <div className="p-4 bg-amber-950/60 border-t border-amber-900/50">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <button
               onClick={handlePrev}
               disabled={currentStep === 0}
-              className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-3 py-2 bg-amber-700 text-white rounded-lg hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               ⏮ 上一步
             </button>
@@ -180,14 +180,14 @@ export default function AlgorithmVisualizer({
             {!isPlaying ? (
               <button
                 onClick={handlePlay}
-                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                className="px-4 py-2 bg-emerald-700 text-white rounded-lg hover:bg-emerald-600 transition-colors"
               >
                 ▶ 播放
               </button>
             ) : (
               <button
                 onClick={handlePause}
-                className="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700"
+                className="px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-400 transition-colors"
               >
                 ⏸ 暂停
               </button>
@@ -196,14 +196,14 @@ export default function AlgorithmVisualizer({
             <button
               onClick={handleNext}
               disabled={currentStep >= steps.length - 1}
-              className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-3 py-2 bg-amber-700 text-white rounded-lg hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               下一步 ⏭
             </button>
             
             <button
               onClick={handleReset}
-              className="px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+              className="px-3 py-2 bg-orange-800 text-white rounded-lg hover:bg-orange-700 transition-colors"
             >
               🔄 重置
             </button>
@@ -216,11 +216,11 @@ export default function AlgorithmVisualizer({
 
         {/* 步骤说明 */}
         {steps[currentStep] && (
-          <div className="bg-slate-700 p-3 rounded-lg">
-            <div className="text-blue-400 text-sm font-semibold mb-1">
+          <div className="bg-amber-950/70 border border-amber-900/40 p-3 rounded-lg">
+            <div className="text-amber-300 text-sm font-semibold mb-1">
               {steps[currentStep].title}
             </div>
-            <div className="text-gray-300 text-sm">
+            <div className="text-amber-200/80 text-sm">
               {steps[currentStep].description}
             </div>
           </div>
@@ -724,7 +724,7 @@ function generateSpiralSteps() {
 // 曼德博集合可视化
 function generateMandelbrotSteps() {
   const steps = [];
-  const size = 50;
+  const size = 80;
   
   for (let zoom = 1; zoom <= 10; zoom++) {
     const mandelbrotData = [];
@@ -737,7 +737,7 @@ function generateMandelbrotSteps() {
         
         let x = 0, y = 0;
         let iteration = 0;
-        const maxIteration = 50;
+        const maxIteration = 100;
         
         while (x * x + y * y <= 4 && iteration < maxIteration) {
           const xtemp = x * x - y * y + x0;
@@ -748,9 +748,9 @@ function generateMandelbrotSteps() {
         
         const height = (iteration / maxIteration) * 5;
         mandelbrotData.push({
-          x: (i - size / 2) * 0.3,
+          x: (i - size / 2) * 0.25,
           y: height,
-          z: (j - size / 2) * 0.3,
+          z: (j - size / 2) * 0.25,
           color: iteration / maxIteration
         });
       }
@@ -836,34 +836,16 @@ function generateWave3DSteps() {
 // 环面（甜甜圈）
 function generateTorusSteps() {
   const steps = [];
-  const R = 3, r = 1;
   
   for (let frame = 0; frame <= 60; frame++) {
-    const torusData = [];
     const rotation = (frame / 60) * Math.PI * 2;
-    
-    for (let i = 0; i <= 40; i++) {
-      for (let j = 0; j <= 20; j++) {
-        const u = (i / 40) * Math.PI * 2;
-        const v = (j / 20) * Math.PI * 2;
-        
-        const x = (R + r * Math.cos(v)) * Math.cos(u);
-        const y = (R + r * Math.cos(v)) * Math.sin(u);
-        const z = r * Math.sin(v);
-        
-        // 旋转
-        const xRot = x * Math.cos(rotation) - z * Math.sin(rotation);
-        const zRot = x * Math.sin(rotation) + z * Math.cos(rotation);
-        
-        torusData.push({ x: xRot, y, z: zRot });
-      }
-    }
     
     steps.push({
       title: '环面旋转',
       description: `旋转角度: ${Math.round((frame / 60) * 360)}°`,
       type: 'torus',
-      data: torusData
+      rotation: rotation,
+      data: []
     });
   }
   
@@ -1479,10 +1461,10 @@ function renderSpiral(scene: THREE.Scene, step: any) {
 // 渲染曼德博集合
 function renderMandelbrot(scene: THREE.Scene, step: any) {
   // 使用实例化网格提高性能
-  const boxGeometry = new THREE.BoxGeometry(0.28, 1, 0.28);
+  const boxGeometry = new THREE.BoxGeometry(0.22, 1, 0.22);
   
   step.data.forEach((p: any) => {
-    if (p.y > 0.2) {
+    if (p.y > 0.15) {
       const height = p.y;
       const hue = p.color * 0.7 + 0.15;
       const color = new THREE.Color().setHSL(hue, 1, 0.5);
@@ -1585,14 +1567,15 @@ function renderWave3D(scene: THREE.Scene, step: any) {
     const height = Math.abs(p.y) + 0.3;
     const geometry = new THREE.CylinderGeometry(0.18, 0.18, height, 16);
     
-    const hue = (p.y + 2.5) / 5;
-    const color = new THREE.Color().setHSL(hue * 0.6 + 0.15, 1, 0.5);
+    // 更丰富的色彩映射：从青绿到紫蓝
+    const hue = 0.4 + (p.y + 2.5) / 5 * 0.45;
+    const color = new THREE.Color().setHSL(hue, 0.9, 0.55 + Math.abs(p.y) / 5 * 0.15);
     const material = new THREE.MeshStandardMaterial({
       color,
       emissive: color,
-      emissiveIntensity: 0.6,
-      metalness: 0.7,
-      roughness: 0.3
+      emissiveIntensity: 0.7,
+      metalness: 0.65,
+      roughness: 0.25
     });
     
     const cylinder = new THREE.Mesh(geometry, material);
@@ -1615,79 +1598,117 @@ function renderWave3D(scene: THREE.Scene, step: any) {
   }
 }
 
-// 渲染环面
+// 渲染环面 - 使用真正的 TorusGeometry
 function renderTorus(scene: THREE.Scene, step: any) {
-  const points = step.data.map((p: any) => new THREE.Vector3(p.x, p.y, p.z));
+  const R = 3, r = 1;
+  // 从步骤数据重建旋转角度
+  const rotation = step.rotation || 0;
   
-  // 使用点云和连接线
-  const geometry = new THREE.BufferGeometry().setFromPoints(points);
+  // 彩虹色实体环面
+  const torusGeom = new THREE.TorusGeometry(R, r, 64, 128);
+  const torusMat = new THREE.MeshStandardMaterial({
+    color: 0x6677aa,
+    emissive: 0x223344,
+    emissiveIntensity: 0.4,
+    metalness: 0.8,
+    roughness: 0.2,
+  });
+  const torus = new THREE.Mesh(torusGeom, torusMat);
+  torus.rotation.x = rotation;
+  torus.rotation.y = rotation * 0.7;
+  scene.add(torus);
   
-  // 创建彩虹色
-  const colors = [];
-  for (let i = 0; i < points.length; i++) {
-    const t = (i % 41) / 41;
-    const color = new THREE.Color().setHSL(t * 0.8 + 0.15, 1, 0.6);
-    colors.push(color.r, color.g, color.b);
+  // 半透明线框叠加
+  const wireGeom = new THREE.TorusGeometry(R, r, 32, 64);
+  const wireMat = new THREE.MeshBasicMaterial({
+    color: 0x88aadd,
+    wireframe: true,
+    transparent: true,
+    opacity: 0.25,
+  });
+  const wireTorus = new THREE.Mesh(wireGeom, wireMat);
+  wireTorus.rotation.copy(torus.rotation);
+  scene.add(wireTorus);
+  
+  // 彩色粒子环绕
+  for (let i = 0; i < 60; i++) {
+    const angle = (i / 60) * Math.PI * 2;
+    const sphereGeom = new THREE.SphereGeometry(0.12, 8, 8);
+    const hue = (i / 60) * 0.8 + 0.15;
+    const color = new THREE.Color().setHSL(hue, 1, 0.6);
+    const sphereMat = new THREE.MeshStandardMaterial({
+      color,
+      emissive: color,
+      emissiveIntensity: 0.8,
+      metalness: 0.6,
+      roughness: 0.2,
+    });
+    const sphere = new THREE.Mesh(sphereGeom, sphereMat);
+    sphere.position.x = Math.cos(angle) * (R + r * 0.5);
+    sphere.position.y = Math.sin(angle) * (R + r * 0.5);
+    sphere.position.z = 0;
+    sphere.position.applyEuler(new THREE.Euler(rotation, rotation * 0.7, 0));
+    scene.add(sphere);
   }
-  geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
-  
-  const material = new THREE.PointsMaterial({
-    vertexColors: true,
-    size: 0.2,
-    transparent: true,
-    opacity: 0.9,
-    sizeAttenuation: true
-  });
-  const pointCloud = new THREE.Points(geometry, material);
-  scene.add(pointCloud);
-  
-  // 添加发光效果
-  const glowMaterial = new THREE.PointsMaterial({
-    vertexColors: true,
-    size: 0.35,
-    transparent: true,
-    opacity: 0.3,
-    sizeAttenuation: true
-  });
-  const glowCloud = new THREE.Points(geometry.clone(), glowMaterial);
-  scene.add(glowCloud);
 }
 
 // 渲染克莱因瓶
+// 渲染克莱因瓶 - 使用曲面网格替代点云
 function renderKlein(scene: THREE.Scene, step: any) {
   const points = step.data.map((p: any) => new THREE.Vector3(p.x, p.y, p.z));
+  if (points.length < 2) return;
+
+  // 构建曲面三角形网格（41x41 网格）
+  const cols = 41;
+  const vertices: number[] = [];
+  const colors: number[] = [];
+  const indices: number[] = [];
   
-  const geometry = new THREE.BufferGeometry().setFromPoints(points);
-  
-  const colors = [];
   for (let i = 0; i < points.length; i++) {
-    const t = (i % 41) / 41;
-    const s = Math.floor(i / 41) / 41;
-    const color = new THREE.Color().setHSL(t * 0.5 + s * 0.3, 1, 0.6);
-    colors.push(color.r, color.g, color.b);
+    vertices.push(points[i].x, points[i].y, points[i].z);
+    const hue = 0.2 + (i % cols) / cols * 0.35 + Math.floor(i / cols) / cols * 0.3;
+    const c = new THREE.Color().setHSL(hue % 1, 0.9, 0.55);
+    colors.push(c.r, c.g, c.b);
   }
-  geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
   
-  const material = new THREE.PointsMaterial({
-    vertexColors: true,
-    size: 0.25,
-    transparent: true,
-    opacity: 0.95,
-    sizeAttenuation: true
-  });
-  const pointCloud = new THREE.Points(geometry, material);
-  scene.add(pointCloud);
+  for (let row = 0; row < cols - 1; row++) {
+    for (let col = 0; col < cols - 1; col++) {
+      const a = row * cols + col;
+      const b = a + 1;
+      const c = a + cols;
+      const d = c + 1;
+      indices.push(a, b, d, a, d, c);
+    }
+  }
   
-  // 添加发光层
-  const glowMaterial = new THREE.PointsMaterial({
+  const geom = new THREE.BufferGeometry();
+  geom.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+  geom.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+  geom.setIndex(indices);
+  geom.computeVertexNormals();
+  
+  const mat = new THREE.MeshStandardMaterial({
     vertexColors: true,
-    size: 0.4,
+    emissive: 0xffffff,
+    emissiveIntensity: 0.2,
+    metalness: 0.75,
+    roughness: 0.25,
+    side: THREE.DoubleSide,
     transparent: true,
-    opacity: 0.4,
-    sizeAttenuation: true
+    opacity: 0.9,
   });
-  const glowCloud = new THREE.Points(geometry.clone(), glowMaterial);
-  scene.add(glowCloud);
+  const mesh = new THREE.Mesh(geom, mat);
+  scene.add(mesh);
+  
+  // 线框叠加
+  const wireGeom = new THREE.WireframeGeometry(new THREE.BufferGeometry().copy(geom).setIndex(indices));
+  const wireMat = new THREE.MeshBasicMaterial({
+    color: 0x8899bb,
+    wireframe: true,
+    transparent: true,
+    opacity: 0.12,
+  });
+  scene.add(new THREE.LineSegments(wireGeom, wireMat as any));
 }
 
 
@@ -1840,27 +1861,28 @@ function generateLinearRegressionSteps() {
 function generateNeuralNetworkSteps() {
   const steps = [];
   
-  // 简单的 3 层网络：2-4-1
+  // 4 层网络：3-6-4-2
   const layers = [
-    { neurons: 2, positions: [] as any[] },
+    { neurons: 3, positions: [] as any[] },
+    { neurons: 6, positions: [] as any[] },
     { neurons: 4, positions: [] as any[] },
-    { neurons: 1, positions: [] as any[] }
+    { neurons: 2, positions: [] as any[] }
   ];
   
   // 计算神经元位置
   layers.forEach((layer, layerIdx) => {
-    const x = (layerIdx - 1) * 6;
+    const x = (layerIdx - 1.5) * 5;
     for (let i = 0; i < layer.neurons; i++) {
-      const y = (i - (layer.neurons - 1) / 2) * 3;
+      const y = (i - (layer.neurons - 1) / 2) * 2.5;
       layer.positions.push({ x, y, z: 0 });
     }
   });
   
   // 前向传播动画
   for (let frame = 0; frame <= 30; frame++) {
-    const activeLayer = Math.floor((frame / 30) * 3);
-    const activeNeuron = Math.floor(((frame / 30) * 3 - activeLayer) * 
-      (layers[Math.min(activeLayer, 2)]?.neurons || 1));
+    const activeLayer = Math.floor((frame / 30) * 4);
+    const activeNeuron = Math.floor(((frame / 30) * 4 - activeLayer) * 
+      (layers[Math.min(activeLayer, 3)]?.neurons || 1));
     
     steps.push({
       title: '神经网络前向传播',
@@ -1928,14 +1950,14 @@ function generateDecisionTreeSteps() {
   
   // 创建决策树结构
   const tree = {
-    root: { x: 0, y: 5, z: 0, label: 'Root' },
+    root: { x: 0, y: 5, z: 0, label: '天气晴朗?' },
     nodes: [
-      { x: -4, y: 2, z: 0, label: 'Left', parent: 0 },
-      { x: 4, y: 2, z: 0, label: 'Right', parent: 0 },
-      { x: -6, y: -1, z: 0, label: 'LL', parent: 1 },
-      { x: -2, y: -1, z: 0, label: 'LR', parent: 1 },
-      { x: 2, y: -1, z: 0, label: 'RL', parent: 2 },
-      { x: 6, y: -1, z: 0, label: 'RR', parent: 2 },
+      { x: -4, y: 2, z: 0, label: '有风?', parent: 0 },
+      { x: 4, y: 2, z: 0, label: '温度>25°?', parent: 0 },
+      { x: -6, y: -1, z: 0, label: '不去', parent: 1 },
+      { x: -2, y: -1, z: 0, label: '放风筝', parent: 1 },
+      { x: 2, y: -1, z: 0, label: '去游泳', parent: 2 },
+      { x: 6, y: -1, z: 0, label: '散步', parent: 2 },
     ]
   };
   
@@ -2051,6 +2073,16 @@ function renderKMeans(scene: THREE.Scene, step: any) {
 
 // 线性回归渲染
 function renderLinearRegression(scene: THREE.Scene, step: any) {
+  // 渲染坐标轴
+  const axisLen = 8;
+  const axisMat = new THREE.LineBasicMaterial({ color: 0x556688, transparent: true, opacity: 0.5 });
+  // X 轴
+  const xAxisGeom = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-axisLen, 0, 0), new THREE.Vector3(axisLen, 0, 0)]);
+  scene.add(new THREE.Line(xAxisGeom, axisMat));
+  // Y 轴
+  const yAxisGeom = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, -axisLen, 0), new THREE.Vector3(0, axisLen, 0)]);
+  scene.add(new THREE.Line(yAxisGeom, axisMat));
+  
   // 渲染数据点（更大更亮）
   step.points.forEach((point: any) => {
     const geometry = new THREE.SphereGeometry(0.2, 16, 16);
@@ -2114,7 +2146,8 @@ function renderNeuralNetwork(scene: THREE.Scene, step: any) {
   const layerColors = [
     { main: 0x00ffff, glow: 0x66ffff },
     { main: 0xff00ff, glow: 0xff66ff },
-    { main: 0xffff00, glow: 0xffff66 }
+    { main: 0xffaa00, glow: 0xffcc66 },
+    { main: 0x22ff22, glow: 0x88ff88 }
   ];
   
   // 渲染连接（先渲染，这样神经元会在上层）
@@ -2257,6 +2290,40 @@ function renderGradientDescent(scene: THREE.Scene, step: any) {
 
 // 决策树渲染
 function renderDecisionTree(scene: THREE.Scene, step: any) {
+  function createLabelSprite(text: string, position: THREE.Vector3, color: string) {
+    const canvas = document.createElement('canvas');
+    canvas.width = 256;
+    canvas.height = 128;
+    const ctx = canvas.getContext('2d')!;
+    ctx.fillStyle = 'rgba(0,0,0,0.7)';
+    ctx.roundRect(8, 8, 240, 112, 16);
+    ctx.fill();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 3;
+    ctx.roundRect(8, 8, 240, 112, 16);
+    ctx.stroke();
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 28px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(text, 128, 64);
+
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.minFilter = THREE.LinearFilter;
+    const spriteMaterial = new THREE.SpriteMaterial({
+      map: texture,
+      transparent: true,
+      depthTest: false,
+      depthWrite: false
+    });
+    const sprite = new THREE.Sprite(spriteMaterial);
+    sprite.position.copy(position);
+    sprite.scale.set(2.5, 1.25, 1);
+    scene.add(sprite);
+  }
+
+  const rootPos = new THREE.Vector3(step.root.x, step.root.y, step.root.z);
+
   // 渲染根节点
   const rootGeometry = new THREE.SphereGeometry(0.6, 32, 32);
   const rootMaterial = new THREE.MeshStandardMaterial({
@@ -2267,9 +2334,12 @@ function renderDecisionTree(scene: THREE.Scene, step: any) {
     roughness: 0.2
   });
   const rootSphere = new THREE.Mesh(rootGeometry, rootMaterial);
-  rootSphere.position.set(step.root.x, step.root.y, step.root.z);
+  rootSphere.position.copy(rootPos);
   scene.add(rootSphere);
   
+  // 根节点标签
+  createLabelSprite(step.root.label || '条件?', new THREE.Vector3(rootPos.x, rootPos.y + 1.3, rootPos.z), '#ff6699');
+
   // 根节点光环
   for (let i = 0; i < 2; i++) {
     const ringGeometry = new THREE.TorusGeometry(0.8 + i * 0.3, 0.08, 16, 100);
@@ -2279,7 +2349,7 @@ function renderDecisionTree(scene: THREE.Scene, step: any) {
       opacity: 0.5 - i * 0.15
     });
     const ring = new THREE.Mesh(ringGeometry, ringMaterial);
-    ring.position.set(step.root.x, step.root.y, step.root.z);
+    ring.position.copy(rootPos);
     ring.rotation.x = Math.PI / 2;
     scene.add(ring);
   }
@@ -2290,11 +2360,11 @@ function renderDecisionTree(scene: THREE.Scene, step: any) {
       (step.activePath && step.activePath.includes(idx + 1));
     
     // 渲染连接线（使用管道）
-    const parentPos = idx === 0 || idx === 1 ? step.root : step.nodes[node.parent - 1];
-    const points = [
-      new THREE.Vector3(parentPos.x, parentPos.y, parentPos.z),
-      new THREE.Vector3(node.x, node.y, node.z)
-    ];
+    const parentPos = idx === 0 || idx === 1 ? rootPos : new THREE.Vector3(
+      step.nodes[node.parent - 1].x, step.nodes[node.parent - 1].y, step.nodes[node.parent - 1].z
+    );
+    const nodePos = new THREE.Vector3(node.x, node.y, node.z);
+    const points = [parentPos, nodePos];
     const curve = new THREE.CatmullRomCurve3(points);
     const tubeGeometry = new THREE.TubeGeometry(curve, 20, isActive ? 0.12 : 0.06, 8, false);
     const tubeMaterial = new THREE.MeshStandardMaterial({
@@ -2319,8 +2389,12 @@ function renderDecisionTree(scene: THREE.Scene, step: any) {
       roughness: 0.2
     });
     const nodeSphere = new THREE.Mesh(nodeGeometry, nodeMaterial);
-    nodeSphere.position.set(node.x, node.y, node.z);
+    nodeSphere.position.copy(nodePos);
     scene.add(nodeSphere);
+
+    // 节点标签
+    createLabelSprite(node.label || '', new THREE.Vector3(node.x, node.y + nodeSize + 0.8, node.z),
+      isActive ? '#00ff88' : '#3399ff');
     
     // 激活节点添加光环
     if (isActive) {
@@ -2331,7 +2405,7 @@ function renderDecisionTree(scene: THREE.Scene, step: any) {
         opacity: 0.6
       });
       const ring = new THREE.Mesh(ringGeometry, ringMaterial);
-      ring.position.set(node.x, node.y, node.z);
+      ring.position.copy(nodePos);
       ring.rotation.x = Math.PI / 2;
       scene.add(ring);
     }
