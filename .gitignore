@@ -62,3 +62,11 @@ dist/logs/
 
 # 用户上传的图片
 public/uploads/
+
+# 比赛提交文档（本地保留，不上传GitHub）
+作品原创声明.md
+思想内涵说明.md
+项目介绍文档.md
+作品原创声明.docx
+思想内涵说明.docx
+项目介绍文档.docx

@@ -564,6 +564,45 @@ CREATE TABLE challenge_submissions (
 
 ---
 
+### 13. study_progress - 学习进度标记表 🆕
+
+记录用户对学习页面的完成标记，支持跨会话持久化。
+
+```sql
+CREATE TABLE study_progress (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL,
+  page_path VARCHAR(500) NOT NULL,
+  completed TINYINT(1) NOT NULL DEFAULT 0,
+  completed_at TIMESTAMP NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY unique_user_page (user_id, page_path),
+  INDEX idx_user_id (user_id)
+)
+```
+
+| 字段名 | 类型 | 说明 | 约束 |
+|-------|------|------|------|
+| id | INT | 主键，自增 | PRIMARY KEY |
+| user_id | INT | 用户ID | NOT NULL, FK |
+| page_path | VARCHAR(500) | 页面路径 | NOT NULL |
+| completed | TINYINT(1) | 是否完成 | DEFAULT 0 |
+| completed_at | TIMESTAMP | 完成时间 | NULL |
+| created_at | TIMESTAMP | 创建时间 | DEFAULT CURRENT_TIMESTAMP |
+| updated_at | TIMESTAMP | 更新时间 | ON UPDATE CURRENT_TIMESTAMP |
+
+**索引：**
+- `unique_user_page`: (user_id, page_path) 唯一索引，每个用户每页仅一条记录
+- `idx_user_id`: user_id字段索引
+
+**前端交互：**
+- 右上角默认折叠为小圆钮，点击展开完整面板
+- 乐观更新：点击即时生效，后台异步同步
+- 通过 study/layout.tsx 自动挂载至所有学习页面
+
+---
+
 ## 表关系图
 
 ```
@@ -581,6 +620,8 @@ users (用户表)
 
 challenges (编程挑战表)
   └─→ challenge_submissions (挑战提交表) [challenge_id]
+
+study_progress (学习进度标记表) [user_id]
 ```
 
 ---
@@ -710,6 +751,7 @@ LIMIT 10
 - **v1.2** (2024-09): 添加编程挑战功能
 - **v1.3** (2024-12): 优化索引和查询性能
 - **v2.0** (2026-03): 完善文档，修复字段不一致问题，添加平台统计API
+- **v2.1** (2026-05): 新增 study_progress 学习进度标记表，支持用户标记学习页面完成状态
 
 ---
 
@@ -797,4 +839,4 @@ ORDER BY (data_length + index_length) DESC;
 
 ---
 
-最后更新：2026年3月7日
+最后更新：2026年5月14日
