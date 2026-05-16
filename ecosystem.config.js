@@ -1,7 +1,6 @@
 module.exports = {
   apps: [
     {
-      // Next.js 前端服务 - Standalone模式
       name: 'frontend',
       script: '.next/standalone/server.js',
       interpreter: 'node',
@@ -9,15 +8,15 @@ module.exports = {
       env: {
         PORT: 3000,
         NODE_ENV: 'production',
-        NEXTAUTH_URL: 'https://www.partjava.com',
-        NEXTAUTH_SECRET: 'RZ7oSkZsSRDy2lps0apRw1/9Qh7ZSuBhCWf4N84ibKE=',
-        DB_HOST: 'localhost',
-        DB_USER: 'ecs-user',
-        DB_PASSWORD: '123456',
-        DB_NAME: 'partjava_notes',
-        RAPIDAPI_KEY: '039e43b537msh40765032398a95ep1f61aajsn0321e61fa9d0',
-        RAPIDAPI_HOST: 'judge0-ce.p.rapidapi.com',
-        NEXT_PUBLIC_AI_API_URL: 'https://www.partjava.com/ai'
+        NEXTAUTH_URL: process.env.NEXTAUTH_URL || 'https://www.partjava.com',
+        NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
+        DB_HOST: process.env.DB_HOST || 'localhost',
+        DB_USER: process.env.DB_USER || 'ecs-user',
+        DB_PASSWORD: process.env.DB_PASSWORD,
+        DB_NAME: process.env.DB_NAME || 'partjava_notes',
+        RAPIDAPI_KEY: process.env.RAPIDAPI_KEY,
+        RAPIDAPI_HOST: process.env.RAPIDAPI_HOST || 'judge0-ce.p.rapidapi.com',
+        NEXT_PUBLIC_AI_API_URL: process.env.NEXT_PUBLIC_AI_API_URL || 'https://www.partjava.com/ai'
       },
       instances: 1,
       autorestart: true,
@@ -29,7 +28,6 @@ module.exports = {
       time: true
     },
     {
-      // Python AI 后端服务
       name: 'backend',
       script: '/root/aidnz/i/partjava-ai/venv/bin/python',
       args: '-m uvicorn main:app --host 0.0.0.0 --port 8000',
@@ -38,7 +36,7 @@ module.exports = {
       env: {
         PYTHONPATH: '/root/aidnz/i/partjava-ai',
         PORT: 8000,
-        DEEPSEEK_API_KEY: 'sk-da99bac1ebc9428e99077661f36abfd6'
+        DEEPSEEK_API_KEY: process.env.DEEPSEEK_API_KEY
       },
       instances: 1,
       autorestart: true,
@@ -51,4 +49,3 @@ module.exports = {
     }
   ]
 };
-

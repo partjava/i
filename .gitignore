@@ -30,6 +30,9 @@ yarn-error.log*
 .env.development
 partjava-ai/.env
 
+# 含密钥的配置文件（禁止上传）
+ecosystem.config.local.js
+
 # vercel
 .vercel
 
