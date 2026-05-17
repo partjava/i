@@ -648,8 +648,8 @@ export default function StudyScreenshot() {
 
       <div ref={editorDivRef} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'auto', padding: 20 }} tabIndex={-1}>
         <div style={{ position: 'relative', display: 'inline-block' }}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
           {baseImage && (
+            // eslint-disable-next-line @next/next/no-img-element
             <img
               src={baseImage}
               alt="screenshot"
