@@ -598,19 +598,6 @@ ${text}${contextHint}`;
 
       {open && (
         <div
-          onMouseDown={(e) => {
-            const t = e.target as HTMLElement;
-            if (['INPUT', 'TEXTAREA', 'BUTTON', 'A', 'SELECT', 'OPTION', 'LABEL'].includes(t.tagName)) return;
-            pendingDragRef.current = true;
-            dragStartPosRef.current = { x: e.clientX, y: e.clientY };
-          }}
-          onTouchStart={(e) => {
-            const touch = e.touches[0];
-            const t = e.target as HTMLElement;
-            if (['INPUT', 'TEXTAREA', 'BUTTON', 'A', 'SELECT', 'OPTION', 'LABEL'].includes(t.tagName)) return;
-            pendingDragRef.current = true;
-            dragStartPosRef.current = { x: touch.clientX, y: touch.clientY };
-          }}
           style={{ width: 360, height: 480, borderRadius: 12, overflow: 'hidden', boxShadow: '0 10px 40px rgba(0,0,0,0.25)', background: '#fff' }}
         >
           <div
