@@ -1,116 +1,129 @@
-'use client';
+'use client'
 
-import React from 'react';
-import { Card, Tabs, Progress, Alert, Typography } from 'antd';
-import { LeftOutlined, RightOutlined } from '@ant-design/icons';
-import Link from 'next/link';
-import { CodeBlock } from '@/app/components/ui/CodeBlock';
+import LessonLayout, { type LessonMeta } from '@/app/components/ui/book/LessonLayout'
+import { THEMES } from '@/app/components/ui/book/theme'
+import {
+  PageTitle,
+  BookParagraph,
+  BookCode,
+  BookAlert,
+  BookList,
+  TagGrid,
+} from '@/app/components/ui/book/BookContent'
 
-const { Title, Paragraph, Text } = Typography;
+const META: LessonMeta = {
+  subject: 'Java 编程',
+  chapterTitle: '编程入门',
+  chapterNumber: 1,
+  totalChapters: 10,
+  subjectHref: '/study/computer/java',
+  nextChapter: { label: '基础语法', href: '/study/computer/java/basic' },
+  theme: THEMES.computer,
+}
 
-export default function JavaIntroPage() {
-  const tabItems = [
-    {
-      key: '1',
-      label: '🌟 Java简介与环境',
-      children: (
-        <Card title="Java简介与开发环境" className="mb-6">
-          <Paragraph>Java是一门广泛应用于企业级开发、移动端、Web和大数据等领域的面向对象编程语言。其跨平台、稳定、安全的特性使其成为全球最受欢迎的编程语言之一。</Paragraph>
-          <Paragraph><b>开发环境搭建：</b></Paragraph>
-          <ul className="list-disc pl-6">
-            <li>下载并安装 <Text code>JDK</Text>（推荐Oracle JDK或OpenJDK）</li>
-            <li>配置环境变量 <Text code>JAVA_HOME</Text> 和 <Text code>Path</Text></li>
-            <li>推荐IDE：IntelliJ IDEA、Eclipse、VS Code等</li>
-          </ul>
-          <CodeBlock language="bash">
-{`# 检查Java安装
+const SPREADS = [
+  {
+    label: 'Java简介',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>Java 简介与开发环境</PageTitle>
+        <BookParagraph>Java是一门广泛应用于企业级开发、移动端、Web和大数据等领域的面向对象编程语言。其跨平台、稳定、安全的特性使其成为全球最受欢迎的编程语言之一。</BookParagraph>
+        <BookAlert type="info" message="Java 的核心优势：跨平台（一次编写到处运行）、自动内存管理（GC）、丰富的生态系统、强大的社区支持" />
+        <h3 className="text-sm font-medium text-ink mt-4">开发环境搭建</h3>
+        <BookList items={[
+          '下载并安装 JDK（推荐 Oracle JDK 或 OpenJDK 17+）',
+          '配置环境变量 JAVA_HOME 和 Path',
+          '推荐 IDE：IntelliJ IDEA、Eclipse、VS Code',
+        ]} />
+      </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <PageTitle>验证安装</PageTitle>
+        <BookCode language="bash" showLineNumbers code={`# 检查Java安装
 java -version
 # 输出示例
 # java version "17.0.2" 2022-01-18
-`}
-          </CodeBlock>
-          <Alert message="要点" description={<ul className="list-disc pl-6"><li>Java跨平台：一次编写，到处运行</li><li>JDK包含JRE和开发工具</li></ul>} type="info" showIcon />
-        </Card>
-      )
-    },
-    {
-      key: '2',
-      label: '👋 第一个Java程序',
-      children: (
-        <Card title="HelloWorld程序" className="mb-6">
-          <Paragraph>Java程序的基本结构由类、主方法（<Text code>main</Text>）组成。下面是经典的HelloWorld示例：</Paragraph>
-          <CodeBlock language="java">
-{`public class HelloWorld {
+
+# 检查编译器
+javac -version
+
+# 检查 Java Home
+echo $JAVA_HOME  # Mac/Linux
+echo %JAVA_HOME% # Windows`} />
+        <BookAlert type="success" message="看到版本号输出说明 JDK 安装成功。如果提示找不到命令，请检查环境变量配置" />
+      </div>
+    ),
+  },
+  {
+    label: '第一个程序',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>HelloWorld 程序</PageTitle>
+        <BookParagraph>Java程序的基本结构由类、主方法（main）组成。每个Java程序都需要一个入口点，即 main 方法。</BookParagraph>
+        <BookCode language="java" showLineNumbers code={`public class HelloWorld {
     public static void main(String[] args) {
         System.out.println("Hello, Java!");
     }
-}`}
-          </CodeBlock>
-          <Paragraph><b>编译与运行：</b></Paragraph>
-          <CodeBlock language="bash">
-{`javac HelloWorld.java
-java HelloWorld`}
-          </CodeBlock>
-          <Alert message="要点" description={<ul className="list-disc pl-6"><li>类名需与文件名一致</li><li>主方法是程序入口</li><li>每条语句以分号结尾</li></ul>} type="success" showIcon />
-        </Card>
-      )
-    },
-    {
-      key: '3',
-      label: '❓ 常见问题与练习',
-      children: (
-        <Card title="常见问题与练习" className="mb-6">
-          <Paragraph><b>常见问题：</b></Paragraph>
-          <ul className="list-disc pl-6">
-            <li>编译报错：检查类名、文件名、大小写</li>
-            <li>找不到主方法：确保方法签名为 <Text code>public static void main(String[] args)</Text></li>
-            <li>中文乱码：建议文件保存为UTF-8编码</li>
-          </ul>
-          <Paragraph><b>练习题：</b></Paragraph>
-          <ul className="list-disc pl-6">
-            <li>编写一个Java程序，输出你的姓名和年龄</li>
-            <li>尝试修改HelloWorld，输出多行内容</li>
-          </ul>
-          <Alert message="温馨提示" description="多动手实践，遇到问题多查文档和社区。" type="info" showIcon />
-        </Card>
-      )
-    }
-  ];
-
-  return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* 页面头部 */}
-        <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Java编程入门</h1>
-              <p className="text-gray-600 mt-2">了解Java语言特点，完成第一个Java程序</p>
-            </div>
-            <Progress type="circle" percent={5} size={100} strokeColor="#1890ff" />
-          </div>
-        </div>
-
-        {/* 课程内容 */}
-        <div className="bg-white rounded-lg shadow-md p-8">
-          <Tabs items={tabItems} tabPosition="left" className="p-6" />
-        </div>
-
-        {/* 底部导航 */}
-        <div className="flex justify-between mt-8">
-          <div className="inline-flex items-center px-4 py-2 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-gray-300">
-            <LeftOutlined className="mr-2" />
-            已是第一课
-          </div>
-          <Link
-            href="/study/java/basic"
-            className="inline-flex items-center px-4 py-2 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"
-          >
-            下一课：基础语法
-            <RightOutlined className="ml-2" />
-          </Link>
-        </div>
+}`} />
+        <h3 className="text-sm font-medium text-ink mt-2">编译与运行</h3>
+        <BookCode language="bash" showLineNumbers maxLines={0} code={`javac HelloWorld.java
+java HelloWorld`} />
       </div>
-    </div>
-  );
-} 
+    ),
+    right: (
+      <div className="space-y-4">
+        <PageTitle>程序结构详解</PageTitle>
+        <BookParagraph>理解 Java 程序的基本结构是入门的第一步：</BookParagraph>
+        <BookList items={[
+          'public class — 类定义，类名必须与文件名一致',
+          'public static void main — 主方法，程序的入口',
+          'String[] args — 命令行参数',
+          'System.out.println — 控制台输出',
+          '每条语句以分号 ; 结尾',
+        ]} />
+        <BookAlert type="warning" message="Java 是大小写敏感的语言，HelloWorld 和 helloworld 是不同的。类名使用帕斯卡命名法（首字母大写）" />
+        <TagGrid items={['JDK', 'JRE', 'JVM', '编译', '运行', 'main 方法']} />
+      </div>
+    ),
+  },
+  {
+    label: '练习例题',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>课后练习</PageTitle>
+        <div className="p-3 bg-paper-200/80 rounded-md border border-paper-300">
+          <p className="text-sm text-ink font-medium mb-1">练习题</p>
+          <BookList items={[
+            '编写程序输出你的姓名和年龄',
+            '修改 HelloWorld 输出多行文字',
+            '尝试在代码中添加中文注释',
+            '使用 System.out.printf 格式化输出',
+          ]} />
+        </div>
+        <BookAlert type="info" message="动手实践是最好的学习方式。尝试修改代码，观察输出变化，理解每行代码的作用" />
+      </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <PageTitle>参考代码</PageTitle>
+        <BookCode language="java" showLineNumbers code={`public class MyInfo {
+    public static void main(String[] args) {
+        // 输出个人信息
+        System.out.println("姓名: 张三");
+        System.out.println("年龄: 20");
+        System.out.println("爱好: 编程");
+
+        // 格式化输出
+        System.out.printf("圆周率: %.2f%n", 3.14159);
+    }
+}`} />
+        <BookAlert type="success" message={'运行结果：输出个人信息和格式化后的圆周率 3.14'} />
+      </div>
+    ),
+  },
+]
+
+export default function JavaIntroPage() {
+  return <LessonLayout meta={META} spreads={SPREADS} />
+}

@@ -1,158 +1,63 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import LessonLayout, { type LessonMeta } from '@/app/components/ui/book/LessonLayout'
+import { THEMES } from '@/app/components/ui/book/theme'
+import {
+  PageTitle, SectionTitle, BookParagraph, BookCode, BookList, TagGrid,
+} from '@/app/components/ui/book/BookContent'
 
-const tabs = [
-  { key: 'faq', label: '常见问题' },
-  { key: 'interview', label: '面试题' },
-  { key: 'algo', label: '算法题' },
-  { key: 'system', label: '系统设计' },
-  { key: 'best', label: '最佳实践' },
-  { key: 'review', label: '代码审查' },
-  { key: 'exercise', label: '练习' },
-]
+const META: LessonMeta = {
+  subject: 'PHP',
+  chapterTitle: '常见问题与面试题',
+  chapterNumber: 22,
+  totalChapters: 22,
+  subjectHref: '/study/computer/php',
+  prevChapter: { label: '云原生与容器化', href: '/study/computer/php/cloud-docker' },
+  theme: THEMES.computer,
+}
 
-export default function FAQPage() {
-  const [activeTab, setActiveTab] = useState('faq')
-  const router = useRouter()
-
-  return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-      <h1 className="text-3xl font-bold mb-6 mt-4 text-center">常见问题与面试题</h1>
-      <div className="border-b border-gray-200 mb-6">
-        <nav className="-mb-px flex space-x-8" aria-label="Tabs">
-          {tabs.map(tab => (
-            <button
-              key={tab.key}
-              onClick={() => setActiveTab(tab.key)}
-              className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm focus:outline-none ${
-                activeTab === tab.key
-                  ? 'border-blue-500 text-blue-600 font-bold'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </nav>
+const SPREADS = [
+  {
+    label: '常见问题',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>常见问题</PageTitle>
+        <BookParagraph><b>Q: PHP 7和PHP 8的主要区别是什么？</b><br />A: PHP 8引入了许多新特性，包括JIT编译器、联合类型、命名参数、属性(Attributes)、构造器属性提升、匹配表达式(match)、Nullsafe运算符，以及字符串与数字比较更严格等。</BookParagraph>
+        <BookParagraph><b>Q: 如何优化PHP应用的性能？</b><br />A: 使用OPcache加速脚本执行、优化数据库查询、实现缓存机制、使用异步处理、代码优化、使用CDN、启用HTTP/2，以及使用Swoole等高性能框架。</BookParagraph>
+        <BookParagraph><b>Q: 如何处理PHP中的内存泄漏？</b><br />A: 使用内存分析工具、及时释放资源、避免循环引用、使用unset()释放变量、监控内存使用、优化数据结构、以及利用垃圾回收机制。</BookParagraph>
       </div>
-
-      {/* 内容区域 */}
-      <div className="bg-white rounded-xl shadow-lg p-8">
-        {activeTab === 'faq' && (
-          <div>
-            <h2 className="text-2xl font-bold mb-6">常见问题</h2>
-            <div className="space-y-6">
-              <div className="bg-gray-50 p-6 rounded-lg">
-                <h3 className="text-lg font-semibold mb-3">1. PHP 7和PHP 8的主要区别是什么？</h3>
-                <div className="space-y-3">
-                  <p className="text-gray-700">PHP 8引入了许多新特性，包括：</p>
-                  <ul className="list-disc pl-4 text-gray-700 space-y-2">
-                    <li>JIT编译器</li>
-                    <li>联合类型</li>
-                    <li>命名参数</li>
-                    <li>属性</li>
-                    <li>构造器属性提升</li>
-                    <li>匹配表达式</li>
-                    <li>Nullsafe运算符</li>
-                    <li>字符串与数字比较更严格</li>
-                  </ul>
-                </div>
-              </div>
-              <div className="bg-gray-50 p-6 rounded-lg">
-                <h3 className="text-lg font-semibold mb-3">2. 如何优化PHP应用的性能？</h3>
-                <div className="space-y-3">
-                  <p className="text-gray-700">性能优化策略包括：</p>
-                  <ul className="list-disc pl-4 text-gray-700 space-y-2">
-                    <li>使用OPcache</li>
-                    <li>优化数据库查询</li>
-                    <li>实现缓存机制</li>
-                    <li>使用异步处理</li>
-                    <li>代码优化</li>
-                    <li>使用CDN</li>
-                    <li>启用HTTP/2</li>
-                    <li>使用Swoole等高性能框架</li>
-                  </ul>
-                </div>
-              </div>
-              <div className="bg-gray-50 p-6 rounded-lg">
-                <h3 className="text-lg font-semibold mb-3">3. 如何处理PHP中的内存泄漏？</h3>
-                <div className="space-y-3">
-                  <p className="text-gray-700">内存泄漏处理方法：</p>
-                  <ul className="list-disc pl-4 text-gray-700 space-y-2">
-                    <li>使用内存分析工具</li>
-                    <li>及时释放资源</li>
-                    <li>避免循环引用</li>
-                    <li>使用unset()释放变量</li>
-                    <li>监控内存使用</li>
-                    <li>优化数据结构</li>
-                    <li>使用垃圾回收</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-        {activeTab === 'interview' && (
-          <div>
-            <h2 className="text-2xl font-bold mb-6">面试题</h2>
-            <div className="space-y-6">
-              <div className="bg-gray-50 p-6 rounded-lg">
-                <h3 className="text-lg font-semibold mb-3">1. 解释PHP的生命周期</h3>
-                <div className="space-y-3">
-                  <p className="text-gray-700">PHP的生命周期包括：</p>
-                  <ul className="list-disc pl-4 text-gray-700 space-y-2">
-                    <li>模块初始化</li>
-                    <li>请求初始化</li>
-                    <li>脚本执行</li>
-                    <li>请求关闭</li>
-                    <li>模块关闭</li>
-                  </ul>
-                </div>
-              </div>
-              <div className="bg-gray-50 p-6 rounded-lg">
-                <h3 className="text-lg font-semibold mb-3">2. 解释PHP的垃圾回收机制</h3>
-                <div className="space-y-3">
-                  <p className="text-gray-700">PHP使用引用计数和循环引用检测的垃圾回收机制：</p>
-                  <ul className="list-disc pl-4 text-gray-700 space-y-2">
-                    <li>每个变量都有引用计数</li>
-                    <li>当引用计数为0时，内存被释放</li>
-                    <li>使用标记清除算法处理循环引用</li>
-                    <li>垃圾回收在特定条件下触发</li>
-                  </ul>
-                </div>
-              </div>
-              <div className="bg-gray-50 p-6 rounded-lg">
-                <h3 className="text-lg font-semibold mb-3">3. 解释PHP的命名空间</h3>
-                <div className="space-y-3">
-                  <p className="text-gray-700">命名空间的作用：</p>
-                  <ul className="list-disc pl-4 text-gray-700 space-y-2">
-                    <li>解决命名冲突</li>
-                    <li>组织代码结构</li>
-                    <li>实现自动加载</li>
-                    <li>提高代码可维护性</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-        {activeTab === 'algo' && (
-          <div>
-            <h2 className="text-2xl font-bold mb-6">算法题</h2>
-            <div className="space-y-6">
-              <div className="bg-gray-50 p-6 rounded-lg">
-                <h3 className="text-lg font-semibold mb-3">1. 实现快速排序</h3>
-                <pre className="bg-gray-800 text-white p-4 rounded-lg overflow-x-auto text-sm">
-{`function quickSort($array) {
+    ),
+    right: (
+      <div className="space-y-4">
+        <SectionTitle>PHP生命周期与垃圾回收</SectionTitle>
+        <BookParagraph><b>PHP生命周期：</b>包含模块初始化、请求初始化、脚本执行、请求关闭、模块关闭五个阶段。</BookParagraph>
+        <BookParagraph><b>垃圾回收机制：</b>PHP使用引用计数和循环引用检测的垃圾回收机制。每个变量都有引用计数，当引用计数为0时内存被释放，使用标记清除算法处理循环引用，垃圾回收在特定条件下触发。</BookParagraph>
+        <BookParagraph><b>命名空间：</b>解决命名冲突、组织代码结构、实现自动加载、提高代码可维护性。</BookParagraph>
+        <TagGrid items={['PHP 8', 'JIT', 'OPcache', '生命周期', '垃圾回收', '命名空间']} />
+      </div>
+    ),
+  },
+  {
+    label: '面试题与算法',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>面试题</PageTitle>
+        <BookParagraph><b>Q: 解释PHP的生命周期？</b><br />A: PHP生命周期包括模块初始化（加载扩展和配置）、请求初始化（设置环境变量）、脚本执行（编译执行PHP代码）、请求关闭（清理资源）、模块关闭（释放扩展资源）。</BookParagraph>
+        <BookParagraph><b>Q: 解释PHP的垃圾回收机制？</b><br />A: PHP使用引用计数和循环引用检测的垃圾回收机制。每个变量都有引用计数，当引用计数为0时内存被释放，使用标记清除算法处理循环引用。</BookParagraph>
+        <BookParagraph><b>Q: 解释PHP的命名空间？</b><br />A: 命名空间用于解决命名冲突、组织代码结构、实现自动加载和提高代码可维护性。</BookParagraph>
+      </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <SectionTitle>算法题</SectionTitle>
+        <BookParagraph><b>1. 快速排序</b></BookParagraph>
+        <BookCode language="php" code={`<?php
+function quickSort($array) {
     if (count($array) <= 1) {
         return $array;
     }
-    
     $pivot = $array[0];
     $left = $right = [];
-    
     for ($i = 1; $i < count($array); $i++) {
         if ($array[$i] < $pivot) {
             $left[] = $array[$i];
@@ -160,181 +65,115 @@ export default function FAQPage() {
             $right[] = $array[$i];
         }
     }
-    
     return array_merge(quickSort($left), [$pivot], quickSort($right));
-}`}
-                </pre>
-              </div>
-              <div className="bg-gray-50 p-6 rounded-lg">
-                <h3 className="text-lg font-semibold mb-3">2. 实现二分查找</h3>
-                <pre className="bg-gray-800 text-white p-4 rounded-lg overflow-x-auto text-sm">
-{`function binarySearch($array, $target) {
+}
+?>`} />
+        <BookParagraph><b>2. 二分查找</b></BookParagraph>
+        <BookCode language="php" code={`<?php
+function binarySearch($array, $target) {
     $left = 0;
     $right = count($array) - 1;
-    
     while ($left <= $right) {
         $mid = floor(($left + $right) / 2);
-        
         if ($array[$mid] == $target) {
             return $mid;
         }
-        
         if ($array[$mid] < $target) {
             $left = $mid + 1;
         } else {
             $right = $mid - 1;
         }
     }
-    
     return -1;
-}`}
-                </pre>
-              </div>
-            </div>
-          </div>
-        )}
-        {activeTab === 'system' && (
-          <div>
-            <h2 className="text-2xl font-bold mb-6">系统设计</h2>
-            <div className="space-y-6">
-              <div className="bg-gray-50 p-6 rounded-lg">
-                <h3 className="text-lg font-semibold mb-3">1. 设计一个高并发的Web应用</h3>
-                <div className="space-y-3">
-                  <p className="text-gray-700">设计要点：</p>
-                  <ul className="list-disc pl-4 text-gray-700 space-y-2">
-                    <li>使用负载均衡</li>
-                    <li>实现缓存层</li>
-                    <li>数据库分片</li>
-                    <li>异步处理</li>
-                    <li>使用消息队列</li>
-                    <li>CDN加速</li>
-                    <li>微服务架构</li>
-                  </ul>
-                </div>
-              </div>
-              <div className="bg-gray-50 p-6 rounded-lg">
-                <h3 className="text-lg font-semibold mb-3">2. 设计一个分布式缓存系统</h3>
-                <div className="space-y-3">
-                  <p className="text-gray-700">设计要点：</p>
-                  <ul className="list-disc pl-4 text-gray-700 space-y-2">
-                    <li>一致性哈希</li>
-                    <li>数据分片</li>
-                    <li>复制策略</li>
-                    <li>失效处理</li>
-                    <li>监控系统</li>
-                    <li>故障转移</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-        {activeTab === 'best' && (
-          <div>
-            <h2 className="text-2xl font-bold mb-6">最佳实践</h2>
-            <div className="space-y-6">
-              <div className="bg-gray-50 p-6 rounded-lg">
-                <h3 className="text-lg font-semibold mb-3">1. 代码规范</h3>
-                <div className="space-y-3">
-                  <ul className="list-disc pl-4 text-gray-700 space-y-2">
-                    <li>遵循PSR标准</li>
-                    <li>使用类型声明</li>
-                    <li>编写单元测试</li>
-                    <li>文档注释</li>
-                    <li>代码审查</li>
-                    <li>持续集成</li>
-                  </ul>
-                </div>
-              </div>
-              <div className="bg-gray-50 p-6 rounded-lg">
-                <h3 className="text-lg font-semibold mb-3">2. 安全实践</h3>
-                <div className="space-y-3">
-                  <ul className="list-disc pl-4 text-gray-700 space-y-2">
-                    <li>输入验证</li>
-                    <li>输出转义</li>
-                    <li>使用预处理语句</li>
-                    <li>CSRF防护</li>
-                    <li>XSS防护</li>
-                    <li>密码加密</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-        {activeTab === 'review' && (
-          <div>
-            <h2 className="text-2xl font-bold mb-6">代码审查</h2>
-            <div className="space-y-6">
-              <div className="bg-gray-50 p-6 rounded-lg">
-                <h3 className="text-lg font-semibold mb-3">1. 代码质量检查点</h3>
-                <div className="space-y-3">
-                  <ul className="list-disc pl-4 text-gray-700 space-y-2">
-                    <li>代码可读性</li>
-                    <li>性能问题</li>
-                    <li>安全问题</li>
-                    <li>错误处理</li>
-                    <li>测试覆盖</li>
-                    <li>文档完整性</li>
-                  </ul>
-                </div>
-              </div>
-              <div className="bg-gray-50 p-6 rounded-lg">
-                <h3 className="text-lg font-semibold mb-3">2. 常见代码问题</h3>
-                <div className="space-y-3">
-                  <ul className="list-disc pl-4 text-gray-700 space-y-2">
-                    <li>重复代码</li>
-                    <li>过长函数</li>
-                    <li>复杂条件</li>
-                    <li>魔法数字</li>
-                    <li>命名不规范</li>
-                    <li>注释不足</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-        {activeTab === 'exercise' && (
-          <div>
-            <h2 className="text-2xl font-bold mb-6">练习</h2>
-            <div className="space-y-6">
-              <div className="bg-gray-50 p-6 rounded-lg">
-                <h3 className="text-lg font-semibold mb-3">1. 算法练习</h3>
-                <div className="space-y-3">
-                  <ul className="list-disc pl-4 text-gray-700 space-y-2">
-                    <li>实现常见排序算法</li>
-                    <li>解决动态规划问题</li>
-                    <li>实现数据结构</li>
-                    <li>解决字符串问题</li>
-                  </ul>
-                </div>
-              </div>
-              <div className="bg-gray-50 p-6 rounded-lg">
-                <h3 className="text-lg font-semibold mb-3">2. 系统设计练习</h3>
-                <div className="space-y-3">
-                  <ul className="list-disc pl-4 text-gray-700 space-y-2">
-                    <li>设计短链接系统</li>
-                    <li>设计秒杀系统</li>
-                    <li>设计搜索引擎</li>
-                    <li>设计即时通讯系统</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+}
+?>`} />
       </div>
+    ),
+  },
+  {
+    label: '系统设计与最佳实践',
+    left: (
+      <div className="space-y-4">
+        <SectionTitle>系统设计</SectionTitle>
+        <BookParagraph><b>1. 设计高并发Web应用</b>：使用负载均衡、实现缓存层、数据库分片、异步处理、使用消息队列、CDN加速、微服务架构。</BookParagraph>
+        <BookParagraph><b>2. 设计分布式缓存系统</b>：一致性哈希、数据分片、复制策略、失效处理、监控系统、故障转移。</BookParagraph>
+        <BookList items={[
+          '高并发系统：使用消息队列、Redis缓存、读写分离',
+          '分布式缓存：缓存穿透、雪崩、击穿防护',
+          '微服务架构：服务拆分、API网关、服务治理',
+        ]} />
+      </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <SectionTitle>最佳实践</SectionTitle>
+        <BookParagraph><b>1. 代码规范</b></BookParagraph>
+        <BookList items={[
+          '遵循PSR标准',
+          '使用类型声明',
+          '编写单元测试',
+          '文档注释',
+          '代码审查',
+          '持续集成',
+        ]} />
+        <BookParagraph><b>2. 安全实践</b></BookParagraph>
+        <BookList items={[
+          '输入验证',
+          '输出转义',
+          '使用预处理语句',
+          'CSRF防护',
+          'XSS防护',
+          '密码加密',
+        ]} />
+      </div>
+    ),
+  },
+  {
+    label: '代码审查与练习',
+    left: (
+      <div className="space-y-4">
+        <SectionTitle>代码审查</SectionTitle>
+        <BookParagraph><b>1. 代码质量检查点</b></BookParagraph>
+        <BookList items={[
+          '代码可读性',
+          '性能问题',
+          '安全问题',
+          '错误处理',
+          '测试覆盖',
+          '文档完整性',
+        ]} />
+        <BookParagraph><b>2. 常见代码问题</b></BookParagraph>
+        <BookList items={[
+          '重复代码',
+          '过长函数',
+          '复杂条件',
+          '魔法数字',
+          '命名不规范',
+          '注释不足',
+        ]} />
+      </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <SectionTitle>练习</SectionTitle>
+        <BookParagraph><b>1. 算法练习</b></BookParagraph>
+        <BookList items={[
+          '实现常见排序算法',
+          '解决动态规划问题',
+          '实现数据结构',
+          '解决字符串问题',
+        ]} />
+        <BookParagraph><b>2. 系统设计练习</b></BookParagraph>
+        <BookList items={[
+          '设计短链接系统',
+          '设计秒杀系统',
+          '设计搜索引擎',
+          '设计即时通讯系统',
+        ]} />
+        <TagGrid items={['面试', '算法', '排序', '查找', '系统设计', '高并发', '安全', '代码规范', '代码审查', '练习']} />
+      </div>
+    ),
+  },
+]
 
-      {/* 底部导航 */}
-      <div className="flex justify-between mt-8">
-        <button
-          onClick={() => router.push('/study/php/cloud-docker')}
-          className="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
-        >
-          上一页：云原生与容器化
-        </button>
-      </div>
-    </div>
-  )
-} 
+export default function PhpFaqPage() { return <LessonLayout meta={META} spreads={SPREADS} /> }

@@ -7,37 +7,37 @@ import { executeQuery } from '@/lib/database';
 // 课程数据结构
 const courseData = {
   programming: [
-    { name: 'Python编程入门', category: '编程语言', path: '/study/python/intro', description: '学习Python基础语法和编程概念' },
-    { name: 'Python基础语法', category: '编程语言', path: '/study/python/basic', description: 'Python变量、数据类型、运算符等基础内容' },
-    { name: 'Python数据类型', category: '编程语言', path: '/study/python/datatypes', description: '深入了解Python的各种数据类型' },
-    { name: 'Python控制结构', category: '编程语言', path: '/study/python/control', description: '条件语句、循环、异常处理等控制结构' },
-    { name: 'Python函数编程', category: '编程语言', path: '/study/python/functions', description: '函数定义、参数传递、递归等概念' },
-    { name: 'Python面向对象', category: '编程语言', path: '/study/python/oop', description: '类、对象、继承、多态等面向对象编程' },
-    { name: 'Python文件操作', category: '编程语言', path: '/study/python/file-io', description: '文件读写、路径操作、数据持久化' },
-    { name: 'Python异常处理', category: '编程语言', path: '/study/python/exceptions', description: '错误处理机制和调试技巧' },
-    { name: 'Python标准库', category: '编程语言', path: '/study/python/stdlib', description: '常用标准库和模块使用' },
-    { name: 'Python包管理', category: '编程语言', path: '/study/python/packages', description: 'pip、虚拟环境、包发布等' },
-    { name: 'Python项目实战', category: '编程语言', path: '/study/python/projects', description: '完整项目开发和最佳实践' }
+    { name: 'Python编程入门', category: '编程语言', path: '/study/computer/python/intro', description: '学习Python基础语法和编程概念' },
+    { name: 'Python基础语法', category: '编程语言', path: '/study/computer/python/basic', description: 'Python变量、数据类型、运算符等基础内容' },
+    { name: 'Python数据类型', category: '编程语言', path: '/study/computer/python/datatypes', description: '深入了解Python的各种数据类型' },
+    { name: 'Python控制结构', category: '编程语言', path: '/study/computer/python/control', description: '条件语句、循环、异常处理等控制结构' },
+    { name: 'Python函数编程', category: '编程语言', path: '/study/computer/python/functions', description: '函数定义、参数传递、递归等概念' },
+    { name: 'Python面向对象', category: '编程语言', path: '/study/computer/python/oop', description: '类、对象、继承、多态等面向对象编程' },
+    { name: 'Python文件操作', category: '编程语言', path: '/study/computer/python/file-io', description: '文件读写、路径操作、数据持久化' },
+    { name: 'Python异常处理', category: '编程语言', path: '/study/computer/python/exceptions', description: '错误处理机制和调试技巧' },
+    { name: 'Python标准库', category: '编程语言', path: '/study/computer/python/stdlib', description: '常用标准库和模块使用' },
+    { name: 'Python包管理', category: '编程语言', path: '/study/computer/python/packages', description: 'pip、虚拟环境、包发布等' },
+    { name: 'Python项目实战', category: '编程语言', path: '/study/computer/python/projects', description: '完整项目开发和最佳实践' }
   ],
   java: [
-    { name: 'Java编程入门', category: '编程语言', path: '/study/java/intro', description: '学习Java基础语法和面向对象编程' },
-    { name: 'Java基础语法', category: '编程语言', path: '/study/java/basic', description: 'Java变量、数据类型、运算符等基础' },
-    { name: 'Java控制结构', category: '编程语言', path: '/study/java/control', description: 'Java条件语句、循环控制等' },
-    { name: 'Java面向对象', category: '编程语言', path: '/study/java/oop', description: '类、对象、继承、多态、封装等OOP概念' },
-    { name: 'Java集合框架', category: '编程语言', path: '/study/java/collections', description: 'List、Set、Map等集合的使用' },
-    { name: 'Java异常处理', category: '编程语言', path: '/study/java/exceptions', description: 'try-catch、自定义异常等' },
-    { name: 'Java文件IO', category: '编程语言', path: '/study/java/file-io', description: '文件读写、流操作、NIO等' },
-    { name: 'Java网络编程', category: '编程语言', path: '/study/java/network', description: 'Socket编程、HTTP客户端等' },
-    { name: 'Java多线程', category: '编程语言', path: '/study/java/thread', description: '线程创建、同步、线程池等' },
-    { name: 'Java项目实战', category: '编程语言', path: '/study/java/projects', description: 'Spring Boot项目开发实践' }
+    { name: 'Java编程入门', category: '编程语言', path: '/study/computer/java/intro', description: '学习Java基础语法和面向对象编程' },
+    { name: 'Java基础语法', category: '编程语言', path: '/study/computer/java/basic', description: 'Java变量、数据类型、运算符等基础' },
+    { name: 'Java控制结构', category: '编程语言', path: '/study/computer/java/control', description: 'Java条件语句、循环控制等' },
+    { name: 'Java面向对象', category: '编程语言', path: '/study/computer/java/oop', description: '类、对象、继承、多态、封装等OOP概念' },
+    { name: 'Java集合框架', category: '编程语言', path: '/study/computer/java/collections', description: 'List、Set、Map等集合的使用' },
+    { name: 'Java异常处理', category: '编程语言', path: '/study/computer/java/exceptions', description: 'try-catch、自定义异常等' },
+    { name: 'Java文件IO', category: '编程语言', path: '/study/computer/java/file-io', description: '文件读写、流操作、NIO等' },
+    { name: 'Java网络编程', category: '编程语言', path: '/study/computer/java/network', description: 'Socket编程、HTTP客户端等' },
+    { name: 'Java多线程', category: '编程语言', path: '/study/computer/java/thread', description: '线程创建、同步、线程池等' },
+    { name: 'Java项目实战', category: '编程语言', path: '/study/computer/java/projects', description: 'Spring Boot项目开发实践' }
   ],
   frontend: [
-    { name: '前端开发概览', category: '前端开发', path: '/study/frontend', description: 'Web前端开发技术栈和发展趋势' },
-    { name: 'HTML基础', category: '前端开发', path: '/study/frontend/html', description: 'HTML标签、语义化、表单等基础知识' },
-    { name: 'CSS样式设计', category: '前端开发', path: '/study/frontend/css', description: 'CSS选择器、盒模型、布局等样式技术' },
-    { name: 'JavaScript基础', category: '前端开发', path: '/study/frontend/js', description: 'JS语法、DOM操作、事件处理等' },
-    { name: 'React框架', category: '前端开发', path: '/study/frontend/react', description: 'React组件、状态管理、路由等' },
-    { name: 'Vue框架', category: '前端开发', path: '/study/frontend/vue', description: 'Vue基础、组件开发、Vuex等' }
+    { name: '前端开发概览', category: '前端开发', path: '/study/computer/frontend', description: 'Web前端开发技术栈和发展趋势' },
+    { name: 'HTML基础', category: '前端开发', path: '/study/computer/frontend/html', description: 'HTML标签、语义化、表单等基础知识' },
+    { name: 'CSS样式设计', category: '前端开发', path: '/study/computer/frontend/css', description: 'CSS选择器、盒模型、布局等样式技术' },
+    { name: 'JavaScript基础', category: '前端开发', path: '/study/computer/frontend/js', description: 'JS语法、DOM操作、事件处理等' },
+    { name: 'React框架', category: '前端开发', path: '/study/computer/frontend/react', description: 'React组件、状态管理、路由等' },
+    { name: 'Vue框架', category: '前端开发', path: '/study/computer/frontend/vue', description: 'Vue基础、组件开发、Vuex等' }
   ],
   ai: [
     { name: '机器学习基础', category: '人工智能', path: '/study/ai/ml', description: '机器学习算法、模型训练、特征工程' },
@@ -48,11 +48,11 @@ const courseData = {
     { name: '强化学习', category: '人工智能', path: '/study/ai/rl', description: 'Q-learning、策略梯度、强化学习应用' }
   ],
   system: [
-    { name: '数据结构与算法', category: '计算机基础', path: '/study/ds', description: '数组、链表、树、图、排序、搜索算法' },
-    { name: '操作系统', category: '计算机基础', path: '/study/os', description: '进程管理、内存管理、文件系统等' },
-    { name: '计算机网络', category: '计算机基础', path: '/study/network', description: 'TCP/IP、HTTP、网络协议、网络安全' },
-    { name: 'Linux系统', category: '计算机基础', path: '/study/linux', description: 'Linux命令、Shell脚本、系统管理' },
-    { name: '数据库技术', category: '计算机基础', path: '/study/sql', description: 'SQL语法、数据库设计、查询优化' }
+    { name: '数据结构与算法', category: '计算机基础', path: '/study/computer/ds', description: '数组、链表、树、图、排序、搜索算法' },
+    { name: '操作系统', category: '计算机基础', path: '/study/computer/os', description: '进程管理、内存管理、文件系统等' },
+    { name: '计算机网络', category: '计算机基础', path: '/study/computer/network', description: 'TCP/IP、HTTP、网络协议、网络安全' },
+    { name: 'Linux系统', category: '计算机基础', path: '/study/computer/linux', description: 'Linux命令、Shell脚本、系统管理' },
+    { name: '数据库技术', category: '计算机基础', path: '/study/computer/sql', description: 'SQL语法、数据库设计、查询优化' }
   ]
 };
 

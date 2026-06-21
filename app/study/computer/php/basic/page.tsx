@@ -1,204 +1,126 @@
-'use client';
+'use client'
 
-import { useState } from 'react';
+import LessonLayout, { type LessonMeta } from '@/app/components/ui/book/LessonLayout'
+import { THEMES } from '@/app/components/ui/book/theme'
+import {
+  PageTitle,
+  SectionTitle,
+  BookParagraph,
+  BookCode,
+  BookList,
+  TagGrid,
+} from '@/app/components/ui/book/BookContent'
 
-const tabs = [
-  { key: 'syntax', label: '语法基础' },
-  { key: 'var', label: '变量与常量' },
-  { key: 'type', label: '数据类型' },
-  { key: 'cast', label: '类型转换' },
-  { key: 'op', label: '运算符' },
-  { key: 'code', label: '代码示例' },
-  { key: 'faq', label: '常见问题' },
-  { key: 'practice', label: '练习' },
-];
+const META: LessonMeta = {
+  subject: 'PHP',
+  chapterTitle: '基础语法与数据类型',
+  chapterNumber: 3,
+  totalChapters: 22,
+  subjectHref: '/study/computer/php',
+  prevChapter: { label: '开发环境配置', href: '/study/computer/php/setup' },
+  nextChapter: { label: '数据类型与变量', href: '/study/computer/php/datatypes' },
+  theme: THEMES.computer,
+}
+
+const SPREADS = [
+  {
+    label: '语法基础与变量',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>语法基础</PageTitle>
+        <BookParagraph>PHP代码嵌入在&lt;?php ... ?&gt;标签中，文件以.php为后缀。</BookParagraph>
+        <BookCode language="php" code={`<?php
+// PHP代码以分号结尾
+echo "Hello, PHP!";
+// 可嵌入HTML
+?><h1><?php echo $title; ?></h1>`} />
+        <BookList items={['PHP代码以?&gt;可切换回HTML模式', '每行语句以分号结尾', 'echo/print用于输出']} />
+      </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <SectionTitle>变量与常量</SectionTitle>
+        <BookCode language="php" code={`<?php
+$name = "PHP";             // 变量以$开头
+$count = 42;               // 无需声明类型
+define("SITE_NAME", "PHP"); // 常量
+const VERSION = "8.2";      // PHP 7+常量
+
+echo $name, SITE_NAME;      // 变量区分大小写
+?>`} />
+        <BookList items={['变量以$开头，无需声明类型', 'define()和const定义常量', '变量名区分大小写']} />
+        <TagGrid items={['PHP标签', '变量', '常量', 'echo', '输出']} />
+      </div>
+    ),
+  },
+  {
+    label: '数据类型与运算符',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>数据类型</PageTitle>
+        <BookParagraph>PHP支持多种数据类型，包括标量类型和复合类型。</BookParagraph>
+        <BookList items={['标量：int、float、string、bool', '复合：array、object、callable', '特殊：null、resource']} />
+        <BookCode language="php" code={`<?php
+$int = 42;             // 整型
+$float = 3.14;         // 浮点
+$str = "PHP";          // 字符串
+$bool = true;          // 布尔
+$arr = [1, 2, 3];      // 数组
+$null = null;          // null
+var_dump($int);        // 查看类型和值
+?>`} />
+      </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <SectionTitle>类型转换</SectionTitle>
+        <BookCode language="php" code={`<?php
+$num = (int)"123";     // 强制转int
+$str = (string)456;    // 转字符串
+$f = floatval("3.14"); // 转浮点
+$b = boolval(1);       // 转布尔
+
+// 自动类型转换
+echo "总数: " . (10 + "20人"); // 30
+?>`} />
+        <SectionTitle>运算符</SectionTitle>
+        <BookCode language="php" code={`<?php
+$a = 10; $b = 3;
+echo $a + $b; // 13
+echo $a % $b; // 1
+echo $a . "元"; // 连接符
+echo $a ** 2;  // 幂运算
+?>`} />
+        <TagGrid items={['int', 'float', 'string', 'bool', '类型转换']} />
+      </div>
+    ),
+  },
+  {
+    label: '示例与练习',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>代码示例</PageTitle>
+        <BookCode language="php" code={`<?php
+$name = "PHP";
+$version = 8.2;
+$features = ["简单", "快速", "灵活"];
+echo "欢迎来到$name $version!\\n";
+foreach ($features as $feat) {
+    echo "- $feat\\n";
+}
+?>`} />
+      </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <SectionTitle>练习</SectionTitle>
+        <BookList items={['声明一个字符串变量并输出', '实现两个数的加法并输出结果', '使用var_dump查看变量类型']} />
+        <TagGrid items={['示例', '练习', '变量', 'var_dump', '输出']} />
+      </div>
+    ),
+  },
+]
 
 export default function PhpBasicPage() {
-  const [activeTab, setActiveTab] = useState('syntax');
-
-  return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-      <h1 className="text-3xl font-bold mb-6 mt-4">基础语法与数据类型</h1>
-      <div className="border-b border-gray-200 mb-6">
-        <nav className="-mb-px flex space-x-8" aria-label="Tabs">
-          {tabs.map(tab => (
-            <button
-              key={tab.key}
-              onClick={() => setActiveTab(tab.key)}
-              className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm focus:outline-none ${
-                activeTab === tab.key
-                  ? 'border-blue-500 text-blue-600 font-bold'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </nav>
-      </div>
-      <div className="bg-white rounded-lg shadow p-8">
-        {activeTab === 'syntax' && (
-          <div>
-            <h2 className="text-2xl font-bold mb-4">语法基础</h2>
-            <ul className="list-disc pl-6 mt-2">
-              <li>PHP脚本以<code>&lt;?php ... ?&gt;</code>包裹</li>
-              <li>每条语句以分号<code>;</code>结尾</li>
-              <li>注释：<code>// 单行</code>、<code>/* 多行 */</code></li>
-              <li>区分大小写（变量、函数名区分，关键字不区分）</li>
-            </ul>
-          </div>
-        )}
-        {activeTab === 'var' && (
-          <div>
-            <h2 className="text-2xl font-bold mb-4">变量与常量</h2>
-            <ul className="list-disc pl-6 mt-2">
-              <li>变量以<code>$</code>开头，动态类型</li>
-              <li>常量用<code>define('NAME', value)</code>或<code>const NAME = value</code>定义</li>
-              <li>变量名区分大小写，不能以数字开头</li>
-            </ul>
-            <pre className="bg-gray-100 p-2 rounded text-sm mt-2">
-{[
-  '$name = "Tom";',
-  'define("PI", 3.14);',
-  'const VERSION = "1.0";',
-].join('\n')}
-            </pre>
-          </div>
-        )}
-        {activeTab === 'type' && (
-          <div>
-            <h2 className="text-2xl font-bold mb-4">数据类型</h2>
-            <ul className="list-disc pl-6 mt-2">
-              <li>标量类型：int、float、string、bool</li>
-              <li>复合类型：array、object、callable、iterable</li>
-              <li>特殊类型：null、resource</li>
-            </ul>
-            <pre className="bg-gray-100 p-2 rounded text-sm mt-2">
-{[
-  '$a = 123;',
-  '$b = 3.14;',
-  '$c = "hello";',
-  '$d = true;',
-  '$arr = [1, 2, 3];',
-  '$obj = (object)["x" => 1];',
-].join('\n')}
-            </pre>
-          </div>
-        )}
-        {activeTab === 'cast' && (
-          <div>
-            <h2 className="text-2xl font-bold mb-4">类型转换</h2>
-            <ul className="list-disc pl-6 mt-2">
-              <li>自动类型转换：根据上下文自动转换</li>
-              <li>强制类型转换：<code>(int)</code>、<code>(float)</code>、<code>(string)</code>等</li>
-            </ul>
-            <pre className="bg-gray-100 p-2 rounded text-sm mt-2">
-{[
-  '$a = "123";',
-  '$b = (int)$a;',
-  '$c = (float)"3.14";',
-  '$d = (string)123;',
-].join('\n')}
-            </pre>
-          </div>
-        )}
-        {activeTab === 'op' && (
-          <div>
-            <h2 className="text-2xl font-bold mb-4">运算符</h2>
-            <ul className="list-disc pl-6 mt-2">
-              <li>算术：<code>+</code> <code>-</code> <code>*</code> <code>/</code> <code>%</code></li>
-              <li>赋值：<code>=</code> <code>+=</code> <code>-=</code> <code>*=</code> <code>/=</code></li>
-              <li>比较：<code>==</code> <code>===</code> <code>!=</code> <code>&lt;</code> <code>&gt;</code></li>
-              <li>逻辑：<code>&&</code> <code>||</code> <code>!</code></li>
-              <li>字符串拼接：<code>.</code></li>
-            </ul>
-            <pre className="bg-gray-100 p-2 rounded text-sm mt-2">
-{[
-  '$a = 1 + 2;',
-  '$b = $a * 3;',
-  '$c = ($a == $b);',
-  '$d = ($a === $b);',
-  '$s = "hello" . " world";',
-].join('\n')}
-            </pre>
-          </div>
-        )}
-        {activeTab === 'code' && (
-          <div>
-            <h2 className="text-2xl font-bold mb-4">代码示例</h2>
-            <pre className="bg-gray-100 p-2 rounded text-sm mt-2">
-{[
-  '<?php',
-  '// 变量与类型',
-  '$name = "Alice";',
-  '$age = 20;',
-  '$score = 88.5;',
-  '$isVip = true;',
-  '',
-  '// 数组',
-  '$arr = [1, 2, 3];',
-  'foreach ($arr as $v) {',
-  '  echo $v . ", ";',
-  '}',
-  '',
-  '// 字符串拼接',
-  'echo "Hello, " . $name;',
-  '',
-  '// 常量',
-  'define("PI", 3.14);',
-  'echo PI;',
-  '',
-  '// 类型转换',
-  '$a = "123";',
-  '$b = (int)$a;',
-  'echo $b + 1;',
-  '?>',
-].join('\n')}
-            </pre>
-          </div>
-        )}
-        {activeTab === 'faq' && (
-          <div>
-            <h2 className="text-2xl font-bold mb-4">常见问题</h2>
-            <ul className="list-disc pl-6 space-y-2">
-              <li><b>Q: PHP变量需要声明类型吗？</b><br />A: 不需要，PHP为动态类型语言。</li>
-              <li><b>Q: == 和 === 有什么区别？</b><br />A: == 比较值，=== 比较值和类型。</li>
-              <li><b>Q: 如何查看变量类型？</b><br />A: 用 <code>var_dump($var)</code>。</li>
-            </ul>
-          </div>
-        )}
-        {activeTab === 'practice' && (
-          <div>
-            <h2 className="text-2xl font-bold mb-4">练习</h2>
-            <ul className="list-decimal pl-6 space-y-2">
-              <li>定义一个变量，赋值你的姓名，并输出</li>
-              <li>定义一个数组，遍历输出所有元素</li>
-              <li>尝试用类型转换将字符串"100"转为整数并加1</li>
-              <li>用var_dump输出任意变量的类型和值</li>
-            </ul>
-          </div>
-        )}
-        <div className="mt-8 flex justify-between">
-          <a
-            href="/study/php/setup"
-            className="inline-flex items-center bg-gray-200 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-300 transition-colors"
-          >
-            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-            上一页：开发环境配置
-          </a>
-          <a
-            href="/study/php/datatypes"
-            className="inline-flex items-center bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors"
-          >
-            下一页：数据类型与变量
-            <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          </a>
-        </div>
-      </div>
-    </div>
-  );
-} 
+  return <LessonLayout meta={META} spreads={SPREADS} />
+}

@@ -1,235 +1,215 @@
-'use client';
+'use client'
 
-import { useState } from 'react';
-import { Card, Tabs, Progress, Alert, Typography } from 'antd';
-import { LeftOutlined, RightOutlined } from '@ant-design/icons';
-import Link from 'next/link';
-import React from 'react';
-import { ProfileOutlined, BranchesOutlined, CodeOutlined, ExperimentOutlined } from '@ant-design/icons';
-import { CodeBlock } from '@/app/components/ui/CodeBlock';
+import LessonLayout, { type LessonMeta } from '@/app/components/ui/book/LessonLayout'
+import { THEMES } from '@/app/components/ui/book/theme'
+import {
+  PageTitle,
+  BookParagraph,
+  BookCode,
+  BookAlert,
+  BookList,
+  TagGrid,
+} from '@/app/components/ui/book/BookContent'
 
-const { TabPane } = Tabs;
-const { Title, Paragraph, Text } = Typography;
+const META: LessonMeta = {
+  subject: 'Python 编程',
+  chapterTitle: '面向对象编程',
+  chapterNumber: 7,
+  totalChapters: 11,
+  subjectHref: '/study/computer/python',
+  prevChapter: { label: '文件操作', href: '/study/computer/python/file-io' },
+  nextChapter: { label: '异常处理', href: '/study/computer/python/exceptions' },
+  theme: THEMES.computer,
+}
 
-export default function Page() {
-  const [activeTab, setActiveTab] = useState('1');
+const SPREADS = [
+  {
+    label: '类与对象',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>类的定义与使用</PageTitle>
+        <BookParagraph>Python 是一种面向对象的语言，通过类来组织代码。</BookParagraph>
+        <BookCode language="python" showLineNumbers code={`class Student:
+    """学生类"""
 
-  const tabItems = [
-    {
-      key: '1',
-      label: (
-        <span>
-          <ProfileOutlined /> 类与对象
-        </span>
-      ),
-      children: (
-        <Card title="类与对象" className="mb-6">
-          <div className="space-y-4 mt-4">
-            <h3 className="text-xl font-semibold mb-4">定义类和实例化</h3>
-            <Paragraph>使用 <Text code>class</Text> 关键字定义类，并通过调用类创建对象实例。</Paragraph>
-            <CodeBlock language="python">
-              {`class Person:
-    def __init__(self, name, age):
-        self.name = name
+    # 类变量（所有实例共享）
+    school = "Python编程学院"
+
+    # 初始化方法（构造函数）
+    def __init__(self, name, age, grade):
+        self.name = name    # 实例变量
         self.age = age
+        self.grade = grade
 
-# 创建对象
-p = Person("Alice", 30)
-print(p.name, p.age)  # 输出: Alice 30`}
-            </CodeBlock>
-            <Alert
-              message="要点"
-              description={
-                <ul className="list-disc pl-6">
-                  <li>类的实例属性通过 <Text code>self</Text> 引用</li>
-                  <li>构造方法 <Text code>__init__</Text> 用于初始化对象</li>
-                </ul>
-              }
-              type="info"
-              showIcon
-            />
-          </div>
-        </Card>
-      )
-    },
-    {
-      key: '2',
-      label: (
-        <span>
-          <BranchesOutlined /> 继承与多态
-        </span>
-      ),
-      children: (
-        <Card title="继承与多态" className="mb-6">
-          <div className="space-y-4 mt-4">
-            <h3 className="text-xl font-semibold mb-4">子类继承示例</h3>
-            <Paragraph>通过在类定义中指定父类，实现继承和方法重写。</Paragraph>
-            <CodeBlock language="python">
-              {`class Animal:
+    # 实例方法
+    def introduce(self):
+        return f"我叫{self.name}，今年{self.age}岁，{self.grade}年级"
+
+    def study(self, hours):
+        print(f"{self.name}学习了{hours}小时")
+
+# 创建实例
+student1 = Student("小明", 18, "高三")
+print(student1.introduce())  # 我叫小明，今年18岁，高三年级`} />
+      </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <PageTitle>实例变量与类变量</PageTitle>
+        <BookCode language="python" showLineNumbers code={`# 访问和修改属性
+student1 = Student("小明", 18, "高三")
+print(student1.school)    # Python编程学院
+student1.name = "小红"    # 修改实例变量
+
+# __dict__ 查看所有实例变量
+print(student1.__dict__)
+
+# 类方法
+@classmethod
+def get_school(cls):
+    return cls.school
+
+# 静态方法
+@staticmethod
+def validate_age(age):
+    return 0 <= age <= 150
+
+# property 装饰器
+@property
+def info(self):
+    return f"{self.name}-{self.age}"
+
+# setter
+@info.setter
+def info(self, value):
+    self.name, self.age = value.split("-")`} />
+      </div>
+    ),
+  },
+  {
+    label: '继承',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>继承与多态</PageTitle>
+        <BookCode language="python" showLineNumbers code={`# 基类
+class Animal:
+    def __init__(self, name):
+        self.name = name
+
     def speak(self):
-        print("动物发声")
+        raise NotImplementedError
 
+# 派生类
 class Dog(Animal):
     def speak(self):
-        super().speak()
-        print("汪汪")
+        return f"{self.name}: 汪汪！"
 
-d = Dog()
-d.speak()
-# 输出:
-# 动物发声
-# 汪汪`}
-            </CodeBlock>
-            <Alert
-              message="要点"
-              description={
-                <ul className="list-disc pl-6">
-                  <li>使用 <Text code>super()</Text> 调用父类方法</li>
-                  <li>多态：不同子类可实现同名方法的不同行为</li>
-                </ul>
-              }
-              type="info"
-              showIcon
-            />
-          </div>
-        </Card>
-      )
-    },
-    {
-      key: '3',
-      label: (
-        <span>
-          <CodeOutlined /> 魔术方法
-        </span>
-      ),
-      children: (
-        <Card title="魔术方法" className="mb-6">
-          <div className="space-y-4 mt-4">
-            <h3 className="text-xl font-semibold mb-4">常用魔术方法示例</h3>
-            <Paragraph>魔术方法以双下划线开头，定义特殊行为。</Paragraph>
-            <CodeBlock language="python">
-              {`class Vector:
+class Cat(Animal):
+    def speak(self):
+        return f"{self.name}: 喵喵~"
+
+# 多态
+def make_sound(animal):
+    print(animal.speak())
+
+animals = [Dog("旺财"), Cat("咪咪")]
+for animal in animals:
+    make_sound(animal)
+
+# 旺财: 汪汪！
+# 咪咪: 喵喵~`} />
+      </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <PageTitle>特殊方法与运算符重载</PageTitle>
+        <BookCode language="python" showLineNumbers code={`class Vector:
     def __init__(self, x, y):
         self.x = x
         self.y = y
 
-    def __add__(self, other):
-        return Vector(self.x + other.x, self.y + other.y)
-
     def __str__(self):
         return f"Vector({self.x}, {self.y})"
 
+    def __repr__(self):
+        return f"Vector({self.x}, {self.y})"
+
+    def __add__(self, other):
+        return Vector(self.x + other.x, self.y + other.y)
+
+    def __sub__(self, other):
+        return Vector(self.x - other.x, self.y - other.y)
+
+    def __mul__(self, scalar):
+        return Vector(self.x * scalar, self.y * scalar)
+
+    def __eq__(self, other):
+        return self.x == other.x and self.y == other.y
+
 v1 = Vector(1, 2)
 v2 = Vector(3, 4)
-print(v1 + v2)  # 输出: Vector(4, 6)`}
-            </CodeBlock>
-            <Alert
-              message="要点"
-              description={
-                <ul className="list-disc pl-6">
-                  <li>__add__ 实现运算符重载</li>
-                  <li>__str__ 定义对象的字符串表示</li>
-                </ul>
-              }
-              type="info"
-              showIcon
-            />
-          </div>
-        </Card>
-      )
-    },
-    {
-      key: '4',
-      label: (
-        <span>
-          <ExperimentOutlined /> 练习例题
-        </span>
-      ),
-      children: (
-        <Card title="实践案例：银行账户" className="mb-6">
-          <div className="space-y-4 mt-4">
-            <h3 className="text-xl font-semibold mb-4">实现银行账户类</h3>
-            <Paragraph>创建一个 BankAccount 类，支持 存款、取款 和 显示余额。</Paragraph>
-            <CodeBlock language="python">
-              {`class BankAccount:
-    def __init__(self, owner, balance=0):
-        self.owner = owner
-        self.balance = balance
-
-    def deposit(self, amount):
-        self.balance += amount
-
-    def withdraw(self, amount):
-        if amount <= self.balance:
-            self.balance -= amount
-        else:
-            print("余额不足")
+print(v1 + v2)  # Vector(4, 6)
+print(v1 * 3)   # Vector(3, 6)`} />
+      </div>
+    ),
+  },
+  {
+    label: '练习例题',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>图书管理系统</PageTitle>
+        <div className="p-3 bg-paper-200/80 rounded-md border border-paper-300">
+          <p className="text-sm text-ink font-medium mb-1">题目描述</p>
+          <BookList items={[
+            '实现 Book 类（标题、作者、ISBN、状态）',
+            '实现 Library 类（添加、借出、归还、搜索）',
+            '使用特殊方法让图书支持 print()',
+            '添加异常处理防止重复借出',
+          ]} />
+        </div>
+        <TagGrid items={['class', '继承', '多态', '特殊方法', '封装']} />
+      </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <PageTitle>参考代码</PageTitle>
+        <BookCode language="python" showLineNumbers code={`class Book:
+    def __init__(self, title, author, isbn):
+        self.title = title
+        self.author = author
+        self.isbn = isbn
+        self.is_borrowed = False
 
     def __str__(self):
-        return f"{self.owner} 账户余额: {self.balance}"
+        status = "已借出" if self.is_borrowed else "可借"
+        return f"{self.title} - {self.author} [{status}]"
 
-# 测试
-acc = BankAccount("张三", 1000)
-acc.deposit(500)
-acc.withdraw(200)
-print(acc)
-# 输出: 张三 账户余额: 1300`}
-            </CodeBlock>
-            <Alert
-              message="知识点"
-              description={
-                <ul className="list-disc pl-6">
-                  <li>封装：方法操作内部状态</li>
-                  <li>方法参数和返回值设计</li>
-                  <li>错误处理示例：余额不足</li>
-                </ul>
-              }
-              type="success"
-              showIcon
-            />
-          </div>
-        </Card>
-      )
-    }
-  ];
+class Library:
+    def __init__(self):
+        self.books = {}
 
-  return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* 页面头部 */}
-        <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">面向对象编程</h1>
-              <p className="text-gray-600 mt-2">学习Python的类、继承、魔术方法和封装</p>
-            </div>
-            <Progress type="circle" percent={50} size={100} strokeColor="#1890ff" />
-          </div>
-        </div>
+    def add_book(self, book):
+        self.books[book.isbn] = book
 
-        {/* 课程内容 */}
-        <div className="bg-white rounded-lg shadow-md p-8">
-          <Tabs activeKey={activeTab} onChange={setActiveTab} className="p-6" items={tabItems} />
-        </div>
+    def borrow(self, isbn):
+        book = self.books.get(isbn)
+        if not book: raise KeyError("图书不存在")
+        if book.is_borrowed: raise ValueError("已被借出")
+        book.is_borrowed = True
 
-        {/* 底部导航 */}
-        <div className="flex justify-between mt-8">
-          <Link
-            href="/study/python/file-io"
-            className="inline-flex items-center px-4 py-2 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
-          >
-            <LeftOutlined className="mr-2" />
-            上一课：文件操作
-          </Link>
-          <Link
-            href="/study/python/exceptions"
-            className="inline-flex items-center px-4 py-2 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-          >
-            下一课：异常处理
-            <RightOutlined className="ml-2" />
-          </Link>
-        </div>
+    def search(self, keyword):
+        return [b for b in self.books.values()
+                if keyword.lower() in b.title.lower()]
+
+# 使用
+lib = Library()
+lib.add_book(Book("Python编程", "张三", "978-7-111-1"))
+lib.add_book(Book("算法导论", "李四", "978-7-111-2"))`} />
       </div>
-    </div>
-  );
-} 
+    ),
+  },
+]
+
+export default function OOPPage() {
+  return <LessonLayout meta={META} spreads={SPREADS} />
+}

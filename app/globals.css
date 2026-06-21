@@ -2,8 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* 引入代码高亮样式 */
-@import 'highlight.js/styles/github.css';
+
 
 /* 引入移动端优化样式 */
 @import './styles/mobile.css';

@@ -1,41 +1,46 @@
-'use client';
+'use client'
 
-import React from 'react';
-import { Typography, Card, Divider, Tabs } from 'antd';
+import LessonLayout, { type LessonMeta } from '@/app/components/ui/book/LessonLayout'
+import { THEMES } from '@/app/components/ui/book/theme'
+import {
+  PageTitle,
+  SectionTitle,
+  BookParagraph,
+  BookCode,
+  BookList,
+  TagGrid,
+} from '@/app/components/ui/book/BookContent'
 
-const { Title, Paragraph, Text } = Typography;
+const META: LessonMeta = {
+  subject: 'Web前端开发',
+  chapterTitle: 'Vue进阶',
+  chapterNumber: 19,
+  totalChapters: 20,
+  subjectHref: '/study/computer/frontend',
+  prevChapter: { label: 'Vue基础', href: '/study/computer/frontend/vue' },
+  nextChapter: { label: '前端项目实战', href: '/study/computer/frontend/projects' },
+  theme: THEMES.computer,
+}
 
-const codeBlockStyle = {
-  background: '#f6f8fa',
-  borderRadius: 6,
-  padding: '12px 16px',
-  fontSize: 15,
-  margin: '12px 0',
-  fontFamily: 'monospace',
-  overflowX: 'auto' as const,
-};
-
-const tabItems = [
+const SPREADS = [
   {
-    key: '1',
-    label: '组件复用',
-    children: (
-      <>
-        <Card title="混入mixin" size="small" style={{ marginBottom: 12 }}>
-          <pre style={codeBlockStyle}>{`<!-- 混入：复用逻辑 -->
-<script>
+    label: '复用与优化',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>组件复用</PageTitle>
+        <BookParagraph><b>混入mixin：</b></BookParagraph>
+        <BookCode language="javascript" code={`// 混入：复用逻辑
+// mixin.js
 export default {
   data() { return { msg: 'hello' } },
   created() { console.log('混入生命周期') }
 }
-</script>
-<script>
+// 组件中使用
 import mixin from './mixin.js'
 export default { mixins: [mixin] }
-</script>`}</pre>
-        </Card>
-        <Card title="组合式API与插件" size="small">
-          <pre style={codeBlockStyle}>{`<!-- 组合式API：逻辑复用更灵活 -->
+}`} />
+        <BookParagraph><b>组合式API与插件：</b></BookParagraph>
+        <BookCode language="html" code={`<!-- 组合式API：逻辑复用更灵活 -->
 <script setup>
 import { ref, onMounted } from 'vue'
 function useCounter() {
@@ -49,18 +54,15 @@ onMounted(() => inc())
 <!-- 插件注册 -->
 import { createApp } from 'vue'
 import MyPlugin from './plugin'
-createApp(App).use(MyPlugin)`}</pre>
-        </Card>
-      </>
-    ),
-  },
-  {
-    key: '2',
-    label: '性能优化',
-    children: (
-      <>
-        <Card title="异步组件与v-memo/v-once" size="small" style={{ marginBottom: 12 }}>
-          <pre style={codeBlockStyle}>{`<!-- 异步组件 -->
+createApp(App).use(MyPlugin)`} />
+        <SectionTitle>性能优化</SectionTitle>
+        <BookList items={[
+          'v-memo：条件缓存静态内容。',
+          'v-once：只渲染一次。',
+          'defineAsyncComponent：异步组件。',
+          '虚拟滚动：提升长列表性能。',
+        ]} />
+        <BookCode language="html" code={`<!-- 异步组件 -->
 <script setup>
 import { defineAsyncComponent } from 'vue'
 const AsyncComp = defineAsyncComponent(() => import('./Comp.vue'))
@@ -68,24 +70,19 @@ const AsyncComp = defineAsyncComponent(() => import('./Comp.vue'))
 <template>
   <Suspense><AsyncComp /></Suspense>
 </template>
-<!-- v-memo缓存静态内容，v-once只渲染一次 -->
+<!-- v-memo缓存静态内容 -->
 <div v-memo="[a, b]">静态内容</div>
-<div v-once>只渲染一次</div>`}</pre>
-        </Card>
-        <Card title="虚拟滚动" size="small">
-          <pre style={codeBlockStyle}>{`<!-- 虚拟滚动：提升长列表性能，需第三方库如vue-virtual-scroller -->
-<virtual-list :size="40" :remain="10" :bench="5" :item="item" :item-count="1000" />`}</pre>
-        </Card>
-      </>
+<!-- v-once只渲染一次 -->
+<div v-once>只渲染一次</div>
+<!-- 虚拟滚动，需第三方库如vue-virtual-scroller -->
+<virtual-list :size="40" :remain="10" :bench="5" :item="item" :item-count="1000" />`} />
+      </div>
     ),
-  },
-  {
-    key: '3',
-    label: '状态管理',
-    children: (
-      <>
-        <Card title="Pinia与Vuex原理" size="small" style={{ marginBottom: 12 }}>
-          <pre style={codeBlockStyle}>{`<!-- Pinia用法 -->
+    right: (
+      <div className="space-y-4">
+        <SectionTitle>状态管理</SectionTitle>
+        <BookParagraph><b>Pinia与Vuex原理：</b></BookParagraph>
+        <BookCode language="javascript" code={`// Pinia用法
 import { defineStore } from 'pinia'
 export const useCounter = defineStore('counter', {
   state: () => ({ n: 0 }),
@@ -94,28 +91,18 @@ export const useCounter = defineStore('counter', {
 // 组件中使用
 const counter = useCounter()
 counter.inc()
-<!-- Vuex原理：集中式状态管理，mutation驱动变更 -->`}</pre>
-        </Card>
-        <Card title="provide/inject进阶" size="small">
-          <pre style={codeBlockStyle}>{`<!-- provide/inject可传递响应式对象，实现全局共享 -->
+// Vuex原理：集中式状态管理，mutation驱动变更`} />
+        <BookParagraph><b>provide/inject进阶：</b></BookParagraph>
+        <BookCode language="html" code={`<!-- provide/inject可传递响应式对象，实现全局共享 -->
 <script setup>
 import { provide, inject, reactive } from 'vue'
 const theme = reactive({ color: 'red' })
 provide('theme', theme)
 const t = inject('theme')
-</script>`}</pre>
-        </Card>
-      </>
-    ),
-  },
-  {
-    key: '4',
-    label: '路由与动态加载',
-    children: (
-      <>
-        <Card title="vue-router基本用法" size="small" style={{ marginBottom: 12 }}>
-          <pre style={codeBlockStyle}>{`<!-- vue-router配置 -->
-import { createRouter, createWebHistory } from 'vue-router'
+</script>`} />
+        <SectionTitle>路由与动态加载</SectionTitle>
+        <BookParagraph><b>vue-router基本用法：</b></BookParagraph>
+        <BookCode language="javascript" code={`import { createRouter, createWebHistory } from 'vue-router'
 const routes = [
   { path: '/a', component: A },
   { path: '/b', component: B }
@@ -123,10 +110,9 @@ const routes = [
 const router = createRouter({ history: createWebHistory(), routes })
 // App.vue中
 <router-link to="/a">A</router-link>
-<router-view />`}</pre>
-        </Card>
-        <Card title="路由懒加载与导航守卫" size="small">
-          <pre style={codeBlockStyle}>{`// 路由懒加载
+<router-view />`} />
+        <BookParagraph><b>路由懒加载与导航守卫：</b></BookParagraph>
+        <BookCode language="javascript" code={`// 路由懒加载
 const routes = [
   { path: '/a', component: () => import('./A.vue') }
 ]
@@ -134,65 +120,50 @@ const routes = [
 router.beforeEach((to, from, next) => {
   if (to.meta.auth && !isLogin()) next('/login')
   else next()
-})`}</pre>
-        </Card>
-      </>
+})`} />
+        <TagGrid items={['组合式API', 'Pinia', '异步组件', '路由', '懒加载']} />
+      </div>
     ),
   },
   {
-    key: '5',
-    label: '异步与数据请求',
-    children: (
-      <>
-        <Card title="watchEffect与axios" size="small" style={{ marginBottom: 12 }}>
-          <pre style={codeBlockStyle}>{`<script setup>
+    label: '数据请求与测试',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>异步与数据请求</PageTitle>
+        <BookParagraph><b>watchEffect与axios：</b></BookParagraph>
+        <BookCode language="html" code={`<script setup>
 import { ref, watchEffect } from 'vue'
 import axios from 'axios'
 const data = ref(null)
 watchEffect(async () => {
   data.value = (await axios.get('/api/data')).data
 })
-</script>`}</pre>
-        </Card>
-        <Card title="Suspense异步组件" size="small">
-          <pre style={codeBlockStyle}>{`<!-- Suspense包裹异步组件，支持加载占位 -->
+</script>`} />
+        <BookParagraph><b>Suspense异步组件：</b></BookParagraph>
+        <BookCode language="html" code={`<!-- Suspense包裹异步组件，支持加载占位 -->
 <template>
   <Suspense>
     <AsyncComp />
     <template #fallback>加载中...</template>
   </Suspense>
-</template>`}</pre>
-        </Card>
-      </>
+</template>`} />
+      </div>
     ),
-  },
-  {
-    key: '6',
-    label: '测试与调试',
-    children: (
-      <>
-        <Card title="Vue Devtools" size="small" style={{ marginBottom: 12 }}>
-          <pre style={codeBlockStyle}>{`// Vue Devtools：调试组件树和响应式数据的浏览器插件
-// https://devtools.vuejs.org/`}</pre>
-        </Card>
-        <Card title="单元测试" size="small">
-          <pre style={codeBlockStyle}>{`// Vue组件单元测试：@vue/test-utils + Jest
-import { mount } from '@vue/test-utils'
+    right: (
+      <div className="space-y-4">
+        <SectionTitle>测试与调试</SectionTitle>
+        <BookList items={[
+          'Vue Devtools：调试组件树和响应式数据的浏览器插件。',
+          '@vue/test-utils + Jest：单元测试。',
+        ]} />
+        <BookCode language="javascript" code={`import { mount } from '@vue/test-utils'
 test('渲染', () => {
   const wrapper = mount({ template: '<button>hi</button>' })
   expect(wrapper.text()).toBe('hi')
-})`}</pre>
-        </Card>
-      </>
-    ),
-  },
-  {
-    key: '7',
-    label: '实战案例',
-    children: (
-      <>
-        <Card title="主题切换" size="small" style={{ marginBottom: 12 }}>
-          <pre style={codeBlockStyle}>{`<script setup>
+})`} />
+        <SectionTitle>实战案例</SectionTitle>
+        <BookParagraph><b>主题切换：</b></BookParagraph>
+        <BookCode language="html" code={`<script setup>
 import { provide, inject, reactive } from 'vue'
 const theme = reactive({ color: 'red' })
 provide('theme', theme)
@@ -201,10 +172,9 @@ const t = inject('theme')
 <template>
   <button @click="t.color = t.color === 'red' ? 'blue' : 'red'">切换主题</button>
   <span :style="{color: t.color}">当前主题色: {{ t.color }}</span>
-</template>`}</pre>
-        </Card>
-        <Card title="异步列表" size="small">
-          <pre style={codeBlockStyle}>{`<script setup>
+</template>`} />
+        <BookParagraph><b>异步列表：</b></BookParagraph>
+        <BookCode language="html" code={`<script setup>
 import { ref, onMounted } from 'vue'
 import axios from 'axios'
 const list = ref([])
@@ -216,79 +186,37 @@ onMounted(async () => {
   <ul>
     <li v-for="item in list" :key="item">{{ item }}</li>
   </ul>
-</template>`}</pre>
-        </Card>
-      </>
+</template>`} />
+        <TagGrid items={['axios', 'watchEffect', '测试', 'Devtools', '练习']} />
+      </div>
     ),
   },
   {
-    key: '8',
     label: '练习与拓展',
-    children: (
-      <>
-        <ol>
-          <li>用Pinia实现全局计数器。</li>
-          <li>用vue-router实现多页面切换。</li>
-          <li>用Suspense实现异步加载占位。</li>
-        </ol>
-        <Divider />
-        <ul>
-          <li><a href="https://cn.vuejs.org/" target="_blank" rel="noopener noreferrer">Vue官方文档</a></li>
-          <li><a href="https://router.vuejs.org/zh/" target="_blank" rel="noopener noreferrer">Vue Router</a></li>
-          <li><a href="https://pinia.vuejs.org/zh/" target="_blank" rel="noopener noreferrer">Pinia</a></li>
-        </ul>
-      </>
+    left: (
+      <div className="space-y-4">
+        <PageTitle>练习</PageTitle>
+        <BookList items={[
+          '用Pinia实现全局计数器。',
+          '用vue-router实现多页面切换。',
+          '用Suspense实现异步加载占位。',
+        ]} />
+      </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <SectionTitle>拓展资源</SectionTitle>
+        <BookList items={[
+          'Vue官方文档：cn.vuejs.org',
+          'Vue Router：router.vuejs.org/zh',
+          'Pinia：pinia.vuejs.org/zh',
+        ]} />
+        <TagGrid items={['Pinia', 'Vue Router', 'Suspense', '练习', '拓展']} />
+      </div>
     ),
   },
-];
+]
 
-export default function VueAdvancedPage() {
-  return (
-    <div style={{ padding: 24, maxWidth: 900, margin: '0 auto' }}>
-      <Typography>
-        <Title level={1}>Vue进阶</Title>
-      </Typography>
-      <Tabs defaultActiveKey="1" items={tabItems} style={{ marginTop: 24 }} />
-      <div style={{ display: 'flex', justifyContent: 'space-between', margin: '48px 0 0 0' }}>
-        <a
-          href="/study/frontend/vue"
-          style={{
-            background: '#386ff6',
-            color: '#fff',
-            padding: '12px 28px',
-            borderRadius: '16px',
-            fontSize: 18,
-            fontWeight: 500,
-            textDecoration: 'none',
-            boxShadow: '0 4px 16px rgba(56,111,246,0.15)',
-            transition: 'background 0.2s',
-            display: 'inline-block',
-          }}
-          onMouseOver={e => (e.currentTarget.style.background = '#2055c7')}
-          onMouseOut={e => (e.currentTarget.style.background = '#386ff6')}
-        >
-          上一章：Vue基础
-        </a>
-        <a
-          href="/study/frontend/projects"
-          style={{
-            background: '#386ff6',
-            color: '#fff',
-            padding: '12px 28px',
-            borderRadius: '16px',
-            fontSize: 18,
-            fontWeight: 500,
-            textDecoration: 'none',
-            boxShadow: '0 4px 16px rgba(56,111,246,0.15)',
-            transition: 'background 0.2s',
-            display: 'inline-block',
-          }}
-          onMouseOver={e => (e.currentTarget.style.background = '#2055c7')}
-          onMouseOut={e => (e.currentTarget.style.background = '#386ff6')}
-        >
-          下一章：前端项目实战
-        </a>
-      </div>
-    </div>
-  );
-} 
+export default function FrontendVueAdvancedPage() {
+  return <LessonLayout meta={META} spreads={SPREADS} />
+}

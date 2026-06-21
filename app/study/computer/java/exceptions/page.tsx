@@ -1,191 +1,126 @@
-'use client';
+'use client'
 
-import React from 'react';
-import { Card, Tabs, Progress, Alert, Typography, Collapse } from 'antd';
-import { LeftOutlined, RightOutlined } from '@ant-design/icons';
-import Link from 'next/link';
-import { CodeBlock } from '@/app/components/ui/CodeBlock';
+import LessonLayout, { type LessonMeta } from '@/app/components/ui/book/LessonLayout'
+import { THEMES } from '@/app/components/ui/book/theme'
+import { PageTitle, BookParagraph, BookCode, BookAlert, BookList, TagGrid } from '@/app/components/ui/book/BookContent'
 
-const { Paragraph, Text } = Typography;
+const META: LessonMeta = {
+  subject: 'Java 编程', chapterTitle: '异常处理', chapterNumber: 6, totalChapters: 10,
+  subjectHref: '/study/computer/java',
+  prevChapter: { label: '常用类与集合', href: '/study/computer/java/collections' },
+  nextChapter: { label: '文件与IO', href: '/study/computer/java/file-io' },
+  theme: THEMES.computer,
+}
 
-export default function JavaExceptionsPage() {
-  const tabItems = [
-    {
-      key: '1',
-      label: '⚠️ 异常体系与分类',
-      children: (
-        <Card title="异常体系与分类" className="mb-6">
-          <Paragraph>Java异常分为受检异常（Checked）和非受检异常（Unchecked）。所有异常继承自Throwable，常见有Exception和RuntimeException。</Paragraph>
-          <CodeBlock language="java">{`try {
-    int a = 10 / 0; // ArithmeticException
+const SPREADS = [
+  {
+    label: '异常机制',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>try-catch-finally</PageTitle>
+        <BookParagraph>异常处理是 Java 程序健壮性的重要保障。通过 try-catch 机制，程序可以从异常状态中恢复并继续执行。</BookParagraph>
+        <BookCode language="java" showLineNumbers code={`try {
+    int result = 10 / 0;  // 抛出异常
+    System.out.println("不会执行");
 } catch (ArithmeticException e) {
-    System.out.println("除零错误");
-}`}</CodeBlock>
-          <Alert message="要点" description={<ul className="list-disc pl-6"><li>受检异常需强制捕获或声明</li><li>常见非受检异常：NullPointerException, ArrayIndexOutOfBoundsException</li></ul>} type="info" showIcon />
-        </Card>
-      )
-    },
-    {
-      key: '2',
-      label: '🛡️ try-catch-finally用法',
-      children: (
-        <Card title="try-catch-finally用法" className="mb-6">
-          <Paragraph>try块用于捕获异常，catch处理异常，finally无论是否异常都会执行，常用于资源释放。</Paragraph>
-          <CodeBlock language="java">{`try {
-    int[] arr = {1, 2};
-    System.out.println(arr[2]);
-} catch (ArrayIndexOutOfBoundsException e) {
-    System.out.println("数组越界");
+    System.out.println("除数不能为零");
+    System.out.println(e.getMessage());
+} catch (Exception e) {
+    System.out.println("其他错误: " + e);
 } finally {
-    System.out.println("程序结束");
-}`}</CodeBlock>
-          <Alert message="要点" description={<ul className="list-disc pl-6"><li>finally常用于关闭文件、释放资源</li><li>catch可多分支，按异常类型匹配</li></ul>} type="success" showIcon />
-        </Card>
-      )
-    },
-    {
-      key: '3',
-      label: '📝 自定义异常与throws',
-      children: (
-        <Card title="自定义异常与throws" className="mb-6">
-          <Paragraph>可通过继承Exception或RuntimeException自定义异常类。throws用于声明方法可能抛出的异常。</Paragraph>
-          <CodeBlock language="java">{`class MyException extends Exception {
-    public MyException(String msg) { super(msg); }
+    System.out.println("总是执行");
 }
 
-public class Main {
-    static void check(int age) throws MyException {
-        if (age < 18) throw new MyException("未成年人");
-    }
-    public static void main(String[] args) {
-        try {
-            check(15);
-        } catch (MyException e) {
-            System.out.println(e.getMessage());
-        }
-    }
-}`}</CodeBlock>
-          <Alert message="要点" description={<ul className="list-disc pl-6"><li>自定义异常需继承Exception或RuntimeException</li><li>throws声明异常，throw抛出异常</li></ul>} type="info" showIcon />
-        </Card>
-      )
-    },
-    {
-      key: '4',
-      label: '💡 综合练习与参考答案',
-      children: (
-        <Card title="综合练习与参考答案" className="mb-6">
-          <Paragraph><b>练习题：</b></Paragraph>
-          <ul className="list-disc pl-6">
-            <li>
-              编写一个方法，接收两个整数参数，返回它们的商，若除数为0抛出自定义异常。
-              <Collapse className="mt-2">
-                <Collapse.Panel header="参考答案" key="1">
-                  <CodeBlock language="java">{`class DivideByZeroException extends Exception {
-    public DivideByZeroException(String msg) { super(msg); }
-}
-public class Main {
-    static int divide(int a, int b) throws DivideByZeroException {
-        if (b == 0) throw new DivideByZeroException("除数不能为0");
-        return a / b;
-    }
-    public static void main(String[] args) {
-        try {
-            System.out.println(divide(10, 0));
-        } catch (DivideByZeroException e) {
-            System.out.println(e.getMessage());
-        }
-    }
-}`}</CodeBlock>
-                  <Paragraph>解析：自定义异常类，方法用throws声明，遇到0主动抛出异常。</Paragraph>
-                </Collapse.Panel>
-              </Collapse>
-            </li>
-            <li>
-              输入一个字符串，尝试将其转为整数，若格式错误捕获异常并提示。
-              <Collapse className="mt-2">
-                <Collapse.Panel header="参考答案" key="2">
-                  <CodeBlock language="java">{`import java.util.Scanner;
-public class ParseIntDemo {
-    public static void main(String[] args) {
-        Scanner sc = new Scanner(System.in);
-        String s = sc.nextLine();
-        try {
-            int n = Integer.parseInt(s);
-            System.out.println("转换成功：" + n);
-        } catch (NumberFormatException e) {
-            System.out.println("输入不是有效整数");
-        }
-    }
-}`}</CodeBlock>
-                  <Paragraph>解析：parseInt可能抛出NumberFormatException，需用try-catch捕获。</Paragraph>
-                </Collapse.Panel>
-              </Collapse>
-            </li>
-            <li>
-              编写一个方法，读取数组指定下标元素，若越界捕获异常并返回-1。
-              <Collapse className="mt-2">
-                <Collapse.Panel header="参考答案" key="3">
-                  <CodeBlock language="java">{`public class ArrayRead {
-    static int get(int[] arr, int idx) {
-        try {
-            return arr[idx];
-        } catch (ArrayIndexOutOfBoundsException e) {
-            return -1;
-        }
-    }
-    public static void main(String[] args) {
-        int[] arr = {1,2,3};
-        System.out.println(get(arr, 5)); // -1
-    }
-}`}</CodeBlock>
-                  <Paragraph>解析：数组越界时catch异常，返回-1作为错误标记。</Paragraph>
-                </Collapse.Panel>
-              </Collapse>
-            </li>
-          </ul>
-          <Alert message="温馨提示" description="多练习异常捕获与自定义异常，理解异常处理机制。" type="info" showIcon />
-        </Card>
-      )
-    }
-  ];
-
-  return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* 页面头部 */}
-        <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Java异常处理</h1>
-              <p className="text-gray-600 mt-2">掌握异常体系、try-catch、throws与自定义异常</p>
-            </div>
-            <Progress type="circle" percent={50} size={100} strokeColor="#1890ff" />
-          </div>
-        </div>
-
-        {/* 课程内容 */}
-        <div className="bg-white rounded-lg shadow-md p-8">
-          <Tabs items={tabItems} tabPosition="left" className="p-6" />
-        </div>
-
-        {/* 底部导航 */}
-        <div className="flex justify-between mt-8">
-          <Link
-            href="/study/java/collections"
-            className="inline-flex items-center px-4 py-2 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-gray-600 hover:bg-gray-700"
-          >
-            <LeftOutlined className="mr-2" />
-            上一课：常用类与集合
-          </Link>
-          <Link
-            href="/study/java/file-io"
-            className="inline-flex items-center px-4 py-2 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"
-          >
-            下一课：文件与IO
-            <RightOutlined className="ml-2" />
-          </Link>
-        </div>
+// try-with-resources（自动关闭资源）
+try (BufferedReader br = new BufferedReader(
+        new FileReader("file.txt"))) {
+    System.out.println(br.readLine());
+} catch (IOException e) {
+    e.printStackTrace();
+}`} />
       </div>
-    </div>
-  );
-} 
+    ),
+    right: (
+      <div className="space-y-4">
+        <PageTitle>异常类型</PageTitle>
+        <BookCode language="java" showLineNumbers code={`// 检查型异常（必须处理）
+try {
+    Thread.sleep(1000);
+} catch (InterruptedException e) {
+    Thread.currentThread().interrupt();
+}
+
+// 非检查型异常（可选处理）
+int[] arr = new int[5];
+arr[10] = 1;  // ArrayIndexOutOfBoundsException
+
+// 抛出异常
+public void withdraw(double amount) {
+    if (amount > balance) {
+        throw new IllegalArgumentException(
+            "余额不足");
+    }
+    balance -= amount;
+}
+
+// throws 声明
+public void readFile() throws IOException {
+    Files.readString(Path.of("test.txt"));
+}`} />
+      </div>
+    ),
+  },
+  {
+    label: '自定义异常',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>自定义异常类</PageTitle>
+        <BookCode language="java" showLineNumbers code={`public class BankException extends Exception {
+    private double balance;
+    private double amount;
+
+    public BankException(String msg, double b, double a) {
+        super(msg);
+        this.balance = b;
+        this.amount = a;
+    }
+
+    public double getBalance() { return balance; }
+}
+
+// 使用
+public void transfer(double amount) throws BankException {
+    if (amount > balance)
+        throw new BankException("余额不足", balance, amount);
+    balance -= amount;
+}
+
+// 调用
+try {
+    account.transfer(1000);
+} catch (BankException e) {
+    System.out.println("余额: " + e.getBalance());
+}`} />
+      </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <PageTitle>最佳实践</PageTitle>
+        <BookList items={[
+          '异常应用于异常情况，不用做流程控制',
+          '捕获具体异常而非通用的 Exception',
+          '在恰当层级处理异常，不要吞异常',
+          '使用 finally 或 try-with-resources 释放资源',
+          '自定义异常继承 Exception 或 RuntimeException',
+          '记录异常日志以便排查问题',
+        ]} />
+        <BookAlert type="warning" message="不要捕获异常后什么都不做，这会导致问题难以排查。至少应该打印日志或重新抛出" />
+        <TagGrid items={['try-catch', 'finally', 'throws', 'throw', 'Exception', 'try-with-resources']} />
+      </div>
+    ),
+  },
+]
+
+export default function ExceptionsPage() {
+  return <LessonLayout meta={META} spreads={SPREADS} />
+}

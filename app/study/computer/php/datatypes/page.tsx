@@ -1,224 +1,125 @@
-'use client';
+'use client'
 
-import { useState } from 'react';
+import LessonLayout, { type LessonMeta } from '@/app/components/ui/book/LessonLayout'
+import { THEMES } from '@/app/components/ui/book/theme'
+import {
+  PageTitle,
+  SectionTitle,
+  BookParagraph,
+  BookCode,
+  BookList,
+  TagGrid,
+} from '@/app/components/ui/book/BookContent'
 
-const tabs = [
-  { key: 'type', label: '数据类型详解' },
-  { key: 'scope', label: '变量作用域' },
-  { key: 'cast', label: '类型判断与转换' },
-  { key: 'array', label: '数组操作' },
-  { key: 'string', label: '字符串操作' },
-  { key: 'code', label: '代码示例' },
-  { key: 'faq', label: '常见问题' },
-  { key: 'practice', label: '练习' },
-];
+const META: LessonMeta = {
+  subject: 'PHP',
+  chapterTitle: '数据类型与变量',
+  chapterNumber: 4,
+  totalChapters: 22,
+  subjectHref: '/study/computer/php',
+  prevChapter: { label: '基础语法与数据类型', href: '/study/computer/php/basic' },
+  nextChapter: { label: '控制流程与函数', href: '/study/computer/php/control-functions' },
+  theme: THEMES.computer,
+}
+
+const SPREADS = [
+  {
+    label: '数据类型与作用域',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>数据类型详解</PageTitle>
+        <BookCode language="php" code={`<?php
+// 标量类型
+$int = 42; $float = 3.14;
+$str = "Hello"; $bool = true;
+// 复合类型
+$arr = [1, 2, 3];        // 数组
+$obj = new stdClass();    // 对象
+// 特殊类型
+$null = null;             // null
+$res = fopen("file","r"); // resource
+?>`} />
+        <SectionTitle>变量作用域</SectionTitle>
+        <BookCode language="php" code={`<?php
+$global = "全局";          // 全局作用域
+function test() {
+    global $global;       // 访问全局变量
+    static $count = 0;    // 静态变量
+    $count++; echo $count;
+}
+?>`} />
+      </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <SectionTitle>类型判断与转换</SectionTitle>
+        <BookCode language="php" code={`<?php
+is_int(42);      // true
+is_string("a");  // true
+is_array([1]);   // true
+gettype($var);   // 返回类型名
+settype($var, "int"); // 设置类型
+
+// 强制转换
+$int = (int)"123";
+$str = (string)456;
+?>`} />
+        <TagGrid items={['类型', '作用域', 'global', 'static', 'type hint']} />
+      </div>
+    ),
+  },
+  {
+    label: '数组与字符串操作',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>数组操作</PageTitle>
+        <BookCode language="php" code={`<?php
+$arr = [1, 2, 3];
+array_push($arr, 4);     // 追加
+$val = array_pop($arr);  // 弹出
+sort($arr);              // 排序
+$map = array_map(fn($x) => $x*2, $arr);
+$filtered = array_filter($arr, fn($x) => $x>1);
+$reduced = array_reduce($arr, fn($c,$i)=>$c+$i, 0);
+?>`} />
+      </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <SectionTitle>字符串操作</SectionTitle>
+        <BookCode language="php" code={`<?php
+$s = "Hello PHP";
+strlen($s);            // 长度
+strpos($s, "PHP");     // 查找位置
+substr($s, 0, 5);      // 子串
+str_replace("PHP","World",$s); // 替换
+explode(" ", $s);      // 分割
+implode(",", ["a","b"]); // 连接
+trim("  text  ");      // 去空格
+?>`} />
+        <TagGrid items={['数组', '字符串', 'array_map', 'strlen', 'explode']} />
+      </div>
+    ),
+  },
+  {
+    label: '练习与FAQ',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>练习</PageTitle>
+        <BookList items={['定义一个数组并排序输出', '使用字符串函数处理文本', '练习global和static变量']} />
+      </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <SectionTitle>常见问题</SectionTitle>
+        <BookParagraph><b>PHP数组和JS数组区别？</b>PHP数组既有索引又有键值对功能，更像哈希表。</BookParagraph>
+        <BookParagraph><b>什么是类型 juggling？</b>PHP自动类型转换，如"1" + 2 = 3。</BookParagraph>
+        <TagGrid items={['练习', 'FAQ', '类型 juggling', '哈希表', '数组']} />
+      </div>
+    ),
+  },
+]
 
 export default function PhpDatatypesPage() {
-  const [activeTab, setActiveTab] = useState('type');
-
-  return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-      <h1 className="text-3xl font-bold mb-6 mt-4">数据类型与变量</h1>
-      <div className="border-b border-gray-200 mb-6">
-        <nav className="-mb-px flex space-x-8" aria-label="Tabs">
-          {tabs.map(tab => (
-            <button
-              key={tab.key}
-              onClick={() => setActiveTab(tab.key)}
-              className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm focus:outline-none ${
-                activeTab === tab.key
-                  ? 'border-blue-500 text-blue-600 font-bold'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </nav>
-      </div>
-      <div className="bg-white rounded-lg shadow p-8">
-        {activeTab === 'type' && (
-          <div>
-            <h2 className="text-2xl font-bold mb-4">数据类型详解</h2>
-            <ul className="list-disc pl-6 mt-2">
-              <li>标量类型：int、float、string、bool</li>
-              <li>复合类型：array、object、callable、iterable</li>
-              <li>特殊类型：null、resource</li>
-            </ul>
-            <pre className="bg-gray-100 p-2 rounded text-sm mt-2">
-{[
-  '$a = 42;',
-  '$b = 3.14;',
-  '$c = "hello";',
-  '$d = false;',
-  '$arr = [1, 2, 3];',
-  '$obj = (object)["x" => 1, "y" => 2];',
-  '$f = function($x) { return $x * $x; };',
-].join('\n')}
-            </pre>
-          </div>
-        )}
-        {activeTab === 'scope' && (
-          <div>
-            <h2 className="text-2xl font-bold mb-4">变量作用域</h2>
-            <ul className="list-disc pl-6 mt-2">
-              <li>全局变量、局部变量、静态变量</li>
-              <li>函数内访问全局变量需用<code>global</code>关键字或<code>$GLOBALS</code>数组</li>
-              <li>静态变量用<code>static</code>声明，函数调用间保留值</li>
-            </ul>
-            <pre className="bg-gray-100 p-2 rounded text-sm mt-2">
-{[
-  '$x = 10;',
-  'function foo() {',
-  '  global $x;',
-  '  static $count = 0;',
-  '  $count++;',
-  '  echo $x + $count;',
-  '}',
-  'foo(); // 输出11',
-  'foo(); // 输出12',
-].join('\n')}
-            </pre>
-          </div>
-        )}
-        {activeTab === 'cast' && (
-          <div>
-            <h2 className="text-2xl font-bold mb-4">类型判断与转换</h2>
-            <ul className="list-disc pl-6 mt-2">
-              <li>类型判断：<code>is_int</code>、<code>is_string</code>、<code>is_array</code>等</li>
-              <li>类型转换：<code>(int)</code>、<code>(string)</code>、<code>intval()</code>、<code>strval()</code></li>
-            </ul>
-            <pre className="bg-gray-100 p-2 rounded text-sm mt-2">
-{[
-  '$a = "123";',
-  'if (is_string($a)) {',
-  '  $b = (int)$a;',
-  '  echo $b + 1;',
-  '}',
-  '$c = 3.14;',
-  'echo intval($c); // 3',
-].join('\n')}
-            </pre>
-          </div>
-        )}
-        {activeTab === 'array' && (
-          <div>
-            <h2 className="text-2xl font-bold mb-4">数组操作</h2>
-            <ul className="list-disc pl-6 mt-2">
-              <li>索引数组、关联数组、二维数组</li>
-              <li>常用函数：<code>count</code>、<code>array_push</code>、<code>array_merge</code>、<code>in_array</code>、<code>array_map</code></li>
-              <li>遍历：<code>foreach</code>、<code>for</code>、<code>while</code></li>
-            </ul>
-            <pre className="bg-gray-100 p-2 rounded text-sm mt-2">
-{[
-  '$arr = [1, 2, 3];',
-  '$assoc = ["name" => "Tom", "age" => 18];',
-  'array_push($arr, 4);',
-  '$merged = array_merge($arr, [5, 6]);',
-  'foreach ($assoc as $k => $v) {',
-  '  echo "$k=$v ";',
-  '}',
-  'if (in_array(2, $arr)) { echo "有2"; }',
-].join('\n')}
-            </pre>
-          </div>
-        )}
-        {activeTab === 'string' && (
-          <div>
-            <h2 className="text-2xl font-bold mb-4">字符串操作</h2>
-            <ul className="list-disc pl-6 mt-2">
-              <li>拼接：<code>.</code>，模板变量<code>"Hello, $name"</code></li>
-              <li>常用函数：<code>strlen</code>、<code>strpos</code>、<code>substr</code>、<code>str_replace</code>、<code>explode</code>、<code>implode</code></li>
-            </ul>
-            <pre className="bg-gray-100 p-2 rounded text-sm mt-2">
-{[
-  '$s = "Hello, world!";',
-  'echo strlen($s); // 13',
-  'echo strpos($s, "world"); // 7',
-  'echo substr($s, 0, 5); // Hello',
-  '$arr = explode(",", "a,b,c");',
-  'echo implode("-", $arr); // a-b-c',
-].join('\n')}
-            </pre>
-          </div>
-        )}
-        {activeTab === 'code' && (
-          <div>
-            <h2 className="text-2xl font-bold mb-4">代码示例</h2>
-            <pre className="bg-gray-100 p-2 rounded text-sm mt-2">
-{[
-  '<?php',
-  '// 变量与作用域',
-  '$g = 100;',
-  'function test() {',
-  '  global $g;',
-  '  static $cnt = 0;',
-  '  $cnt++;',
-  '  echo $g + $cnt;',
-  '}',
-  'test(); // 101',
-  'test(); // 102',
-  '',
-  '// 数组操作',
-  '$arr = [1,2,3];',
-  'array_push($arr, 4);',
-  'foreach ($arr as $v) { echo $v; }',
-  '',
-  '// 字符串操作',
-  '$s = "abc,def,ghi";',
-  '$parts = explode(",", $s);',
-  'echo implode("-", $parts);',
-  '',
-  '// 类型判断',
-  '$x = "123";',
-  'if (is_string($x)) { echo "字符串"; }',
-  '?>',
-].join('\n')}
-            </pre>
-          </div>
-        )}
-        {activeTab === 'faq' && (
-          <div>
-            <h2 className="text-2xl font-bold mb-4">常见问题</h2>
-            <ul className="list-disc pl-6 space-y-2">
-              <li><b>Q: PHP数组和Python列表有何区别？</b><br />A: PHP数组既可做索引数组也可做字典，功能更灵活。</li>
-              <li><b>Q: 如何判断变量类型？</b><br />A: 用is_xxx函数，如is_array、is_string等。</li>
-              <li><b>Q: 变量作用域如何理解？</b><br />A: 全局、局部、静态变量作用范围不同，注意global/static关键字。</li>
-            </ul>
-          </div>
-        )}
-        {activeTab === 'practice' && (
-          <div>
-            <h2 className="text-2xl font-bold mb-4">练习</h2>
-            <ul className="list-decimal pl-6 space-y-2">
-              <li>定义一个全局变量和一个函数，函数内累加并输出该变量</li>
-              <li>定义一个关联数组，遍历输出所有键值对</li>
-              <li>用explode和implode实现字符串与数组的互转</li>
-              <li>判断一个变量是否为数组并输出结果</li>
-            </ul>
-          </div>
-        )}
-        <div className="mt-8 flex justify-between">
-          <a
-            href="/study/php/basic"
-            className="inline-flex items-center bg-gray-200 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-300 transition-colors"
-          >
-            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-            上一页：基础语法与数据类型
-          </a>
-          <a
-            href="/study/php/control-functions"
-            className="inline-flex items-center bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors"
-          >
-            下一页：控制流程与函数
-            <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          </a>
-        </div>
-      </div>
-    </div>
-  );
-} 
+  return <LessonLayout meta={META} spreads={SPREADS} />
+}

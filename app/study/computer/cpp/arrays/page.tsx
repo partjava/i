@@ -1,53 +1,42 @@
-'use client';
+'use client'
 
-import { Card, Tabs, Alert, Progress } from 'antd';
-import { CodeBlock } from '@/app/components/ui/CodeBlock';
-import Link from 'next/link';
-import { 
-  TableOutlined,
-  BlockOutlined,
-  SortAscendingOutlined,
-  ExperimentOutlined 
-} from '@ant-design/icons';
+import LessonLayout, { type LessonMeta } from '@/app/components/ui/book/LessonLayout'
+import { THEMES } from '@/app/components/ui/book/theme'
+import {
+  PageTitle,
+  BookParagraph,
+  BookCode,
+  BookAlert,
+  BookList,
+  TagGrid,
+  BookDivider,
+} from '@/app/components/ui/book/BookContent'
 
-const { TabPane } = Tabs;
+const META: LessonMeta = {
+  subject: 'C++编程',
+  chapterTitle: '数组和字符串',
+  chapterNumber: 7,
+  totalChapters: 18,
+  subjectHref: '/study/computer/cpp',
+  prevChapter: { label: '函数', href: '/study/computer/cpp/functions' },
+  nextChapter: { label: '指针', href: '/study/computer/cpp/pointers' },
+  theme: THEMES.computer,
+}
 
-export default function ArraysPage() {
-  return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">数组和字符串</h1>
-              <p className="text-gray-600 mt-2">
-                C++ / 数组和字符串
-              </p>
-            </div>
-            <Progress type="circle" percent={35} size={80} />
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <Tabs defaultActiveKey="1">
-            <TabPane 
-              tab={
-                <span>
-                  <TableOutlined />
-                  一维数组
-                </span>
-              } 
-              key="1"
-            >
-              <Card title="数组基础" className="mb-6">
-                <CodeBlock language="cpp">
-                  {`// 数组声明和初始化
-int numbers[5];                    // 声明一个包含5个整数的数组
-int scores[5] = {90, 85, 88, 92, 78};  // 初始化
-int values[] = {1, 2, 3, 4, 5};   // 自动确定大小
+const SPREADS = [
+  // ===== 跨页 1: 一维数组 =====
+  {
+    label: '一维数组',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>数组基础</PageTitle>
+        <BookCode language="cpp" showLineNumbers code={`// 数组声明和初始化
+int numbers[5];
+int scores[5] = {90, 85, 88, 92, 78};
+int values[] = {1, 2, 3, 4, 5};
 
 // 访问数组元素
-cout << scores[0];    // 访问第一个元素
+cout << scores[0];    // 第一个元素
 scores[1] = 95;       // 修改元素
 
 // 使用循环遍历数组
@@ -55,7 +44,7 @@ for (int i = 0; i < 5; i++) {
     cout << scores[i] << " ";
 }
 
-// 使用范围for循环（C++11）
+// 范围for循环（C++11）
 for (int score : scores) {
     cout << score << " ";
 }
@@ -73,48 +62,66 @@ cout << *ptr;        // 第一个元素
 cout << *(ptr + 1);  // 第二个元素
 
 // 计算数组大小
-int size = sizeof(scores) / sizeof(scores[0]);`}
-                </CodeBlock>
-                <Alert
-                  className="mt-4"
-                  message="数组注意事项"
-                  description={
-                    <ul className="list-disc pl-6">
-                      <li>数组下标从0开始</li>
-                      <li>访问数组时要注意边界检查</li>
-                      <li>数组名实际上是指向第一个元素的指针</li>
-                      <li>作为参数传递时会退化为指针</li>
-                    </ul>
-                  }
-                  type="warning"
-                  showIcon
-                />
-              </Card>
-            </TabPane>
+int size = sizeof(scores) / sizeof(scores[0]);`} />
+        <BookAlert type="warning" message="数组下标从0开始，访问时注意边界检查。数组名实际上是指向第一个元素的指针" />
+      </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <PageTitle>数组操作详解</PageTitle>
+        <BookCode language="cpp" showLineNumbers code={`// 数组排序
+#include <algorithm>
+int arr[] = {5, 2, 8, 1, 9};
+int n = sizeof(arr) / sizeof(arr[0]);
 
-            <TabPane 
-              tab={
-                <span>
-                  <BlockOutlined />
-                  多维数组
-                </span>
-              } 
-              key="2"
-            >
-              <Card title="多维数组" className="mb-6">
-                <CodeBlock language="cpp">
-                  {`// 二维数组声明和初始化
+// 升序排序
+sort(arr, arr + n);
+
+// 降序排序
+sort(arr, arr + n, greater<int>());
+
+// 查找元素
+int key = 8;
+int* found = find(arr, arr + n, key);
+
+// 数组拷贝
+int dest[5];
+copy(arr, arr + n, dest);
+
+// 填充数组
+fill(arr, arr + n, 0);  // 全部置零
+
+// 反转数组
+reverse(arr, arr + n);`} />
+        <BookParagraph>数组使用要点：</BookParagraph>
+        <BookList items={[
+          '固定大小，编译时确定',
+          '内存连续存储，访问速度快',
+          '作为参数传递时退化为指针',
+          '优先使用 vector 代替定长数组',
+        ]} />
+      </div>
+    ),
+  },
+
+  // ===== 跨页 2: 多维数组 =====
+  {
+    label: '多维数组',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>二维数组基础</PageTitle>
+        <BookCode language="cpp" showLineNumbers code={`// 二维数组声明和初始化
 int matrix[3][4] = {
     {1, 2, 3, 4},
     {5, 6, 7, 8},
     {9, 10, 11, 12}
 };
 
-// 访问二维数组元素
-cout << matrix[0][0];  // 访问第一行第一列
+// 访问元素
+cout << matrix[0][0];  // 第一行第一列
 matrix[1][2] = 15;     // 修改元素
 
-// 使用嵌套循环遍历
+// 嵌套循环遍历
 for (int i = 0; i < 3; i++) {
     for (int j = 0; j < 4; j++) {
         cout << matrix[i][j] << " ";
@@ -122,7 +129,7 @@ for (int i = 0; i < 3; i++) {
     cout << endl;
 }
 
-// 二维数组作为函数参数
+// 作为函数参数
 void print2DArray(int arr[][4], int rows) {
     for (int i = 0; i < rows; i++) {
         for (int j = 0; j < 4; j++) {
@@ -130,463 +137,149 @@ void print2DArray(int arr[][4], int rows) {
         }
         cout << endl;
     }
-}
-
-// 动态分配二维数组
-int** dynamicMatrix = new int*[3];
+}`} />
+        <BookAlert type="info" message="多维数组在内存中连续存储。作为参数时需指定除第一维外的所有维度大小" />
+      </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <PageTitle>动态分配多维数组</PageTitle>
+        <BookCode language="cpp" showLineNumbers code={`// 动态分配二维数组
+int** matrix = new int*[3];
 for (int i = 0; i < 3; i++) {
-    dynamicMatrix[i] = new int[4];
+    matrix[i] = new int[4];
 }
 
 // 使用完后释放内存
 for (int i = 0; i < 3; i++) {
-    delete[] dynamicMatrix[i];
+    delete[] matrix[i];
 }
-delete[] dynamicMatrix;`}
-                </CodeBlock>
-                <Alert
-                  className="mt-4"
-                  message="多维数组要点"
-                  description={
-                    <ul className="list-disc pl-6">
-                      <li>多维数组在内存中是连续存储的</li>
-                      <li>作为参数传递时需要指定除第一维外的所有维度大小</li>
-                      <li>动态分配需要手动管理内存</li>
-                      <li>可以使用vector代替动态数组以简化内存管理</li>
-                    </ul>
-                  }
-                  type="info"
-                  showIcon
-                />
-              </Card>
-            </TabPane>
+delete[] matrix;
 
-            <TabPane 
-              tab={
-                <span>
-                  <SortAscendingOutlined />
-                  字符串
-                </span>
-              } 
-              key="3"
-            >
-              <Card title="字符串处理" className="mb-6">
-                <CodeBlock language="cpp">
-                  {`// C风格字符串
-char str1[] = "Hello";           // 自动添加空字符\\0
-char str2[10] = "World";        // 指定大小
-char str3[6] = {'H', 'e', 'l', 'l', 'o', '\\0'};
+// 使用 vector 替代（推荐）
+vector<vector<int>> vec = {
+    {1, 2, 3, 4},
+    {5, 6, 7, 8},
+    {9, 10, 11, 12}
+};`} />
+        <BookAlert type="warning" message="动态分配需要手动管理内存。推荐使用 vector 代替动态数组以简化内存管理" />
+      </div>
+    ),
+  },
+
+  // ===== 跨页 3: 字符串 =====
+  {
+    label: '字符串',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>C 风格字符串</PageTitle>
+        <BookCode language="cpp" showLineNumbers code={`// C风格字符串
+char str1[] = "Hello";           // 自动加\\0
+char str2[10] = "World";
+char str3[6] = {'H','e','l','l','o','\\0'};
 
 // 字符串操作函数
 #include <cstring>
-strlen(str1);              // 字符串长度
-strcpy(str2, str1);       // 复制字符串
-strcat(str2, str1);       // 连接字符串
-strcmp(str1, str2);       // 比较字符串
+strlen(str1);              // 长度
+strcpy(str2, str1);       // 复制
+strcat(str2, str1);       // 连接
+strcmp(str1, str2);       // 比较
 
-// C++ string类
-#include <string>
+// 注意：C风格字符串容易缓冲区溢出`} />
+        <BookAlert type="warning" message="优先使用 C++ string 类而不是 C 风格字符串。C 风格字符串要注意缓冲区溢出" />
+      </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <PageTitle>C++ string 类</PageTitle>
+        <BookCode language="cpp" showLineNumbers code={`#include <string>
 string s1 = "Hello";
 string s2 = "World";
-string s3 = s1 + " " + s2;  // 字符串连接
-cout << s3.length();        // 字符串长度
-cout << s3.substr(0, 5);    // 子字符串
+string s3 = s1 + " " + s2;  // 连接
+cout << s3.length();        // 长度
+cout << s3.substr(0, 5);    // 子串
 
-// string类的常用操作
+// 常用操作
 s1.append(" there");        // 追加
 s1.insert(5, " my");       // 插入
 s1.erase(5, 3);           // 删除
 s1.replace(5, 2, "sir");  // 替换
 s1.find("lo");            // 查找
 
-// 字符串转换
-string num_str = "123";
-int num = stoi(num_str);     // 字符串转整数
-string pi_str = "3.14";
-double pi = stod(pi_str);    // 字符串转浮点数
-string str = to_string(42);  // 数字转字符串`}
-                </CodeBlock>
-                <Alert
-                  className="mt-4"
-                  message="字符串处理建议"
-                  description={
-                    <ul className="list-disc pl-6">
-                      <li>优先使用C++ string类而不是C风格字符串</li>
-                      <li>string类自动管理内存，更安全方便</li>
-                      <li>使用C风格字符串时要注意缓冲区溢出</li>
-                      <li>字符串转换时要注意异常处理</li>
-                    </ul>
-                  }
-                  type="warning"
-                  showIcon
-                />
-              </Card>
-            </TabPane>
+// 类型转换
+int num = stoi("123");        // 字符串→整数
+double pi = stod("3.14");     // 字符串→浮点
+string str = to_string(42);   // 数字→字符串`} />
+        <BookAlert type="info" message="string 类自动管理内存，更安全方便。字符串转换时注意异常处理" />
+      </div>
+    ),
+  },
 
-            <TabPane 
-              tab={
-                <span>
-                  <ExperimentOutlined />
-                  练习例题
-                </span>
-              } 
-              key="4"
-            >
-              <Card title="例题1：矩阵运算器" className="mb-6">
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="text-lg font-medium">题目描述</h3>
-                    <p className="mt-2">实现一个矩阵运算器，支持以下功能：</p>
-                    <ul className="list-disc pl-6 mt-2">
-                      <li>矩阵加法和减法</li>
-                      <li>矩阵乘法</li>
-                      <li>矩阵转置</li>
-                      <li>计算行列式（2x2和3x3矩阵）</li>
-                    </ul>
-                  </div>
-
-                  <div>
-                    <h3 className="text-lg font-medium">参考代码</h3>
-                    <CodeBlock language="cpp">
-                      {`#include <iostream>
-#include <vector>
-using namespace std;
-
-class Matrix {
-private:
+  // ===== 跨页 4: 练习 =====
+  {
+    label: '练习例题',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>矩阵运算器</PageTitle>
+        <div className="p-3 bg-paper-200/80 rounded-md border border-paper-300">
+          <p className="text-sm text-ink font-medium mb-1">题目描述</p>
+          <BookList items={[
+            '矩阵加法和减法',
+            '矩阵乘法',
+            '矩阵转置',
+            '计算行列式（2x2和3x3矩阵）',
+          ]} />
+        </div>
+        <BookDivider />
+        <PageTitle>单词统计器</PageTitle>
+        <div className="p-3 bg-paper-200/80 rounded-md border border-paper-300">
+          <p className="text-sm text-ink font-medium mb-1">题目描述</p>
+          <BookList items={[
+            '接收一段文本输入',
+            '统计每个单词出现的次数',
+            '按出现频率降序排列',
+            '支持忽略标点符号',
+          ]} />
+        </div>
+        <TagGrid items={['数组', 'vector', 'string', 'STL算法', 'map']} />
+      </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <PageTitle>矩阵参考代码</PageTitle>
+        <BookCode language="cpp" showLineNumbers code={`class Matrix {
     vector<vector<int>> data;
     int rows, cols;
-
 public:
-    Matrix(int r, int c) : rows(r), cols(c) {
-        data.resize(r, vector<int>(c, 0));
-    }
-    
-    void input() {
-        cout << "请输入 " << rows << "x" << cols << " 矩阵元素:" << endl;
-        for (int i = 0; i < rows; i++) {
-            for (int j = 0; j < cols; j++) {
-                cin >> data[i][j];
-            }
-        }
-    }
-    
-    void display() {
-        for (int i = 0; i < rows; i++) {
-            for (int j = 0; j < cols; j++) {
-                cout << data[i][j] << "\\t";
-            }
-            cout << endl;
-        }
-    }
-    
+    Matrix(vector<vector<int>> d)
+        : data(d), rows(d.size()),
+          cols(d[0].size()) {}
+
     Matrix add(const Matrix& other) {
-        if (rows != other.rows || cols != other.cols) {
-            throw "矩阵维度不匹配";
-        }
-        
-        Matrix result(rows, cols);
-        for (int i = 0; i < rows; i++) {
-            for (int j = 0; j < cols; j++) {
-                result.data[i][j] = data[i][j] + other.data[i][j];
-            }
-        }
-        return result;
+        vector<vector<int>> res(rows,
+            vector<int>(cols));
+        for (int i = 0; i < rows; i++)
+            for (int j = 0; j < cols; j++)
+                res[i][j] = data[i][j]
+                          + other.data[i][j];
+        return Matrix(res);
     }
-    
-    Matrix multiply(const Matrix& other) {
-        if (cols != other.rows) {
-            throw "矩阵维度不匹配";
-        }
-        
-        Matrix result(rows, other.cols);
-        for (int i = 0; i < rows; i++) {
-            for (int j = 0; j < other.cols; j++) {
-                for (int k = 0; k < cols; k++) {
-                    result.data[i][j] += data[i][k] * other.data[k][j];
-                }
-            }
-        }
-        return result;
-    }
-    
+
     Matrix transpose() {
-        Matrix result(cols, rows);
-        for (int i = 0; i < rows; i++) {
-            for (int j = 0; j < cols; j++) {
-                result.data[j][i] = data[i][j];
-            }
-        }
-        return result;
+        vector<vector<int>> res(cols,
+            vector<int>(rows));
+        for (int i = 0; i < rows; i++)
+            for (int j = 0; j < cols; j++)
+                res[j][i] = data[i][j];
+        return Matrix(res);
     }
-    
-    int determinant() {
-        if (rows != cols) {
-            throw "非方阵无法计算行列式";
-        }
-        
-        if (rows == 2) {
-            return data[0][0] * data[1][1] - data[0][1] * data[1][0];
-        } else if (rows == 3) {
-            return data[0][0] * (data[1][1] * data[2][2] - data[1][2] * data[2][1])
-                 - data[0][1] * (data[1][0] * data[2][2] - data[1][2] * data[2][0])
-                 + data[0][2] * (data[1][0] * data[2][1] - data[1][1] * data[2][0]);
-        }
-        throw "仅支持2x2和3x3矩阵的行列式计算";
-    }
-};
-
-int main() {
-    try {
-        // 测试矩阵加法
-        Matrix m1(2, 2), m2(2, 2);
-        cout << "输入第一个矩阵：" << endl;
-        m1.input();
-        cout << "输入第二个矩阵：" << endl;
-        m2.input();
-        
-        cout << "\\n矩阵加法结果：" << endl;
-        Matrix sum = m1.add(m2);
-        sum.display();
-        
-        cout << "\\n矩阵乘法结果：" << endl;
-        Matrix product = m1.multiply(m2);
-        product.display();
-        
-        cout << "\\n第一个矩阵的转置：" << endl;
-        Matrix trans = m1.transpose();
-        trans.display();
-        
-        cout << "\\n第一个矩阵的行列式：" << endl;
-        cout << m1.determinant() << endl;
-        
-    } catch (const char* msg) {
-        cout << "错误：" << msg << endl;
-    }
-    
-    return 0;
-}`}
-                    </CodeBlock>
-                  </div>
-
-                  <div>
-                    <h3 className="text-lg font-medium">知识点</h3>
-                    <ul className="list-disc pl-6">
-                      <li>二维数组（vector）的使用</li>
-                      <li>类的设计与实现</li>
-                      <li>运算符重载</li>
-                      <li>异常处理</li>
-                    </ul>
-                  </div>
-                </div>
-              </Card>
-
-              <Card title="例题2：字符串处理工具" className="mb-6">
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="text-lg font-medium">题目描述</h3>
-                    <p className="mt-2">实现一个字符串处理工具，提供以下功能：</p>
-                    <ul className="list-disc pl-6 mt-2">
-                      <li>回文字符串检测</li>
-                      <li>字符串加密解密</li>
-                      <li>单词反转</li>
-                      <li>字符串模式匹配</li>
-                    </ul>
-                  </div>
-
-                  <div>
-                    <h3 className="text-lg font-medium">参考代码</h3>
-                    <CodeBlock language="cpp">
-                      {`#include <iostream>
-#include <string>
-#include <algorithm>
-using namespace std;
-
-class StringProcessor {
-public:
-    // 检查是否为回文
-    bool isPalindrome(string str) {
-        string processed;
-        // 移除非字母字符并转换为小写
-        for (char c : str) {
-            if (isalpha(c)) {
-                processed += tolower(c);
-            }
-        }
-        
-        string reversed = processed;
-        reverse(reversed.begin(), reversed.end());
-        return processed == reversed;
-    }
-    
-    // 凯撒密码加密
-    string encrypt(string str, int shift) {
-        string result = str;
-        for (char& c : result) {
-            if (isalpha(c)) {
-                char base = isupper(c) ? 'A' : 'a';
-                c = base + (c - base + shift) % 26;
-            }
-        }
-        return result;
-    }
-    
-    // 凯撒密码解密
-    string decrypt(string str, int shift) {
-        return encrypt(str, 26 - shift);
-    }
-    
-    // 单词反转
-    string reverseWords(string str) {
-        string result;
-        string word;
-        
-        for (char c : str) {
-            if (isspace(c)) {
-                reverse(word.begin(), word.end());
-                result += word + c;
-                word.clear();
-            } else {
-                word += c;
-            }
-        }
-        
-        // 处理最后一个单词
-        if (!word.empty()) {
-            reverse(word.begin(), word.end());
-            result += word;
-        }
-        
-        return result;
-    }
-    
-    // KMP模式匹配算法
-    vector<int> findPattern(string text, string pattern) {
-        vector<int> result;
-        if (pattern.empty()) return result;
-        
-        // 构建部分匹配表
-        vector<int> lps(pattern.length(), 0);
-        int len = 0;
-        int i = 1;
-        
-        while (i < pattern.length()) {
-            if (pattern[i] == pattern[len]) {
-                lps[i++] = ++len;
-            } else {
-                if (len != 0) {
-                    len = lps[len - 1];
-                } else {
-                    lps[i++] = 0;
-                }
-            }
-        }
-        
-        // 查找模式
-        i = 0;
-        int j = 0;
-        while (i < text.length()) {
-            if (pattern[j] == text[i]) {
-                i++;
-                j++;
-            }
-            
-            if (j == pattern.length()) {
-                result.push_back(i - j);
-                j = lps[j - 1];
-            } else if (i < text.length() && pattern[j] != text[i]) {
-                if (j != 0) {
-                    j = lps[j - 1];
-                } else {
-                    i++;
-                }
-            }
-        }
-        
-        return result;
-    }
-};
-
-int main() {
-    StringProcessor processor;
-    
-    // 测试回文检查
-    string str1 = "A man, a plan, a canal: Panama";
-    cout << str1 << " 是回文？ " 
-         << (processor.isPalindrome(str1) ? "是" : "否") << endl;
-    
-    // 测试加密解密
-    string str2 = "Hello World";
-    int shift = 3;
-    string encrypted = processor.encrypt(str2, shift);
-    string decrypted = processor.decrypt(encrypted, shift);
-    cout << "原文：" << str2 << endl;
-    cout << "加密：" << encrypted << endl;
-    cout << "解密：" << decrypted << endl;
-    
-    // 测试单词反转
-    string str3 = "Hello World from C++";
-    cout << "单词反转：" << processor.reverseWords(str3) << endl;
-    
-    // 测试模式匹配
-    string text = "AABAACAADAABAAABAA";
-    string pattern = "AABA";
-    vector<int> positions = processor.findPattern(text, pattern);
-    cout << "模式 '" << pattern << "' 在文本中的位置：";
-    for (int pos : positions) {
-        cout << pos << " ";
-    }
-    cout << endl;
-    
-    return 0;
-}`}
-                    </CodeBlock>
-                  </div>
-
-                  <div>
-                    <h3 className="text-lg font-medium">知识点</h3>
-                    <ul className="list-disc pl-6">
-                      <li>字符串操作和算法</li>
-                      <li>字符处理函数</li>
-                      <li>KMP模式匹配算法</li>
-                      <li>类的设计与实现</li>
-                    </ul>
-                  </div>
-
-                  <Alert
-                    message="扩展建议"
-                    description={
-                      <ul className="list-disc pl-6">
-                        <li>添加更多加密算法（如维吉尼亚密码）</li>
-                        <li>支持正则表达式匹配</li>
-                        <li>添加字符串压缩功能</li>
-                        <li>实现模糊字符串匹配</li>
-                      </ul>
-                    }
-                    type="info"
-                    showIcon
-                  />
-                </div>
-              </Card>
-            </TabPane>
-          </Tabs>
-
-          <div className="flex justify-between mt-8">
-            <Link 
-              href="/study/cpp/functions" 
-              className="inline-flex items-center px-4 py-2 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
-            >
-              上一课：函数
-            </Link>
-            <Link 
-              href="/study/cpp/pointers" 
-              className="inline-flex items-center px-4 py-2 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-            >
-              下一课：指针
-            </Link>
-          </div>
-        </div>
+};`} />
+        <BookAlert type="info" message="用 vector 实现矩阵比动态数组更安全。运算符重载可让矩阵操作更直观" />
       </div>
-    </div>
-  );
-} 
+    ),
+  },
+]
+
+export default function ArraysPage() {
+  return <LessonLayout meta={META} spreads={SPREADS} />
+}

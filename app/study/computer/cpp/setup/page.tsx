@@ -1,338 +1,265 @@
-'use client';
+'use client'
 
-import { useState } from 'react';
-import { Card, Tabs, Steps, Button, Alert, Progress } from 'antd';
-import { CodeBlock } from '@/app/components/ui/CodeBlock';
-import { 
-  DesktopOutlined, 
-  CodeOutlined, 
-  ToolOutlined,
-  CheckCircleOutlined,
-  ExperimentOutlined,
-  RightOutlined 
-} from '@ant-design/icons';
+import LessonLayout, { type LessonMeta } from '@/app/components/ui/book/LessonLayout'
+import { THEMES } from '@/app/components/ui/book/theme'
+import {
+  PageTitle,
+  StepList,
+  BookAlert,
+  BookParagraph,
+  BookList,
+  BookCode,
+  TagGrid,
+} from '@/app/components/ui/book/BookContent'
+import { DesktopOutlined, CodeOutlined, ToolOutlined, ExperimentOutlined } from '@ant-design/icons'
 
-const { TabPane } = Tabs;
+// ========== 章节元信息 ==========
 
-export default function SetupPage() {
-  const [activeTab, setActiveTab] = useState('1');
+const META: LessonMeta = {
+  subject: 'C++编程',
+  chapterTitle: '开发环境配置',
+  chapterNumber: 1,
+  totalChapters: 18,
+  subjectHref: '/study/computer/cpp',
+  nextChapter: { label: '基础语法', href: '/study/computer/cpp/syntax' },
+  theme: THEMES.computer,
+}
 
-  return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* 页面标题 */}
-        <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">C++ 开发环境配置</h1>
-              <p className="text-gray-600 mt-2">配置你的第一个C++开发环境，开始编程之旅</p>
-            </div>
-            <Progress type="circle" percent={5} size={80} strokeColor="#1890ff" />
-          </div>
-        </div>
+// ========== 内容（每个标签 = 两页） ==========
 
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <Tabs activeKey={activeTab} onChange={setActiveTab}>
-            <TabPane 
-              tab={
-                <span>
-                  <DesktopOutlined />
-                  Windows环境
-                </span>
-              } 
-              key="1"
-            >
-              <Steps
-                direction="vertical"
-                current={-1}
-                items={[
-                  {
-                    title: '下载MinGW编译器',
-                    description: (
-                      <div className="py-4">
-                        <p className="mb-4">访问 MinGW 官网下载安装程序：</p>
-                        <Alert
-                          message="下载链接"
-                          description={
-                            <a href="https://sourceforge.net/projects/mingw-w64/files/" 
-                               target="_blank" 
-                               rel="noopener noreferrer"
-                               className="text-blue-500 hover:text-blue-600"
-                            >
-                              https://sourceforge.net/projects/mingw-w64/files/
-                            </a>
-                          }
-                          type="info"
-                          showIcon
-                        />
-                      </div>
-                    )
-                  },
-                  {
-                    title: '安装MinGW',
-                    description: (
-                      <div className="py-4">
-                        <p className="mb-4">1. 运行下载的安装程序</p>
-                        <p className="mb-4">2. 选择安装选项：</p>
-                        <ul className="list-disc pl-6 mb-4">
-                          <li>Version: 最新版本</li>
-                          <li>Architecture: x86_64</li>
-                          <li>Threads: posix</li>
-                          <li>Exception: seh</li>
-                        </ul>
-                        <p>3. 选择安装路径（建议默认路径）</p>
-                      </div>
-                    )
-                  },
-                  {
-                    title: '配置环境变量',
-                    description: (
-                      <div className="py-4">
-                        <p className="mb-4">1. 打开系统环境变量设置</p>
-                        <p className="mb-4">2. 编辑 Path 变量，添加 MinGW 的 bin 目录：</p>
-                        <CodeBlock language="bash">
-                          C:\mingw64\bin
-                        </CodeBlock>
-                      </div>
-                    )
-                  },
-                  {
-                    title: '验证安装',
-                    description: (
-                      <div className="py-4">
-                        <p className="mb-4">打开命令提示符，输入以下命令：</p>
-                        <CodeBlock language="bash">
-                          g++ --version
-                        </CodeBlock>
-                        <p className="mt-4">如果显示版本信息，说明安装成功。</p>
-                      </div>
-                    )
-                  }
-                ]}
-              />
-            </TabPane>
+const SPREADS = [
+  // 跨页 1: Windows环境 ---------------------------------
+  {
+    label: 'Windows环境',
+    left: (
+      <div className="space-y-4">
+        <PageTitle icon={<DesktopOutlined />}>Windows 环境配置</PageTitle>
+        <StepList
+          items={[
+            {
+              title: '下载 MinGW 编译器',
+              content: (
+                <div className="space-y-2">
+                  <BookParagraph>
+                    访问 MinGW-w64 官网下载安装程序，建议选择 x86_64 架构版本。
+                  </BookParagraph>
+                  <div className="p-2 bg-paper-200 rounded text-xs font-code text-azure break-all">
+                    <a href="https://sourceforge.net/projects/mingw-w64/files/" target="_blank" rel="noopener noreferrer" className="hover:underline">
+                      https://sourceforge.net/projects/mingw-w64/files/
+                    </a>
+                  </div>
+                  <BookAlert type="info" message="建议选择最新版本，架构选 x86_64，线程模型选 posix" />
+                </div>
+              ),
+            },
+            {
+              title: '安装 MinGW',
+              content: (
+                <BookList items={[
+                  '运行下载的安装程序',
+                  'Version: 选择最新版本',
+                  'Architecture: x86_64',
+                  'Threads: posix',
+                  'Exception: seh',
+                  '选择安装路径（建议默认路径 C:\\mingw64）',
+                ]} />
+              ),
+            },
+          ]}
+        />
+      </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <PageTitle icon={<DesktopOutlined />}>环境变量与验证</PageTitle>
+        <StepList
+          items={[
+            {
+              title: '配置环境变量',
+              content: (
+                <BookList items={[
+                  '右键「此电脑」→ 属性 → 高级系统设置',
+                  '点击「环境变量」',
+                  '编辑 Path 变量，新增 C:\\mingw64\\bin',
+                  '点击确定保存',
+                ]} />
+              ),
+            },
+            {
+              title: '验证安装',
+              content: (
+                <div className="space-y-2">
+                  <BookParagraph>打开命令提示符，输入以下命令验证：</BookParagraph>
+                  <BookCode language="bash" code="g++ --version" />
+                  <BookAlert type="success" message="看到版本号输出 = 环境配置完成" />
+                </div>
+              ),
+            },
+          ]}
+        />
+      </div>
+    ),
+  },
 
-            <TabPane 
-              tab={
-                <span>
-                  <CodeOutlined />
-                  VSCode配置
-                </span>
-              } 
-              key="2"
-            >
-              <Steps
-                direction="vertical"
-                current={-1}
-                items={[
-                  {
-                    title: '安装VSCode',
-                    description: (
-                      <div className="py-4">
-                        <p className="mb-4">从官网下载并安装VSCode：</p>
-                        <Alert
-                          message="下载链接"
-                          description={
-                            <a href="https://code.visualstudio.com/" 
-                               target="_blank" 
-                               rel="noopener noreferrer"
-                               className="text-blue-500 hover:text-blue-600"
-                            >
-                              https://code.visualstudio.com/
-                            </a>
-                          }
-                          type="info"
-                          showIcon
-                        />
-                      </div>
-                    )
-                  },
-                  {
-                    title: '安装C++扩展',
-                    description: (
-                      <div className="py-4">
-                        <p className="mb-4">在VSCode中安装以下扩展：</p>
-                        <ul className="list-disc pl-6">
-                          <li>C/C++</li>
-                          <li>C/C++ Extension Pack</li>
-                          <li>Code Runner（可选）</li>
-                        </ul>
-                      </div>
-                    )
-                  },
-                  {
-                    title: '配置C++环境',
-                    description: (
-                      <div className="py-4">
-                        <p className="mb-4">1. 创建工作目录</p>
-                        <p className="mb-4">2. 创建.vscode文件夹，添加配置文件：</p>
-                        <p className="mb-2">tasks.json:</p>
-                        <CodeBlock language="json">
-                          {`{
-  "version": "2.0.0",
-  "tasks": [
-    {
-      "type": "cppbuild",
-      "label": "C/C++: g++.exe build active file",
-      "command": "g++",
-      "args": [
-        "-fdiagnostics-color=always",
-        "-g",
-        "\${file}",
-        "-o",
-        "\${fileDirname}/\${fileBasenameNoExtension}.exe"
-      ],
-      "options": {
-        "cwd": "\${fileDirname}"
-      },
-      "problemMatcher": ["$gcc"],
-      "group": {
-        "kind": "build",
-        "isDefault": true
-      }
-    }
-  ]
-}`}
-                        </CodeBlock>
-                      </div>
-                    )
-                  }
-                ]}
-              />
-            </TabPane>
+  // 跨页 2: VSCode配置 ----------------------------------
+  {
+    label: 'VSCode配置',
+    left: (
+      <div className="space-y-4">
+        <PageTitle icon={<CodeOutlined />}>安装 VS Code</PageTitle>
+        <StepList
+          items={[
+            {
+              title: '下载并安装 VS Code',
+              content: (
+                <div className="space-y-2">
+                  <BookParagraph>从官网下载 Visual Studio Code 安装程序。</BookParagraph>
+                  <div className="p-2 bg-paper-200 rounded text-xs font-code text-azure break-all">
+                    <a href="https://code.visualstudio.com/" target="_blank" rel="noopener noreferrer" className="hover:underline">
+                      https://code.visualstudio.com/
+                    </a>
+                  </div>
+                </div>
+              ),
+            },
+            {
+              title: '安装 C++ 扩展',
+              content: (
+                <div className="space-y-2">
+                  <BookParagraph>在 VS Code 扩展市场搜索并安装：</BookParagraph>
+                  <BookList items={[
+                    'C/C++（微软官方）',
+                    'C/C++ Extension Pack',
+                    'Code Runner（可选）',
+                  ]} />
+                  <BookAlert type="info" message="按 Ctrl+Shift+X 打开扩展面板" />
+                </div>
+              ),
+            },
+          ]}
+        />
+      </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <PageTitle icon={<CodeOutlined />}>配置编译环境</PageTitle>
+        <StepList
+          items={[
+            {
+              title: '创建工作目录',
+              content: <BookParagraph>在桌面上创建一个新的 C++ 项目文件夹。</BookParagraph>,
+            },
+            {
+              title: '创建 .vscode 配置',
+              content: (
+                <BookCode
+                  language="json"
+                  showLineNumbers
+                  maxLines={10}
+                  code={'{\n  "version": "2.0.0",\n  "tasks": [\n    {\n      "type": "cppbuild",\n      "label": "C/C++: g++ 编译",\n      "command": "g++",\n      "args": [\n        "-fdiagnostics-color=always",\n        "-g",\n        "${file}",\n        "-o",\n        "${fileDirname}/${fileBasenameNoExtension}.exe"\n      ],\n      "group": {\n        "kind": "build",\n        "isDefault": true\n      }\n    }\n  ]\n}'}
+                />
+              ),
+            },
+          ]}
+        />
+      </div>
+    ),
+  },
 
-            <TabPane 
-              tab={
-                <span>
-                  <ToolOutlined />
-                  测试环境
-                </span>
-              } 
-              key="3"
-            >
-              <div className="space-y-6">
-                <Card title="创建测试程序">
-                  <p className="mb-4">创建一个新文件 hello.cpp：</p>
-                  <CodeBlock language="cpp">
-                    {`#include <iostream>
+  // 跨页 3: 测试环境 ------------------------------------
+  {
+    label: '测试环境',
+    left: (
+      <div className="space-y-4">
+        <PageTitle icon={<ToolOutlined />}>创建测试程序</PageTitle>
+        <BookParagraph>
+          创建一个新文件 <code className="px-1 py-0.5 bg-paper-200 rounded text-xs font-code">hello.cpp</code>：
+        </BookParagraph>
+        <BookCode
+          language="cpp"
+          showLineNumbers
+         
+          code={`#include <iostream>
 using namespace std;
 
 int main() {
     cout << "Hello, C++!" << endl;
     return 0;
 }`}
-                  </CodeBlock>
-                </Card>
+        />
+      </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <PageTitle icon={<ToolOutlined />}>编译运行</PageTitle>
+        <div className="space-y-4">
+          <div>
+            <h3 className="text-sm font-medium text-ink mb-2">方法一：命令行</h3>
+            <BookCode language="bash" code="g++ hello.cpp -o hello\n./hello" />
+          </div>
+          <div>
+            <h3 className="text-sm font-medium text-ink mb-2">方法二：VS Code</h3>
+            <BookList items={[
+              '打开 hello.cpp，按 F5 运行',
+              '或按 Ctrl+Alt+N（Code Runner）',
+            ]} />
+          </div>
+          <BookAlert type="success" message={'如果看到 "Hello, C++!" 输出，恭喜配置成功！'} />
+        </div>
+      </div>
+    ),
+  },
 
-                <Card title="编译运行">
-                  <p className="mb-4">方法1：使用命令行</p>
-                  <CodeBlock language="bash">
-                    {`g++ hello.cpp -o hello
-./hello`}
-                  </CodeBlock>
-
-                  <p className="mb-4 mt-6">方法2：使用VSCode</p>
-                  <ul className="list-disc pl-6">
-                    <li>打开hello.cpp</li>
-                    <li>按F5运行程序</li>
-                    <li>或使用Code Runner插件的运行按钮</li>
-                  </ul>
-                </Card>
-
-                <Alert
-                  message="成功标准"
-                  description="如果看到输出 'Hello, C++!'，说明环境配置成功！"
-                  type="success"
-                  showIcon
-                  icon={<CheckCircleOutlined />}
-                />
-              </div>
-            </TabPane>
-
-            <TabPane 
-              tab={
-                <span>
-                  <ExperimentOutlined />
-                  练习例题
-                </span>
-              } 
-              key="4"
-            >
-              <div className="space-y-6">
-                <Card title="例题：创建并运行第一个C++程序">
-                  <div className="space-y-4">
-                    <div>
-                      <h3 className="text-lg font-medium">题目描述</h3>
-                      <p className="mt-2">创建一个C++程序，实现以下功能：</p>
-                      <ul className="list-disc pl-6 mt-2">
-                        <li>输出一行文字："Welcome to C++ Programming!"</li>
-                        <li>输出当前的编译器版本信息</li>
-                        <li>等待用户按回车键后退出</li>
-                      </ul>
-                    </div>
-
-                    <div>
-                      <h3 className="text-lg font-medium">参考代码</h3>
-                      <CodeBlock language="cpp">
-                        {`#include <iostream>
+  // 跨页 4: 练习例题 ------------------------------------
+  {
+    label: '练习例题',
+    left: (
+      <div className="space-y-4">
+        <PageTitle icon={<ExperimentOutlined />}>题目描述</PageTitle>
+        <div className="p-4 bg-paper-200/80 rounded-md border border-paper-300">
+          <p className="text-sm text-ink font-medium mb-3">创建一个 C++ 程序：</p>
+          <BookList items={[
+            '输出 "Welcome to C++ Programming!"',
+            '输出编译器版本信息',
+            '等待回车后退出',
+          ]} />
+        </div>
+        <h3 className="text-sm font-medium text-ink mt-4 mb-2">要求</h3>
+        <BookList items={[
+          '使用 iostream 库',
+          '使用 endl 换行',
+          '使用 cin.get() 等待输入',
+          '使用 __cplusplus 宏',
+        ]} />
+      </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <PageTitle icon={<ExperimentOutlined />}>参考代码</PageTitle>
+        <BookCode
+          language="cpp"
+          showLineNumbers
+          code={`#include <iostream>
 using namespace std;
 
 int main() {
-    // 输出欢迎信息
     cout << "Welcome to C++ Programming!" << endl;
-    
-    // 输出编译器版本信息
-    cout << "Compiler version: " << __cplusplus << endl;
-    
-    // 等待用户输入
-    cout << "按回车键退出..." << endl;
+    cout << "C++ Standard: " << __cplusplus << endl;
+    cout << "按回车键退出...";
     cin.get();
-    
     return 0;
 }`}
-                      </CodeBlock>
-                    </div>
-
-                    <div>
-                      <h3 className="text-lg font-medium">知识点</h3>
-                      <ul className="list-disc pl-6">
-                        <li>基本的C++程序结构</li>
-                        <li>iostream库的使用</li>
-                        <li>标准输入输出</li>
-                        <li>预定义宏的使用</li>
-                      </ul>
-                    </div>
-
-                    <Alert
-                      message="提示"
-                      description={
-                        <ul className="list-disc pl-6">
-                          <li>确保已正确配置g++编译器</li>
-                          <li>使用 VS Code 创建新的 .cpp 文件</li>
-                          <li>使用 F5 或终端命令编译运行</li>
-                          <li>观察程序的输出结果</li>
-                        </ul>
-                      }
-                      type="info"
-                      showIcon
-                    />
-                  </div>
-                </Card>
-              </div>
-            </TabPane>
-          </Tabs>
-        </div>
-
-        {/* 底部导航 */}
-        <div className="flex justify-between mt-8">
-          <Button disabled>
-            上一课
-          </Button>
-          <Button type="primary" href="/study/cpp/syntax">
-            下一课：基础语法
-          </Button>
-        </div>
+        />
+        <h3 className="text-sm font-medium text-ink mt-4 mb-2">知识点</h3>
+        <TagGrid items={['程序基本结构', 'iostream 库', '标准输入输出', '__cplusplus 宏', '命名空间', 'main 函数']} />
+        <BookAlert type="warning" message="确保已正确配置 g++ 编译器" />
       </div>
-    </div>
-  );
-} 
+    ),
+  },
+]
+
+// ========== 页面 ==========
+
+export default function SetupPage() {
+  return <LessonLayout meta={META} spreads={SPREADS} />
+}
