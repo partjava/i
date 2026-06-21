@@ -1,217 +1,213 @@
-'use client';
+'use client'
 
-import { useState } from 'react';
-import { Card, Tabs, Progress, Alert, Typography } from 'antd';
-import { LeftOutlined, RightOutlined } from '@ant-design/icons';
-import Link from 'next/link';
-import React from 'react';
-import { GlobalOutlined, DatabaseOutlined, BarChartOutlined, ExperimentOutlined } from '@ant-design/icons';
-import { CodeBlock } from '@/app/components/ui/CodeBlock';
+import LessonLayout, { type LessonMeta } from '@/app/components/ui/book/LessonLayout'
+import { THEMES } from '@/app/components/ui/book/theme'
+import {
+  PageTitle,
+  BookParagraph,
+  BookCode,
+  BookAlert,
+  BookList,
+  TagGrid,
+} from '@/app/components/ui/book/BookContent'
 
-const { TabPane } = Tabs;
-const { Title, Paragraph, Text } = Typography;
+const META: LessonMeta = {
+  subject: 'Python 编程',
+  chapterTitle: '第三方库',
+  chapterNumber: 10,
+  totalChapters: 11,
+  subjectHref: '/study/computer/python',
+  prevChapter: { label: '标准库', href: '/study/computer/python/stdlib' },
+  nextChapter: { label: '项目实战', href: '/study/computer/python/projects' },
+  theme: THEMES.computer,
+}
 
-export default function Page() {
-  const [activeTab, setActiveTab] = useState('1');
+const SPREADS = [
+  {
+    label: '包管理',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>pip 包管理</PageTitle>
+        <BookParagraph>pip 是 Python 的官方包管理工具，用于安装、管理和卸载第三方库。</BookParagraph>
+        <BookCode language="bash" showLineNumbers code={`# 安装包
+pip install requests
+pip install requests==2.28.0  # 指定版本
+pip install requests>=2.28.0
 
-  const tabItems = [
-    {
-      key: '1',
-      label: (
-        <span><GlobalOutlined /> 网络请求</span>
-      ),
-      children: (
-        <Card title="网络请求 (requests)" className="mb-6">
-          <div className="space-y-4 mt-4">
-            <h3 className="text-xl font-semibold">使用 requests 发送 HTTP 请求</h3>
-            <Paragraph>展示GET和POST请求示例，并处理响应和异常。</Paragraph>
-            <CodeBlock language="python">
-{`import requests
+# 查看已安装
+pip list
+pip show requests
 
-# 发送GET请求
-response = requests.get('https://api.github.com/repos/psf/requests')
-print(response.status_code)
-data = response.json()
-print(data['stargazers_count'], 'stars')
+# 卸载
+pip uninstall requests
 
-# POST请求示例
-payload = {'key': 'value'}
-response = requests.post('https://httpbin.org/post', json=payload)
-print(response.json())`}
-            </CodeBlock>
-            <Alert
-              message="要点"
-              description={
-                <ul className="list-disc pl-6">
-                  <li>使用<code>requests.get/post</code>发送请求</li>
-                  <li>通过<code>response.status_code</code>检查状态</li>
-                  <li><code>response.json()</code>解析JSON响应</li>
-                </ul>
-              }
-              type="info"
-              showIcon
-            />
-          </div>
-        </Card>
-      )
-    },
-    {
-      key: '2',
-      label: (
-        <span><DatabaseOutlined /> 数据处理</span>
-      ),
-      children: (
-        <Card title="数据处理 (pandas & numpy)" className="mb-6">
-          <div className="space-y-4 mt-4">
-            <h3 className="text-xl font-semibold">pandas 读取与处理表格数据</h3>
-            <CodeBlock language="python">
-{`import pandas as pd
-import numpy as np
+# requirements.txt
+pip freeze > requirements.txt
+pip install -r requirements.txt
 
-# 读取CSV
-df = pd.read_csv('data.csv')
+# 常用源
+pip install -i https://pypi.tuna.tsinghua.edu.cn/simple pkg
+
+# 虚拟环境
+python -m venv venv
+source venv/bin/activate  # Mac/Linux
+venv\\Scripts\\activate    # Windows`} />
+      </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <PageTitle>requests 与网络请求</PageTitle>
+        <BookCode language="python" showLineNumbers code={`import requests
+
+# GET 请求
+response = requests.get(
+    "https://api.github.com",
+    params={"q": "python"},
+    headers={"Accept": "application/json"}
+)
+print(response.status_code)  # 200
+print(response.json())       # JSON 数据
+
+# POST 请求
+data = {"name": "Alice", "age": 30}
+response = requests.post(
+    "https://httpbin.org/post",
+    json=data
+)
+
+# 处理响应
+response.raise_for_status()  # 检查错误
+print(response.text)         # 文本
+print(response.elapsed)      # 耗时
+
+# 会话管理
+with requests.Session() as session:
+    session.auth = ("user", "pass")
+    response = session.get("https://api.example.com")`} />
+      </div>
+    ),
+  },
+  {
+    label: '数据处理',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>NumPy 基础</PageTitle>
+        <BookCode language="python" showLineNumbers code={`import numpy as np
+
+# 创建数组
+arr = np.array([1, 2, 3, 4, 5])
+zeros = np.zeros((3, 4))
+ones = np.ones((2, 3))
+range_arr = np.arange(10)
+
+# 矩阵运算
+a = np.array([[1, 2], [3, 4]])
+b = np.array([[5, 6], [7, 8]])
+print(a + b)       # 矩阵加法
+print(a @ b)       # 矩阵乘法
+print(a.T)         # 转置
+
+# 统计运算
+data = np.random.randn(1000)
+print(data.mean())
+print(data.std())
+print(data.max())
+print(data.min())`} />
+      </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <PageTitle>Pandas 基础</PageTitle>
+        <BookCode language="python" showLineNumbers code={`import pandas as pd
+
+# 创建 DataFrame
+data = {
+    "name": ["Alice", "Bob", "Charlie"],
+    "age": [25, 30, 35],
+    "city": ["北京", "上海", "广州"]
+}
+df = pd.DataFrame(data)
 print(df.head())
 
-# 计算统计信息
-print(df['age'].mean(), df['salary'].median())
+# 读取数据
+df = pd.read_csv("data.csv")
+df = pd.read_excel("data.xlsx")
 
-# 使用NumPy进行数组计算
-arr = np.array([1, 2, 3, 4])
-print(np.sqrt(arr), np.mean(arr))`}
-            </CodeBlock>
-            <Alert
-              message="要点"
-              description={
-                <ul className="list-disc pl-6">
-                  <li><code>pandas</code>提供DataFrame结构</li>
-                  <li><code>numpy</code>用于高效数组运算</li>
-                </ul>
-              }
-              type="info"
-              showIcon
-            />
-          </div>
-        </Card>
-      )
-    },
-    {
-      key: '3',
-      label: (
-        <span><BarChartOutlined /> 数据可视化</span>
-      ),
-      children: (
-        <Card title="数据可视化 (matplotlib & seaborn)" className="mb-6">
-          <div className="space-y-4 mt-4">
-            <h3 className="text-xl font-semibold">绘制图表示例</h3>
-            <CodeBlock language="python">
-{`import matplotlib.pyplot as plt
-import seaborn as sns
+# 数据操作
+print(df.describe())         # 统计摘要
+print(df["name"])            # 选择列
+filtered = df[df["age"] > 28]
+print(df.groupby("city").mean())
 
-# 简单折线图
-x = [1, 2, 3, 4]
-y = [10, 20, 15, 30]
-plt.plot(x, y, marker='o')
-plt.title('示例折线图')
-plt.xlabel('X轴')
-plt.ylabel('Y轴')
+# 数据清洗
+df.dropna()                  # 删除空值
+df.fillna(0)                 # 填充空值
+df.drop_duplicates()         # 去重`} />
+      </div>
+    ),
+  },
+  {
+    label: '可视化',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>Matplotlib 基础</PageTitle>
+        <BookCode language="python" showLineNumbers code={`import matplotlib.pyplot as plt
+
+# 折线图
+x = [1, 2, 3, 4, 5]
+y = [2, 4, 6, 8, 10]
+plt.plot(x, y, label="线性增长")
+plt.xlabel("X轴")
+plt.ylabel("Y轴")
+plt.title("折线图示例")
+plt.legend()
 plt.show()
 
-# seaborn 散点图
-sns.scatterplot(x='age', y='salary', data=df)
-plt.show()`}
-            </CodeBlock>
-            <Alert
-              message="要点"
-              description={
-                <ul className="list-disc pl-6">
-                  <li>使用<code>matplotlib</code>基础绘图</li>
-                  <li><code>seaborn</code>简化统计可视化</li>
-                </ul>
-              }
-              type="info"
-              showIcon
-            />
-          </div>
-        </Card>
-      )
-    },
-    {
-      key: '4',
-      label: (
-        <span><ExperimentOutlined /> 练习示例</span>
-      ),
-      children: (
-        <Card title="练习：API和可视化" className="mb-6">
-          <div className="space-y-4 mt-4">
-            <h3 className="text-xl font-semibold">综合实践</h3>
-            <Paragraph>从公共API获取数据，并使用pandas处理和matplotlib绘图。</Paragraph>
-            <CodeBlock language="python">
-{`# 获取疫情API数据
-import requests, pandas as pd, matplotlib.pyplot as plt
+# 柱状图
+categories = ["A", "B", "C", "D"]
+values = [23, 45, 12, 67]
+plt.bar(categories, values)
+plt.title("柱状图示例")
+plt.show()
 
-resp = requests.get('https://api.covid19api.com/summary')
-data = resp.json()['Countries']
-df = pd.DataFrame(data)
-
-df_top = df.nlargest(5, 'TotalConfirmed')[['Country', 'TotalConfirmed']]
-df_top.plot.bar(x='Country', y='TotalConfirmed')
-plt.title('Top 5 Confirmed Cases')
-plt.show()`}
-            </CodeBlock>
-            <Alert
-              message="知识点"
-              description={
-                <ul className="list-disc pl-6">
-                  <li>综合使用requests、pandas和matplotlib</li>
-                  <li>数据清洗与可视化流程</li>
-                </ul>
-              }
-              type="success"
-              showIcon
-            />
-          </div>
-        </Card>
-      )
-    }
-  ];
-
-  return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* 页面头部 */}
-        <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">第三方库</h1>
-              <p className="text-gray-600 mt-2">学习常见Python第三方库的使用方法</p>
+# 散点图
+import numpy as np
+x = np.random.randn(100)
+y = np.random.randn(100)
+plt.scatter(x, y, alpha=0.5)
+plt.title("散点图示例")
+plt.show()`} />
+      </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <PageTitle>更多常用库</PageTitle>
+        <div className="space-y-3">
+          {[
+            { name: 'BeautifulSoup', desc: 'HTML/XML 解析，配合 requests 做网络爬虫' },
+            { name: 'Flask / FastAPI', desc: '轻量级 Web 框架，快速构建 REST API' },
+            { name: 'Django', desc: '全功能 Web 框架，适合大型项目' },
+            { name: 'SQLAlchemy', desc: 'ORM 框架，简化数据库操作' },
+            { name: 'Pillow', desc: '图片处理库，支持裁剪、滤镜、格式转换' },
+            { name: 'PyTorch / TensorFlow', desc: '深度学习框架，构建和训练神经网络' },
+          ].map((lib, i) => (
+            <div key={i} className="flex gap-3 p-2.5 rounded-md bg-paper-200/60">
+              <span className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold"
+                style={{ background: `${THEMES.computer.accent}15`, color: THEMES.computer.accent }}>
+                {i + 1}
+              </span>
+              <div>
+                <h3 className="text-sm font-medium text-ink">{lib.name}</h3>
+                <p className="text-xs text-ink-light">{lib.desc}</p>
+              </div>
             </div>
-            <Progress type="circle" percent={85} size={80} strokeColor="#1890ff" />
-          </div>
-        </div>
-
-        {/* 课程内容 */}
-        <div className="bg-white rounded-lg shadow-md p-8">
-          <Tabs activeKey={activeTab} onChange={setActiveTab} className="p-6" items={tabItems} />
-        </div>
-
-        {/* 底部导航 */}
-        <div className="flex justify-between mt-8">
-          <Link
-            href="/study/python/stdlib"
-            className="inline-flex items-center px-4 py-2 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
-          >
-            <LeftOutlined className="mr-2" />
-            上一课：标准库
-          </Link>
-          <Link
-            href="/study/python/projects"
-            className="inline-flex items-center px-4 py-2 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-          >
-            下一课：项目实战
-            <RightOutlined className="ml-2" />
-          </Link>
+          ))}
         </div>
       </div>
-    </div>
-  );
-} 
+    ),
+  },
+]
+
+export default function PackagesPage() {
+  return <LessonLayout meta={META} spreads={SPREADS} />
+}

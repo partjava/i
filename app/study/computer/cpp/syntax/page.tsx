@@ -1,316 +1,199 @@
-'use client';
+'use client'
 
-import { Card, Tabs, Alert, Progress } from 'antd';
-import { CodeBlock } from '@/app/components/ui/CodeBlock';
-import Link from 'next/link';
-import { 
-  ExperimentOutlined,
-  CodeOutlined,
-  DatabaseOutlined,
-  CalculatorOutlined,
-  RightOutlined,
-  LeftOutlined
-} from '@ant-design/icons';
+import LessonLayout, { type LessonMeta } from '@/app/components/ui/book/LessonLayout'
+import { THEMES } from '@/app/components/ui/book/theme'
+import {
+  PageTitle,
+  BookParagraph,
+  BookCode,
+  BookAlert,
+  BookList,
+  BookDivider,
+} from '@/app/components/ui/book/BookContent'
 
-const { TabPane } = Tabs;
-
-export default function SyntaxPage() {
-  return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">基础语法</h1>
-              <p className="text-gray-600 mt-2">
-                C++ / 基础语法
-              </p>
-            </div>
-            <Progress type="circle" percent={8} size={80} strokeColor="#1890ff" />
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <Tabs defaultActiveKey="1">
-            <TabPane 
-              tab={
-                <span>
-                  <CodeOutlined />
-                  程序结构
-                </span>
-              } 
-              key="1"
-            >
-              <Card title="基本程序结构" className="mb-6">
-                <CodeBlock language="cpp">
-                  {`// 头文件包含
-#include <iostream>  // 输入输出流
-#include <string>   // 字符串处理
-#include <vector>   // 动态数组
-using namespace std;  // 使用标准命名空间
-
-// 主函数
-int main() {
-    // 程序主体
-    cout << "Hello, World!" << endl;
-    return 0;  // 返回值
+const META: LessonMeta = {
+  subject: 'C++编程',
+  chapterTitle: '基础语法',
+  chapterNumber: 2,
+  totalChapters: 18,
+  subjectHref: '/study/computer/cpp',
+  prevChapter: { label: '开发环境配置', href: '/study/computer/cpp/setup' },
+  nextChapter: { label: '变量和数据类型', href: '/study/computer/cpp/variables' },
+  theme: THEMES.computer,
 }
 
-// 多文件程序结构
-// header.h
-#ifndef HEADER_H
-#define HEADER_H
+const SPREADS = [
+  // ===== 跨页 1: 程序结构 =====
+  {
+    label: '程序结构',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>C++ 程序基本结构</PageTitle>
+        <BookParagraph>
+          一个 C++ 程序由函数、变量、语句和表达式组成。最简单的 C++ 程序必须包含一个 <code className="px-1 py-0.5 bg-paper-200 rounded text-xs font-code text-amber-dark">main()</code> 函数，它是程序的入口。
+        </BookParagraph>
+        <BookCode
+          language="cpp"
+          showLineNumbers
+         
+          code={`#include <iostream>   // 预处理指令
+using namespace std;     // 使用标准命名空间
 
-// 声明
-void function();
-
-#endif
-
-// source.cpp
-#include "header.h"
-
-// 定义
-void function() {
-    // 函数实现
+int main() {             // 主函数
+    cout << "你好" << endl;  // 输出语句
+    return 0;            // 返回值
 }`}
-                </CodeBlock>
-                <Alert
-                  className="mt-4"
-                  message="程序结构要点"
-                  description={
-                    <ul className="list-disc pl-6">
-                      <li>所有C++程序都需要main函数</li>
-                      <li>使用预处理器指令包含头文件</li>
-                      <li>使用命名空间避免名称冲突</li>
-                      <li>头文件保护防止重复包含</li>
-                    </ul>
-                  }
-                  type="info"
-                  showIcon
-                />
-              </Card>
+        />
+        <BookAlert type="info" message="main() 函数是每个 C++ 程序的入口，程序从这里开始执行" />
+      </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <PageTitle>语句与注释</PageTitle>
+        <BookParagraph>每条语句以分号 <code className="px-1 py-0.5 bg-paper-200 rounded text-xs font-code">;</code> 结束。注释用于解释代码，不会被编译执行。</BookParagraph>
+        <BookCode
+          language="cpp"
+          code={`// 单行注释
 
-              <Card title="注释" className="mb-6">
-                <CodeBlock language="cpp">
-                  {`// 这是单行注释
+/*
+  多行注释
+  可以写多行
+*/
 
-/* 这是多行注释
-   可以跨越多行
-   直到结束符 */
-
-// 文档注释示例
-/**
- * @brief 函数功能简述
- * @param x 参数说明
- * @return 返回值说明
- */`}
-                </CodeBlock>
-              </Card>
-            </TabPane>
-
-            <TabPane 
-              tab={
-                <span>
-                  <DatabaseOutlined />
-                  数据类型
-                </span>
-              } 
-              key="2"
-            >
-              <Card title="基本数据类型" className="mb-6">
-                <CodeBlock language="cpp">
-                  {`// 整数类型
-int age = 25;            // 整数
-short small = 1;         // 短整数
-long big = 1000000L;     // 长整数
-long long huge = 1000000000LL;  // 超长整数
-
-// 浮点类型
-float price = 9.99f;     // 单精度浮点数
-double pi = 3.14159;     // 双精度浮点数
-
-// 字符类型
-char grade = 'A';        // 单个字符
-bool passed = true;      // 布尔值
-
-// 字符串（C++风格）
-string name = "Alice";   // 字符串对象`}
-                </CodeBlock>
-              </Card>
-
-              <Card title="常量定义" className="mb-6">
-                <CodeBlock language="cpp">
-                  {`// 使用const关键字
-const int MAX_SIZE = 100;
-
-// 使用#define预处理指令
-#define PI 3.14159
-
-// 枚举常量
-enum Color {
-    RED,    // 0
-    GREEN,  // 1
-    BLUE    // 2
-};`}
-                </CodeBlock>
-              </Card>
-            </TabPane>
-
-            <TabPane 
-              tab={
-                <span>
-                  <CalculatorOutlined />
-                  运算符
-                </span>
-              } 
-              key="3"
-            >
-              <Card title="基本运算符" className="mb-6">
-                <CodeBlock language="cpp">
-                  {`// 算术运算符
-int a = 10, b = 3;
-int sum = a + b;      // 加法
-int diff = a - b;     // 减法
-int prod = a * b;     // 乘法
-int quot = a / b;     // 除法
-int rem = a % b;      // 取余
-
-// 关系运算符
-bool isEqual = (a == b);    // 相等
-bool notEqual = (a != b);   // 不相等
-bool greater = (a > b);     // 大于
-bool less = (a < b);        // 小于
-
-// 逻辑运算符
-bool result1 = true && false;  // 逻辑与
-bool result2 = true || false;  // 逻辑或
-bool result3 = !true;          // 逻辑非
-
-// 赋值运算符
-int x = 5;
-x += 3;      // 等同于 x = x + 3
-x -= 2;      // 等同于 x = x - 2
-x *= 4;      // 等同于 x = x * 4`}
-                </CodeBlock>
-              </Card>
-            </TabPane>
-
-            <TabPane 
-              tab={
-                <span>
-                  <ExperimentOutlined />
-                  练习例题
-                </span>
-              } 
-              key="4"
-            >
-              <Card title="例题：基本数据类型和运算符的使用" className="mb-6">
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="text-lg font-medium">题目描述</h3>
-                    <p className="mt-2">编写一个程序，完成以下任务：</p>
-                    <ul className="list-disc pl-6 mt-2">
-                      <li>声明并初始化不同类型的变量（整数、浮点数、字符）</li>
-                      <li>进行基本的算术运算</li>
-                      <li>使用关系运算符进行比较</li>
-                      <li>输出运算结果</li>
-                    </ul>
-                  </div>
-
-                  <div>
-                    <h3 className="text-lg font-medium">参考代码</h3>
-                    <CodeBlock language="cpp">
-                      {`#include <iostream>
-using namespace std;
-
+#include <iostream>
 int main() {
-    // 变量声明和初始化
-    int num1 = 10;
-    int num2 = 3;
-    double decimal = 3.14;
-    char letter = 'A';
-    
-    // 算术运算
-    cout << "基本运算：" << endl;
-    cout << num1 << " + " << num2 << " = " << num1 + num2 << endl;
-    cout << num1 << " - " << num2 << " = " << num1 - num2 << endl;
-    cout << num1 << " * " << num2 << " = " << num1 * num2 << endl;
-    cout << num1 << " / " << num2 << " = " << num1 / num2 << endl;
-    cout << num1 << " % " << num2 << " = " << num1 % num2 << endl;
-    
-    // 类型转换
-    cout << "\\n类型转换：" << endl;
-    cout << "整数 + 小数: " << num1 + decimal << endl;
-    cout << "字符的ASCII值: " << (int)letter << endl;
-    
-    // 关系运算
-    cout << "\\n比较运算：" << endl;
-    cout << num1 << " > " << num2 << " 是 " << (num1 > num2) << endl;
-    cout << num1 << " < " << num2 << " 是 " << (num1 < num2) << endl;
-    cout << num1 << " == " << num2 << " 是 " << (num1 == num2) << endl;
-    
-    return 0;
+    std::cout << "Hello";
+    return 0; // 行尾注释
 }`}
-                    </CodeBlock>
-                  </div>
-
-                  <div>
-                    <h3 className="text-lg font-medium">知识点</h3>
-                    <ul className="list-disc pl-6">
-                      <li>变量声明和初始化</li>
-                      <li>基本数据类型的使用</li>
-                      <li>算术运算符</li>
-                      <li>关系运算符</li>
-                      <li>类型转换</li>
-                      <li>输出格式化</li>
-                    </ul>
-                  </div>
-
-                  <Alert
-                    message="预期输出"
-                    description={
-                      <pre className="whitespace-pre-wrap">
-                        {`基本运算：
-10 + 3 = 13
-10 - 3 = 7
-10 * 3 = 30
-10 / 3 = 3
-10 % 3 = 1
-
-类型转换：
-整数 + 小数: 13.14
-字符的ASCII值: 65
-
-比较运算：
-10 > 3 是 1
-10 < 3 是 0
-10 == 3 是 0`}
-                      </pre>
-                    }
-                    type="info"
-                    showIcon
-                  />
-                </div>
-              </Card>
-            </TabPane>
-          </Tabs>
-
-          <div className="flex justify-between mt-8">
-            <Link 
-              href="/study/cpp/setup" 
-              className="inline-flex items-center px-4 py-2 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
-            >
-              上一课：C++开发环境配置
-            </Link>
-            <Link 
-              href="/study/cpp/variables" 
-              className="inline-flex items-center px-4 py-2 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-            >
-              下一课：变量和数据类型
-            </Link>
-          </div>
+        />
+        <div>
+          <h3 className="text-sm font-medium text-ink mt-4 mb-2">注释规范</h3>
+          <BookList items={[
+            '单行注释用 //，放在代码上方或行尾',
+            '多行注释用 /* */，用于大段说明',
+            '不要注释显而易见的代码',
+          ]} />
         </div>
       </div>
-    </div>
-  );
-} 
+    ),
+  },
+
+  // ===== 跨页 2: 输入输出 =====
+  {
+    label: '输入输出',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>标准输出 (cout)</PageTitle>
+        <BookParagraph>
+          <code className="px-1 py-0.5 bg-paper-200 rounded text-xs font-code text-amber-dark">cout</code> 用于向控制台输出内容。结合 <code className="px-1 py-0.5 bg-paper-200 rounded text-xs font-code text-amber-dark">&lt;&lt;</code> 运算符，可以输出字符串和变量。
+        </BookParagraph>
+        <BookCode
+          language="cpp"
+          showLineNumbers
+          code={`int age = 18;
+cout << "年龄：" << age;
+// 输出：年龄：18
+
+cout << "第一行" << endl;
+cout << "第二行";
+// endl 换行
+
+cout << "a=" << 10
+     << ", b=" << 20;
+// 链式输出`}
+        />
+        <BookAlert type="info" message="endl 既换行又刷新缓冲区，仅换行可以用 \\n" />
+      </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <PageTitle>标准输入 (cin)</PageTitle>
+        <BookParagraph>
+          <code className="px-1 py-0.5 bg-paper-200 rounded text-xs font-code text-amber-dark">cin</code> 从键盘读取输入，结合 <code className="px-1 py-0.5 bg-paper-200 rounded text-xs font-code text-amber-dark">&gt;&gt;</code> 运算符存入变量。
+        </BookParagraph>
+        <BookCode
+          language="cpp"
+          showLineNumbers
+          code={`int a, b;
+cout << "请输入两个数：";
+cin >> a >> b;
+cout << "和：" << a + b;`}
+        />
+        <BookAlert type="warning" message="cin 遇到空格会停止读取，读取一行用 getline()" />
+        <BookDivider />
+        <div>
+          <h3 className="text-sm font-medium text-ink mb-2">常用控制符</h3>
+          <BookList items={[
+            'endl — 换行并刷新',
+            '\\n — 换行（更高效）',
+            '\\t — 制表符对齐',
+          ]} />
+        </div>
+      </div>
+    ),
+  },
+
+  // ===== 跨页 3: 数据类型 =====
+  {
+    label: '数据类型',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>基本数据类型</PageTitle>
+        <BookParagraph>C++ 提供丰富的基本数据类型：</BookParagraph>
+        <div className="overflow-hidden rounded-md border border-paper-300 text-sm">
+          <table className="w-full text-left">
+            <thead>
+              <tr className="bg-ink text-paper-100/90 text-xs">
+                <th className="px-3 py-2 font-medium">类型</th>
+                <th className="px-3 py-2 font-medium">关键字</th>
+                <th className="px-3 py-2 font-medium">大小</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-paper-300 text-xs text-ink-light">
+              {[
+                ['整型', 'int', '4 字节'],
+                ['短整型', 'short', '2 字节'],
+                ['长整型', 'long', '4/8 字节'],
+                ['浮点型', 'float', '4 字节'],
+                ['双精度', 'double', '8 字节'],
+                ['字符型', 'char', '1 字节'],
+                ['布尔型', 'bool', '1 字节'],
+                ['无值', 'void', '—'],
+              ].map(([desc, type, size], i) => (
+                <tr key={i} className="hover:bg-paper-200/50">
+                  <td className="px-3 py-2 text-ink">{desc}</td>
+                  <td className="px-3 py-2 font-code text-amber-dark">{type}</td>
+                  <td className="px-3 py-2">{size}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <PageTitle>类型示例</PageTitle>
+        <BookCode
+          language="cpp"
+          showLineNumbers
+         
+          code={`int     age = 20;        // 整型
+float   pi = 3.14f;       // 单精度
+double  price = 99.99;    // 双精度
+char    grade = 'A';      // 字符（单引号）
+bool    isOk = true;      // 布尔值
+string  name = "小明";    // 字符串（需 #include <string>）`}
+        />
+        <BookAlert type="info" message="C++ 是静态类型语言，变量声明后类型不可变" />
+        <BookParagraph>
+          使用 <code className="px-1 py-0.5 bg-paper-200 rounded text-xs font-code text-amber-dark">sizeof()</code> 可以查看类型在当前平台占用的字节数。
+        </BookParagraph>
+      </div>
+    ),
+  },
+]
+
+export default function SyntaxPage() {
+  return <LessonLayout meta={META} spreads={SPREADS} />
+}

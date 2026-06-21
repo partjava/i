@@ -1,248 +1,139 @@
-'use client';
+'use client'
 
-import { useState } from 'react';
+import LessonLayout, { type LessonMeta } from '@/app/components/ui/book/LessonLayout'
+import { THEMES } from '@/app/components/ui/book/theme'
+import {
+  PageTitle,
+  SectionTitle,
+  BookParagraph,
+  BookCode,
+  BookList,
+  TagGrid,
+} from '@/app/components/ui/book/BookContent'
 
-const tabs = [
-  { key: 'map', label: 'Map基础' },
-  { key: 'struct', label: '结构体基础' },
-  { key: 'method', label: '结构体方法与嵌套' },
-  { key: 'combine', label: 'Map与结构体结合' },
-  { key: 'practice', label: '例题与练习' },
-  { key: 'faq', label: '常见问题' },
-];
+const META: LessonMeta = {
+  subject: 'Go语言',
+  chapterTitle: 'Map与结构体',
+  chapterNumber: 8,
+  totalChapters: 23,
+  subjectHref: '/study/computer/go',
+  prevChapter: { label: '数组与切片', href: '/study/computer/go/arrays-slices' },
+  nextChapter: { label: '接口与类型系统', href: '/study/computer/go/interfaces' },
+  theme: THEMES.computer,
+}
 
-export default function GoMapStructPage() {
-  const [activeTab, setActiveTab] = useState('map');
-
-  return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <h1 className="text-3xl font-bold mb-6 mt-4">Go语言Map与结构体</h1>
-      <div className="border-b border-gray-200 mb-6">
-        <nav className="-mb-px flex space-x-8" aria-label="Tabs">
-          {tabs.map(tab => (
-            <button
-              key={tab.key}
-              onClick={() => setActiveTab(tab.key)}
-              className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm focus:outline-none ${
-                activeTab === tab.key
-                  ? 'border-blue-500 text-blue-600 font-bold'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </nav>
-      </div>
-      <div className="bg-white rounded-lg shadow p-8">
-        {activeTab === 'map' && (
-          <div>
-            <h2 className="text-2xl font-bold mb-4">Map基础</h2>
-            <p>Map是Go内置的无序键值对集合，常用于字典、索引等场景。</p>
-            <pre className="bg-gray-100 p-2 rounded text-sm mt-2">
-{`// 声明和初始化
-var m1 map[string]int           // nil map，需先make
-m2 := make(map[string]int)      // 空map
-m3 := map[string]int{"Tom": 18, "Jerry": 20}
+const SPREADS = [
+  {
+    label: 'Map基础',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>Map基础</PageTitle>
+        <BookParagraph>Map是Go内置的键值对集合，需用make初始化。</BookParagraph>
+        <BookCode language="go" code={`// Map声明与初始化
+var m1 map[string]int
+m2 := make(map[string]int)
+m3 := map[string]int{"Alice": 25, "Bob": 30}
 
 // 增删改查
-m2["Alice"] = 25               // 添加或修改
-age := m2["Alice"]              // 查询
-v, ok := m2["Bob"]              // 判断key是否存在
-if ok {
-    fmt.Println("Bob的年龄：", v)
+m2["Tom"] = 18        // 增加/修改
+age := m2["Tom"]      // 查询
+delete(m2, "Tom")     // 删除
+v, ok := m2["Tom"]    // 判断key是否存在`} />
+      </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <SectionTitle>结构体基础</SectionTitle>
+        <BookParagraph>结构体是Go用于定义复杂数据类型的方式。</BookParagraph>
+        <BookCode language="go" code={`type Student struct {
+    Name  string
+    Age   int
+    Score float64
 }
-delete(m2, "Alice")             // 删除key
 
-// 遍历
-for k, v := range m3 {
-    fmt.Println(k, v)
-}`}
-            </pre>
-            <ul className="list-disc pl-6 mt-2">
-              <li>Map是引用类型，赋值和传参不会复制底层数据。</li>
-              <li>查询不存在的key返回零值。</li>
-              <li>用delete删除key。</li>
-            </ul>
-          </div>
-        )}
-        {activeTab === 'struct' && (
-          <div>
-            <h2 className="text-2xl font-bold mb-4">结构体基础</h2>
-            <p>结构体是用户自定义的复合数据类型，用于描述一组属性。</p>
-            <pre className="bg-gray-100 p-2 rounded text-sm mt-2">
-{`// 定义结构体
+// 创建结构体实例
+s1 := Student{"Tom", 18, 95.5}
+s2 := Student{Name: "Jerry", Age: 20}
+s3 := new(Student) // 返回指针`} />
+        <TagGrid items={['Map', 'make', 'delete', '结构体', '字段']} />
+      </div>
+    ),
+  },
+  {
+    label: '结构体方法与结合',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>结构体方法与嵌套</PageTitle>
+        <BookCode language="go" code={`// 结构体方法
+func (s Student) GetGrade() string {
+    if s.Score >= 90 { return "优秀" }
+    if s.Score >= 80 { return "良好" }
+    return "及格"
+}
+
+// 结构体嵌套
+type Address struct {
+    City, Street string
+}
 type Person struct {
-    Name string
-    Age  int
-}
-
-// 初始化
-var p1 Person
-p1.Name = "Tom"
-p1.Age = 18
-p2 := Person{"Jerry", 20}
-p3 := Person{Name: "Alice"}
-
-// 访问字段
-fmt.Println(p2.Name, p2.Age)
-
-// 结构体数组
-var people = [2]Person{
-    {"A", 10},
-    {"B", 20},
-}`}
-            </pre>
-            <ul className="list-disc pl-6 mt-2">
-              <li>结构体字段首字母大写可导出（包外可见）。</li>
-              <li>支持匿名字段和嵌套结构体。</li>
-            </ul>
-          </div>
-        )}
-        {activeTab === 'method' && (
-          <div>
-            <h2 className="text-2xl font-bold mb-4">结构体方法与嵌套</h2>
-            <p>结构体可定义方法，支持嵌套和组合，实现面向对象风格。</p>
-            <pre className="bg-gray-100 p-2 rounded text-sm mt-2">
-{`type Address struct {
-    City string
-}
-
-type User struct {
-    Name string
+    Name    string
     Address // 匿名嵌套
 }
-
-// 方法
-func (u User) SayHi() {
-    fmt.Println("Hi, I am", u.Name, "from", u.City)
-}
-
-u := User{Name: "Tom", Address: Address{City: "Beijing"}}
-u.SayHi() // Hi, I am Tom from Beijing`}
-            </pre>
-            <ul className="list-disc pl-6 mt-2">
-              <li>嵌套结构体可直接访问匿名字段。</li>
-              <li>方法接收者可为值或指针。</li>
-            </ul>
-          </div>
-        )}
-        {activeTab === 'combine' && (
-          <div>
-            <h2 className="text-2xl font-bold mb-4">Map与结构体结合</h2>
-            <p>Map与结构体结合可实现更复杂的数据结构，如学生信息表。</p>
-            <pre className="bg-gray-100 p-2 rounded text-sm mt-2">
-{`type Student struct {
-    Name string
-    Score int
-}
-
-// 学号到学生信息的映射
-students := map[string]Student{
-    "1001": {Name: "小明", Score: 90},
-    "1002": {Name: "小红", Score: 95},
-}
-
-// 查询和遍历
-stu, ok := students["1001"]
-if ok {
-    fmt.Println(stu.Name, stu.Score)
-}
-for id, s := range students {
-    fmt.Println(id, s.Name, s.Score)
-}`}
-            </pre>
-            <ul className="list-disc pl-6 mt-2">
-              <li>Map的value可为结构体，实现复杂映射。</li>
-              <li>结构体可嵌套Map，实现多级数据。</li>
-            </ul>
-          </div>
-        )}
-        {activeTab === 'practice' && (
-          <div>
-            <h2 className="text-2xl font-bold mb-4">例题与练习</h2>
-            <p className="mb-2 font-semibold">例题1：统计字符串中每个字符出现次数</p>
-            <pre className="bg-gray-100 p-2 rounded text-sm mt-2">
-{`func charCount(s string) map[rune]int {
-    m := make(map[rune]int)
-    for _, ch := range s {
-        m[ch]++
-    }
-    return m
-}
-
-fmt.Println(charCount("hello")) // map[e:1 h:1 l:2 o:1]`}
-            </pre>
-            <p className="mb-2 font-semibold">例题2：定义结构体并实现方法，输出学生信息</p>
-            <pre className="bg-gray-100 p-2 rounded text-sm mt-2">
-{`type Student struct {
-    Name string
-    Score int
-}
-
-func (s Student) Info() string {
-    return fmt.Sprintf("%s的分数是%d", s.Name, s.Score)
-}
-
-stu := Student{"小明", 95}
-fmt.Println(stu.Info()) // 小明的分数是95`}
-            </pre>
-            <p className="mb-2 font-semibold">练习：用Map统计一组学生的平均分</p>
-            <pre className="bg-gray-100 p-2 rounded text-sm mt-2">
-{`students := map[string]int{"小明": 90, "小红": 95, "小刚": 88}
-sum := 0
-for _, score := range students {
-    sum += score
-}
-avg := float64(sum) / float64(len(students))
-fmt.Println("平均分：", avg)`}
-            </pre>
-          </div>
-        )}
-        {activeTab === 'faq' && (
-          <div>
-            <h2 className="text-2xl font-bold mb-4">常见问题</h2>
-            <ul className="list-disc pl-6 space-y-2">
-              <li>
-                <b>Q: Map的key可以用哪些类型？</b><br />
-                A: 支持可比较类型，如int、string、bool、数组等，不能用切片、Map、函数等。
-              </li>
-              <li>
-                <b>Q: 结构体能否比较？</b><br />
-                A: 字段均可比较时可直接==，否则需自定义比较函数。
-              </li>
-              <li>
-                <b>Q: 结构体能否作为Map的key？</b><br />
-                A: 可以，但字段必须都是可比较类型。
-              </li>
-              <li>
-                <b>Q: Map并发安全吗？</b><br />
-                A: 内置Map不是并发安全的，需用sync.Map或加锁。
-              </li>
-            </ul>
-          </div>
-        )}
-        <div className="mt-8 flex justify-between">
-          <a
-            href="/study/go/arrays-slices"
-            className="inline-flex items-center bg-gray-200 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-300 transition-colors"
-          >
-            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-            上一页：数组与切片
-          </a>
-          <a
-            href="/study/go/interfaces"
-            className="inline-flex items-center bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors"
-          >
-            下一页：接口与类型系统
-            <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          </a>
-        </div>
+p := Person{Name: "Tom", Address: Address{City: "北京"}}
+fmt.Println(p.City) // 直接访问嵌套字段`} />
       </div>
-    </div>
-  );
+    ),
+    right: (
+      <div className="space-y-4">
+        <SectionTitle>Map与结构体结合</SectionTitle>
+        <BookCode language="go" code={`// Map值用结构体
+type Product struct {
+    Name  string
+    Price float64
+}
+products := map[int]Product{
+    1: {"苹果", 5.5},
+    2: {"香蕉", 3.0},
+}`} />
+        <SectionTitle>例题与练习</SectionTitle>
+        <BookParagraph><b>统计字符串字符出现次数：</b></BookParagraph>
+        <BookCode language="go" code={`func charCount(s string) map[rune]int {
+    m := make(map[rune]int)
+    for _, c := range s { m[c]++ }
+    return m
+}`} />
+        <TagGrid items={['方法', '嵌套', '匿名', 'Map嵌套', '练习']} />
+      </div>
+    ),
+  },
+  {
+    label: '练习与FAQ',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>例题与练习</PageTitle>
+        <BookParagraph><b>学生信息管理：</b></BookParagraph>
+        <BookCode language="go" code={`type Student struct {
+    ID, Name string; Score float64
+}
+func averageScore(students []Student) float64 {
+    sum := 0.0
+    for _, s := range students { sum += s.Score }
+    return sum / float64(len(students))
+}`} />
+      </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <SectionTitle>常见问题</SectionTitle>
+        <BookParagraph><b>Map是线程安全的吗？</b>不是，并发读写需加锁或用sync.Map。</BookParagraph>
+        <BookParagraph><b>结构体值传递还是引用？</b>结构体默认值传递，需用指针修改原值。</BookParagraph>
+        <BookParagraph><b>Map的遍历顺序？</b>Map遍历顺序不固定，每次可能不同。</BookParagraph>
+        <TagGrid items={['sync.Map', '值传递', '指针', '遍历', '并发']} />
+      </div>
+    ),
+  },
+]
+
+export default function GoMapStructPage() {
+  return <LessonLayout meta={META} spreads={SPREADS} />
 }

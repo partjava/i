@@ -1,170 +1,134 @@
-'use client';
+'use client'
 
-import React from 'react';
-import { Card, Tabs, Progress, Alert, Typography, Collapse } from 'antd';
-import { LeftOutlined, RightOutlined } from '@ant-design/icons';
-import Link from 'next/link';
-import { CodeBlock } from '@/app/components/ui/CodeBlock';
+import LessonLayout, { type LessonMeta } from '@/app/components/ui/book/LessonLayout'
+import { THEMES } from '@/app/components/ui/book/theme'
+import { PageTitle, BookParagraph, BookCode, BookAlert, BookList, TagGrid } from '@/app/components/ui/book/BookContent'
 
-const { Paragraph, Text } = Typography;
+const META: LessonMeta = {
+  subject: 'Java 编程', chapterTitle: '网络编程', chapterNumber: 9, totalChapters: 10,
+  subjectHref: '/study/computer/java',
+  prevChapter: { label: '多线程与并发', href: '/study/computer/java/thread' },
+  nextChapter: { label: '项目实战', href: '/study/computer/java/projects' },
+  theme: THEMES.computer,
+}
 
-export default function JavaNetworkPage() {
-  const tabItems = [
-    {
-      key: '1',
-      label: '🌐 Socket基础',
-      children: (
-        <Card title="Socket基础" className="mb-6">
-          <Paragraph>Java通过Socket类实现网络通信，支持TCP和UDP协议。常用ServerSocket和Socket进行TCP通信。</Paragraph>
-          <CodeBlock language="java">{`// TCP服务器
-import java.net.*;
-import java.io.*;
-ServerSocket server = new ServerSocket(8888);
+const SPREADS = [
+  {
+    label: 'Socket 编程',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>TCP 通信</PageTitle>
+        <BookParagraph>Socket 是实现网络通信的基础。Java 提供了 ServerSocket 和 Socket 类简化 TCP 编程。</BookParagraph>
+        <BookCode language="java" showLineNumbers code={`// 服务器
+ServerSocket server = new ServerSocket(8080);
+System.out.println("等待客户端连接...");
+
 Socket client = server.accept();
-BufferedReader in = new BufferedReader(new InputStreamReader(client.getInputStream()));
-System.out.println(in.readLine());
+BufferedReader in = new BufferedReader(
+    new InputStreamReader(client.getInputStream()));
+PrintWriter out = new PrintWriter(
+    client.getOutputStream(), true);
+
+String msg = in.readLine();
+System.out.println("收到: " + msg);
+out.println("已收到: " + msg);
+
 client.close();
-server.close();`}</CodeBlock>
-          <Alert message="要点" description={<ul className="list-disc pl-6"><li>ServerSocket监听端口，Socket连接服务器</li><li>数据传输用输入输出流</li></ul>} type="info" showIcon />
-        </Card>
-      )
-    },
-    {
-      key: '2',
-      label: '🔗 TCP通信',
-      children: (
-        <Card title="TCP通信" className="mb-6">
-          <Paragraph>TCP通信需要客户端和服务器两端配合，客户端用Socket连接，服务器用ServerSocket监听。</Paragraph>
-          <CodeBlock language="java">{`// TCP客户端
-import java.net.*;
-import java.io.*;
-Socket socket = new Socket("localhost", 8888);
-BufferedWriter out = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
-out.write("Hello Server\n");
-out.flush();
-socket.close();`}</CodeBlock>
-          <Alert message="要点" description={<ul className="list-disc pl-6"><li>客户端需指定服务器IP和端口</li><li>数据发送后需flush刷新缓冲区</li></ul>} type="success" showIcon />
-        </Card>
-      )
-    },
-    {
-      key: '3',
-      label: '🌍 HTTP请求与常用库',
-      children: (
-        <Card title="HTTP请求与常用库" className="mb-6">
-          <Paragraph>Java可用HttpURLConnection或第三方库（如OkHttp、HttpClient）发送HTTP请求。</Paragraph>
-          <CodeBlock language="java">{`// HttpURLConnection示例
-import java.net.*;
-import java.io.*;
-URL url = new URL("https://www.example.com");
+server.close();
+
+// 客户端
+Socket socket = new Socket("localhost", 8080);
+PrintWriter out = new PrintWriter(
+    socket.getOutputStream(), true);
+BufferedReader in = new BufferedReader(
+    new InputStreamReader(socket.getInputStream()));
+
+out.println("Hello Server");
+System.out.println(in.readLine());
+
+socket.close();`} />
+      </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <PageTitle>UDP 通信</PageTitle>
+        <BookCode language="java" showLineNumbers code={`// UDP 服务器
+DatagramSocket server = new DatagramSocket(9090);
+byte[] buf = new byte[1024];
+DatagramPacket packet = new DatagramPacket(buf, buf.length);
+server.receive(packet);
+String msg = new String(packet.getData(), 0, packet.getLength());
+System.out.println("收到: " + msg);
+
+InetAddress addr = packet.getAddress();
+int port = packet.getPort();
+byte[] resp = "ACK".getBytes();
+server.send(new DatagramPacket(resp, resp.length, addr, port));
+server.close();
+
+// UDP 客户端
+DatagramSocket client = new DatagramSocket();
+byte[] data = "Hello".getBytes();
+client.send(new DatagramPacket(data, data.length,
+    InetAddress.getByName("localhost"), 9090));
+
+byte[] buf2 = new byte[1024];
+DatagramPacket resp2 = new DatagramPacket(buf2, buf2.length);
+client.receive(resp2);
+System.out.println(new String(resp2.getData(), 0, resp2.getLength()));
+client.close();`} />
+      </div>
+    ),
+  },
+  {
+    label: 'HTTP 与 URL',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>HTTP 请求</PageTitle>
+        <BookCode language="java" showLineNumbers code={`// HttpURLConnection
+URL url = new URL("https://api.github.com");
 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
 conn.setRequestMethod("GET");
-BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+conn.setRequestProperty("Accept", "application/json");
+
+int code = conn.getResponseCode();
+BufferedReader reader = new BufferedReader(
+    new InputStreamReader(conn.getInputStream()));
 String line;
-while ((line = in.readLine()) != null) {
+while ((line = reader.readLine()) != null) {
     System.out.println(line);
 }
-in.close();
-conn.disconnect();`}</CodeBlock>
-          <Alert message="要点" description={<ul className="list-disc pl-6"><li>HttpURLConnection适合简单请求</li><li>第三方库更适合复杂场景</li></ul>} type="info" showIcon />
-        </Card>
-      )
-    },
-    {
-      key: '4',
-      label: '💡 综合练习与参考答案',
-      children: (
-        <Card title="综合练习与参考答案" className="mb-6">
-          <Paragraph><b>练习题：</b></Paragraph>
-          <ul className="list-disc pl-6">
-            <li>
-              编写一个TCP服务器，接收客户端发送的消息并打印。
-              <Collapse className="mt-2">
-                <Collapse.Panel header="参考答案" key="1">
-                  <CodeBlock language="java">{`import java.net.*;
-import java.io.*;
-public class TCPServer {
-    public static void main(String[] args) throws Exception {
-        ServerSocket server = new ServerSocket(8888);
-        Socket client = server.accept();
-        BufferedReader in = new BufferedReader(new InputStreamReader(client.getInputStream()));
-        System.out.println("收到消息：" + in.readLine());
-        client.close();
-        server.close();
-    }
-}`}</CodeBlock>
-                  <Paragraph>解析：ServerSocket监听端口，接收Socket连接并读取消息。</Paragraph>
-                </Collapse.Panel>
-              </Collapse>
-            </li>
-            <li>
-              用Java发送GET请求，获取网页内容并输出前100个字符。
-              <Collapse className="mt-2">
-                <Collapse.Panel header="参考答案" key="2">
-                  <CodeBlock language="java">{`import java.net.*;
-import java.io.*;
-public class HttpGetDemo {
-    public static void main(String[] args) throws Exception {
-        URL url = new URL("https://www.example.com");
-        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-        conn.setRequestMethod("GET");
-        BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-        StringBuilder sb = new StringBuilder();
-        String line;
-        while ((line = in.readLine()) != null) sb.append(line);
-        in.close();
-        conn.disconnect();
-        System.out.println(sb.substring(0, Math.min(100, sb.length())));
-    }
-}`}</CodeBlock>
-                  <Paragraph>解析：用HttpURLConnection发送GET请求，读取并输出网页内容。</Paragraph>
-                </Collapse.Panel>
-              </Collapse>
-            </li>
-          </ul>
-          <Alert message="温馨提示" description="多练习Socket和HTTP编程，理解网络通信流程。" type="info" showIcon />
-        </Card>
-      )
-    }
-  ];
 
-  return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* 页面头部 */}
-        <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Java网络编程</h1>
-              <p className="text-gray-600 mt-2">掌握Socket、TCP、HTTP等网络通信基础</p>
-            </div>
-            <Progress type="circle" percent={80} size={100} strokeColor="#1890ff" />
-          </div>
-        </div>
+// HttpClient（Java 11+）
+HttpClient client = HttpClient.newHttpClient();
+HttpRequest request = HttpRequest.newBuilder()
+    .uri(URI.create("https://api.github.com"))
+    .GET()
+    .build();
 
-        {/* 课程内容 */}
-        <div className="bg-white rounded-lg shadow-md p-8">
-          <Tabs items={tabItems} tabPosition="left" className="p-6" />
-        </div>
-
-        {/* 底部导航 */}
-        <div className="flex justify-between mt-8">
-          <Link
-            href="/study/java/thread"
-            className="inline-flex items-center px-4 py-2 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-gray-600 hover:bg-gray-700"
-          >
-            <LeftOutlined className="mr-2" />
-            上一课：多线程与并发
-          </Link>
-          <Link
-            href="/study/java/projects"
-            className="inline-flex items-center px-4 py-2 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"
-          >
-            下一课：项目实战
-            <RightOutlined className="ml-2" />
-          </Link>
-        </div>
+HttpResponse<String> response = client.send(
+    request, HttpResponse.BodyHandlers.ofString());
+System.out.println(response.body());`} />
       </div>
-    </div>
-  );
-} 
+    ),
+    right: (
+      <div className="space-y-4">
+        <PageTitle>网络编程总结</PageTitle>
+        <BookList items={[
+          'TCP 面向连接可靠，适合要求完整性的场景',
+          'UDP 无连接快速，适合实时性要求高的场景',
+          'HTTP 是应用层协议，底层基于 TCP',
+          'Java 11+ 的 HttpClient 简化了 HTTP 请求',
+          '线程池搭配 Socket 实现高并发服务器',
+          '注意处理网络异常和超时情况',
+        ]} />
+        <BookAlert type="info" message="生产环境推荐使用 Netty 或 Spring WebFlux 进行网络编程，比原生 Socket 更高效" />
+        <TagGrid items={['Socket', 'TCP', 'UDP', 'HTTP', 'ServerSocket', 'URL']} />
+      </div>
+    ),
+  },
+]
+
+export default function NetworkPage() {
+  return <LessonLayout meta={META} spreads={SPREADS} />
+}

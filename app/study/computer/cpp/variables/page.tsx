@@ -1,47 +1,36 @@
-'use client';
+'use client'
 
-import { Card, Tabs, Alert, Progress } from 'antd';
-import { CodeBlock } from '@/app/components/ui/CodeBlock';
-import Link from 'next/link';
-import { 
-  DatabaseOutlined, 
-  FormOutlined, 
-  RetweetOutlined,
-  ExperimentOutlined 
-} from '@ant-design/icons';
+import LessonLayout, { type LessonMeta } from '@/app/components/ui/book/LessonLayout'
+import { THEMES } from '@/app/components/ui/book/theme'
+import {
+  PageTitle,
+  BookParagraph,
+  BookCode,
+  BookAlert,
+  BookList,
+  TagGrid,
+  BookDivider,
+} from '@/app/components/ui/book/BookContent'
 
-const { TabPane } = Tabs;
+const META: LessonMeta = {
+  subject: 'C++编程',
+  chapterTitle: '变量和数据类型',
+  chapterNumber: 3,
+  totalChapters: 18,
+  subjectHref: '/study/computer/cpp',
+  prevChapter: { label: '基础语法', href: '/study/computer/cpp/syntax' },
+  nextChapter: { label: '运算符', href: '/study/computer/cpp/operators' },
+  theme: THEMES.computer,
+}
 
-export default function VariablesPage() {
-  return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">变量和数据类型</h1>
-              <p className="text-gray-600 mt-2">
-                C++ / 变量和数据类型
-              </p>
-            </div>
-            <Progress type="circle" percent={10} size={80} />
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <Tabs defaultActiveKey="1">
-            <TabPane 
-              tab={
-                <span>
-                  <DatabaseOutlined />
-                  基本数据类型
-                </span>
-              } 
-              key="1"
-            >
-              <Card title="整数类型" className="mb-6">
-                <CodeBlock language="cpp">
-                  {`// 整数类型及其范围
+const SPREADS = [
+  // ===== 跨页 1: 基本数据类型 =====
+  {
+    label: '基本数据类型',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>整数类型</PageTitle>
+        <BookCode language="cpp" showLineNumbers code={`// 整数类型及其范围
 short int shortNum;           // 通常 16 位
 int normalNum;               // 通常 32 位
 long int longNum;            // 至少 32 位
@@ -55,27 +44,11 @@ unsigned long ulongNum;
 // 实际使用示例
 int age = 25;
 unsigned int count = 1000;
-long long bigNumber = 9223372036854775807LL;`}
-                </CodeBlock>
-                <Alert
-                  className="mt-4"
-                  message="说明"
-                  description={
-                    <ul className="list-disc pl-6">
-                      <li>整数类型用于存储整数值</li>
-                      <li>不同类型有不同的取值范围</li>
-                      <li>无符号类型只能存储非负数</li>
-                      <li>使用 LL 后缀表示 long long 类型</li>
-                    </ul>
-                  }
-                  type="info"
-                  showIcon
-                />
-              </Card>
-
-              <Card title="浮点类型" className="mb-6">
-                <CodeBlock language="cpp">
-                  {`// 浮点类型
+long long bigNumber = 9223372036854775807LL;`} />
+        <BookAlert type="info" message="整数类型用于存储整数值，不同类型有不同的取值范围。无符号类型只能存储非负数" />
+        <BookDivider />
+        <PageTitle>浮点类型</PageTitle>
+        <BookCode language="cpp" showLineNumbers code={`// 浮点类型
 float f = 3.14f;           // 单精度浮点数，通常 32 位
 double d = 3.14159;        // 双精度浮点数，通常 64 位
 long double ld = 3.14159L; // 扩展精度浮点数
@@ -86,13 +59,13 @@ float small = 1.23e-4f;    // 0.000123
 
 // 精度示例
 float pi_f = 3.141592653589793f;  // 可能会损失精度
-double pi_d = 3.141592653589793;  // 保持更高精度`}
-                </CodeBlock>
-              </Card>
-
-              <Card title="字符和布尔类型" className="mb-6">
-                <CodeBlock language="cpp">
-                  {`// 字符类型
+double pi_d = 3.141592653589793;  // 保持更高精度`} />
+      </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <PageTitle>字符和布尔类型</PageTitle>
+        <BookCode language="cpp" showLineNumbers code={`// 字符类型
 char ch = 'A';            // 单个字符
 char newline = '\\n';     // 转义字符
 wchar_t wide = L'世';     // 宽字符
@@ -103,23 +76,50 @@ bool isEmpty = false;
 
 // 字符的ASCII值
 int ascii = (int)ch;      // 获取字符的ASCII值
-char fromAscii = 65;      // 'A'的ASCII值`}
-                </CodeBlock>
-              </Card>
-            </TabPane>
+char fromAscii = 65;      // 'A'的ASCII值`} />
+        <BookDivider />
+        <h3 className="text-sm font-medium text-ink mb-2">数据类型总结</h3>
+        <div className="overflow-hidden rounded-md border border-paper-300 text-sm">
+          <table className="w-full text-left">
+            <thead>
+              <tr className="bg-ink text-paper-100/90 text-xs">
+                <th className="px-3 py-2 font-medium">类型</th>
+                <th className="px-3 py-2 font-medium">关键字</th>
+                <th className="px-3 py-2 font-medium">大小</th>
+                <th className="px-3 py-2 font-medium">范围</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-paper-300 text-xs text-ink-light">
+              {[
+                ['短整型', 'short', '2 字节', '-32K ~ 32K'],
+                ['整型', 'int', '4 字节', '-21亿 ~ 21亿'],
+                ['长整型', 'long', '4/8 字节', '平台相关'],
+                ['浮点型', 'float', '4 字节', '~7位精度'],
+                ['双精度', 'double', '8 字节', '~15位精度'],
+                ['字符型', 'char', '1 字节', '-128 ~ 127'],
+                ['布尔型', 'bool', '1 字节', 'true / false'],
+              ].map((row, i) => (
+                <tr key={i} className="hover:bg-paper-200/50">
+                  <td className="px-3 py-2 text-ink">{row[0]}</td>
+                  <td className="px-3 py-2 font-code text-amber-dark">{row[1]}</td>
+                  <td className="px-3 py-2">{row[2]}</td>
+                  <td className="px-3 py-2">{row[3]}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    ),
+  },
 
-            <TabPane 
-              tab={
-                <span>
-                  <FormOutlined />
-                  变量声明与初始化
-                </span>
-              } 
-              key="2"
-            >
-              <Card title="变量声明" className="mb-6">
-                <CodeBlock language="cpp">
-                  {`// 基本声明
+  // ===== 跨页 2: 变量声明 =====
+  {
+    label: '变量声明',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>变量声明与初始化</PageTitle>
+        <BookCode language="cpp" showLineNumbers code={`// 基本声明
 int number;         // 声明变量
 int value = 42;     // 声明并初始化
 
@@ -134,59 +134,49 @@ const int MAX_SIZE = 100;
 // 类型推导（C++11）
 auto num = 42;      // int
 auto pi = 3.14;     // double
-auto name = "John"; // const char*`}
-                </CodeBlock>
-              </Card>
-
-              <Card title="变量作用域" className="mb-6">
-                <CodeBlock language="cpp">
-                  {`// 全局变量
+auto name = "John"; // const char*`} />
+        <BookAlert type="info" message="使用 const 声明的常量不可修改，auto 关键字自动推导变量类型" />
+      </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <PageTitle>变量作用域</PageTitle>
+        <BookCode language="cpp" showLineNumbers code={`// 全局变量
 int globalVar = 100;
 
 void function() {
     // 局部变量
     int localVar = 200;
-    
+
     // 块作用域
     {
         int blockVar = 300;
         // blockVar 只在这个块内可用
     }
-    
+
     // 静态局部变量
     static int staticVar = 400;
     // staticVar 在函数调用之间保持其值
-}`}
-                </CodeBlock>
-                <Alert
-                  className="mt-4"
-                  message="作用域规则"
-                  description={
-                    <ul className="list-disc pl-6">
-                      <li>全局变量在整个程序中可访问</li>
-                      <li>局部变量只在其声明的函数内可用</li>
-                      <li>块作用域变量只在其声明的块内可用</li>
-                      <li>静态局部变量在函数调用之间保持其值</li>
-                    </ul>
-                  }
-                  type="info"
-                  showIcon
-                />
-              </Card>
-            </TabPane>
+}`} />
+        <h3 className="text-sm font-medium text-ink mt-2 mb-1">作用域规则</h3>
+        <BookList items={[
+          '全局变量在整个程序中可访问',
+          '局部变量只在其声明的函数内可用',
+          '块作用域变量只在其声明的块内可用',
+          '静态局部变量在函数调用之间保持其值',
+        ]} />
+      </div>
+    ),
+  },
 
-            <TabPane 
-              tab={
-                <span>
-                  <RetweetOutlined />
-                  类型转换
-                </span>
-              } 
-              key="3"
-            >
-              <Card title="隐式转换" className="mb-6">
-                <CodeBlock language="cpp">
-                  {`// 自动类型转换
+  // ===== 跨页 3: 类型转换 =====
+  {
+    label: '类型转换',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>隐式类型转换</PageTitle>
+        <BookParagraph>编译器自动进行的类型转换，通常发生在不同类型混合运算时：</BookParagraph>
+        <BookCode language="cpp" showLineNumbers code={`// 自动类型转换
 int i = 42;
 double d = i;      // int 转 double
 
@@ -200,13 +190,15 @@ int intPi = pi;    // 3（小数部分被截断）
 // 算术运算中的转换
 int x = 5;
 double y = 2.0;
-double result = x / y;  // x 被转换为 double`}
-                </CodeBlock>
-              </Card>
-
-              <Card title="显式转换" className="mb-6">
-                <CodeBlock language="cpp">
-                  {`// C风格转换
+double result = x / y;  // x 被转换为 double`} />
+        <BookAlert type="warning" message="隐式转换可能导致精度损失，从大范围到小范围的转换需格外小心" />
+      </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <PageTitle>显式类型转换</PageTitle>
+        <BookParagraph>C++ 提供了多种显式转换方式，推荐使用 C++ 风格的转换操作符：</BookParagraph>
+        <BookCode language="cpp" showLineNumbers code={`// C风格转换
 double d = 3.14;
 int i1 = (int)d;            // C风格转换
 
@@ -218,132 +210,65 @@ const int constant = 100;
 int* ptr = const_cast<int*>(&constant);  // 移除const
 
 char* str = "Hello";
-void* vptr = reinterpret_cast<void*>(str);  // 指针类型转换`}
-                </CodeBlock>
-                <Alert
-                  className="mt-4"
-                  message="类型转换注意事项"
-                  description={
-                    <ul className="list-disc pl-6">
-                      <li>优先使用C++风格的类型转换</li>
-                      <li>注意数据范围，避免数据丢失</li>
-                      <li>const_cast 要谨慎使用</li>
-                      <li>reinterpret_cast 主要用于底层操作</li>
-                    </ul>
-                  }
-                  type="info"
-                  showIcon
-                />
-              </Card>
-            </TabPane>
+void* vptr = reinterpret_cast<void*>(str);  // 指针类型转换`} />
+        <BookAlert type="info" message="优先使用 C++ 风格的 static_cast，避免使用 C 风格转换">
+          <BookList items={['static_cast — 常规类型转换', 'const_cast — 移除 const 属性', 'reinterpret_cast — 指针类型转换', 'dynamic_cast — 类层次转换']} tight />
+        </BookAlert>
+      </div>
+    ),
+  },
 
-            <TabPane 
-              tab={
-                <span>
-                  <ExperimentOutlined />
-                  练习例题
-                </span>
-              } 
-              key="4"
-            >
-              <Card title="例题：温度转换器" className="mb-6">
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="text-lg font-medium">题目描述</h3>
-                    <p className="mt-2">编写一个程序，实现以下功能：</p>
-                    <ul className="list-disc pl-6 mt-2">
-                      <li>声明变量存储摄氏度和华氏度</li>
-                      <li>读取用户输入的摄氏度</li>
-                      <li>将摄氏度转换为华氏度（公式：F = C * 9/5 + 32）</li>
-                      <li>输出转换结果，保留两位小数</li>
-                    </ul>
-                  </div>
-
-                  <div>
-                    <h3 className="text-lg font-medium">参考代码</h3>
-                    <CodeBlock language="cpp">
-                      {`#include <iostream>
+  // ===== 跨页 4: 练习 =====
+  {
+    label: '练习例题',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>温度转换器</PageTitle>
+        <div className="p-4 bg-paper-200/80 rounded-md border border-paper-300">
+          <p className="text-sm text-ink font-medium mb-2">题目描述</p>
+          <BookList items={[
+            '声明变量存储摄氏度和华氏度',
+            '读取用户输入的摄氏度',
+            '将摄氏度转换为华氏度（公式：F = C × 9/5 + 32）',
+            '输出转换结果，保留两位小数',
+          ]} />
+        </div>
+        <h3 className="text-sm font-medium text-ink">知识点</h3>
+        <TagGrid items={['double类型', '输入输出', '算术运算', '输出格式控制', '浮点数精度']} />
+      </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <PageTitle>参考代码</PageTitle>
+        <BookCode language="cpp" showLineNumbers code={`#include <iostream>
 #include <iomanip>  // 用于设置输出精度
 using namespace std;
 
 int main() {
     // 声明变量
     double celsius, fahrenheit;
-    
+
     // 获取用户输入
     cout << "请输入摄氏度: ";
     cin >> celsius;
-    
+
     // 转换温度
     fahrenheit = celsius * 9.0/5.0 + 32;
-    
+
     // 设置输出格式并显示结果
     cout << fixed << setprecision(2);
-    cout << celsius << " 摄氏度 = " 
+    cout << celsius << " 摄氏度 = "
          << fahrenheit << " 华氏度" << endl;
-    
+
     return 0;
-}`}
-                    </CodeBlock>
-                  </div>
-
-                  <div>
-                    <h3 className="text-lg font-medium">知识点</h3>
-                    <ul className="list-disc pl-6">
-                      <li>double类型的使用</li>
-                      <li>基本输入输出</li>
-                      <li>算术运算</li>
-                      <li>输出格式控制</li>
-                      <li>浮点数精度处理</li>
-                    </ul>
-                  </div>
-
-                  <Alert
-                    message="运行示例"
-                    description={
-                      <pre className="whitespace-pre-wrap">
-                        {`请输入摄氏度: 37.5
-37.50 摄氏度 = 99.50 华氏度`}
-                      </pre>
-                    }
-                    type="info"
-                    showIcon
-                  />
-
-                  <Alert
-                    message="提示"
-                    description={
-                      <ul className="list-disc pl-6">
-                        <li>使用double类型以保持计算精度</li>
-                        <li>注意除法运算时使用9.0而不是9，避免整数除法</li>
-                        <li>使用iomanip头文件的setprecision控制输出精度</li>
-                        <li>使用fixed确保显示固定小数位数</li>
-                      </ul>
-                    }
-                    type="warning"
-                    showIcon
-                  />
-                </div>
-              </Card>
-            </TabPane>
-          </Tabs>
-
-          <div className="flex justify-between mt-8">
-            <Link 
-              href="/study/cpp/syntax" 
-              className="inline-flex items-center px-4 py-2 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
-            >
-              上一课：基础语法
-            </Link>
-            <Link 
-              href="/study/cpp/operators" 
-              className="inline-flex items-center px-4 py-2 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-            >
-              下一课：运算符
-            </Link>
-          </div>
-        </div>
+}`} />
+        <BookAlert type="info" message={'运行示例：输入 37.5 → 输出 "37.50 摄氏度 = 99.50 华氏度"'} />
+        <BookAlert type="warning" message="使用 double 保持精度，除法时用 9.0 避免整数除法，使用 setprecision 控制输出格式" />
       </div>
-    </div>
-  );
-} 
+    ),
+  },
+]
+
+export default function VariablesPage() {
+  return <LessonLayout meta={META} spreads={SPREADS} />
+}

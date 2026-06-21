@@ -1,475 +1,162 @@
-'use client';
+'use client'
 
-import { useState } from 'react';
-import { Card, Tabs, Progress, Alert, Table } from 'antd';
-import { LeftOutlined, RightOutlined, FileOutlined, DatabaseOutlined, ToolOutlined, ClockCircleOutlined } from '@ant-design/icons';
-import { CodeBlock } from '@/app/components/ui/CodeBlock';
-import Link from 'next/link';
-import React from 'react';
+import LessonLayout, { type LessonMeta } from '@/app/components/ui/book/LessonLayout'
+import { THEMES } from '@/app/components/ui/book/theme'
+import {
+  PageTitle,
+  BookParagraph,
+  BookAlert,
+  TagGrid,
+} from '@/app/components/ui/book/BookContent'
+
+const META: LessonMeta = {
+  subject: 'C++编程',
+  chapterTitle: 'C++常用头文件',
+  chapterNumber: 20,
+  totalChapters: 18,
+  subjectHref: '/study/computer/cpp',
+  prevChapter: { label: '项目实战', href: '/study/computer/cpp/projects' },
+  theme: THEMES.computer,
+}
+
+function Table({ headers, data }: { headers: string[]; data: string[][] }) {
+  return (
+    <div className="overflow-hidden rounded-md border border-paper-300 text-sm">
+      <table className="w-full text-left">
+        <thead>
+          <tr className="bg-ink text-paper-100/90 text-xs">
+            {headers.map((h, i) => (
+              <th key={i} className="px-3 py-2 font-medium">{h}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-paper-300 text-xs text-ink-light">
+          {data.map((row, i) => (
+            <tr key={i} className="hover:bg-paper-200/50">
+              {row.map((cell, j) => (
+                <td key={j} className={`px-3 py-2 ${j === 0 ? 'font-code text-amber-dark' : ''}`}>{cell}</td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
+const SPREADS = [
+  {
+    label: '输入输出',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>标准输入输出库</PageTitle>
+        <BookParagraph>C++ 标准库提供了一套完整的输入输出机制。</BookParagraph>
+        <Table
+          headers={['头文件', '主要用途', '常用功能/类']}
+          data={[
+            ['<iostream>', '输入输出流', 'cin, cout, cerr, clog, istream, ostream'],
+            ['<fstream>', '文件输入输出', 'ifstream, ofstream, fstream'],
+            ['<sstream>', '字符串流', 'istringstream, ostringstream, stringstream'],
+            ['<iomanip>', '格式化IO', 'setw, setprecision, setfill, fixed'],
+          ]}
+        />
+      </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <PageTitle>数据结构与容器</PageTitle>
+        <BookParagraph>STL 提供了丰富的数据结构头文件。</BookParagraph>
+        <Table
+          headers={['头文件', '主要用途', '常用功能/类']}
+          data={[
+            ['<vector>', '动态数组', 'vector, push_back, size, begin, end'],
+            ['<list>', '双向链表', 'list, push_back, push_front, insert'],
+            ['<deque>', '双端队列', 'deque, push_back, push_front, pop'],
+            ['<queue>', '队列', 'queue, priority_queue, push, pop'],
+            ['<stack>', '栈', 'stack, push, pop, top'],
+            ['<map>', '键值对容器', 'map, multimap, insert, find, erase'],
+            ['<set>', '集合', 'set, multiset, insert, find, erase'],
+            ['<unordered_map>', '哈希表', 'unordered_map, unordered_set'],
+          ]}
+        />
+      </div>
+    ),
+  },
+  {
+    label: '算法与工具',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>算法与数值库</PageTitle>
+        <Table
+          headers={['头文件', '主要用途', '常用功能/类']}
+          data={[
+            ['<algorithm>', '通用算法', 'sort, find, binary_search, transform'],
+            ['<numeric>', '数值算法', 'accumulate, iota, inner_product'],
+            ['<cmath>', '数学函数', 'sin, cos, sqrt, pow, exp, log, abs'],
+            ['<cstdlib>', '标准库函数', 'rand, srand, atoi, atof, malloc'],
+            ['<ctime>', '时间与日期', 'time, clock, localtime, strftime'],
+            ['<random>', '随机数生成', 'mt19937, uniform_int_distribution'],
+          ]}
+        />
+      </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <PageTitle>并发与工具</PageTitle>
+        <Table
+          headers={['头文件', '主要用途', '常用功能/类']}
+          data={[
+            ['<thread>', '线程管理', 'thread, this_thread, get_id, sleep_for'],
+            ['<mutex>', '互斥锁', 'mutex, lock_guard, unique_lock'],
+            ['<atomic>', '原子操作', 'atomic, atomic_int, fetch_add'],
+            ['<condition_variable>', '条件变量', 'condition_variable, wait, notify'],
+            ['<future>', '异步操作', 'future, promise, async, packaged_task'],
+            ['<chrono>', '时间工具', 'system_clock, duration, time_point'],
+            ['<regex>', '正则表达式', 'regex, smatch, regex_match, regex_search'],
+          ]}
+        />
+      </div>
+    ),
+  },
+  {
+    label: '内存与类型',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>内存与智能指针</PageTitle>
+        <Table
+          headers={['头文件', '主要用途', '常用功能/类']}
+          data={[
+            ['<memory>', '智能指针', 'unique_ptr, shared_ptr, weak_ptr, make_shared'],
+            ['<new>', '动态内存管理', 'new, delete, nothrow, bad_alloc'],
+            ['<typeinfo>', '运行时类型信息', 'typeid, type_info, bad_cast'],
+            ['<type_traits>', '类型特征', 'is_integral, is_same, enable_if, remove_reference'],
+            ['<utility>', '通用工具', 'pair, move, forward, swap, exchange'],
+            ['<tuple>', '元组', 'tuple, make_tuple, get, tie, tuple_size'],
+          ]}
+        />
+      </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <PageTitle>字符串与异常</PageTitle>
+        <Table
+          headers={['头文件', '主要用途', '常用功能/类']}
+          data={[
+            ['<string>', '字符串类', 'string, wstring, to_string, stoi, stod'],
+            ['<cstring>', 'C风格字符串', 'strlen, strcpy, strcmp, strcat'],
+            ['<exception>', '异常处理', 'exception, runtime_error, logic_error'],
+            ['<stdexcept>', '标准异常类', 'out_of_range, invalid_argument, bad_alloc'],
+            ['<functional>', '函数对象', 'function, bind, less, greater, hash'],
+            ['<iterator>', '迭代器', 'begin, end, back_inserter, ostream_iterator'],
+          ]}
+        />
+        <BookAlert type="info" message="本速查表涵盖了 C++ 最常用的标准库头文件，建议收藏供日常编码查阅" />
+        <TagGrid items={['STL', '头文件', '标准库', '容器', '算法', '并发']} />
+      </div>
+    ),
+  },
+]
 
 export default function HeadersPage() {
-  const [activeTab, setActiveTab] = useState('1');
-
-  const standardColumns = [
-    {
-      title: '头文件',
-      dataIndex: 'header',
-      key: 'header',
-      render: (text: string) => <code>{text}</code>,
-    },
-    {
-      title: '主要用途',
-      dataIndex: 'purpose',
-      key: 'purpose',
-    },
-    {
-      title: '常用功能/类',
-      dataIndex: 'features',
-      key: 'features',
-    },
-  ];
-
-  const standardIOData = [
-    {
-      key: '1',
-      header: '<iostream>',
-      purpose: '输入输出流',
-      features: 'cin, cout, cerr, clog, ios, istream, ostream',
-    },
-    {
-      key: '2',
-      header: '<fstream>',
-      purpose: '文件输入输出',
-      features: 'ifstream, ofstream, fstream',
-    },
-    {
-      key: '3',
-      header: '<sstream>',
-      purpose: '字符串流',
-      features: 'istringstream, ostringstream, stringstream',
-    },
-    {
-      key: '4',
-      header: '<iomanip>',
-      purpose: '格式化输入输出',
-      features: 'setw, setprecision, setfill, hex, dec, fixed',
-    },
-  ];
-
-  const dataStructureData = [
-    {
-      key: '1',
-      header: '<vector>',
-      purpose: '动态数组',
-      features: 'vector, push_back, size, begin, end',
-    },
-    {
-      key: '2',
-      header: '<list>',
-      purpose: '双向链表',
-      features: 'list, push_back, push_front, insert, erase',
-    },
-    {
-      key: '3',
-      header: '<deque>',
-      purpose: '双端队列',
-      features: 'deque, push_back, push_front, pop_back, pop_front',
-    },
-    {
-      key: '4',
-      header: '<queue>',
-      purpose: '队列',
-      features: 'queue, priority_queue, push, pop, front',
-    },
-    {
-      key: '5',
-      header: '<stack>',
-      purpose: '栈',
-      features: 'stack, push, pop, top',
-    },
-    {
-      key: '6',
-      header: '<map>',
-      purpose: '键值对关联容器',
-      features: 'map, multimap, insert, find, erase',
-    },
-    {
-      key: '7',
-      header: '<set>',
-      purpose: '集合',
-      features: 'set, multiset, insert, find, erase',
-    },
-    {
-      key: '8',
-      header: '<unordered_map>',
-      purpose: '哈希表(C++11)',
-      features: 'unordered_map, unordered_multimap',
-    },
-    {
-      key: '9',
-      header: '<unordered_set>',
-      purpose: '哈希集合(C++11)',
-      features: 'unordered_set, unordered_multiset',
-    },
-    {
-      key: '10',
-      header: '<array>',
-      purpose: '固定大小数组(C++11)',
-      features: 'array, size, fill, at',
-    },
-  ];
-
-  const utilityData = [
-    {
-      key: '1',
-      header: '<algorithm>',
-      purpose: '常用算法',
-      features: 'sort, find, reverse, min, max, count, for_each',
-    },
-    {
-      key: '2',
-      header: '<utility>',
-      purpose: '实用工具',
-      features: 'pair, make_pair, move, swap',
-    },
-    {
-      key: '3',
-      header: '<functional>',
-      purpose: '函数对象',
-      features: 'function, bind, placeholders, plus, minus',
-    },
-    {
-      key: '4',
-      header: '<memory>',
-      purpose: '内存管理',
-      features: 'unique_ptr, shared_ptr, weak_ptr, allocator',
-    },
-    {
-      key: '5',
-      header: '<limits>',
-      purpose: '数值极限',
-      features: 'numeric_limits',
-    },
-    {
-      key: '6',
-      header: '<random>',
-      purpose: '随机数生成(C++11)',
-      features: 'random_device, mt19937, uniform_int_distribution',
-    },
-    {
-      key: '7',
-      header: '<chrono>',
-      purpose: '时间处理(C++11)',
-      features: 'duration, time_point, system_clock',
-    },
-    {
-      key: '8',
-      header: '<regex>',
-      purpose: '正则表达式(C++11)',
-      features: 'regex, regex_match, regex_search, regex_replace',
-    },
-    {
-      key: '9',
-      header: '<thread>',
-      purpose: '线程支持(C++11)',
-      features: 'thread, this_thread, mutex, condition_variable',
-    },
-  ];
-
-  const tabItems = [
-    {
-      key: '1',
-      label: <span><FileOutlined /> 标准IO头文件</span>,
-      children: (
-        <Card title="标准输入输出头文件" className="mb-6">
-          <div className="space-y-4 mt-4">
-            <p>这些头文件提供了基本的输入输出功能，包括控制台IO、文件IO和字符串处理。</p>
-            <Table columns={standardColumns} dataSource={standardIOData} pagination={false} />
-            <h3 className="text-xl font-semibold mt-8 mb-4">典型用法示例</h3>
-            <CodeBlock language="cpp">
-              {`#include <iostream>  // 标准输入输出
-#include <fstream>   // 文件输入输出
-#include <iomanip>   // 格式化控制
-using namespace std;
-
-int main() {
-    // 标准输出
-    cout << "Hello C++ Headers!" << endl;
-    
-    // 格式化输出
-    cout << fixed << setprecision(2);
-    cout << "Pi: " << setw(10) << 3.14159265 << endl;
-    
-    // 文件输出
-    ofstream outFile("example.txt");
-    if (outFile.is_open()) {
-        outFile << "写入文件的内容" << endl;
-        outFile.close();
-    }
-    
-    // 文件输入
-    ifstream inFile("example.txt");
-    if (inFile.is_open()) {
-        string line;
-        while (getline(inFile, line)) {
-            cout << "读取: " << line << endl;
-        }
-        inFile.close();
-    }
-    
-    return 0;
-}`}
-            </CodeBlock>
-          </div>
-        </Card>
-      ),
-    },
-    {
-      key: '2',
-      label: <span><DatabaseOutlined /> 数据结构头文件</span>,
-      children: (
-        <Card title="STL容器与数据结构头文件" className="mb-6">
-          <div className="space-y-4 mt-4">
-            <p>这些头文件提供了各种容器和数据结构，是C++ STL的核心组件。</p>
-            <Table columns={standardColumns} dataSource={dataStructureData} pagination={{ pageSize: 6 }} />
-            <h3 className="text-xl font-semibold mt-8 mb-4">典型用法示例</h3>
-            <CodeBlock language="cpp">
-              {`#include <iostream>
-#include <vector>
-#include <map>
-#include <string>
-using namespace std;
-
-int main() {
-    // 向量(动态数组)
-    vector<int> numbers = {1, 2, 3, 4, 5};
-    numbers.push_back(6);
-    
-    cout << "向量内容: ";
-    for (const auto& num : numbers) {
-        cout << num << " ";
-    }
-    cout << endl;
-    
-    // 映射(键值对)
-    map<string, int> scores;
-    scores["Alice"] = 95;
-    scores["Bob"] = 87;
-    scores["Charlie"] = 92;
-    
-    cout << "映射内容:" << endl;
-    for (const auto& entry : scores) {
-        cout << entry.first << ": " << entry.second << endl;
-    }
-    
-    return 0;
-}`}
-            </CodeBlock>
-          </div>
-        </Card>
-      ),
-    },
-    {
-      key: '3',
-      label: <span><ToolOutlined /> 工具类头文件</span>,
-      children: (
-        <Card title="工具与算法头文件" className="mb-6">
-          <div className="space-y-4 mt-4">
-            <p>这些头文件提供了各种实用工具、算法和功能，增强了C++的实用性。</p>
-            <Table columns={standardColumns} dataSource={utilityData} pagination={{ pageSize: 6 }} />
-            <h3 className="text-xl font-semibold mt-8 mb-4">典型用法示例</h3>
-            <CodeBlock language="cpp">
-              {`#include <iostream>
-#include <vector>
-#include <algorithm>
-#include <memory>
-#include <chrono>
-using namespace std;
-using namespace chrono;
-
-int main() {
-    // 使用算法
-    vector<int> nums = {5, 2, 8, 1, 9, 3};
-    
-    // 排序
-    sort(nums.begin(), nums.end());
-    cout << "排序后: ";
-    for (int num : nums) {
-        cout << num << " ";
-    }
-    cout << endl;
-    
-    // 查找
-    auto it = find(nums.begin(), nums.end(), 8);
-    if (it != nums.end()) {
-        cout << "找到元素: " << *it << endl;
-    }
-    
-    // 智能指针
-    auto ptr = make_shared<string>("智能指针示例");
-    cout << *ptr << ", 引用计数: " << ptr.use_count() << endl;
-    
-    // 时间测量
-    auto start = high_resolution_clock::now();
-    // 执行一些操作
-    for (volatile int i = 0; i < 1000000; i++) {}
-    auto end = high_resolution_clock::now();
-    
-    auto duration = duration_cast<milliseconds>(end - start);
-    cout << "执行时间: " << duration.count() << " 毫秒" << endl;
-    
-    return 0;
-}`}
-            </CodeBlock>
-          </div>
-        </Card>
-      ),
-    },
-    {
-      key: '4',
-      label: <span><ClockCircleOutlined /> C++11/14/17/20头文件</span>,
-      children: (
-        <Card title="新标准引入的头文件" className="mb-6">
-          <div className="space-y-4 mt-4">
-            <h3 className="text-xl font-semibold mb-4">C++11及以后引入的重要头文件</h3>
-            <p>现代C++标准引入了许多新的头文件，增强了语言的功能和实用性。</p>
-            
-            <Alert
-              className="mt-4"
-              message="C++11引入的重要头文件"
-              description={
-                <ul className="list-disc pl-6">
-                  <li><code>&lt;array&gt;</code> - 提供固定大小的数组</li>
-                  <li><code>&lt;chrono&gt;</code> - 时间相关功能</li>
-                  <li><code>&lt;thread&gt;</code> - 线程支持</li>
-                  <li><code>&lt;mutex&gt;</code> - 互斥量和锁</li>
-                  <li><code>&lt;condition_variable&gt;</code> - 条件变量</li>
-                  <li><code>&lt;atomic&gt;</code> - 原子操作</li>
-                  <li><code>&lt;regex&gt;</code> - 正则表达式支持</li>
-                  <li><code>&lt;unordered_map&gt;</code> 和 <code>&lt;unordered_set&gt;</code> - 基于哈希的容器</li>
-                  <li><code>&lt;random&gt;</code> - 随机数生成</li>
-                  <li><code>&lt;tuple&gt;</code> - 元组类型</li>
-                </ul>
-              }
-              type="info"
-              showIcon
-            />
-            
-            <Alert
-              className="mt-4"
-              message="C++14/17/20添加的头文件"
-              description={
-                <ul className="list-disc pl-6">
-                  <li><code>&lt;any&gt;</code> (C++17) - 可存储任意类型的值</li>
-                  <li><code>&lt;optional&gt;</code> (C++17) - 可能有值或无值的对象</li>
-                  <li><code>&lt;variant&gt;</code> (C++17) - 类型安全的联合体</li>
-                  <li><code>&lt;string_view&gt;</code> (C++17) - 字符串的非拥有引用</li>
-                  <li><code>&lt;filesystem&gt;</code> (C++17) - 文件系统操作</li>
-                  <li><code>&lt;charconv&gt;</code> (C++17) - 字符转换实用程序</li>
-                  <li><code>&lt;execution&gt;</code> (C++17) - 并行算法执行策略</li>
-                  <li><code>&lt;span&gt;</code> (C++20) - 连续序列的视图</li>
-                  <li><code>&lt;concepts&gt;</code> (C++20) - 编程概念支持</li>
-                  <li><code>&lt;coroutine&gt;</code> (C++20) - 协程支持</li>
-                  <li><code>&lt;ranges&gt;</code> (C++20) - 范围库</li>
-                </ul>
-              }
-              type="success"
-              showIcon
-            />
-            
-            <h3 className="text-xl font-semibold mt-8 mb-4">典型用法示例</h3>
-            <CodeBlock language="cpp">
-              {`#include <iostream>
-#include <vector>
-#include <thread>
-#include <mutex>
-#include <optional>  // C++17
-#include <filesystem> // C++17
-using namespace std;
-namespace fs = filesystem;
-
-// C++17: optional 示例
-optional<string> findUserById(int id) {
-    if (id == 1) {
-        return "张三";
-    } else if (id == 2) {
-        return "李四";
-    }
-    return nullopt; // 没找到返回空
+  return <LessonLayout meta={META} spreads={SPREADS} />
 }
-
-// C++11: 线程和互斥量示例
-mutex printMutex;
-void threadFunction(int id) {
-    lock_guard<mutex> lock(printMutex);
-    cout << "线程 " << id << " 正在执行" << endl;
-}
-
-int main() {
-    // 测试 optional
-    auto user = findUserById(2);
-    if (user) {
-        cout << "找到用户: " << *user << endl;
-    } else {
-        cout << "用户不存在" << endl;
-    }
-    
-    // 测试线程
-    vector<thread> threads;
-    for (int i = 0; i < 5; i++) {
-        threads.push_back(thread(threadFunction, i));
-    }
-    
-    for (auto& t : threads) {
-        t.join();
-    }
-    
-    // 测试文件系统 (C++17)
-    cout << "当前路径: " << fs::current_path() << endl;
-    
-    for (const auto& entry : fs::directory_iterator(".")) {
-        cout << entry.path() << (fs::is_directory(entry) ? " (目录)" : " (文件)") << endl;
-    }
-    
-    return 0;
-}`}
-            </CodeBlock>
-          </div>
-        </Card>
-      ),
-    },
-  ];
-
-  return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* 课程头部 */}
-        <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">C++常用头文件</h1>
-              <p className="text-gray-600 mt-2">了解和掌握C++标准库中常用的头文件及其功能</p>
-            </div>
-            <Progress type="circle" percent={95} size={80} strokeColor="#2f54eb" />
-          </div>
-        </div>
-
-        {/* 课程内容 */}
-        <div className="bg-white rounded-lg shadow-md p-8">
-          <Tabs activeKey={activeTab} onChange={setActiveTab} className="p-6" items={tabItems} />
-        </div>
-
-        {/* 底部导航 */}
-        <div className="flex justify-between mt-8">
-          <Link 
-            href="/study/cpp/projects" 
-            className="inline-flex items-center px-4 py-2 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
-          >
-            <LeftOutlined className="mr-2" />
-            上一课：项目实战
-          </Link>
-        </div>
-      </div>
-    </div>
-  );
-} 

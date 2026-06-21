@@ -1,198 +1,156 @@
-'use client';
+'use client'
 
-import { useState } from 'react';
-import { Card, Tabs, Progress, Alert, Typography } from 'antd';
-import { LeftOutlined, RightOutlined } from '@ant-design/icons';
-import Link from 'next/link';
-import React from 'react';
-import { AppstoreOutlined, DesktopOutlined, CalendarOutlined, ExperimentOutlined } from '@ant-design/icons';
-import { CodeBlock } from '@/app/components/ui/CodeBlock';
+import LessonLayout, { type LessonMeta } from '@/app/components/ui/book/LessonLayout'
+import { THEMES } from '@/app/components/ui/book/theme'
+import {
+  PageTitle,
+  BookParagraph,
+  BookCode,
+  BookAlert,
+  BookList,
+  BookDivider,
+  TagGrid,
+} from '@/app/components/ui/book/BookContent'
 
-const { TabPane } = Tabs;
-const { Title, Paragraph, Text } = Typography;
+const META: LessonMeta = {
+  subject: 'Python 编程',
+  chapterTitle: '标准库',
+  chapterNumber: 9,
+  totalChapters: 11,
+  subjectHref: '/study/computer/python',
+  prevChapter: { label: '异常处理', href: '/study/computer/python/exceptions' },
+  nextChapter: { label: '第三方库', href: '/study/computer/python/packages' },
+  theme: THEMES.computer,
+}
 
-export default function Page() {
-  const [activeTab, setActiveTab] = useState('1');
+const SPREADS = [
+  {
+    label: '常用模块',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>日期与时间</PageTitle>
+        <BookCode language="python" showLineNumbers code={`# datetime 模块
+from datetime import datetime, timedelta, date
 
-  const tabItems = [
-    {
-      key: '1',
-      label: (
-        <span>
-          <AppstoreOutlined /> 常用模块概览
-        </span>
-      ),
-      children: (
-        <Card title="常用模块概览" className="mb-6">
-          <div className="space-y-4 mt-4">
-            <Paragraph>导入并查看常用标准库模块。</Paragraph>
-            <CodeBlock language="python">
-              {`import os, sys, math, random
+now = datetime.now()
+print(now.strftime("%Y-%m-%d %H:%M:%S"))
+today = date.today()
+yesterday = today - timedelta(days=1)
 
-print(os.name)
-print(sys.version)
-print(math.pi)
-print(random.randint(1, 10))`}
-            </CodeBlock>
-            <Alert
-              message="要点"
-              description={
-                <ul className="list-disc pl-6">
-                  <li>使用 <Text code>import</Text> 导入模块</li>
-                  <li>每个模块提供专属功能，如数学运算、系统信息等</li>
-                </ul>
-              }
-              type="info"
-              showIcon
-            />
-          </div>
-        </Card>
-      )
-    },
-    {
-      key: '2',
-      label: (
-        <span>
-          <DesktopOutlined /> OS与系统
-        </span>
-      ),
-      children: (
-        <Card title="OS与系统模块" className="mb-6">
-          <div className="space-y-4 mt-4">
-            <Paragraph>使用 <Text code>os</Text> 和 <Text code>sys</Text> 模块操作系统相关功能。</Paragraph>
-            <CodeBlock language="python">
-              {`import os
-import sys
+# 字符串解析
+dt = datetime.strptime("2024-01-01", "%Y-%m-%d")
 
-print(os.getcwd())
-os.makedirs('test_dir', exist_ok=True)
-print(sys.platform)`}
-            </CodeBlock>
-            <Alert
-              message="要点"
-              description={
-                <ul className="list-disc pl-6">
-                  <li><Text code>os</Text> 提供文件与目录操作</li>
-                  <li><Text code>sys</Text> 提供解释器和环境信息</li>
-                </ul>
-              }
-              type="warning"
-              showIcon
-            />
-          </div>
-        </Card>
-      )
-    },
-    {
-      key: '3',
-      label: (
-        <span>
-          <CalendarOutlined /> 日期与时间
-        </span>
-      ),
-      children: (
-        <Card title="日期与时间模块" className="mb-6">
-          <div className="space-y-4 mt-4">
-            <Paragraph>使用 <Text code>datetime</Text> 和 <Text code>time</Text> 模块处理时间数据。</Paragraph>
-            <CodeBlock language="python">
-              {`import datetime
+# time 模块
 import time
+print(time.time())  # 时间戳
+time.sleep(1)       # 延迟1秒
 
-print(datetime.datetime.now())
-print(time.strftime('%Y-%m-%d %H:%M:%S'))`}
-            </CodeBlock>
-            <Alert
-              message="要点"
-              description={
-                <ul className="list-disc pl-6">
-                  <li><Text code>datetime</Text> 提供高层次日期时间处理</li>
-                  <li><Text code>time</Text> 提供底层时间函数</li>
-                </ul>
-              }
-              type="info"
-              showIcon
-            />
-          </div>
-        </Card>
-      )
-    },
-    {
-      key: '4',
-      label: (
-        <span>
-          <ExperimentOutlined /> 练习例题
-        </span>
-      ),
-      children: (
-        <Card title="练习：CSV 数据统计" className="mb-6">
-          <div className="space-y-4 mt-4">
-            <Paragraph>读取 CSV 文件并计算某列平均值。</Paragraph>
-            <CodeBlock language="python">
-              {`import csv
-import statistics
+# calendar 模块
+import calendar
+print(calendar.month(2024, 1))  # 月历`} />
+        <BookDivider />
+        <PageTitle>数学与随机数</PageTitle>
+        <BookCode language="python" showLineNumbers code={`import math
+import random
 
-def avg_from_csv(path, col):
-    with open(path, 'r', encoding='utf-8') as f:
-        reader = csv.DictReader(f)
-        data = [float(row[col]) for row in reader]
-    return statistics.mean(data)
+print(math.pi)          # 3.141592653589793
+print(math.sqrt(16))    # 4.0
+print(math.floor(3.7))  # 3
+print(math.ceil(3.2))   # 4
 
-print(avg_from_csv('data.csv', 'age'))`}
-            </CodeBlock>
-            <Alert
-              message="知识点"
-              description={
-                <ul className="list-disc pl-6">
-                  <li>使用 <Text code>csv.DictReader</Text> 解析 CSV</li>
-                  <li>使用 <Text code>statistics</Text> 计算统计指标</li>
-                </ul>
-              }
-              type="success"
-              showIcon
-            />
-          </div>
-        </Card>
-      )
-    }
-  ];
-
-  return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* 页面头部 */}
-        <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">标准库</h1>
-              <p className="text-gray-600 mt-2">学习Python的常用标准库模块使用方法</p>
-            </div>
-            <Progress type="circle" percent={75} size={80} strokeColor="#1890ff" />
-          </div>
-        </div>
-
-        {/* 课程内容 */}
-        <div className="bg-white rounded-lg shadow-md p-8">
-          <Tabs activeKey={activeTab} onChange={setActiveTab} className="p-6" items={tabItems} />
-        </div>
-
-        {/* 底部导航 */}
-        <div className="flex justify-between mt-8">
-          <Link
-            href="/study/python/exceptions"
-            className="inline-flex items-center px-4 py-2 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
-          >
-            <LeftOutlined className="mr-2" />
-            上一课：异常处理
-          </Link>
-          <Link
-            href="/study/python/packages"
-            className="inline-flex items-center px-4 py-2 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-          >
-            下一课：第三方库
-            <RightOutlined className="ml-2" />
-          </Link>
-        </div>
+print(random.randint(1, 10))
+print(random.choice(["a", "b", "c"]))
+random.shuffle(lst)`} />
       </div>
-    </div>
-  );
-} 
+    ),
+    right: (
+      <div className="space-y-4">
+        <PageTitle>系统与序列化</PageTitle>
+        <BookCode language="python" showLineNumbers code={`import os
+import sys
+import json
+import pickle
+
+# os 模块
+print(os.getcwd())      # 当前目录
+print(os.listdir("."))  # 文件列表
+print(os.environ)       # 环境变量
+
+# sys 模块
+print(sys.version)      # Python版本
+print(sys.argv)         # 命令行参数
+sys.exit(0)             # 退出程序
+
+# JSON 序列化
+data = {"name": "Alice", "age": 30}
+json_str = json.dumps(data, ensure_ascii=False)
+parsed = json.loads(json_str)
+print(parsed["name"])
+
+# pickle 序列化
+with open("data.pkl", "wb") as f:
+    pickle.dump(data, f)
+with open("data.pkl", "rb") as f:
+    loaded = pickle.load(f)`} />
+      </div>
+    ),
+  },
+  {
+    label: '集合与迭代',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>itertools 与 collections</PageTitle>
+        <BookCode language="python" showLineNumbers code={`from itertools import count, cycle, chain
+from collections import Counter, defaultdict, deque
+
+# itertools
+for i in count(10):  # 10, 11, 12, ...
+    if i > 15: break
+
+# Counter
+words = ["a", "b", "a", "c", "b", "a"]
+counter = Counter(words)
+print(counter.most_common(1))  # [("a", 3)]
+
+# defaultdict
+d = defaultdict(list)
+d["key"].append(1)
+
+# deque
+dq = deque([1, 2, 3])
+dq.appendleft(0)
+dq.append(4)`} />
+      </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <PageTitle>哈希与正则</PageTitle>
+        <BookCode language="python" showLineNumbers code={`import hashlib
+import re
+
+# hashlib
+hash = hashlib.sha256("hello".encode())
+print(hash.hexdigest())
+
+# 正则表达式
+text = "我的邮箱是 alice@example.com"
+pattern = r"\\w+@\\w+\\.\\w+"
+match = re.search(pattern, text)
+if match:
+    print(match.group())  # alice@example.com
+
+# sub 替换
+result = re.sub(r"\\d+", "NUM", "有123个苹果")
+print(result)  # 有NUM个苹果
+
+# findall
+emails = re.findall(r"\\w+@\\w+\\.\\w+", text)`} />
+        <TagGrid items={['datetime', 'json', 'os', 're', 'collections', 'itertools', 'hashlib']} />
+      </div>
+    ),
+  },
+]
+
+export default function StdlibPage() {
+  return <LessonLayout meta={META} spreads={SPREADS} />
+}

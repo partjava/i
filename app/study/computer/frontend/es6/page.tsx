@@ -1,188 +1,154 @@
-'use client';
+'use client'
 
-import React from 'react';
-import { Typography, Card, Divider, Tabs } from 'antd';
+import LessonLayout, { type LessonMeta } from '@/app/components/ui/book/LessonLayout'
+import { THEMES } from '@/app/components/ui/book/theme'
+import {
+  PageTitle,
+  SectionTitle,
+  BookParagraph,
+  BookCode,
+  BookList,
+  TagGrid,
+} from '@/app/components/ui/book/BookContent'
 
-const { Title, Paragraph, Text } = Typography;
-
-const codeBlockStyle = {
-  background: '#f6f8fa',
-  borderRadius: 6,
-  padding: '12px 16px',
-  fontSize: 15,
-  margin: '12px 0',
-  fontFamily: 'monospace',
-  overflowX: 'auto' as const,
-};
-
-const tabItems = [
-  {
-    key: '1',
-    label: 'let/const声明',
-    children: (
-      <>
-        <Paragraph>ES6引入let和const，替代var，支持块级作用域和常量声明。</Paragraph>
-        <pre style={codeBlockStyle}>{`let a = 1;
-const PI = 3.14;
-// var声明变量存在变量提升和作用域问题`}</pre>
-      </>
-    ),
-  },
-  {
-    key: '2',
-    label: '箭头函数',
-    children: (
-      <>
-        <Paragraph>箭头函数语法简洁，自动绑定this，常用于回调和数组方法。</Paragraph>
-        <pre style={codeBlockStyle}>{`const add = (a, b) => a + b;
-const arr = [1,2,3].map(x => x * 2);`}</pre>
-      </>
-    ),
-  },
-  {
-    key: '3',
-    label: '解构赋值',
-    children: (
-      <>
-        <Paragraph>解构赋值可快速提取数组、对象中的值。</Paragraph>
-        <pre style={codeBlockStyle}>{`const [a, b] = [1, 2];
-const {x, y} = {x: 10, y: 20};`}</pre>
-      </>
-    ),
-  },
-  {
-    key: '4',
-    label: '模板字符串',
-    children: (
-      <>
-        <Paragraph>模板字符串用反引号`包裹，支持变量插值和多行文本。</Paragraph>
-        <pre style={codeBlockStyle}>{'const name = "Tom";\nconst msg = `Hello, ${name}!`;'}</pre>
-      </>
-    ),
-  },
-  {
-    key: '5',
-    label: '扩展运算符',
-    children: (
-      <>
-        <Paragraph>扩展运算符...可用于数组/对象的展开与合并。</Paragraph>
-        <pre style={codeBlockStyle}>{`const arr1 = [1,2];
-const arr2 = [...arr1, 3];
-const obj1 = {a:1};
-const obj2 = {...obj1, b:2};`}</pre>
-      </>
-    ),
-  },
-  {
-    key: '6',
-    label: 'Promise与异步',
-    children: (
-      <>
-        <Paragraph>Promise用于异步编程，支持链式then/catch，配合async/await更简洁。</Paragraph>
-        <pre style={codeBlockStyle}>{`function delay(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
+const META: LessonMeta = {
+  subject: 'Web前端开发',
+  chapterTitle: 'ES6+新特性',
+  chapterNumber: 9,
+  totalChapters: 20,
+  subjectHref: '/study/computer/frontend',
+  prevChapter: { label: 'JavaScript基础', href: '/study/computer/frontend/js' },
+  nextChapter: { label: 'DOM与事件', href: '/study/computer/frontend/dom' },
+  theme: THEMES.computer,
 }
-async function run() {
-  await delay(1000);
-  console.log('done');
-}`}</pre>
-      </>
-    ),
-  },
-  {
-    key: '7',
-    label: '类与模块',
-    children: (
-      <>
-        <Paragraph>ES6支持class类和模块化import/export。</Paragraph>
-        <pre style={codeBlockStyle}>{`class Person {
-  constructor(name) { this.name = name; }
-  sayHi() { console.log('Hi,' + this.name); }
-}
-export default Person;`}</pre>
-        <pre style={codeBlockStyle}>{`import Person from './person.js';`}</pre>
-      </>
-    ),
-  },
-  {
-    key: '8',
-    label: 'Set/Map新对象',
-    children: (
-      <>
-        <Paragraph>Set用于存储唯一值，Map用于键值对集合。</Paragraph>
-        <pre style={codeBlockStyle}>{`const s = new Set([1,2,2,3]); // {1,2,3}
-const m = new Map([['a',1],['b',2]]);
-console.log(m.get('a'));`}</pre>
-      </>
-    ),
-  },
-  {
-    key: '9',
-    label: '练习与拓展',
-    children: (
-      <>
-        <ol>
-          <li>用解构赋值交换两个变量的值。</li>
-          <li>用Promise封装一个延时函数。</li>
-          <li>用class实现一个简单的计数器类。</li>
-        </ol>
-        <Divider />
-        <ul>
-          <li><a href="https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference" target="_blank" rel="noopener noreferrer">MDN ES6参考</a></li>
-          <li><a href="https://es6.ruanyifeng.com/" target="_blank" rel="noopener noreferrer">阮一峰ES6教程</a></li>
-        </ul>
-      </>
-    ),
-  },
-];
 
-export default function Es6Page() {
-  return (
-    <div style={{ padding: 24, maxWidth: 900, margin: '0 auto' }}>
-      <Typography>
-        <Title level={1}>ES6+新特性</Title>
-      </Typography>
-      <Tabs defaultActiveKey="1" items={tabItems} style={{ marginTop: 24 }} />
-      <div style={{ display: 'flex', justifyContent: 'space-between', margin: '48px 0 0 0' }}>
-        <a
-          href="/study/frontend/js"
-          style={{
-            background: '#386ff6',
-            color: '#fff',
-            padding: '12px 28px',
-            borderRadius: '16px',
-            fontSize: 18,
-            fontWeight: 500,
-            textDecoration: 'none',
-            boxShadow: '0 4px 16px rgba(56,111,246,0.15)',
-            transition: 'background 0.2s',
-            display: 'inline-block',
-          }}
-          onMouseOver={e => (e.currentTarget.style.background = '#2055c7')}
-          onMouseOut={e => (e.currentTarget.style.background = '#386ff6')}
-        >
-          上一章：JavaScript基础
-        </a>
-        <a
-          href="/study/frontend/dom"
-          style={{
-            background: '#386ff6',
-            color: '#fff',
-            padding: '12px 28px',
-            borderRadius: '16px',
-            fontSize: 18,
-            fontWeight: 500,
-            textDecoration: 'none',
-            boxShadow: '0 4px 16px rgba(56,111,246,0.15)',
-            transition: 'background 0.2s',
-            display: 'inline-block',
-          }}
-          onMouseOver={e => (e.currentTarget.style.background = '#2055c7')}
-          onMouseOut={e => (e.currentTarget.style.background = '#386ff6')}
-        >
-          下一章：DOM与事件
-        </a>
+const SPREADS = [
+  {
+    label: 'let/const与箭头函数',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>let/const声明</PageTitle>
+        <BookParagraph>ES6引入了let和const替代var，提供块级作用域，消除了变量提升带来的问题。</BookParagraph>
+        <BookCode language="javascript" code={`// let/const vs var
+if (true) {
+  let x = 1;    // 块级作用域
+  const y = 2;  // 常量
+  var z = 3;    // 函数作用域
+}
+// console.log(x); // ReferenceError
+console.log(z); // 3`} />
+        <SectionTitle>箭头函数</SectionTitle>
+        <BookParagraph>箭头函数语法更简洁，且不绑定自己的this。</BookParagraph>
+        <BookCode language="javascript" code={`// 箭头函数
+const add = (a, b) => a + b;
+const square = x => x * x;
+const getObj = () => ({ name: "ES6" });
+// 不绑定this
+const obj = {
+  name: "obj",
+  fn: () => { console.log(this.name); } // 指向外层this
+};`} />
       </div>
-    </div>
-  );
-} 
+    ),
+    right: (
+      <div className="space-y-4">
+        <SectionTitle>解构赋值</SectionTitle>
+        <BookParagraph>解构赋值可以方便地从数组或对象中提取值。</BookParagraph>
+        <BookCode language="javascript" code={`// 数组解构
+const [a, b, ...rest] = [1, 2, 3, 4];
+// 对象解构
+const { name, age = 18 } = { name: "Tom" };
+// 交换变量
+[x, y] = [y, x];`} />
+        <SectionTitle>模板字符串</SectionTitle>
+        <BookCode language="javascript" code={`// 模板字符串
+const name = "World";
+console.log(\`Hello, \${name}!\`);
+// 支持多行
+const html = \`
+<div>
+  <h1>\${title}</h1>
+</div>\`;`} />
+        <TagGrid items={['let', 'const', '箭头函数', '解构', '模板字符串']} />
+      </div>
+    ),
+  },
+  {
+    label: '扩展运算符与Promise',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>扩展运算符</PageTitle>
+        <BookCode language="javascript" code={`// 扩展运算符
+const arr1 = [1, 2, 3];
+const arr2 = [...arr1, 4, 5]; // [1,2,3,4,5]
+const obj1 = { a: 1, b: 2 };
+const obj2 = { ...obj1, c: 3 }; // {a:1,b:2,c:3}
+// 函数调用
+Math.max(...arr1);`} />
+        <SectionTitle>Promise与异步</SectionTitle>
+        <BookParagraph>Promise用于处理异步操作，async/await是语法糖。</BookParagraph>
+        <BookCode language="javascript" code={`// Promise
+fetch('/api/data')
+  .then(res => res.json())
+  .then(data => console.log(data))
+  .catch(err => console.error(err));
+// async/await
+async function getData() {
+  try {
+    const res = await fetch('/api/data');
+    const data = await res.json();
+    return data;
+  } catch (err) { console.error(err); }
+}`} />
+      </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <SectionTitle>类与模块</SectionTitle>
+        <BookCode language="javascript" code={`// ES6类
+class Animal {
+  constructor(name) { this.name = name; }
+  speak() { return \`\${this.name} makes a noise\`; }
+}
+class Dog extends Animal {
+  speak() { return \`\${this.name} barks\`; }
+}
+// 模块
+export const PI = 3.14;
+export default function hello() {}`} />
+        <SectionTitle>Set/Map新对象</SectionTitle>
+        <BookCode language="javascript" code={`// Set（不重复）
+const set = new Set([1,2,2,3]); // {1,2,3}
+set.has(2); // true
+// Map（键可为对象）
+const map = new Map();
+map.set('key', 'value');`} />
+        <TagGrid items={['扩展运算符', 'Promise', 'class', 'Set', 'Map']} />
+      </div>
+    ),
+  },
+  {
+    label: '练习与拓展',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>练习与拓展</PageTitle>
+        <BookList items={[
+          '用解构赋值交换两个变量的值',
+          '用Promise封装一个延时函数',
+          '用class实现一个简单的计数器类',
+        ]} />
+      </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <SectionTitle>拓展资源</SectionTitle>
+        <BookList items={['MDN ES6 文档', '阮一峰ES6教程']} />
+        <TagGrid items={['练习', 'Promise', 'class', 'Set', 'ES6']} />
+      </div>
+    ),
+  },
+]
+
+export default function FrontendEs6Page() {
+  return <LessonLayout meta={META} spreads={SPREADS} />
+}

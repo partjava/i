@@ -1,54 +1,53 @@
-'use client';
+'use client'
 
-import React from 'react';
-import { Typography, Card, Divider, Tabs } from 'antd';
+import LessonLayout, { type LessonMeta } from '@/app/components/ui/book/LessonLayout'
+import { THEMES } from '@/app/components/ui/book/theme'
+import {
+  PageTitle,
+  SectionTitle,
+  BookParagraph,
+  BookCode,
+  BookList,
+  TagGrid,
+} from '@/app/components/ui/book/BookContent'
 
-const { Title, Paragraph, Text } = Typography;
+const META: LessonMeta = {
+  subject: 'Web前端开发',
+  chapterTitle: '性能优化',
+  chapterNumber: 15,
+  totalChapters: 20,
+  subjectHref: '/study/computer/frontend',
+  prevChapter: { label: '包管理与构建工具', href: '/study/computer/frontend/build-tools' },
+  nextChapter: { label: 'React基础', href: '/study/computer/frontend/react' },
+  theme: THEMES.computer,
+}
 
-const codeBlockStyle = {
-  background: '#f6f8fa',
-  borderRadius: 6,
-  padding: '12px 16px',
-  fontSize: 15,
-  margin: '12px 0',
-  fontFamily: 'monospace',
-  overflowX: 'auto' as const,
-};
-
-const tabItems = [
+const SPREADS = [
   {
-    key: '1',
-    label: '性能优化目标与指标',
-    children: (
-      <>
-        <Card title="常见性能指标" size="small" style={{ marginBottom: 12 }}>
-          <ul>
-            <li>FCP（首次内容绘制）：页面首次有内容渲染</li>
-            <li>LCP（最大内容绘制）：主内容区域最大元素渲染</li>
-            <li>TTI（可交互时间）：页面可响应用户操作</li>
-            <li>CLS（累积布局偏移）：页面元素跳动情况</li>
-          </ul>
-        </Card>
-        <pre style={codeBlockStyle}>{`// 使用Performance API获取FCP
+    label: '目标与加载优化',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>性能优化目标与指标</PageTitle>
+        <BookList items={[
+          'FCP（首次内容绘制）：页面首次有内容渲染。',
+          'LCP（最大内容绘制）：主内容区域最大元素渲染。',
+          'TTI（可交互时间）：页面可响应用户操作。',
+          'CLS（累积布局偏移）：页面元素跳动情况。',
+        ]} />
+        <BookCode language="javascript" code={`// 使用Performance API获取FCP
 new PerformanceObserver((entryList) => {
   for (const entry of entryList.getEntries()) {
     if (entry.name === 'first-contentful-paint') {
       console.log('FCP:', entry.startTime);
     }
   }
-}).observe({ type: 'paint', buffered: true });`}</pre>
-      </>
-    ),
-  },
-  {
-    key: '2',
-    label: '资源加载优化',
-    children: (
-      <>
-        <Card title="懒加载与预加载" size="small" style={{ marginBottom: 12 }}>
-          <pre style={codeBlockStyle}>{`// 图片懒加载（原生支持）
+}).observe({ type: 'paint', buffered: true });`} />
+        <SectionTitle>资源加载优化</SectionTitle>
+        <BookParagraph><b>懒加载与预加载：</b></BookParagraph>
+        <BookCode language="html" code={`<!-- 图片懒加载（原生支持） -->
 <img src="a.jpg" loading="lazy" />
-// IntersectionObserver实现图片懒加载
+<!-- IntersectionObserver实现图片懒加载 -->
+<script>
 const img = document.querySelector('img');
 const io = new IntersectionObserver(entries => {
   if (entries[0].isIntersecting) {
@@ -57,55 +56,43 @@ const io = new IntersectionObserver(entries => {
   }
 });
 io.observe(img);
-// 预加载资源
-<link rel="preload" href="main.js" as="script" />`}</pre>
-        </Card>
-        <Card title="压缩与CDN" size="small">
-          <pre style={codeBlockStyle}>{`// Gzip压缩
+</script>
+<!-- 预加载资源 -->
+<link rel="preload" href="main.js" as="script" />`} />
+        <BookParagraph><b>压缩与CDN：</b></BookParagraph>
+        <BookCode language="nginx" code={`// Gzip压缩
 // nginx.conf
 gzip on;
-gzip_types text/css application/javascript;
-// CDN加速，自动选择最近节点
-<img src="https://cdn.example.com/img.png" />`}</pre>
-        </Card>
-      </>
+gzip_types text/css application/javascript;`} />
+        <BookCode language="html" code={`// CDN加速，自动选择最近节点
+<img src="https://cdn.example.com/img.png" />`} />
+      </div>
     ),
-  },
-  {
-    key: '3',
-    label: '代码优化',
-    children: (
-      <>
-        <ul>
-          <li>Tree Shaking移除未用代码</li>
-          <li>按需加载（动态import）</li>
-          <li>去冗余、合并小文件</li>
-        </ul>
-        <pre style={codeBlockStyle}>{`// Tree Shaking示例（只打包用到的函数）
+    right: (
+      <div className="space-y-4">
+        <SectionTitle>代码优化</SectionTitle>
+        <BookList items={[
+          'Tree Shaking移除未用代码。',
+          '按需加载（动态import）。',
+          '去冗余、合并小文件。',
+        ]} />
+        <BookCode language="javascript" code={`// Tree Shaking示例（只打包用到的函数）
 // math.js
 export function add(a, b) { return a + b; }
 export function sub(a, b) { return a - b; }
 // main.js
 import { add } from './math'; // 只会打包add
 // 按需加载
-import('lodash').then(_ => _.chunk([1,2,3], 2));`}</pre>
-      </>
-    ),
-  },
-  {
-    key: '4',
-    label: '渲染与交互优化',
-    children: (
-      <>
-        <Card title="虚拟列表" size="small" style={{ marginBottom: 12 }}>
-          <pre style={codeBlockStyle}>{`// 只渲染可视区域数据，提升大列表性能
+import('lodash').then(_ => _.chunk([1,2,3], 2));`} />
+        <SectionTitle>渲染与交互优化</SectionTitle>
+        <BookParagraph><b>虚拟列表：</b></BookParagraph>
+        <BookCode language="javascript" code={`// 只渲染可视区域数据，提升大列表性能
 function renderList(data, start, end) {
   return data.slice(start, end).map(item => <li>{item}</li>);
 }
-// react-window等库可实现高性能虚拟滚动`}</pre>
-        </Card>
-        <Card title="节流与防抖" size="small">
-          <pre style={codeBlockStyle}>{`// 节流：高频事件只在间隔内执行一次
+// react-window等库可实现高性能虚拟滚动`} />
+        <BookParagraph><b>节流与防抖：</b></BookParagraph>
+        <BookCode language="javascript" code={`// 节流：高频事件只在间隔内执行一次
 function throttle(fn, delay) {
   let last = 0;
   return (...args) => {
@@ -129,31 +116,29 @@ function debounce(fn, delay) {
 }
 document.getElementById('search').oninput = debounce(e => {
   // 输入停止后发请求
-}, 300);`}</pre>
-        </Card>
-      </>
+}, 300);`} />
+        <TagGrid items={['FCP', 'LCP', '懒加载', 'CDN', '节流', '防抖']} />
+      </div>
     ),
   },
   {
-    key: '5',
-    label: '网络与缓存优化',
-    children: (
-      <>
-        <Card title="HTTP缓存" size="small" style={{ marginBottom: 12 }}>
-          <pre style={codeBlockStyle}>{`// 设置强缓存
+    label: '缓存与监控',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>网络与缓存优化</PageTitle>
+        <BookParagraph><b>HTTP缓存：</b></BookParagraph>
+        <BookCode language="text" code={`// 设置强缓存
 Cache-Control: max-age=31536000
 // 协商缓存
 ETag: "abc123"
 If-None-Match: "abc123"
 // 清除缓存
-fetch('/api/data', { cache: 'reload' });`}</pre>
-        </Card>
-        <Card title="Service Worker与PWA" size="small">
-          <pre style={codeBlockStyle}>{`// 注册Service Worker，实现离线缓存
+fetch('/api/data', { cache: 'reload' });`} />
+        <BookParagraph><b>Service Worker与PWA：</b></BookParagraph>
+        <BookCode language="javascript" code={`// 注册Service Worker，实现离线缓存
 if ('serviceWorker' in navigator) {
-  // Service Worker注册示例代码（生产环境会自动注册）
-  // navigator.serviceWorker.register('/sw.js').then(reg => {
-  //   console.log('SW注册成功', reg);
+  navigator.serviceWorker.register('/sw.js').then(reg => {
+    console.log('SW注册成功', reg);
   });
 }
 // sw.js示例
@@ -161,117 +146,51 @@ self.addEventListener('fetch', e => {
   e.respondWith(
     caches.match(e.request).then(res => res || fetch(e.request))
   );
-});`}</pre>
-        </Card>
-      </>
+});`} />
+      </div>
     ),
-  },
-  {
-    key: '6',
-    label: '性能监控与分析',
-    children: (
-      <>
-        <Card title="Lighthouse分析" size="small" style={{ marginBottom: 12 }}>
-          <pre style={codeBlockStyle}>{`// Chrome DevTools -> Lighthouse
+    right: (
+      <div className="space-y-4">
+        <SectionTitle>性能监控与分析</SectionTitle>
+        <BookParagraph><b>Lighthouse分析：</b></BookParagraph>
+        <BookCode language="text" code={`// Chrome DevTools -> Lighthouse
 // 可分析性能、可访问性、SEO等
-// 推荐定期用Lighthouse跑分，定位瓶颈`}</pre>
-        </Card>
-        <Card title="Performance API" size="small">
-          <pre style={codeBlockStyle}>{`// 记录关键性能点
+// 推荐定期用Lighthouse跑分，定位瓶颈`} />
+        <BookParagraph><b>Performance API：</b></BookParagraph>
+        <BookCode language="javascript" code={`// 记录关键性能点
 performance.mark('start');
 // ...业务代码
 performance.mark('end');
 performance.measure('业务耗时', 'start', 'end');
 // 获取所有性能指标
-console.log(performance.getEntriesByType('measure'));`}</pre>
-        </Card>
-      </>
-    ),
-  },
-  {
-    key: '7',
-    label: '实战案例',
-    children: (
-      <>
-        <Card title="首页秒开优化" size="small" style={{ marginBottom: 12 }}>
-          <pre style={codeBlockStyle}>{`// 关键资源优先加载，非关键异步加载
+console.log(performance.getEntriesByType('measure'));`} />
+        <SectionTitle>实战案例</SectionTitle>
+        <BookParagraph><b>首页秒开优化：</b></BookParagraph>
+        <BookCode language="html" code={`<!-- 关键资源优先加载，非关键异步加载 -->
 <link rel="preload" href="main.css" as="style" />
-<script src="main.js" async></script>`}</pre>
-        </Card>
-        <Card title="图片优化" size="small">
-          <pre style={codeBlockStyle}>{`// 响应式图片
-<img srcset="a-320.jpg 320w, a-640.jpg 640w" sizes="(max-width: 600px) 320px, 640px" src="a-640.jpg" />`}</pre>
-        </Card>
-      </>
-    ),
-  },
-  {
-    key: '8',
-    label: '练习与拓展',
-    children: (
-      <>
-        <ol>
-          <li>用节流/防抖优化滚动监听。</li>
-          <li>用Service Worker实现离线缓存。</li>
-          <li>用Lighthouse分析并优化页面性能。</li>
-        </ol>
-        <Divider />
-        <ul>
-          <li><a href="https://web.dev/performance/" target="_blank" rel="noopener noreferrer">Web.dev 性能优化</a></li>
-          <li><a href="https://developer.mozilla.org/zh-CN/docs/Web/Performance" target="_blank" rel="noopener noreferrer">MDN 性能文档</a></li>
-        </ul>
-      </>
-    ),
-  },
-];
-
-export default function PerformancePage() {
-  return (
-    <div style={{ padding: 24, maxWidth: 900, margin: '0 auto' }}>
-      <Typography>
-        <Title level={1}>性能优化</Title>
-      </Typography>
-      <Tabs defaultActiveKey="1" items={tabItems} style={{ marginTop: 24 }} />
-      <div style={{ display: 'flex', justifyContent: 'space-between', margin: '48px 0 0 0' }}>
-        <a
-          href="/study/frontend/build-tools"
-          style={{
-            background: '#386ff6',
-            color: '#fff',
-            padding: '12px 28px',
-            borderRadius: '16px',
-            fontSize: 18,
-            fontWeight: 500,
-            textDecoration: 'none',
-            boxShadow: '0 4px 16px rgba(56,111,246,0.15)',
-            transition: 'background 0.2s',
-            display: 'inline-block',
-          }}
-          onMouseOver={e => (e.currentTarget.style.background = '#2055c7')}
-          onMouseOut={e => (e.currentTarget.style.background = '#386ff6')}
-        >
-          上一章：包管理与构建工具
-        </a>
-        <a
-          href="/study/frontend/react"
-          style={{
-            background: '#386ff6',
-            color: '#fff',
-            padding: '12px 28px',
-            borderRadius: '16px',
-            fontSize: 18,
-            fontWeight: 500,
-            textDecoration: 'none',
-            boxShadow: '0 4px 16px rgba(56,111,246,0.15)',
-            transition: 'background 0.2s',
-            display: 'inline-block',
-          }}
-          onMouseOver={e => (e.currentTarget.style.background = '#2055c7')}
-          onMouseOut={e => (e.currentTarget.style.background = '#386ff6')}
-        >
-          下一章：React基础
-        </a>
+<script src="main.js" async></script>`} />
+        <BookParagraph><b>图片优化：</b></BookParagraph>
+        <BookCode language="html" code={`<!-- 响应式图片 -->
+<img srcset="a-320.jpg 320w, a-640.jpg 640w"
+     sizes="(max-width: 600px) 320px, 640px"
+     src="a-640.jpg" />`} />
+        <SectionTitle>练习</SectionTitle>
+        <BookList items={[
+          '用节流/防抖优化滚动监听。',
+          '用Service Worker实现离线缓存。',
+          '用Lighthouse分析并优化页面性能。',
+        ]} />
+        <SectionTitle>拓展资源</SectionTitle>
+        <BookList items={[
+          'Web.dev 性能优化：web.dev/performance',
+          'MDN 性能文档：developer.mozilla.org/zh-CN/docs/Web/Performance',
+        ]} />
+        <TagGrid items={['缓存', 'Service Worker', 'Lighthouse', 'Performance', 'Web Vitals']} />
       </div>
-    </div>
-  );
-} 
+    ),
+  },
+]
+
+export default function FrontendPerformancePage() {
+  return <LessonLayout meta={META} spreads={SPREADS} />
+}

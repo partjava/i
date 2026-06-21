@@ -1,102 +1,50 @@
-"use client";
+'use client'
 
-import React from 'react';
-import { Typography, Tabs, Card, Alert, Button, Space, Collapse } from 'antd';
+import LessonLayout, { type LessonMeta } from '@/app/components/ui/book/LessonLayout'
+import { THEMES } from '@/app/components/ui/book/theme'
+import {
+  PageTitle,
+  SectionTitle,
+  BookParagraph,
+  BookCode,
+  BookAlert,
+  BookList,
+  TagGrid,
+} from '@/app/components/ui/book/BookContent'
 
-const { Title, Paragraph, Text } = Typography;
-const { Panel } = Collapse;
+const META: LessonMeta = {
+  subject: 'Linux系统',
+  chapterTitle: '软件与包管理',
+  chapterNumber: 4,
+  totalChapters: 9,
+  subjectHref: '/study/computer/linux',
+  prevChapter: { label: '用户与权限管理', href: '/study/computer/linux/user' },
+  nextChapter: { label: '进程与服务管理', href: '/study/computer/linux/process' },
+  theme: THEMES.computer,
+}
 
-// 实战案例数据
-const practicalCases = [
+const SPREADS = [
   {
-    title: "包管理案例",
-    cases: [
-      {
-        problem: "批量安装多个软件包",
-        solution: "apt-get install package1 package2 package3",
-        explanation: "使用apt-get install命令可以一次性安装多个软件包，系统会自动解决依赖关系"
-      },
-      {
-        problem: "查找特定软件包",
-        solution: "apt-cache search keyword",
-        explanation: "使用apt-cache search命令可以根据关键词搜索软件包，支持模糊匹配"
-      },
-      {
-        problem: "清理不需要的包",
-        solution: "apt-get autoremove && apt-get clean",
-        explanation: "autoremove删除自动安装的依赖包，clean清理下载的包缓存"
-      }
-    ]
-  },
-  {
-    title: "软件编译安装案例",
-    cases: [
-      {
-        problem: "从源码编译安装软件",
-        solution: "./configure && make && make install",
-        explanation: "标准的源码编译安装步骤：配置、编译、安装"
-      },
-      {
-        problem: "指定安装路径",
-        solution: "./configure --prefix=/usr/local/software",
-        explanation: "使用--prefix参数指定软件安装路径"
-      },
-      {
-        problem: "卸载源码安装的软件",
-        solution: "make uninstall",
-        explanation: "如果软件支持，可以使用make uninstall卸载，否则需要手动删除文件"
-      }
-    ]
-  }
-];
-
-const tabItems = [
-  {
-    key: 'basic',
     label: '包管理基础',
-    children: (
-      <Card title="包管理基础" className="mb-4">
-        <Paragraph>
-          <b>包管理系统：</b>
-          <ul>
-            <li>Debian/Ubuntu：APT (Advanced Package Tool)</li>
-            <li>RedHat/CentOS：RPM (Red Hat Package Manager)</li>
-            <li>Arch Linux：Pacman</li>
-            <li>通用：Snap、Flatpak</li>
-          </ul>
-        </Paragraph>
-        <Paragraph>
-          <b>软件包类型：</b>
-          <ul>
-            <li>二进制包：预编译好的程序</li>
-            <li>源码包：需要编译安装</li>
-            <li>依赖包：程序运行所需的库和工具</li>
-          </ul>
-        </Paragraph>
-        <Alert
-          message="要点"
-          description={
-            <ul>
-              <li>使用包管理器可以自动解决依赖关系</li>
-              <li>建议优先使用系统包管理器安装软件</li>
-              <li>定期更新软件包以获取安全补丁</li>
-            </ul>
-          }
-          type="info"
-          showIcon
-        />
-      </Card>
-    ),
-  },
-  {
-    key: 'apt',
-    label: 'APT包管理',
-    children: (
-      <Card title="APT包管理" className="mb-4">
-        <Paragraph>
-          <b>常用命令：</b>
-          <pre className="bg-gray-100 rounded p-4 text-sm overflow-x-auto">{
-`# 更新软件包列表
+    left: (
+      <div className="space-y-4">
+        <PageTitle>包管理基础</PageTitle>
+        <BookParagraph><strong>包管理系统：</strong></BookParagraph>
+        <BookList items={[
+          'Debian/Ubuntu：APT (Advanced Package Tool)',
+          'RedHat/CentOS：RPM (Red Hat Package Manager)',
+          'Arch Linux：Pacman',
+          '通用：Snap、Flatpak',
+        ]} />
+        <BookParagraph><strong>软件包类型：</strong></BookParagraph>
+        <BookList items={[
+          '二进制包：预编译好的程序',
+          '源码包：需要编译安装',
+          '依赖包：程序运行所需的库和工具',
+        ]} />
+        <BookAlert type="info" message="使用包管理器可以自动解决依赖关系，建议优先使用系统包管理器安装软件，定期更新软件包以获取安全补丁。" />
+        <SectionTitle>APT包管理</SectionTitle>
+        <BookCode language="bash" code={`# 更新软件包列表
 sudo apt update
 
 # 升级所有软件包
@@ -114,34 +62,14 @@ apt search keyword
 # 显示软件包信息
 apt show package
 
-# 列出所有软件包
-apt list --installed
-`}</pre>
-        </Paragraph>
-        <Alert
-          message="实操要点"
-          description={
-            <ul>
-              <li>安装前先更新：<Text code>apt update && apt upgrade</Text></li>
-              <li>查看软件信息：<Text code>apt show package</Text></li>
-              <li>清理缓存：<Text code>apt clean</Text></li>
-            </ul>
-          }
-          type="info"
-          showIcon
-        />
-      </Card>
+# 列出已安装软件包
+apt list --installed`} />
+      </div>
     ),
-  },
-  {
-    key: 'rpm',
-    label: 'RPM包管理',
-    children: (
-      <Card title="RPM包管理" className="mb-4">
-        <Paragraph>
-          <b>常用命令：</b>
-          <pre className="bg-gray-100 rounded p-4 text-sm overflow-x-auto">{
-`# 安装软件包
+    right: (
+      <div className="space-y-4">
+        <PageTitle>RPM包管理</PageTitle>
+        <BookCode language="bash" code={`# 安装软件包
 sudo rpm -ivh package.rpm
 
 # 卸载软件包
@@ -163,33 +91,10 @@ sudo yum install package
 sudo yum remove package
 
 # 使用yum更新
-sudo yum update
-`}</pre>
-        </Paragraph>
-        <Alert
-          message="实操要点"
-          description={
-            <ul>
-              <li>安装本地包：<Text code>rpm -ivh package.rpm</Text></li>
-              <li>查询已安装包：<Text code>rpm -qa | grep package</Text></li>
-              <li>查看包信息：<Text code>rpm -qi package</Text></li>
-            </ul>
-          }
-          type="info"
-          showIcon
-        />
-      </Card>
-    ),
-  },
-  {
-    key: 'source',
-    label: '源码安装',
-    children: (
-      <Card title="源码安装" className="mb-4">
-        <Paragraph>
-          <b>常用命令：</b>
-          <pre className="bg-gray-100 rounded p-4 text-sm overflow-x-auto">{
-`# 下载源码包
+sudo yum update`} />
+        <BookAlert type="info" message="安装本地包：rpm -ivh package.rpm，查询已安装包：rpm -qa | grep package，查看包信息：rpm -qi package" />
+        <SectionTitle>源码安装</SectionTitle>
+        <BookCode language="bash" code={`# 下载源码包
 wget http://example.com/software.tar.gz
 
 # 解压源码包
@@ -208,110 +113,78 @@ make
 sudo make install
 
 # 清理编译文件
-make clean
-`}</pre>
-        </Paragraph>
-        <Alert
-          message="注意事项"
-          description={
-            <ul>
-              <li>确保安装必要的编译工具和依赖库</li>
-              <li>注意查看README和INSTALL文件</li>
-              <li>建议使用--prefix指定安装路径</li>
-            </ul>
-          }
-          type="warning"
-          showIcon
-        />
-      </Card>
+make clean`} />
+        <BookAlert type="warning" message="确保安装必要的编译工具和依赖库，注意查看README和INSTALL文件，建议使用--prefix指定安装路径" />
+        <TagGrid items={['APT', 'RPM', '源码安装', 'yum', 'dnf', 'pacman']} />
+      </div>
     ),
   },
   {
-    key: 'case',
-    label: '实战案例与面试题',
-    children: (
-      <Card title="实战案例与面试题" className="mb-4">
-        {practicalCases.map((section, index) => (
-          <div key={index} className="mb-6">
-            <Title level={4}>{section.title}</Title>
-            {section.cases.map((caseItem, caseIndex) => (
-              <div key={caseIndex} className="mb-4">
-                <Paragraph>
-                  <b>问题：</b> {caseItem.problem}
-                </Paragraph>
-                <Collapse>
-                  <Panel header="查看解决方案" key={caseIndex}>
-                    <div className="space-y-2">
-                      <Paragraph>
-                        <b>命令：</b> <Text code>{caseItem.solution}</Text>
-                      </Paragraph>
-                      <Paragraph>
-                        <b>解释：</b> {caseItem.explanation}
-                      </Paragraph>
-                    </div>
-                  </Panel>
-                </Collapse>
-              </div>
-            ))}
-          </div>
-        ))}
-        <div className="mt-6">
-          <Title level={4}>面试高频题</Title>
-          <Collapse>
-            <Panel header="解释APT和RPM的区别" key="1">
-              <Paragraph>
-                APT和RPM的主要区别：
-              </Paragraph>
-              <ul>
-                <li>APT是Debian/Ubuntu的包管理系统，RPM是RedHat/CentOS的包管理系统</li>
-                <li>APT自动解决依赖关系，RPM需要手动处理依赖</li>
-                <li>APT使用.deb包格式，RPM使用.rpm包格式</li>
-                <li>APT的配置文件在/etc/apt/，RPM的配置文件在/etc/yum.repos.d/</li>
-              </ul>
-            </Panel>
-            <Panel header="如何处理软件包依赖问题？" key="2">
-              <Paragraph>
-                处理依赖问题的方法：
-              </Paragraph>
-              <ul>
-                <li>使用包管理器自动解决（apt/yum）</li>
-                <li>手动安装依赖包</li>
-                <li>使用--nodeps参数（不推荐）</li>
-                <li>使用容器或虚拟环境隔离依赖</li>
-              </ul>
-            </Panel>
-            <Panel header="如何排查软件安装问题？" key="3">
-              <Paragraph>
-                排查安装问题的步骤：
-              </Paragraph>
-              <ul>
-                <li>查看错误信息</li>
-                <li>检查依赖关系</li>
-                <li>查看日志文件</li>
-                <li>检查系统环境</li>
-                <li>尝试手动安装依赖</li>
-              </ul>
-            </Panel>
-          </Collapse>
+    label: '实战案例',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>包管理案例</PageTitle>
+        <div className="rounded-lg p-4 mb-4" style={{ background: 'rgba(0,0,0,0.02)', border: '1px solid rgba(0,0,0,0.06)' }}>
+          <p className="font-semibold mb-2">批量安装多个软件包</p>
+          <BookCode language="bash" code={`apt-get install package1 package2 package3`} />
+          <p className="text-xs mt-1" style={{ color: '#666' }}>使用apt-get install一次性安装多个软件包，系统会自动解决依赖关系</p>
         </div>
-      </Card>
+        <div className="rounded-lg p-4 mb-4" style={{ background: 'rgba(0,0,0,0.02)', border: '1px solid rgba(0,0,0,0.06)' }}>
+          <p className="font-semibold mb-2">查找特定软件包</p>
+          <BookCode language="bash" code={`apt-cache search keyword`} />
+          <p className="text-xs mt-1" style={{ color: '#666' }}>根据关键词搜索软件包，支持模糊匹配</p>
+        </div>
+        <div className="rounded-lg p-4" style={{ background: 'rgba(0,0,0,0.02)', border: '1px solid rgba(0,0,0,0.06)' }}>
+          <p className="font-semibold mb-2">清理不需要的包</p>
+          <BookCode language="bash" code={`apt-get autoremove && apt-get clean`} />
+          <p className="text-xs mt-1" style={{ color: '#666' }}>autoremove删除自动安装的依赖包，clean清理下载的包缓存</p>
+        </div>
+        <SectionTitle>软件编译安装案例</SectionTitle>
+        <div className="rounded-lg p-4 mb-4" style={{ background: 'rgba(0,0,0,0.02)', border: '1px solid rgba(0,0,0,0.06)' }}>
+          <p className="font-semibold mb-2">从源码编译安装软件</p>
+          <BookCode language="bash" code={`./configure && make && make install`} />
+          <p className="text-xs mt-1" style={{ color: '#666' }}>标准的源码编译安装步骤：配置、编译、安装</p>
+        </div>
+      </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <PageTitle>更多安装案例</PageTitle>
+        <div className="rounded-lg p-4 mb-4" style={{ background: 'rgba(0,0,0,0.02)', border: '1px solid rgba(0,0,0,0.06)' }}>
+          <p className="font-semibold mb-2">指定安装路径</p>
+          <BookCode language="bash" code={`./configure --prefix=/usr/local/software`} />
+          <p className="text-xs mt-1" style={{ color: '#666' }}>使用--prefix参数指定软件安装路径</p>
+        </div>
+        <div className="rounded-lg p-4" style={{ background: 'rgba(0,0,0,0.02)', border: '1px solid rgba(0,0,0,0.06)' }}>
+          <p className="font-semibold mb-2">卸载源码安装的软件</p>
+          <BookCode language="bash" code={`make uninstall`} />
+          <p className="text-xs mt-1" style={{ color: '#666' }}>如果软件支持，可以使用make uninstall卸载，否则需要手动删除文件</p>
+        </div>
+        <SectionTitle>面试高频题</SectionTitle>
+        <div className="rounded-lg p-4 mb-4" style={{ background: 'rgba(0,0,0,0.02)', border: '1px solid rgba(0,0,0,0.06)' }}>
+          <p className="font-semibold mb-2">APT和RPM的区别</p>
+          <BookList items={[
+            'APT是Debian/Ubuntu的包管理，RPM是RedHat/CentOS的包管理',
+            'APT自动解决依赖关系，RPM需要手动处理依赖',
+            'APT使用.deb包格式，RPM使用.rpm包格式',
+            'APT配置在/etc/apt/，RPM配置在/etc/yum.repos.d/',
+          ]} />
+        </div>
+        <div className="rounded-lg p-4" style={{ background: 'rgba(0,0,0,0.02)', border: '1px solid rgba(0,0,0,0.06)' }}>
+          <p className="font-semibold mb-2">如何处理软件包依赖问题？</p>
+          <BookList items={[
+            '使用包管理器自动解决（apt/yum）',
+            '手动安装依赖包',
+            '使用--nodeps参数（不推荐）',
+            '使用容器或虚拟环境隔离依赖',
+          ]} />
+        </div>
+        <TagGrid items={['apt', 'rpm', 'yum', '源码编译', '依赖', '面试题']} />
+      </div>
     ),
   },
-];
+]
 
 export default function LinuxPackagePage() {
-  return (
-    <div className="container mx-auto py-8 px-4">
-      <Title level={2}>软件与包管理</Title>
-      <Tabs defaultActiveKey="basic" items={tabItems} />
-      <div className="flex justify-between mt-6">
-        <Button size="large" href="/study/linux/user">
-          上一章：用户与权限管理
-        </Button>
-        <Button type="primary" size="large" href="/study/linux/process">
-          下一章：进程与服务管理
-        </Button>
-      </div>
-    </div>
-  );
-} 
+  return <LessonLayout meta={META} spreads={SPREADS} />
+}

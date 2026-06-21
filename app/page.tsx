@@ -301,7 +301,7 @@ export default function Home() {
             
             {/* 学习分类导航 */}
             <div className="relative group">
-              <button className="flex items-center text-gray-700 font-semibold text-lg hover:text-gray-900 transition-colors py-2 px-4 rounded-md hover:bg-[#e8e0d0]">
+              <button className="flex items-center text-gray-700 font-semibold text-lg hover:text-gray-900 transition-colors py-2 px-4 rounded-md hover:bg-[#FFD6A5]">
                 🏫 学习中心
                 <svg className="ml-2 w-5 h-5 transition-transform group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -330,9 +330,9 @@ export default function Home() {
                             <Link
                               key={item.code}
                               href={homepage}
-                              className="flex items-center space-x-2 text-gray-600 hover:text-gray-800 text-sm transition-colors py-1 px-2 rounded hover:bg-[#e8e0d0]"
+                              className="flex items-center space-x-2 text-gray-600 hover:text-gray-800 text-sm transition-colors py-1 px-2 rounded hover:bg-[#FFD6A5]"
                             >
-                              <span className="flex-shrink-0 w-6 h-6 flex items-center justify-center bg-[#e8e0d0] text-sm text-gray-600 hover:bg-[#ddd5c5] hover:text-gray-800 rounded">
+                              <span className="flex-shrink-0 w-6 h-6 flex items-center justify-center bg-[#FFD6A5] text-sm text-gray-600 hover:bg-[#f0c08a] hover:text-gray-800 rounded">
                                 {item.code}
                               </span>
                               <span>{item.name}</span>
@@ -361,7 +361,7 @@ export default function Home() {
               </span>
               <button
                 onClick={() => setSearchQuery('')}
-                className="ml-4 text-[#8b7355] hover:text-[#6b5a45] underline"
+                className="ml-4 text-[#FFD6A5] hover:text-[#e8b883] underline"
               >
                 清除搜索
               </button>
@@ -374,7 +374,7 @@ export default function Home() {
           {filteredSoftware.length > 0 ? (
             filteredSoftware.map(group => (
               <div key={group.group}>
-                <h2 className="text-lg md:text-2xl font-bold mb-2 md:mb-3 text-gray-800 border-l-4 border-[#8b7355] pl-2 md:pl-3 bg-[#e8e0d0] py-1 rounded-r">
+                <h2 className="text-lg md:text-2xl font-bold mb-2 md:mb-3 text-gray-800 border-l-4 border-[#FFD6A5] pl-2 md:pl-3 bg-[#FFD6A5] py-1 rounded-r">
                   {group.group} ({group.items.length})
                 </h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-2 md:gap-4">
@@ -424,7 +424,7 @@ export default function Home() {
                   在线编写代码，沉浸式体验算法的魅力
                 </p>
                 <div className="flex justify-center gap-4 flex-wrap">
-                  <span className="px-4 py-2 bg-[#8b7355]/30 text-[#d4c8b8] rounded-full text-sm border border-[#8b7355]/30">
+                  <span className="px-4 py-2 bg-[#FFD6A5]/30 text-[#d4c8b8] rounded-full text-sm border border-[#FFD6A5]/30">
                     💻 在线编辑
                   </span>
                   <span className="px-4 py-2 bg-[#4a6741]/30 text-[#c4d4b8] rounded-full text-sm border border-[#4a6741]/30">
@@ -438,7 +438,7 @@ export default function Home() {
                   </span>
                 </div>
                 <div className="mt-6">
-                  <span className="inline-block px-6 py-3 bg-[#8b7355] text-white rounded-full font-semibold hover:shadow-lg transition-all hover:bg-[#6b5a45]">
+                  <span className="inline-block px-6 py-3 bg-[#FFD6A5] text-gray-800 rounded-full font-semibold hover:shadow-lg transition-all hover:bg-[#e8b883]">
                     立即体验 →
                   </span>
                 </div>

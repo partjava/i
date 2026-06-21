@@ -1,220 +1,148 @@
-'use client';
+'use client'
 
-import React from 'react';
-import { Typography, Card, Divider, Tabs } from 'antd';
+import LessonLayout, { type LessonMeta } from '@/app/components/ui/book/LessonLayout'
+import { THEMES } from '@/app/components/ui/book/theme'
+import {
+  PageTitle,
+  SectionTitle,
+  BookParagraph,
+  BookCode,
+  BookList,
+  TagGrid,
+} from '@/app/components/ui/book/BookContent'
 
-const { Title, Paragraph, Text } = Typography;
+const META: LessonMeta = {
+  subject: 'Web前端开发',
+  chapterTitle: '包管理与构建工具',
+  chapterNumber: 14,
+  totalChapters: 20,
+  subjectHref: '/study/computer/frontend',
+  prevChapter: { label: '前端工程化', href: '/study/computer/frontend/engineering' },
+  nextChapter: { label: '性能优化', href: '/study/computer/frontend/performance' },
+  theme: THEMES.computer,
+}
 
-const codeBlockStyle = {
-  background: '#f6f8fa',
-  borderRadius: 6,
-  padding: '12px 16px',
-  fontSize: 15,
-  margin: '12px 0',
-  fontFamily: 'monospace',
-  overflowX: 'auto' as const,
-};
-
-const tabItems = [
+const SPREADS = [
   {
-    key: '1',
-    label: '包管理器原理',
-    children: (
-      <>
-        <Card title="npm/yarn/pnpm对比" size="small" style={{ marginBottom: 12 }}>
-          <ul>
-            <li>npm：最早、最广泛，依赖树扁平，node_modules体积大。</li>
-            <li>yarn：速度快，锁文件yarn.lock，支持workspaces。</li>
-            <li>pnpm：磁盘复用，依赖隔离，体积小，速度快。</li>
-          </ul>
-        </Card>
-        <pre style={codeBlockStyle}>{`// 锁文件保证依赖一致性
+    label: '包管理器',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>包管理器原理</PageTitle>
+        <BookList items={[
+          'npm：最早、最广泛，依赖树扁平，node_modules体积大。',
+          'yarn：速度快，锁文件yarn.lock，支持workspaces。',
+          'pnpm：磁盘复用，依赖隔离，体积小，速度快。',
+        ]} />
+        <BookCode language="text" code={`// 锁文件保证依赖一致性
 // npm: package-lock.json
-yarn: yarn.lock
-pnpm: pnpm-lock.yaml`}</pre>
-        <pre style={codeBlockStyle}>{`// 查看依赖树
+// yarn: yarn.lock
+// pnpm: pnpm-lock.yaml`} />
+        <BookCode language="bash" code={`// 查看依赖树
 npm ls
 pnpm list
-yarn list`}</pre>
-      </>
-    ),
-  },
-  {
-    key: '2',
-    label: '常用命令与配置',
-    children: (
-      <>
-        <Paragraph>包管理器常用命令：安装、卸载、升级、运行脚本等。</Paragraph>
-        <pre style={codeBlockStyle}>{`npm install react
+yarn list`} />
+        <SectionTitle>常用命令与配置</SectionTitle>
+        <BookParagraph>包管理器常用命令：安装、卸载、升级、运行脚本等。</BookParagraph>
+        <BookCode language="bash" code={`npm install react
 npm uninstall lodash
 npm update
 npm run build
-npm run test`}</pre>
-        <pre style={codeBlockStyle}>{`// scripts配置
+npm run test`} />
+      </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <BookCode language="json" code={`// scripts配置
 {
   "scripts": {
     "start": "node index.js",
     "dev": "vite",
     "build": "webpack --mode production"
   }
-}`}</pre>
-      </>
+}`} />
+        <SectionTitle>版本控制与发布</SectionTitle>
+        <BookParagraph>npm包采用semver语义化版本，支持发布到npm或私有仓库。</BookParagraph>
+        <BookCode language="text" code={`// 版本号格式：主.次.补丁
+1.2.3`} />
+        <BookList items={[
+          '^1.0.0：兼容更新（允许主版本不变）',
+          '~1.0.0：补丁更新（仅允许补丁版本变化）',
+        ]} />
+        <BookCode language="bash" code={`// 发布包
+npm publish
+// 发布到私有仓库
+npm config set registry https://npm.mycompany.com`} />
+        <TagGrid items={['npm', 'yarn', 'pnpm', 'semver', 'publish']} />
+      </div>
     ),
   },
   {
-    key: '3',
-    label: '构建工具原理',
-    children: (
-      <>
-        <Card title="打包/转译/压缩/Tree Shaking" size="small" style={{ marginBottom: 12 }}>
-          <ul>
-            <li>打包：将多个模块合并为一个或多个文件</li>
-            <li>转译：Babel/TypeScript将新语法转为兼容代码</li>
-            <li>压缩：UglifyJS/Terser压缩体积</li>
-            <li>Tree Shaking：移除未用代码，减小包体积</li>
-          </ul>
-        </Card>
-        <pre style={codeBlockStyle}>{`// Tree Shaking示例
+    label: '构建工具与配置',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>构建工具原理</PageTitle>
+        <BookList items={[
+          '打包：将多个模块合并为一个或多个文件。',
+          '转译：Babel/TypeScript将新语法转为兼容代码。',
+          '压缩：UglifyJS/Terser压缩体积。',
+          'Tree Shaking：移除未用代码，减小包体积。',
+        ]} />
+        <BookCode language="javascript" code={`// Tree Shaking示例
 // math.js
 export function add(a, b) { return a + b; }
 export function sub(a, b) { return a - b; }
 // main.js
-import { add } from './math'; // 只会打包add`}</pre>
-      </>
-    ),
-  },
-  {
-    key: '4',
-    label: 'Babel/TypeScript配置',
-    children: (
-      <>
-        <Card title="Babel配置" size="small" style={{ marginBottom: 12 }}>
-          <pre style={codeBlockStyle}>{`// .babelrc
+import { add } from './math'; // 只会打包add`} />
+        <SectionTitle>Babel配置</SectionTitle>
+        <BookCode language="json" code={`// .babelrc
 {
   "presets": ["@babel/preset-env", "@babel/preset-react"]
-}`}</pre>
-        </Card>
-        <Card title="TypeScript配置" size="small">
-          <pre style={codeBlockStyle}>{`// tsconfig.json
+}`} />
+        <SectionTitle>TypeScript配置</SectionTitle>
+        <BookCode language="json" code={`// tsconfig.json
 {
   "compilerOptions": {
     "target": "es6",
     "module": "esnext",
     "strict": true
   }
-}`}</pre>
-        </Card>
-      </>
+}`} />
+      </div>
     ),
-  },
-  {
-    key: '5',
-    label: '版本控制与发布',
-    children: (
-      <>
-        <Paragraph>npm包采用semver语义化版本，支持发布到npm或私有仓库。</Paragraph>
-        <pre style={codeBlockStyle}>{`// 版本号格式：主.次.补丁
-1.2.3
-// 发布包
-npm publish
-// 发布到私有仓库
-npm config set registry https://npm.mycompany.com`}</pre>
-      </>
-    ),
-  },
-  {
-    key: '6',
-    label: '实战案例',
-    children: (
-      <>
-        <Card title="多包管理（Monorepo）" size="small" style={{ marginBottom: 12 }}>
-          <pre style={codeBlockStyle}>{`// pnpm workspace配置
-// pnpm-workspace.yaml
+    right: (
+      <div className="space-y-4">
+        <SectionTitle>实战案例</SectionTitle>
+        <BookParagraph><b>多包管理（Monorepo）：</b></BookParagraph>
+        <BookCode language="yaml" code={`# pnpm-workspace.yaml
 packages:
-  - 'packages/*'`}</pre>
-        </Card>
-        <Card title="构建优化" size="small">
-          <pre style={codeBlockStyle}>{`// 按需加载
+  - 'packages/*'`} />
+        <BookParagraph><b>构建优化：</b></BookParagraph>
+        <BookCode language="javascript" code={`// 按需加载
 import('lodash').then(_ => _.chunk([1,2,3], 2));
-// 生产环境去除console
-// terser-webpack-plugin配置
+// 生产环境去除console（terser-webpack-plugin配置）
 minimizer: [
   new TerserPlugin({
     terserOptions: { compress: { drop_console: true } }
   })
-]`}</pre>
-        </Card>
-      </>
-    ),
-  },
-  {
-    key: '7',
-    label: '练习与拓展',
-    children: (
-      <>
-        <ol>
-          <li>用npm scripts实现自动化构建和测试。</li>
-          <li>配置Babel和TypeScript支持React项目。</li>
-          <li>尝试用pnpm管理多包项目。</li>
-        </ol>
-        <Divider />
-        <ul>
-          <li><a href="https://docs.npmjs.com/" target="_blank" rel="noopener noreferrer">npm官方文档</a></li>
-          <li><a href="https://babel.docschina.org/" target="_blank" rel="noopener noreferrer">Babel中文文档</a></li>
-          <li><a href="https://www.typescriptlang.org/" target="_blank" rel="noopener noreferrer">TypeScript官网</a></li>
-        </ul>
-      </>
-    ),
-  },
-];
-
-export default function BuildToolsPage() {
-  return (
-    <div style={{ padding: 24, maxWidth: 900, margin: '0 auto' }}>
-      <Typography>
-        <Title level={1}>包管理与构建工具</Title>
-      </Typography>
-      <Tabs defaultActiveKey="1" items={tabItems} style={{ marginTop: 24 }} />
-      <div style={{ display: 'flex', justifyContent: 'space-between', margin: '48px 0 0 0' }}>
-        <a
-          href="/study/frontend/engineering"
-          style={{
-            background: '#386ff6',
-            color: '#fff',
-            padding: '12px 28px',
-            borderRadius: '16px',
-            fontSize: 18,
-            fontWeight: 500,
-            textDecoration: 'none',
-            boxShadow: '0 4px 16px rgba(56,111,246,0.15)',
-            transition: 'background 0.2s',
-            display: 'inline-block',
-          }}
-          onMouseOver={e => (e.currentTarget.style.background = '#2055c7')}
-          onMouseOut={e => (e.currentTarget.style.background = '#386ff6')}
-        >
-          上一章：前端工程化
-        </a>
-        <a
-          href="/study/frontend/performance"
-          style={{
-            background: '#386ff6',
-            color: '#fff',
-            padding: '12px 28px',
-            borderRadius: '16px',
-            fontSize: 18,
-            fontWeight: 500,
-            textDecoration: 'none',
-            boxShadow: '0 4px 16px rgba(56,111,246,0.15)',
-            transition: 'background 0.2s',
-            display: 'inline-block',
-          }}
-          onMouseOver={e => (e.currentTarget.style.background = '#2055c7')}
-          onMouseOut={e => (e.currentTarget.style.background = '#386ff6')}
-        >
-          下一章：性能优化
-        </a>
+]`} />
+        <SectionTitle>练习</SectionTitle>
+        <BookList items={[
+          '用npm scripts实现自动化构建和测试。',
+          '配置Babel和TypeScript支持React项目。',
+          '尝试用pnpm管理多包项目。',
+        ]} />
+        <SectionTitle>拓展资源</SectionTitle>
+        <BookList items={[
+          'npm官方文档：docs.npmjs.com',
+          'Babel中文文档：babel.docschina.org',
+          'TypeScript官网：www.typescriptlang.org',
+        ]} />
+        <TagGrid items={['Babel', 'TypeScript', 'Monorepo', '优化', '练习']} />
       </div>
-    </div>
-  );
-} 
+    ),
+  },
+]
+
+export default function FrontendBuildToolsPage() {
+  return <LessonLayout meta={META} spreads={SPREADS} />
+}

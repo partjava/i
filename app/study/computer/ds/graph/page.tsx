@@ -1,38 +1,49 @@
-'use client';
+'use client'
 
-import React from 'react';
-import { Card, Tabs, Progress, Alert, Typography, Collapse } from 'antd';
-import { LeftOutlined, RightOutlined } from '@ant-design/icons';
-import Link from 'next/link';
-import { CodeBlock } from '@/app/components/ui/CodeBlock';
+import LessonLayout, { type LessonMeta } from '@/app/components/ui/book/LessonLayout'
+import { THEMES } from '@/app/components/ui/book/theme'
+import {
+  PageTitle,
+  SectionTitle,
+  BookParagraph,
+  BookCode,
+  BookAlert,
+  BookList,
+  TagGrid,
+} from '@/app/components/ui/book/BookContent'
 
-const { Paragraph } = Typography;
+const META: LessonMeta = {
+  subject: '数据结构与算法',
+  chapterTitle: '图与图算法',
+  chapterNumber: 5,
+  totalChapters: 10,
+  subjectHref: '/study/computer/ds',
+  prevChapter: { label: '树与二叉树', href: '/study/computer/ds/tree' },
+  nextChapter: { label: '排序与查找', href: '/study/computer/ds/sort' },
+  theme: THEMES.computer,
+}
 
-export default function DsGraphPage() {
-  const tabItems = [
-    {
-      key: '1',
-      label: '🌐 图的基本概念与存储',
-      children: (
-        <Card title="图的基本概念与存储结构" className="mb-6">
-          <Paragraph>图分为有向图、无向图、带权图等。常用存储方式有邻接矩阵和邻接表：</Paragraph>
-          <CodeBlock language="cpp">{`// 邻接矩阵存储
+const SPREADS = [
+  {
+    label: '基本概念与遍历',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>图的基本概念与存储</PageTitle>
+        <BookParagraph>图分为有向图、无向图、带权图等。常用存储方式有邻接矩阵和邻接表：</BookParagraph>
+        <BookCode language="cpp" code={`// 邻接矩阵存储
 const int N = 100;
 int g[N][N]; // g[i][j]=1表示i到j有边
 // 邻接表存储
 vector<int> adj[N]; // adj[i]存储与i相邻的点
 // 带权邻接表
-vector<pair<int,int>> adjw[N]; // adjw[i]存储(i,权值)`}</CodeBlock>
-        </Card>
-      )
-    },
-    {
-      key: '2',
-      label: '🔍 图的遍历算法',
-      children: (
-        <Card title="图的遍历算法（DFS与BFS）" className="mb-6">
-          <Paragraph>图的遍历主要有深度优先搜索（DFS）和广度优先搜索（BFS）：</Paragraph>
-          <CodeBlock language="cpp">{`// DFS递归
+vector<pair<int,int>> adjw[N]; // adjw[i]存储(i,权值)`} />
+      </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <SectionTitle>图的遍历算法（DFS与BFS）</SectionTitle>
+        <BookParagraph>图的遍历主要有深度优先搜索（DFS）和广度优先搜索（BFS）：</BookParagraph>
+        <BookCode language="cpp" code={`// DFS递归
 void dfs(int u, vector<bool>& vis, vector<int> adj[]) {
     vis[u] = true;
     cout << u << ' ';
@@ -47,7 +58,7 @@ void dfsIter(int start, vector<bool>& vis, vector<int> adj[]) {
         vis[u] = true;
         cout << u << ' ';
         for (auto it = adj[u].rbegin(); it != adj[u].rend(); ++it)
-            if (!vis[*it]) st.push(*it); // 保证顺序
+            if (!vis[*it]) st.push(*it);
     }
 }
 // BFS
@@ -58,17 +69,19 @@ void bfs(int start, vector<bool>& vis, vector<int> adj[]) {
         cout << u << ' ';
         for (int v : adj[u]) if (!vis[v]) { vis[v] = true; q.push(v); }
     }
-}`}</CodeBlock>
-        </Card>
-      )
-    },
-    {
-      key: '3',
-      label: '🛠️ 经典图算法',
-      children: (
-        <Card title="经典图算法" className="mb-6">
-          <Paragraph>常用算法：拓扑排序、最短路、最小生成树等。</Paragraph>
-          <CodeBlock language="cpp">{`// 拓扑排序（Kahn算法，适用于DAG）
+}`} />
+        <TagGrid items={['邻接矩阵', '邻接表', 'DFS', 'BFS', '有向图', '无向图']} />
+      </div>
+    ),
+  },
+  {
+    label: '经典图算法',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>经典图算法</PageTitle>
+        <BookParagraph>常用算法：拓扑排序、最短路、最小生成树等。</BookParagraph>
+        <SectionTitle>拓扑排序（Kahn算法）</SectionTitle>
+        <BookCode language="cpp" code={`// 拓扑排序（Kahn算法，适用于DAG）
 vector<int> topoSort(int n, vector<int> adj[]) {
     vector<int> in(n, 0);
     for (int u = 0; u < n; ++u)
@@ -82,8 +95,9 @@ vector<int> topoSort(int n, vector<int> adj[]) {
         for (int v : adj[u]) if (--in[v] == 0) q.push(v);
     }
     return res;
-}
-// Dijkstra最短路（适用于正权图）
+}`} />
+        <SectionTitle>Dijkstra最短路</SectionTitle>
+        <BookCode language="cpp" code={`// Dijkstra最短路（适用于正权图）
 vector<int> dijkstra(int n, vector<pair<int,int>> adj[], int src) {
     vector<int> dist(n, 1e9);
     priority_queue<pair<int,int>, vector<pair<int,int>>, greater<>> pq;
@@ -99,15 +113,21 @@ vector<int> dijkstra(int n, vector<pair<int,int>> adj[], int src) {
         }
     }
     return dist;
-}
-// Floyd多源最短路
+}`} />
+      </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <SectionTitle>Floyd多源最短路</SectionTitle>
+        <BookCode language="cpp" code={`// Floyd多源最短路
 void floyd(int n, int g[][N]) {
     for (int k = 0; k < n; ++k)
         for (int i = 0; i < n; ++i)
             for (int j = 0; j < n; ++j)
                 g[i][j] = min(g[i][j], g[i][k] + g[k][j]);
-}
-// Kruskal最小生成树
+}`} />
+        <SectionTitle>Kruskal最小生成树</SectionTitle>
+        <BookCode language="cpp" code={`// Kruskal最小生成树
 struct Edge { int u, v, w; };
 bool cmp(Edge a, Edge b) { return a.w < b.w; }
 int find(int x, vector<int>& fa) { return fa[x] == x ? x : fa[x] = find(fa[x], fa); }
@@ -118,22 +138,21 @@ int kruskal(int n, vector<Edge>& edges) {
     int res = 0, cnt = 0;
     for (auto& e : edges) {
         int fu = find(e.u, fa), fv = find(e.v, fa);
-        if (fu != fv) {
-            fa[fu] = fv; res += e.w; cnt++;
-        }
+        if (fu != fv) { fa[fu] = fv; res += e.w; cnt++; }
     }
     return cnt == n - 1 ? res : -1;
-}`}</CodeBlock>
-        </Card>
-      )
-    },
-    {
-      key: '4',
-      label: '🌟 典型例题与完整解答',
-      children: (
-        <Card title="典型例题与完整解答" className="mb-6">
-          <Paragraph>1. 求无向图连通分量个数</Paragraph>
-          <CodeBlock language="cpp">{`// 连通分量个数
+}`} />
+        <TagGrid items={['拓扑排序', 'Dijkstra', 'Floyd', 'Kruskal', 'MST']} />
+      </div>
+    ),
+  },
+  {
+    label: '例题与练习',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>典型例题与完整解答</PageTitle>
+        <SectionTitle>1. 求无向图连通分量个数</SectionTitle>
+        <BookCode language="cpp" code={`// 连通分量个数
 #include <iostream>
 #include <vector>
 using namespace std;
@@ -152,9 +171,9 @@ int main() {
     vector<int> adj[5] = {{1,2},{0,3},{0,4},{1},{2}};
     cout << countComponents(n, adj) << endl; // 输出2
     return 0;
-}`}</CodeBlock>
-          <Paragraph>2. 岛屿数量（LeetCode 200）</Paragraph>
-          <CodeBlock language="cpp">{`// 岛屿数量
+}`} />
+        <SectionTitle>2. 岛屿数量（LeetCode 200）</SectionTitle>
+        <BookCode language="cpp" code={`// 岛屿数量
 #include <vector>
 #include <queue>
 using namespace std;
@@ -178,9 +197,13 @@ int numIslands(vector<vector<char>>& grid) {
         for (int j = 0; j < m; ++j)
             if (grid[i][j] == '1') { bfs(i, j, grid); cnt++; }
     return cnt;
-}`}</CodeBlock>
-          <Paragraph>3. 单源最短路径（Dijkstra）</Paragraph>
-          <CodeBlock language="cpp">{`// Dijkstra最短路
+}`} />
+      </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <SectionTitle>3. 单源最短路径（Dijkstra）</SectionTitle>
+        <BookCode language="cpp" code={`// Dijkstra最短路
 #include <iostream>
 #include <vector>
 #include <queue>
@@ -209,22 +232,10 @@ int main() {
     vector<int> d = dijkstra(n, adj, 0);
     for(int x:d) cout<<x<<' '; // 输出0 1 3
     return 0;
-}`}</CodeBlock>
-        </Card>
-      )
-    },
-    {
-      key: '5',
-      label: '💡 练习题与参考答案',
-      children: (
-        <Card title="练习题与参考答案" className="mb-6">
-          <Paragraph><b>练习题：</b></Paragraph>
-          <ul className="list-disc pl-6">
-            <li>
-              实现无向图的BFS遍历，并输出遍历顺序。
-              <Collapse className="mt-2">
-                <Collapse.Panel header="参考答案" key="1">
-                  <CodeBlock language="cpp">{`// 无向图BFS遍历
+}`} />
+        <SectionTitle>练习题与参考答案</SectionTitle>
+        <BookParagraph><b>练习题1：</b>实现无向图的BFS遍历，并输出遍历顺序。</BookParagraph>
+        <BookCode language="cpp" code={`// 无向图BFS遍历
 #include <iostream>
 #include <vector>
 #include <queue>
@@ -243,15 +254,9 @@ int main() {
     vector<bool> vis(n, false);
     bfs(0, vis, adj); // 输出0 1 2 3
     return 0;
-}`}</CodeBlock>
-                </Collapse.Panel>
-              </Collapse>
-            </li>
-            <li>
-              实现有向无环图的拓扑排序，并输出结果。
-              <Collapse className="mt-2">
-                <Collapse.Panel header="参考答案" key="2">
-                  <CodeBlock language="cpp">{`// 拓扑排序
+}`} />
+        <BookParagraph><b>练习题2：</b>实现有向无环图的拓扑排序，并输出结果。</BookParagraph>
+        <BookCode language="cpp" code={`// 拓扑排序
 #include <iostream>
 #include <vector>
 #include <queue>
@@ -276,54 +281,14 @@ int main() {
     vector<int> res = topoSort(n, adj);
     for(int x:res) cout<<x<<' '; // 输出0 1 2 3
     return 0;
-}`}</CodeBlock>
-                </Collapse.Panel>
-              </Collapse>
-            </li>
-          </ul>
-          <Alert message="温馨提示" description="建议多练习图的遍历、最短路、连通分量等高频题型，理解每个算法的实现细节。" type="info" showIcon />
-        </Card>
-      )
-    }
-  ];
-
-  return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* 页面头部 */}
-        <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">图与图算法</h1>
-              <p className="text-gray-600 mt-2">掌握图的存储、遍历、经典算法与高频题型</p>
-            </div>
-            <Progress type="circle" percent={50} size={100} strokeColor="#13c2c2" />
-          </div>
-        </div>
-
-        {/* 课程内容 */}
-        <div className="bg-white rounded-lg shadow-md p-8">
-          <Tabs items={tabItems} tabPosition="left" className="p-6" />
-        </div>
-
-        {/* 底部导航 */}
-        <div className="flex justify-between mt-8">
-          <Link
-            href="/study/ds/tree"
-            className="inline-flex items-center px-4 py-2 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-gray-600 hover:bg-gray-700"
-          >
-            <LeftOutlined className="mr-2" />
-            上一课：树与二叉树
-          </Link>
-          <Link
-            href="/study/ds/sort"
-            className="inline-flex items-center px-4 py-2 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"
-          >
-            下一课：排序与查找
-            <RightOutlined className="ml-2" />
-          </Link>
-        </div>
+}`} />
+        <BookAlert type="info" message="建议多练习图的遍历、最短路、连通分量等高频题型，理解每个算法的实现细节。" />
+        <TagGrid items={['连通分量', '岛屿', 'Dijkstra', '拓扑排序', 'BFS', 'DFS']} />
       </div>
-    </div>
-  );
-} 
+    ),
+  },
+]
+
+export default function DsGraphPage() {
+  return <LessonLayout meta={META} spreads={SPREADS} />
+}

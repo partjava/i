@@ -1,212 +1,173 @@
-'use client';
+'use client'
 
-import { useState } from 'react';
-import { Card, Tabs, Progress, Alert, Typography } from 'antd';
-import { LeftOutlined, RightOutlined } from '@ant-design/icons';
-import Link from 'next/link';
-import React from 'react';
-import { ExceptionOutlined, SafetyOutlined, ThunderboltOutlined, ExperimentOutlined } from '@ant-design/icons';
-import { CodeBlock } from '@/app/components/ui/CodeBlock';
+import LessonLayout, { type LessonMeta } from '@/app/components/ui/book/LessonLayout'
+import { THEMES } from '@/app/components/ui/book/theme'
+import {
+  PageTitle,
+  BookParagraph,
+  BookCode,
+  BookAlert,
+  BookList,
+  TagGrid,
+} from '@/app/components/ui/book/BookContent'
 
-const { TabPane } = Tabs;
-const { Title, Paragraph, Text } = Typography;
+const META: LessonMeta = {
+  subject: 'Python 编程',
+  chapterTitle: '异常处理',
+  chapterNumber: 8,
+  totalChapters: 11,
+  subjectHref: '/study/computer/python',
+  prevChapter: { label: '面向对象编程', href: '/study/computer/python/oop' },
+  nextChapter: { label: '标准库', href: '/study/computer/python/stdlib' },
+  theme: THEMES.computer,
+}
 
-export default function Page() {
-  const [activeTab, setActiveTab] = useState('1');
-
-  const tabItems = [
-    {
-      key: '1',
-      label: (
-        <span>
-          <ExceptionOutlined /> 异常基础
-        </span>
-      ),
-      children: (
-        <Card title="异常基础" className="mb-6">
-          <div className="space-y-4 mt-4">
-            <h3 className="text-xl font-semibold mb-2">基本捕获</h3>
-            <Paragraph>使用<code>try</code>/<code>except</code>/<code>finally</code>捕获和清理。</Paragraph>
-            <CodeBlock language="python">
-              {`try:
-    x = int(input("请输入数字: "))
-    print(10 / x)
-except ValueError:
-    print("无效的输入，请输入整数。")
-except ZeroDivisionError:
-    print("不能除以零。")
-finally:
-    print("程序结束。")`}
-            </CodeBlock>
-            <Alert
-              message="流程要点"
-              description={
-                <ul className="list-disc pl-6">
-                  <li>先执行<code>try</code>块，出现异常则跳转<code>except</code></li>
-                  <li>可定义多个<code>except</code>分支</li>
-                  <li><code>finally</code>块无论是否异常都会执行</li>
-                </ul>
-              }
-              type="info"
-              showIcon
-            />
-          </div>
-        </Card>
-      )
-    },
-    {
-      key: '2',
-      label: (
-        <span>
-          <SafetyOutlined /> 异常层次
-        </span>
-      ),
-      children: (
-        <Card title="异常层次" className="mb-6">
-          <div className="space-y-4 mt-4">
-            <h3 className="text-xl font-semibold mb-2">内置与自定义</h3>
-            <Paragraph>Python内置多种异常，也可自定义异常类。</Paragraph>
-            <CodeBlock language="python">
-              {`# 自定义异常
-class MyError(Exception):
-    pass
-
+const SPREADS = [
+  {
+    label: '异常基础',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>try-except 语句</PageTitle>
+        <BookCode language="python" showLineNumbers code={`# 基本 try-except
 try:
-    raise MyError("示例错误")
-except MyError as e:
-    print(f"捕获到自定义异常: {e}")
-except Exception:
-    print("其他异常")`}
-            </CodeBlock>
-            <Alert
-              message="层次要点"
-              description={
-                <ul className="list-disc pl-6">
-                  <li>所有异常均继承自<code>BaseException</code></li>
-                  <li>自定义异常需继承<code>Exception</code>类</li>
-                  <li>捕获子类异常要放在父类之前</li>
-                </ul>
-              }
-              type="warning"
-              showIcon
-            />
-          </div>
-        </Card>
-      )
-    },
-    {
-      key: '3',
-      label: (
-        <span>
-          <ThunderboltOutlined /> 处理示例
-        </span>
-      ),
-      children: (
-        <Card title="处理示例" className="mb-6">
-          <div className="space-y-4 mt-4">
-            <h3 className="text-xl font-semibold mb-2">上下文管理</h3>
-            <Paragraph>使用<code>contextlib.suppress</code>或<code>with</code>简化。</Paragraph>
-            <CodeBlock language="python">
-              {`from contextlib import suppress
+    num = int(input("请输入数字: "))
+    result = 10 / num
+    print(f"结果是: {result}")
+except ValueError:
+    print("输入的不是有效数字")
+except ZeroDivisionError:
+    print("不能除以零")
+except Exception as e:
+    print(f"发生未知错误: {e}")
 
-with suppress(FileNotFoundError):
-    with open('nofile.txt') as f:
-        data = f.read()
-    print(data)
-print("继续执行...")`}
-            </CodeBlock>
-            <Alert
-              message="示例要点"
-              description={
-                <ul className="list-disc pl-6">
-                  <li><code>suppress</code>可选择性忽略指定异常</li>
-                  <li><code>with</code>可管理资源确保关闭文件</li>
-                </ul>
-              }
-              type="info"
-              showIcon
-            />
-          </div>
-        </Card>
-      )
-    },
-    {
-      key: '4',
-      label: (
-        <span>
-          <ExperimentOutlined /> 练习例题
-        </span>
-      ),
-      children: (
-        <Card title="练习：安全除法" className="mb-6">
-          <div className="space-y-4 mt-4">
-            <h3 className="text-xl font-semibold mb-2">实现安全除法</h3>
-            <Paragraph>编写函数<code>safe_div(a, b)</code>，当除数为0时返回<code>None</code>，否则返回商。</Paragraph>
-            <CodeBlock language="python">
-              {`def safe_div(a, b):
-    try:
-        return a / b
-    except ZeroDivisionError:
-        return None
-
-print(safe_div(10, 2))  # 5.0
-print(safe_div(10, 0))  # None`}
-            </CodeBlock>
-            <Alert
-              message="知识点"
-              description={
-                <ul className="list-disc pl-6">
-                  <li>设计函数时考虑异常场景</li>
-                  <li>使用<code>try/except</code>控制错误返回</li>
-                  <li>保持函数接口简单一致</li>
-                </ul>
-              }
-              type="success"
-              showIcon
-            />
-          </div>
-        </Card>
-      )
-    }
-  ];
-
-  return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* 页面头部 */}
-        <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">异常处理</h1>
-              <p className="text-gray-600 mt-2">学习Python的异常类型及处理机制</p>
-            </div>
-            <Progress type="circle" percent={70} size={80} strokeColor="#1890ff" />
-          </div>
-        </div>
-
-        {/* 课程内容 */}
-        <div className="bg-white rounded-lg shadow-md p-8">
-          <Tabs activeKey={activeTab} onChange={setActiveTab} className="p-6" items={tabItems} />
-        </div>
-
-        {/* 底部导航 */}
-        <div className="flex justify-between mt-8">
-          <Link
-            href="/study/python/oop"
-            className="inline-flex items-center px-4 py-2 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
-          >
-            <LeftOutlined className="mr-2" />
-            上一课：面向对象编程
-          </Link>
-          <Link
-            href="/study/python/stdlib"
-            className="inline-flex items-center px-4 py-2 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-          >
-            下一课：标准库
-            <RightOutlined className="ml-2" />
-          </Link>
-        </div>
+# try-except-else-finally
+try:
+    file = open("example.txt", "r")
+    content = file.read()
+except FileNotFoundError:
+    print("文件不存在")
+else:
+    print("文件读取成功")
+    print(content)
+finally:
+    print("无论如何都会执行")
+    if 'file' in locals():
+        file.close()`} />
       </div>
-    </div>
-  );
-} 
+    ),
+    right: (
+      <div className="space-y-4">
+        <PageTitle>常见异常类型</PageTitle>
+        <BookCode language="python" showLineNumbers code={`# 常见的内置异常
+# ValueError: 值错误
+int("abc")  # ValueError
+
+# TypeError: 类型错误
+"hello" + 5  # TypeError
+
+# IndexError: 索引错误
+lst = [1, 2, 3]
+lst[10]  # IndexError
+
+# KeyError: 键错误
+d = {"a": 1}
+d["b"]  # KeyError
+
+# AttributeError: 属性错误
+None.strip()  # AttributeError
+
+# ImportError: 导入错误
+import nonexistent_module  # ImportError
+
+# 捕获多个异常
+try:
+    x = int("abc")
+except (ValueError, TypeError) as e:
+    print(f"值或类型错误: {e}")
+
+# 获取异常信息
+try:
+    1 / 0
+except ZeroDivisionError as e:
+    print(f"错误类型: {type(e).__name__}")
+    print(f"错误信息: {str(e)}")`} />
+      </div>
+    ),
+  },
+  {
+    label: '自定义异常',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>自定义异常与断言</PageTitle>
+        <BookCode language="python" showLineNumbers code={`# 自定义异常
+class WithdrawError(Exception):
+    """提款异常"""
+    def __init__(self, balance, amount, message=None):
+        self.balance = balance
+        self.amount = amount
+        self.message = message or f"余额不足: 余额{balance}, 需要{amount}"
+        super().__init__(self.message)
+
+class BankAccount:
+    def __init__(self, owner, balance=0):
+        self.owner = owner
+        self.balance = balance
+
+    def withdraw(self, amount):
+        if amount <= 0:
+            raise ValueError("提款金额必须为正数")
+        if amount > self.balance:
+            raise WithdrawError(self.balance, amount)
+        self.balance -= amount
+        return amount
+
+# 使用
+account = BankAccount("小明", 1000)
+try:
+    account.withdraw(1500)
+except WithdrawError as e:
+    print(e.message)`} />
+      </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <PageTitle>断言与上下文管理</PageTitle>
+        <BookCode language="python" showLineNumbers code={`# 断言
+def divide(a, b):
+    assert b != 0, "除数不能为零"
+    assert isinstance(a, (int, float)), "参数必须是数字"
+    return a / b
+
+# 上下文管理器
+class FileManager:
+    def __init__(self, filename, mode):
+        self.filename = filename
+        self.mode = mode
+
+    def __enter__(self):
+        self.file = open(self.filename, self.mode)
+        return self.file
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.file.close()
+        # 返回 False 则传播异常，True 则抑制异常
+        return False
+
+# 使用自定义上下文管理器
+with FileManager("test.txt", "w") as f:
+    f.write("Hello, World!")
+
+# 异常处理最佳实践
+# 1. 异常应用于异常情况，不要用于控制流程
+# 2. 尽量捕获具体异常而非 Exception
+# 3. 在恰当的层级捕获异常
+# 4. 使用 finally 释放资源
+# 5. 自定义异常继承 Exception`} />
+      </div>
+    ),
+  },
+]
+
+export default function ExceptionsPage() {
+  return <LessonLayout meta={META} spreads={SPREADS} />
+}
