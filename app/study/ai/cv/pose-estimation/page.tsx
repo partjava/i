@@ -1,491 +1,93 @@
-'use client';
+'use client'
 
-import { useState } from 'react';
-import Link from 'next/link';
+import LessonLayout, { type LessonMeta } from '@/app/components/ui/book/LessonLayout'
+import { THEMES } from '@/app/components/ui/book/theme'
+import {
+  PageTitle, SectionTitle, BookParagraph, BookCode, BookList,
+} from '@/app/components/ui/book/BookContent'
 
-export default function PoseEstimationPage() {
-  const [activeTab, setActiveTab] = useState('overview');
-  const [expandedContent, setExpandedContent] = useState<string | null>(null);
-
-  const tabs = [
-    { id: 'overview', label: '概述' },
-    { id: '2d', label: '2D姿态估计' },
-    { id: '3d', label: '3D姿态估计' },
-    { id: 'applications', label: '应用场景' },
-    { id: 'code', label: '代码示例' }
-  ];
-
-  const toggleContent = (contentId: string) => {
-    setExpandedContent(expandedContent === contentId ? null : contentId);
-  };
-
-  return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-6">姿态估计</h1>
-      
-      {/* 标签导航 */}
-      <div className="flex space-x-4 mb-6 border-b overflow-x-auto">
-        {tabs.map(tab => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={`px-4 py-2 font-medium whitespace-nowrap ${
-              activeTab === tab.id 
-                ? 'border-b-2 border-blue-500 text-blue-600' 
-                : 'text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
-
-      {/* 内容区域 */}
-      <div className="bg-white rounded-lg shadow-md p-6">
-        {activeTab === 'overview' && (
-          <div className="space-y-6">
-            <div>
-              <h3 className="text-xl font-semibold mb-3">姿态估计概述</h3>
-              <div className="prose max-w-none">
-                <p className="mb-4">
-                  姿态估计是计算机视觉中的重要任务，旨在从图像或视频中估计人体或物体的空间位置和姿态。
-                  根据输出维度的不同，可以分为2D姿态估计和3D姿态估计。
-                </p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                  <div>
-                    <h4 className="font-semibold mb-2">主要任务：</h4>
-                    <ul className="list-disc pl-6 space-y-2">
-                      <li>关键点检测：定位身体关键点</li>
-                      <li>骨架估计：连接关键点形成骨架</li>
-                      <li>姿态分析：理解动作和姿态</li>
-                      <li>3D重建：估计3D空间中的姿态</li>
-                    </ul>
-                  </div>
-                  <div className="relative h-48">
-                    <svg viewBox="0 0 300 200" className="w-full h-full">
-                      {/* 姿态估计示意图 */}
-                      <rect x="50" y="50" width="200" height="100" fill="#f0f0f0" stroke="#333" strokeWidth="2"/>
-                      <circle cx="150" cy="75" r="5" fill="#4a90e2"/>
-                      <circle cx="120" cy="100" r="5" fill="#4a90e2"/>
-                      <circle cx="180" cy="100" r="5" fill="#4a90e2"/>
-                      <line x1="150" y1="75" x2="120" y2="100" stroke="#333" strokeWidth="2"/>
-                      <line x1="150" y1="75" x2="180" y2="100" stroke="#333" strokeWidth="2"/>
-                      <text x="140" y="70" className="text-sm">2D/3D</text>
-                    </svg>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <h3 className="text-xl font-semibold mb-3">技术挑战</h3>
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <ul className="list-disc pl-6 space-y-2">
-                  <li>遮挡问题
-                    <ul className="list-disc pl-6 mt-2">
-                      <li>自遮挡</li>
-                      <li>物体遮挡</li>
-                      <li>多人遮挡</li>
-                    </ul>
-                  </li>
-                  <li>姿态多样性
-                    <ul className="list-disc pl-6 mt-2">
-                      <li>复杂动作</li>
-                      <li>快速运动</li>
-                      <li>极端姿态</li>
-                    </ul>
-                  </li>
-                  <li>环境因素
-                    <ul className="list-disc pl-6 mt-2">
-                      <li>光照变化</li>
-                      <li>背景干扰</li>
-                      <li>视角变化</li>
-                    </ul>
-                  </li>
-                  <li>实时性要求
-                    <ul className="list-disc pl-6 mt-2">
-                      <li>计算效率</li>
-                      <li>延迟控制</li>
-                      <li>资源限制</li>
-                    </ul>
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {activeTab === '2d' && (
-          <div className="space-y-6">
-            <div>
-              <h3 className="text-xl font-semibold mb-3">传统方法</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <h4 className="font-semibold mb-2">基于图形模型</h4>
-                  <ul className="list-disc pl-6 space-y-2">
-                    <li>Pictorial Structures
-                      <ul className="list-disc pl-6 mt-2">
-                        <li>部件检测</li>
-                        <li>空间关系建模</li>
-                        <li>图模型推理</li>
-                      </ul>
-                    </li>
-                    <li>Deformable Part Models
-                      <ul className="list-disc pl-6 mt-2">
-                        <li>可变形部件</li>
-                        <li>空间约束</li>
-                        <li>结构预测</li>
-                      </ul>
-                    </li>
-                  </ul>
-                </div>
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <h4 className="font-semibold mb-2">基于回归</h4>
-                  <ul className="list-disc pl-6 space-y-2">
-                    <li>随机森林
-                      <ul className="list-disc pl-6 mt-2">
-                        <li>特征提取</li>
-                        <li>回归预测</li>
-                        <li>级联回归</li>
-                      </ul>
-                    </li>
-                    <li>深度回归
-                      <ul className="list-disc pl-6 mt-2">
-                        <li>CNN特征</li>
-                        <li>坐标回归</li>
-                        <li>多任务学习</li>
-                      </ul>
-                    </li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <h3 className="text-xl font-semibold mb-3">深度学习方法</h3>
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <ul className="list-disc pl-6 space-y-2">
-                  <li>基于热图
-                    <ul className="list-disc pl-6 mt-2">
-                      <li>Stacked Hourglass</li>
-                      <li>HRNet</li>
-                      <li>CPN</li>
-                    </ul>
-                  </li>
-                  <li>基于回归
-                    <ul className="list-disc pl-6 mt-2">
-                      <li>DeepPose</li>
-                      <li>DensePose</li>
-                      <li>OpenPose</li>
-                    </ul>
-                  </li>
-                  <li>混合方法
-                    <ul className="list-disc pl-6 mt-2">
-                      <li>热图+回归</li>
-                      <li>多尺度特征</li>
-                      <li>注意力机制</li>
-                    </ul>
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {activeTab === '3d' && (
-          <div className="space-y-6">
-            <div>
-              <h3 className="text-xl font-semibold mb-3">单目3D姿态估计</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <h4 className="font-semibold mb-2">基于模型</h4>
-                  <ul className="list-disc pl-6 space-y-2">
-                    <li>SMPL模型
-                      <ul className="list-disc pl-6 mt-2">
-                        <li>参数化人体模型</li>
-                        <li>姿态参数估计</li>
-                        <li>形状参数估计</li>
-                      </ul>
-                    </li>
-                    <li>骨架模型
-                      <ul className="list-disc pl-6 mt-2">
-                        <li>关节角度估计</li>
-                        <li>骨骼长度约束</li>
-                        <li>运动学约束</li>
-                      </ul>
-                    </li>
-                  </ul>
-                </div>
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <h4 className="font-semibold mb-2">基于学习</h4>
-                  <ul className="list-disc pl-6 space-y-2">
-                    <li>端到端方法
-                      <ul className="list-disc pl-6 mt-2">
-                        <li>直接回归</li>
-                        <li>多任务学习</li>
-                        <li>自监督学习</li>
-                      </ul>
-                    </li>
-                    <li>两阶段方法
-                      <ul className="list-disc pl-6 mt-2">
-                        <li>2D检测</li>
-                        <li>3D重建</li>
-                        <li>优化后处理</li>
-                      </ul>
-                    </li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <h3 className="text-xl font-semibold mb-3">多视角方法</h3>
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <ul className="list-disc pl-6 space-y-2">
-                  <li>多相机系统
-                    <ul className="list-disc pl-6 mt-2">
-                      <li>相机标定</li>
-                      <li>三角测量</li>
-                      <li>多视角融合</li>
-                    </ul>
-                  </li>
-                  <li>深度相机
-                    <ul className="list-disc pl-6 mt-2">
-                      <li>深度信息</li>
-                      <li>点云处理</li>
-                      <li>实时跟踪</li>
-                    </ul>
-                  </li>
-                  <li>混合方法
-                    <ul className="list-disc pl-6 mt-2">
-                      <li>RGB-D融合</li>
-                      <li>多模态学习</li>
-                      <li>传感器融合</li>
-                    </ul>
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'applications' && (
-          <div className="space-y-6">
-            <div>
-              <h3 className="text-xl font-semibold mb-3">应用领域</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <h4 className="font-semibold mb-2">人机交互</h4>
-                  <ul className="list-disc pl-6 space-y-2">
-                    <li>动作控制
-                      <ul className="list-disc pl-6 mt-2">
-                        <li>手势识别</li>
-                        <li>体感游戏</li>
-                        <li>虚拟现实</li>
-                      </ul>
-                    </li>
-                    <li>行为分析
-                      <ul className="list-disc pl-6 mt-2">
-                        <li>动作识别</li>
-                        <li>姿态评估</li>
-                        <li>异常检测</li>
-                      </ul>
-                    </li>
-                  </ul>
-                </div>
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <h4 className="font-semibold mb-2">医疗健康</h4>
-                  <ul className="list-disc pl-6 space-y-2">
-                    <li>康复训练
-                      <ul className="list-disc pl-6 mt-2">
-                        <li>动作指导</li>
-                        <li>姿态纠正</li>
-                        <li>进度评估</li>
-                      </ul>
-                    </li>
-                    <li>运动分析
-                      <ul className="list-disc pl-6 mt-2">
-                        <li>运动捕捉</li>
-                        <li>生物力学</li>
-                        <li>运动评估</li>
-                      </ul>
-                    </li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <h3 className="text-xl font-semibold mb-3">其他应用</h3>
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <ul className="list-disc pl-6 space-y-2">
-                  <li>安防监控
-                    <ul className="list-disc pl-6 mt-2">
-                      <li>行为分析</li>
-                      <li>异常检测</li>
-                      <li>人数统计</li>
-                    </ul>
-                  </li>
-                  <li>智能零售
-                    <ul className="list-disc pl-6 mt-2">
-                      <li>顾客行为</li>
-                      <li>商品交互</li>
-                      <li>客流分析</li>
-                    </ul>
-                  </li>
-                  <li>体育分析
-                    <ul className="list-disc pl-6 mt-2">
-                      <li>动作分析</li>
-                      <li>技术评估</li>
-                      <li>训练指导</li>
-                    </ul>
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'code' && (
-          <div className="space-y-6">
-            <div>
-              <h3 className="text-xl font-semibold mb-3">OpenPose示例</h3>
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <pre className="text-sm overflow-x-auto">
-                  <code>{`# 导入必要的库
-import cv2
+const openposeCode = `import cv2
 import numpy as np
 from openpose import OpenPose
 
-# 初始化OpenPose
 op = OpenPose()
-
-# 读取图像
 image = cv2.imread('person.jpg')
-
-# 进行姿态估计
 keypoints = op.detect(image)
 
-# 绘制骨架
 def draw_skeleton(image, keypoints):
-    # 定义骨架连接
-    skeleton = [
-        [0,1], [1,2], [2,3], [3,4],  # 右臂
-        [0,5], [5,6], [6,7], [7,8],  # 左臂
-        [0,9], [9,10], [10,11], [11,12],  # 右腿
-        [0,13], [13,14], [14,15], [15,16]  # 左腿
-    ]
-    
-    # 绘制关键点
+    skeleton = [[0,1],[1,2],[2,3],[3,4],[0,5],[5,6],[6,7],[7,8],[0,9],[9,10],[10,11],[11,12],[0,13],[13,14],[14,15],[15,16]]
     for point in keypoints:
         x, y = point
         cv2.circle(image, (int(x), int(y)), 4, (0, 255, 0), -1)
-    
-    # 绘制骨架连接
     for connection in skeleton:
-        start_point = keypoints[connection[0]]
-        end_point = keypoints[connection[1]]
-        cv2.line(image, 
-                (int(start_point[0]), int(start_point[1])),
-                (int(end_point[0]), int(end_point[1])),
-                (0, 255, 0), 2)
-    
+        start = keypoints[connection[0]]; end = keypoints[connection[1]]
+        cv2.line(image, (int(start[0]), int(start[1])), (int(end[0]), int(end[1])), (0, 255, 0), 2)
     return image
 
-# 绘制结果
 result = draw_skeleton(image.copy(), keypoints)
+cv2.imshow('Pose Estimation', result); cv2.waitKey(0); cv2.destroyAllWindows()`
 
-# 显示结果
-cv2.imshow('Pose Estimation', result)
-cv2.waitKey(0)
-cv2.destroyAllWindows()`}</code>
-                </pre>
-              </div>
-            </div>
-
-            <div>
-              <h3 className="text-xl font-semibold mb-3">3D姿态估计示例</h3>
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <pre className="text-sm overflow-x-auto">
-                  <code>{`# 导入必要的库
-import torch
+const pose3dCode = `import torch
 import torch.nn as nn
 import torchvision.models as models
 
 class Pose3DNet(nn.Module):
     def __init__(self, num_joints=17):
         super().__init__()
-        # 使用ResNet作为特征提取器
         resnet = models.resnet50(pretrained=True)
         self.features = nn.Sequential(*list(resnet.children())[:-1])
-        
-        # 3D姿态回归头
         self.pose_head = nn.Sequential(
-            nn.Linear(2048, 1024),
-            nn.ReLU(),
-            nn.Dropout(0.5),
-            nn.Linear(1024, num_joints * 3)  # 每个关节3个坐标
-        )
-        
+            nn.Linear(2048, 1024), nn.ReLU(), nn.Dropout(0.5),
+            nn.Linear(1024, num_joints * 3))
     def forward(self, x):
-        # 提取特征
-        features = self.features(x)
-        features = features.view(features.size(0), -1)
-        
-        # 预测3D姿态
-        pose_3d = self.pose_head(features)
-        pose_3d = pose_3d.view(-1, 17, 3)  # 重塑为关节数x3的格式
-        
-        return pose_3d
+        features = self.features(x).view(x.size(0), -1)
+        return self.pose_head(features).view(-1, 17, 3)
 
-# 训练函数
 def train_pose3d(model, train_loader, criterion, optimizer):
     model.train()
     for batch_idx, (data, target) in enumerate(train_loader):
-        optimizer.zero_grad()
-        output = model(data)
-        loss = criterion(output, target)
-        loss.backward()
-        optimizer.step()
-        
+        optimizer.zero_grad(); output = model(data); loss = criterion(output, target)
+        loss.backward(); optimizer.step()
         if batch_idx % 100 == 0:
-            print(f'Train Epoch: {epoch} [{batch_idx}/{len(train_loader)}] '
-                  f'Loss: {loss.item():.6f}')
+            print(f'Train Epoch: {epoch} [{batch_idx}/{len(train_loader)}] Loss: {loss.item():.6f}')
 
-# 评估函数
 def evaluate_pose3d(model, test_loader):
-    model.eval()
-    total_error = 0
+    model.eval(); total_error = 0
     with torch.no_grad():
         for data, target in test_loader:
             output = model(data)
-            # 计算MPJPE (Mean Per Joint Position Error)
-            error = torch.norm(output - target, dim=2).mean()
-            total_error += error.item()
-    
-    return total_error / len(test_loader)`}</code>
-                </pre>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
+            total_error += torch.norm(output - target, dim=2).mean().item()
+    return total_error / len(test_loader)`
 
-      {/* 底部导航 */}
-      <div className="mt-8 flex justify-between">
-        <Link 
-          href="/study/ai/cv/face-recognition"
-          className="px-4 py-2 text-blue-600 hover:text-blue-800"
-        >
-          ← 返回人脸识别
-        </Link>
-        <Link 
-          href="/study/ai/cv/video-analysis"
-          className="px-4 py-2 text-blue-600 hover:text-blue-800"
-        >
-          视频分析 →
-        </Link>
-      </div>
-    </div>
-  );
-} 
+const META: LessonMeta = {
+  subject: '计算机视觉', chapterTitle: '姿态估计', chapterNumber: 7, totalChapters: 13,
+  subjectHref: '/study/ai/cv',
+  prevChapter: { label: '人脸识别', href: '/study/ai/cv/face-recognition' },
+  nextChapter: { label: '视频分析', href: '/study/ai/cv/video-analysis' },
+  theme: THEMES.ai,
+}
+
+const SPREADS = [
+  {
+    label: '概述', left: (<div className="space-y-4"><PageTitle>姿态估计概述</PageTitle><BookParagraph>姿态估计是计算机视觉中的重要任务，旨在从图像或视频中估计人体或物体的空间位置和姿态。根据输出维度的不同，可以分为2D姿态估计和3D姿态估计。</BookParagraph><SectionTitle>主要任务：</SectionTitle><BookList items={['关键点检测：定位身体关键点','骨架估计：连接关键点形成骨架','姿态分析：理解动作和姿态','3D重建：估计3D空间中的姿态']} /><SectionTitle>技术挑战</SectionTitle><BookParagraph><b>遮挡问题：</b>自遮挡、物体遮挡、多人遮挡</BookParagraph><BookParagraph><b>姿态多样性：</b>复杂动作、快速运动、极端姿态</BookParagraph><BookParagraph><b>环境因素：</b>光照变化、背景干扰、视角变化</BookParagraph><BookParagraph><b>实时性要求：</b>计算效率、延迟控制、资源限制</BookParagraph></div>),
+    right: (<div className="space-y-4"><br /><br /><br /><br /><br /><br /><br /><br /><br /></div>),
+  },
+  {
+    label: '2D姿态估计', left: (<div className="space-y-4"><PageTitle>2D姿态估计</PageTitle><SectionTitle>传统方法</SectionTitle><BookParagraph><b>基于图形模型：</b>Pictorial Structures(部件检测、空间关系建模、图模型推理)，Deformable Part Models(可变形部件、空间约束、结构预测)</BookParagraph><BookParagraph><b>基于回归：</b>随机森林(特征提取、回归预测、级联回归)，深度回归(CNN特征、坐标回归、多任务学习)</BookParagraph><SectionTitle>深度学习方法</SectionTitle><BookParagraph><b>基于热图：</b>Stacked Hourglass、HRNet、CPN</BookParagraph><BookParagraph><b>基于回归：</b>DeepPose、DensePose、OpenPose</BookParagraph><BookParagraph><b>混合方法：</b>热图+回归、多尺度特征、注意力机制</BookParagraph></div>),
+    right: (<div className="space-y-4"><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /></div>),
+  },
+  {
+    label: '3D姿态估计', left: (<div className="space-y-4"><PageTitle>3D姿态估计</PageTitle><SectionTitle>单目3D姿态估计</SectionTitle><BookParagraph><b>基于模型：</b>SMPL模型(参数化人体模型、姿态参数估计、形状参数估计)，骨架模型(关节角度估计、骨骼长度约束、运动学约束)</BookParagraph><BookParagraph><b>基于学习：</b>端到端方法(直接回归、多任务学习、自监督学习)，两阶段方法(2D检测、3D重建、优化后处理)</BookParagraph></div>),
+    right: (<div className="space-y-4"><br /><SectionTitle>多视角方法</SectionTitle><BookParagraph><b>多相机系统：</b>相机标定、三角测量、多视角融合</BookParagraph><BookParagraph><b>深度相机：</b>深度信息、点云处理、实时跟踪</BookParagraph><BookParagraph><b>混合方法：</b>RGB-D融合、多模态学习、传感器融合</BookParagraph></div>),
+  },
+  {
+    label: '应用场景', left: (<div className="space-y-4"><PageTitle>应用场景</PageTitle><SectionTitle>人机交互</SectionTitle><BookParagraph><b>动作控制：</b>手势识别、体感游戏、虚拟现实</BookParagraph><BookParagraph><b>行为分析：</b>动作识别、姿态评估、异常检测</BookParagraph><SectionTitle>医疗健康</SectionTitle><BookParagraph><b>康复训练：</b>动作指导、姿态纠正、进度评估</BookParagraph><BookParagraph><b>运动分析：</b>运动捕捉、生物力学、运动评估</BookParagraph></div>),
+    right: (<div className="space-y-4"><br /><SectionTitle>其他应用</SectionTitle><BookParagraph><b>安防监控：</b>行为分析、异常检测、人数统计</BookParagraph><BookParagraph><b>智能零售：</b>顾客行为、商品交互、客流分析</BookParagraph><BookParagraph><b>体育分析：</b>动作分析、技术评估、训练指导</BookParagraph></div>),
+  },
+  {
+    label: '代码示例', left: (<div className="space-y-4"><PageTitle>代码示例</PageTitle><SectionTitle>OpenPose示例</SectionTitle><BookCode language="python" code={openposeCode} /></div>),
+    right: (<div className="space-y-4"><SectionTitle>3D姿态估计示例</SectionTitle><BookCode language="python" code={pose3dCode} /></div>),
+  },
+]
+
+export default function CvPoseEstimationPage() { return <LessonLayout meta={META} spreads={SPREADS} /> }

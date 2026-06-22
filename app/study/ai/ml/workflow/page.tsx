@@ -1,197 +1,83 @@
-'use client';
+'use client'
 
-import { useState } from 'react';
-import Link from 'next/link';
-import { FaDatabase, FaChartLine, FaCode, FaTools, FaCheckCircle, FaArrowRight } from 'react-icons/fa';
-import { SiScikitlearn, SiPandas, SiNumpy, SiJupyter } from 'react-icons/si';
+import LessonLayout, { type LessonMeta } from '@/app/components/ui/book/LessonLayout'
+import { THEMES } from '@/app/components/ui/book/theme'
+import {
+  PageTitle, SectionTitle, BookParagraph, BookCode, BookList, TagGrid,
+} from '@/app/components/ui/book/BookContent'
 
-export default function MLWorkflowPage() {
-  const [activeTab, setActiveTab] = useState('theory');
+const META: LessonMeta = {
+  subject: '机器学习',
+  chapterTitle: '机器学习项目流程',
+  chapterNumber: 2,
+  totalChapters: 11,
+  subjectHref: '/study/ai/ml',
+  prevChapter: { label: '机器学习基础', href: '/study/ai/ml/basic' },
+  nextChapter: { label: '监督学习算法', href: '/study/ai/ml/supervised' },
+  theme: THEMES.ai,
+}
 
-  return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-6">机器学习项目流程</h1>
-      
-      {/* 进度条 */}
-      <div className="w-full bg-gray-200 rounded-full h-2.5 mb-8">
-        <div className="bg-blue-600 h-2.5 rounded-full" style={{ width: '20%' }}></div>
+const SPREADS = [
+  {
+    label: '理论知识',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>机器学习项目流程</PageTitle>
+        <BookParagraph>一个完整的机器学习项目通常包含以下步骤：问题定义、数据收集、数据预处理、特征工程、模型训练、模型评估和部署。每个步骤都至关重要，需要仔细规划和执行。</BookParagraph>
+        <SectionTitle>前期准备</SectionTitle>
+        <BookList items={['明确项目目标和需求', '确定评估指标', '收集相关数据', '准备开发环境']} />
+        <SectionTitle>后期工作</SectionTitle>
+        <BookList items={['模型优化和调参', '模型部署和维护', '性能监控和更新', '文档编写和分享']} />
       </div>
-
-      {/* 标签页导航 */}
-      <div className="flex space-x-4 mb-8">
-        <button
-          onClick={() => setActiveTab('theory')}
-          className={`px-4 py-2 rounded-lg ${
-            activeTab === 'theory'
-              ? 'bg-blue-500 text-white'
-              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-          }`}
-        >
-          理论知识
-        </button>
-        <button
-          onClick={() => setActiveTab('practice')}
-          className={`px-4 py-2 rounded-lg ${
-            activeTab === 'practice'
-              ? 'bg-blue-500 text-white'
-              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-          }`}
-        >
-          代码实践
-        </button>
+    ),
+    right: (
+      <div className="space-y-4">
+        <SectionTitle>1. 数据收集与预处理</SectionTitle>
+        <BookParagraph>数据是机器学习项目的基础，质量直接影响模型效果</BookParagraph>
+        <BookList items={['数据来源：公开数据集、爬虫、API等', '数据清洗：处理缺失值、异常值、重复值', '数据转换：标准化、归一化、编码', '数据验证：检查数据质量和完整性']} />
+        <SectionTitle>2. 特征工程</SectionTitle>
+        <BookParagraph>特征工程是提升模型性能的关键步骤</BookParagraph>
+        <BookList items={['特征选择：相关性分析、重要性评估', '特征构建：组合特征、时间特征、统计特征', '特征转换：多项式特征、交互特征', '特征降维：PCA、LDA等']} />
+        <SectionTitle>3. 模型训练与评估</SectionTitle>
+        <BookParagraph>选择合适的模型并进行训练和评估</BookParagraph>
+        <BookList items={['模型选择：根据问题类型选择合适算法', '参数调优：网格搜索、随机搜索、贝叶斯优化', '交叉验证：K折交叉验证、留一法', '性能评估：准确率、精确率、召回率、F1分数']} />
+        <SectionTitle>4. 模型部署与维护</SectionTitle>
+        <BookParagraph>将模型部署到生产环境并持续维护</BookParagraph>
+        <BookList items={['模型保存：序列化、版本控制', '接口开发：REST API、gRPC等', '性能监控：延迟、吞吐量、资源使用', '模型更新：增量学习、在线学习']} />
       </div>
-
-      {activeTab === 'theory' ? (
-        <div className="space-y-8">
-          <section className="bg-white p-6 rounded-lg shadow-md">
-            <h2 className="text-2xl font-semibold mb-4">项目流程概述</h2>
-            <p className="text-gray-700 mb-4">
-              一个完整的机器学习项目通常包含以下步骤：问题定义、数据收集、数据预处理、特征工程、模型训练、模型评估和部署。每个步骤都至关重要，需要仔细规划和执行。
-            </p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <h3 className="font-semibold mb-2">前期准备</h3>
-                <ul className="list-disc list-inside text-gray-700 space-y-2">
-                  <li>明确项目目标和需求</li>
-                  <li>确定评估指标</li>
-                  <li>收集相关数据</li>
-                  <li>准备开发环境</li>
-                </ul>
-              </div>
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <h3 className="font-semibold mb-2">后期工作</h3>
-                <ul className="list-disc list-inside text-gray-700 space-y-2">
-                  <li>模型优化和调参</li>
-                  <li>模型部署和维护</li>
-                  <li>性能监控和更新</li>
-                  <li>文档编写和分享</li>
-                </ul>
-              </div>
-            </div>
-          </section>
-
-          <section className="bg-white p-6 rounded-lg shadow-md">
-            <h2 className="text-2xl font-semibold mb-4">实际案例：电商用户流失预测</h2>
-            <div className="space-y-4">
-              <div className="bg-blue-50 p-4 rounded-lg">
-                <h3 className="font-semibold text-blue-700 mb-2">1. 问题定义</h3>
-                <p className="text-gray-700">预测哪些用户可能会在未来30天内流失，以便提前进行挽留。</p>
-                <ul className="list-disc list-inside text-gray-600 mt-2">
-                  <li>目标：预测用户流失概率</li>
-                  <li>评估指标：准确率、召回率、F1分数</li>
-                  <li>时间范围：未来30天</li>
-                </ul>
-              </div>
-
-              <div className="bg-green-50 p-4 rounded-lg">
-                <h3 className="font-semibold text-green-700 mb-2">2. 数据收集</h3>
-                <p className="text-gray-700">收集用户行为数据、交易数据、基本信息等。</p>
-                <ul className="list-disc list-inside text-gray-600 mt-2">
-                  <li>用户行为：浏览记录、搜索记录、购物车操作</li>
-                  <li>交易数据：订单金额、购买频率、退款情况</li>
-                  <li>用户信息：注册时间、会员等级、活跃度</li>
-                </ul>
-              </div>
-
-              <div className="bg-purple-50 p-4 rounded-lg">
-                <h3 className="font-semibold text-purple-700 mb-2">3. 特征工程</h3>
-                <p className="text-gray-700">构建预测用户流失的关键特征。</p>
-                <ul className="list-disc list-inside text-gray-600 mt-2">
-                  <li>时间特征：最近一次购买距今天数</li>
-                  <li>行为特征：日均浏览时长、搜索次数</li>
-                  <li>交易特征：客单价、复购率、退款率</li>
-                  <li>用户特征：会员等级、活跃度评分</li>
-                </ul>
-              </div>
-
-              <div className="bg-yellow-50 p-4 rounded-lg">
-                <h3 className="font-semibold text-yellow-700 mb-2">4. 模型训练与评估</h3>
-                <p className="text-gray-700">选择合适的模型并进行训练和评估。</p>
-                <ul className="list-disc list-inside text-gray-600 mt-2">
-                  <li>模型选择：XGBoost、LightGBM</li>
-                  <li>参数调优：网格搜索最优参数</li>
-                  <li>评估结果：准确率85%，召回率80%</li>
-                </ul>
-              </div>
-            </div>
-          </section>
-
-          <section className="bg-white p-6 rounded-lg shadow-md">
-            <h2 className="text-2xl font-semibold mb-4">详细工作流程</h2>
-            <div className="space-y-6">
-              <div className="flex items-start space-x-4">
-                <div className="bg-blue-100 p-3 rounded-full mt-1">
-                  <FaDatabase className="text-blue-500 text-xl" />
-                </div>
-                <div>
-                  <h3 className="font-semibold">1. 数据收集与预处理</h3>
-                  <p className="text-gray-700">数据是机器学习项目的基础，质量直接影响模型效果</p>
-                  <ul className="list-disc list-inside text-gray-600 mt-2 space-y-1">
-                    <li>数据来源：公开数据集、爬虫、API等</li>
-                    <li>数据清洗：处理缺失值、异常值、重复值</li>
-                    <li>数据转换：标准化、归一化、编码</li>
-                    <li>数据验证：检查数据质量和完整性</li>
-                  </ul>
-                </div>
-              </div>
-
-              <div className="flex items-start space-x-4">
-                <div className="bg-green-100 p-3 rounded-full mt-1">
-                  <FaTools className="text-green-500 text-xl" />
-                </div>
-                <div>
-                  <h3 className="font-semibold">2. 特征工程</h3>
-                  <p className="text-gray-700">特征工程是提升模型性能的关键步骤</p>
-                  <ul className="list-disc list-inside text-gray-600 mt-2 space-y-1">
-                    <li>特征选择：相关性分析、重要性评估</li>
-                    <li>特征构建：组合特征、时间特征、统计特征</li>
-                    <li>特征转换：多项式特征、交互特征</li>
-                    <li>特征降维：PCA、LDA等</li>
-                  </ul>
-                </div>
-              </div>
-
-              <div className="flex items-start space-x-4">
-                <div className="bg-purple-100 p-3 rounded-full mt-1">
-                  <FaChartLine className="text-purple-500 text-xl" />
-                </div>
-                <div>
-                  <h3 className="font-semibold">3. 模型训练与评估</h3>
-                  <p className="text-gray-700">选择合适的模型并进行训练和评估</p>
-                  <ul className="list-disc list-inside text-gray-600 mt-2 space-y-1">
-                    <li>模型选择：根据问题类型选择合适算法</li>
-                    <li>参数调优：网格搜索、随机搜索、贝叶斯优化</li>
-                    <li>交叉验证：K折交叉验证、留一法</li>
-                    <li>性能评估：准确率、精确率、召回率、F1分数</li>
-                  </ul>
-                </div>
-              </div>
-
-              <div className="flex items-start space-x-4">
-                <div className="bg-yellow-100 p-3 rounded-full mt-1">
-                  <FaCheckCircle className="text-yellow-500 text-xl" />
-                </div>
-                <div>
-                  <h3 className="font-semibold">4. 模型部署与维护</h3>
-                  <p className="text-gray-700">将模型部署到生产环境并持续维护</p>
-                  <ul className="list-disc list-inside text-gray-600 mt-2 space-y-1">
-                    <li>模型保存：序列化、版本控制</li>
-                    <li>接口开发：REST API、gRPC等</li>
-                    <li>性能监控：延迟、吞吐量、资源使用</li>
-                    <li>模型更新：增量学习、在线学习</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-          </section>
-        </div>
-      ) : (
-        <div className="space-y-8">
-          <section className="bg-white p-6 rounded-lg shadow-md">
-            <h2 className="text-2xl font-semibold mb-4">完整项目示例：房价预测</h2>
-            <div className="bg-gray-50 border border-gray-200 p-4 rounded-lg">
-              <pre className="overflow-x-auto text-gray-800">
-                <code>{`import numpy as np
+    ),
+  },
+  {
+    label: '案例详解',
+    left: (
+      <div className="space-y-4">
+        <SectionTitle>实际案例：电商用户流失预测</SectionTitle>
+        <SectionTitle>1. 问题定义</SectionTitle>
+        <BookParagraph>预测哪些用户可能会在未来30天内流失，以便提前进行挽留。</BookParagraph>
+        <BookList items={['目标：预测用户流失概率', '评估指标：准确率、召回率、F1分数', '时间范围：未来30天']} />
+        <SectionTitle>2. 数据收集</SectionTitle>
+        <BookParagraph>收集用户行为数据、交易数据、基本信息等。</BookParagraph>
+        <BookList items={['用户行为：浏览记录、搜索记录、购物车操作', '交易数据：订单金额、购买频率、退款情况', '用户信息：注册时间、会员等级、活跃度']} />
+      </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <SectionTitle>3. 特征工程</SectionTitle>
+        <BookParagraph>构建预测用户流失的关键特征。</BookParagraph>
+        <BookList items={['时间特征：最近一次购买距今天数', '行为特征：日均浏览时长、搜索次数', '交易特征：客单价、复购率、退款率', '用户特征：会员等级、活跃度评分']} />
+        <SectionTitle>4. 模型训练与评估</SectionTitle>
+        <BookParagraph>选择合适的模型并进行训练和评估。</BookParagraph>
+        <BookList items={['模型选择：XGBoost、LightGBM', '参数调优：网格搜索最优参数', '评估结果：准确率85%，召回率80%']} />
+        <TagGrid items={['项目流程', '数据预处理', '特征工程', '模型评估', '部署']} />
+      </div>
+    ),
+  },
+  {
+    label: '代码实践',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>完整项目示例：房价预测</PageTitle>
+        <BookCode language="python" code={`import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
@@ -242,7 +128,7 @@ r2 = r2_score(y_test, y_pred)
 
 print(f"\\n模型评估结果：")
 print(f"均方误差 (MSE): {mse:.2f}")
-print(f"决定系数 (R²): {r2:.2f}")
+print(f"决定系数 (R\\u00b2): {r2:.2f}")
 
 # 8. 特征重要性分析
 feature_importance = pd.DataFrame({
@@ -250,16 +136,13 @@ feature_importance = pd.DataFrame({
     'importance': model.feature_importances_
 })
 print("\\n特征重要性：")
-print(feature_importance.sort_values('importance', ascending=False))`}</code>
-              </pre>
-            </div>
-          </section>
-
-          <section className="bg-white p-6 rounded-lg shadow-md">
-            <h2 className="text-2xl font-semibold mb-4">数据可视化分析</h2>
-            <div className="bg-gray-50 border border-gray-200 p-4 rounded-lg">
-              <pre className="overflow-x-auto text-gray-800">
-                <code>{`import matplotlib.pyplot as plt
+print(feature_importance.sort_values('importance', ascending=False))`} />
+      </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <SectionTitle>数据可视化分析</SectionTitle>
+        <BookCode language="python" code={`import matplotlib.pyplot as plt
 import seaborn as sns
 
 # 1. 相关性分析
@@ -285,16 +168,17 @@ plt.figure(figsize=(10, 6))
 sns.barplot(data=feature_importance.sort_values('importance', ascending=False),
             x='importance', y='feature')
 plt.title('特征重要性')
-plt.show()`}</code>
-              </pre>
-            </div>
-          </section>
-
-          <section className="bg-white p-6 rounded-lg shadow-md">
-            <h2 className="text-2xl font-semibold mb-4">用户流失预测示例</h2>
-            <div className="bg-gray-50 border border-gray-200 p-4 rounded-lg">
-              <pre className="overflow-x-auto text-gray-800">
-                <code>{`import pandas as pd
+plt.show()`} />
+        <TagGrid items={['RandomForest', '特征工程', '可视化', 'Scikit-learn']} />
+      </div>
+    ),
+  },
+  {
+    label: '用户流失预测',
+    left: (
+      <div className="space-y-4">
+        <SectionTitle>用户流失预测示例</SectionTitle>
+        <BookCode language="python" code={`import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
@@ -349,16 +233,13 @@ feature_importance = pd.DataFrame({
     'importance': model.feature_importances_
 })
 print("\\n特征重要性：")
-print(feature_importance.sort_values('importance', ascending=False))`}</code>
-              </pre>
-            </div>
-          </section>
-
-          <section className="bg-white p-6 rounded-lg shadow-md">
-            <h2 className="text-2xl font-semibold mb-4">用户行为分析可视化</h2>
-            <div className="bg-gray-50 border border-gray-200 p-4 rounded-lg">
-              <pre className="overflow-x-auto text-gray-800">
-                <code>{`import matplotlib.pyplot as plt
+print(feature_importance.sort_values('importance', ascending=False))`} />
+      </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <SectionTitle>用户行为分析可视化</SectionTitle>
+        <BookCode language="python" code={`import matplotlib.pyplot as plt
 import seaborn as sns
 
 # 1. 用户活跃度分布
@@ -384,28 +265,13 @@ plt.show()
 plt.figure(figsize=(12, 8))
 sns.heatmap(df[features + ['churned']].corr(), annot=True, cmap='coolwarm')
 plt.title('特征相关性分析')
-plt.show()`}</code>
-              </pre>
-            </div>
-          </section>
-        </div>
-      )}
-
-      {/* 导航链接 */}
-      <div className="flex justify-between mt-8">
-        <Link
-          href="/study/ai/ml/basic"
-          className="bg-gray-500 text-white px-6 py-2 rounded-lg hover:bg-gray-600"
-        >
-          上一课：机器学习基础
-        </Link>
-        <Link
-          href="/study/ai/ml/supervised"
-          className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600"
-        >
-          下一课：监督学习算法
-        </Link>
+plt.show()`} />
+        <TagGrid items={['XGBoost', '用户流失', '特征工程', '分类模型']} />
       </div>
-    </div>
-  );
-} 
+    ),
+  },
+]
+
+export default function MlWorkflowPage() {
+  return <LessonLayout meta={META} spreads={SPREADS} />
+}

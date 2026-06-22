@@ -1,133 +1,12 @@
-'use client';
+'use client'
 
-import { useState } from 'react';
-import Link from 'next/link';
+import LessonLayout, { type LessonMeta } from '@/app/components/ui/book/LessonLayout'
+import { THEMES } from '@/app/components/ui/book/theme'
+import {
+  PageTitle, SectionTitle, BookParagraph, BookCode, BookList,
+} from '@/app/components/ui/book/BookContent'
 
-export default function MachineTranslationPage() {
-  const [activeTab, setActiveTab] = useState('overview');
-  const [expandedCode, setExpandedCode] = useState<string | null>(null);
-
-  const tabs = [
-    { id: 'overview', label: '概述' },
-    { id: 'methods', label: '翻译方法' },
-    { id: 'evaluation', label: '评估指标' },
-    { id: 'cases', label: '实战案例' }
-  ];
-
-  const toggleCode = (codeId: string) => {
-    setExpandedCode(expandedCode === codeId ? null : codeId);
-  };
-
-  return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-6">机器翻译</h1>
-      
-      {/* 标签导航 */}
-      <div className="flex space-x-4 mb-6 border-b overflow-x-auto">
-        {tabs.map(tab => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={`px-4 py-2 font-medium whitespace-nowrap ${
-              activeTab === tab.id 
-                ? 'border-b-2 border-blue-500 text-blue-600' 
-                : 'text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
-
-      {/* 内容区域 */}
-      <div className="bg-white rounded-lg shadow-md p-6">
-        {activeTab === 'overview' && (
-          <div>
-            <h2 className="text-2xl font-semibold mb-4">机器翻译概述</h2>
-            <p className="mb-4">
-              机器翻译(Machine Translation, MT)是自然语言处理的重要应用领域，旨在将一种语言的文本自动翻译成另一种语言。随着深度学习技术的发展，机器翻译的质量得到了显著提升。
-            </p>
-            
-            <div className="my-6">
-              <svg className="w-full max-w-2xl mx-auto" viewBox="0 0 800 300" xmlns="http://www.w3.org/2000/svg">
-                <defs>
-                  <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
-                    <polygon points="0 0, 10 3.5, 0 7" fill="#666" />
-                  </marker>
-                </defs>
-                <rect x="50" y="100" width="150" height="80" rx="5" fill="#e3f2fd" stroke="#2196f3" />
-                <text x="125" y="145" textAnchor="middle" fill="#1565c0">源语言文本</text>
-                
-                <line x1="200" y1="140" x2="300" y2="140" stroke="#666" strokeWidth="2" markerEnd="url(#arrowhead)" />
-                
-                <rect x="300" y="100" width="150" height="80" rx="5" fill="#e8f5e9" stroke="#4caf50" />
-                <text x="375" y="145" textAnchor="middle" fill="#2e7d32">翻译模型</text>
-                
-                <line x1="450" y1="140" x2="550" y2="140" stroke="#666" strokeWidth="2" markerEnd="url(#arrowhead)" />
-                
-                <rect x="550" y="100" width="150" height="80" rx="5" fill="#fff3e0" stroke="#ff9800" />
-                <text x="625" y="145" textAnchor="middle" fill="#e65100">目标语言文本</text>
-              </svg>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-              <div>
-                <h3 className="text-xl font-semibold mb-3">主要特点</h3>
-                <ul className="list-disc pl-6 space-y-2">
-                  <li>端到端翻译</li>
-                  <li>上下文理解</li>
-                  <li>多语言支持</li>
-                  <li>实时翻译</li>
-                  <li>专业领域适应</li>
-                </ul>
-              </div>
-              
-              <div>
-                <h3 className="text-xl font-semibold mb-3">应用场景</h3>
-                <ul className="list-disc pl-6 space-y-2">
-                  <li>跨语言交流</li>
-                  <li>文档翻译</li>
-                  <li>网页翻译</li>
-                  <li>字幕翻译</li>
-                  <li>多语言内容创作</li>
-                </ul>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'methods' && (
-          <div>
-            <h2 className="text-2xl font-semibold mb-4">机器翻译方法</h2>
-            <p className="mb-4">
-              机器翻译的方法经历了从基于规则到统计方法，再到深度学习的演进过程。目前主流的翻译方法主要基于神经网络架构。
-            </p>
-
-            <div className="space-y-6">
-              <div>
-                <h3 className="text-xl font-semibold mb-3">主要方法</h3>
-                <ul className="list-disc pl-6 space-y-2">
-                  <li>基于规则的机器翻译</li>
-                  <li>统计机器翻译</li>
-                  <li>神经机器翻译</li>
-                  <li>Transformer架构</li>
-                  <li>多语言翻译模型</li>
-                </ul>
-              </div>
-
-              <div>
-                <h3 className="text-xl font-semibold mb-3">Python代码示例</h3>
-                <div className="border rounded-lg overflow-hidden">
-                  <button
-                    onClick={() => toggleCode('transformer-mt')}
-                    className="w-full px-4 py-2 bg-gray-100 hover:bg-gray-200 text-left font-medium flex justify-between items-center"
-                  >
-                    <span>Transformer翻译模型实现</span>
-                    <span>{expandedCode === 'transformer-mt' ? '▼' : '▶'}</span>
-                  </button>
-                  {expandedCode === 'transformer-mt' && (
-                    <pre className="bg-gray-100 p-4 overflow-x-auto">
-                      <code>{`import torch
+const transformerMtCode = `import torch
 import torch.nn as nn
 from transformers import MarianMTModel, MarianTokenizer
 
@@ -137,12 +16,12 @@ class TransformerMT:
         self.model = MarianMTModel.from_pretrained(model_name)
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.model.to(self.device)
-        
+
     def translate(self, text, max_length=128):
         # 对输入文本进行编码
         inputs = self.tokenizer(text, return_tensors="pt", padding=True, truncation=True)
         inputs = {k: v.to(self.device) for k, v in inputs.items()}
-        
+
         # 生成翻译
         with torch.no_grad():
             outputs = self.model.generate(
@@ -152,7 +31,7 @@ class TransformerMT:
                 length_penalty=0.6,
                 early_stopping=True
             )
-        
+
         # 解码翻译结果
         translated = self.tokenizer.batch_decode(outputs, skip_special_tokens=True)
         return translated[0]
@@ -174,395 +53,271 @@ english_texts = [
 translations = [translator.translate(text) for text in english_texts]
 for src, tgt in zip(english_texts, translations):
     print(f"\\n原文: {src}")
-    print(f"翻译: {tgt}")`}</code>
-                    </pre>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+    print(f"翻译: {tgt}")`
 
-        {activeTab === 'evaluation' && (
-          <div>
-            <h2 className="text-2xl font-semibold mb-4">评估指标</h2>
-            <p className="mb-4">
-              机器翻译的评估主要关注翻译的准确性、流畅性和语义保持度。常用的评估指标包括BLEU、METEOR、ROUGE等。
-            </p>
+const bleuCode = `from nltk.translate.bleu_score import sentence_bleu, SmoothingFunction
+import numpy as np
 
-            <div className="space-y-6">
-              <div>
-                <h3 className="text-xl font-semibold mb-3">评估指标</h3>
-                <ul className="list-disc pl-6 space-y-2">
-                  <li>BLEU (Bilingual Evaluation Understudy)</li>
-                  <li>METEOR (Metric for Evaluation of Translation with Explicit ORdering)</li>
-                  <li>ROUGE (Recall-Oriented Understudy for Gisting Evaluation)</li>
-                  <li>TER (Translation Edit Rate)</li>
-                  <li>人工评估</li>
-                </ul>
-              </div>
+# 准备数据
+reference = "Machine translation is an important application of natural language processing."
+candidate = "Machine translation is an important field of natural language processing."
 
-              <div>
-                <h3 className="text-xl font-semibold mb-3">Python代码示例</h3>
-                <div className="border rounded-lg overflow-hidden">
-                  <button
-                    onClick={() => toggleCode('evaluation-code')}
-                    className="w-full px-4 py-2 bg-gray-100 hover:bg-gray-200 text-left font-medium flex justify-between items-center"
-                  >
-                    <span>评估指标实现</span>
-                    <span>{expandedCode === 'evaluation-code' ? '▼' : '▶'}</span>
-                  </button>
-                  {expandedCode === 'evaluation-code' && (
-                    <pre className="bg-gray-100 p-4 overflow-x-auto">
-                      <code>{`from nltk.translate.bleu_score import sentence_bleu, corpus_bleu
-from nltk.translate.meteor_score import meteor_score
-from rouge import Rouge
-import nltk
-import jieba
+# 分词
+reference_tokens = reference.lower().split()
+candidate_tokens = candidate.lower().split()
 
-def evaluate_translation(reference, candidate):
-    """
-    评估翻译质量
-    reference: 参考翻译
-    candidate: 候选翻译
-    """
-    # 分词
-    ref_tokens = list(jieba.cut(reference))
-    cand_tokens = list(jieba.cut(candidate))
-    
-    # 计算BLEU分数
-    bleu_score = sentence_bleu([ref_tokens], cand_tokens)
-    
-    # 计算METEOR分数
-    meteor_score_value = meteor_score([ref_tokens], cand_tokens)
-    
-    # 计算ROUGE分数
-    rouge = Rouge()
-    rouge_scores = rouge.get_scores(candidate, reference)[0]
-    
-    return {
-        'BLEU': bleu_score,
-        'METEOR': meteor_score_value,
-        'ROUGE-1': rouge_scores['rouge-1']['f'],
-        'ROUGE-2': rouge_scores['rouge-2']['f'],
-        'ROUGE-L': rouge_scores['rouge-l']['f']
-    }
+# 计算BLEU分数
+smoothie = SmoothingFunction().method4
+bleu_score = sentence_bleu([reference_tokens], candidate_tokens,
+                          smoothing_function=smoothie)
 
-def evaluate_corpus(references, candidates):
-    """
-    评估翻译语料库
-    references: 参考翻译列表
-    candidates: 候选翻译列表
-    """
-    # 准备BLEU评估数据
-    ref_tokens = [list(jieba.cut(ref)) for ref in references]
-    cand_tokens = [list(jieba.cut(cand)) for cand in candidates]
-    
-    # 计算语料库BLEU分数
-    corpus_bleu_score = corpus_bleu([[ref] for ref in ref_tokens], cand_tokens)
-    
-    # 计算平均METEOR分数
-    meteor_scores = [meteor_score([ref], cand) for ref, cand in zip(ref_tokens, cand_tokens)]
-    avg_meteor = sum(meteor_scores) / len(meteor_scores)
-    
-    # 计算平均ROUGE分数
-    rouge = Rouge()
-    rouge_scores = rouge.get_scores(candidates, references, avg=True)
-    
-    return {
-        'Corpus BLEU': corpus_bleu_score,
-        'Average METEOR': avg_meteor,
-        'ROUGE-1': rouge_scores['rouge-1']['f'],
-        'ROUGE-2': rouge_scores['rouge-2']['f'],
-        'ROUGE-L': rouge_scores['rouge-l']['f']
-    }
+print(f"BLEU分数: {bleu_score:.4f}")
 
-# 使用示例
-reference = "机器翻译是自然语言处理的重要应用。"
-candidate = "机器翻译是NLP的重要应用领域。"
-
-# 评估单个翻译
-scores = evaluate_translation(reference, candidate)
-print("单个翻译评估结果：")
-for metric, score in scores.items():
-    print(f"{metric}: {score:.4f}")
-
-# 评估翻译语料库
+# 多参考翻译评估
 references = [
-    "机器翻译是自然语言处理的重要应用。",
-    "深度学习技术显著提升了翻译质量。"
+    "Machine translation is an important application of NLP.",
+    "Machine translation is an important application of natural language processing."
 ]
-candidates = [
-    "机器翻译是NLP的重要应用领域。",
-    "深度学习大大提高了翻译的准确性。"
-]
+candidate = "Machine translation is an important application of natural language processing."
 
-corpus_scores = evaluate_corpus(references, candidates)
-print("\\n语料库评估结果：")
-for metric, score in corpus_scores.items():
-    print(f"{metric}: {score:.4f}")`}</code>
-                    </pre>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+ref_tokens = [ref.lower().split() for ref in references]
+cand_tokens = candidate.lower().split()
 
-        {activeTab === 'cases' && (
-          <div>
-            <h2 className="text-2xl font-semibold mb-4">实战案例</h2>
-            <p className="mb-4">
-              本节将介绍机器翻译在实际应用中的案例，包括多语言翻译系统、专业领域翻译等。
-            </p>
+bleu_score_multi = sentence_bleu(ref_tokens, cand_tokens,
+                                 smoothing_function=smoothie)
+print(f"多参考BLEU分数: {bleu_score_multi:.4f}")`
 
-            <div className="space-y-6">
-              <div>
-                <h3 className="text-xl font-semibold mb-3">多语言翻译系统</h3>
-                <div className="border rounded-lg overflow-hidden">
-                  <button
-                    onClick={() => toggleCode('multilingual-mt')}
-                    className="w-full px-4 py-2 bg-gray-100 hover:bg-gray-200 text-left font-medium flex justify-between items-center"
-                  >
-                    <span>多语言翻译实现</span>
-                    <span>{expandedCode === 'multilingual-mt' ? '▼' : '▶'}</span>
-                  </button>
-                  {expandedCode === 'multilingual-mt' && (
-                    <pre className="bg-gray-100 p-4 overflow-x-auto">
-                      <code>{`import torch
-from transformers import MBartForConditionalGeneration, MBart50TokenizerFast
+const mtCaseCode = `from transformers import MarianMTModel, MarianTokenizer
+import torch
 
-class MultilingualTranslator:
-    def __init__(self):
-        self.model = MBartForConditionalGeneration.from_pretrained("facebook/mbart-large-50-many-to-many-mmt")
-        self.tokenizer = MBart50TokenizerFast.from_pretrained("facebook/mbart-large-50-many-to-many-mmt")
+class BatchTranslator:
+    def __init__(self, src_lang='en', tgt_lang='zh'):
+        model_name = f'Helsinki-NLP/opus-mt-{src_lang}-{tgt_lang}'
+        self.tokenizer = MarianTokenizer.from_pretrained(model_name)
+        self.model = MarianMTModel.from_pretrained(model_name)
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.model.to(self.device)
-        
-        # 语言代码映射
-        self.lang_codes = {
-            'en': 'en_XX',
-            'zh': 'zh_CN',
-            'ja': 'ja_XX',
-            'ko': 'ko_KR',
-            'fr': 'fr_XX',
-            'de': 'de_DE',
-            'es': 'es_XX',
-            'ru': 'ru_RU'
-        }
-    
-    def translate(self, text, src_lang, tgt_lang, max_length=128):
-        # 设置源语言和目标语言
-        self.tokenizer.src_lang = self.lang_codes[src_lang]
-        
-        # 编码输入文本
-        inputs = self.tokenizer(text, return_tensors="pt", padding=True, truncation=True)
-        inputs = {k: v.to(self.device) for k, v in inputs.items()}
-        
-        # 生成翻译
-        with torch.no_grad():
-            outputs = self.model.generate(
-                **inputs,
-                forced_bos_token_id=self.tokenizer.lang_code_to_id[self.lang_codes[tgt_lang]],
-                max_length=max_length,
-                num_beams=5,
-                length_penalty=0.6,
-                early_stopping=True
+
+    def translate_batch(self, texts, batch_size=16, max_length=128):
+        translations = []
+        for i in range(0, len(texts), batch_size):
+            batch = texts[i:i+batch_size]
+            inputs = self.tokenizer(batch, return_tensors="pt",
+                                   padding=True, truncation=True, max_length=max_length)
+            inputs = {k: v.to(self.device) for k, v in inputs.items()}
+
+            with torch.no_grad():
+                outputs = self.model.generate(
+                    **inputs, max_length=max_length,
+                    num_beams=4, length_penalty=0.6,
+                    early_stopping=True
+                )
+
+            batch_translations = self.tokenizer.batch_decode(
+                outputs, skip_special_tokens=True
             )
-        
-        # 解码翻译结果
-        translated = self.tokenizer.batch_decode(outputs, skip_special_tokens=True)
-        return translated[0]
+            translations.extend(batch_translations)
+
+            print(f"已翻译 {min(i+batch_size, len(texts))}/{len(texts)} 条")
+
+        return translations
 
 # 使用示例
-translator = MultilingualTranslator()
+translator = BatchTranslator('en', 'zh')
 
-# 多语言翻译示例
 texts = [
-    ("Hello, how are you?", "en", "zh"),
-    ("人工智能正在改变世界。", "zh", "en"),
-    ("こんにちは、元気ですか？", "ja", "zh"),
-    ("안녕하세요, 잘 지내세요?", "ko", "en")
+    "The Transformer architecture has revolutionized machine translation.",
+    "Attention mechanisms allow the model to focus on relevant parts of the input.",
+    "Neural machine translation achieves state-of-the-art results on many language pairs.",
+    "The encoder-decoder architecture is the foundation of modern MT systems.",
+    "Pre-trained language models have further improved translation quality."
 ]
 
-for text, src, tgt in texts:
-    translation = translator.translate(text, src, tgt)
-    print(f"\\n原文 ({src}): {text}")
-    print(f"翻译 ({tgt}): {translation}")
+translations = translator.translate_batch(texts)
 
-# 批量翻译
-def batch_translate(texts, src_lang, tgt_lang):
-    translations = []
-    for text in texts:
-        translation = translator.translate(text, src_lang, tgt_lang)
-        translations.append(translation)
-    return translations
+for src, tgt in zip(texts, translations):
+    print(f"\\n原文: {src}")
+    print(f"翻译: {tgt}")`
 
-# 批量翻译示例
-english_texts = [
-    "Machine translation is an important technology.",
-    "Deep learning has revolutionized many fields.",
-    "Natural language processing is fascinating."
-]
-
-chinese_translations = batch_translate(english_texts, "en", "zh")
-for src, tgt in zip(english_texts, chinese_translations):
-    print(f"\\n英文: {src}")
-    print(f"中文: {tgt}")`}</code>
-                    </pre>
-                  )}
-                </div>
-              </div>
-
-              <div>
-                <h3 className="text-xl font-semibold mb-3">专业领域翻译</h3>
-                <div className="border rounded-lg overflow-hidden">
-                  <button
-                    onClick={() => toggleCode('domain-mt')}
-                    className="w-full px-4 py-2 bg-gray-100 hover:bg-gray-200 text-left font-medium flex justify-between items-center"
-                  >
-                    <span>专业领域翻译实现</span>
-                    <span>{expandedCode === 'domain-mt' ? '▼' : '▶'}</span>
-                  </button>
-                  {expandedCode === 'domain-mt' && (
-                    <pre className="bg-gray-100 p-4 overflow-x-auto">
-                      <code>{`import torch
-from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
-import json
-
-class DomainSpecificTranslator:
-    def __init__(self, model_path, domain_glossary_path=None):
-        self.model = AutoModelForSeq2SeqLM.from_pretrained(model_path)
-        self.tokenizer = AutoTokenizer.from_pretrained(model_path)
-        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-        self.model.to(self.device)
-        
-        # 加载领域术语表
-        self.domain_glossary = {}
-        if domain_glossary_path:
-            with open(domain_glossary_path, 'r', encoding='utf-8') as f:
-                self.domain_glossary = json.load(f)
-    
-    def preprocess_text(self, text):
-        """预处理文本，处理领域特定术语"""
-        for term, translation in self.domain_glossary.items():
-            text = text.replace(term, f"<{translation}>")
-        return text
-    
-    def postprocess_text(self, text):
-        """后处理文本，恢复领域特定术语"""
-        for term, translation in self.domain_glossary.items():
-            text = text.replace(f"<{translation}>", translation)
-        return text
-    
-    def translate(self, text, max_length=128):
-        # 预处理
-        processed_text = self.preprocess_text(text)
-        
-        # 编码输入文本
-        inputs = self.tokenizer(processed_text, return_tensors="pt", padding=True, truncation=True)
-        inputs = {k: v.to(self.device) for k, v in inputs.items()}
-        
-        # 生成翻译
-        with torch.no_grad():
-            outputs = self.model.generate(
-                **inputs,
-                max_length=max_length,
-                num_beams=5,
-                length_penalty=0.6,
-                early_stopping=True
-            )
-        
-        # 解码翻译结果
-        translated = self.tokenizer.batch_decode(outputs, skip_special_tokens=True)[0]
-        
-        # 后处理
-        final_translation = self.postprocess_text(translated)
-        return final_translation
-
-# 使用示例
-# 医疗领域术语表
-medical_glossary = {
-    "COVID-19": "新型冠状病毒肺炎",
-    "PCR": "聚合酶链式反应",
-    "CT": "计算机断层扫描",
-    "MRI": "磁共振成像",
-    "ICU": "重症监护室"
+const META: LessonMeta = {
+  subject: '自然语言处理',
+  chapterTitle: '机器翻译',
+  chapterNumber: 6,
+  totalChapters: 14,
+  subjectHref: '/study/ai/nlp',
+  prevChapter: { label: '命名实体识别', href: '/study/ai/nlp/ner' },
+  nextChapter: { label: '文本生成', href: '/study/ai/nlp/text-generation' },
+  theme: THEMES.ai,
 }
 
-# 保存术语表
-with open('medical_glossary.json', 'w', encoding='utf-8') as f:
-    json.dump(medical_glossary, f, ensure_ascii=False, indent=2)
+const SPREADS = [
+  {
+    label: '概述',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>机器翻译概述</PageTitle>
+        <BookParagraph>
+          机器翻译(Machine Translation, MT)是自然语言处理的重要应用领域，旨在将一种语言的文本自动翻译成另一种语言。随着深度学习技术的发展，机器翻译的质量得到了显著提升。
+        </BookParagraph>
 
-# 初始化医疗领域翻译器
-medical_translator = DomainSpecificTranslator(
-    model_path="Helsinki-NLP/opus-mt-en-zh",
-    domain_glossary_path="medical_glossary.json"
-)
+        <div className="flex justify-center">
+          <svg width="100%" height="200" viewBox="0 0 700 200" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <marker id="arrowhead_mt" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                <polygon points="0 0, 10 3.5, 0 7" fill="#666" />
+              </marker>
+            </defs>
+            <rect x="40" y="60" width="140" height="70" rx="5" fill="#e3f2fd" stroke="#2196f3" />
+            <text x="110" y="100" textAnchor="middle" fill="#1565c0">源语言文本</text>
+            <line x1="180" y1="95" x2="260" y2="95" stroke="#666" strokeWidth="2" markerEnd="url(#arrowhead_mt)" />
+            <rect x="260" y="60" width="140" height="70" rx="5" fill="#e8f5e9" stroke="#4caf50" />
+            <text x="330" y="100" textAnchor="middle" fill="#2e7d32">翻译模型</text>
+            <line x1="400" y1="95" x2="480" y2="95" stroke="#666" strokeWidth="2" markerEnd="url(#arrowhead_mt)" />
+            <rect x="480" y="60" width="140" height="70" rx="5" fill="#fff3e0" stroke="#ff9800" />
+            <text x="550" y="100" textAnchor="middle" fill="#e65100">目标语言文本</text>
+          </svg>
+        </div>
 
-# 医疗文本翻译示例
-medical_texts = [
-    "The patient was diagnosed with COVID-19 and admitted to ICU.",
-    "The doctor ordered a CT scan and MRI to examine the patient's condition.",
-    "PCR test results confirmed the diagnosis."
+        <SectionTitle>主要特点</SectionTitle>
+        <BookList items={[
+          '端到端翻译',
+          '上下文理解',
+          '多语言支持',
+          '实时翻译',
+          '专业领域适应',
+        ]} />
+      </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <SectionTitle>应用场景</SectionTitle>
+        <BookList items={[
+          '跨语言交流',
+          '文档翻译',
+          '网页翻译',
+          '字幕翻译',
+          '多语言内容创作',
+        ]} />
+      </div>
+    ),
+  },
+  {
+    label: '翻译方法',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>机器翻译方法</PageTitle>
+        <BookParagraph>
+          机器翻译的方法经历了从基于规则到统计方法，再到深度学习的演进过程。目前主流的翻译方法主要基于神经网络架构。
+        </BookParagraph>
+
+        <SectionTitle>主要方法</SectionTitle>
+        <BookList items={[
+          '基于规则的机器翻译',
+          '统计机器翻译',
+          '神经机器翻译',
+          'Transformer架构',
+          '多语言翻译模型',
+        ]} />
+
+        <SectionTitle>Transformer翻译模型实现</SectionTitle>
+        <BookCode language="python" code={transformerMtCode} />
+      </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <SectionTitle>方法对比</SectionTitle>
+        <BookParagraph>
+          基于规则的方法依赖语言学家编写的规则，维护成本高且覆盖面有限。统计机器翻译利用平行语料自动学习翻译规律，但需要大量特征工程。神经机器翻译实现了端到端学习，显著提升了翻译质量，特别是Transformer架构的出现带来了质的飞跃。
+        </BookParagraph>
+      </div>
+    ),
+  },
+  {
+    label: '评估指标',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>评估指标</PageTitle>
+        <BookParagraph>
+          机器翻译的评估主要关注翻译的准确性、流畅性和语义保持度。常用的评估指标包括BLEU、METEOR、ROUGE等。
+        </BookParagraph>
+
+        <SectionTitle>评估指标</SectionTitle>
+        <BookList items={[
+          'BLEU (Bilingual Evaluation Understudy)',
+          'METEOR (Metric for Evaluation of Translation with Explicit ORdering)',
+          'ROUGE (Recall-Oriented Understudy for Gisting Evaluation)',
+          'TER (Translation Edit Rate)',
+          '人工评估',
+        ]} />
+
+        <SectionTitle>BLEU计算</SectionTitle>
+        <BookParagraph>
+          BLEU通过比较候选翻译与参考翻译的n-gram重合度来评估翻译质量，取值范围0-1，值越高表示翻译质量越好。
+        </BookParagraph>
+        <BookCode language="python" code={bleuCode} />
+      </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <SectionTitle>BLEU详解</SectionTitle>
+        <BookParagraph>
+          BLEU的计算公式综合考虑了精确率和简短惩罚。精确率计算n-gram的匹配程度，简短惩罚防止生成过短的翻译。
+        </BookParagraph>
+        <BookParagraph>
+          <b>优点：</b>计算速度快、与人工评估相关性高、语言无关<br />
+          <b>缺点：</b>只考虑词形匹配、无法评估语义、对创造性翻译不友好
+        </BookParagraph>
+
+        <SectionTitle>其他指标</SectionTitle>
+        <BookList items={[
+          'METEOR：考虑同义词和词干匹配',
+          'TER：计算翻译编辑距离',
+          '人工评估：最准确但成本最高',
+        ]} />
+      </div>
+    ),
+  },
+  {
+    label: '实战案例',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>实战案例</PageTitle>
+        <BookParagraph>
+          本节将介绍机器翻译在实际应用中的案例，包括批量翻译、领域自适应翻译等。
+        </BookParagraph>
+
+        <SectionTitle>批量翻译系统</SectionTitle>
+        <BookParagraph>
+          使用MarianMT构建一个批量翻译系统，支持英译中和中译英，并提供批处理功能。
+        </BookParagraph>
+        <BookCode language="python" code={mtCaseCode} />
+      </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <SectionTitle>领域自适应翻译</SectionTitle>
+        <BookParagraph>
+          在实际应用中，通用翻译模型在特定领域（如医疗、法律、技术）的表现可能不够理想。领域自适应翻译通过对领域数据微调来提升翻译质量。
+        </BookParagraph>
+        <BookList items={[
+          '收集领域平行语料',
+          '在基础模型上继续训练',
+          '使用领域术语词典',
+          '评估领域翻译质量',
+        ]} />
+
+        <SectionTitle>翻译系统优化</SectionTitle>
+        <BookList items={[
+          '使用批处理提高吞吐量',
+          '束搜索(Beam Search)优化',
+          '长度惩罚控制翻译长度',
+          '覆盖惩罚避免重复翻译',
+        ]} />
+      </div>
+    ),
+  },
 ]
 
-for text in medical_texts:
-    translation = medical_translator.translate(text)
-    print(f"\\n英文: {text}")
-    print(f"中文: {translation}")
-
-# 法律领域翻译示例
-legal_glossary = {
-    "plaintiff": "原告",
-    "defendant": "被告",
-    "court": "法院",
-    "judge": "法官",
-    "verdict": "判决"
+export default function NlpMtPage() {
+  return <LessonLayout meta={META} spreads={SPREADS} />
 }
-
-with open('legal_glossary.json', 'w', encoding='utf-8') as f:
-    json.dump(legal_glossary, f, ensure_ascii=False, indent=2)
-
-legal_translator = DomainSpecificTranslator(
-    model_path="Helsinki-NLP/opus-mt-en-zh",
-    domain_glossary_path="legal_glossary.json"
-)
-
-legal_texts = [
-    "The plaintiff filed a lawsuit against the defendant.",
-    "The judge will announce the verdict next week.",
-    "The court has scheduled a hearing for next month."
-]
-
-for text in legal_texts:
-    translation = legal_translator.translate(text)
-    print(f"\\n英文: {text}")
-    print(f"中文: {translation}")`}</code>
-                    </pre>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* 底部导航 */}
-      <div className="mt-8 flex justify-between">
-        <Link 
-          href="/study/ai/nlp/ner"
-          className="px-4 py-2 text-blue-600 hover:text-blue-800"
-        >
-          ← 返回命名实体识别
-        </Link>
-        <Link 
-          href="/study/ai/nlp/text-generation"
-          className="px-4 py-2 text-blue-600 hover:text-blue-800"
-        >
-          文本生成 →
-        </Link>
-      </div>
-    </div>
-  );
-} 

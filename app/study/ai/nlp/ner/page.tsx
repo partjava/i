@@ -1,140 +1,12 @@
-'use client';
+'use client'
 
-import { useState } from 'react';
-import Link from 'next/link';
+import LessonLayout, { type LessonMeta } from '@/app/components/ui/book/LessonLayout'
+import { THEMES } from '@/app/components/ui/book/theme'
+import {
+  PageTitle, SectionTitle, BookParagraph, BookCode, BookList,
+} from '@/app/components/ui/book/BookContent'
 
-export default function NERPage() {
-  const [activeTab, setActiveTab] = useState('overview');
-  const [expandedCode, setExpandedCode] = useState<string | null>(null);
-
-  const tabs = [
-    { id: 'overview', label: '概述' },
-    { id: 'methods', label: '识别方法' },
-    { id: 'evaluation', label: '评估指标' },
-    { id: 'cases', label: '实战案例' }
-  ];
-
-  const toggleCode = (codeId: string) => {
-    setExpandedCode(expandedCode === codeId ? null : codeId);
-  };
-
-  return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-6">命名实体识别</h1>
-      
-      {/* 标签导航 */}
-      <div className="flex space-x-4 mb-6 border-b overflow-x-auto">
-        {tabs.map(tab => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={`px-4 py-2 font-medium whitespace-nowrap ${
-              activeTab === tab.id 
-                ? 'border-b-2 border-blue-500 text-blue-600' 
-                : 'text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
-
-      {/* 内容区域 */}
-      <div className="bg-white rounded-lg shadow-md p-6">
-        {activeTab === 'overview' && (
-          <div>
-            <h2 className="text-2xl font-semibold mb-4">命名实体识别概述</h2>
-            <p className="mb-4">
-              命名实体识别(Named Entity Recognition, NER)是自然语言处理中的基础任务之一，其目标是从文本中识别出具有特定意义的实体，如人名、地名、组织机构名等。
-            </p>
-            
-            <div className="my-6">
-              <svg className="w-full max-w-2xl mx-auto" viewBox="0 0 800 300" xmlns="http://www.w3.org/2000/svg">
-                <defs>
-                  <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
-                    <polygon points="0 0, 10 3.5, 0 7" fill="#666" />
-                  </marker>
-                </defs>
-                <rect x="50" y="100" width="150" height="80" rx="5" fill="#e3f2fd" stroke="#2196f3" />
-                <text x="125" y="145" textAnchor="middle" fill="#1565c0">输入文本</text>
-                
-                <line x1="200" y1="140" x2="300" y2="140" stroke="#666" strokeWidth="2" markerEnd="url(#arrowhead)" />
-                
-                <rect x="300" y="100" width="150" height="80" rx="5" fill="#e8f5e9" stroke="#4caf50" />
-                <text x="375" y="145" textAnchor="middle" fill="#2e7d32">实体识别</text>
-                
-                <line x1="450" y1="140" x2="550" y2="140" stroke="#666" strokeWidth="2" markerEnd="url(#arrowhead)" />
-                
-                <rect x="550" y="100" width="150" height="80" rx="5" fill="#fff3e0" stroke="#ff9800" />
-                <text x="625" y="145" textAnchor="middle" fill="#e65100">实体分类</text>
-                
-                <line x1="700" y1="140" x2="800" y2="140" stroke="#666" strokeWidth="2" markerEnd="url(#arrowhead)" />
-                
-                <rect x="800" y="100" width="150" height="80" rx="5" fill="#f3e5f5" stroke="#9c27b0" />
-                <text x="875" y="145" textAnchor="middle" fill="#6a1b9a">标注结果</text>
-              </svg>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-              <div>
-                <h3 className="text-xl font-semibold mb-3">常见实体类型</h3>
-                <ul className="list-disc pl-6 space-y-2">
-                  <li>人名(PER)</li>
-                  <li>地名(LOC)</li>
-                  <li>组织机构名(ORG)</li>
-                  <li>时间(TIME)</li>
-                  <li>日期(DATE)</li>
-                  <li>货币(MONEY)</li>
-                  <li>百分比(PERCENT)</li>
-                </ul>
-              </div>
-              
-              <div>
-                <h3 className="text-xl font-semibold mb-3">应用场景</h3>
-                <ul className="list-disc pl-6 space-y-2">
-                  <li>信息抽取</li>
-                  <li>问答系统</li>
-                  <li>机器翻译</li>
-                  <li>知识图谱构建</li>
-                  <li>文本摘要</li>
-                </ul>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'methods' && (
-          <div>
-            <h2 className="text-2xl font-semibold mb-4">命名实体识别方法</h2>
-            <p className="mb-4">
-              命名实体识别的方法主要包括基于规则的方法、统计机器学习方法和深度学习方法。每种方法都有其特点和适用场景。
-            </p>
-
-            <div className="space-y-6">
-              <div>
-                <h3 className="text-xl font-semibold mb-3">主要方法</h3>
-                <ul className="list-disc pl-6 space-y-2">
-                  <li>基于规则的方法</li>
-                  <li>条件随机场(CRF)</li>
-                  <li>BiLSTM-CRF</li>
-                  <li>BERT-CRF</li>
-                  <li>预训练语言模型</li>
-                </ul>
-              </div>
-
-              <div>
-                <h3 className="text-xl font-semibold mb-3">Python代码示例</h3>
-                <div className="border rounded-lg overflow-hidden">
-                  <button
-                    onClick={() => toggleCode('bert-crf')}
-                    className="w-full px-4 py-2 bg-gray-100 hover:bg-gray-200 text-left font-medium flex justify-between items-center"
-                  >
-                    <span>BERT-CRF模型实现</span>
-                    <span>{expandedCode === 'bert-crf' ? '▼' : '▶'}</span>
-                  </button>
-                  {expandedCode === 'bert-crf' && (
-                    <pre className="bg-gray-100 p-4 overflow-x-auto">
-                      <code>{`import torch
+const bertCrfCode = `import torch
 import torch.nn as nn
 from transformers import BertTokenizer, BertModel
 from torchcrf import CRF
@@ -146,13 +18,13 @@ class BertCRF(nn.Module):
         self.dropout = nn.Dropout(0.1)
         self.classifier = nn.Linear(768, num_labels)
         self.crf = CRF(num_labels, batch_first=True)
-        
+
     def forward(self, input_ids, attention_mask, labels=None):
         outputs = self.bert(input_ids=input_ids, attention_mask=attention_mask)
         sequence_output = outputs[0]
         sequence_output = self.dropout(sequence_output)
         logits = self.classifier(sequence_output)
-        
+
         if labels is not None:
             loss = -self.crf(logits, labels, mask=attention_mask.bool())
             return loss
@@ -182,47 +54,9 @@ predicted_labels = [id2label[p] for p in predictions[0]]
 tokens = tokenizer.convert_ids_to_tokens(tokens['input_ids'][0])
 for token, label in zip(tokens, predicted_labels):
     if token not in ['[CLS]', '[SEP]', '[PAD]']:
-        print(f"{token}: {label}")`}</code>
-                    </pre>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+        print(f"{token}: {label}")`
 
-        {activeTab === 'evaluation' && (
-          <div>
-            <h2 className="text-2xl font-semibold mb-4">评估指标</h2>
-            <p className="mb-4">
-              命名实体识别任务的评估主要关注实体级别的准确率、召回率和F1值，同时也需要考虑边界识别和实体分类的准确性。
-            </p>
-
-            <div className="space-y-6">
-              <div>
-                <h3 className="text-xl font-semibold mb-3">评估指标</h3>
-                <ul className="list-disc pl-6 space-y-2">
-                  <li>实体级别的准确率</li>
-                  <li>实体级别的召回率</li>
-                  <li>实体级别的F1值</li>
-                  <li>边界识别准确率</li>
-                  <li>实体分类准确率</li>
-                </ul>
-              </div>
-
-              <div>
-                <h3 className="text-xl font-semibold mb-3">Python代码示例</h3>
-                <div className="border rounded-lg overflow-hidden">
-                  <button
-                    onClick={() => toggleCode('evaluation-code')}
-                    className="w-full px-4 py-2 bg-gray-100 hover:bg-gray-200 text-left font-medium flex justify-between items-center"
-                  >
-                    <span>评估指标实现</span>
-                    <span>{expandedCode === 'evaluation-code' ? '▼' : '▶'}</span>
-                  </button>
-                  {expandedCode === 'evaluation-code' && (
-                    <pre className="bg-gray-100 p-4 overflow-x-auto">
-                      <code>{`from seqeval.metrics import precision_score, recall_score, f1_score
+const evalCode = `from seqeval.metrics import precision_score, recall_score, f1_score
 import numpy as np
 
 def evaluate_ner(y_true, y_pred):
@@ -235,24 +69,24 @@ def evaluate_ner(y_true, y_pred):
     precision = precision_score(y_true, y_pred)
     recall = recall_score(y_true, y_pred)
     f1 = f1_score(y_true, y_pred)
-    
+
     print(f"实体级别准确率: {precision:.4f}")
     print(f"实体级别召回率: {recall:.4f}")
     print(f"实体级别F1值: {f1:.4f}")
-    
+
     # 计算每个实体类型的评估指标
     entity_types = set()
     for seq in y_true:
         for tag in seq:
             if tag != 'O':
                 entity_types.add(tag.split('-')[1])
-    
+
     print("\\n各实体类型的评估指标：")
     for entity_type in entity_types:
         type_precision = precision_score(y_true, y_pred, mode='strict', scheme='IOB2', suffix=True, average='micro', labels=[f'B-{entity_type}', f'I-{entity_type}'])
         type_recall = recall_score(y_true, y_pred, mode='strict', scheme='IOB2', suffix=True, average='micro', labels=[f'B-{entity_type}', f'I-{entity_type}'])
         type_f1 = f1_score(y_true, y_pred, mode='strict', scheme='IOB2', suffix=True, average='micro', labels=[f'B-{entity_type}', f'I-{entity_type}'])
-        
+
         print(f"\\n{entity_type}:")
         print(f"准确率: {type_precision:.4f}")
         print(f"召回率: {type_recall:.4f}")
@@ -268,36 +102,9 @@ y_pred = [
     ['B-ORG', 'I-ORG', 'O', 'B-PER', 'O']
 ]
 
-evaluate_ner(y_true, y_pred)`}</code>
-                    </pre>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+evaluate_ner(y_true, y_pred)`
 
-        {activeTab === 'cases' && (
-          <div>
-            <h2 className="text-2xl font-semibold mb-4">实战案例</h2>
-            <p className="mb-4">
-              本节将介绍命名实体识别在实际应用中的案例，包括中文新闻实体识别、医疗文本实体识别等。
-            </p>
-
-            <div className="space-y-6">
-              <div>
-                <h3 className="text-xl font-semibold mb-3">中文新闻实体识别案例</h3>
-                <div className="border rounded-lg overflow-hidden">
-                  <button
-                    onClick={() => toggleCode('news-ner')}
-                    className="w-full px-4 py-2 bg-gray-100 hover:bg-gray-200 text-left font-medium flex justify-between items-center"
-                  >
-                    <span>新闻实体识别实现</span>
-                    <span>{expandedCode === 'news-ner' ? '▼' : '▶'}</span>
-                  </button>
-                  {expandedCode === 'news-ner' && (
-                    <pre className="bg-gray-100 p-4 overflow-x-auto">
-                      <code>{`import torch
+const newsNerCode = `import torch
 import torch.nn as nn
 from transformers import BertTokenizer, BertModel
 from torchcrf import CRF
@@ -311,13 +118,13 @@ class NewsNERModel(nn.Module):
         self.dropout = nn.Dropout(0.1)
         self.classifier = nn.Linear(768, num_labels)
         self.crf = CRF(num_labels, batch_first=True)
-        
+
     def forward(self, input_ids, attention_mask, labels=None):
         outputs = self.bert(input_ids=input_ids, attention_mask=attention_mask)
         sequence_output = outputs[0]
         sequence_output = self.dropout(sequence_output)
         logits = self.classifier(sequence_output)
-        
+
         if labels is not None:
             loss = -self.crf(logits, labels, mask=attention_mask.bool())
             return loss
@@ -334,23 +141,23 @@ def preprocess_text(text):
 def predict_entities(text, model, tokenizer, id2label):
     # 预处理文本
     words = preprocess_text(text)
-    
+
     # 转换为模型输入格式
     tokens = tokenizer(words, is_split_into_words=True, return_tensors='pt', padding=True, truncation=True)
-    
+
     # 预测
     model.eval()
     with torch.no_grad():
         predictions = model(tokens['input_ids'], tokens['attention_mask'])
-    
+
     # 解码预测结果
     predicted_labels = [id2label[p] for p in predictions[0]]
-    
+
     # 提取实体
     entities = []
     current_entity = []
     current_type = None
-    
+
     for word, label in zip(words, predicted_labels):
         if label.startswith('B-'):
             if current_entity:
@@ -365,10 +172,10 @@ def predict_entities(text, model, tokenizer, id2label):
                 entities.append((''.join(current_entity), current_type))
                 current_entity = []
                 current_type = None
-    
+
     if current_entity:
         entities.append((''.join(current_entity), current_type))
-    
+
     return entities
 
 # 使用示例
@@ -379,7 +186,7 @@ text = """
 
 # 加载模型和分词器
 tokenizer = BertTokenizer.from_pretrained('bert-base-chinese')
-model = NewsNERModel(num_labels=7)  # 假设有7个标签类别
+model = NewsNERModel(num_labels=7)
 id2label = {0: 'O', 1: 'B-PER', 2: 'I-PER', 3: 'B-LOC', 4: 'I-LOC', 5: 'B-ORG', 6: 'I-ORG'}
 
 # 预测实体
@@ -388,25 +195,9 @@ entities = predict_entities(text, model, tokenizer, id2label)
 # 输出结果
 print("识别到的实体：")
 for entity, entity_type in entities:
-    print(f"{entity}: {entity_type}")`}</code>
-                    </pre>
-                  )}
-                </div>
-              </div>
+    print(f"{entity}: {entity_type}")`
 
-              <div>
-                <h3 className="text-xl font-semibold mb-3">医疗文本实体识别案例</h3>
-                <div className="border rounded-lg overflow-hidden">
-                  <button
-                    onClick={() => toggleCode('medical-ner')}
-                    className="w-full px-4 py-2 bg-gray-100 hover:bg-gray-200 text-left font-medium flex justify-between items-center"
-                  >
-                    <span>医疗实体识别实现</span>
-                    <span>{expandedCode === 'medical-ner' ? '▼' : '▶'}</span>
-                  </button>
-                  {expandedCode === 'medical-ner' && (
-                    <pre className="bg-gray-100 p-4 overflow-x-auto">
-                      <code>{`import torch
+const medicalNerCode = `import torch
 import torch.nn as nn
 from transformers import BertTokenizer, BertModel
 from torchcrf import CRF
@@ -419,13 +210,13 @@ class MedicalNERModel(nn.Module):
         self.dropout = nn.Dropout(0.1)
         self.classifier = nn.Linear(768, num_labels)
         self.crf = CRF(num_labels, batch_first=True)
-        
+
     def forward(self, input_ids, attention_mask, labels=None):
         outputs = self.bert(input_ids=input_ids, attention_mask=attention_mask)
         sequence_output = outputs[0]
         sequence_output = self.dropout(sequence_output)
         logits = self.classifier(sequence_output)
-        
+
         if labels is not None:
             loss = -self.crf(logits, labels, mask=attention_mask.bool())
             return loss
@@ -442,23 +233,23 @@ def preprocess_medical_text(text):
 def predict_medical_entities(text, model, tokenizer, id2label):
     # 预处理文本
     text = preprocess_medical_text(text)
-    
+
     # 转换为模型输入格式
     tokens = tokenizer(text, return_tensors='pt', padding=True, truncation=True)
-    
+
     # 预测
     model.eval()
     with torch.no_grad():
         predictions = model(tokens['input_ids'], tokens['attention_mask'])
-    
+
     # 解码预测结果
     predicted_labels = [id2label[p] for p in predictions[0]]
-    
+
     # 提取实体
     entities = []
     current_entity = []
     current_type = None
-    
+
     tokens = tokenizer.convert_ids_to_tokens(tokens['input_ids'][0])
     for token, label in zip(tokens, predicted_labels):
         if token not in ['[CLS]', '[SEP]', '[PAD]']:
@@ -475,10 +266,10 @@ def predict_medical_entities(text, model, tokenizer, id2label):
                     entities.append((''.join(current_entity), current_type))
                     current_entity = []
                     current_type = None
-    
+
     if current_entity:
         entities.append((''.join(current_entity), current_type))
-    
+
     return entities
 
 # 使用示例
@@ -490,7 +281,7 @@ text = """
 
 # 加载模型和分词器
 tokenizer = BertTokenizer.from_pretrained('bert-base-chinese')
-model = MedicalNERModel(num_labels=9)  # 假设有9个标签类别
+model = MedicalNERModel(num_labels=9)
 id2label = {
     0: 'O',
     1: 'B-SYMPTOM', 2: 'I-SYMPTOM',  # 症状
@@ -505,31 +296,159 @@ entities = predict_medical_entities(text, model, tokenizer, id2label)
 # 输出结果
 print("识别到的医疗实体：")
 for entity, entity_type in entities:
-    print(f"{entity}: {entity_type}")`}</code>
-                    </pre>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
+    print(f"{entity}: {entity_type}")`
 
-      {/* 底部导航 */}
-      <div className="mt-8 flex justify-between">
-        <Link 
-          href="/study/ai/nlp/text-classification"
-          className="px-4 py-2 text-blue-600 hover:text-blue-800"
-        >
-          ← 返回文本分类
-        </Link>
-        <Link 
-          href="/study/ai/nlp/machine-translation"
-          className="px-4 py-2 text-blue-600 hover:text-blue-800"
-        >
-          机器翻译 →
-        </Link>
+const META: LessonMeta = {
+  subject: '自然语言处理',
+  chapterTitle: '命名实体识别',
+  chapterNumber: 5,
+  totalChapters: 14,
+  subjectHref: '/study/ai/nlp',
+  prevChapter: { label: '文本分类', href: '/study/ai/nlp/text-classification' },
+  nextChapter: { label: '机器翻译', href: '/study/ai/nlp/machine-translation' },
+  theme: THEMES.ai,
+}
+
+const SPREADS = [
+  {
+    label: '概述',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>命名实体识别概述</PageTitle>
+        <BookParagraph>
+          命名实体识别(Named Entity Recognition, NER)是自然语言处理中的基础任务之一，其目标是从文本中识别出具有特定意义的实体，如人名、地名、组织机构名等。
+        </BookParagraph>
+
+        <div className="flex justify-center">
+          <svg width="100%" height="220" viewBox="0 0 900 220" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <marker id="arrowhead_ner" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                <polygon points="0 0, 10 3.5, 0 7" fill="#666" />
+              </marker>
+            </defs>
+            <rect x="30" y="70" width="120" height="70" rx="5" fill="#e3f2fd" stroke="#2196f3" />
+            <text x="90" y="110" textAnchor="middle" fill="#1565c0">输入文本</text>
+            <line x1="150" y1="105" x2="230" y2="105" stroke="#666" strokeWidth="2" markerEnd="url(#arrowhead_ner)" />
+            <rect x="230" y="70" width="120" height="70" rx="5" fill="#e8f5e9" stroke="#4caf50" />
+            <text x="290" y="110" textAnchor="middle" fill="#2e7d32">实体识别</text>
+            <line x1="350" y1="105" x2="430" y2="105" stroke="#666" strokeWidth="2" markerEnd="url(#arrowhead_ner)" />
+            <rect x="430" y="70" width="120" height="70" rx="5" fill="#fff3e0" stroke="#ff9800" />
+            <text x="490" y="110" textAnchor="middle" fill="#e65100">实体分类</text>
+            <line x1="550" y1="105" x2="630" y2="105" stroke="#666" strokeWidth="2" markerEnd="url(#arrowhead_ner)" />
+            <rect x="630" y="70" width="120" height="70" rx="5" fill="#f3e5f5" stroke="#9c27b0" />
+            <text x="690" y="110" textAnchor="middle" fill="#6a1b9a">标注结果</text>
+          </svg>
+        </div>
+
+        <SectionTitle>常见实体类型</SectionTitle>
+        <BookList items={[
+          '人名(PER)',
+          '地名(LOC)',
+          '组织机构名(ORG)',
+          '时间(TIME)',
+          '日期(DATE)',
+          '货币(MONEY)',
+          '百分比(PERCENT)',
+        ]} />
       </div>
-    </div>
-  );
-} 
+    ),
+    right: (
+      <div className="space-y-4">
+        <SectionTitle>应用场景</SectionTitle>
+        <BookList items={[
+          '信息抽取',
+          '问答系统',
+          '机器翻译',
+          '知识图谱构建',
+          '文本摘要',
+        ]} />
+      </div>
+    ),
+  },
+  {
+    label: '识别方法',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>命名实体识别方法</PageTitle>
+        <BookParagraph>
+          命名实体识别的方法主要包括基于规则的方法、统计机器学习方法和深度学习方法。每种方法都有其特点和适用场景。
+        </BookParagraph>
+
+        <SectionTitle>主要方法</SectionTitle>
+        <BookList items={[
+          '基于规则的方法',
+          '条件随机场(CRF)',
+          'BiLSTM-CRF',
+          'BERT-CRF',
+          '预训练语言模型',
+        ]} />
+
+        <SectionTitle>BERT-CRF模型实现</SectionTitle>
+        <BookCode language="python" code={bertCrfCode} />
+      </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <SectionTitle>方法对比</SectionTitle>
+        <BookParagraph>
+          基于规则的方法准确率高但可移植性差；CRF方法通过特征工程效果好但依赖人工特征；深度学习方法自动学习特征，性能最优但需要大量标注数据。
+        </BookParagraph>
+      </div>
+    ),
+  },
+  {
+    label: '评估指标',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>评估指标</PageTitle>
+        <BookParagraph>
+          命名实体识别任务的评估主要关注实体级别的准确率、召回率和F1值，同时也需要考虑边界识别和实体分类的准确性。
+        </BookParagraph>
+
+        <SectionTitle>评估指标</SectionTitle>
+        <BookList items={[
+          '实体级别的准确率',
+          '实体级别的召回率',
+          '实体级别的F1值',
+          '边界识别准确率',
+          '实体分类准确率',
+        ]} />
+
+        <SectionTitle>评估指标实现</SectionTitle>
+        <BookCode language="python" code={evalCode} />
+      </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <SectionTitle>评估维度</SectionTitle>
+        <BookParagraph>
+          实体级别的评估同时考虑边界和类型，要求实体边界和类型都正确才算正确。此外也需要按实体类型分别评估，了解模型在不同实体上的表现差异。
+        </BookParagraph>
+      </div>
+    ),
+  },
+  {
+    label: '实战案例',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>实战案例</PageTitle>
+        <BookParagraph>
+          本节将介绍命名实体识别在实际应用中的案例，包括中文新闻实体识别、医疗文本实体识别等。
+        </BookParagraph>
+
+        <SectionTitle>中文新闻实体识别案例</SectionTitle>
+        <BookCode language="python" code={newsNerCode} />
+      </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <SectionTitle>医疗文本实体识别案例</SectionTitle>
+        <BookCode language="python" code={medicalNerCode} />
+      </div>
+    ),
+  },
+]
+
+export default function NlpNerPage() {
+  return <LessonLayout meta={META} spreads={SPREADS} />
+}
