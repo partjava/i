@@ -181,9 +181,15 @@ body.dark .prose blockquote { border-left-color: #4b5563; color: #9ca3af; }
 
 
 body.dark .card {
-  background-color: #1f2937;
+  background: rgba(12, 31, 61, 0.65);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   color: #f9fafb;
-  border-color: #374151;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+body.dark .card:hover {
+  background: rgba(12, 31, 61, 0.78);
 }
 
 body.dark .dark-mode-card {
@@ -436,14 +442,36 @@ body {
 
 /* 卡片样式 */
 .card {
-  background: white;
-  border-radius: 0.5rem;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
-  transition: box-shadow 0.15s ease-in-out;
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 0.75rem;
+  box-shadow: 0 4px 24px rgba(12, 31, 61, 0.08), 0 1px 4px rgba(12, 31, 61, 0.04);
+  transition: all 0.2s ease-in-out;
 }
 
 .card:hover {
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  background: rgba(255, 255, 255, 0.78);
+  box-shadow: 0 8px 40px rgba(12, 31, 61, 0.10), 0 2px 8px rgba(12, 31, 61, 0.05);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+/* 磨砂玻璃通用类 */
+.frost {
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 4px 24px rgba(12, 31, 61, 0.08), 0 1px 4px rgba(12, 31, 61, 0.04);
+}
+
+.frost-dark {
+  background: rgba(12, 31, 61, 0.6);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
 }
 
 /* 响应式文本 */
