@@ -36,7 +36,7 @@ export const THEMES: Record<string, SubjectTheme> = {
     accentLight: '#4a87c4', // 浅蓝 hover
     accentDark: '#0e4a8a',  // 深蓝 文字/边框
     paperBg: '#BDE0FE',     // 纸色 冰川白
-    paperCard: '#f5ede0',   // 卡片色
+    paperCard: '#d8d8db',   // 卡片色
   },
 
   ai: {
@@ -46,7 +46,7 @@ export const THEMES: Record<string, SubjectTheme> = {
     accentLight: '#5a6070', // 浅灰 hover
     accentDark: '#1a202f',  // 深灰 文字/边框
     paperBg: '#E2E7BF',     // 纸色 嫩菊绿
-    paperCard: '#d8ddb5',   // 卡片色
+    paperCard: '#d8d8db',   // 卡片色
   },
 
   software: {
@@ -56,7 +56,7 @@ export const THEMES: Record<string, SubjectTheme> = {
     accentLight: '#5a5b56', // 浅绿灰 hover
     accentDark: '#272823',  // 深绿灰 文字/边框
     paperBg: '#C6E6E8',     // 纸色 海天蓝
-    paperCard: '#b8dbdd',   // 卡片色
+    paperCard: '#d8d8db',   // 卡片色
   },
 
   security: {

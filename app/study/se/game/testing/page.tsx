@@ -1,19 +1,43 @@
-'use client';
-export default function GameTestingPage() {
-  return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-4xl font-bold mb-6">游戏测试</h1>
-      <div className="bg-white rounded-lg shadow p-8">
-        <h2 className="text-2xl font-bold mb-4">游戏测试概述</h2>
-        <ul className="mb-4 space-y-2 text-gray-700">
-          <li>• 游戏测试的定义与作用</li>
-          <li>• 游戏测试的基本组成</li>
-          <li>• 游戏测试的工作流程</li>
-        </ul>
-        <h2 className="text-2xl font-bold mb-4">游戏测试示例</h2>
-        <pre className="bg-gray-100 p-4 rounded-lg overflow-x-auto mb-6">
-{`# 示例代码
-class Game {
+'use client'
+
+import LessonLayout, { type LessonMeta } from '@/app/components/ui/book/LessonLayout'
+import { THEMES } from '@/app/components/ui/book/theme'
+import {
+  PageTitle,
+  BookCode,
+  BookAlert,
+  BookList,
+} from '@/app/components/ui/book/BookContent'
+
+const META: LessonMeta = {
+  subject: '软件工程',
+  chapterTitle: '游戏测试',
+  chapterNumber: 4,
+  totalChapters: 10,
+  subjectHref: '/study/se/game',
+  prevChapter: { label: '游戏开发', href: '/study/se/game/development' },
+  nextChapter: { label: '游戏发布', href: '/study/se/game/release' },
+  theme: THEMES.software,
+}
+
+const SPREADS = [
+  {
+    label: '游戏测试',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>游戏测试概述</PageTitle>
+        <BookList items={[
+          '游戏测试的定义与作用：发现游戏缺陷，确保产品质量和用户体验',
+          '游戏测试的基本组成：功能测试、性能测试、兼容性测试、用户体验测试',
+          '游戏测试的工作流程：测试计划 → 用例设计 → 执行测试 → 缺陷跟踪 → 回归验证',
+        ]} />
+        <BookAlert type="info" message="游戏测试不仅要发现 Bug，还需关注平衡性、流畅度和玩家体验的完整性" />
+      </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <PageTitle>游戏测试示例</PageTitle>
+        <BookCode language="javascript" showLineNumbers code={`class Game {
   constructor(name, genre) {
     this.name = name;
     this.genre = genre;
@@ -21,17 +45,15 @@ class Game {
   getInfo() {
     return \`Game: \${this.name}, Genre: \${this.genre}\`;
   }
-}`}
-        </pre>
+}
+
+const testGame = new Game('跑酷达人', '休闲');
+console.log(testGame.getInfo());`} />
       </div>
-      <div className="mt-10 flex justify-between">
-        <a href="/study/se/game/development" className="px-4 py-2 text-blue-600 hover:text-blue-800">
-          ← 游戏开发
-        </a>
-        <a href="/study/se/game/release" className="px-4 py-2 text-blue-600 hover:text-blue-800">
-          游戏发布 →
-        </a>
-      </div>
-    </div>
-  );
-} 
+    ),
+  },
+]
+
+export default function GameTestingPage() {
+  return <LessonLayout meta={META} spreads={SPREADS} />
+}

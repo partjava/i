@@ -1,19 +1,42 @@
-'use client';
-export default function AnimationBasicPage() {
-  return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-4xl font-bold mb-6">动画基础</h1>
-      <div className="bg-white rounded-lg shadow p-8">
-        <h2 className="text-2xl font-bold mb-4">动画概述</h2>
-        <ul className="mb-4 space-y-2 text-gray-700">
-          <li>• 动画的定义与作用</li>
-          <li>• 动画的基本组成</li>
-          <li>• 动画的工作流程</li>
-        </ul>
-        <h2 className="text-2xl font-bold mb-4">动画示例</h2>
-        <pre className="bg-gray-100 p-4 rounded-lg overflow-x-auto mb-6">
-{`# 示例代码
-class Animation {
+'use client'
+
+import LessonLayout, { type LessonMeta } from '@/app/components/ui/book/LessonLayout'
+import { THEMES } from '@/app/components/ui/book/theme'
+import {
+  PageTitle,
+  BookCode,
+  BookAlert,
+  BookList,
+} from '@/app/components/ui/book/BookContent'
+
+const META: LessonMeta = {
+  subject: '软件工程',
+  chapterTitle: '动画基础',
+  chapterNumber: 1,
+  totalChapters: 10,
+  subjectHref: '/study/se/game',
+  nextChapter: { label: '游戏设计', href: '/study/se/game/design' },
+  theme: THEMES.software,
+}
+
+const SPREADS = [
+  {
+    label: '动画基础',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>动画概述</PageTitle>
+        <BookList items={[
+          '动画的定义与作用：通过连续播放一系列静态图像产生运动视觉效果',
+          '动画的基本组成：帧、时间线、补间动画、关键帧',
+          '动画的工作流程：概念设计 → 原画绘制 → 中间帧生成 → 后期合成',
+        ]} />
+        <BookAlert type="info" message="动画是游戏开发的基础，连贯的动画效果能极大提升游戏体验和沉浸感" />
+      </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <PageTitle>动画示例</PageTitle>
+        <BookCode language="javascript" showLineNumbers code={`class Animation {
   constructor(name, duration) {
     this.name = name;
     this.duration = duration;
@@ -21,17 +44,15 @@ class Animation {
   play() {
     return \`Playing \${this.name} for \${this.duration} seconds\`;
   }
-}`}
-        </pre>
+}
+
+const runAnim = new Animation('跑步', 2);
+console.log(runAnim.play());`} />
       </div>
-      <div className="mt-10 flex justify-between">
-        <a href="/study/se/game" className="px-4 py-2 text-blue-600 hover:text-blue-800">
-          ← 动画与游戏设计
-        </a>
-        <a href="/study/se/game/design" className="px-4 py-2 text-blue-600 hover:text-blue-800">
-          游戏设计 →
-        </a>
-      </div>
-    </div>
-  );
-} 
+    ),
+  },
+]
+
+export default function AnimationBasicPage() {
+  return <LessonLayout meta={META} spreads={SPREADS} />
+}

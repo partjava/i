@@ -1,19 +1,43 @@
-'use client';
-export default function GameDevelopmentPage() {
-  return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-4xl font-bold mb-6">游戏开发</h1>
-      <div className="bg-white rounded-lg shadow p-8">
-        <h2 className="text-2xl font-bold mb-4">游戏开发概述</h2>
-        <ul className="mb-4 space-y-2 text-gray-700">
-          <li>• 游戏开发的定义与作用</li>
-          <li>• 游戏开发的基本组成</li>
-          <li>• 游戏开发的工作流程</li>
-        </ul>
-        <h2 className="text-2xl font-bold mb-4">游戏开发示例</h2>
-        <pre className="bg-gray-100 p-4 rounded-lg overflow-x-auto mb-6">
-{`# 示例代码
-class Game {
+'use client'
+
+import LessonLayout, { type LessonMeta } from '@/app/components/ui/book/LessonLayout'
+import { THEMES } from '@/app/components/ui/book/theme'
+import {
+  PageTitle,
+  BookCode,
+  BookAlert,
+  BookList,
+} from '@/app/components/ui/book/BookContent'
+
+const META: LessonMeta = {
+  subject: '软件工程',
+  chapterTitle: '游戏开发',
+  chapterNumber: 3,
+  totalChapters: 10,
+  subjectHref: '/study/se/game',
+  prevChapter: { label: '游戏设计', href: '/study/se/game/design' },
+  nextChapter: { label: '游戏测试', href: '/study/se/game/testing' },
+  theme: THEMES.software,
+}
+
+const SPREADS = [
+  {
+    label: '游戏开发',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>游戏开发概述</PageTitle>
+        <BookList items={[
+          '游戏开发的定义与作用：将设计转化为可运行的游戏软件',
+          '游戏开发的基本组成：引擎选择、架构设计、编码实现、资源集成',
+          '游戏开发的工作流程：需求分析 → 技术选型 → 迭代开发 → 集成测试',
+        ]} />
+        <BookAlert type="info" message="游戏开发需要综合运用编程、美术、音效等多学科知识，团队协作是关键" />
+      </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <PageTitle>游戏开发示例</PageTitle>
+        <BookCode language="javascript" showLineNumbers code={`class Game {
   constructor(name, genre) {
     this.name = name;
     this.genre = genre;
@@ -21,17 +45,15 @@ class Game {
   getInfo() {
     return \`Game: \${this.name}, Genre: \${this.genre}\`;
   }
-}`}
-        </pre>
+}
+
+const newGame = new Game('太空探险', 'ACT');
+console.log(newGame.getInfo());`} />
       </div>
-      <div className="mt-10 flex justify-between">
-        <a href="/study/se/game/design" className="px-4 py-2 text-blue-600 hover:text-blue-800">
-          ← 游戏设计
-        </a>
-        <a href="/study/se/game/testing" className="px-4 py-2 text-blue-600 hover:text-blue-800">
-          游戏测试 →
-        </a>
-      </div>
-    </div>
-  );
-} 
+    ),
+  },
+]
+
+export default function GameDevelopmentPage() {
+  return <LessonLayout meta={META} spreads={SPREADS} />
+}

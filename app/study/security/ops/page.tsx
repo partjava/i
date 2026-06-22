@@ -1,193 +1,141 @@
-import Link from 'next/link';
+'use client'
 
-export default function SecurityOperationsPage() {
-  const stats = {
-    totalLessons: 10,
-    difficulty: '中高级',
-    duration: '8-10周',
-    rating: 4.8
-  };
+import BookCover from '@/app/components/ui/book/BookCover'
+import { THEMES } from '@/app/components/ui/book/theme'
+import { CheckCircleOutlined } from '@ant-design/icons'
+import Link from 'next/link'
 
-  const roadmap = [
-    {
-      phase: '基础建设',
-      topics: ['安全运维基础', '系统加固', '安全监控'],
-      duration: '3周'
-    },
-    {
-      phase: '运营管理',
-      topics: ['日志分析', '漏洞管理', '补丁管理', '配置管理'],
-      duration: '4周'
-    },
-    {
-      phase: '应急响应',
-      topics: ['应急响应', '灾难恢复', '安全评估'],
-      duration: '3周'
-    }
-  ];
+const CHAPTERS = [
+  { number: 1, title: '安全运维基础', description: '了解安全运维核心概念与体系', href: '/study/security/ops/basic' },
+  { number: 2, title: '系统加固', description: '掌握系统安全加固技术', href: '/study/security/ops/hardening' },
+  { number: 3, title: '安全监控', description: '学习安全监控体系搭建', href: '/study/security/ops/monitor' },
+  { number: 4, title: '日志分析', description: '掌握日志收集与分析技术', href: '/study/security/ops/log' },
+  { number: 5, title: '漏洞管理', description: '了解漏洞全生命周期管理', href: '/study/security/ops/vulnerability' },
+  { number: 6, title: '补丁管理', description: '掌握补丁评估与部署流程', href: '/study/security/ops/patch' },
+  { number: 7, title: '配置管理', description: '学习安全配置管理最佳实践', href: '/study/security/ops/config' },
+  { number: 8, title: '应急响应', description: '掌握应急响应流程与技术', href: '/study/security/ops/incident' },
+  { number: 9, title: '灾难恢复', description: '了解灾难恢复规划与实施', href: '/study/security/ops/recovery' },
+  { number: 10, title: '安全评估', description: '学习安全评估方法与标准', href: '/study/security/ops/assessment' },
+]
 
-  const features = [
-    { icon: '🛡️', title: '系统加固', desc: '全面的系统安全加固方案' },
-    { icon: '📊', title: '监控分析', desc: '7×24安全监控与分析' },
-    { icon: '⚡', title: '应急响应', desc: '快速安全事件响应机制' },
-    { icon: '🔧', title: '自动化', desc: '安全运维自动化工具' }
-  ];
+const features = [
+  { title: '系统加固', desc: '全面的系统安全加固方案' },
+  { title: '监控分析', desc: '7×24安全监控与分析' },
+  { title: '应急响应', desc: '快速安全事件响应机制' },
+  { title: '自动化', desc: '安全运维自动化工具' },
+]
+
+const learningPath = [
+  { title: '基础建设', desc: '打好安全运维根基，掌握核心概念', items: [CHAPTERS[0], CHAPTERS[1], CHAPTERS[2]] },
+  { title: '运营管理', desc: '深入学习日志、漏洞、补丁与配置管理', items: [CHAPTERS[3], CHAPTERS[4], CHAPTERS[5], CHAPTERS[6]] },
+  { title: '应急响应', desc: '掌握应急响应、灾难恢复与安全评估', items: [CHAPTERS[7], CHAPTERS[8], CHAPTERS[9]] },
+]
+
+const careerPaths = [
+  { title: '安全运维工程师', desc: '企业安全运维专家', skills: ['系统加固', '安全监控', '漏洞管理', '自动化运维'] },
+  { title: '安全运营专家', desc: 'SOC安全运营中心', skills: ['日志分析', '安全监控', '事件分析', '安全编排'] },
+  { title: '应急响应专家', desc: '安全事件响应处理', skills: ['应急响应', '灾难恢复', '取证分析', '安全评估'] },
+]
+
+export default function SecurityOpsLearningPage() {
+  const theme = THEMES.security
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-100">
-      <div className="container mx-auto px-4 py-8">
-        <div className="text-center mb-12">
-          <div className="inline-flex items-center justify-center w-20 h-20 bg-orange-600 text-white rounded-full text-3xl font-bold mb-6">
-            运
-          </div>
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">安全运维</h1>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            掌握企业级安全运维技能，学习系统加固、安全监控、
-            应急响应等核心技术，保障业务系统安全稳定运行
-          </p>
-        </div>
+    <div>
+      <BookCover
+        title="安全运维"
+        subtitle="Security Operations"
+        description="掌握系统加固、安全监控、应急响应等安全运维核心技能，保障企业信息系统的安全稳定运行"
+        chapterCount={CHAPTERS.length}
+        totalHours={35}
+        chapters={CHAPTERS}
+        icon="⚙️"
+        startHref="/study/security/ops/basic"
+        theme={theme}
+      />
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-12">
-          <div className="bg-white rounded-lg p-6 text-center shadow-md">
-            <div className="text-3xl font-bold text-orange-600 mb-2">{stats?.totalLessons || 0}</div>
-            <div className="text-gray-600">课程数量</div>
-          </div>
-          <div className="bg-white rounded-lg p-6 text-center shadow-md">
-            <div className="text-3xl font-bold text-green-600 mb-2">{stats?.difficulty || 0}</div>
-            <div className="text-gray-600">难度等级</div>
-          </div>
-          <div className="bg-white rounded-lg p-6 text-center shadow-md">
-            <div className="text-3xl font-bold text-purple-600 mb-2">{stats?.duration || 0}</div>
-            <div className="text-gray-600">学习周期</div>
-          </div>
-          <div className="bg-white rounded-lg p-6 text-center shadow-md">
-            <div className="text-3xl font-bold text-blue-600 mb-2">{stats?.rating || 0}</div>
-            <div className="text-gray-600">学员评分</div>
+      {/* 课程特色 */}
+      <div className="py-12 sm:py-16 transition-colors duration-300" style={{ background: theme.paperBg }}>
+        <div className="max-w-5xl mx-auto px-4">
+          <h2 className="text-2xl font-bold text-center mb-10" style={{ color: theme.accent }}>为什么学习安全运维？</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {features.map((f, i) => (
+              <div key={i} className="rounded-lg p-5 text-center transition-shadow hover:shadow-md" style={{ background: theme.paperCard || theme.paperBg, border: '1px solid rgba(0,0,0,0.06)' }}>
+                <h3 className="text-lg font-semibold mb-2">{f.title}</h3>
+                <p className="text-sm opacity-70">{f.desc}</p>
+              </div>
+            ))}
           </div>
         </div>
+      </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2">
-            <div className="bg-white rounded-xl shadow-lg p-8 mb-8">
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">🌟 课程特色</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {features.map((feature, index) => (
-                  <div key={index} className="flex items-start space-x-4">
-                    <div className="text-2xl">{feature.icon}</div>
-                    <div>
-                      <h3 className="font-semibold text-gray-900 mb-1">{feature.title}</h3>
-                      <p className="text-gray-600 text-sm">{feature.desc}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="bg-white rounded-xl shadow-lg p-8">
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">🗺️ 学习路径</h2>
-              <div className="space-y-6">
-                {roadmap.map((phase, index) => (
-                  <div key={index} className="relative">
-                    <div className="flex items-center mb-3">
-                      <div className="w-8 h-8 bg-orange-600 text-white rounded-full flex items-center justify-center text-sm font-bold mr-4">
-                        {index + 1}
-                      </div>
-                      <h3 className="text-lg font-semibold text-gray-900">{phase.phase}</h3>
-                      <span className="ml-auto text-sm text-gray-500">{phase.duration}</span>
-                    </div>
-                    <div className="ml-12 grid grid-cols-1 md:grid-cols-3 gap-2">
-                      {phase.topics.map((topic, topicIndex) => {
-                        const topicLinks: { [key: string]: string } = {
-                          '安全运维基础': '/study/security/ops/basic',
-                          '系统加固': '/study/security/ops/hardening',
-                          '安全监控': '/study/security/ops/monitor',
-                          '日志分析': '/study/security/ops/log',
-                          '漏洞管理': '/study/security/ops/vulnerability',
-                          '补丁管理': '/study/security/ops/patch',
-                          '配置管理': '/study/security/ops/config',
-                          '应急响应': '/study/security/ops/incident',
-                          '灾难恢复': '/study/security/ops/recovery',
-                          '安全评估': '/study/security/ops/assessment'
-                        };
-                        
-                        return (
-                          <Link
-                            key={topicIndex}
-                            href={topicLinks[topic] || '#'}
-                            className="text-sm text-gray-600 bg-gray-50 rounded px-3 py-1 hover:bg-orange-50 hover:text-orange-600 transition-colors cursor-pointer block"
-                          >
-                            {topic}
-                          </Link>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
+      {/* 学习路径 */}
+      <div className="py-12 sm:py-16" style={{ background: '#f4f4f6' }}>
+        <div className="max-w-5xl mx-auto px-4">
+          <h2 className="text-2xl font-bold text-center mb-10" style={{ color: theme.accent }}>学习路径</h2>
           <div className="space-y-6">
-            <div className="bg-white rounded-xl shadow-lg p-6">
-              <h3 className="text-xl font-bold text-gray-900 mb-4">🚀 快速开始</h3>
-              <div className="space-y-3">
-                <Link 
-                  href="/study/security/ops/basic"
-                  className="block w-full bg-orange-600 text-white text-center py-3 rounded-lg hover:bg-orange-700 transition-colors"
-                >
-                  开始学习
-                </Link>
-                <Link 
-                  href="/study/security/ops/hardening"
-                  className="block w-full border border-gray-300 text-gray-700 text-center py-3 rounded-lg hover:bg-gray-50 transition-colors"
-                >
-                  系统加固
-                </Link>
+            {learningPath.map((phase, i) => (
+              <div key={i} className="rounded-lg p-6 transition-shadow hover:shadow-md" style={{ background: theme.paperCard || theme.paperBg, border: '1px solid rgba(0,0,0,0.06)' }}>
+                <div className="flex items-center gap-3 mb-3">
+                  <span className="text-xs font-medium px-3 py-1 rounded-full" style={{ background: `${theme.accent}15`, color: theme.accent }}>阶段 {i + 1}</span>
+                  <h3 className="text-lg font-bold">{phase.title}</h3>
+                </div>
+                <p className="text-sm opacity-70 mb-4">{phase.desc}</p>
+                <div className="flex flex-wrap gap-3">
+                  {phase.items.map((item, j) => (
+                    <Link key={j} href={item.href} className="text-sm px-3 py-1.5 rounded-md transition-colors hover:opacity-80" style={{ background: `${theme.accent}0D`, color: theme.accent }}>{item.title}</Link>
+                  ))}
+                </div>
               </div>
-            </div>
+            ))}
+          </div>
+        </div>
+      </div>
 
-            <div className="bg-white rounded-xl shadow-lg p-6">
-              <h3 className="text-xl font-bold text-gray-900 mb-4">🎯 核心技能</h3>
-              <ul className="space-y-2 text-sm text-gray-600">
-                <li className="flex items-center">
-                  <span className="w-2 h-2 bg-orange-600 rounded-full mr-3"></span>
-                  系统安全加固
-                </li>
-                <li className="flex items-center">
-                  <span className="w-2 h-2 bg-orange-600 rounded-full mr-3"></span>
-                  安全监控分析
-                </li>
-                <li className="flex items-center">
-                  <span className="w-2 h-2 bg-orange-600 rounded-full mr-3"></span>
-                  漏洞补丁管理
-                </li>
-                <li className="flex items-center">
-                  <span className="w-2 h-2 bg-orange-600 rounded-full mr-3"></span>
-                  应急事件响应
-                </li>
+      {/* 职业发展 */}
+      <div className="py-12 sm:py-16 transition-colors duration-300" style={{ background: theme.paperBg }}>
+        <div className="max-w-5xl mx-auto px-4">
+          <h2 className="text-2xl font-bold text-center mb-10" style={{ color: theme.accent }}>职业发展方向</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+            {careerPaths.map((career, i) => (
+              <div key={i} className="rounded-lg p-6 transition-shadow hover:shadow-md" style={{ background: theme.paperCard || theme.paperBg, border: '1px solid rgba(0,0,0,0.06)' }}>
+                <h3 className="text-lg font-semibold mb-1" style={{ color: theme.accent }}>{career.title}</h3>
+                <p className="text-sm opacity-70 mb-4">{career.desc}</p>
+                <div className="flex flex-wrap gap-2">
+                  {career.skills.map((skill, j) => (
+                    <span key={j} className="text-xs px-2 py-0.5 rounded" style={{ background: `${theme.accent}10`, color: theme.accent }}>{skill}</span>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* 学习建议 */}
+      <div className="py-12 sm:py-16" style={{ background: '#f4f4f6' }}>
+        <div className="max-w-5xl mx-auto px-4">
+          <h2 className="text-2xl font-bold text-center mb-10" style={{ color: theme.accent }}>学习建议</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="rounded-lg p-6" style={{ background: theme.paperCard || theme.paperBg, border: '1px solid rgba(0,0,0,0.06)' }}>
+              <h3 className="text-lg font-semibold mb-4" style={{ color: theme.accent }}>先修知识</h3>
+              <ul className="space-y-3">
+                {['熟悉操作系统和网络基础知识', '了解常见的安全威胁与攻击类型', '掌握基本命令行操作和脚本编写', '具备一定的系统管理经验'].map((item, i) => (
+                  <li key={i} className="flex items-start gap-2"><CheckCircleOutlined className="mt-0.5" style={{ color: '#22c55e' }} /><span className="text-sm">{item}</span></li>
+                ))}
               </ul>
             </div>
-
-            <div className="bg-white rounded-xl shadow-lg p-6">
-              <h3 className="text-xl font-bold text-gray-900 mb-4">💼 职业方向</h3>
-              <div className="space-y-3">
-                <div className="bg-gradient-to-r from-orange-50 to-orange-100 rounded-lg p-3">
-                  <div className="font-medium text-orange-900">安全运维工程师</div>
-                  <div className="text-sm text-orange-700">企业安全运维专家</div>
-                </div>
-                <div className="bg-gradient-to-r from-red-50 to-red-100 rounded-lg p-3">
-                  <div className="font-medium text-red-900">安全运营专家</div>
-                  <div className="text-sm text-red-700">SOC安全运营中心</div>
-                </div>
-                <div className="bg-gradient-to-r from-purple-50 to-purple-100 rounded-lg p-3">
-                  <div className="font-medium text-purple-900">应急响应专家</div>
-                  <div className="text-sm text-purple-700">安全事件响应处理</div>
-                </div>
-              </div>
+            <div className="rounded-lg p-6" style={{ background: theme.paperCard || theme.paperBg, border: '1px solid rgba(0,0,0,0.06)' }}>
+              <h3 className="text-lg font-semibold mb-4" style={{ color: theme.accent }}>核心技能</h3>
+              <ul className="space-y-3">
+                {['系统安全加固与防护', '安全监控与日志分析', '漏洞补丁全生命周期管理', '应急事件响应与处置'].map((item, i) => (
+                  <li key={i} className="flex items-start gap-2"><CheckCircleOutlined className="mt-0.5" style={{ color: '#22c55e' }} /><span className="text-sm">{item}</span></li>
+                ))}
+              </ul>
             </div>
           </div>
         </div>
       </div>
     </div>
-  );
-} 
+  )
+}

@@ -1,178 +1,31 @@
-"use client";
-import { useState } from 'react';
-import Link from 'next/link';
+'use client'
 
-export default function SecurityProjectPage() {
-  const [activeTab, setActiveTab] = useState('overview');
+import LessonLayout, { type LessonMeta } from '@/app/components/ui/book/LessonLayout'
+import { THEMES } from '@/app/components/ui/book/theme'
+import {
+  PageTitle,
+  SectionTitle,
+  BookParagraph,
+  BookCode,
+  BookList,
+} from '@/app/components/ui/book/BookContent'
 
-  return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-8">安全项目管理</h1>
-      
-      {/* 标签页导航 */}
-      <div className="flex space-x-4 mb-6 border-b overflow-x-auto">
-        <button
-          onClick={() => setActiveTab('overview')}
-          className={`px-4 py-2 font-medium whitespace-nowrap ${
-            activeTab === 'overview'
-              ? 'border-b-2 border-blue-500 text-blue-600'
-              : 'text-gray-500 hover:text-gray-700'
-          }`}
-        >
-          概述
-        </button>
-        <button
-          onClick={() => setActiveTab('planning')}
-          className={`px-4 py-2 font-medium whitespace-nowrap ${
-            activeTab === 'planning'
-              ? 'border-b-2 border-blue-500 text-blue-600'
-              : 'text-gray-500 hover:text-gray-700'
-          }`}
-        >
-          项目规划
-        </button>
-        <button
-          onClick={() => setActiveTab('execution')}
-          className={`px-4 py-2 font-medium whitespace-nowrap ${
-            activeTab === 'execution'
-              ? 'border-b-2 border-blue-500 text-blue-600'
-              : 'text-gray-500 hover:text-gray-700'
-          }`}
-        >
-          项目执行
-        </button>
-        <button
-          onClick={() => setActiveTab('monitoring')}
-          className={`px-4 py-2 font-medium whitespace-nowrap ${
-            activeTab === 'monitoring'
-              ? 'border-b-2 border-blue-500 text-blue-600'
-              : 'text-gray-500 hover:text-gray-700'
-          }`}
-        >
-          项目监控
-        </button>
-        <button
-          onClick={() => setActiveTab('risk')}
-          className={`px-4 py-2 font-medium whitespace-nowrap ${
-            activeTab === 'risk'
-              ? 'border-b-2 border-blue-500 text-blue-600'
-              : 'text-gray-500 hover:text-gray-700'
-          }`}
-        >
-          风险管理
-        </button>
-        <button
-          onClick={() => setActiveTab('quality')}
-          className={`px-4 py-2 font-medium whitespace-nowrap ${
-            activeTab === 'quality'
-              ? 'border-b-2 border-blue-500 text-blue-600'
-              : 'text-gray-500 hover:text-gray-700'
-          }`}
-        >
-          质量管理
-        </button>
-      </div>
+const META: LessonMeta = {
+  subject: '网络安全',
+  chapterTitle: '安全项目管理',
+  chapterNumber: 10,
+  totalChapters: 10,
+  subjectHref: '/study/security/dev',
+  prevChapter: { label: '安全运维', href: '/study/security/dev/ops' },
+  nextChapter: { label: '安全运维基础', href: '/study/security/ops/basic' },
+  theme: THEMES.security,
+}
 
-      {/* 内容区域 */}
-      <div className="space-y-6">
-        {activeTab === 'overview' && (
-          <div className="space-y-6">
-            <h3 className="text-xl font-semibold mb-3">安全项目管理概述</h3>
-            <div className="prose max-w-none">
-              <h4 className="font-semibold">1. 安全项目管理的重要性</h4>
-              <div className="bg-gray-100 p-4 rounded-lg mb-4">
-                <p className="mb-4">
-                  安全项目管理是确保信息安全项目成功实施的关键，它涵盖了从项目启动、规划、执行到收尾的全过程管理。
-                  良好的安全项目管理可以：
-                </p>
-                <ul className="list-disc pl-6 mb-4">
-                  <li>确保项目目标的实现</li>
-                  <li>控制项目风险</li>
-                  <li>优化资源配置</li>
-                  <li>提高项目质量</li>
-                  <li>保证项目进度</li>
-                </ul>
-              </div>
+// ============================
+//  项目规划 - 大型代码块
+// ============================
 
-              <h4 className="font-semibold">2. 安全项目管理的主要内容</h4>
-              <div className="bg-gray-100 p-4 rounded-lg mb-4">
-                <ul className="list-disc pl-6 mb-4">
-                  <li>项目规划
-                    <ul className="list-disc pl-6 mt-2 text-sm">
-                      <li>目标定义</li>
-                      <li>范围确定</li>
-                      <li>资源规划</li>
-                      <li>进度安排</li>
-                    </ul>
-                  </li>
-                  <li>项目执行
-                    <ul className="list-disc pl-6 mt-2 text-sm">
-                      <li>团队管理</li>
-                      <li>进度控制</li>
-                      <li>质量控制</li>
-                      <li>变更管理</li>
-                    </ul>
-                  </li>
-                  <li>风险管理
-                    <ul className="list-disc pl-6 mt-2 text-sm">
-                      <li>风险识别</li>
-                      <li>风险评估</li>
-                      <li>风险应对</li>
-                      <li>风险监控</li>
-                    </ul>
-                  </li>
-                </ul>
-              </div>
-
-              <h4 className="font-semibold">3. 安全项目管理的生命周期</h4>
-              <div className="bg-gray-100 p-4 rounded-lg mb-4">
-                <ul className="list-disc pl-6 mb-4">
-                  <li>启动阶段
-                    <ul className="list-disc pl-6 mt-2 text-sm">
-                      <li>项目立项</li>
-                      <li>需求分析</li>
-                      <li>可行性研究</li>
-                      <li>团队组建</li>
-                    </ul>
-                  </li>
-                  <li>规划阶段
-                    <ul className="list-disc pl-6 mt-2 text-sm">
-                      <li>制定计划</li>
-                      <li>分配资源</li>
-                      <li>确定里程碑</li>
-                      <li>制定预算</li>
-                    </ul>
-                  </li>
-                  <li>执行阶段
-                    <ul className="list-disc pl-6 mt-2 text-sm">
-                      <li>任务分配</li>
-                      <li>进度跟踪</li>
-                      <li>质量控制</li>
-                      <li>风险管理</li>
-                    </ul>
-                  </li>
-                  <li>收尾阶段
-                    <ul className="list-disc pl-6 mt-2 text-sm">
-                      <li>验收测试</li>
-                      <li>文档归档</li>
-                      <li>经验总结</li>
-                      <li>项目评估</li>
-                    </ul>
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'planning' && (
-          <div className="space-y-6">
-            <h3 className="text-xl font-semibold mb-3">项目规划</h3>
-            <div className="prose max-w-none">
-              <h4 className="font-semibold">1. 项目章程</h4>
-              <div className="bg-gray-100 p-4 rounded-lg mb-4">
-                <pre className="bg-gray-200 p-2 rounded text-xs overflow-x-auto">
-                  <code>{`# 项目章程示例
+const projectCharterCode = `# 项目章程示例
 
 项目名称：企业安全基础设施升级项目
 项目编号：SEC-2024-001
@@ -292,14 +145,9 @@ export default function SecurityProjectPage() {
 项目发起人：_____________  日期：_____________
 项目经理：_______________  日期：_____________
 技术负责人：_____________  日期：_____________
-质量负责人：_____________  日期：_____________`}</code>
-                </pre>
-              </div>
+质量负责人：_____________  日期：_____________`
 
-              <h4 className="font-semibold">2. 工作分解结构(WBS)</h4>
-              <div className="bg-gray-100 p-4 rounded-lg mb-4">
-                <pre className="bg-gray-200 p-2 rounded text-xs overflow-x-auto">
-                  <code>{`# 工作分解结构示例
+const wbsCode = `# 工作分解结构示例
 
 1. 项目启动
    1.1 需求调研
@@ -307,7 +155,7 @@ export default function SecurityProjectPage() {
        1.1.2 需求收集
        1.1.3 需求分析
        1.1.4 需求确认
-   
+
    1.2 可行性研究
        1.2.1 技术可行性
        1.2.2 经济可行性
@@ -319,7 +167,7 @@ export default function SecurityProjectPage() {
        2.1.1 网络架构
        2.1.2 安全架构
        2.1.3 系统架构
-   
+
    2.2 详细设计
        2.2.1 网络安全设计
        2.2.2 系统安全设计
@@ -331,13 +179,13 @@ export default function SecurityProjectPage() {
        3.1.1 硬件采购
        3.1.2 软件采购
        3.1.3 环境搭建
-   
+
    3.2 安全设备部署
        3.2.1 防火墙部署
        3.2.2 IDS/IPS部署
        3.2.3 堡垒机部署
        3.2.4 审计系统部署
-   
+
    3.3 安全配置
        3.3.1 基线配置
        3.3.2 策略配置
@@ -348,12 +196,12 @@ export default function SecurityProjectPage() {
        4.1.1 单元测试
        4.1.2 集成测试
        4.1.3 系统测试
-   
+
    4.2 性能测试
        4.2.1 负载测试
        4.2.2 压力测试
        4.2.3 稳定性测试
-   
+
    4.3 安全测试
        4.3.1 漏洞扫描
        4.3.2 渗透测试
@@ -364,12 +212,12 @@ export default function SecurityProjectPage() {
        5.1.1 技术文档
        5.1.2 操作手册
        5.1.3 维护手册
-   
+
    5.2 人员培训
        5.2.1 管理人员培训
        5.2.2 技术人员培训
        5.2.3 运维人员培训
-   
+
    5.3 运维移交
        5.3.1 运维准备
        5.3.2 应急预案
@@ -380,18 +228,13 @@ export default function SecurityProjectPage() {
        6.1.1 功能验收
        6.1.2 性能验收
        6.1.3 安全验收
-   
+
    6.2 总结归档
        6.2.1 项目总结
        6.2.2 文档归档
-       6.2.3 经验总结`}</code>
-                </pre>
-              </div>
+       6.2.3 经验总结`
 
-              <h4 className="font-semibold">3. 进度计划</h4>
-              <div className="bg-gray-100 p-4 rounded-lg mb-4">
-                <pre className="bg-gray-200 p-2 rounded text-xs overflow-x-auto">
-                  <code>{`# 项目进度甘特图示例
+const ganttCode = `# 项目进度甘特图示例
 
 项目名称：企业安全基础设施升级项目
 开始日期：2024-01-15
@@ -428,21 +271,13 @@ export default function SecurityProjectPage() {
 图例：
 ▓ = 5个工作日
 - = 关联关系
-└─ = 子任务`}</code>
-                </pre>
-              </div>
-            </div>
-          </div>
-        )}
+└─ = 子任务`
 
-        {activeTab === 'execution' && (
-          <div className="space-y-6">
-            <h3 className="text-xl font-semibold mb-3">项目执行</h3>
-            <div className="prose max-w-none">
-              <h4 className="font-semibold">1. 任务分配与跟踪</h4>
-              <div className="bg-gray-100 p-4 rounded-lg mb-4">
-                <pre className="bg-gray-200 p-2 rounded text-xs overflow-x-auto">
-                  <code>{`# 任务跟踪表
+// ============================
+//  项目执行 - 大型代码块
+// ============================
+
+const taskTrackingCode = `# 任务跟踪表
 
 项目名称：企业安全基础设施升级项目
 更新日期：2024-01-15
@@ -513,14 +348,9 @@ export default function SecurityProjectPage() {
 解决方案：
 1. 安排业务沟通会议
 2. 协调网络组支持
-3. 制定分批实施计划`}</code>
-                </pre>
-              </div>
+3. 制定分批实施计划`
 
-              <h4 className="font-semibold">2. 变更管理</h4>
-              <div className="bg-gray-100 p-4 rounded-lg mb-4">
-                <pre className="bg-gray-200 p-2 rounded text-xs overflow-x-auto">
-                  <code>{`# 变更申请表
+const changeMgmtCode = `# 变更申请表
 
 变更编号: CR-001
 提交日期: 2024-01-15
@@ -608,14 +438,9 @@ export default function SecurityProjectPage() {
    - 增加安全审计功能
    - 扩展日志存储
    - 优化分析报表
-   状态: 待审核`}</code>
-                </pre>
-              </div>
+   状态: 待审核`
 
-              <h4 className="font-semibold">3. 质量控制</h4>
-              <div className="bg-gray-100 p-4 rounded-lg mb-4">
-                <pre className="bg-gray-200 p-2 rounded text-xs overflow-x-auto">
-                  <code>{`# 质量检查清单
+const qualityCheckCode = `# 质量检查清单
 
 项目名称：企业安全基础设施升级项目
 检查日期：2024-01-15
@@ -719,21 +544,13 @@ export default function SecurityProjectPage() {
    - 建立质量度量体系
    - 优化开发规范
    - 完善运维体系
-   - 提升安全能力`}</code>
-                </pre>
-              </div>
-            </div>
-          </div>
-        )}
+   - 提升安全能力`
 
-        {activeTab === 'risk' && (
-          <div className="space-y-6">
-            <h3 className="text-xl font-semibold mb-3">风险管理</h3>
-            <div className="prose max-w-none">
-              <h4 className="font-semibold">1. 风险识别</h4>
-              <div className="bg-gray-100 p-4 rounded-lg mb-4">
-                <pre className="bg-gray-200 p-2 rounded text-xs overflow-x-auto">
-                  <code>{`# 风险识别清单
+// ============================
+//  风险管理 - 大型代码块
+// ============================
+
+const riskIdentCode = `# 风险识别清单
 
 项目名称：企业安全基础设施升级项目
 更新日期：2024-01-15
@@ -804,14 +621,9 @@ export default function SecurityProjectPage() {
 3. 合规风险
    - 政策法规
    - 行业标准
-   - 审计要求`}</code>
-                </pre>
-              </div>
+   - 审计要求`
 
-              <h4 className="font-semibold">2. 风险评估</h4>
-              <div className="bg-gray-100 p-4 rounded-lg mb-4">
-                <pre className="bg-gray-200 p-2 rounded text-xs overflow-x-auto">
-                  <code>{`# 风险评估矩阵
+const riskEvalCode = `# 风险评估矩阵
 
 风险等级定义：
 -------------
@@ -867,31 +679,26 @@ export default function SecurityProjectPage() {
 高风险项TOP3：
 1. 需求变更（16分）
 2. 系统兼容性（12分）
-3. 协调问题（12分）`}</code>
-                </pre>
-              </div>
+3. 协调问题（12分）`
 
-              <h4 className="font-semibold">3. 风险应对</h4>
-              <div className="bg-gray-100 p-4 rounded-lg mb-4">
-                <pre className="bg-gray-200 p-2 rounded text-xs overflow-x-auto">
-                  <code>{`# 风险应对计划
+const riskResponseCode = `# 风险应对计划
 
 一、高风险应对
 ------------
 1. 需求变更风险
    策略：减轻
-   
+
    应对措施：
    - 加强需求管理
      * 严格需求变更流程
      * 评估变更影响
      * 控制变更范围
-   
+
    - 提高需求质量
      * 详细需求分析
      * 原型验证
      * 用户确认
-   
+
    - 建立变更缓冲
      * 预留时间缓冲
      * 预留成本缓冲
@@ -899,18 +706,18 @@ export default function SecurityProjectPage() {
 
 2. 系统兼容性风险
    策略：规避
-   
+
    应对措施：
    - 技术方案验证
      * 概念验证测试
      * 小规模试点
      * 性能评估
-   
+
    - 分步实施
      * 制定分步计划
      * 逐步切换
      * 及时总结
-   
+
    - 应急预案
      * 准备回滚方案
      * 建立应急流程
@@ -918,18 +725,18 @@ export default function SecurityProjectPage() {
 
 3. 协调问题风险
    策略：转移
-   
+
    应对措施：
    - 加强沟通管理
      * 建立沟通机制
      * 定期协调会
      * 问题跟踪
-   
+
    - 明确职责分工
      * 责任矩阵
      * 接口人制度
      * 升级机制
-   
+
    - 提高协作效率
      * 协作工具
      * 文档共享
@@ -939,7 +746,7 @@ export default function SecurityProjectPage() {
 ------------
 1. 安全防护风险
    策略：减轻
-   
+
    应对措施：
    - 完善安全体系
    - 加强安全测试
@@ -947,7 +754,7 @@ export default function SecurityProjectPage() {
 
 2. 预算风险
    策略：分担
-   
+
    应对措施：
    - 细化成本估算
    - 建立预警机制
@@ -955,7 +762,7 @@ export default function SecurityProjectPage() {
 
 3. 业务中断风险
    策略：规避
-   
+
    应对措施：
    - 制定切换方案
    - 准备应急预案
@@ -965,7 +772,7 @@ export default function SecurityProjectPage() {
 ------------
 1. 采购风险
    策略：接受
-   
+
    应对措施：
    - 多方询价
    - 备选方案
@@ -973,7 +780,7 @@ export default function SecurityProjectPage() {
 
 2. 合规风险
    策略：减轻
-   
+
    应对措施：
    - 跟踪政策法规
    - 咨询专业机构
@@ -994,21 +801,13 @@ export default function SecurityProjectPage() {
 3. 持续改进
    - 总结经验
    - 更新风险库
-   - 优化应对措施`}</code>
-                </pre>
-              </div>
-            </div>
-          </div>
-        )}
+   - 优化应对措施`
 
-        {activeTab === 'monitoring' && (
-          <div className="space-y-6">
-            <h3 className="text-xl font-semibold mb-3">项目监控</h3>
-            <div className="prose max-w-none">
-              <h4 className="font-semibold">1. 监控指标</h4>
-              <div className="bg-gray-100 p-4 rounded-lg mb-4">
-                <pre className="bg-gray-200 p-2 rounded text-xs overflow-x-auto">
-                  <code>{`# 监控指标
+// ============================
+//  项目监控 - 大型代码块
+// ============================
+
+const monitorIndicatorsCode = `# 监控指标
 
 项目名称：企业安全基础设施升级项目
 更新日期：2024-01-15
@@ -1091,14 +890,9 @@ export default function SecurityProjectPage() {
 
 2. 问题记录
    - 问题记录表
-   - 改进建议`}</code>
-                </pre>
-              </div>
+   - 改进建议`
 
-              <h4 className="font-semibold">2. 监控方法</h4>
-              <div className="bg-gray-100 p-4 rounded-lg mb-4">
-                <pre className="bg-gray-200 p-2 rounded text-xs overflow-x-auto">
-                  <code>{`# 监控方法
+const monitorMethodsCode = `# 监控方法
 
 项目名称：企业安全基础设施升级项目
 更新日期：2024-01-15
@@ -1179,21 +973,13 @@ export default function SecurityProjectPage() {
 
 2. 问题记录
    - 问题记录表
-   - 改进建议`}</code>
-                </pre>
-              </div>
-            </div>
-          </div>
-        )}
+   - 改进建议`
 
-        {activeTab === 'quality' && (
-          <div className="space-y-6">
-            <h3 className="text-xl font-semibold mb-3">质量管理</h3>
-            <div className="prose max-w-none">
-              <h4 className="font-semibold">1. 质量计划</h4>
-              <div className="bg-gray-100 p-4 rounded-lg mb-4">
-                <pre className="bg-gray-200 p-2 rounded text-xs overflow-x-auto">
-                  <code>{`# 质量管理计划
+// ============================
+//  质量管理 - 大型代码块
+// ============================
+
+const qualityPlanCode = `# 质量管理计划
 
 项目名称：企业安全基础设施升级项目
 版本：1.0
@@ -1291,14 +1077,9 @@ export default function SecurityProjectPage() {
    - PDCA循环
    - 根因分析
    - 对标管理
-   - 持续改进`}</code>
-                </pre>
-              </div>
+   - 持续改进`
 
-              <h4 className="font-semibold">2. 质量控制</h4>
-              <div className="bg-gray-100 p-4 rounded-lg mb-4">
-                <pre className="bg-gray-200 p-2 rounded text-xs overflow-x-auto">
-                  <code>{`# 质量控制检查表
+const qualityControlCheckCode = `# 质量控制检查表
 
 一、代码质量控制
 -------------
@@ -1378,14 +1159,9 @@ export default function SecurityProjectPage() {
    □ 测试报告
    □ 验收报告
    □ 总结报告
-   □ 移交文档`}</code>
-                </pre>
-              </div>
+   □ 移交文档`
 
-              <h4 className="font-semibold">3. 质量评估</h4>
-              <div className="bg-gray-100 p-4 rounded-lg mb-4">
-                <pre className="bg-gray-200 p-2 rounded text-xs overflow-x-auto">
-                  <code>{`# 质量评估报告
+const qualityEvalCode = `# 质量评估报告
 
 一、功能质量评估
 -------------
@@ -1479,29 +1255,151 @@ export default function SecurityProjectPage() {
    - 建立质量体系
    - 优化开发流程
    - 提升运维能力
-   - 加强安全防护`}</code>
-                </pre>
-              </div>
-            </div>
-          </div>
-        )}
+   - 加强安全防护`
 
-        {/* 导航链接 */}
-        <div className="mt-8 flex justify-between">
-          <Link
-            href="/study/security/dev/ops"
-            className="px-4 py-2 text-blue-600 hover:text-blue-800"
-          >
-            ← 安全运维
-          </Link>
-          <Link
-            href="/study/security/dev/basic"
-            className="px-4 py-2 text-blue-600 hover:text-blue-800"
-          >
-            安全开发基础 →
-          </Link>
-        </div>
+// ============================
+//  SPREADS
+// ============================
+
+const SPREADS = [
+  // ---- 概述 ----
+  {
+    label: '概述',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>安全项目管理概述</PageTitle>
+        <SectionTitle>1. 安全项目管理的重要性</SectionTitle>
+        <BookParagraph>
+          安全项目管理是确保信息安全项目成功实施的关键，它涵盖了从项目启动、规划、执行到收尾的全过程管理。
+          良好的安全项目管理可以：
+        </BookParagraph>
+        <BookList items={[
+          '确保项目目标的实现',
+          '控制项目风险',
+          '优化资源配置',
+          '提高项目质量',
+          '保证项目进度',
+        ]} />
       </div>
-    </div>
-  );
-} 
+    ),
+    right: (
+      <div className="space-y-4">
+        <SectionTitle>2. 安全项目管理的主要内容</SectionTitle>
+        <BookList items={[
+          '项目规划：目标定义、范围确定、资源规划、进度安排',
+          '项目执行：团队管理、进度控制、质量控制、变更管理',
+          '风险管理：风险识别、风险评估、风险应对、风险监控',
+        ]} />
+        <SectionTitle>3. 安全项目管理的生命周期</SectionTitle>
+        <BookList items={[
+          '启动阶段：项目立项、需求分析、可行性研究、团队组建',
+          '规划阶段：制定计划、分配资源、确定里程碑、制定预算',
+          '执行阶段：任务分配、进度跟踪、质量控制、风险管理',
+          '收尾阶段：验收测试、文档归档、经验总结、项目评估',
+        ]} />
+      </div>
+    ),
+  },
+
+  // ---- 项目规划 ----
+  {
+    label: '项目规划',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>项目规划</PageTitle>
+        <SectionTitle>1. 项目章程</SectionTitle>
+        <BookCode language="text" code={projectCharterCode} maxLines={25} />
+      </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <SectionTitle>2. 工作分解结构(WBS)</SectionTitle>
+        <BookCode language="text" code={wbsCode} maxLines={25} />
+        <SectionTitle>3. 进度计划</SectionTitle>
+        <BookCode language="text" code={ganttCode} maxLines={25} />
+      </div>
+    ),
+  },
+
+  // ---- 项目执行 ----
+  {
+    label: '项目执行',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>项目执行</PageTitle>
+        <SectionTitle>1. 任务分配与跟踪</SectionTitle>
+        <BookCode language="text" code={taskTrackingCode} maxLines={25} />
+      </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <SectionTitle>2. 变更管理</SectionTitle>
+        <BookCode language="text" code={changeMgmtCode} maxLines={25} />
+        <SectionTitle>3. 质量控制</SectionTitle>
+        <BookCode language="text" code={qualityCheckCode} maxLines={25} />
+      </div>
+    ),
+  },
+
+  // ---- 风险管理 ----
+  {
+    label: '风险管理',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>风险管理</PageTitle>
+        <SectionTitle>1. 风险识别</SectionTitle>
+        <BookCode language="text" code={riskIdentCode} maxLines={25} />
+        <SectionTitle>2. 风险评估</SectionTitle>
+        <BookCode language="text" code={riskEvalCode} maxLines={25} />
+      </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <SectionTitle>3. 风险应对</SectionTitle>
+        <BookCode language="text" code={riskResponseCode} maxLines={25} />
+      </div>
+    ),
+  },
+
+  // ---- 项目监控 ----
+  {
+    label: '项目监控',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>项目监控</PageTitle>
+        <SectionTitle>1. 监控指标</SectionTitle>
+        <BookCode language="text" code={monitorIndicatorsCode} maxLines={25} />
+      </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <SectionTitle>2. 监控方法</SectionTitle>
+        <BookCode language="text" code={monitorMethodsCode} maxLines={25} />
+      </div>
+    ),
+  },
+
+  // ---- 质量管理 ----
+  {
+    label: '质量管理',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>质量管理</PageTitle>
+        <SectionTitle>1. 质量计划</SectionTitle>
+        <BookCode language="text" code={qualityPlanCode} maxLines={25} />
+        <SectionTitle>2. 质量控制</SectionTitle>
+        <BookCode language="text" code={qualityControlCheckCode} maxLines={25} />
+      </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <SectionTitle>3. 质量评估</SectionTitle>
+        <BookCode language="text" code={qualityEvalCode} maxLines={25} />
+      </div>
+    ),
+  },
+]
+
+export default function SecurityProjectPage() {
+  return <LessonLayout meta={META} spreads={SPREADS} />
+}

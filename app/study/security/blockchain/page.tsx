@@ -1,193 +1,162 @@
-import Link from 'next/link';
+'use client'
+
+import BookCover from '@/app/components/ui/book/BookCover'
+import { THEMES } from '@/app/components/ui/book/theme'
+
+const CHAPTERS = [
+  { number: 1, title: '区块链安全基础', description: '了解区块链安全核心概念', href: '/study/security/blockchain/basic' },
+  { number: 2, title: '共识机制安全', description: '掌握共识算法安全分析', href: '/study/security/blockchain/consensus' },
+  { number: 3, title: '智能合约安全', description: '学习智能合约漏洞与防护', href: '/study/security/blockchain/smart-contract' },
+  { number: 4, title: '密码学应用', description: '深入学习区块链密码学技术', href: '/study/security/blockchain/crypto' },
+  { number: 5, title: '钱包安全', description: '掌握数字钱包安全防护', href: '/study/security/blockchain/wallet' },
+  { number: 6, title: '交易所安全', description: '了解交易所安全架构与防护', href: '/study/security/blockchain/exchange' },
+  { number: 7, title: '挖矿安全', description: '学习挖矿安全威胁与防护', href: '/study/security/blockchain/mining' },
+  { number: 8, title: '51%攻击防护', description: '掌握51%攻击原理与防御', href: '/study/security/blockchain/51-attack' },
+  { number: 9, title: '双花攻击防护', description: '了解双花攻击原理与防护', href: '/study/security/blockchain/double-spend' },
+  { number: 10, title: '区块链审计', description: '学习区块链安全审计方法', href: '/study/security/blockchain/audit' },
+]
+
+const roadmap = [
+  {
+    phase: '基础理论',
+    topics: ['区块链安全基础', '共识机制安全', '密码学应用'],
+    duration: '4周'
+  },
+  {
+    phase: '应用安全',
+    topics: ['智能合约安全', '钱包安全', '交易所安全', '挖矿安全'],
+    duration: '4周'
+  },
+  {
+    phase: '攻击防护',
+    topics: ['51%攻击防护', '双花攻击防护', '区块链审计'],
+    duration: '4周'
+  }
+]
+
+const topicLinks: Record<string, string> = {
+  '区块链安全基础': '/study/security/blockchain/basic',
+  '共识机制安全': '/study/security/blockchain/consensus',
+  '智能合约安全': '/study/security/blockchain/smart-contract',
+  '密码学应用': '/study/security/blockchain/crypto',
+  '钱包安全': '/study/security/blockchain/wallet',
+  '交易所安全': '/study/security/blockchain/exchange',
+  '挖矿安全': '/study/security/blockchain/mining',
+  '51%攻击防护': '/study/security/blockchain/51-attack',
+  '双花攻击防护': '/study/security/blockchain/double-spend',
+  '区块链审计': '/study/security/blockchain/audit'
+}
+
+const features = [
+  { icon: '⛓️', title: '区块链技术', desc: '深入理解区块链核心技术' },
+  { icon: '🔐', title: '智能合约', desc: '智能合约安全开发与审计' },
+  { icon: '💰', title: '数字资产', desc: '数字资产安全管理' },
+  { icon: '🛡️', title: '攻击防护', desc: '区块链攻击手段与防护' }
+]
+
+const careers = [
+  { title: '区块链安全工程师', desc: '区块链项目安全专家', bg: 'from-blue-50 to-blue-100', text: 'blue' },
+  { title: '智能合约审计师', desc: '智能合约安全审计', bg: 'from-indigo-50 to-indigo-100', text: 'indigo' },
+  { title: 'DeFi安全专家', desc: '去中心化金融安全', bg: 'from-purple-50 to-purple-100', text: 'purple' }
+]
 
 export default function BlockchainSecurityPage() {
-  const stats = {
-    totalLessons: 10,
-    difficulty: '高级',
-    duration: '10-12周',
-    rating: 4.9
-  };
-
-  const roadmap = [
-    {
-      phase: '基础理论',
-      topics: ['区块链安全基础', '共识机制安全', '密码学应用'],
-      duration: '4周'
-    },
-    {
-      phase: '应用安全',
-      topics: ['智能合约安全', '钱包安全', '交易所安全', '挖矿安全'],
-      duration: '4周'
-    },
-    {
-      phase: '攻击防护',
-      topics: ['51%攻击防护', '双花攻击防护', '区块链审计'],
-      duration: '4周'
-    }
-  ];
-
-  const features = [
-    { icon: '⛓️', title: '区块链技术', desc: '深入理解区块链核心技术' },
-    { icon: '🔐', title: '智能合约', desc: '智能合约安全开发与审计' },
-    { icon: '💰', title: '数字资产', desc: '数字资产安全管理' },
-    { icon: '🛡️', title: '攻击防护', desc: '区块链攻击手段与防护' }
-  ];
+  const t = THEMES.security
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-yellow-50 to-amber-100">
-      <div className="container mx-auto px-4 py-8">
-        <div className="text-center mb-12">
-          <div className="inline-flex items-center justify-center w-20 h-20 bg-yellow-600 text-white rounded-full text-3xl font-bold mb-6">
-            链
-          </div>
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">区块链安全</h1>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            掌握区块链安全技术，学习智能合约安全、数字资产保护、
-            共识机制安全等核心知识，成为区块链安全专家
-          </p>
-        </div>
+    <div>
+      <BookCover
+        title="区块链安全"
+        subtitle="Blockchain Security"
+        description="深入学习区块链安全机制，掌握智能合约审计、共识安全、密码学应用等核心技能"
+        chapterCount={CHAPTERS.length}
+        totalHours={40}
+        chapters={CHAPTERS}
+        icon="🔗"
+        startHref="/study/security/blockchain/basic"
+        theme={t}
+      />
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-12">
-          <div className="bg-white rounded-lg p-6 text-center shadow-md">
-            <div className="text-3xl font-bold text-yellow-600 mb-2">{stats.totalLessons}</div>
-            <div className="text-gray-600">课程数量</div>
-          </div>
-          <div className="bg-white rounded-lg p-6 text-center shadow-md">
-            <div className="text-3xl font-bold text-red-600 mb-2">{stats.difficulty}</div>
-            <div className="text-gray-600">难度等级</div>
-          </div>
-          <div className="bg-white rounded-lg p-6 text-center shadow-md">
-            <div className="text-3xl font-bold text-purple-600 mb-2">{stats.duration}</div>
-            <div className="text-gray-600">学习周期</div>
-          </div>
-          <div className="bg-white rounded-lg p-6 text-center shadow-md">
-            <div className="text-3xl font-bold text-orange-600 mb-2">{stats.rating}</div>
-            <div className="text-gray-600">学员评分</div>
+      {/* 课程特色 */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-12 mb-12">
+        <div className="bg-white rounded-xl shadow-md p-8">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">🌟 课程特色</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {features.map((feature, index) => (
+              <div key={index} className="text-center p-4 rounded-lg hover:bg-gray-50 transition-colors">
+                <div className="text-3xl mb-3">{feature.icon}</div>
+                <h3 className="text-lg font-semibold mb-2">{feature.title}</h3>
+                <p className="text-gray-600 text-sm">{feature.desc}</p>
+              </div>
+            ))}
           </div>
         </div>
+      </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2">
-            <div className="bg-white rounded-xl shadow-lg p-8 mb-8">
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">🌟 课程特色</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {features.map((feature, index) => (
-                  <div key={index} className="flex items-start space-x-4">
-                    <div className="text-2xl">{feature.icon}</div>
-                    <div>
-                      <h3 className="font-semibold text-gray-900 mb-1">{feature.title}</h3>
-                      <p className="text-gray-600 text-sm">{feature.desc}</p>
-                    </div>
-                  </div>
+      {/* 学习路径 */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-12">
+        <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">🗺️ 学习路径</h2>
+        <div className="space-y-6">
+          {roadmap.map((phase, index) => (
+            <div key={index} className="bg-white rounded-xl shadow-md p-6">
+              <div className="flex items-center mb-4">
+                <div
+                  className="text-white px-3 py-1 rounded-full text-sm font-medium mr-4"
+                  style={{ backgroundColor: t.accent }}
+                >
+                  阶段 {index + 1}
+                </div>
+                <h3 className="text-xl font-bold text-gray-900">{phase.phase}</h3>
+                <span className="ml-auto text-sm text-gray-500">{phase.duration}</span>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {phase.topics.map((topic, topicIndex) => (
+                  <a
+                    key={topicIndex}
+                    href={topicLinks[topic] || '#'}
+                    className="bg-gray-100 text-gray-700 px-3 py-1 rounded text-sm hover:bg-opacity-80 transition-colors cursor-pointer"
+                  >
+                    {topic}
+                  </a>
                 ))}
               </div>
             </div>
+          ))}
+        </div>
+      </div>
 
-            <div className="bg-white rounded-xl shadow-lg p-8">
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">🗺️ 学习路径</h2>
-              <div className="space-y-6">
-                {roadmap.map((phase, index) => (
-                  <div key={index} className="relative">
-                    <div className="flex items-center mb-3">
-                      <div className="w-8 h-8 bg-yellow-600 text-white rounded-full flex items-center justify-center text-sm font-bold mr-4">
-                        {index + 1}
-                      </div>
-                      <h3 className="text-lg font-semibold text-gray-900">{phase.phase}</h3>
-                      <span className="ml-auto text-sm text-gray-500">{phase.duration}</span>
-                    </div>
-                    <div className="ml-12 grid grid-cols-1 md:grid-cols-3 gap-2">
-                      {phase.topics.map((topic, topicIndex) => {
-                        const topicLinks: { [key: string]: string } = {
-                          '区块链安全基础': '/study/security/blockchain/basic',
-                          '共识机制安全': '/study/security/blockchain/consensus',
-                          '智能合约安全': '/study/security/blockchain/smart-contract',
-                          '密码学应用': '/study/security/blockchain/crypto',
-                          '钱包安全': '/study/security/blockchain/wallet',
-                          '交易所安全': '/study/security/blockchain/exchange',
-                          '挖矿安全': '/study/security/blockchain/mining',
-                          '51%攻击防护': '/study/security/blockchain/51-attack',
-                          '双花攻击防护': '/study/security/blockchain/double-spend',
-                          '区块链审计': '/study/security/blockchain/audit'
-                        };
-                        
-                        return (
-                          <Link
-                            key={topicIndex}
-                            href={topicLinks[topic] || '#'}
-                            className="text-sm text-gray-600 bg-gray-50 rounded px-3 py-1 hover:bg-yellow-50 hover:text-yellow-600 transition-colors cursor-pointer block"
-                          >
-                            {topic}
-                          </Link>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-12">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* 先修知识 */}
+          <div className="bg-white rounded-xl shadow-md p-8">
+            <h3 className="text-2xl font-bold text-gray-900 mb-6">📚 先修知识</h3>
+            <ul className="space-y-3">
+              {['区块链基础技术', '密码学基础', '编程基础(Solidity)', '网络安全基础'].map((item, i) => (
+                <li key={i} className="flex items-center text-gray-600">
+                  <span
+                    className="w-2 h-2 rounded-full mr-3"
+                    style={{ backgroundColor: t.accent }}
+                  />
+                  {item}
+                </li>
+              ))}
+            </ul>
           </div>
 
-          <div className="space-y-6">
-            <div className="bg-white rounded-xl shadow-lg p-6">
-              <h3 className="text-xl font-bold text-gray-900 mb-4">🚀 快速开始</h3>
-              <div className="space-y-3">
-                <Link 
-                  href="/study/security/blockchain/basic"
-                  className="block w-full bg-yellow-600 text-white text-center py-3 rounded-lg hover:bg-yellow-700 transition-colors"
-                >
-                  开始学习
-                </Link>
-                <Link 
-                  href="/study/security/blockchain/smart-contract"
-                  className="block w-full border border-gray-300 text-gray-700 text-center py-3 rounded-lg hover:bg-gray-50 transition-colors"
-                >
-                  智能合约
-                </Link>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-xl shadow-lg p-6">
-              <h3 className="text-xl font-bold text-gray-900 mb-4">📚 先修知识</h3>
-              <ul className="space-y-2 text-sm text-gray-600">
-                <li className="flex items-center">
-                  <span className="w-2 h-2 bg-yellow-600 rounded-full mr-3"></span>
-                  区块链基础技术
-                </li>
-                <li className="flex items-center">
-                  <span className="w-2 h-2 bg-yellow-600 rounded-full mr-3"></span>
-                  密码学基础
-                </li>
-                <li className="flex items-center">
-                  <span className="w-2 h-2 bg-yellow-600 rounded-full mr-3"></span>
-                  编程基础(Solidity)
-                </li>
-                <li className="flex items-center">
-                  <span className="w-2 h-2 bg-yellow-600 rounded-full mr-3"></span>
-                  网络安全基础
-                </li>
-              </ul>
-            </div>
-
-            <div className="bg-white rounded-xl shadow-lg p-6">
-              <h3 className="text-xl font-bold text-gray-900 mb-4">💼 职业方向</h3>
-              <div className="space-y-3">
-                <div className="bg-gradient-to-r from-yellow-50 to-yellow-100 rounded-lg p-3">
-                  <div className="font-medium text-yellow-900">区块链安全工程师</div>
-                  <div className="text-sm text-yellow-700">区块链项目安全专家</div>
+          {/* 职业方向 */}
+          <div className="bg-white rounded-xl shadow-md p-8">
+            <h3 className="text-2xl font-bold text-gray-900 mb-6">💼 职业方向</h3>
+            <div className="space-y-3">
+              {careers.map((c, i) => (
+                <div key={i} className={`bg-gradient-to-r ${c.bg} rounded-lg p-4`}>
+                  <div className={`font-medium text-${c.text}-900`}>{c.title}</div>
+                  <div className={`text-sm text-${c.text}-700`}>{c.desc}</div>
                 </div>
-                <div className="bg-gradient-to-r from-amber-50 to-amber-100 rounded-lg p-3">
-                  <div className="font-medium text-amber-900">智能合约审计师</div>
-                  <div className="text-sm text-amber-700">智能合约安全审计</div>
-                </div>
-                <div className="bg-gradient-to-r from-orange-50 to-orange-100 rounded-lg p-3">
-                  <div className="font-medium text-orange-900">DeFi安全专家</div>
-                  <div className="text-sm text-orange-700">去中心化金融安全</div>
-                </div>
-              </div>
+              ))}
             </div>
           </div>
         </div>
       </div>
     </div>
-  );
-} 
+  )
+}

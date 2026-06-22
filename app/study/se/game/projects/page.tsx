@@ -1,19 +1,43 @@
-'use client';
-export default function GameProjectsPage() {
-  return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-4xl font-bold mb-6">实战案例与项目</h1>
-      <div className="bg-white rounded-lg shadow p-8">
-        <h2 className="text-2xl font-bold mb-4">实战案例概述</h2>
-        <ul className="mb-4 space-y-2 text-gray-700">
-          <li>• 实战案例的定义与作用</li>
-          <li>• 实战案例的基本组成</li>
-          <li>• 实战案例的工作流程</li>
-        </ul>
-        <h2 className="text-2xl font-bold mb-4">实战案例示例</h2>
-        <pre className="bg-gray-100 p-4 rounded-lg overflow-x-auto mb-6">
-{`# 示例代码
-class Game {
+'use client'
+
+import LessonLayout, { type LessonMeta } from '@/app/components/ui/book/LessonLayout'
+import { THEMES } from '@/app/components/ui/book/theme'
+import {
+  PageTitle,
+  BookCode,
+  BookAlert,
+  BookList,
+} from '@/app/components/ui/book/BookContent'
+
+const META: LessonMeta = {
+  subject: '软件工程',
+  chapterTitle: '实战案例与项目',
+  chapterNumber: 6,
+  totalChapters: 10,
+  subjectHref: '/study/se/game',
+  prevChapter: { label: '游戏发布', href: '/study/se/game/release' },
+  nextChapter: { label: '游戏引擎', href: '/study/se/game/engine' },
+  theme: THEMES.software,
+}
+
+const SPREADS = [
+  {
+    label: '实战案例与项目',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>实战案例概述</PageTitle>
+        <BookList items={[
+          '实战案例的定义与作用：通过真实项目巩固所学知识与技能',
+          '实战案例的基本组成：需求分析、架构设计、编码实现、测试部署',
+          '实战案例的工作流程：项目规划 → 分步实现 → 调试优化 → 总结复盘',
+        ]} />
+        <BookAlert type="info" message="动手实践是掌握游戏开发最有效的方式，每个案例都是能力提升的阶梯" />
+      </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <PageTitle>实战案例示例</PageTitle>
+        <BookCode language="javascript" showLineNumbers code={`class Game {
   constructor(name, genre) {
     this.name = name;
     this.genre = genre;
@@ -21,17 +45,15 @@ class Game {
   getInfo() {
     return \`Game: \${this.name}, Genre: \${this.genre}\`;
   }
-}`}
-        </pre>
+}
+
+const projectGame = new Game('迷宫逃脱', '解谜');
+console.log(projectGame.getInfo());`} />
       </div>
-      <div className="mt-10 flex justify-between">
-        <a href="/study/se/game/release" className="px-4 py-2 text-blue-600 hover:text-blue-800">
-          ← 游戏发布
-        </a>
-        <a href="/study/se/game/engine" className="px-4 py-2 text-blue-600 hover:text-blue-800">
-          游戏引擎 →
-        </a>
-      </div>
-    </div>
-  );
-} 
+    ),
+  },
+]
+
+export default function GameProjectsPage() {
+  return <LessonLayout meta={META} spreads={SPREADS} />
+}
