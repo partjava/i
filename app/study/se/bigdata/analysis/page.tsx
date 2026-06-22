@@ -1,35 +1,89 @@
-'use client';
-export default function BigdataAnalysisPage() {
-  return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-4xl font-bold mb-6">数据分析与挖掘</h1>
-      <div className="bg-white rounded-lg shadow p-8">
-        <h2 className="text-2xl font-bold mb-4">Spark SQL分析</h2>
-        <pre className="bg-gray-100 p-4 rounded-lg overflow-x-auto mb-6">
-{`df.createOrReplaceTempView('users')
+'use client'
+
+import LessonLayout, { type LessonMeta } from '@/app/components/ui/book/LessonLayout'
+import { THEMES } from '@/app/components/ui/book/theme'
+import {
+  PageTitle,
+  BookParagraph,
+  BookCode,
+  TagGrid,
+} from '@/app/components/ui/book/BookContent'
+
+const META: LessonMeta = {
+  subject: '软件工程',
+  chapterTitle: '数据分析与挖掘',
+  chapterNumber: 5,
+  totalChapters: 8,
+  subjectHref: '/study/se/bigdata',
+  prevChapter: { label: '分布式存储与计算', href: '/study/se/bigdata/distributed' },
+  nextChapter: { label: '可视化与BI', href: '/study/se/bigdata/bi' },
+  theme: THEMES.software,
+}
+
+const SPREADS = [
+  {
+    label: 'Spark SQL',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>Spark SQL分析</PageTitle>
+        <BookParagraph>
+          Spark SQL 提供 DataFrame 和 SQL 两种方式对结构化数据进行查询分析。
+        </BookParagraph>
+        <BookCode
+          language="python"
+          showLineNumbers
+          code={`df.createOrReplaceTempView('users')
 spark.sql('SELECT COUNT(*) FROM users').show()`}
-        </pre>
-        <h2 className="text-2xl font-bold mb-4">机器学习与挖掘</h2>
-        <pre className="bg-gray-100 p-4 rounded-lg overflow-x-auto mb-6">
-{`from pyspark.ml.classification import LogisticRegression
+        />
+      </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <PageTitle>机器学习与挖掘</PageTitle>
+        <BookParagraph>
+          PySpark MLlib 提供了丰富的机器学习算法库，支持分类、回归、聚类等任务。
+        </BookParagraph>
+        <BookCode
+          language="python"
+          showLineNumbers
+          code={`from pyspark.ml.classification import LogisticRegression
 lr = LogisticRegression()
 model = lr.fit(df)`}
-        </pre>
-        <h2 className="text-2xl font-bold mb-4">流式分析</h2>
-        <pre className="bg-gray-100 p-4 rounded-lg overflow-x-auto">
-{`from pyspark.sql import SparkSession
+        />
+      </div>
+    ),
+  },
+  {
+    label: '流式分析',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>流式分析</PageTitle>
+        <BookParagraph>
+          Spark Structured Streaming 支持从 Kafka 等消息队列中实时消费数据进行分析。
+        </BookParagraph>
+        <BookCode
+          language="python"
+          showLineNumbers
+          code={`from pyspark.sql import SparkSession
 spark = SparkSession.builder.getOrCreate()
 ds = spark.readStream.format('kafka').option('subscribe', 'topic').load()`}
-        </pre>
+        />
       </div>
-      <div className="mt-10 flex justify-between">
-        <a href="/study/se/bigdata/distributed" className="px-4 py-2 text-blue-600 hover:text-blue-800">
-          ← 分布式存储与计算
-        </a>
-        <a href="/study/se/bigdata/bi" className="px-4 py-2 text-blue-600 hover:text-blue-800">
-          可视化与BI →
-        </a>
+    ),
+    right: (
+      <div className="space-y-4">
+        <PageTitle>核心概念</PageTitle>
+        <BookParagraph>
+          数据分析与挖掘的整个过程涉及多个环节，理解核心概念有助于构建高效的数据管道。
+        </BookParagraph>
+        <div className="mt-4">
+          <TagGrid items={['Spark SQL', 'DataFrame', 'MLlib', 'Kafka', 'Structured Streaming', '特征工程']} />
+        </div>
       </div>
-    </div>
-  );
-} 
+    ),
+  },
+]
+
+export default function AnalysisPage() {
+  return <LessonLayout meta={META} spreads={SPREADS} />
+}

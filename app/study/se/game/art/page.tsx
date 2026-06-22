@@ -1,19 +1,43 @@
-'use client';
-export default function GameArtPage() {
-  return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-4xl font-bold mb-6">游戏美术</h1>
-      <div className="bg-white rounded-lg shadow p-8">
-        <h2 className="text-2xl font-bold mb-4">游戏美术概述</h2>
-        <ul className="mb-4 space-y-2 text-gray-700">
-          <li>• 游戏美术的定义与作用</li>
-          <li>• 游戏美术的基本组成</li>
-          <li>• 游戏美术的工作流程</li>
-        </ul>
-        <h2 className="text-2xl font-bold mb-4">游戏美术示例</h2>
-        <pre className="bg-gray-100 p-4 rounded-lg overflow-x-auto mb-6">
-{`# 示例代码
-class GameArt {
+'use client'
+
+import LessonLayout, { type LessonMeta } from '@/app/components/ui/book/LessonLayout'
+import { THEMES } from '@/app/components/ui/book/theme'
+import {
+  PageTitle,
+  BookCode,
+  BookAlert,
+  BookList,
+} from '@/app/components/ui/book/BookContent'
+
+const META: LessonMeta = {
+  subject: '软件工程',
+  chapterTitle: '游戏美术',
+  chapterNumber: 8,
+  totalChapters: 10,
+  subjectHref: '/study/se/game',
+  prevChapter: { label: '游戏引擎', href: '/study/se/game/engine' },
+  nextChapter: { label: '游戏音效', href: '/study/se/game/sound' },
+  theme: THEMES.software,
+}
+
+const SPREADS = [
+  {
+    label: '游戏美术',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>游戏美术概述</PageTitle>
+        <BookList items={[
+          '游戏美术的定义与作用：通过视觉设计塑造游戏的世界观和氛围',
+          '游戏美术的基本组成：角色设计、场景设计、UI界面、特效制作',
+          '游戏美术的工作流程：概念草图 → 模型制作 → 贴图绘制 → 动画绑定 → 场景整合',
+        ]} />
+        <BookAlert type="info" message="游戏美术决定了游戏的第一印象，风格统一且精美的美术能显著提升产品品质" />
+      </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <PageTitle>游戏美术示例</PageTitle>
+        <BookCode language="javascript" showLineNumbers code={`class GameArt {
   constructor(name, style) {
     this.name = name;
     this.style = style;
@@ -21,17 +45,15 @@ class GameArt {
   getInfo() {
     return \`Art: \${this.name}, Style: \${this.style}\`;
   }
-}`}
-        </pre>
+}
+
+const art = new GameArt('角色模型', '卡通渲染');
+console.log(art.getInfo());`} />
       </div>
-      <div className="mt-10 flex justify-between">
-        <a href="/study/se/game/engine" className="px-4 py-2 text-blue-600 hover:text-blue-800">
-          ← 游戏引擎
-        </a>
-        <a href="/study/se/game/sound" className="px-4 py-2 text-blue-600 hover:text-blue-800">
-          游戏音效 →
-        </a>
-      </div>
-    </div>
-  );
-} 
+    ),
+  },
+]
+
+export default function GameArtPage() {
+  return <LessonLayout meta={META} spreads={SPREADS} />
+}

@@ -1,32 +1,20 @@
-"use client";
-import React, { useState } from "react";
-import Link from "next/link";
+'use client'
 
-const tabList = [
-  { key: "ecommerceCase", label: "电商平台测试案例" },
-  { key: "financeCase", label: "金融系统测试案例" },
-  { key: "mobileAppCase", label: "移动应用测试案例" },
-  { key: "saasCase", label: "SaaS系统测试案例" }
-] as const;
+import LessonLayout, { type LessonMeta } from '@/app/components/ui/book/LessonLayout'
+import { THEMES } from '@/app/components/ui/book/theme'
+import { PageTitle, SectionTitle, BookParagraph, BookCode, BookList } from '@/app/components/ui/book/BookContent'
 
-type TabKey = typeof tabList[number]['key'];
-
-interface TabContent {
-  desc: string[];
-  exampleTitle: string;
-  example: React.ReactNode;
+const META: LessonMeta = {
+  subject: '软件工程',
+  chapterTitle: '实际项目案例',
+  chapterNumber: 9,
+  totalChapters: 9,
+  subjectHref: '/study/se/standards-testing',
+  prevChapter: { label: '专项测试', href: '/study/se/standards-testing/special' },
+  theme: THEMES.software,
 }
 
-const tabContent: Record<TabKey, TabContent> = {
-  ecommerceCase: {
-    desc: [
-      "本次测试针对某大型电商平台，重点解决多平台兼容性、高并发性能及交易流程正确性问题。",
-      "通过自动化与手动测试结合，确保系统在复杂业务场景下稳定运行。"
-    ],
-    exampleTitle: "电商平台购物流程测试示例",
-    example: (
-      <pre className="bg-gray-100 p-4 rounded text-xs overflow-x-auto">
-{`// 使用Selenium进行购物流程自动化测试
+const seleniumCode = `// 使用Selenium进行购物流程自动化测试
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -65,20 +53,9 @@ submit_order_button = WebDriverWait(driver, 10).until(
 )
 submit_order_button.click()
 
-driver.quit()
-`}
-      </pre>
-    )
-  },
-  financeCase: {
-    desc: [
-      "针对金融系统的测试，着重验证交易安全性、数据准确性及合规性要求。",
-      "运用静态代码分析、渗透测试等手段保障系统安全可靠。"
-    ],
-    exampleTitle: "金融系统转账功能测试示例",
-    example: (
-      <pre className="bg-gray-100 p-4 rounded text-xs overflow-x-auto">
-{`// 使用Postman进行接口测试验证转账功能
+driver.quit()`
+
+const financeCode = `// 使用Postman进行接口测试验证转账功能
 // 配置请求URL
 POST https://api.example-finance.com/transfer
 
@@ -95,20 +72,9 @@ Authorization: Bearer <token>
 }
 
 // 预期响应状态码200
-// 响应体包含交易成功信息及交易ID
-`}
-      </pre>
-    )
-  },
-  mobileAppCase: {
-    desc: [
-      "对某移动社交应用进行测试，重点关注设备兼容性、性能优化及用户体验。",
-      "借助Appium实现自动化测试，提升测试效率与覆盖范围。"
-    ],
-    exampleTitle: "移动应用登录功能测试示例",
-    example: (
-      <pre className="bg-gray-100 p-4 rounded text-xs overflow-x-auto">
-{`// 使用Appium进行移动应用登录自动化测试
+// 响应体包含交易成功信息及交易ID`
+
+const appiumCode = `// 使用Appium进行移动应用登录自动化测试
 import io.appium.java_client.AppiumDriver;
 import io.appium.java_client.android.AndroidDriver;
 import org.openqa.selenium.remote.DesiredCapabilities;
@@ -132,76 +98,86 @@ public class MobileAppLoginTest {
         // 点击登录按钮
         driver.findElementById("login-button").click();
 
-        // 验证登录成功（假设登录成功后会出现特定元素）
+        // 验证登录成功
         driver.findElementById("home-screen-element").isDisplayed();
 
         driver.quit();
     }
-}
-`}
-      </pre>
-    )
-  },
-  saasCase: {
-    desc: [
-      "对SaaS项目管理系统进行测试，确保多租户数据隔离、功能定制化及系统稳定性。",
-      "采用数据驱动测试方法，覆盖不同租户场景需求。"
-    ],
-    exampleTitle: "SaaS系统多租户数据隔离测试示例",
-    example: (
-      <pre className="bg-gray-100 p-4 rounded text-xs overflow-x-auto">
-{`// 使用SQL查询验证多租户数据隔离
--- 假设存在租户表tenants和数据记录表data
+}`
+
+const saasCode = `-- 验证多租户数据隔离
 -- 查询租户1的数据
 SELECT * FROM data WHERE tenant_id = 1;
 
 -- 尝试查询租户2的数据（期望无结果返回）
-SELECT * FROM data WHERE tenant_id = 2 AND user_id IN (SELECT user_id FROM data WHERE tenant_id = 1);
-`}
-      </pre>
-    )
-  }
-};
+SELECT * FROM data WHERE tenant_id = 2
+  AND user_id IN (SELECT user_id FROM data WHERE tenant_id = 1);`
 
-export default function TestProjectCasePage() {
-  const [currentTab, setCurrentTab] = useState<TabKey>("ecommerceCase");
-  return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-8">测试项目案例</h1>
-      {/* 标签页导航 */}
-      <div className="flex space-x-4 mb-6 border-b overflow-x-auto">
-        {tabList.map(tab => (
-          <button
-            key={tab.key}
-            onClick={() => setCurrentTab(tab.key)}
-            className={`px-4 py-2 font-medium whitespace-nowrap ${currentTab === tab.key? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
-          >
-            {tab.label}
-          </button>
-        ))}
+const SPREADS = [
+  {
+    label: '电商平台测试案例',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>电商平台测试案例</PageTitle>
+        <BookParagraph>本次测试针对某大型电商平台，重点解决多平台兼容性、高并发性能及交易流程正确性问题。</BookParagraph>
+        <BookList items={['通过自动化与手动测试结合，确保系统在复杂业务场景下稳定运行。', '使用 Selenium 进行购物流程端到端自动化测试。', '覆盖商品浏览、加入购物车、结算、支付等核心流程。']} />
       </div>
-      {/* 主要内容 */}
-      <div className="bg-white rounded-lg shadow-md p-6 min-h-[320px]">
-        <h2 className="text-xl font-semibold mb-4 text-blue-600">{tabList.find(tab => tab.key === currentTab)?.label}</h2>
-        {/* 描述部分 */}
-        <ul className="list-disc pl-5 text-gray-700 space-y-2 mb-6">
-          {tabContent[currentTab]?.desc.map((paragraph, index) => (
-            <li key={index}>{paragraph}</li>
-          ))}
-        </ul>
-        {/* 示例部分 */}
-        <div>
-          <h3 className="font-semibold mb-2">{tabContent[currentTab]?.exampleTitle}</h3>
-          <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-            {tabContent[currentTab]?.example}
-          </div>
-        </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <SectionTitle>购物流程自动化测试</SectionTitle>
+        <BookCode language="python" code={seleniumCode} />
       </div>
-      {/* 底部导航 */}
-      <div className="mt-10 flex justify-between">
-        <Link href="/study/se/standards-testing/special" className="px-4 py-2 text-blue-600 hover:text-blue-800">专项测试 →</Link>
-        <Link href="/study/se/standards-testing" className="px-4 py-2 text-blue-600 hover:text-blue-800">开发规范与测试 →</Link>
+    ),
+  },
+  {
+    label: '金融系统测试案例',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>金融系统测试案例</PageTitle>
+        <BookParagraph>针对金融系统的测试，着重验证交易安全性、数据准确性及合规性要求。</BookParagraph>
+        <BookList items={['运用静态代码分析、渗透测试等手段保障系统安全可靠。', '使用 Postman 进行接口测试验证转账功能。', '重点测试转账、账户查询、资金流水等核心业务。']} />
       </div>
-    </div>
-  );
-}
+    ),
+    right: (
+      <div className="space-y-4">
+        <SectionTitle>转账功能接口测试</SectionTitle>
+        <BookCode language="json" code={financeCode} />
+      </div>
+    ),
+  },
+  {
+    label: '移动应用测试案例',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>移动应用测试案例</PageTitle>
+        <BookParagraph>对某移动社交应用进行测试，重点关注设备兼容性、性能优化及用户体验。</BookParagraph>
+        <BookList items={['借助 Appium 实现自动化测试，提升测试效率与覆盖范围。', '覆盖 Android 和 iOS 双平台。', '包括登录注册、消息发送、动态发布等核心功能。']} />
+      </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <SectionTitle>登录功能自动化测试</SectionTitle>
+        <BookCode language="java" code={appiumCode} />
+      </div>
+    ),
+  },
+  {
+    label: 'SaaS系统测试案例',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>SaaS 系统测试案例</PageTitle>
+        <BookParagraph>对 SaaS 项目管理系统进行测试，确保多租户数据隔离、功能定制化及系统稳定性。</BookParagraph>
+        <BookList items={['采用数据驱动测试方法，覆盖不同租户场景需求。', '验证租户间数据完全隔离，互不可见。', '测试租户自定义配置功能。']} />
+      </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <SectionTitle>多租户数据隔离测试</SectionTitle>
+        <BookCode language="sql" code={saasCode} />
+      </div>
+    ),
+  },
+]
+
+export default function TestProjectCasePage() { return <LessonLayout meta={META} spreads={SPREADS} /> }

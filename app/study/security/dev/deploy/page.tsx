@@ -1,131 +1,30 @@
-"use client";
-import { useState } from 'react';
-import Link from 'next/link';
+'use client'
 
-export default function SecurityDeployPage() {
-  const [activeTab, setActiveTab] = useState('overview');
+import LessonLayout, { type LessonMeta } from '@/app/components/ui/book/LessonLayout'
+import { THEMES } from '@/app/components/ui/book/theme'
+import {
+  PageTitle,
+  SectionTitle,
+  BookParagraph,
+  BookCode,
+  BookList,
+  BookDivider,
+} from '@/app/components/ui/book/BookContent'
 
-  return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-8">安全部署</h1>
-      
-      {/* 标签页导航 */}
-      <div className="flex space-x-4 mb-6 border-b overflow-x-auto">
-        <button
-          onClick={() => setActiveTab('overview')}
-          className={`px-4 py-2 font-medium whitespace-nowrap ${
-            activeTab === 'overview'
-              ? 'border-b-2 border-blue-500 text-blue-600'
-              : 'text-gray-500 hover:text-gray-700'
-          }`}
-        >
-          概述
-        </button>
-        <button
-          onClick={() => setActiveTab('environment')}
-          className={`px-4 py-2 font-medium whitespace-nowrap ${
-            activeTab === 'environment'
-              ? 'border-b-2 border-blue-500 text-blue-600'
-              : 'text-gray-500 hover:text-gray-700'
-          }`}
-        >
-          环境配置
-        </button>
-        <button
-          onClick={() => setActiveTab('deployment')}
-          className={`px-4 py-2 font-medium whitespace-nowrap ${
-            activeTab === 'deployment'
-              ? 'border-b-2 border-blue-500 text-blue-600'
-              : 'text-gray-500 hover:text-gray-700'
-          }`}
-        >
-          部署流程
-        </button>
-        <button
-          onClick={() => setActiveTab('security')}
-          className={`px-4 py-2 font-medium whitespace-nowrap ${
-            activeTab === 'security'
-              ? 'border-b-2 border-blue-500 text-blue-600'
-              : 'text-gray-500 hover:text-gray-700'
-          }`}
-        >
-          安全加固
-        </button>
-        <button
-          onClick={() => setActiveTab('monitoring')}
-          className={`px-4 py-2 font-medium whitespace-nowrap ${
-            activeTab === 'monitoring'
-              ? 'border-b-2 border-blue-500 text-blue-600'
-              : 'text-gray-500 hover:text-gray-700'
-          }`}
-        >
-          监控告警
-        </button>
-        <button
-          onClick={() => setActiveTab('cases')}
-          className={`px-4 py-2 font-medium whitespace-nowrap ${
-            activeTab === 'cases'
-              ? 'border-b-2 border-blue-500 text-blue-600'
-              : 'text-gray-500 hover:text-gray-700'
-          }`}
-        >
-          案例分析
-        </button>
-      </div>
+const META: LessonMeta = {
+  subject: '安全开发',
+  chapterTitle: '安全部署',
+  chapterNumber: 8,
+  totalChapters: 10,
+  subjectHref: '/study/security/dev',
+  prevChapter: { label: '漏洞修复', href: '/study/security/dev/fix' },
+  nextChapter: { label: '安全运维', href: '/study/security/dev/ops' },
+  theme: THEMES.security,
+}
 
-      {/* 内容区域 */}
-      <div className="space-y-6">
-        {activeTab === 'overview' && (
-          <div className="space-y-6">
-            <h3 className="text-xl font-semibold mb-3">安全部署概述</h3>
-            <div className="prose max-w-none">
-              <h4 className="font-semibold">1. 安全部署的重要性</h4>
-              <div className="bg-gray-100 p-4 rounded-lg mb-4">
-                <p className="mb-4">
-                  安全部署是确保应用系统在生产环境中安全运行的关键环节。它涉及从开发到运维的全流程安全控制，包括环境配置、部署流程、安全加固、监控告警等多个方面。
-                </p>
-                <ul className="list-disc pl-6 mb-4">
-                  <li>防止未授权访问和恶意攻击</li>
-                  <li>保护敏感数据和用户隐私</li>
-                  <li>确保系统稳定性和可用性</li>
-                  <li>满足合规要求和安全标准</li>
-                </ul>
-              </div>
+// ============ 代码片段常量 ============
 
-              <h4 className="font-semibold">2. 安全部署的基本原则</h4>
-              <div className="bg-gray-100 p-4 rounded-lg mb-4">
-                <ul className="list-disc pl-6 mb-4">
-                  <li>最小权限原则：只授予必要的访问权限</li>
-                  <li>纵深防御：多层安全防护机制</li>
-                  <li>安全默认配置：默认采用安全配置</li>
-                  <li>持续监控：实时监控和告警机制</li>
-                  <li>定期审计：安全配置和访问日志审计</li>
-                </ul>
-              </div>
-
-              <h4 className="font-semibold">3. 安全部署的关键环节</h4>
-              <div className="bg-gray-100 p-4 rounded-lg mb-4">
-                <ul className="list-disc pl-6 mb-4">
-                  <li>环境隔离：开发、测试、生产环境严格分离</li>
-                  <li>配置管理：统一的安全配置管理</li>
-                  <li>访问控制：严格的权限管理和认证机制</li>
-                  <li>数据保护：敏感数据加密和脱敏</li>
-                  <li>日志审计：完整的操作日志记录</li>
-                  <li>应急响应：快速的安全事件响应机制</li>
-                </ul>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'environment' && (
-          <div className="space-y-6">
-            <h3 className="text-xl font-semibold mb-3">环境配置</h3>
-            <div className="prose max-w-none">
-              <h4 className="font-semibold">1. 环境隔离</h4>
-              <div className="bg-gray-100 p-4 rounded-lg mb-4">
-                <p className="mb-2">Docker环境隔离示例：</p>
-                <pre className="bg-gray-200 p-2 rounded text-xs overflow-x-auto"><code>{`# docker-compose.yml
+const CODE_DOCKER_COMPOSE = `# docker-compose.yml
 version: '3'
 services:
   app:
@@ -171,19 +70,9 @@ volumes:
 
 secrets:
   db_password:
-    file: ./db_password.txt`}</code></pre>
-                <ul className="list-disc pl-6 mt-2 text-xs">
-                  <li>使用网络隔离，限制服务间通信</li>
-                  <li>敏感信息使用secrets管理</li>
-                  <li>只读文件系统，临时目录使用tmpfs</li>
-                  <li>限制容器权限，防止提权</li>
-                </ul>
-              </div>
+    file: ./db_password.txt`
 
-              <h4 className="font-semibold">2. 安全配置</h4>
-              <div className="bg-gray-100 p-4 rounded-lg mb-4">
-                <p className="mb-2">Nginx安全配置示例：</p>
-                <pre className="bg-gray-200 p-2 rounded text-xs overflow-x-auto"><code>{`# nginx.conf
+const CODE_NGINX = `# nginx.conf
 http {
     # 基本安全配置
     server_tokens off;
@@ -191,56 +80,45 @@ http {
     add_header X-XSS-Protection "1; mode=block";
     add_header X-Content-Type-Options "nosniff";
     add_header Content-Security-Policy "default-src 'self'";
-    
+
     # SSL配置
     ssl_protocols TLSv1.2 TLSv1.3;
     ssl_prefer_server_ciphers on;
     ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256;
     ssl_session_cache shared:SSL:10m;
     ssl_session_timeout 10m;
-    
+
     # 限制请求
     limit_req_zone $binary_remote_addr zone=one:10m rate=1r/s;
     limit_conn_zone $binary_remote_addr zone=addr:10m;
-    
+
     server {
         listen 443 ssl http2;
         server_name example.com;
-        
+
         # SSL证书
         ssl_certificate /etc/nginx/ssl/example.com.crt;
         ssl_certificate_key /etc/nginx/ssl/example.com.key;
-        
+
         # 安全headers
         add_header Strict-Transport-Security "max-age=31536000" always;
-        
+
         # 限制访问
         location /admin {
             allow 192.168.1.0/24;
             deny all;
         }
-        
+
         # 文件上传限制
         client_max_body_size 10M;
-        
+
         # 日志配置
         access_log /var/log/nginx/access.log combined buffer=512k flush=1m;
         error_log /var/log/nginx/error.log warn;
     }
-}`}</code></pre>
-                <ul className="list-disc pl-6 mt-2 text-xs">
-                  <li>禁用服务器版本信息</li>
-                  <li>配置安全响应头</li>
-                  <li>使用强SSL配置</li>
-                  <li>限制请求速率和连接数</li>
-                  <li>配置访问控制和日志</li>
-                </ul>
-              </div>
+}`
 
-              <h4 className="font-semibold">3. 数据库安全配置</h4>
-              <div className="bg-gray-100 p-4 rounded-lg mb-4">
-                <p className="mb-2">PostgreSQL安全配置示例：</p>
-                <pre className="bg-gray-200 p-2 rounded text-xs overflow-x-auto"><code>{`# postgresql.conf
+const CODE_POSTGRESQL = `# postgresql.conf
 # 连接限制
 max_connections = 100
 superuser_reserved_connections = 3
@@ -276,82 +154,37 @@ effective_io_concurrency = 200
 max_worker_processes = 8
 max_parallel_workers_per_gather = 4
 max_parallel_workers = 8
-max_parallel_maintenance_workers = 4`}</code></pre>
-                <ul className="list-disc pl-6 mt-2 text-xs">
-                  <li>限制最大连接数</li>
-                  <li>启用SSL加密</li>
-                  <li>配置详细的日志记录</li>
-                  <li>优化性能参数</li>
-                </ul>
-              </div>
-            </div>
-          </div>
-        )}
+max_parallel_maintenance_workers = 4`
 
-        {activeTab === 'deployment' && (
-          <div className="space-y-6">
-            <h3 className="text-xl font-semibold mb-3">部署流程</h3>
-            <div className="prose max-w-none">
-              <h4 className="font-semibold">1. 部署前准备</h4>
-              <div className="bg-gray-100 p-4 rounded-lg mb-4">
-                <ul className="list-disc pl-6 mb-4">
-                  <li>代码安全审计
-                    <ul className="list-disc pl-6 mt-2 text-sm">
-                      <li>静态代码分析</li>
-                      <li>依赖组件检查</li>
-                      <li>安全漏洞扫描</li>
-                    </ul>
-                  </li>
-                  <li>环境检查
-                    <ul className="list-disc pl-6 mt-2 text-sm">
-                      <li>系统补丁更新</li>
-                      <li>安全配置验证</li>
-                      <li>资源使用评估</li>
-                    </ul>
-                  </li>
-                  <li>备份策略
-                    <ul className="list-disc pl-6 mt-2 text-sm">
-                      <li>数据备份</li>
-                      <li>配置文件备份</li>
-                      <li>回滚方案</li>
-                    </ul>
-                  </li>
-                </ul>
-              </div>
-
-              <h4 className="font-semibold">2. 部署脚本示例</h4>
-              <div className="bg-gray-100 p-4 rounded-lg mb-4">
-                <p className="mb-2">自动化部署脚本：</p>
-                <pre className="bg-gray-200 p-2 rounded text-xs overflow-x-auto">
-                  <code>{`#!/bin/bash
+const CODE_DEPLOY_SCRIPT = `#!/bin/bash
 # deploy.sh
 
 # 配置变量
 APP_NAME="myapp"
 DEPLOY_PATH="/opt/apps"
 BACKUP_PATH="/opt/backups"
-TIMESTAMP=\\\$(date +%Y%m%d_%H%M%S)
+TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 
 # 创建备份
 echo "Creating backup..."
-tar -czf "\\\$BACKUP_PATH/\\\${APP_NAME}_\\\${TIMESTAMP}.tar.gz" -C "\\\$DEPLOY_PATH" .
+tar -czf "\${BACKUP_PATH}/\${APP_NAME}_\${TIMESTAMP}.tar.gz" -C "\${DEPLOY_PATH}" .
 
 # 停止服务
 echo "Stopping service..."
-systemctl stop \\\$APP_NAME
+systemctl stop $APP_NAME
 
 # 部署新版本
 echo "Deploying new version..."
-rsync -av --delete ./dist/ "\\\$DEPLOY_PATH/"
+rsync -av --delete ./dist/ "\${DEPLOY_PATH}/"
 
 # 更新权限
 echo "Updating permissions..."
-chown -R app:app "\\\$DEPLOY_PATH"
-chmod -R 750 "\\\$DEPLOY_PATH"
+chown -R app:app "\${DEPLOY_PATH}"
+chmod -R 750 "\${DEPLOY_PATH}"
 
 # 启动服务
 echo "Starting service..."
-systemctl start \\\$APP_NAME
+systemctl start $APP_NAME
 
 # 健康检查
 echo "Performing health check..."
@@ -365,58 +198,12 @@ done
 
 # 如果健康检查失败，回滚
 echo "Health check failed, rolling back..."
-systemctl stop \\\$APP_NAME
-tar -xzf "\\\$BACKUP_PATH/\\\${APP_NAME}_\\\${TIMESTAMP}.tar.gz" -C "\\\$DEPLOY_PATH"
-systemctl start \\\$APP_NAME
-exit 1`}</code>
-                </pre>
-                <ul className="list-disc pl-6 mt-2 text-xs">
-                  <li>自动备份当前版本</li>
-                  <li>优雅停止和启动服务</li>
-                  <li>权限管理</li>
-                  <li>健康检查</li>
-                  <li>自动回滚机制</li>
-                </ul>
-              </div>
+systemctl stop $APP_NAME
+tar -xzf "\${BACKUP_PATH}/\${APP_NAME}_\${TIMESTAMP}.tar.gz" -C "\${DEPLOY_PATH}"
+systemctl start $APP_NAME
+exit 1`
 
-              <h4 className="font-semibold">3. 部署后验证</h4>
-              <div className="bg-gray-100 p-4 rounded-lg mb-4">
-                <ul className="list-disc pl-6 mb-4">
-                  <li>功能验证
-                    <ul className="list-disc pl-6 mt-2 text-sm">
-                      <li>核心功能测试</li>
-                      <li>接口可用性检查</li>
-                      <li>性能指标验证</li>
-                    </ul>
-                  </li>
-                  <li>安全验证
-                    <ul className="list-disc pl-6 mt-2 text-sm">
-                      <li>漏洞扫描</li>
-                      <li>配置检查</li>
-                      <li>权限验证</li>
-                    </ul>
-                  </li>
-                  <li>监控确认
-                    <ul className="list-disc pl-6 mt-2 text-sm">
-                      <li>日志收集</li>
-                      <li>告警配置</li>
-                      <li>性能监控</li>
-                    </ul>
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'security' && (
-          <div className="space-y-6">
-            <h3 className="text-xl font-semibold mb-3">安全加固</h3>
-            <div className="prose max-w-none">
-              <h4 className="font-semibold">1. 系统加固</h4>
-              <div className="bg-gray-100 p-4 rounded-lg mb-4">
-                <p className="mb-2">Linux系统加固脚本示例：</p>
-                <pre className="bg-gray-200 p-2 rounded text-xs overflow-x-auto"><code>{`#!/bin/bash
+const CODE_HARDENING = `#!/bin/bash
 # security_hardening.sh
 
 # 更新系统
@@ -477,21 +264,9 @@ findtime = 600
 EOF
 
 systemctl enable fail2ban
-systemctl start fail2ban`}</code></pre>
-                <ul className="list-disc pl-6 mt-2 text-xs">
-                  <li>系统更新和补丁管理</li>
-                  <li>防火墙配置</li>
-                  <li>SSH安全加固</li>
-                  <li>系统参数优化</li>
-                  <li>文件权限管理</li>
-                  <li>安全工具部署</li>
-                </ul>
-              </div>
+systemctl start fail2ban`
 
-              <h4 className="font-semibold">2. 应用安全加固</h4>
-              <div className="bg-gray-100 p-4 rounded-lg mb-4">
-                <p className="mb-2">Node.js应用安全配置示例：</p>
-                <pre className="bg-gray-200 p-2 rounded text-xs overflow-x-auto"><code>{`// security.js
+const CODE_NODE_SECURITY = `// security.js
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const cors = require('cors');
@@ -558,38 +333,19 @@ const securityMiddleware = (req, res, next) => {
   if (!req.isAuthenticated()) {
     return res.status(401).json({ error: '未授权访问' });
   }
-  
+
   // 检查权限
   if (!req.user.hasPermission(req.path)) {
     return res.status(403).json({ error: '权限不足' });
   }
-  
+
   next();
 };
 
 // 应用安全中间件
-app.use('/api', securityMiddleware);`}</code></pre>
-                <ul className="list-disc pl-6 mt-2 text-xs">
-                  <li>安全响应头配置</li>
-                  <li>请求速率限制</li>
-                  <li>CORS策略</li>
-                  <li>请求体限制</li>
-                  <li>错误处理</li>
-                  <li>安全中间件</li>
-                </ul>
-              </div>
-            </div>
-          </div>
-        )}
+app.use('/api', securityMiddleware);`
 
-        {activeTab === 'monitoring' && (
-          <div className="space-y-6">
-            <h3 className="text-xl font-semibold mb-3">监控告警</h3>
-            <div className="prose max-w-none">
-              <h4 className="font-semibold">1. 监控系统配置</h4>
-              <div className="bg-gray-100 p-4 rounded-lg mb-4">
-                <p className="mb-2">Prometheus监控配置示例：</p>
-                <pre className="bg-gray-200 p-2 rounded text-xs overflow-x-auto"><code>{`# prometheus.yml
+const CODE_PROMETHEUS = `# prometheus.yml
 global:
   scrape_interval: 15s
   evaluation_interval: 15s
@@ -650,19 +406,9 @@ groups:
           severity: critical
         annotations:
           summary: "服务不可用"
-          description: "实例 {{ $labels.instance }} 已停止响应"`}</code></pre>
-                <ul className="list-disc pl-6 mt-2 text-xs">
-                  <li>监控指标配置</li>
-                  <li>告警规则定义</li>
-                  <li>TLS加密配置</li>
-                  <li>多实例监控</li>
-                </ul>
-              </div>
+          description: "实例 {{ $labels.instance }} 已停止响应"`
 
-              <h4 className="font-semibold">2. 日志监控配置</h4>
-              <div className="bg-gray-100 p-4 rounded-lg mb-4">
-                <p className="mb-2">ELK日志监控配置示例：</p>
-                <pre className="bg-gray-200 p-2 rounded text-xs overflow-x-auto"><code>{`# filebeat.yml
+const CODE_ELK = `# filebeat.yml
 filebeat.inputs:
 - type: log
   enabled: true
@@ -716,7 +462,7 @@ filter {
       match => [ "timestamp", "dd/MMM/yyyy:HH:mm:ss Z" ]
     }
   }
-  
+
   if [type] == "application" {
     json {
       source => "message"
@@ -736,125 +482,327 @@ output {
     ssl_certificate => "/etc/logstash/certs/logstash.crt"
     ssl_key => "/etc/logstash/certs/logstash.key"
   }
-}`}</code></pre>
-                <ul className="list-disc pl-6 mt-2 text-xs">
-                  <li>多源日志收集</li>
-                  <li>日志格式解析</li>
-                  <li>SSL加密传输</li>
-                  <li>元数据添加</li>
-                </ul>
-              </div>
-            </div>
-          </div>
-        )}
+}`
 
-        {activeTab === 'cases' && (
-          <div className="space-y-6">
-            <h3 className="text-xl font-semibold mb-3">案例分析</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="bg-gray-100 p-4 rounded-lg">
-                <b>案例一：配置错误导致的数据泄露</b>
-                <ul className="list-disc pl-6 mt-2 text-sm">
-                  <li><b>问题描述：</b>生产环境数据库配置错误，导致未授权访问。</li>
-                  <li><b>原因分析：</b>
-                    <ul className="list-disc pl-6 mt-1">
-                      <li>数据库监听地址配置为0.0.0.0</li>
-                      <li>未启用SSL加密</li>
-                      <li>防火墙规则配置不当</li>
-                    </ul>
-                  </li>
-                  <li><b>解决方案：</b>
-                    <ul className="list-disc pl-6 mt-1">
-                      <li>修改监听地址为127.0.0.1</li>
-                      <li>启用SSL加密</li>
-                      <li>配置严格的防火墙规则</li>
-                    </ul>
-                  </li>
-                </ul>
-              </div>
+// ============ 内容跨页 ============
 
-              <div className="bg-gray-100 p-4 rounded-lg">
-                <b>案例二：部署流程导致的服务中断</b>
-                <ul className="list-disc pl-6 mt-2 text-sm">
-                  <li><b>问题描述：</b>部署新版本时未进行充分测试，导致服务中断。</li>
-                  <li><b>原因分析：</b>
-                    <ul className="list-disc pl-6 mt-1">
-                      <li>缺少自动化测试</li>
-                      <li>未进行灰度发布</li>
-                      <li>回滚机制不完善</li>
-                    </ul>
-                  </li>
-                  <li><b>解决方案：</b>
-                    <ul className="list-disc pl-6 mt-1">
-                      <li>实现自动化测试流程</li>
-                      <li>采用蓝绿部署</li>
-                      <li>完善回滚机制</li>
-                    </ul>
-                  </li>
-                </ul>
-              </div>
-
-              <div className="bg-gray-100 p-4 rounded-lg">
-                <b>案例三：监控告警不及时</b>
-                <ul className="list-disc pl-6 mt-2 text-sm">
-                  <li><b>问题描述：</b>系统异常未能及时发现，导致服务长时间不可用。</li>
-                  <li><b>原因分析：</b>
-                    <ul className="list-disc pl-6 mt-1">
-                      <li>监控指标不完善</li>
-                      <li>告警阈值设置不合理</li>
-                      <li>告警通知机制失效</li>
-                    </ul>
-                  </li>
-                  <li><b>解决方案：</b>
-                    <ul className="list-disc pl-6 mt-1">
-                      <li>完善监控指标体系</li>
-                      <li>优化告警规则</li>
-                      <li>建立多通道告警机制</li>
-                    </ul>
-                  </li>
-                </ul>
-              </div>
-
-              <div className="bg-gray-100 p-4 rounded-lg">
-                <b>案例四：安全加固不完整</b>
-                <ul className="list-disc pl-6 mt-2 text-sm">
-                  <li><b>问题描述：</b>系统遭受攻击，导致数据泄露。</li>
-                  <li><b>原因分析：</b>
-                    <ul className="list-disc pl-6 mt-1">
-                      <li>系统补丁未及时更新</li>
-                      <li>安全配置不完整</li>
-                      <li>缺乏入侵检测机制</li>
-                    </ul>
-                  </li>
-                  <li><b>解决方案：</b>
-                    <ul className="list-disc pl-6 mt-1">
-                      <li>建立补丁管理流程</li>
-                      <li>完善安全配置基线</li>
-                      <li>部署IDS/IPS系统</li>
-                    </ul>
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </div>
-        )}
+const SPREADS = [
+  // ===== 跨页 1: 概述 =====
+  {
+    label: '概述',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>安全部署概述</PageTitle>
+        <SectionTitle>1. 安全部署的重要性</SectionTitle>
+        <BookParagraph>
+          安全部署是确保应用系统在生产环境中安全运行的关键环节。它涉及从开发到运维的全流程安全控制，包括环境配置、部署流程、安全加固、监控告警等多个方面。
+        </BookParagraph>
+        <BookList items={[
+          '防止未授权访问和恶意攻击',
+          '保护敏感数据和用户隐私',
+          '确保系统稳定性和可用性',
+          '满足合规要求和安全标准',
+        ]} />
+        <SectionTitle>2. 安全部署的基本原则</SectionTitle>
+        <BookList items={[
+          '最小权限原则：只授予必要的访问权限',
+          '纵深防御：多层安全防护机制',
+          '安全默认配置：默认采用安全配置',
+          '持续监控：实时监控和告警机制',
+          '定期审计：安全配置和访问日志审计',
+        ]} />
       </div>
-
-      {/* 导航链接 */}
-      <div className="mt-8 flex justify-between">
-        <Link
-          href="/study/security/dev/fix"
-          className="px-4 py-2 text-blue-600 hover:text-blue-800"
-        >
-          ← 漏洞修复
-        </Link>
-        <Link
-          href="/study/security/dev/ops"
-          className="px-4 py-2 text-blue-600 hover:text-blue-800"
-        >
-          安全运维 →
-        </Link>
+    ),
+    right: (
+      <div className="space-y-4">
+        <SectionTitle>3. 安全部署的关键环节</SectionTitle>
+        <BookList items={[
+          '环境隔离：开发、测试、生产环境严格分离',
+          '配置管理：统一的安全配置管理',
+          '访问控制：严格的权限管理和认证机制',
+          '数据保护：敏感数据加密和脱敏',
+          '日志审计：完整的操作日志记录',
+          '应急响应：快速的安全事件响应机制',
+        ]} />
       </div>
-    </div>
-  );
-} 
+    ),
+  },
+
+  // ===== 跨页 2: 环境配置 =====
+  {
+    label: '环境配置',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>环境隔离</PageTitle>
+        <BookParagraph>Docker环境隔离示例：</BookParagraph>
+        <BookCode language="yaml" maxLines={0} code={CODE_DOCKER_COMPOSE} />
+        <BookList items={[
+          '使用网络隔离，限制服务间通信',
+          '敏感信息使用secrets管理',
+          '只读文件系统，临时目录使用tmpfs',
+          '限制容器权限，防止提权',
+        ]} />
+      </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <SectionTitle>安全配置</SectionTitle>
+        <BookParagraph>Nginx安全配置示例：</BookParagraph>
+        <BookCode language="nginx" maxLines={0} code={CODE_NGINX} />
+        <BookList items={[
+          '禁用服务器版本信息',
+          '配置安全响应头',
+          '使用强SSL配置',
+          '限制请求速率和连接数',
+          '配置访问控制和日志',
+        ]} />
+        <BookDivider />
+        <SectionTitle>数据库安全配置</SectionTitle>
+        <BookParagraph>PostgreSQL安全配置示例：</BookParagraph>
+        <BookCode language="ini" maxLines={0} code={CODE_POSTGRESQL} />
+        <BookList items={[
+          '限制最大连接数',
+          '启用SSL加密',
+          '配置详细的日志记录',
+          '优化性能参数',
+        ]} />
+      </div>
+    ),
+  },
+
+  // ===== 跨页 3: 部署流程 =====
+  {
+    label: '部署流程',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>部署前准备</PageTitle>
+        <SectionTitle>1. 代码安全审计</SectionTitle>
+        <BookList items={[
+          '静态代码分析',
+          '依赖组件检查',
+          '安全漏洞扫描',
+        ]} />
+        <SectionTitle>2. 环境检查</SectionTitle>
+        <BookList items={[
+          '系统补丁更新',
+          '安全配置验证',
+          '资源使用评估',
+        ]} />
+        <SectionTitle>3. 备份策略</SectionTitle>
+        <BookList items={[
+          '数据备份',
+          '配置文件备份',
+          '回滚方案',
+        ]} />
+        <BookDivider />
+        <SectionTitle>部署脚本示例</SectionTitle>
+        <BookParagraph>自动化部署脚本：</BookParagraph>
+        <BookCode language="bash" maxLines={0} code={CODE_DEPLOY_SCRIPT} />
+      </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <SectionTitle>脚本功能说明</SectionTitle>
+        <BookList items={[
+          '自动备份当前版本',
+          '优雅停止和启动服务',
+          '权限管理',
+          '健康检查',
+          '自动回滚机制',
+        ]} />
+        <BookDivider />
+        <SectionTitle>部署后验证</SectionTitle>
+        <SectionTitle>1. 功能验证</SectionTitle>
+        <BookList items={[
+          '核心功能测试',
+          '接口可用性检查',
+          '性能指标验证',
+        ]} />
+        <SectionTitle>2. 安全验证</SectionTitle>
+        <BookList items={[
+          '漏洞扫描',
+          '配置检查',
+          '权限验证',
+        ]} />
+        <SectionTitle>3. 监控确认</SectionTitle>
+        <BookList items={[
+          '日志收集',
+          '告警配置',
+          '性能监控',
+        ]} />
+      </div>
+    ),
+  },
+
+  // ===== 跨页 4: 安全加固 =====
+  {
+    label: '安全加固',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>系统加固</PageTitle>
+        <BookParagraph>Linux系统加固脚本示例：</BookParagraph>
+        <BookCode language="bash" maxLines={0} code={CODE_HARDENING} />
+        <BookList items={[
+          '系统更新和补丁管理',
+          '防火墙配置',
+          'SSH安全加固',
+          '系统参数优化',
+          '文件权限管理',
+          '安全工具部署',
+        ]} />
+      </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <SectionTitle>应用安全加固</SectionTitle>
+        <BookParagraph>Node.js应用安全配置示例：</BookParagraph>
+        <BookCode language="javascript" maxLines={0} code={CODE_NODE_SECURITY} />
+        <BookList items={[
+          '安全响应头配置',
+          '请求速率限制',
+          'CORS策略',
+          '请求体限制',
+          '错误处理',
+          '安全中间件',
+        ]} />
+      </div>
+    ),
+  },
+
+  // ===== 跨页 5: 监控告警 =====
+  {
+    label: '监控告警',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>监控系统配置</PageTitle>
+        <BookParagraph>Prometheus监控配置示例：</BookParagraph>
+        <BookCode language="yaml" maxLines={0} code={CODE_PROMETHEUS} />
+        <BookList items={[
+          '监控指标配置',
+          '告警规则定义',
+          'TLS加密配置',
+          '多实例监控',
+        ]} />
+      </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <SectionTitle>日志监控配置</SectionTitle>
+        <BookParagraph>ELK日志监控配置示例：</BookParagraph>
+        <BookCode language="yaml" maxLines={0} code={CODE_ELK} />
+        <BookList items={[
+          '多源日志收集',
+          '日志格式解析',
+          'SSL加密传输',
+          '元数据添加',
+        ]} />
+      </div>
+    ),
+  },
+
+  // ===== 跨页 6: 案例分析 =====
+  {
+    label: '案例分析',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>案例分析</PageTitle>
+        <div className="bg-gray-100 p-4 rounded-lg">
+          <p className="font-semibold mb-2">案例一：配置错误导致的数据泄露</p>
+          <ul className="list-disc pl-5 space-y-1.5 text-sm">
+            <li><span className="font-semibold">问题描述：</span>生产环境数据库配置错误，导致未授权访问。</li>
+            <li>
+              <span className="font-semibold">原因分析：</span>
+              <ul className="list-disc pl-5 mt-1 space-y-0.5">
+                <li>数据库监听地址配置为0.0.0.0</li>
+                <li>未启用SSL加密</li>
+                <li>防火墙规则配置不当</li>
+              </ul>
+            </li>
+            <li>
+              <span className="font-semibold">解决方案：</span>
+              <ul className="list-disc pl-5 mt-1 space-y-0.5">
+                <li>修改监听地址为127.0.0.1</li>
+                <li>启用SSL加密</li>
+                <li>配置严格的防火墙规则</li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+        <div className="bg-gray-100 p-4 rounded-lg">
+          <p className="font-semibold mb-2">案例二：部署流程导致的服务中断</p>
+          <ul className="list-disc pl-5 space-y-1.5 text-sm">
+            <li><span className="font-semibold">问题描述：</span>部署新版本时未进行充分测试，导致服务中断。</li>
+            <li>
+              <span className="font-semibold">原因分析：</span>
+              <ul className="list-disc pl-5 mt-1 space-y-0.5">
+                <li>缺少自动化测试</li>
+                <li>未进行灰度发布</li>
+                <li>回滚机制不完善</li>
+              </ul>
+            </li>
+            <li>
+              <span className="font-semibold">解决方案：</span>
+              <ul className="list-disc pl-5 mt-1 space-y-0.5">
+                <li>实现自动化测试流程</li>
+                <li>采用蓝绿部署</li>
+                <li>完善回滚机制</li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+      </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <div className="bg-gray-100 p-4 rounded-lg">
+          <p className="font-semibold mb-2">案例三：监控告警不及时</p>
+          <ul className="list-disc pl-5 space-y-1.5 text-sm">
+            <li><span className="font-semibold">问题描述：</span>系统异常未能及时发现，导致服务长时间不可用。</li>
+            <li>
+              <span className="font-semibold">原因分析：</span>
+              <ul className="list-disc pl-5 mt-1 space-y-0.5">
+                <li>监控指标不完善</li>
+                <li>告警阈值设置不合理</li>
+                <li>告警通知机制失效</li>
+              </ul>
+            </li>
+            <li>
+              <span className="font-semibold">解决方案：</span>
+              <ul className="list-disc pl-5 mt-1 space-y-0.5">
+                <li>完善监控指标体系</li>
+                <li>优化告警规则</li>
+                <li>建立多通道告警机制</li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+        <div className="bg-gray-100 p-4 rounded-lg">
+          <p className="font-semibold mb-2">案例四：安全加固不完整</p>
+          <ul className="list-disc pl-5 space-y-1.5 text-sm">
+            <li><span className="font-semibold">问题描述：</span>系统遭受攻击，导致数据泄露。</li>
+            <li>
+              <span className="font-semibold">原因分析：</span>
+              <ul className="list-disc pl-5 mt-1 space-y-0.5">
+                <li>系统补丁未及时更新</li>
+                <li>安全配置不完整</li>
+                <li>缺乏入侵检测机制</li>
+              </ul>
+            </li>
+            <li>
+              <span className="font-semibold">解决方案：</span>
+              <ul className="list-disc pl-5 mt-1 space-y-0.5">
+                <li>建立补丁管理流程</li>
+                <li>完善安全配置基线</li>
+                <li>部署IDS/IPS系统</li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+      </div>
+    ),
+  },
+]
+
+export default function SecurityDeployPage() {
+  return <LessonLayout meta={META} spreads={SPREADS} />
+}

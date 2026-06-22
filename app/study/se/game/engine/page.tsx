@@ -1,19 +1,43 @@
-'use client';
-export default function GameEnginePage() {
-  return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-4xl font-bold mb-6">游戏引擎</h1>
-      <div className="bg-white rounded-lg shadow p-8">
-        <h2 className="text-2xl font-bold mb-4">游戏引擎概述</h2>
-        <ul className="mb-4 space-y-2 text-gray-700">
-          <li>• 游戏引擎的定义与作用</li>
-          <li>• 游戏引擎的基本组成</li>
-          <li>• 游戏引擎的工作流程</li>
-        </ul>
-        <h2 className="text-2xl font-bold mb-4">游戏引擎示例</h2>
-        <pre className="bg-gray-100 p-4 rounded-lg overflow-x-auto mb-6">
-{`# 示例代码
-class GameEngine {
+'use client'
+
+import LessonLayout, { type LessonMeta } from '@/app/components/ui/book/LessonLayout'
+import { THEMES } from '@/app/components/ui/book/theme'
+import {
+  PageTitle,
+  BookCode,
+  BookAlert,
+  BookList,
+} from '@/app/components/ui/book/BookContent'
+
+const META: LessonMeta = {
+  subject: '软件工程',
+  chapterTitle: '游戏引擎',
+  chapterNumber: 7,
+  totalChapters: 10,
+  subjectHref: '/study/se/game',
+  prevChapter: { label: '实战案例与项目', href: '/study/se/game/projects' },
+  nextChapter: { label: '游戏美术', href: '/study/se/game/art' },
+  theme: THEMES.software,
+}
+
+const SPREADS = [
+  {
+    label: '游戏引擎',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>游戏引擎概述</PageTitle>
+        <BookList items={[
+          '游戏引擎的定义与作用：为游戏开发提供底层框架和工具集',
+          '游戏引擎的基本组成：渲染引擎、物理引擎、音频系统、脚本系统、资源管理',
+          '游戏引擎的工作流程：场景搭建 → 组件配置 → 脚本编写 → 运行调试',
+        ]} />
+        <BookAlert type="info" message="选择合适的游戏引擎能大幅提升开发效率，Unity 和 Unreal Engine 是当前主流选择" />
+      </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <PageTitle>游戏引擎示例</PageTitle>
+        <BookCode language="javascript" showLineNumbers code={`class GameEngine {
   constructor(name, version) {
     this.name = name;
     this.version = version;
@@ -21,17 +45,15 @@ class GameEngine {
   getInfo() {
     return \`Engine: \${this.name}, Version: \${this.version}\`;
   }
-}`}
-        </pre>
+}
+
+const engine = new GameEngine('Unity', '2022.3');
+console.log(engine.getInfo());`} />
       </div>
-      <div className="mt-10 flex justify-between">
-        <a href="/study/se/game/projects" className="px-4 py-2 text-blue-600 hover:text-blue-800">
-          ← 实战案例与项目
-        </a>
-        <a href="/study/se/game/art" className="px-4 py-2 text-blue-600 hover:text-blue-800">
-          游戏美术 →
-        </a>
-      </div>
-    </div>
-  );
-} 
+    ),
+  },
+]
+
+export default function GameEnginePage() {
+  return <LessonLayout meta={META} spreads={SPREADS} />
+}

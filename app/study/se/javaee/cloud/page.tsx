@@ -1,112 +1,27 @@
-'use client';
-import { useState } from 'react';
+'use client'
 
-const tabs = [
-  { key: 'overview', label: '概述' },
-  { key: 'container', label: '容器化基础' },
-  { key: 'docker', label: 'Docker实战' },
-  { key: 'cloud', label: '云服务与部署' },
-  { key: 'k8s', label: 'Kubernetes与微服务' },
-  { key: 'example', label: '实用示例' },
-];
+import LessonLayout, { type LessonMeta } from '@/app/components/ui/book/LessonLayout'
+import { THEMES } from '@/app/components/ui/book/theme'
+import {
+  PageTitle,
+  BookCode,
+  BookAlert,
+  BookList,
+  TagGrid,
+} from '@/app/components/ui/book/BookContent'
 
-export default function JavaEECloudPage() {
-  const [activeTab, setActiveTab] = useState('overview');
+const META: LessonMeta = {
+  subject: '软件工程',
+  chapterTitle: '容器化与云服务',
+  chapterNumber: 14,
+  totalChapters: 17,
+  subjectHref: '/study/se/javaee',
+  prevChapter: { label: '性能调优与监控', href: '/study/se/javaee/performance' },
+  nextChapter: { label: 'DevOps与CI/CD', href: '/study/se/javaee/devops' },
+  theme: THEMES.software,
+}
 
-  return (
-    <div className="container mx-auto px-4 py-8">
-      {/* 页面大标题 */}
-      <h1 className="text-4xl font-bold mb-6">容器化与云服务</h1>
-
-      {/* 下划线风格Tab栏 */}
-      <div className="flex border-b mb-6 space-x-8">
-        {tabs.map(tab => (
-          <button
-            key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
-            className={`pb-2 text-lg font-medium focus:outline-none transition-colors duration-200
-              ${activeTab === tab.key
-                ? 'border-b-2 border-blue-500 text-blue-600'
-                : 'text-gray-500 hover:text-blue-500'}`}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
-
-      <div className="bg-white rounded-lg shadow p-8">
-        {activeTab === 'overview' && (
-          <div>
-            <h2 className="text-2xl font-bold mb-4">容器化与云服务概述</h2>
-            <div className="bg-blue-50 p-6 rounded-lg mb-6">
-              <h3 className="text-xl font-bold mb-3">JavaEE云原生发展趋势</h3>
-              <ul className="space-y-2 text-gray-700">
-                <li>• 容器化部署成为标准</li>
-                <li>• 微服务架构普及</li>
-                <li>• 云原生技术栈成熟</li>
-                <li>• DevOps流程自动化</li>
-                <li>• 服务网格与可观测性</li>
-              </ul>
-            </div>
-            <div className="bg-green-50 p-6 rounded-lg mb-6">
-              <h3 className="text-xl font-bold mb-3">主流技术栈</h3>
-              <ul className="space-y-2 text-gray-700">
-                <li>• Docker：容器化标准</li>
-                <li>• Kubernetes：容器编排</li>
-                <li>• Spring Cloud：微服务框架</li>
-                <li>• Istio：服务网格</li>
-                <li>• Prometheus：监控系统</li>
-              </ul>
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'container' && (
-          <div>
-            <h2 className="text-2xl font-bold mb-4">容器化基础</h2>
-            <div className="bg-blue-50 p-6 rounded-lg mb-6">
-              <h3 className="text-xl font-bold mb-3">容器与虚拟机对比</h3>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <h4 className="font-bold mb-2">容器优势</h4>
-                  <ul className="space-y-2 text-gray-700">
-                    <li>• 轻量级，启动快速</li>
-                    <li>• 资源利用率高</li>
-                    <li>• 环境一致性好</li>
-                    <li>• 便于微服务部署</li>
-                  </ul>
-                </div>
-                <div>
-                  <h4 className="font-bold mb-2">虚拟机优势</h4>
-                  <ul className="space-y-2 text-gray-700">
-                    <li>• 完全隔离</li>
-                    <li>• 安全性更高</li>
-                    <li>• 支持不同OS</li>
-                    <li>• 适合传统应用</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-            <div className="bg-green-50 p-6 rounded-lg mb-6">
-              <h3 className="text-xl font-bold mb-3">JavaEE容器化注意事项</h3>
-              <ul className="space-y-2 text-gray-700">
-                <li>• JVM参数优化</li>
-                <li>• 内存配置合理</li>
-                <li>• 日志收集方案</li>
-                <li>• 健康检查配置</li>
-                <li>• 数据持久化</li>
-              </ul>
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'docker' && (
-          <div>
-            <h2 className="text-2xl font-bold mb-4">Docker实战</h2>
-            <div className="bg-blue-50 p-6 rounded-lg mb-6">
-              <h3 className="text-xl font-bold mb-3">Dockerfile示例</h3>
-              <pre className="bg-gray-100 p-4 rounded-lg overflow-x-auto">
-{`# 基础镜像
+const DOCKERFILE = `# 基础镜像
 FROM openjdk:11-jdk-slim
 
 # 工作目录
@@ -119,13 +34,9 @@ COPY target/*.jar app.jar
 EXPOSE 8080
 
 # 启动命令
-ENTRYPOINT ["java","-jar","app.jar"]`}
-              </pre>
-            </div>
-            <div className="bg-green-50 p-6 rounded-lg mb-6">
-              <h3 className="text-xl font-bold mb-3">docker-compose.yml示例</h3>
-              <pre className="bg-gray-100 p-4 rounded-lg overflow-x-auto">
-{`version: '3'
+ENTRYPOINT ["java","-jar","app.jar"]`
+
+const DOCKER_COMPOSE = `version: '3'
 services:
   app:
     build: .
@@ -153,19 +64,9 @@ services:
       - "6379:6379"
 
 volumes:
-  mysql-data:`}
-              </pre>
-            </div>
-          </div>
-        )}
+  mysql-data:`
 
-        {activeTab === 'cloud' && (
-          <div>
-            <h2 className="text-2xl font-bold mb-4">云服务与部署</h2>
-            <div className="bg-blue-50 p-6 rounded-lg mb-6">
-              <h3 className="text-xl font-bold mb-3">云平台部署配置</h3>
-              <pre className="bg-gray-100 p-4 rounded-lg overflow-x-auto">
-{`# 阿里云ECS部署脚本
+const ECS_DEPLOY = `# 阿里云ECS部署脚本
 #!/bin/bash
 
 # 安装Docker
@@ -183,13 +84,9 @@ docker run -d \\
   -p 8080:8080 \\
   -v /app/logs:/logs \\
   -e SPRING_PROFILES_ACTIVE=prod \\
-  your-registry/app:latest`}
-              </pre>
-            </div>
-            <div className="bg-green-50 p-6 rounded-lg mb-6">
-              <h3 className="text-xl font-bold mb-3">云服务配置示例</h3>
-              <pre className="bg-gray-100 p-4 rounded-lg overflow-x-auto">
-{`# application-cloud.yml
+  your-registry/app:latest`
+
+const APP_CLOUD_YML = `# application-cloud.yml
 spring:
   cloud:
     alicloud:
@@ -207,19 +104,9 @@ spring:
   redis:
     host: "localhost"
     port: 6379
-    password: "redis-password"`}
-              </pre>
-            </div>
-          </div>
-        )}
+    password: "redis-password"`
 
-        {activeTab === 'k8s' && (
-          <div>
-            <h2 className="text-2xl font-bold mb-4">Kubernetes与微服务</h2>
-            <div className="bg-blue-50 p-6 rounded-lg mb-6">
-              <h3 className="text-xl font-bold mb-3">Deployment配置</h3>
-              <pre className="bg-gray-100 p-4 rounded-lg overflow-x-auto">
-{`apiVersion: apps/v1
+const K8S_DEPLOYMENT = `apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: javaee-app
@@ -247,13 +134,9 @@ spec:
             cpu: "200m"
           limits:
             memory: "1Gi"
-            cpu: "500m"`}
-              </pre>
-            </div>
-            <div className="bg-green-50 p-6 rounded-lg mb-6">
-              <h3 className="text-xl font-bold mb-3">Service配置</h3>
-              <pre className="bg-gray-100 p-4 rounded-lg overflow-x-auto">
-{`apiVersion: v1
+            cpu: "500m"`
+
+const K8S_SERVICE = `apiVersion: v1
 kind: Service
 metadata:
   name: javaee-app-service
@@ -263,19 +146,9 @@ spec:
   ports:
   - port: 80
     targetPort: 8080
-  type: LoadBalancer`}
-              </pre>
-            </div>
-          </div>
-        )}
+  type: LoadBalancer`
 
-        {activeTab === 'example' && (
-          <div>
-            <h2 className="text-2xl font-bold mb-4">实用示例</h2>
-            <div className="bg-blue-50 p-6 rounded-lg mb-6">
-              <h3 className="text-xl font-bold mb-3">一键部署脚本</h3>
-              <pre className="bg-gray-100 p-4 rounded-lg overflow-x-auto">
-{`#!/bin/bash
+const DEPLOY_SCRIPT = `#!/bin/bash
 
 # 构建镜像
 docker build -t your-registry/app:latest .
@@ -289,13 +162,9 @@ kubectl apply -f k8s/service.yaml
 
 # 检查部署状态
 kubectl get pods
-kubectl get services`}
-              </pre>
-            </div>
-            <div className="bg-green-50 p-6 rounded-lg mb-6">
-              <h3 className="text-xl font-bold mb-3">监控配置</h3>
-              <pre className="bg-gray-100 p-4 rounded-lg overflow-x-auto">
-{`# prometheus.yml
+kubectl get services`
+
+const MONITORING_CONFIG = `# prometheus.yml
 scrape_configs:
   - job_name: 'javaee-app'
     metrics_path: '/actuator/prometheus'
@@ -319,24 +188,153 @@ scrape_configs:
       }
     ]
   }
-}`}
-              </pre>
-            </div>
-          </div>
-        )}
-      </div>
+}`
 
-      <div className="mt-10 flex justify-between">
-        <a href="/study/se/javaee/performance" className="px-4 py-2 text-blue-600 hover:text-blue-800">
-          ← 性能调优与监控
-        </a>
-        <a
-          href="/study/se/javaee/devops"
-          className="px-4 py-2 text-blue-600 hover:text-blue-800"
-        >
-          DevOps与CI/CD →
-        </a>
+const SPREADS = [
+  {
+    label: '概述',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>容器化与云服务概述</PageTitle>
+        <h3 className="text-sm font-medium text-ink mt-4">JavaEE云原生发展趋势</h3>
+        <BookList items={[
+          '容器化部署成为标准',
+          '微服务架构普及',
+          '云原生技术栈成熟',
+          'DevOps流程自动化',
+          '服务网格与可观测性',
+        ]} />
       </div>
-    </div>
-  );
-} 
+    ),
+    right: (
+      <div className="space-y-4">
+        <h3 className="text-sm font-medium text-ink mt-4">主流技术栈</h3>
+        <BookList items={[
+          'Docker：容器化标准',
+          'Kubernetes：容器编排',
+          'Spring Cloud：微服务框架',
+          'Istio：服务网格',
+          'Prometheus：监控系统',
+        ]} />
+        <TagGrid items={['容器化', '微服务', 'Kubernetes', '云原生', 'DevOps']} />
+      </div>
+    ),
+  },
+  {
+    label: '容器化基础',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>容器化基础</PageTitle>
+        <h3 className="text-sm font-medium text-ink mt-4">容器与虚拟机对比</h3>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="rounded-lg p-4" style={{ background: THEMES.software.paperCard, border: '1px solid rgba(0,0,0,0.06)' }}>
+            <h4 className="font-semibold mb-2 text-sm">容器优势</h4>
+            <BookList items={[
+              '轻量级，启动快速',
+              '资源利用率高',
+              '环境一致性好',
+              '便于微服务部署',
+            ]} />
+          </div>
+          <div className="rounded-lg p-4" style={{ background: THEMES.software.paperCard, border: '1px solid rgba(0,0,0,0.06)' }}>
+            <h4 className="font-semibold mb-2 text-sm">虚拟机优势</h4>
+            <BookList items={[
+              '完全隔离',
+              '安全性更高',
+              '支持不同OS',
+              '适合传统应用',
+            ]} />
+          </div>
+        </div>
+      </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <h3 className="text-sm font-medium text-ink mt-4">JavaEE容器化注意事项</h3>
+        <BookList items={[
+          'JVM参数优化',
+          '内存配置合理',
+          '日志收集方案',
+          '健康检查配置',
+          '数据持久化',
+        ]} />
+        <BookAlert type="info" message="容器化部署时，JVM能正确识别容器内存限制，推荐使用 JDK 10+ 的 UseContainerSupport 参数。" />
+        <TagGrid items={['JVM', '内存', '日志', '健康检查', '持久化']} />
+      </div>
+    ),
+  },
+  {
+    label: 'Docker实战',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>Docker实战</PageTitle>
+        <h3 className="text-sm font-medium text-ink mt-4">Dockerfile示例</h3>
+        <BookCode language="dockerfile" code={DOCKERFILE} />
+      </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <h3 className="text-sm font-medium text-ink mt-4">docker-compose.yml示例</h3>
+        <BookCode language="yaml" code={DOCKER_COMPOSE} />
+        <TagGrid items={['Dockerfile', 'docker-compose', '镜像构建', '服务编排', '容器部署']} />
+      </div>
+    ),
+  },
+  {
+    label: '云服务与部署',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>云服务与部署</PageTitle>
+        <h3 className="text-sm font-medium text-ink mt-4">云平台部署配置</h3>
+        <BookCode language="bash" code={ECS_DEPLOY} />
+      </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <h3 className="text-sm font-medium text-ink mt-4">云服务配置示例</h3>
+        <BookCode language="yaml" code={APP_CLOUD_YML} />
+        <TagGrid items={['阿里云', 'ECS', 'OSS', '云配置', '部署']} />
+      </div>
+    ),
+  },
+  {
+    label: 'Kubernetes与微服务',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>Kubernetes与微服务</PageTitle>
+        <h3 className="text-sm font-medium text-ink mt-4">Deployment配置</h3>
+        <BookCode language="yaml" code={K8S_DEPLOYMENT} />
+      </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <h3 className="text-sm font-medium text-ink mt-4">Service配置</h3>
+        <BookCode language="yaml" code={K8S_SERVICE} />
+        <BookAlert type="info" message="Kubernetes Service 提供了稳定的网络访问入口，支持负载均衡和服务发现。Type: LoadBalancer 会创建云厂商提供的负载均衡器。" />
+        <TagGrid items={['Deployment', 'Service', 'K8s', '负载均衡', '容器编排']} />
+      </div>
+    ),
+  },
+  {
+    label: '实用示例',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>实用示例</PageTitle>
+        <h3 className="text-sm font-medium text-ink mt-4">一键部署脚本</h3>
+        <BookCode language="bash" code={DEPLOY_SCRIPT} />
+      </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <h3 className="text-sm font-medium text-ink mt-4">监控配置</h3>
+        <BookCode language="yaml" code={MONITORING_CONFIG} />
+        <BookAlert type="success" message="Prometheus + Grafana 是云原生生态中最常用的监控组合，配合 Spring Boot Actuator 可以全面监控应用状态。" />
+        <TagGrid items={['部署脚本', '监控', 'Prometheus', 'Grafana', '自动化']} />
+      </div>
+    ),
+  },
+]
+
+export default function JavaEECloudPage() {
+  return <LessonLayout meta={META} spreads={SPREADS} />
+}

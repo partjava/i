@@ -1,117 +1,23 @@
-'use client';
-import { useState } from 'react';
-import Link from 'next/link';
+'use client'
 
-export default function SecurityOpsRecoveryPage() {
-  const [activeTab, setActiveTab] = useState('overview');
+import LessonLayout, { type LessonMeta } from '@/app/components/ui/book/LessonLayout'
+import { THEMES } from '@/app/components/ui/book/theme'
+import {
+  PageTitle, SectionTitle, BookParagraph, BookCode, BookList,
+} from '@/app/components/ui/book/BookContent'
 
-  return (
-    <div className="container mx-auto px-4 py-8">
-      {/* 顶部返回导航 */}
-      <div className="mb-4">
-        <Link href="/study/security/ops" className="px-4 py-2 text-blue-600 hover:text-blue-800">← 返回安全运维</Link>
-      </div>
-      <h1 className="text-3xl font-bold mb-8">灾难恢复</h1>
+const META: LessonMeta = {
+  subject: '网络安全',
+  chapterTitle: '灾难恢复',
+  chapterNumber: 9,
+  totalChapters: 10,
+  subjectHref: '/study/security/ops',
+  prevChapter: { label: '应急响应', href: '/study/security/ops/incident' },
+  nextChapter: { label: '安全评估', href: '/study/security/ops/assessment' },
+  theme: THEMES.security,
+}
 
-      {/* 标签页导航 */}
-      <div className="flex space-x-4 mb-6 border-b overflow-x-auto">
-        <button onClick={() => setActiveTab('overview')} className={`px-4 py-2 font-medium whitespace-nowrap ${activeTab === 'overview' ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}>概述</button>
-        <button onClick={() => setActiveTab('plan')} className={`px-4 py-2 font-medium whitespace-nowrap ${activeTab === 'plan' ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}>恢复计划</button>
-        <button onClick={() => setActiveTab('backup')} className={`px-4 py-2 font-medium whitespace-nowrap ${activeTab === 'backup' ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}>备份策略</button>
-        <button onClick={() => setActiveTab('recovery')} className={`px-4 py-2 font-medium whitespace-nowrap ${activeTab === 'recovery' ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}>恢复流程</button>
-        <button onClick={() => setActiveTab('test')} className={`px-4 py-2 font-medium whitespace-nowrap ${activeTab === 'test' ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}>演练测试</button>
-        <button onClick={() => setActiveTab('case')} className={`px-4 py-2 font-medium whitespace-nowrap ${activeTab === 'case' ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}>实践案例</button>
-      </div>
-
-      {/* 内容区域 */}
-      <div className="bg-white rounded-lg shadow-md p-6">
-        {activeTab === 'overview' && (
-          <div className="space-y-6">
-            <h3 className="text-xl font-semibold mb-3">灾难恢复概述</h3>
-            <div className="prose max-w-none">
-              <p>灾难恢复是确保业务连续性的重要组成部分，通过制定完善的恢复计划和策略，在发生灾难时能够快速恢复系统和数据，保证业务正常运行。</p>
-              <ul className="list-disc pl-6">
-                <li>制定灾难恢复计划</li>
-                <li>建立备份策略</li>
-                <li>设计恢复流程</li>
-                <li>定期演练测试</li>
-                <li>持续改进优化</li>
-              </ul>
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'plan' && (
-          <div className="space-y-6">
-            <h3 className="text-xl font-semibold mb-3">灾难恢复计划</h3>
-            <div className="prose max-w-none">
-              <h4 className="font-semibold text-lg mb-2">计划要素</h4>
-              <ol className="list-decimal pl-6">
-                <li>风险评估
-                  <ul className="list-disc pl-6">
-                    <li>识别潜在风险</li>
-                    <li>评估影响程度</li>
-                    <li>确定恢复优先级</li>
-                  </ul>
-                </li>
-                <li>恢复目标
-                  <ul className="list-disc pl-6">
-                    <li>恢复时间目标(RTO)</li>
-                    <li>恢复点目标(RPO)</li>
-                    <li>业务影响分析</li>
-                  </ul>
-                </li>
-                <li>组织架构
-                  <ul className="list-disc pl-6">
-                    <li>恢复团队职责</li>
-                    <li>沟通机制</li>
-                    <li>决策流程</li>
-                  </ul>
-                </li>
-                <li>资源准备
-                  <ul className="list-disc pl-6">
-                    <li>硬件资源</li>
-                    <li>软件资源</li>
-                    <li>人力资源</li>
-                  </ul>
-                </li>
-              </ol>
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'backup' && (
-          <div className="space-y-6">
-            <h3 className="text-xl font-semibold mb-3">备份策略</h3>
-            <div className="prose max-w-none">
-              <h4 className="font-semibold text-lg mb-2">备份类型</h4>
-              <ul className="list-disc pl-6">
-                <li>完全备份
-                  <ul className="list-disc pl-6">
-                    <li>备份所有数据</li>
-                    <li>恢复时间最短</li>
-                    <li>存储空间需求大</li>
-                  </ul>
-                </li>
-                <li>增量备份
-                  <ul className="list-disc pl-6">
-                    <li>只备份变化数据</li>
-                    <li>存储空间需求小</li>
-                    <li>恢复时间较长</li>
-                  </ul>
-                </li>
-                <li>差异备份
-                  <ul className="list-disc pl-6">
-                    <li>备份与完全备份的差异</li>
-                    <li>平衡存储和恢复时间</li>
-                    <li>适合定期备份</li>
-                  </ul>
-                </li>
-              </ul>
-
-              <h4 className="font-semibold text-lg mb-2">备份策略示例</h4>
-              <pre className="bg-gray-100 p-4 rounded mb-4">
-{`import os
+const backupManagerCode = `import os
 import json
 import logging
 import subprocess
@@ -141,7 +47,7 @@ class BackupManager:
         self.configs: Dict[str, BackupConfig] = {}
         self.logger = self._setup_logger()
         self._load_config()
-    
+
     def _setup_logger(self):
         logging.basicConfig(
             level=logging.INFO,
@@ -149,7 +55,7 @@ class BackupManager:
             filename=f'backup_{datetime.now().strftime("%Y%m%d")}.log'
         )
         return logging.getLogger(__name__)
-    
+
     def _load_config(self):
         """加载备份配置"""
         try:
@@ -159,12 +65,12 @@ class BackupManager:
                     self.configs[backup['id']] = BackupConfig(**backup)
         except Exception as e:
             self.logger.error(f"Error loading config: {e}")
-    
+
     def perform_backup(self, backup_id: str) -> Dict:
         """执行备份"""
         if backup_id not in self.configs:
             return {'success': False, 'error': 'Backup config not found'}
-        
+
         config = self.configs[backup_id]
         try:
             if config.type == BackupType.FULL:
@@ -175,23 +81,23 @@ class BackupManager:
                 return self._perform_differential_backup(config)
         except Exception as e:
             return {'success': False, 'error': str(e)}
-    
+
     def _perform_full_backup(self, config: BackupConfig) -> Dict:
         """执行完全备份"""
         try:
             # 创建备份目录
             backup_dir = f"{config.target_path}/{datetime.now().strftime('%Y%m%d_%H%M%S')}"
             os.makedirs(backup_dir, exist_ok=True)
-            
+
             # 执行备份
             cmd = f"rsync -avz --delete {config.source_path} {backup_dir}"
             if config.compression:
                 cmd += " --compress"
             if config.encryption:
                 cmd += " --encrypt"
-            
+
             result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
-            
+
             return {
                 'success': result.returncode == 0,
                 'backup_dir': backup_dir,
@@ -199,26 +105,26 @@ class BackupManager:
             }
         except Exception as e:
             return {'success': False, 'error': str(e)}
-    
+
     def _perform_incremental_backup(self, config: BackupConfig) -> Dict:
         """执行增量备份"""
         try:
             # 获取上次备份时间
             last_backup = self._get_last_backup_time(config)
-            
+
             # 创建备份目录
             backup_dir = f"{config.target_path}/{datetime.now().strftime('%Y%m%d_%H%M%S')}"
             os.makedirs(backup_dir, exist_ok=True)
-            
+
             # 执行增量备份
             cmd = f"rsync -avz --delete --link-dest={last_backup} {config.source_path} {backup_dir}"
             if config.compression:
                 cmd += " --compress"
             if config.encryption:
                 cmd += " --encrypt"
-            
+
             result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
-            
+
             return {
                 'success': result.returncode == 0,
                 'backup_dir': backup_dir,
@@ -226,26 +132,26 @@ class BackupManager:
             }
         except Exception as e:
             return {'success': False, 'error': str(e)}
-    
+
     def _perform_differential_backup(self, config: BackupConfig) -> Dict:
         """执行差异备份"""
         try:
             # 获取上次完全备份时间
             last_full_backup = self._get_last_full_backup_time(config)
-            
+
             # 创建备份目录
             backup_dir = f"{config.target_path}/{datetime.now().strftime('%Y%m%d_%H%M%S')}"
             os.makedirs(backup_dir, exist_ok=True)
-            
+
             # 执行差异备份
             cmd = f"rsync -avz --delete --link-dest={last_full_backup} {config.source_path} {backup_dir}"
             if config.compression:
                 cmd += " --compress"
             if config.encryption:
                 cmd += " --encrypt"
-            
+
             result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
-            
+
             return {
                 'success': result.returncode == 0,
                 'backup_dir': backup_dir,
@@ -253,7 +159,7 @@ class BackupManager:
             }
         except Exception as e:
             return {'success': False, 'error': str(e)}
-    
+
     def _get_last_backup_time(self, config: BackupConfig) -> str:
         """获取上次备份时间"""
         try:
@@ -262,7 +168,7 @@ class BackupManager:
             return result.stdout.strip()
         except Exception:
             return None
-    
+
     def _get_last_full_backup_time(self, config: BackupConfig) -> str:
         """获取上次完全备份时间"""
         try:
@@ -276,22 +182,20 @@ class BackupManager:
 if __name__ == '__main__':
     # 创建备份管理器
     bm = BackupManager('backup_config.json')
-    
+
     # 执行完全备份
     result = bm.perform_backup('daily_full')
     print(json.dumps(result, indent=2))
-    
+
     # 执行增量备份
     result = bm.perform_backup('hourly_incremental')
     print(json.dumps(result, indent=2))
-    
+
     # 执行差异备份
     result = bm.perform_backup('weekly_differential')
-    print(json.dumps(result, indent=2))`}
-              </pre>
-              <h4 className="font-semibold text-lg mb-2">进阶：自动化备份与恢复脚本</h4>
-              <pre className="bg-gray-100 p-4 rounded mb-4">
-{`import os
+    print(json.dumps(result, indent=2))`
+
+const disasterRecoveryCode = `import os
 import shutil
 import logging
 from datetime import datetime
@@ -340,89 +244,9 @@ if __name__ == '__main__':
     dr = DisasterRecovery('/backup', '/data')
     full = dr.full_backup('/data')
     inc = dr.incremental_backup('/data', full)
-    dr.restore(full)`}
-              </pre>
-            </div>
-          </div>
-        )}
+    dr.restore(full)`
 
-        {activeTab === 'recovery' && (
-          <div className="space-y-6">
-            <h3 className="text-xl font-semibold mb-3">恢复流程</h3>
-            <div className="prose max-w-none">
-              <h4 className="font-semibold text-lg mb-2">恢复步骤</h4>
-              <ol className="list-decimal pl-6">
-                <li>灾难评估
-                  <ul className="list-disc pl-6">
-                    <li>确认灾难范围</li>
-                    <li>评估影响程度</li>
-                    <li>确定恢复优先级</li>
-                  </ul>
-                </li>
-                <li>恢复准备
-                  <ul className="list-disc pl-6">
-                    <li>准备恢复环境</li>
-                    <li>检查备份完整性</li>
-                    <li>准备恢复工具</li>
-                  </ul>
-                </li>
-                <li>系统恢复
-                  <ul className="list-disc pl-6">
-                    <li>恢复操作系统</li>
-                    <li>恢复应用程序</li>
-                    <li>恢复配置文件</li>
-                  </ul>
-                </li>
-                <li>数据恢复
-                  <ul className="list-disc pl-6">
-                    <li>恢复数据库</li>
-                    <li>恢复文件系统</li>
-                    <li>验证数据完整性</li>
-                  </ul>
-                </li>
-                <li>业务恢复
-                  <ul className="list-disc pl-6">
-                    <li>启动业务系统</li>
-                    <li>验证业务功能</li>
-                    <li>监控系统状态</li>
-                  </ul>
-                </li>
-              </ol>
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'test' && (
-          <div className="space-y-6">
-            <h3 className="text-xl font-semibold mb-3">演练测试</h3>
-            <div className="prose max-w-none">
-              <h4 className="font-semibold text-lg mb-2">测试类型</h4>
-              <ul className="list-disc pl-6">
-                <li>桌面演练
-                  <ul className="list-disc pl-6">
-                    <li>讨论恢复流程</li>
-                    <li>验证计划完整性</li>
-                    <li>培训团队成员</li>
-                  </ul>
-                </li>
-                <li>功能测试
-                  <ul className="list-disc pl-6">
-                    <li>测试备份恢复</li>
-                    <li>验证恢复流程</li>
-                    <li>检查工具可用性</li>
-                  </ul>
-                </li>
-                <li>全面演练
-                  <ul className="list-disc pl-6">
-                    <li>模拟真实灾难</li>
-                    <li>执行完整恢复</li>
-                    <li>评估恢复效果</li>
-                  </ul>
-                </li>
-              </ul>
-              <h4 className="font-semibold text-lg mb-2">进阶：灾难演练自动化脚本</h4>
-              <pre className="bg-gray-100 p-4 rounded mb-4">
-{`import subprocess
+const simulateFailureCode = `import subprocess
 
 def simulate_failure(target_service):
     subprocess.run(['systemctl', 'stop', target_service])
@@ -439,85 +263,145 @@ def check_service(target_service):
 if __name__ == '__main__':
     simulate_failure('nginx')
     auto_recover('nginx')
-    check_service('nginx')`}
-              </pre>
-            </div>
-          </div>
-        )}
+    check_service('nginx')`
 
-        {activeTab === 'case' && (
-          <div className="space-y-6">
-            <h3 className="text-xl font-semibold mb-3">实践案例</h3>
-            <div className="prose max-w-none">
-              <h4 className="font-semibold text-lg mb-2">案例一：数据中心火灾</h4>
-              <ol className="list-decimal pl-6">
-                <li>事件描述
-                  <ul className="list-disc pl-6">
-                    <li>数据中心发生火灾</li>
-                    <li>部分设备损毁</li>
-                    <li>业务系统中断</li>
-                  </ul>
-                </li>
-                <li>恢复过程
-                  <ul className="list-disc pl-6">
-                    <li>启动备用数据中心</li>
-                    <li>恢复关键系统</li>
-                    <li>迁移业务数据</li>
-                  </ul>
-                </li>
-                <li>经验总结
-                  <ul className="list-disc pl-6">
-                    <li>完善灾备方案</li>
-                    <li>加强应急演练</li>
-                    <li>优化恢复流程</li>
-                  </ul>
-                </li>
-              </ol>
-
-              <h4 className="font-semibold text-lg mb-2">案例二：勒索软件攻击</h4>
-              <ol className="list-decimal pl-6">
-                <li>事件描述
-                  <ul className="list-disc pl-6">
-                    <li>系统感染勒索软件</li>
-                    <li>数据被加密</li>
-                    <li>业务无法运行</li>
-                  </ul>
-                </li>
-                <li>恢复过程
-                  <ul className="list-disc pl-6">
-                    <li>隔离受感染系统</li>
-                    <li>恢复备份数据</li>
-                    <li>重建系统环境</li>
-                  </ul>
-                </li>
-                <li>经验总结
-                  <ul className="list-disc pl-6">
-                    <li>加强安全防护</li>
-                    <li>完善备份策略</li>
-                    <li>提高恢复效率</li>
-                  </ul>
-                </li>
-              </ol>
-            </div>
-          </div>
-        )}
+const SPREADS = [
+  {
+    label: '概述',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>灾难恢复概述</PageTitle>
+        <BookParagraph>
+          灾难恢复是确保业务连续性的重要组成部分，通过制定完善的恢复计划和策略，在发生灾难时能够快速恢复系统和数据，保证业务正常运行。
+        </BookParagraph>
       </div>
-
-      {/* 底部导航 */}
-      <div className="mt-8 flex justify-between">
-        <Link 
-          href="/study/security/ops/incident"
-          className="px-4 py-2 text-blue-600 hover:text-blue-800"
-        >
-          ← 返回应急响应
-        </Link>
-        <Link 
-          href="/study/security/ops/assessment"
-          className="px-4 py-2 text-blue-600 hover:text-blue-800"
-        >
-          安全评估 →
-        </Link>
+    ),
+    right: (
+      <div className="space-y-4">
+        <SectionTitle>核心任务</SectionTitle>
+        <BookList items={[
+          '制定灾难恢复计划',
+          '建立备份策略',
+          '设计恢复流程',
+          '定期演练测试',
+          '持续改进优化',
+        ]} />
       </div>
-    </div>
-  );
-} 
+    ),
+  },
+  {
+    label: '恢复计划',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>灾难恢复计划</PageTitle>
+        <SectionTitle>计划要素</SectionTitle>
+        <BookParagraph>
+          灾难恢复计划是组织应对灾难的指导性文件，需要全面考虑风险评估、恢复目标、组织架构和资源准备等关键要素。
+        </BookParagraph>
+      </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <BookList ordered items={[
+          <span key="1">风险评估<BookList tight items={['识别潜在风险', '评估影响程度', '确定恢复优先级']} /></span>,
+          <span key="2">恢复目标<BookList tight items={['恢复时间目标(RTO)', '恢复点目标(RPO)', '业务影响分析']} /></span>,
+          <span key="3">组织架构<BookList tight items={['恢复团队职责', '沟通机制', '决策流程']} /></span>,
+          <span key="4">资源准备<BookList tight items={['硬件资源', '软件资源', '人力资源']} /></span>,
+        ]} />
+      </div>
+    ),
+  },
+  {
+    label: '备份策略',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>备份策略</PageTitle>
+        <SectionTitle>备份类型</SectionTitle>
+        <BookList items={[
+          <span key="1">完全备份<BookList tight items={['备份所有数据', '恢复时间最短', '存储空间需求大']} /></span>,
+          <span key="2">增量备份<BookList tight items={['只备份变化数据', '存储空间需求小', '恢复时间较长']} /></span>,
+          <span key="3">差异备份<BookList tight items={['备份与完全备份的差异', '平衡存储和恢复时间', '适合定期备份']} /></span>,
+        ]} />
+      </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <SectionTitle>备份策略示例</SectionTitle>
+        <BookCode language="python" code={backupManagerCode} />
+        <SectionTitle>进阶：自动化备份与恢复脚本</SectionTitle>
+        <BookCode language="python" code={disasterRecoveryCode} />
+      </div>
+    ),
+  },
+  {
+    label: '恢复流程',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>恢复流程</PageTitle>
+        <SectionTitle>恢复步骤</SectionTitle>
+        <BookParagraph>
+          当灾难发生时，需要按照标准化的恢复流程进行操作，确保恢复过程有序、高效，最大限度地减少业务中断时间。
+        </BookParagraph>
+      </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <BookList ordered items={[
+          <span key="1">灾难评估<BookList tight items={['确认灾难范围', '评估影响程度', '确定恢复优先级']} /></span>,
+          <span key="2">恢复准备<BookList tight items={['准备恢复环境', '检查备份完整性', '准备恢复工具']} /></span>,
+          <span key="3">系统恢复<BookList tight items={['恢复操作系统', '恢复应用程序', '恢复配置文件']} /></span>,
+          <span key="4">数据恢复<BookList tight items={['恢复数据库', '恢复文件系统', '验证数据完整性']} /></span>,
+          <span key="5">业务恢复<BookList tight items={['启动业务系统', '验证业务功能', '监控系统状态']} /></span>,
+        ]} />
+      </div>
+    ),
+  },
+  {
+    label: '演练测试',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>演练测试</PageTitle>
+        <SectionTitle>测试类型</SectionTitle>
+        <BookList items={[
+          <span key="1">桌面演练<BookList tight items={['讨论恢复流程', '验证计划完整性', '培训团队成员']} /></span>,
+          <span key="2">功能测试<BookList tight items={['测试备份恢复', '验证恢复流程', '检查工具可用性']} /></span>,
+          <span key="3">全面演练<BookList tight items={['模拟真实灾难', '执行完整恢复', '评估恢复效果']} /></span>,
+        ]} />
+      </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <SectionTitle>进阶：灾难演练自动化脚本</SectionTitle>
+        <BookCode language="python" code={simulateFailureCode} />
+      </div>
+    ),
+  },
+  {
+    label: '实践案例',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>实践案例</PageTitle>
+        <SectionTitle>案例一：数据中心火灾</SectionTitle>
+        <BookList ordered items={[
+          <span key="1">事件描述<BookList tight items={['数据中心发生火灾', '部分设备损毁', '业务系统中断']} /></span>,
+          <span key="2">恢复过程<BookList tight items={['启动备用数据中心', '恢复关键系统', '迁移业务数据']} /></span>,
+          <span key="3">经验总结<BookList tight items={['完善灾备方案', '加强应急演练', '优化恢复流程']} /></span>,
+        ]} />
+      </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <SectionTitle>案例二：勒索软件攻击</SectionTitle>
+        <BookList ordered items={[
+          <span key="1">事件描述<BookList tight items={['系统感染勒索软件', '数据被加密', '业务无法运行']} /></span>,
+          <span key="2">恢复过程<BookList tight items={['隔离受感染系统', '恢复备份数据', '重建系统环境']} /></span>,
+          <span key="3">经验总结<BookList tight items={['加强安全防护', '完善备份策略', '提高恢复效率']} /></span>,
+        ]} />
+      </div>
+    ),
+  },
+]
+
+export default function SecurityOpsRecoveryPage() {
+  return <LessonLayout meta={META} spreads={SPREADS} />
+}

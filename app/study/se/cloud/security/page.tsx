@@ -1,36 +1,78 @@
-'use client';
-export default function CloudSecurityPage() {
-  return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-4xl font-bold mb-6">云安全与合规</h1>
-      <div className="bg-white rounded-lg shadow p-8">
-        <h2 className="text-2xl font-bold mb-4">云安全挑战</h2>
-        <ul className="mb-4 space-y-2 text-gray-700">
-          <li>• 数据泄露与访问控制</li>
-          <li>• DDoS攻击与防护</li>
-          <li>• 多租户隔离</li>
-        </ul>
-        <h2 className="text-2xl font-bold mb-4">身份与访问管理（IAM）</h2>
-        <pre className="bg-gray-100 p-4 rounded-lg overflow-x-auto mb-6">
-{`# 创建子用户并授权
+'use client'
+
+import LessonLayout, { type LessonMeta } from '@/app/components/ui/book/LessonLayout'
+import { THEMES } from '@/app/components/ui/book/theme'
+import {
+  PageTitle,
+  BookParagraph,
+  BookCode,
+  BookList,
+} from '@/app/components/ui/book/BookContent'
+
+const META: LessonMeta = {
+  subject: '软件工程',
+  chapterTitle: '云安全与合规',
+  chapterNumber: 5,
+  totalChapters: 7,
+  subjectHref: '/study/se/cloud',
+  prevChapter: { label: '云存储与数据库', href: '/study/se/cloud/storage' },
+  nextChapter: { label: '自动化与DevOps', href: '/study/se/cloud/devops' },
+  theme: THEMES.software,
+}
+
+const CODE_IAM = `# 创建子用户并授权
 aws iam create-user --user-name devuser
-aws iam attach-user-policy --user-name devuser --policy-arn arn:aws:iam::aws:policy/AdministratorAccess`}
-        </pre>
-        <h2 className="text-2xl font-bold mb-4">合规标准</h2>
-        <ul className="mb-4 space-y-2 text-gray-700">
-          <li>• ISO 27001</li>
-          <li>• 等保合规</li>
-          <li>• GDPR</li>
-        </ul>
+aws iam attach-user-policy --user-name devuser --policy-arn arn:aws:iam::aws:policy/AdministratorAccess`
+
+const SPREADS = [
+  {
+    label: '安全挑战与IAM',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>云安全挑战</PageTitle>
+        <BookParagraph>云计算环境面临以下主要安全挑战：</BookParagraph>
+        <BookList items={[
+          '数据泄露与访问控制',
+          'DDoS攻击与防护',
+          '多租户隔离',
+        ]} />
       </div>
-      <div className="mt-10 flex justify-between">
-        <a href="/study/se/cloud/storage" className="px-4 py-2 text-blue-600 hover:text-blue-800">
-          ← 云存储与数据库
-        </a>
-        <a href="/study/se/cloud/devops" className="px-4 py-2 text-blue-600 hover:text-blue-800">
-          自动化与DevOps →
-        </a>
+    ),
+    right: (
+      <div className="space-y-4">
+        <PageTitle>身份与访问管理（IAM）</PageTitle>
+        <BookParagraph>IAM用于管理用户身份和资源访问权限，是云安全的基础设施。以下示例创建子用户并授权管理员权限：</BookParagraph>
+        <BookCode language="bash" code={CODE_IAM} />
       </div>
-    </div>
-  );
-} 
+    ),
+  },
+  {
+    label: '合规标准',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>合规标准</PageTitle>
+        <BookParagraph>云服务商需要遵循各类国际和国内合规标准：</BookParagraph>
+        <BookList items={[
+          'ISO 27001',
+          '等保合规',
+          'GDPR',
+        ]} />
+      </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <PageTitle>安全最佳实践</PageTitle>
+        <BookList items={[
+          '最小权限原则',
+          '加密数据传输与存储',
+          '定期安全审计',
+          '多因素认证',
+        ]} />
+      </div>
+    ),
+  },
+]
+
+export default function CloudSecurityPage() {
+  return <LessonLayout meta={META} spreads={SPREADS} />
+}

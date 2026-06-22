@@ -1,124 +1,23 @@
-'use client';
-import { useState } from 'react';
-import Link from 'next/link';
+'use client'
 
-export default function SecurityOpsAssessmentPage() {
-  const [activeTab, setActiveTab] = useState('overview');
+import LessonLayout, { type LessonMeta } from '@/app/components/ui/book/LessonLayout'
+import { THEMES } from '@/app/components/ui/book/theme'
+import {
+  PageTitle, SectionTitle, BookParagraph, BookCode, BookList,
+} from '@/app/components/ui/book/BookContent'
 
-  return (
-    <div className="container mx-auto px-4 py-8">
-      {/* 顶部返回导航 */}
-      <div className="mb-4">
-        <Link href="/study/security/ops" className="px-4 py-2 text-blue-600 hover:text-blue-800">← 返回安全运维</Link>
-      </div>
-      <h1 className="text-3xl font-bold mb-8">安全评估</h1>
+const META: LessonMeta = {
+  subject: '网络安全',
+  chapterTitle: '安全评估',
+  chapterNumber: 10,
+  totalChapters: 10,
+  subjectHref: '/study/security/ops',
+  prevChapter: { label: '灾难恢复', href: '/study/security/ops/recovery' },
+  nextChapter: { label: '区块链安全基础', href: '/study/security/blockchain/basic' },
+  theme: THEMES.security,
+}
 
-      {/* 标签页导航 */}
-      <div className="flex space-x-4 mb-6 border-b overflow-x-auto">
-        <button onClick={() => setActiveTab('overview')} className={`px-4 py-2 font-medium whitespace-nowrap ${activeTab === 'overview' ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}>概述</button>
-        <button onClick={() => setActiveTab('method')} className={`px-4 py-2 font-medium whitespace-nowrap ${activeTab === 'method' ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}>评估方法</button>
-        <button onClick={() => setActiveTab('tool')} className={`px-4 py-2 font-medium whitespace-nowrap ${activeTab === 'tool' ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}>评估工具</button>
-        <button onClick={() => setActiveTab('process')} className={`px-4 py-2 font-medium whitespace-nowrap ${activeTab === 'process' ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}>评估流程</button>
-        <button onClick={() => setActiveTab('report')} className={`px-4 py-2 font-medium whitespace-nowrap ${activeTab === 'report' ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}>评估报告</button>
-        <button onClick={() => setActiveTab('case')} className={`px-4 py-2 font-medium whitespace-nowrap ${activeTab === 'case' ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}>实践案例</button>
-      </div>
-
-      {/* 内容区域 */}
-      <div className="bg-white rounded-lg shadow-md p-6">
-        {activeTab === 'overview' && (
-          <div className="space-y-6">
-            <h3 className="text-xl font-semibold mb-3">安全评估概述</h3>
-            <div className="prose max-w-none">
-              <p>安全评估是识别、分析和评估系统安全风险的重要过程，通过系统化的方法发现潜在的安全问题，并提供改进建议。</p>
-              <ul className="list-disc pl-6">
-                <li>识别安全风险</li>
-                <li>评估安全控制</li>
-                <li>发现安全漏洞</li>
-                <li>提供改进建议</li>
-                <li>验证安全措施</li>
-              </ul>
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'method' && (
-          <div className="space-y-6">
-            <h3 className="text-xl font-semibold mb-3">评估方法</h3>
-            <div className="prose max-w-none">
-              <h4 className="font-semibold text-lg mb-2">主要评估方法</h4>
-              <ul className="list-disc pl-6">
-                <li>漏洞扫描
-                  <ul className="list-disc pl-6">
-                    <li>自动化扫描工具</li>
-                    <li>漏洞库比对</li>
-                    <li>配置检查</li>
-                  </ul>
-                </li>
-                <li>渗透测试
-                  <ul className="list-disc pl-6">
-                    <li>模拟攻击</li>
-                    <li>漏洞利用</li>
-                    <li>权限提升</li>
-                  </ul>
-                </li>
-                <li>代码审计
-                  <ul className="list-disc pl-6">
-                    <li>静态分析</li>
-                    <li>动态分析</li>
-                    <li>人工审查</li>
-                  </ul>
-                </li>
-                <li>安全配置检查
-                  <ul className="list-disc pl-6">
-                    <li>基线检查</li>
-                    <li>合规性检查</li>
-                    <li>最佳实践检查</li>
-                  </ul>
-                </li>
-              </ul>
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'tool' && (
-          <div className="space-y-6">
-            <h3 className="text-xl font-semibold mb-3">评估工具</h3>
-            <div className="prose max-w-none">
-              <h4 className="font-semibold text-lg mb-2">常用评估工具</h4>
-              <ul className="list-disc pl-6">
-                <li>漏洞扫描工具
-                  <ul className="list-disc pl-6">
-                    <li>Nessus</li>
-                    <li>OpenVAS</li>
-                    <li>Nmap</li>
-                  </ul>
-                </li>
-                <li>渗透测试工具
-                  <ul className="list-disc pl-6">
-                    <li>Metasploit</li>
-                    <li>Burp Suite</li>
-                    <li>OWASP ZAP</li>
-                  </ul>
-                </li>
-                <li>代码审计工具
-                  <ul className="list-disc pl-6">
-                    <li>SonarQube</li>
-                    <li>Fortify</li>
-                    <li>Checkmarx</li>
-                  </ul>
-                </li>
-                <li>配置检查工具
-                  <ul className="list-disc pl-6">
-                    <li>OpenSCAP</li>
-                    <li>CIS-CAT</li>
-                    <li>Lynis</li>
-                  </ul>
-                </li>
-              </ul>
-
-              <h4 className="font-semibold text-lg mb-2">进阶：综合漏洞扫描与报告自动生成脚本</h4>
-              <pre className="bg-gray-100 p-4 rounded mb-4">
-{`import subprocess
+const vulnScanCode = `import subprocess
 import json
 from datetime import datetime
 
@@ -148,59 +47,9 @@ if __name__ == '__main__':
     generate_report([
         {"type": "port_scan", "result": "无高危端口暴露"},
         {"type": "vuln_scan", "result": "发现1个中危漏洞"}
-    ])
-`}
-              </pre>
-            </div>
-          </div>
-        )}
+    ])`
 
-        {activeTab === 'process' && (
-          <div className="space-y-6">
-            <h3 className="text-xl font-semibold mb-3">评估流程</h3>
-            <div className="prose max-w-none">
-              <h4 className="font-semibold text-lg mb-2">评估步骤</h4>
-              <ol className="list-decimal pl-6">
-                <li>准备阶段
-                  <ul className="list-disc pl-6">
-                    <li>确定评估范围</li>
-                    <li>制定评估计划</li>
-                    <li>准备评估工具</li>
-                  </ul>
-                </li>
-                <li>信息收集
-                  <ul className="list-disc pl-6">
-                    <li>系统信息收集</li>
-                    <li>网络拓扑分析</li>
-                    <li>资产清单整理</li>
-                  </ul>
-                </li>
-                <li>漏洞扫描
-                  <ul className="list-disc pl-6">
-                    <li>执行自动化扫描</li>
-                    <li>分析扫描结果</li>
-                    <li>验证漏洞真实性</li>
-                  </ul>
-                </li>
-                <li>渗透测试
-                  <ul className="list-disc pl-6">
-                    <li>模拟攻击测试</li>
-                    <li>漏洞利用验证</li>
-                    <li>权限提升测试</li>
-                  </ul>
-                </li>
-                <li>结果分析
-                  <ul className="list-disc pl-6">
-                    <li>风险评估</li>
-                    <li>漏洞分类</li>
-                    <li>改进建议</li>
-                  </ul>
-                </li>
-              </ol>
-
-              <h4 className="font-semibold text-lg mb-2">进阶：自动化配置基线检查脚本</h4>
-              <pre className="bg-gray-100 p-4 rounded mb-4">
-{`import subprocess
+const configCheckCode = `import subprocess
 
 def check_password_policy():
     result = subprocess.getoutput("grep PASS_MAX_DAYS /etc/login.defs")
@@ -217,139 +66,150 @@ def check_ssh():
 if __name__ == '__main__':
     check_password_policy()
     check_firewall()
-    check_ssh()
-`}
-              </pre>
-            </div>
-          </div>
-        )}
+    check_ssh()`
 
-        {activeTab === 'report' && (
-          <div className="space-y-6">
-            <h3 className="text-xl font-semibold mb-3">评估报告</h3>
-            <div className="prose max-w-none">
-              <h4 className="font-semibold text-lg mb-2">报告内容</h4>
-              <ul className="list-disc pl-6">
-                <li>执行摘要
-                  <ul className="list-disc pl-6">
-                    <li>评估概述</li>
-                    <li>主要发现</li>
-                    <li>风险等级</li>
-                  </ul>
-                </li>
-                <li>评估详情
-                  <ul className="list-disc pl-6">
-                    <li>评估范围</li>
-                    <li>评估方法</li>
-                    <li>评估过程</li>
-                  </ul>
-                </li>
-                <li>漏洞清单
-                  <ul className="list-disc pl-6">
-                    <li>漏洞描述</li>
-                    <li>风险等级</li>
-                    <li>影响范围</li>
-                  </ul>
-                </li>
-                <li>改进建议
-                  <ul className="list-disc pl-6">
-                    <li>修复方案</li>
-                    <li>加固建议</li>
-                    <li>最佳实践</li>
-                  </ul>
-                </li>
-              </ul>
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'case' && (
-          <div className="space-y-6">
-            <h3 className="text-xl font-semibold mb-3">实践案例</h3>
-            <div className="prose max-w-none">
-              <h4 className="font-semibold text-lg mb-2">案例一：Web应用安全评估</h4>
-              <ol className="list-decimal pl-6">
-                <li>评估背景
-                  <ul className="list-disc pl-6">
-                    <li>电商网站安全评估</li>
-                    <li>发现多个高危漏洞</li>
-                    <li>涉及用户数据安全</li>
-                  </ul>
-                </li>
-                <li>评估过程
-                  <ul className="list-disc pl-6">
-                    <li>漏洞扫描</li>
-                    <li>渗透测试</li>
-                    <li>代码审计</li>
-                  </ul>
-                </li>
-                <li>主要发现
-                  <ul className="list-disc pl-6">
-                    <li>SQL注入漏洞</li>
-                    <li>XSS跨站脚本</li>
-                    <li>越权访问</li>
-                  </ul>
-                </li>
-                <li>改进建议
-                  <ul className="list-disc pl-6">
-                    <li>输入验证</li>
-                    <li>参数过滤</li>
-                    <li>访问控制</li>
-                  </ul>
-                </li>
-              </ol>
-
-              <h4 className="font-semibold text-lg mb-2">案例二：系统安全评估</h4>
-              <ol className="list-decimal pl-6">
-                <li>评估背景
-                  <ul className="list-disc pl-6">
-                    <li>企业内网系统评估</li>
-                    <li>发现配置问题</li>
-                    <li>存在安全隐患</li>
-                  </ul>
-                </li>
-                <li>评估过程
-                  <ul className="list-disc pl-6">
-                    <li>配置检查</li>
-                    <li>漏洞扫描</li>
-                    <li>渗透测试</li>
-                  </ul>
-                </li>
-                <li>主要发现
-                  <ul className="list-disc pl-6">
-                    <li>弱密码策略</li>
-                    <li>未打补丁</li>
-                    <li>权限过大</li>
-                  </ul>
-                </li>
-                <li>改进建议
-                  <ul className="list-disc pl-6">
-                    <li>密码策略</li>
-                    <li>补丁管理</li>
-                    <li>权限控制</li>
-                  </ul>
-                </li>
-              </ol>
-            </div>
-          </div>
-        )}
+const SPREADS = [
+  {
+    label: '概述',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>安全评估概述</PageTitle>
+        <BookParagraph>
+          安全评估是识别、分析和评估系统安全风险的重要过程，通过系统化的方法发现潜在的安全问题，并提供改进建议。
+        </BookParagraph>
       </div>
-
-      {/* 底部导航 */}
-      <div className="mt-8 flex justify-between">
-        <Link 
-          href="/study/security/ops/recovery"
-          className="px-4 py-2 text-blue-600 hover:text-blue-800"
-        >
-          ← 返回灾难恢复
-        </Link>
-        <Link 
-          href="/study/security/ops"
-          className="px-4 py-2 text-blue-600 hover:text-blue-800"
-        >
-          返回安全运维 →
-        </Link>
+    ),
+    right: (
+      <div className="space-y-4">
+        <SectionTitle>核心目标</SectionTitle>
+        <BookList items={[
+          '识别安全风险',
+          '评估安全控制',
+          '发现安全漏洞',
+          '提供改进建议',
+          '验证安全措施',
+        ]} />
       </div>
-    </div>
-  );
-} 
+    ),
+  },
+  {
+    label: '评估方法',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>评估方法</PageTitle>
+        <SectionTitle>主要评估方法</SectionTitle>
+        <BookParagraph>
+          安全评估采用多种方法相结合的方式，从不同角度全面评估系统的安全状况。
+        </BookParagraph>
+      </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <BookList items={[
+          <span key="1">漏洞扫描<BookList tight items={['自动化扫描工具', '漏洞库比对', '配置检查']} /></span>,
+          <span key="2">渗透测试<BookList tight items={['模拟攻击', '漏洞利用', '权限提升']} /></span>,
+          <span key="3">代码审计<BookList tight items={['静态分析', '动态分析', '人工审查']} /></span>,
+          <span key="4">安全配置检查<BookList tight items={['基线检查', '合规性检查', '最佳实践检查']} /></span>,
+        ]} />
+      </div>
+    ),
+  },
+  {
+    label: '评估工具',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>评估工具</PageTitle>
+        <SectionTitle>常用评估工具</SectionTitle>
+        <BookList items={[
+          <span key="1">漏洞扫描工具<BookList tight items={['Nessus', 'OpenVAS', 'Nmap']} /></span>,
+          <span key="2">渗透测试工具<BookList tight items={['Metasploit', 'Burp Suite', 'OWASP ZAP']} /></span>,
+          <span key="3">代码审计工具<BookList tight items={['SonarQube', 'Fortify', 'Checkmarx']} /></span>,
+          <span key="4">配置检查工具<BookList tight items={['OpenSCAP', 'CIS-CAT', 'Lynis']} /></span>,
+        ]} />
+      </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <SectionTitle>进阶：综合漏洞扫描与报告自动生成脚本</SectionTitle>
+        <BookCode language="python" code={vulnScanCode} />
+      </div>
+    ),
+  },
+  {
+    label: '评估流程',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>评估流程</PageTitle>
+        <SectionTitle>评估步骤</SectionTitle>
+        <BookParagraph>
+          安全评估需要遵循标准化的流程，确保评估工作的系统性和完整性。
+        </BookParagraph>
+      </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <BookList ordered items={[
+          <span key="1">准备阶段<BookList tight items={['确定评估范围', '制定评估计划', '准备评估工具']} /></span>,
+          <span key="2">信息收集<BookList tight items={['系统信息收集', '网络拓扑分析', '资产清单整理']} /></span>,
+          <span key="3">漏洞扫描<BookList tight items={['执行自动化扫描', '分析扫描结果', '验证漏洞真实性']} /></span>,
+          <span key="4">渗透测试<BookList tight items={['模拟攻击测试', '漏洞利用验证', '权限提升测试']} /></span>,
+          <span key="5">结果分析<BookList tight items={['风险评估', '漏洞分类', '改进建议']} /></span>,
+        ]} />
+        <SectionTitle>进阶：自动化配置基线检查脚本</SectionTitle>
+        <BookCode language="python" code={configCheckCode} />
+      </div>
+    ),
+  },
+  {
+    label: '评估报告',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>评估报告</PageTitle>
+        <SectionTitle>报告内容</SectionTitle>
+        <BookParagraph>
+          评估报告是安全评估的重要产出，需要全面、清晰地呈现评估结果和改进建议。
+        </BookParagraph>
+      </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <BookList items={[
+          <span key="1">执行摘要<BookList tight items={['评估概述', '主要发现', '风险等级']} /></span>,
+          <span key="2">评估详情<BookList tight items={['评估范围', '评估方法', '评估过程']} /></span>,
+          <span key="3">漏洞清单<BookList tight items={['漏洞描述', '风险等级', '影响范围']} /></span>,
+          <span key="4">改进建议<BookList tight items={['修复方案', '加固建议', '最佳实践']} /></span>,
+        ]} />
+      </div>
+    ),
+  },
+  {
+    label: '实践案例',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>实践案例</PageTitle>
+        <SectionTitle>案例一：Web应用安全评估</SectionTitle>
+        <BookList ordered items={[
+          <span key="1">评估背景<BookList tight items={['电商网站安全评估', '发现多个高危漏洞', '涉及用户数据安全']} /></span>,
+          <span key="2">评估过程<BookList tight items={['漏洞扫描', '渗透测试', '代码审计']} /></span>,
+          <span key="3">主要发现<BookList tight items={['SQL注入漏洞', 'XSS跨站脚本', '越权访问']} /></span>,
+          <span key="4">改进建议<BookList tight items={['输入验证', '参数过滤', '访问控制']} /></span>,
+        ]} />
+      </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <SectionTitle>案例二：系统安全评估</SectionTitle>
+        <BookList ordered items={[
+          <span key="1">评估背景<BookList tight items={['企业内网系统评估', '发现配置问题', '存在安全隐患']} /></span>,
+          <span key="2">评估过程<BookList tight items={['配置检查', '漏洞扫描', '渗透测试']} /></span>,
+          <span key="3">主要发现<BookList tight items={['弱密码策略', '未打补丁', '权限过大']} /></span>,
+          <span key="4">改进建议<BookList tight items={['密码策略', '补丁管理', '权限控制']} /></span>,
+        ]} />
+      </div>
+    ),
+  },
+]
+
+export default function SecurityOpsAssessmentPage() {
+  return <LessonLayout meta={META} spreads={SPREADS} />
+}

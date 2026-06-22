@@ -4,6 +4,15 @@ import { ReactNode, useState, useRef, useEffect, useMemo } from 'react'
 import hljs from 'highlight.js'
 import 'highlight.js/styles/atom-one-dark.css'
 
+// 注册 highlight.js 未自动加载的语言模块
+import 'highlight.js/lib/languages/accesslog'
+
+// 手动注册 'asm'（汇编）—— 用 x86asm 替代
+hljs.registerLanguage('asm', () => {
+  const lang = hljs.getLanguage('x86asm')
+  return lang || { name: 'asm', aliases: [], contains: [] }
+})
+
 // ============================================================
 //  书本内容区块组件
 //  所有组件都支持自由组合，left/right 可以放任意 ReactNode
@@ -263,6 +272,7 @@ export function BookImage({
   return (
     <figure className="my-5">
       <div className="rounded-md overflow-hidden border border-paper-300/60 bg-paper-200/40 p-2">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={src}
           alt={alt}

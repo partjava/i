@@ -1,142 +1,23 @@
-"use client";
-import { useState } from "react";
-import Link from "next/link";
+'use client'
 
-export default function PackUnpackPage() {
-  const [activeTab, setActiveTab] = useState("overview");
+import LessonLayout, { type LessonMeta } from '@/app/components/ui/book/LessonLayout'
+import { THEMES } from '@/app/components/ui/book/theme'
+import {
+  PageTitle, SectionTitle, BookParagraph, BookCode, BookAlert, BookList,
+} from '@/app/components/ui/book/BookContent'
 
-  return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-8">加壳脱壳技术</h1>
-      
-      {/* 标签页导航 */}
-      <div className="flex space-x-4 mb-6 border-b overflow-x-auto">
-        <button
-          onClick={() => setActiveTab("overview")}
-          className={`px-4 py-2 font-medium whitespace-nowrap ${
-            activeTab === "overview"
-              ? "border-b-2 border-blue-500 text-blue-600"
-              : "text-gray-500 hover:text-gray-700"
-          }`}
-        >
-          概述
-        </button>
-        <button
-          onClick={() => setActiveTab("packing")}
-          className={`px-4 py-2 font-medium whitespace-nowrap ${
-            activeTab === "packing"
-              ? "border-b-2 border-blue-500 text-blue-600"
-              : "text-gray-500 hover:text-gray-700"
-          }`}
-        >
-          加壳技术
-        </button>
-        <button
-          onClick={() => setActiveTab("unpacking")}
-          className={`px-4 py-2 font-medium whitespace-nowrap ${
-            activeTab === "unpacking"
-              ? "border-b-2 border-blue-500 text-blue-600"
-              : "text-gray-500 hover:text-gray-700"
-          }`}
-        >
-          脱壳方法
-        </button>
-        <button
-          onClick={() => setActiveTab("practice")}
-          className={`px-4 py-2 font-medium whitespace-nowrap ${
-            activeTab === "practice"
-              ? "border-b-2 border-blue-500 text-blue-600"
-              : "text-gray-500 hover:text-gray-700"
-          }`}
-        >
-          实践案例
-        </button>
-      </div>
+const META: LessonMeta = {
+  subject: '网络安全',
+  chapterTitle: '加壳脱壳技术',
+  chapterNumber: 8,
+  totalChapters: 10,
+  subjectHref: '/study/security/reverse',
+  prevChapter: { label: '反调试技术', href: '/study/security/reverse/anti-debug' },
+  nextChapter: { label: '漏洞挖掘', href: '/study/security/reverse/vulnerability' },
+  theme: THEMES.security,
+}
 
-      {/* 内容区域 */}
-      <div className="space-y-6">
-        {activeTab === "overview" && (
-          <div className="space-y-6">
-            <h3 className="text-xl font-semibold mb-3">加壳脱壳概述</h3>
-            <div className="prose max-w-none">
-              <h4 className="font-semibold">1. 什么是加壳脱壳</h4>
-              <div className="bg-gray-100 p-4 rounded-lg mb-4">
-                <p className="mb-4">
-                  加壳是一种对可执行文件进行保护的技术，通过加密、压缩或混淆等方式来保护程序代码。脱壳则是逆向分析加壳程序的过程，目的是还原原始程序。
-                </p>
-
-                <h5 className="font-semibold mb-2">主要目的</h5>
-                <ul className="list-disc pl-6 mb-4">
-                  <li>代码保护
-                    <ul className="list-disc pl-6 mt-2">
-                      <li>防止逆向分析</li>
-                      <li>保护知识产权</li>
-                      <li>防止破解和盗版</li>
-                    </ul>
-                  </li>
-                  <li>程序压缩
-                    <ul className="list-disc pl-6 mt-2">
-                      <li>减小文件体积</li>
-                      <li>加快下载速度</li>
-                      <li>节省存储空间</li>
-                    </ul>
-                  </li>
-                  <li>反调试
-                    <ul className="list-disc pl-6 mt-2">
-                      <li>增加调试难度</li>
-                      <li>防止动态分析</li>
-                      <li>保护核心算法</li>
-                    </ul>
-                  </li>
-                </ul>
-              </div>
-
-              <h4 className="font-semibold">2. 加壳技术的分类</h4>
-              <div className="bg-gray-100 p-4 rounded-lg mb-4">
-                <ul className="list-disc pl-6 mb-4">
-                  <li>压缩壳
-                    <ul className="list-disc pl-6 mt-2">
-                      <li>UPX</li>
-                      <li>ASPack</li>
-                      <li>PECompact</li>
-                    </ul>
-                  </li>
-                  <li>加密壳
-                    <ul className="list-disc pl-6 mt-2">
-                      <li>Themida</li>
-                      <li>VMProtect</li>
-                      <li>Enigma Protector</li>
-                    </ul>
-                  </li>
-                  <li>虚拟机保护
-                    <ul className="list-disc pl-6 mt-2">
-                      <li>代码虚拟化</li>
-                      <li>指令转换</li>
-                      <li>虚拟指令集</li>
-                    </ul>
-                  </li>
-                  <li>反调试壳
-                    <ul className="list-disc pl-6 mt-2">
-                      <li>调试器检测</li>
-                      <li>时间检测</li>
-                      <li>环境检测</li>
-                    </ul>
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {activeTab === "packing" && (
-          <div className="space-y-6">
-            <h3 className="text-xl font-semibold mb-3">加壳技术</h3>
-            <div className="prose max-w-none">
-              <h4 className="font-semibold">1. 基本加壳流程</h4>
-              <div className="bg-gray-100 p-4 rounded-lg mb-4">
-                <h5 className="font-semibold mb-2">加壳步骤</h5>
-                <pre className="bg-gray-200 p-2 rounded">
-                  <code>{`// 基本加壳流程示例
+const basicPackCode = `// 基本加壳流程示例
 class Packer {
 private:
     // 1. 读取原始PE文件
@@ -147,7 +28,7 @@ private:
         // 读取数据段
         return true;
     }
-    
+
     // 2. 压缩/加密代码
     bool compressCode() {
         // 选择压缩算法
@@ -155,7 +36,7 @@ private:
         // 压缩数据段
         return true;
     }
-    
+
     // 3. 添加解压/解密代码
     bool addUnpacker() {
         // 生成解压代码
@@ -163,7 +44,7 @@ private:
         // 添加反调试代码
         return true;
     }
-    
+
     // 4. 重建PE文件
     bool rebuildPE() {
         // 修改PE头
@@ -172,7 +53,7 @@ private:
         // 保存文件
         return true;
     }
-    
+
 public:
     // 执行加壳
     bool pack(const char* inputFile, const char* outputFile) {
@@ -182,15 +63,9 @@ public:
         if (!rebuildPE()) return false;
         return true;
     }
-};`}</code>
-                </pre>
-              </div>
+};`
 
-              <h4 className="font-semibold">2. 高级加壳技术</h4>
-              <div className="bg-gray-100 p-4 rounded-lg mb-4">
-                <h5 className="font-semibold mb-2">代码虚拟化</h5>
-                <pre className="bg-gray-200 p-2 rounded">
-                  <code>{`// 代码虚拟化示例
+const codeVirtualizerCode = `// 代码虚拟化示例
 class CodeVirtualizer {
 private:
     // 虚拟指令集
@@ -199,7 +74,7 @@ private:
         uint32_t operand1;
         uint32_t operand2;
     };
-    
+
     // 虚拟化代码
     bool virtualizeCode(const uint8_t* code, size_t size) {
         // 1. 分析原始指令
@@ -208,7 +83,7 @@ private:
         // 4. 添加解释器
         return true;
     }
-    
+
     // 生成虚拟机
     bool generateVM() {
         // 1. 实现虚拟指令集
@@ -217,7 +92,7 @@ private:
         // 4. 添加完整性检查
         return true;
     }
-    
+
 public:
     // 执行代码虚拟化
     bool virtualize(const char* inputFile, const char* outputFile) {
@@ -227,12 +102,9 @@ public:
         // 保存结果
         return true;
     }
-};`}</code>
-                </pre>
+};`
 
-                <h5 className="font-semibold mb-2">反调试保护</h5>
-                <pre className="bg-gray-200 p-2 rounded">
-                  <code>{`// 反调试保护示例
+const antiDebugProtectionCode = `// 反调试保护示例
 class AntiDebugProtection {
 private:
     // 添加反调试代码
@@ -243,7 +115,7 @@ private:
         // 4. 检测代码注入
         return true;
     }
-    
+
     // 添加完整性检查
     bool addIntegrityCheck() {
         // 1. 计算代码哈希
@@ -252,7 +124,7 @@ private:
         // 4. 检查导入表完整性
         return true;
     }
-    
+
 public:
     // 添加保护
     bool protect(const char* inputFile, const char* outputFile) {
@@ -262,37 +134,24 @@ public:
         // 保存结果
         return true;
     }
-};`}</code>
-                </pre>
-              </div>
-            </div>
-          </div>
-        )}
+};`
 
-        {activeTab === "unpacking" && (
-          <div className="space-y-6">
-            <h3 className="text-xl font-semibold mb-3">脱壳方法</h3>
-            <div className="prose max-w-none">
-              <h4 className="font-semibold">1. 静态脱壳</h4>
-              <div className="bg-gray-100 p-4 rounded-lg mb-4">
-                <h5 className="font-semibold mb-2">特征识别</h5>
-                <pre className="bg-gray-200 p-2 rounded">
-                  <code>{`// 识别常见壳的特征
+const identifyPackerCode = `// 识别常见壳的特征
 bool identifyPacker(const char* filename) {
     // 读取文件头
     FILE* fp = fopen(filename, "rb");
     if (!fp) return false;
-    
+
     // 读取PE头
     IMAGE_DOS_HEADER dosHeader;
     fread(&dosHeader, sizeof(dosHeader), 1, fp);
-    
+
     // 检查特征
     if (dosHeader.e_magic != IMAGE_DOS_SIGNATURE) {
         fclose(fp);
         return false;
     }
-    
+
     // 检查常见壳的特征
     const char* signatures[] = {
         "UPX",
@@ -301,7 +160,7 @@ bool identifyPacker(const char* filename) {
         "Themida",
         "VMProtect"
     };
-    
+
     // 搜索特征字符串
     char buffer[1024];
     while (fread(buffer, 1, sizeof(buffer), fp)) {
@@ -312,15 +171,12 @@ bool identifyPacker(const char* filename) {
             }
         }
     }
-    
+
     fclose(fp);
     return false;
-}`}</code>
-                </pre>
+}`
 
-                <h5 className="font-semibold mb-2">手动脱壳</h5>
-                <pre className="bg-gray-200 p-2 rounded">
-                  <code>{`// 手动脱壳步骤
+const manualUnpackCode = `// 手动脱壳步骤
 class ManualUnpacker {
 private:
     // 1. 定位解压代码
@@ -330,7 +186,7 @@ private:
         // 定位解压函数
         return true;
     }
-    
+
     // 2. 提取原始代码
     bool extractOriginalCode() {
         // 跟踪解压过程
@@ -338,7 +194,7 @@ private:
         // 提取解压后的代码
         return true;
     }
-    
+
     // 3. 修复PE文件
     bool fixPE() {
         // 修复PE头
@@ -347,7 +203,7 @@ private:
         // 修复重定位表
         return true;
     }
-    
+
 public:
     // 执行手动脱壳
     bool unpack(const char* inputFile, const char* outputFile) {
@@ -356,15 +212,9 @@ public:
         if (!fixPE()) return false;
         return true;
     }
-};`}</code>
-                </pre>
-              </div>
+};`
 
-              <h4 className="font-semibold">2. 动态脱壳</h4>
-              <div className="bg-gray-100 p-4 rounded-lg mb-4">
-                <h5 className="font-semibold mb-2">内存转储</h5>
-                <pre className="bg-gray-200 p-2 rounded">
-                  <code>{`// 内存转储示例
+const memoryDumpCode = `// 内存转储示例
 class MemoryDumper {
 private:
     // 等待程序解压完成
@@ -374,7 +224,7 @@ private:
         // 检测解压完成
         return true;
     }
-    
+
     // 转储内存
     bool dumpMemory() {
         // 获取进程句柄
@@ -382,7 +232,7 @@ private:
         // 保存到文件
         return true;
     }
-    
+
     // 修复转储文件
     bool fixDump() {
         // 修复PE头
@@ -390,7 +240,7 @@ private:
         // 修复导入表
         return true;
     }
-    
+
 public:
     // 执行内存转储
     bool dump(const char* processName, const char* outputFile) {
@@ -399,12 +249,9 @@ public:
         if (!fixDump()) return false;
         return true;
     }
-};`}</code>
-                </pre>
+};`
 
-                <h5 className="font-semibold mb-2">调试器辅助</h5>
-                <pre className="bg-gray-200 p-2 rounded">
-                  <code>{`// 调试器辅助脱壳
+const debuggerAssistedCode = `// 调试器辅助脱壳
 class DebuggerAssistedUnpacker {
 private:
     // 设置断点
@@ -414,7 +261,7 @@ private:
         // 设置API断点
         return true;
     }
-    
+
     // 跟踪执行
     bool traceExecution() {
         // 单步执行
@@ -422,7 +269,7 @@ private:
         // 分析执行流程
         return true;
     }
-    
+
     // 提取代码
     bool extractCode() {
         // 定位解压后的代码
@@ -430,7 +277,7 @@ private:
         // 提取数据段
         return true;
     }
-    
+
 public:
     // 执行调试器辅助脱壳
     bool unpack(const char* inputFile, const char* outputFile) {
@@ -439,21 +286,9 @@ public:
         if (!extractCode()) return false;
         return true;
     }
-};`}</code>
-                </pre>
-              </div>
-            </div>
-          </div>
-        )}
+};`
 
-        {activeTab === "practice" && (
-          <div className="space-y-6">
-            <h3 className="text-xl font-semibold mb-3">实践案例</h3>
-            <div className="prose max-w-none">
-              <h4 className="font-semibold">1. UPX脱壳案例</h4>
-              <div className="bg-gray-100 p-4 rounded-lg mb-4">
-                <pre className="bg-gray-200 p-2 rounded">
-                  <code>{`// UPX脱壳步骤
+const upxUnpackCode = `// UPX脱壳步骤
 1. 识别UPX特征
    - 检查PE头中的UPX标记
    - 检查节表特征
@@ -483,14 +318,9 @@ public:
 6. 保存文件
    - 保存修复后的文件
    - 验证文件完整性
-   - 测试程序功能`}</code>
-                </pre>
-              </div>
+   - 测试程序功能`
 
-              <h4 className="font-semibold">2. VMProtect脱壳案例</h4>
-              <div className="bg-gray-100 p-4 rounded-lg mb-4">
-                <pre className="bg-gray-200 p-2 rounded">
-                  <code>{`// VMProtect脱壳步骤
+const vmprotectUnpackCode = `// VMProtect脱壳步骤
 1. 分析保护特征
    - 检查VMProtect标记
    - 分析虚拟化代码
@@ -525,29 +355,98 @@ public:
 7. 验证结果
    - 测试程序功能
    - 验证代码完整性
-   - 检查是否有遗漏`}</code>
-                </pre>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
+   - 检查是否有遗漏`
 
-      {/* 导航链接 */}
-      <div className="mt-8 flex justify-between">
-        <Link
-          href="/study/security/reverse/anti-debug"
-          className="px-4 py-2 text-blue-600 hover:text-blue-800"
-        >
-          ← 反调试技术
-        </Link>
-        <Link
-          href="/study/security/reverse/vulnerability"
-          className="px-4 py-2 text-blue-600 hover:text-blue-800"
-        >
-          漏洞挖掘 →
-        </Link>
+const SPREADS = [
+  {
+    label: '概述',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>加壳脱壳概述</PageTitle>
+        <SectionTitle>1. 什么是加壳脱壳</SectionTitle>
+        <BookParagraph>
+          加壳是一种对可执行文件进行保护的技术，通过加密、压缩或混淆等方式来保护程序代码。脱壳则是逆向分析加壳程序的过程，目的是还原原始程序。
+        </BookParagraph>
+        <SectionTitle>主要目的</SectionTitle>
+        <BookList items={[
+          '代码保护：防止逆向分析、保护知识产权、防止破解和盗版',
+          '程序压缩：减小文件体积、加快下载速度、节省存储空间',
+          '反调试：增加调试难度、防止动态分析、保护核心算法',
+        ]} />
       </div>
-    </div>
-  );
-} 
+    ),
+    right: (
+      <div className="space-y-4">
+        <SectionTitle>2. 加壳技术的分类</SectionTitle>
+        <BookList items={[
+          '压缩壳：UPX、ASPack、PECompact',
+          '加密壳：Themida、VMProtect、Enigma Protector',
+          '虚拟机保护：代码虚拟化、指令转换、虚拟指令集',
+          '反调试壳：调试器检测、时间检测、环境检测',
+        ]} />
+      </div>
+    ),
+  },
+  {
+    label: '加壳技术',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>加壳技术</PageTitle>
+        <SectionTitle>1. 基本加壳流程</SectionTitle>
+        <SectionTitle>加壳步骤</SectionTitle>
+        <BookCode language="cpp" code={basicPackCode} />
+      </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <SectionTitle>2. 高级加壳技术</SectionTitle>
+        <SectionTitle>代码虚拟化</SectionTitle>
+        <BookCode language="cpp" code={codeVirtualizerCode} />
+        <SectionTitle>反调试保护</SectionTitle>
+        <BookCode language="cpp" code={antiDebugProtectionCode} />
+      </div>
+    ),
+  },
+  {
+    label: '脱壳方法',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>脱壳方法</PageTitle>
+        <SectionTitle>1. 静态脱壳</SectionTitle>
+        <SectionTitle>特征识别</SectionTitle>
+        <BookCode language="cpp" code={identifyPackerCode} />
+        <SectionTitle>手动脱壳</SectionTitle>
+        <BookCode language="cpp" code={manualUnpackCode} />
+      </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <SectionTitle>2. 动态脱壳</SectionTitle>
+        <SectionTitle>内存转储</SectionTitle>
+        <BookCode language="cpp" code={memoryDumpCode} />
+        <SectionTitle>调试器辅助</SectionTitle>
+        <BookCode language="cpp" code={debuggerAssistedCode} />
+      </div>
+    ),
+  },
+  {
+    label: '实践案例',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>实践案例</PageTitle>
+        <SectionTitle>1. UPX脱壳案例</SectionTitle>
+        <BookCode language="cpp" code={upxUnpackCode} />
+      </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <SectionTitle>2. VMProtect脱壳案例</SectionTitle>
+        <BookCode language="cpp" code={vmprotectUnpackCode} />
+      </div>
+    ),
+  },
+]
+
+export default function PackUnpackPage() {
+  return <LessonLayout meta={META} spreads={SPREADS} />
+}
