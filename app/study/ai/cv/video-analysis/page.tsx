@@ -1,477 +1,92 @@
-'use client';
+'use client'
 
-import { useState } from 'react';
-import Link from 'next/link';
+import LessonLayout, { type LessonMeta } from '@/app/components/ui/book/LessonLayout'
+import { THEMES } from '@/app/components/ui/book/theme'
+import {
+  PageTitle, SectionTitle, BookParagraph, BookCode, BookList,
+} from '@/app/components/ui/book/BookContent'
 
-export default function VideoAnalysisPage() {
-  const [activeTab, setActiveTab] = useState('overview');
-  const [expandedContent, setExpandedContent] = useState<string | null>(null);
-
-  const tabs = [
-    { id: 'overview', label: '概述' },
-    { id: 'processing', label: '视频处理' },
-    { id: 'tracking', label: '目标跟踪' },
-    { id: 'recognition', label: '行为识别' },
-    { id: 'code', label: '代码示例' }
-  ];
-
-  const toggleContent = (contentId: string) => {
-    setExpandedContent(expandedContent === contentId ? null : contentId);
-  };
-
-  return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-6">视频分析</h1>
-      
-      {/* 标签导航 */}
-      <div className="flex space-x-4 mb-6 border-b overflow-x-auto">
-        {tabs.map(tab => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={`px-4 py-2 font-medium whitespace-nowrap ${
-              activeTab === tab.id 
-                ? 'border-b-2 border-blue-500 text-blue-600' 
-                : 'text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
-
-      {/* 内容区域 */}
-      <div className="bg-white rounded-lg shadow-md p-6">
-        {activeTab === 'overview' && (
-          <div className="space-y-6">
-            <div>
-              <h3 className="text-xl font-semibold mb-3">视频分析概述</h3>
-              <div className="prose max-w-none">
-                <p className="mb-4">
-                  视频分析是计算机视觉的重要分支，它通过分析视频序列来理解场景、跟踪目标、识别行为等。
-                  相比图像分析，视频分析需要考虑时序信息和运动特征。
-                </p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                  <div>
-                    <h4 className="font-semibold mb-2">主要任务：</h4>
-                    <ul className="list-disc pl-6 space-y-2">
-                      <li>视频预处理：降噪、稳定、增强</li>
-                      <li>目标检测：定位视频中的目标</li>
-                      <li>目标跟踪：跟踪目标的运动轨迹</li>
-                      <li>行为识别：理解目标的动作和行为</li>
-                    </ul>
-                  </div>
-                  <div className="relative h-48">
-                    <svg viewBox="0 0 300 200" className="w-full h-full">
-                      {/* 视频分析示意图 */}
-                      <rect x="50" y="50" width="200" height="100" fill="#f0f0f0" stroke="#333" strokeWidth="2"/>
-                      <circle cx="100" cy="100" r="20" fill="#4a90e2" opacity="0.3"/>
-                      <circle cx="150" cy="100" r="20" fill="#4a90e2" opacity="0.3"/>
-                      <circle cx="200" cy="100" r="20" fill="#4a90e2" opacity="0.3"/>
-                      <line x1="100" y1="100" x2="200" y2="100" stroke="#333" strokeWidth="2" strokeDasharray="5,5"/>
-                      <text x="120" y="90" className="text-sm">时序分析</text>
-                    </svg>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <h3 className="text-xl font-semibold mb-3">技术挑战</h3>
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <ul className="list-disc pl-6 space-y-2">
-                  <li>实时性要求
-                    <ul className="list-disc pl-6 mt-2">
-                      <li>计算效率</li>
-                      <li>延迟控制</li>
-                      <li>资源优化</li>
-                    </ul>
-                  </li>
-                  <li>环境变化
-                    <ul className="list-disc pl-6 mt-2">
-                      <li>光照变化</li>
-                      <li>视角变化</li>
-                      <li>遮挡问题</li>
-                    </ul>
-                  </li>
-                  <li>目标变化
-                    <ul className="list-disc pl-6 mt-2">
-                      <li>外观变化</li>
-                      <li>尺度变化</li>
-                      <li>运动模糊</li>
-                    </ul>
-                  </li>
-                  <li>场景复杂度
-                    <ul className="list-disc pl-6 mt-2">
-                      <li>多目标交互</li>
-                      <li>背景干扰</li>
-                      <li>场景切换</li>
-                    </ul>
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'processing' && (
-          <div className="space-y-6">
-            <div>
-              <h3 className="text-xl font-semibold mb-3">视频预处理</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <h4 className="font-semibold mb-2">图像增强</h4>
-                  <ul className="list-disc pl-6 space-y-2">
-                    <li>降噪处理
-                      <ul className="list-disc pl-6 mt-2">
-                        <li>高斯滤波</li>
-                        <li>中值滤波</li>
-                        <li>非局部均值去噪</li>
-                      </ul>
-                    </li>
-                    <li>图像增强
-                      <ul className="list-disc pl-6 mt-2">
-                        <li>直方图均衡化</li>
-                        <li>对比度增强</li>
-                        <li>锐化处理</li>
-                      </ul>
-                    </li>
-                  </ul>
-                </div>
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <h4 className="font-semibold mb-2">视频稳定</h4>
-                  <ul className="list-disc pl-6 space-y-2">
-                    <li>运动估计
-                      <ul className="list-disc pl-6 mt-2">
-                        <li>光流估计</li>
-                        <li>特征匹配</li>
-                        <li>运动补偿</li>
-                      </ul>
-                    </li>
-                    <li>稳定处理
-                      <ul className="list-disc pl-6 mt-2">
-                        <li>运动平滑</li>
-                        <li>帧对齐</li>
-                        <li>抖动消除</li>
-                      </ul>
-                    </li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <h3 className="text-xl font-semibold mb-3">视频编码</h3>
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <ul className="list-disc pl-6 space-y-2">
-                  <li>编码标准
-                    <ul className="list-disc pl-6 mt-2">
-                      <li>H.264/AVC</li>
-                      <li>H.265/HEVC</li>
-                      <li>AV1</li>
-                    </ul>
-                  </li>
-                  <li>压缩技术
-                    <ul className="list-disc pl-6 mt-2">
-                      <li>帧内预测</li>
-                      <li>帧间预测</li>
-                      <li>变换编码</li>
-                    </ul>
-                  </li>
-                  <li>质量评估
-                    <ul className="list-disc pl-6 mt-2">
-                      <li>PSNR</li>
-                      <li>SSIM</li>
-                      <li>VMAF</li>
-                    </ul>
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'tracking' && (
-          <div className="space-y-6">
-            <div>
-              <h3 className="text-xl font-semibold mb-3">传统跟踪方法</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <h4 className="font-semibold mb-2">基于相关滤波</h4>
-                  <ul className="list-disc pl-6 space-y-2">
-                    <li>KCF
-                      <ul className="list-disc pl-6 mt-2">
-                        <li>循环矩阵</li>
-                        <li>核相关</li>
-                        <li>快速计算</li>
-                      </ul>
-                    </li>
-                    <li>CSK
-                      <ul className="list-disc pl-6 mt-2">
-                        <li>密集采样</li>
-                        <li>核函数</li>
-                        <li>尺度估计</li>
-                      </ul>
-                    </li>
-                  </ul>
-                </div>
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <h4 className="font-semibold mb-2">基于粒子滤波</h4>
-                  <ul className="list-disc pl-6 space-y-2">
-                    <li>粒子采样
-                      <ul className="list-disc pl-6 mt-2">
-                        <li>状态预测</li>
-                        <li>权重更新</li>
-                        <li>重采样</li>
-                      </ul>
-                    </li>
-                    <li>观测模型
-                      <ul className="list-disc pl-6 mt-2">
-                        <li>特征提取</li>
-                        <li>相似度计算</li>
-                        <li>状态估计</li>
-                      </ul>
-                    </li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <h3 className="text-xl font-semibold mb-3">深度学习方法</h3>
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <ul className="list-disc pl-6 space-y-2">
-                  <li>Siam系列
-                    <ul className="list-disc pl-6 mt-2">
-                      <li>SiamFC</li>
-                      <li>SiamRPN</li>
-                      <li>SiamMask</li>
-                    </ul>
-                  </li>
-                  <li>MDNet系列
-                    <ul className="list-disc pl-6 mt-2">
-                      <li>MDNet</li>
-                      <li>RT-MDNet</li>
-                      <li>VITAL</li>
-                    </ul>
-                  </li>
-                  <li>Transformer系列
-                    <ul className="list-disc pl-6 mt-2">
-                      <li>TransT</li>
-                      <li>STARK</li>
-                      <li>TrDiMP</li>
-                    </ul>
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'recognition' && (
-          <div className="space-y-6">
-            <div>
-              <h3 className="text-xl font-semibold mb-3">行为识别方法</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <h4 className="font-semibold mb-2">传统方法</h4>
-                  <ul className="list-disc pl-6 space-y-2">
-                    <li>基于特征
-                      <ul className="list-disc pl-6 mt-2">
-                        <li>HOG特征</li>
-                        <li>光流特征</li>
-                        <li>轨迹特征</li>
-                      </ul>
-                    </li>
-                    <li>基于模型
-                      <ul className="list-disc pl-6 mt-2">
-                        <li>隐马尔可夫模型</li>
-                        <li>条件随机场</li>
-                        <li>动态贝叶斯网络</li>
-                      </ul>
-                    </li>
-                  </ul>
-                </div>
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <h4 className="font-semibold mb-2">深度学习方法</h4>
-                  <ul className="list-disc pl-6 space-y-2">
-                    <li>CNN系列
-                      <ul className="list-disc pl-6 mt-2">
-                        <li>3D CNN</li>
-                        <li>C3D</li>
-                        <li>I3D</li>
-                      </ul>
-                    </li>
-                    <li>RNN系列
-                      <ul className="list-disc pl-6 mt-2">
-                        <li>LSTM</li>
-                        <li>GRU</li>
-                        <li>BiLSTM</li>
-                      </ul>
-                    </li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <h3 className="text-xl font-semibold mb-3">应用场景</h3>
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <ul className="list-disc pl-6 space-y-2">
-                  <li>安防监控
-                    <ul className="list-disc pl-6 mt-2">
-                      <li>异常行为检测</li>
-                      <li>人群行为分析</li>
-                      <li>安全预警</li>
-                    </ul>
-                  </li>
-                  <li>智能零售
-                    <ul className="list-disc pl-6 mt-2">
-                      <li>顾客行为分析</li>
-                      <li>商品交互识别</li>
-                      <li>客流统计</li>
-                    </ul>
-                  </li>
-                  <li>体育分析
-                    <ul className="list-disc pl-6 mt-2">
-                      <li>动作识别</li>
-                      <li>技术评估</li>
-                      <li>训练指导</li>
-                    </ul>
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'code' && (
-          <div className="space-y-6">
-            <div>
-              <h3 className="text-xl font-semibold mb-3">视频目标跟踪示例</h3>
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <pre className="text-sm overflow-x-auto">
-                  <code>{`# 导入必要的库
-import cv2
+const trackingCode = `import cv2
 import numpy as np
-from siamrpn import SiamRPN
 
-# 初始化跟踪器
 tracker = SiamRPN()
-
-# 打开视频
 cap = cv2.VideoCapture('video.mp4')
-
-# 读取第一帧
 ret, frame = cap.read()
-if not ret:
-    exit()
-
-# 选择目标区域
 bbox = cv2.selectROI('Select Target', frame, False)
 tracker.init(frame, bbox)
 
-# 跟踪循环
 while True:
     ret, frame = cap.read()
-    if not ret:
-        break
-        
-    # 更新跟踪器
+    if not ret: break
     bbox = tracker.update(frame)
-    
-    # 绘制边界框
     x, y, w, h = [int(v) for v in bbox]
     cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
-    
-    # 显示结果
     cv2.imshow('Tracking', frame)
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-        break
+    if cv2.waitKey(1) & 0xFF == ord('q'): break
+cap.release(); cv2.destroyAllWindows()`
 
-cap.release()
-cv2.destroyAllWindows()`}</code>
-                </pre>
-              </div>
-            </div>
-
-            <div>
-              <h3 className="text-xl font-semibold mb-3">行为识别示例</h3>
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <pre className="text-sm overflow-x-auto">
-                  <code>{`# 导入必要的库
-import torch
+const actionCode = `import torch
 import torch.nn as nn
 import torchvision.models as models
 
 class ActionRecognitionNet(nn.Module):
     def __init__(self, num_classes):
         super().__init__()
-        # 使用3D ResNet作为特征提取器
         self.backbone = models.video.r3d_18(pretrained=True)
         self.backbone.fc = nn.Linear(512, num_classes)
-        
     def forward(self, x):
-        # 输入形状: (batch_size, channels, frames, height, width)
         return self.backbone(x)
 
-# 数据预处理
 def preprocess_video(video_path, num_frames=16):
     frames = []
     cap = cv2.VideoCapture(video_path)
-    
     while len(frames) < num_frames:
         ret, frame = cap.read()
-        if not ret:
-            break
-        # 调整大小和归一化
-        frame = cv2.resize(frame, (224, 224))
-        frame = frame / 255.0
+        if not ret: break
+        frame = cv2.resize(frame, (224, 224)) / 255.0
         frames.append(frame)
-    
     cap.release()
-    
-    # 填充或截断到指定帧数
     if len(frames) < num_frames:
         frames.extend([frames[-1]] * (num_frames - len(frames)))
-    else:
-        frames = frames[:num_frames]
-    
+    else: frames = frames[:num_frames]
     return torch.FloatTensor(frames).permute(3, 0, 1, 2).unsqueeze(0)
 
-# 预测函数
 def predict_action(model, video_path):
     model.eval()
     with torch.no_grad():
-        # 预处理视频
         video = preprocess_video(video_path)
-        # 预测动作
-        output = model(video)
-        # 获取预测结果
-        pred = output.argmax(dim=1).item()
-        return pred`}</code>
-                </pre>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
+        pred = model(video).argmax(dim=1).item()
+        return pred`
 
-      {/* 底部导航 */}
-      <div className="mt-8 flex justify-between">
-        <Link 
-          href="/study/ai/cv/pose-estimation"
-          className="px-4 py-2 text-blue-600 hover:text-blue-800"
-        >
-          ← 返回姿态估计
-        </Link>
-        <Link 
-          href="/study/ai/cv/3d-vision"
-          className="px-4 py-2 text-blue-600 hover:text-blue-800"
-        >
-          3D视觉 →
-        </Link>
-      </div>
-    </div>
-  );
-} 
+const META: LessonMeta = {
+  subject: '计算机视觉', chapterTitle: '视频分析', chapterNumber: 8, totalChapters: 13,
+  subjectHref: '/study/ai/cv',
+  prevChapter: { label: '姿态估计', href: '/study/ai/cv/pose-estimation' },
+  nextChapter: { label: '3D视觉', href: '/study/ai/cv/3d-vision' },
+  theme: THEMES.ai,
+}
+
+const SPREADS = [
+  {
+    label: '概述', left: (<div className="space-y-4"><PageTitle>视频分析概述</PageTitle><BookParagraph>视频分析是计算机视觉的重要分支，它通过分析视频序列来理解场景、跟踪目标、识别行为等。相比图像分析，视频分析需要考虑时序信息和运动特征。</BookParagraph><BookList items={['视频预处理：降噪、稳定、增强','目标检测：定位视频中的目标','目标跟踪：跟踪目标的运动轨迹','行为识别：理解目标的动作和行为']} /><SectionTitle>技术挑战</SectionTitle><BookList items={['实时性要求：计算效率、延迟控制、资源优化','环境变化：光照变化、视角变化、遮挡问题','目标变化：外观变化、尺度变化、运动模糊','场景复杂度：多目标交互、背景干扰、场景切换']} /></div>),
+    right: (<div className="space-y-4"><br /></div>),
+  },
+  {
+    label: '视频处理', left: (<div className="space-y-4"><PageTitle>视频预处理</PageTitle><SectionTitle>图像增强</SectionTitle><BookParagraph><b>降噪处理：</b>高斯滤波、中值滤波、非局部均值去噪</BookParagraph><BookParagraph><b>图像增强：</b>直方图均衡化、对比度增强、锐化处理</BookParagraph><SectionTitle>视频稳定</SectionTitle><BookParagraph><b>运动估计：</b>光流估计、特征匹配、运动补偿</BookParagraph><BookParagraph><b>稳定处理：</b>运动平滑、帧对齐、抖动消除</BookParagraph></div>),
+    right: (<div className="space-y-4"><br /><SectionTitle>视频编码</SectionTitle><BookParagraph><b>编码标准：</b>H.264/AVC、H.265/HEVC、AV1</BookParagraph><BookParagraph><b>压缩技术：</b>帧内预测、帧间预测、变换编码</BookParagraph><BookParagraph><b>质量评估：</b>PSNR、SSIM、VMAF</BookParagraph></div>),
+  },
+  {
+    label: '目标跟踪', left: (<div className="space-y-4"><PageTitle>目标跟踪方法</PageTitle><SectionTitle>传统跟踪方法</SectionTitle><BookParagraph><b>基于相关滤波：</b>KCF(循环矩阵、核相关、快速计算)，CSK(密集采样、核函数、尺度估计)</BookParagraph><BookParagraph><b>基于粒子滤波：</b>粒子采样(状态预测、权重更新、重采样)，观测模型(特征提取、相似度计算、状态估计)</BookParagraph></div>),
+    right: (<div className="space-y-4"><br /><SectionTitle>深度学习方法</SectionTitle><BookParagraph><b>Siam系列：</b>SiamFC、SiamRPN、SiamMask</BookParagraph><BookParagraph><b>MDNet系列：</b>MDNet、RT-MDNet、VITAL</BookParagraph><BookParagraph><b>Transformer系列：</b>TransT、STARK、TrDiMP</BookParagraph></div>),
+  },
+  {
+    label: '行为识别', left: (<div className="space-y-4"><PageTitle>行为识别方法</PageTitle><SectionTitle>传统方法</SectionTitle><BookParagraph><b>基于特征：</b>HOG特征、光流特征、轨迹特征</BookParagraph><BookParagraph><b>基于模型：</b>隐马尔可夫模型、条件随机场、动态贝叶斯网络</BookParagraph><SectionTitle>深度学习方法</SectionTitle><BookParagraph><b>CNN系列：</b>3D CNN、C3D、I3D</BookParagraph><BookParagraph><b>RNN系列：</b>LSTM、GRU、BiLSTM</BookParagraph></div>),
+    right: (<div className="space-y-4"><br /><SectionTitle>应用场景</SectionTitle><BookParagraph><b>安防监控：</b>异常行为检测、人群行为分析、安全预警</BookParagraph><BookParagraph><b>智能零售：</b>顾客行为分析、商品交互识别、客流统计</BookParagraph><BookParagraph><b>体育分析：</b>动作识别、技术评估、训练指导</BookParagraph></div>),
+  },
+  {
+    label: '代码示例', left: (<div className="space-y-4"><PageTitle>代码示例</PageTitle><SectionTitle>视频目标跟踪</SectionTitle><BookCode language="python" code={trackingCode} /></div>),
+    right: (<div className="space-y-4"><SectionTitle>行为识别</SectionTitle><BookCode language="python" code={actionCode} /></div>),
+  },
+]
+
+export default function CvVideoAnalysisPage() { return <LessonLayout meta={META} spreads={SPREADS} /> }

@@ -1,84 +1,28 @@
-'use client';
+'use client'
 
-import { useState } from 'react';
-import Link from 'next/link';
-import { FaRobot, FaBrain, FaChartLine, FaCode, FaLightbulb, FaNetworkWired, FaArrowLeft, FaArrowRight } from 'react-icons/fa';
-import { SiScikitlearn, SiPandas, SiNumpy } from 'react-icons/si';
+import LessonLayout, { type LessonMeta } from '@/app/components/ui/book/LessonLayout'
+import { THEMES } from '@/app/components/ui/book/theme'
+import {
+  PageTitle, SectionTitle, BookParagraph, BookCode, BookList, TagGrid,
+} from '@/app/components/ui/book/BookContent'
 
-export default function MLCasesPage() {
-  const [activeTab, setActiveTab] = useState('case1');
+const META: LessonMeta = {
+  subject: '机器学习', chapterTitle: '实战案例', chapterNumber: 8, totalChapters: 11,
+  subjectHref: '/study/ai/ml',
+  prevChapter: { label: '集成学习', href: '/study/ai/ml/ensemble' },
+  nextChapter: { label: '模型部署与优化', href: '/study/ai/ml/deployment' },
+  theme: THEMES.ai,
+}
 
-  return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-6">机器学习实战案例</h1>
-      
-      {/* 进度条 */}
-      <div className="w-full bg-gray-200 rounded-full h-2.5 mb-8">
-        <div className="bg-blue-600 h-2.5 rounded-full" style={{ width: '80%' }}></div>
-      </div>
-
-      {/* 标签页导航 */}
-      <div className="flex space-x-4 mb-8">
-        <button
-          onClick={() => setActiveTab('case1')}
-          className={`px-4 py-2 rounded-lg ${
-            activeTab === 'case1'
-              ? 'bg-blue-500 text-white'
-              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-          }`}
-        >
-          案例一：电商用户流失预测
-        </button>
-        <button
-          onClick={() => setActiveTab('case2')}
-          className={`px-4 py-2 rounded-lg ${
-            activeTab === 'case2'
-              ? 'bg-blue-500 text-white'
-              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-          }`}
-        >
-          案例二：信用卡欺诈检测
-        </button>
-        <button
-          onClick={() => setActiveTab('case3')}
-          className={`px-4 py-2 rounded-lg ${
-            activeTab === 'case3'
-              ? 'bg-blue-500 text-white'
-              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-          }`}
-        >
-          案例三：商品推荐系统
-        </button>
-      </div>
-
-      {activeTab === 'case1' ? (
-        <div className="space-y-8">
-          <section className="bg-white p-6 rounded-lg shadow-md">
-            <h2 className="text-2xl font-semibold mb-4">电商用户流失预测</h2>
-            <div className="space-y-6">
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <h3 className="font-semibold mb-2">项目背景</h3>
-                <p className="text-gray-700">
-                  电商平台需要预测哪些用户可能会流失，以便及时采取挽留措施。本项目使用机器学习方法，基于用户的历史行为数据，预测用户在未来30天内是否会流失。
-                </p>
-              </div>
-
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <h3 className="font-semibold mb-2">数据准备</h3>
-                <pre className="overflow-x-auto text-gray-800">
-                  <code>{`# 用户行为数据示例
+const SPREADS = [
+  {
+    label: '用户流失预测',
+    left: (<div className="space-y-4"><PageTitle>电商用户流失预测</PageTitle><BookParagraph>电商平台需要预测哪些用户可能会流失，以便及时采取挽留措施。本项目使用机器学习方法，基于用户的历史行为数据，预测用户在未来30天内是否会流失。</BookParagraph><SectionTitle>数据准备</SectionTitle><BookCode language="python" code={`# 用户行为数据示例
 用户ID  注册时间    最近登录  购买次数  消费金额  浏览时长  收藏数  购物车数  流失标记
 001     2023-01-01  2024-01-15  5        1000     120       3       2        0
 002     2023-02-01  2024-01-20  8        2000     180       5       3        0
 003     2023-03-01  2024-01-25  2        500      60        1       1        1
-...`}</code>
-                </pre>
-              </div>
-
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <h3 className="font-semibold mb-2">特征工程</h3>
-                <pre className="overflow-x-auto text-gray-800">
-                  <code>{`import pandas as pd
+...`} /><SectionTitle>特征工程</SectionTitle><BookCode language="python" code={`import pandas as pd
 import numpy as np
 from datetime import datetime
 
@@ -113,14 +57,8 @@ features = [
 ]
 
 X = df[features]
-y = df['流失标记']`}</code>
-                </pre>
-              </div>
-
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <h3 className="font-semibold mb-2">模型训练与评估</h3>
-                <pre className="overflow-x-auto text-gray-800">
-                  <code>{`from sklearn.model_selection import train_test_split
+y = df['流失标记']`} /></div>),
+    right: (<div className="space-y-4"><SectionTitle>模型训练与评估</SectionTitle><BookCode language="python" code={`from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import classification_report, roc_auc_score
@@ -163,7 +101,7 @@ models = {
 for name, model in models.items():
     pred = model.predict(X_test_scaled)
     proba = model.predict_proba(X_test_scaled)[:, 1]
-    
+
     print(f"\\n{name}模型评估：")
     print(classification_report(y_test, pred))
     print(f"AUC分数: {roc_auc_score(y_test, proba):.3f}")
@@ -175,14 +113,7 @@ rf_importance = pd.DataFrame({
 }).sort_values('重要性', ascending=False)
 
 print("\\n特征重要性：")
-print(rf_importance)`}</code>
-                </pre>
-              </div>
-
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <h3 className="font-semibold mb-2">模型部署与应用</h3>
-                <pre className="overflow-x-auto text-gray-800">
-                  <code>{`import joblib
+print(rf_importance)`} /><SectionTitle>模型部署与应用</SectionTitle><BookCode language="python" code={`import joblib
 import pandas as pd
 from datetime import datetime
 
@@ -195,27 +126,27 @@ def predict_churn(user_data):
     # 加载模型和标准化器
     model = joblib.load('churn_prediction_model.pkl')
     scaler = joblib.load('feature_scaler.pkl')
-    
+
     # 特征工程
     user_data['注册时长'] = (datetime.now() - pd.to_datetime(user_data['注册时间'])).dt.days
     user_data['最近登录间隔'] = (datetime.now() - pd.to_datetime(user_data['最近登录'])).dt.days
     user_data['活跃度'] = user_data['浏览时长'] / user_data['最近登录间隔']
     user_data['购买频率'] = user_data['购买次数'] / user_data['注册时长']
     user_data['平均消费'] = user_data['消费金额'] / user_data['购买次数']
-    
+
     # 选择特征
     features = [
         '注册时长', '最近登录间隔', '购买次数', '消费金额',
         '浏览时长', '收藏数', '购物车数', '活跃度',
         '购买频率', '平均消费'
     ]
-    
+
     # 标准化特征
     X = scaler.transform(user_data[features])
-    
+
     # 预测
     churn_prob = model.predict_proba(X)[:, 1]
-    
+
     return churn_prob
 
 # 3. 使用示例
@@ -230,40 +161,16 @@ new_user = pd.DataFrame({
 })
 
 churn_probability = predict_churn(new_user)
-print(f"用户流失概率: {churn_probability[0]:.2%}")`}</code>
-                </pre>
-              </div>
-            </div>
-          </section>
-        </div>
-      ) : activeTab === 'case2' ? (
-        <div className="space-y-8">
-          <section className="bg-white p-6 rounded-lg shadow-md">
-            <h2 className="text-2xl font-semibold mb-4">信用卡欺诈检测</h2>
-            <div className="space-y-6">
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <h3 className="font-semibold mb-2">项目背景</h3>
-                <p className="text-gray-700">
-                  信用卡欺诈检测是一个典型的二分类问题，需要从大量交易数据中识别出欺诈交易。由于欺诈交易通常只占很小比例，这是一个典型的类别不平衡问题。
-                </p>
-              </div>
-
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <h3 className="font-semibold mb-2">数据准备</h3>
-                <pre className="overflow-x-auto text-gray-800">
-                  <code>{`# 交易数据示例
+print(f"用户流失概率: {churn_probability[0]:.2%}")`} /><TagGrid items={['RandomForest', 'XGBoost', 'AUC', '特征工程', '部署']} /></div>),
+  },
+  {
+    label: '欺诈检测',
+    left: (<div className="space-y-4"><PageTitle>信用卡欺诈检测</PageTitle><BookParagraph>信用卡欺诈检测是一个典型的二分类问题，需要从大量交易数据中识别出欺诈交易。由于欺诈交易通常只占很小比例，这是一个典型的类别不平衡问题。</BookParagraph><SectionTitle>数据准备</SectionTitle><BookCode language="python" code={`# 交易数据示例
 交易ID  时间戳  交易金额  商户类型  交易地点  持卡人年龄  持卡人收入  欺诈标记
 001     1234567  1000     超市      北京      35         50000      0
 002     1234568  5000     珠宝店    上海      45         80000      1
 003     1234569  2000     餐厅      广州      28         40000      0
-...`}</code>
-                </pre>
-              </div>
-
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <h3 className="font-semibold mb-2">特征工程与数据平衡</h3>
-                <pre className="overflow-x-auto text-gray-800">
-                  <code>{`import pandas as pd
+...`} /><SectionTitle>特征工程与数据平衡</SectionTitle><BookCode language="python" code={`import pandas as pd
 import numpy as np
 from sklearn.preprocessing import StandardScaler
 from imblearn.over_sampling import SMOTE
@@ -305,14 +212,8 @@ X_balanced, y_balanced = sampler.fit_resample(X, y)
 print("原始数据分布：")
 print(pd.Series(y).value_counts())
 print("\\n平衡后数据分布：")
-print(pd.Series(y_balanced).value_counts())`}</code>
-                </pre>
-              </div>
-
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <h3 className="font-semibold mb-2">模型训练与评估</h3>
-                <pre className="overflow-x-auto text-gray-800">
-                  <code>{`from sklearn.model_selection import train_test_split
+print(pd.Series(y_balanced).value_counts())`} /></div>),
+    right: (<div className="space-y-4"><SectionTitle>模型训练与评估</SectionTitle><BookCode language="python" code={`from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import classification_report, confusion_matrix
 import xgboost as xgb
@@ -360,14 +261,7 @@ rf_importance = pd.DataFrame({
 }).sort_values('重要性', ascending=False)
 
 print("\\n特征重要性：")
-print(rf_importance)`}</code>
-                </pre>
-              </div>
-
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <h3 className="font-semibold mb-2">实时欺诈检测系统</h3>
-                <pre className="overflow-x-auto text-gray-800">
-                  <code>{`import joblib
+print(rf_importance)`} /><SectionTitle>实时欺诈检测系统</SectionTitle><BookCode language="python" code={`import joblib
 import pandas as pd
 from datetime import datetime
 
@@ -378,23 +272,23 @@ joblib.dump(rf_model, 'fraud_detection_model.pkl')
 def detect_fraud(transaction_data):
     # 加载模型
     model = joblib.load('fraud_detection_model.pkl')
-    
+
     # 特征工程
     transaction_data['小时'] = pd.to_datetime(transaction_data['时间戳'], unit='s').dt.hour
     transaction_data['星期'] = pd.to_datetime(transaction_data['时间戳'], unit='s').dt.dayofweek
     transaction_data['交易金额/收入'] = transaction_data['交易金额'] / transaction_data['持卡人收入']
     transaction_data['交易金额/年龄'] = transaction_data['交易金额'] / transaction_data['持卡人年龄']
-    
+
     # 选择特征
     features = [
         '交易金额', '商户类型', '交易地点', '持卡人年龄',
         '持卡人收入', '小时', '星期', '交易金额/收入',
         '交易金额/年龄'
     ]
-    
+
     # 预测
     fraud_prob = model.predict_proba(transaction_data[features])[:, 1]
-    
+
     return fraud_prob
 
 # 3. 使用示例
@@ -420,40 +314,16 @@ def get_risk_level(prob):
         return "高风险"
 
 risk_level = get_risk_level(fraud_probability[0])
-print(f"风险等级: {risk_level}")`}</code>
-                </pre>
-              </div>
-            </div>
-          </section>
-        </div>
-      ) : (
-        <div className="space-y-8">
-          <section className="bg-white p-6 rounded-lg shadow-md">
-            <h2 className="text-2xl font-semibold mb-4">商品推荐系统</h2>
-            <div className="space-y-6">
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <h3 className="font-semibold mb-2">项目背景</h3>
-                <p className="text-gray-700">
-                  电商平台需要为用户推荐可能感兴趣的商品，提高用户购买转化率。本项目实现了一个基于协同过滤和内容推荐的混合推荐系统。
-                </p>
-              </div>
-
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <h3 className="font-semibold mb-2">数据准备</h3>
-                <pre className="overflow-x-auto text-gray-800">
-                  <code>{`# 用户行为数据示例
+print(f"风险等级: {risk_level}")`} /><TagGrid items={['SMOTE', '欺诈检测', 'RandomForest', 'XGBoost', '实时检测']} /></div>),
+  },
+  {
+    label: '推荐系统',
+    left: (<div className="space-y-4"><PageTitle>商品推荐系统</PageTitle><BookParagraph>电商平台需要为用户推荐可能感兴趣的商品，提高用户购买转化率。本项目实现了一个基于协同过滤和内容推荐的混合推荐系统。</BookParagraph><SectionTitle>数据准备</SectionTitle><BookCode language="python" code={`# 用户行为数据示例
 用户ID  商品ID  评分  浏览时长  购买标记  时间戳
 001     101     5     120       1        1234567
 001     102     4     90        1        1234568
 002     101     3     60        0        1234569
-...`}</code>
-                </pre>
-              </div>
-
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <h3 className="font-semibold mb-2">协同过滤推荐</h3>
-                <pre className="overflow-x-auto text-gray-800">
-                  <code>{`import pandas as pd
+...`} /><SectionTitle>协同过滤推荐</SectionTitle><BookCode language="python" code={`import pandas as pd
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
 from scipy.sparse import csr_matrix
@@ -476,21 +346,21 @@ def user_based_recommendation(user_id, n_recommendations=5):
     # 获取用户相似度
     user_idx = user_item_matrix.index.get_loc(user_id)
     user_sim = user_similarity[user_idx]
-    
+
     # 获取用户未评分的商品
     user_ratings = user_item_matrix.iloc[user_idx]
     unrated_items = user_ratings[user_ratings == 0].index
-    
+
     # 计算预测评分
     predictions = []
     for item in unrated_items:
         item_idx = user_item_matrix.columns.get_loc(item)
         item_ratings = user_item_matrix.iloc[:, item_idx]
-        
+
         # 计算加权评分
         pred_rating = np.sum(user_sim * item_ratings) / np.sum(np.abs(user_sim))
         predictions.append((item, pred_rating))
-    
+
     # 返回推荐结果
     return sorted(predictions, key=lambda x: x[1], reverse=True)[:n_recommendations]
 
@@ -499,14 +369,8 @@ user_id = '001'
 recommendations = user_based_recommendation(user_id)
 print(f"为用户 {user_id} 的推荐商品：")
 for item, score in recommendations:
-    print(f"商品 {item}: 预测评分 {score:.2f}")`}</code>
-                </pre>
-              </div>
-
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <h3 className="font-semibold mb-2">内容推荐</h3>
-                <pre className="overflow-x-auto text-gray-800">
-                  <code>{`from sklearn.feature_extraction.text import TfidfVectorizer
+    print(f"商品 {item}: 预测评分 {score:.2f}")`} /></div>),
+    right: (<div className="space-y-4"><SectionTitle>内容推荐</SectionTitle><BookCode language="python" code={`from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
 # 1. 商品特征数据
@@ -535,11 +399,11 @@ product_similarity = cosine_similarity(product_features)
 def content_based_recommendation(product_id, n_recommendations=3):
     # 获取商品索引
     product_idx = products[products['商品ID'] == product_id].index[0]
-    
+
     # 获取相似商品
     similar_scores = product_similarity[product_idx]
     similar_indices = similar_scores.argsort()[::-1][1:n_recommendations+1]
-    
+
     # 返回推荐结果
     recommendations = []
     for idx in similar_indices:
@@ -548,7 +412,7 @@ def content_based_recommendation(product_id, n_recommendations=3):
             products.iloc[idx]['描述'],
             similar_scores[idx]
         ))
-    
+
     return recommendations
 
 # 5. 使用示例
@@ -556,35 +420,28 @@ product_id = 101
 recommendations = content_based_recommendation(product_id)
 print(f"与商品 {product_id} 相似的商品：")
 for item_id, desc, score in recommendations:
-    print(f"商品 {item_id}: {desc} (相似度: {score:.2f})")`}</code>
-                </pre>
-              </div>
-
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <h3 className="font-semibold mb-2">混合推荐系统</h3>
-                <pre className="overflow-x-auto text-gray-800">
-                  <code>{`# 1. 混合推荐函数
+    print(f"商品 {item_id}: {desc} (相似度: {score:.2f})")`} /><SectionTitle>混合推荐系统</SectionTitle><BookCode language="python" code={`# 1. 混合推荐函数
 def hybrid_recommendation(user_id, product_id, n_recommendations=5):
     # 获取协同过滤推荐
     cf_recommendations = user_based_recommendation(user_id, n_recommendations)
-    
+
     # 获取内容推荐
     content_recommendations = content_based_recommendation(product_id, n_recommendations)
-    
+
     # 合并推荐结果
     recommendations = {}
-    
+
     # 添加协同过滤推荐
     for item, score in cf_recommendations:
         recommendations[item] = score * 0.6  # 权重0.6
-    
+
     # 添加内容推荐
     for item, _, score in content_recommendations:
         if item in recommendations:
             recommendations[item] += score * 0.4  # 权重0.4
         else:
             recommendations[item] = score * 0.4
-    
+
     # 返回最终推荐结果
     return sorted(recommendations.items(), key=lambda x: x[1], reverse=True)[:n_recommendations]
 
@@ -601,10 +458,10 @@ def evaluate_recommendations(user_id, recommendations, actual_purchases):
     # 计算命中率
     hits = len(set(recommendations) & set(actual_purchases))
     hit_rate = hits / len(recommendations)
-    
+
     # 计算覆盖率
     coverage = len(set(recommendations)) / len(products)
-    
+
     return {
         '命中率': hit_rate,
         '覆盖率': coverage
@@ -616,31 +473,8 @@ recommended_items = [item for item, _ in recommendations]
 metrics = evaluate_recommendations(user_id, recommended_items, actual_purchases)
 print("\\n推荐系统评估：")
 for metric, value in metrics.items():
-    print(f"{metric}: {value:.2%}")`}</code>
-                </pre>
-              </div>
-            </div>
-          </section>
-        </div>
-      )}
+    print(f"{metric}: {value:.2%}")`} /><TagGrid items={['协同过滤', 'TF-IDF', '内容推荐', '余弦相似度', '混合推荐']} /></div>),
+  },
+]
 
-      {/* 导航链接 */}
-      <div className="flex justify-between mt-8">
-        <Link 
-          href="/study/ai/ml/ensemble"
-          className="bg-gray-500 text-white px-6 py-2 rounded-lg hover:bg-gray-600 flex items-center"
-        >
-          <FaArrowLeft className="mr-2" />
-          上一课：集成学习
-        </Link>
-        <Link 
-          href="/study/ai/ml/deployment"
-          className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 flex items-center"
-        >
-          下一课：模型部署与优化
-          <FaArrowRight className="ml-2" />
-        </Link>
-      </div>
-    </div>
-  );
-} 
+export default function MlCasesPage() { return <LessonLayout meta={META} spreads={SPREADS} /> }

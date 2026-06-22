@@ -1,264 +1,12 @@
-'use client';
+'use client'
 
-import { useState } from 'react';
-import Link from 'next/link';
-import { FaRobot, FaBrain, FaChartLine, FaCode, FaLightbulb, FaNetworkWired, FaArrowLeft, FaArrowRight } from 'react-icons/fa';
-import { SiTensorflow, SiPytorch, SiKeras } from 'react-icons/si';
+import LessonLayout, { type LessonMeta } from '@/app/components/ui/book/LessonLayout'
+import { THEMES } from '@/app/components/ui/book/theme'
+import {
+  PageTitle, SectionTitle, BookParagraph, BookCode, BookList,
+} from '@/app/components/ui/book/BookContent'
 
-export default function DeepLearningFrameworksPage() {
-  const [activeTab, setActiveTab] = useState('theory');
-
-  return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-8">深度学习框架 (Deep Learning Frameworks)</h1>
-      
-      
-
-      {/* 标签页导航 */}
-      <div className="flex space-x-4 mb-8">
-        <button
-          onClick={() => setActiveTab('theory')}
-          className={`px-4 py-2 rounded-lg ${
-            activeTab === 'theory'
-              ? 'bg-blue-500 text-white'
-              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-          }`}
-        >
-          理论知识
-        </button>
-        <button
-          onClick={() => setActiveTab('practice')}
-          className={`px-4 py-2 rounded-lg ${
-            activeTab === 'practice'
-              ? 'bg-blue-500 text-white'
-              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-          }`}
-        >
-          代码实践
-        </button>
-        <button
-          onClick={() => setActiveTab('exercise')}
-          className={`px-4 py-2 rounded-lg ${
-            activeTab === 'exercise'
-              ? 'bg-blue-500 text-white'
-              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-          }`}
-        >
-          实战练习
-        </button>
-      </div>
-
-      {activeTab === 'theory' ? (
-        <div className="space-y-8">
-          <section className="bg-white p-6 rounded-lg shadow-md">
-            <h2 className="text-2xl font-semibold mb-4">深度学习框架概述</h2>
-            <div className="space-y-6">
-              <div className="border-l-4 border-blue-500 pl-4">
-                <h3 className="text-xl font-semibold mb-2">什么是深度学习框架？</h3>
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <p className="text-gray-700 mb-4">
-                    深度学习框架是用于构建、训练和部署深度学习模型的软件工具。它们提供了高级API和底层优化，使得开发者能够更高效地实现复杂的神经网络。
-                  </p>
-                  <div className="space-y-4">
-                    <div>
-                      <h4 className="font-semibold mb-2">框架的主要功能：</h4>
-                      <ul className="list-disc list-inside text-gray-700 space-y-2">
-                        <li>自动微分：自动计算梯度</li>
-                        <li>张量运算：高效的矩阵运算</li>
-                        <li>模型构建：预定义层和模型架构</li>
-                        <li>优化器：各种优化算法实现</li>
-                        <li>数据加载：高效的数据处理管道</li>
-                        <li>分布式训练：多GPU/多机训练支持</li>
-                        <li>模型部署：模型导出和推理优化</li>
-                      </ul>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="border-l-4 border-green-500 pl-4">
-                <h3 className="text-xl font-semibold mb-2">主流深度学习框架</h3>
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <div className="space-y-6">
-                    <div>
-                      <h4 className="font-semibold mb-2">1. PyTorch</h4>
-                      <ul className="list-disc list-inside text-gray-700 space-y-2">
-                        <li>特点：
-                          <ul className="list-disc list-inside text-gray-600 ml-4 mt-2">
-                            <li>动态计算图</li>
-                            <li>Python优先</li>
-                            <li>灵活性强</li>
-                            <li>调试方便</li>
-                          </ul>
-                        </li>
-                        <li>应用场景：
-                          <ul className="list-disc list-inside text-gray-600 ml-4 mt-2">
-                            <li>研究原型开发</li>
-                            <li>学术研究</li>
-                            <li>快速实验</li>
-                          </ul>
-                        </li>
-                        <li>生态系统：
-                          <ul className="list-disc list-inside text-gray-600 ml-4 mt-2">
-                            <li>torchvision：计算机视觉</li>
-                            <li>torchaudio：音频处理</li>
-                            <li>torchtext：文本处理</li>
-                          </ul>
-                        </li>
-                      </ul>
-                    </div>
-
-                    <div>
-                      <h4 className="font-semibold mb-2">2. TensorFlow</h4>
-                      <ul className="list-disc list-inside text-gray-700 space-y-2">
-                        <li>特点：
-                          <ul className="list-disc list-inside text-gray-600 ml-4 mt-2">
-                            <li>静态计算图</li>
-                            <li>生产就绪</li>
-                            <li>跨平台支持</li>
-                            <li>部署便捷</li>
-                          </ul>
-                        </li>
-                        <li>应用场景：
-                          <ul className="list-disc list-inside text-gray-600 ml-4 mt-2">
-                            <li>大规模部署</li>
-                            <li>企业应用</li>
-                            <li>移动端部署</li>
-                          </ul>
-                        </li>
-                        <li>生态系统：
-                          <ul className="list-disc list-inside text-gray-600 ml-4 mt-2">
-                            <li>Keras：高级API</li>
-                            <li>TensorFlow Lite：移动端</li>
-                            <li>TensorFlow.js：Web端</li>
-                          </ul>
-                        </li>
-                      </ul>
-                    </div>
-
-                    <div>
-                      <h4 className="font-semibold mb-2">3. Keras</h4>
-                      <ul className="list-disc list-inside text-gray-700 space-y-2">
-                        <li>特点：
-                          <ul className="list-disc list-inside text-gray-600 ml-4 mt-2">
-                            <li>用户友好</li>
-                            <li>模块化设计</li>
-                            <li>易于扩展</li>
-                            <li>多后端支持</li>
-                          </ul>
-                        </li>
-                        <li>应用场景：
-                          <ul className="list-disc list-inside text-gray-600 ml-4 mt-2">
-                            <li>快速原型开发</li>
-                            <li>教育学习</li>
-                            <li>小型项目</li>
-                          </ul>
-                        </li>
-                        <li>主要功能：
-                          <ul className="list-disc list-inside text-gray-600 ml-4 mt-2">
-                            <li>预定义模型</li>
-                            <li>层和损失函数</li>
-                            <li>优化器</li>
-                            <li>回调函数</li>
-                          </ul>
-                        </li>
-                      </ul>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="border-l-4 border-purple-500 pl-4">
-                <h3 className="text-xl font-semibold mb-2">框架选择指南</h3>
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <div className="space-y-4">
-                    <div>
-                      <h4 className="font-semibold mb-2">选择考虑因素：</h4>
-                      <ul className="list-disc list-inside text-gray-700 space-y-2">
-                        <li>项目需求
-                          <ul className="list-disc list-inside text-gray-600 ml-4 mt-2">
-                            <li>研究还是生产</li>
-                            <li>部署环境</li>
-                            <li>性能要求</li>
-                          </ul>
-                        </li>
-                        <li>团队因素
-                          <ul className="list-disc list-inside text-gray-600 ml-4 mt-2">
-                            <li>技术栈熟悉度</li>
-                            <li>开发效率</li>
-                            <li>维护成本</li>
-                          </ul>
-                        </li>
-                        <li>生态系统
-                          <ul className="list-disc list-inside text-gray-600 ml-4 mt-2">
-                            <li>社区活跃度</li>
-                            <li>文档质量</li>
-                            <li>工具支持</li>
-                          </ul>
-                        </li>
-                      </ul>
-                    </div>
-
-                    <div>
-                      <h4 className="font-semibold mb-2">框架比较：</h4>
-                      <div className="overflow-x-auto">
-                        <table className="min-w-full bg-white">
-                          <thead>
-                            <tr>
-                              <th className="px-4 py-2 border">特性</th>
-                              <th className="px-4 py-2 border">PyTorch</th>
-                              <th className="px-4 py-2 border">TensorFlow</th>
-                              <th className="px-4 py-2 border">Keras</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            <tr>
-                              <td className="px-4 py-2 border">学习曲线</td>
-                              <td className="px-4 py-2 border">中等</td>
-                              <td className="px-4 py-2 border">较陡</td>
-                              <td className="px-4 py-2 border">平缓</td>
-                            </tr>
-                            <tr>
-                              <td className="px-4 py-2 border">灵活性</td>
-                              <td className="px-4 py-2 border">高</td>
-                              <td className="px-4 py-2 border">中等</td>
-                              <td className="px-4 py-2 border">中等</td>
-                            </tr>
-                            <tr>
-                              <td className="px-4 py-2 border">部署难度</td>
-                              <td className="px-4 py-2 border">中等</td>
-                              <td className="px-4 py-2 border">低</td>
-                              <td className="px-4 py-2 border">低</td>
-                            </tr>
-                            <tr>
-                              <td className="px-4 py-2 border">社区支持</td>
-                              <td className="px-4 py-2 border">强</td>
-                              <td className="px-4 py-2 border">强</td>
-                              <td className="px-4 py-2 border">中等</td>
-                            </tr>
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
-        </div>
-      ) : null}
-
-      {activeTab === 'practice' ? (
-        <div className="space-y-8">
-          <section className="bg-white p-6 rounded-lg shadow-md">
-            <h2 className="text-2xl font-semibold mb-4">框架实践</h2>
-            <div className="space-y-6">
-              <div className="border-l-4 border-blue-500 pl-4">
-                <h3 className="text-xl font-semibold mb-2">1. PyTorch基础示例</h3>
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <div className="bg-gray-50 p-4 rounded-lg overflow-x-auto">
-                    <pre className="text-sm text-gray-800">
-{`import torch
+const pytorchBasicCode = `import torch
 import torch.nn as nn
 import torch.optim as optim
 
@@ -270,7 +18,7 @@ class SimpleNN(nn.Module):
         self.layer2 = nn.Linear(64, 32)
         self.layer3 = nn.Linear(32, 1)
         self.relu = nn.ReLU()
-        
+
     def forward(self, x):
         x = self.relu(self.layer1(x))
         x = self.relu(self.layer2(x))
@@ -293,28 +41,19 @@ for epoch in range(100):
     # 前向传播
     outputs = model(x)
     loss = criterion(outputs, y)
-    
+
     # 反向传播和优化
     optimizer.zero_grad()
     loss.backward()
     optimizer.step()
-    
+
     if (epoch + 1) % 10 == 0:
         print(f'Epoch [{epoch+1}/100], Loss: {loss.item():.4f}')
 
 # 保存模型
-torch.save(model.state_dict(), 'simple_nn.pth')`}
-                    </pre>
-                  </div>
-                </div>
-              </div>
+torch.save(model.state_dict(), 'simple_nn.pth')`
 
-              <div className="border-l-4 border-green-500 pl-4">
-                <h3 className="text-xl font-semibold mb-2">2. TensorFlow基础示例</h3>
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <div className="bg-gray-50 p-4 rounded-lg overflow-x-auto">
-                    <pre className="text-sm text-gray-800">
-{`import tensorflow as tf
+const tfBasicCode = `import tensorflow as tf
 from tensorflow.keras import layers, models
 
 # 定义神经网络
@@ -357,18 +96,9 @@ model.save('simple_nn.h5')
 loaded_model = models.load_model('simple_nn.h5')
 
 # 预测
-predictions = loaded_model.predict(x)`}
-                    </pre>
-                  </div>
-                </div>
-              </div>
+predictions = loaded_model.predict(x)`
 
-              <div className="border-l-4 border-purple-500 pl-4">
-                <h3 className="text-xl font-semibold mb-2">3. Keras基础示例</h3>
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <div className="bg-gray-50 p-4 rounded-lg overflow-x-auto">
-                    <pre className="text-sm text-gray-800">
-{`from keras.models import Sequential
+const kerasBasicCode = `from keras.models import Sequential
 from keras.layers import Dense, Dropout
 from keras.optimizers import Adam
 import numpy as np
@@ -415,33 +145,9 @@ from keras.models import load_model
 loaded_model = load_model('simple_nn_keras.h5')
 
 # 预测
-predictions = loaded_model.predict(x)`}
-                    </pre>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
-        </div>
-      ) : null}
+predictions = loaded_model.predict(x)`
 
-      {activeTab === 'exercise' ? (
-        <div className="space-y-8">
-          <section className="bg-white p-6 rounded-lg shadow-md">
-            <h2 className="text-2xl font-semibold mb-4">实战练习</h2>
-            <div className="space-y-6">
-              <div className="border-l-4 border-blue-500 pl-4">
-                <h3 className="text-xl font-semibold mb-2">题目一：图像分类模型</h3>
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <h4 className="font-semibold mb-2">要求：</h4>
-                  <p className="text-gray-700 mb-4">
-                    使用PyTorch实现一个图像分类模型，对CIFAR-10数据集进行分类。
-                  </p>
-                  <div className="mt-4">
-                    <h4 className="font-semibold mb-2">参考答案：</h4>
-                    <div className="bg-gray-50 p-4 rounded-lg overflow-x-auto">
-                      <pre className="text-sm text-gray-800">
-{`import torch
+const cifar10CnnCode = `import torch
 import torch.nn as nn
 import torch.optim as optim
 import torchvision
@@ -459,7 +165,7 @@ class CNN(nn.Module):
         self.fc1 = nn.Linear(64 * 4 * 4, 64)
         self.fc2 = nn.Linear(64, 10)
         self.relu = nn.ReLU()
-        
+
     def forward(self, x):
         x = self.pool(self.relu(self.conv1(x)))
         x = self.pool(self.relu(self.conv2(x)))
@@ -477,15 +183,15 @@ transform = transforms.Compose([
 
 # 加载数据集
 trainset = torchvision.datasets.CIFAR10(
-    root='./data', 
+    root='./data',
     train=True,
-    download=True, 
+    download=True,
     transform=transform
 )
 trainloader = DataLoader(
-    trainset, 
+    trainset,
     batch_size=64,
-    shuffle=True, 
+    shuffle=True,
     num_workers=2
 )
 
@@ -502,13 +208,13 @@ for epoch in range(10):
     running_loss = 0.0
     for i, data in enumerate(trainloader, 0):
         inputs, labels = data[0].to(device), data[1].to(device)
-        
+
         optimizer.zero_grad()
         outputs = model(inputs)
         loss = criterion(outputs, labels)
         loss.backward()
         optimizer.step()
-        
+
         running_loss += loss.item()
         if i % 200 == 199:
             print(f'[{epoch + 1}, {i + 1:5d}] loss: {running_loss / 200:.3f}')
@@ -517,25 +223,9 @@ for epoch in range(10):
 print('Finished Training')
 
 # 保存模型
-torch.save(model.state_dict(), 'cifar10_cnn.pth')`}
-                      </pre>
-                    </div>
-                  </div>
-                </div>
-              </div>
+torch.save(model.state_dict(), 'cifar10_cnn.pth')`
 
-              <div className="border-l-4 border-green-500 pl-4">
-                <h3 className="text-xl font-semibold mb-2">题目二：文本分类模型</h3>
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <h4 className="font-semibold mb-2">要求：</h4>
-                  <p className="text-gray-700 mb-4">
-                    使用TensorFlow实现一个文本分类模型，对电影评论进行情感分析。
-                  </p>
-                  <div className="mt-4">
-                    <h4 className="font-semibold mb-2">参考答案：</h4>
-                    <div className="bg-gray-50 p-4 rounded-lg overflow-x-auto">
-                      <pre className="text-sm text-gray-800">
-{`import tensorflow as tf
+const textClassTfCode = `import tensorflow as tf
 from tensorflow.keras import layers, models
 from tensorflow.keras.preprocessing.text import Tokenizer
 from tensorflow.keras.preprocessing.sequence import pad_sequences
@@ -580,17 +270,17 @@ def main():
     texts, labels = load_data()
     x, tokenizer = preprocess_text(texts)
     y = np.array(labels)
-    
+
     # 创建模型
     model = create_model(10000, 100)
-    
+
     # 编译模型
     model.compile(
         optimizer='adam',
         loss='binary_crossentropy',
         metrics=['accuracy']
     )
-    
+
     # 训练模型
     history = model.fit(
         x, y,
@@ -598,10 +288,10 @@ def main():
         batch_size=32,
         validation_split=0.2
     )
-    
+
     # 保存模型
     model.save('sentiment_model.h5')
-    
+
     # 测试模型
     test_text = "This movie was fantastic!"
     test_sequence = tokenizer.texts_to_sequences([test_text])
@@ -610,34 +300,136 @@ def main():
     print(f"Sentiment: {'Positive' if prediction[0] > 0.5 else 'Negative'}")
 
 if __name__ == '__main__':
-    main()`}
-                      </pre>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
-        </div>
-      ) : null}
+    main()`
 
-      {/* 导航链接 */}
-      <div className="flex justify-between mt-8">
-        <Link 
-          href="/study/ai/dl/transfer-learning"
-          className="bg-gray-500 text-white px-6 py-2 rounded-lg hover:bg-gray-600 flex items-center"
-        >
-          <FaArrowLeft className="mr-2" />
-          上一课：迁移学习
-        </Link>
-        <Link 
-          href="/study/ai/dl/optimization"
-          className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 flex items-center"
-        >
-          下一课：模型压缩与优化
-          <FaArrowRight className="ml-2" />
-        </Link>
+const META: LessonMeta = {
+  subject: '深度学习',
+  chapterTitle: '深度学习框架',
+  chapterNumber: 10,
+  totalChapters: 14,
+  subjectHref: '/study/ai/dl',
+  prevChapter: { label: '迁移学习', href: '/study/ai/dl/transfer-learning' },
+  nextChapter: { label: '模型压缩与优化', href: '/study/ai/dl/optimization' },
+  theme: THEMES.ai,
+}
+
+const SPREADS = [
+  {
+    label: '理论知识',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>深度学习框架概述</PageTitle>
+
+        <SectionTitle>什么是深度学习框架？</SectionTitle>
+        <BookParagraph>
+          深度学习框架是用于构建、训练和部署深度学习模型的软件工具。它们提供了高级API和底层优化，使得开发者能够更高效地实现复杂的神经网络。
+        </BookParagraph>
+        <BookParagraph><b>框架的主要功能：</b></BookParagraph>
+        <BookList items={[
+          '自动微分：自动计算梯度',
+          '张量运算：高效的矩阵运算',
+          '模型构建：预定义层和模型架构',
+          '优化器：各种优化算法实现',
+          '数据加载：高效的数据处理管道',
+          '分布式训练：多GPU/多机训练支持',
+          '模型部署：模型导出和推理优化',
+        ]} />
+
+        <SectionTitle>1. PyTorch</SectionTitle>
+        <BookList items={[
+          '特点：动态计算图、Python优先、灵活性强、调试方便',
+          '应用场景：研究原型开发、学术研究、快速实验',
+          '生态系统：torchvision(计算机视觉)、torchaudio(音频处理)、torchtext(文本处理)',
+        ]} />
       </div>
-    </div>
-  );
-} 
+    ),
+    right: (
+      <div className="space-y-4">
+        <SectionTitle>2. TensorFlow</SectionTitle>
+        <BookList items={[
+          '特点：静态计算图、生产就绪、跨平台支持、部署便捷',
+          '应用场景：大规模部署、企业应用、移动端部署',
+          '生态系统：Keras(高级API)、TensorFlow Lite(移动端)、TensorFlow.js(Web端)',
+        ]} />
+
+        <SectionTitle>3. Keras</SectionTitle>
+        <BookList items={[
+          '特点：用户友好、模块化设计、易于扩展、多后端支持',
+          '应用场景：快速原型开发、教育学习、小型项目',
+          '主要功能：预定义模型、层和损失函数、优化器、回调函数',
+        ]} />
+
+        <SectionTitle>框架选择指南</SectionTitle>
+        <BookParagraph><b>选择考虑因素：</b></BookParagraph>
+        <BookList items={[
+          '项目需求：研究还是生产、部署环境、性能要求',
+          '团队因素：技术栈熟悉度、开发效率、维护成本',
+          '生态系统：社区活跃度、文档质量、工具支持',
+        ]} />
+
+        <BookParagraph><b>框架比较：</b></BookParagraph>
+        <table className="min-w-full bg-white border rounded-lg overflow-hidden">
+          <thead>
+            <tr className="bg-gray-100">
+              <th className="px-4 py-2 border">特性</th>
+              <th className="px-4 py-2 border">PyTorch</th>
+              <th className="px-4 py-2 border">TensorFlow</th>
+              <th className="px-4 py-2 border">Keras</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td className="px-4 py-2 border">学习曲线</td><td className="px-4 py-2 border">中等</td><td className="px-4 py-2 border">较陡</td><td className="px-4 py-2 border">平缓</td></tr>
+            <tr><td className="px-4 py-2 border">灵活性</td><td className="px-4 py-2 border">高</td><td className="px-4 py-2 border">中等</td><td className="px-4 py-2 border">中等</td></tr>
+            <tr><td className="px-4 py-2 border">部署难度</td><td className="px-4 py-2 border">中等</td><td className="px-4 py-2 border">低</td><td className="px-4 py-2 border">低</td></tr>
+            <tr><td className="px-4 py-2 border">社区支持</td><td className="px-4 py-2 border">强</td><td className="px-4 py-2 border">强</td><td className="px-4 py-2 border">中等</td></tr>
+          </tbody>
+        </table>
+      </div>
+    ),
+  },
+  {
+    label: '代码实践',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>框架实践</PageTitle>
+
+        <SectionTitle>1. PyTorch基础示例</SectionTitle>
+        <BookCode language="python" code={pytorchBasicCode} />
+
+        <SectionTitle>2. TensorFlow基础示例</SectionTitle>
+        <BookCode language="python" code={tfBasicCode} />
+      </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <SectionTitle>3. Keras基础示例</SectionTitle>
+        <BookCode language="python" code={kerasBasicCode} />
+      </div>
+    ),
+  },
+  {
+    label: '实战练习',
+    left: (
+      <div className="space-y-4">
+        <PageTitle>实战练习</PageTitle>
+
+        <SectionTitle>题目一：图像分类模型</SectionTitle>
+        <BookParagraph><b>要求：</b>使用PyTorch实现一个图像分类模型，对CIFAR-10数据集进行分类。</BookParagraph>
+        <BookParagraph><b>参考答案：</b></BookParagraph>
+        <BookCode language="python" code={cifar10CnnCode} />
+      </div>
+    ),
+    right: (
+      <div className="space-y-4">
+        <SectionTitle>题目二：文本分类模型</SectionTitle>
+        <BookParagraph><b>要求：</b>使用TensorFlow实现一个文本分类模型，对电影评论进行情感分析。</BookParagraph>
+        <BookParagraph><b>参考答案：</b></BookParagraph>
+        <BookCode language="python" code={textClassTfCode} />
+      </div>
+    ),
+  },
+]
+
+export default function DlFrameworksPage() {
+  return <LessonLayout meta={META} spreads={SPREADS} />
+}
