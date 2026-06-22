@@ -10,17 +10,22 @@ module.exports = {
       colors: {
         // ===== 纸墨色系 — 书本设计系统 =====
         paper: {
-          50:  '#faf8f5',  // 最白
-          100: '#f7f4ef',  // 宣纸（主背景）
-          200: '#efebe5',  // 素笺（卡片/区块）
-          300: '#e3ddd3',  // 纸边（边框）
-          400: '#d5cdc2',  // 旧纸（分割线）
+          50:  '#f5f7fa',  // 最白（偏冷）
+          100: '#EDF0F5',  // 宣纸（主背景）冷白
+          200: '#e2e6ed',  // 素笺（卡片/区块）
+          300: '#d1d6e0',  // 纸边（边框）
+          400: '#b8bfcc',  // 旧纸（分割线）
         },
         ink: {
-          DEFAULT: '#2c2a27',  // 暖黑（正文）
-          light:   '#6e6860',  // 暖灰（辅助）
-          lighter: '#9a948a',  // 浅灰（注释）
-          fade:    '#c4beb4',  // 更淡
+          DEFAULT: '#0C1F3D',  // 深藏青（正文）
+          light:   '#3d4f6b',  // 蓝灰（辅助）
+          lighter: '#6b7d99',  // 浅灰蓝（注释）
+          fade:    '#a0aec0',  // 更淡
+        },
+        // ===== 页面背景（全局根背景） =====
+        page: {
+          bg:   '#EDF0F5',  // 冷白根背景
+          dark: '#0C1F3D',  // 深色模式根背景
         },
         // ===== 点缀色 =====
         amber: {
@@ -30,9 +35,9 @@ module.exports = {
           pale:    '#ebe0d4',
         },
         jade: {
-          DEFAULT: '#5a8f6d',  // 玉青（成功/完成）
-          light:   '#7aaa8a',
-          pale:    '#dcebe0',
+          DEFAULT: '#BBFF5C',  // 荧光绿（成功/完成/高亮）
+          light:   '#ccff7a',
+          pale:    '#e8ffcc',
         },
         rust: {
           DEFAULT: '#b85a48',  // 赭石（危险/删除）
@@ -40,9 +45,9 @@ module.exports = {
           pale:    '#f0ddd8',
         },
         azure: {
-          DEFAULT: '#5a7fa0',  // 青蓝（链接）
-          light:   '#7a9ab8',
-          pale:    '#dce6f0',
+          DEFAULT: '#044BB5',  // 亮蓝（链接/强调）
+          light:   '#2a6fd4',
+          pale:    '#dce8f7',
         },
       },
       fontFamily: {
@@ -51,10 +56,12 @@ module.exports = {
         code:    ['"JetBrains Mono"', '"Fira Code"', '"Cascadia Code"', 'monospace'],
       },
       boxShadow: {
-        'book':        '0 6px 28px rgba(44, 42, 39, 0.09), 0 2px 6px rgba(44, 42, 39, 0.05)',
-        'book-hover':  '0 8px 36px rgba(44, 42, 39, 0.12), 0 2px 8px rgba(44, 42, 39, 0.06)',
-        'page-left':   '2px 0 16px rgba(44, 42, 39, 0.06)',
-        'page-right':  '-2px 0 16px rgba(44, 42, 39, 0.06)',
+        'frost':       '0 4px 24px rgba(12, 31, 61, 0.08), 0 1px 4px rgba(12, 31, 61, 0.04)',
+        'frost-lg':    '0 8px 40px rgba(12, 31, 61, 0.10), 0 2px 8px rgba(12, 31, 61, 0.05)',
+        'book':        '0 6px 28px rgba(12, 31, 61, 0.09), 0 2px 6px rgba(12, 31, 61, 0.05)',
+        'book-hover':  '0 8px 36px rgba(12, 31, 61, 0.12), 0 2px 8px rgba(12, 31, 61, 0.06)',
+        'page-left':   '2px 0 16px rgba(12, 31, 61, 0.06)',
+        'page-right':  '-2px 0 16px rgba(12, 31, 61, 0.06)',
       },
       animation: {
         'book-exit-forward':  'bookExitForward  0.35s ease-in-out forwards',
