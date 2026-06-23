@@ -40,8 +40,8 @@ case "$choice" in
     # 3. 复制静态文件到 standalone 目录
     echo "📁 复制静态文件..."
     mkdir -p .next/standalone/.next
-    cp -r .next/static .next/standalone/.next/
-    cp -r public .next/standalone/
+    cp -r .next/static/. .next/standalone/.next/static/
+    cp -r public/. .next/standalone/public/
     ;;
   1)
     echo "⚡ 已选择：快速启动（使用现有构建）"
