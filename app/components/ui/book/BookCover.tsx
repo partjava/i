@@ -68,7 +68,7 @@ export default function BookCover({
             <div
               className="w-full h-full rounded-l-sm"
               style={{
-                background: 'linear-gradient(180deg, #e8e0d0 0px, #e8e0d0 1.5px, #f0e8dc 1.5px, #f0e8dc 3px)',
+                background: 'linear-gradient(180deg, #d1d6e0 0px, #d1d6e0 1.5px, #e2e6ed 1.5px, #e2e6ed 3px)',
                 backgroundSize: '100% 3px',
                 boxShadow: 'inset -2px 0 4px rgba(0,0,0,0.06)',
               }}
@@ -79,7 +79,7 @@ export default function BookCover({
           <div
             className="absolute bottom-0 left-[14px] sm:left-[20px] right-[-8px] sm:right-[-12px] h-[12px] sm:h-[16px] rounded-b-sm"
             style={{
-              background: 'linear-gradient(180deg, #e8e0d0 0px, #e8e0d0 1.5px, #f0e8dc 1.5px, #f0e8dc 3px)',
+              background: 'linear-gradient(180deg, #d1d6e0 0px, #d1d6e0 1.5px, #e2e6ed 1.5px, #e2e6ed 3px)',
               backgroundSize: '100% 3px',
               boxShadow: 'inset 0 -2px 4px rgba(0,0,0,0.04)',
             }}
@@ -89,13 +89,13 @@ export default function BookCover({
           <div
             className="absolute right-[-8px] sm:right-[-12px] top-[4px] bottom-[12px] w-[8px] sm:w-[12px] z-10"
             style={{
-              background: 'linear-gradient(to right, #e8e0d0, #ddd5c5)',
+              background: 'linear-gradient(to right, #d1d6e0, #b8bfcc)',
               borderRadius: '0 2px 2px 0',
               boxShadow: 'inset 1px 0 2px rgba(0,0,0,0.04)',
             }}
           >
             <div className="absolute inset-0" style={{
-              background: 'repeating-linear-gradient(to bottom, transparent, transparent 2.5px, rgba(180,170,155,0.15) 2.5px, rgba(180,170,155,0.15) 3px)',
+              background: 'repeating-linear-gradient(to bottom, transparent, transparent 2.5px, rgba(160,174,192,0.15) 2.5px, rgba(160,174,192,0.15) 3px)',
             }} />
           </div>
 

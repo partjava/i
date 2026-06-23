@@ -43,11 +43,11 @@ export default function FlipCard({ name, icon: Icon, url, desc, color }: FlipCar
               e.preventDefault();
             }
           }}
-          className="absolute inset-0 flex items-center rounded-xl shadow-md hover:shadow-2xl transition-all p-4 border border-[#d4c8b8]"
-          style={{ 
+          className="absolute inset-0 flex items-center rounded-xl shadow-md hover:shadow-2xl transition-all p-4 border border-[#b8bfcc]"
+          style={{
             backfaceVisibility: 'hidden',
             WebkitBackfaceVisibility: 'hidden',
-            background: 'linear-gradient(135deg, #faf6f0 0%, #f5efe6 30%, #faf6f0 60%, #f3ede2 100%)',
+            background: 'linear-gradient(135deg, #f5f7fa 0%, #f0f3f8 30%, #f5f7fa 60%, #eef1f6 100%)',
             borderTop: `3px solid ${color}`,
             zIndex: isFlipped ? 0 : 1
           }}
@@ -79,7 +79,7 @@ export default function FlipCard({ name, icon: Icon, url, desc, color }: FlipCar
             backfaceVisibility: 'hidden',
             WebkitBackfaceVisibility: 'hidden',
             transform: 'rotateY(180deg)',
-            background: 'linear-gradient(135deg, #5c4033 0%, #4a3728 50%, #3d2e20 100%)',
+            background: 'linear-gradient(135deg, #0C1F3D 0%, #1a2d4a 50%, #0C1F3D 100%)',
             zIndex: isFlipped ? 1 : 0
           }}
         >

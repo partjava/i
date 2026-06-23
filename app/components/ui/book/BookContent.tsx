@@ -113,7 +113,7 @@ export function BookAlert({
       {message && (
         <p className="flex items-start gap-2 text-sm text-ink-light leading-relaxed">
           <span className="flex-shrink-0 w-4 h-4 rounded-full bg-current/10 flex items-center justify-center text-[10px] font-bold mt-0.5"
-               style={{ color: type === 'info' ? '#5a7fa0' : type === 'success' ? '#5a8f6d' : '#b85a48' }}>
+               style={{ color: type === 'info' ? '#6366f1' : type === 'success' ? '#10b981' : '#8b5cf6' }}>
             {c.icon}
           </span>
           <span>{message}</span>

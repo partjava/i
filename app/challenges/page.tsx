@@ -114,10 +114,10 @@ const ChallengePage: React.FC = () => {
 
   return (
     <>
-    <div className="min-h-screen bg-[#e5dfd0] py-8">
+    <div className="min-h-screen bg-[#d1d6e0] py-8">
       {/* 水墨画顶部装饰 */}
-      <InkWashDecoration variant="landscape" height={180} className="bg-[#e5dfd0] -mt-8" />
-      <InkWashDecoration variant="mist" height={50} className="bg-[#e5dfd0] -mt-4" />
+      <InkWashDecoration variant="landscape" height={180} className="bg-[#d1d6e0] -mt-8" />
+      <InkWashDecoration variant="mist" height={50} className="bg-[#d1d6e0] -mt-4" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* 页面标题 */}
@@ -139,7 +139,7 @@ const ChallengePage: React.FC = () => {
         </div>
 
         {/* 筛选和搜索 */}
-        <div className="bg-[#faf6f0] rounded-lg shadow-md p-6 mb-8 border border-[#d4c8b8]">
+        <div className="bg-[#f5f7fa] rounded-lg shadow-md p-6 mb-8 border border-[#b8bfcc]">
           <Row gutter={[16, 16]} align="middle">
             <Col xs={24} sm={12} md={6}>
               <div className="flex items-center gap-2">
@@ -201,7 +201,7 @@ const ChallengePage: React.FC = () => {
                     hoverable
                     className="h-full challenge-card"
                     cover={
-                      <div className="p-4 bg-gradient-to-r from-[#5c4033] to-[#8b7355] text-white">
+                      <div className="p-4 bg-gradient-to-r from-[#0C1F3D] to-[#6b7d99] text-white">
                         <div className="flex justify-between items-start mb-2">
                           <Tag
                             color={difficultyColors[challenge.difficulty]}
@@ -297,8 +297,8 @@ const ChallengePage: React.FC = () => {
       </div>
 
       {/* 水墨画底部装饰 */}
-      <InkWashDecoration variant="bamboo" height={100} className="bg-[#e5dfd0] mt-8" />
-      <InkWashDecoration variant="landscape" height={200} className="bg-[#e5dfd0]" />
+      <InkWashDecoration variant="bamboo" height={100} className="bg-[#d1d6e0] mt-8" />
+      <InkWashDecoration variant="landscape" height={200} className="bg-[#d1d6e0]" />
 
       <style jsx>{`
         .challenge-card {

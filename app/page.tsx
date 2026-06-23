@@ -282,26 +282,26 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-[#e5dfd0]">
+    <div className="min-h-screen bg-[#d1d6e0]">
       {/* Hero区域 */}
       <HeroSection />
 
       {/* 水墨山水过渡 */}
-      <InkWashDecoration variant="landscape" height={220} className="bg-[#e5dfd0]" />
-      <InkWashDecoration variant="mist" height={60} className="bg-[#e5dfd0] -mt-4" />
+      <InkWashDecoration variant="landscape" height={220} className="bg-[#d1d6e0]" />
+      <InkWashDecoration variant="mist" height={60} className="bg-[#d1d6e0] -mt-4" />
 
       {/* 数据统计区域 */}
       <StatsSection />
 
       {/* 学习分类悬停菜单 */}
       <div className="relative">
-        <div className="shadow-md py-4 px-3 md:px-6 border-b border-[#d4c8b8]" style={{ background: 'linear-gradient(180deg, #f5f0e8 0%, #f0ebe0 100%)' }}>
+        <div className="shadow-md py-4 px-3 md:px-6 border-b border-[#b8bfcc]" style={{ background: 'linear-gradient(180deg, #EDF0F5 0%, #e8ecf2 100%)' }}>
           <div className="max-w-[1400px] mx-auto">
             <h1 className="text-xl md:text-3xl font-bold text-gray-800 mb-4 md:mb-6 tracking-wide">PartJava 学习平台</h1>
             
             {/* 学习分类导航 */}
             <div className="relative group">
-              <button className="flex items-center text-gray-700 font-semibold text-lg hover:text-gray-900 transition-colors py-2 px-4 rounded-md hover:bg-[#FFD6A5]">
+              <button className="flex items-center text-gray-700 font-semibold text-lg hover:text-gray-900 transition-colors py-2 px-4 rounded-md hover:bg-[#e0e7ff]">
                 🏫 学习中心
                 <svg className="ml-2 w-5 h-5 transition-transform group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -309,11 +309,11 @@ export default function Home() {
               </button>
               
               {/* 悬停显示的学习分类菜单 */}
-              <div className="absolute left-0 top-full mt-2 shadow-xl rounded-lg p-6 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 w-full max-w-[1400px] border border-[#d4c8b8]" style={{ background: 'linear-gradient(135deg, #faf6f0 0%, #f5efe6 50%, #faf6f0 100%)' }}>
+              <div className="absolute left-0 top-full mt-2 shadow-xl rounded-lg p-6 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 w-full max-w-[1400px] border border-[#b8bfcc]" style={{ background: 'linear-gradient(135deg, #f5f7fa 0%, #f0f3f8 50%, #f5f7fa 100%)' }}>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                   {Object.entries(navigationItems).map(([category, items]) => (
                     <div key={category} className="col-span-1">
-                      <h3 className="text-base font-medium text-gray-800 mb-4 pb-2 border-b border-[#d4c8b8]">
+                      <h3 className="text-base font-medium text-gray-800 mb-4 pb-2 border-b border-[#b8bfcc]">
                         {category}
                       </h3>
                       <div className="grid grid-cols-1 gap-y-3">
@@ -330,9 +330,9 @@ export default function Home() {
                             <Link
                               key={item.code}
                               href={homepage}
-                              className="flex items-center space-x-2 text-gray-600 hover:text-gray-800 text-sm transition-colors py-1 px-2 rounded hover:bg-[#FFD6A5]"
+                              className="flex items-center space-x-2 text-gray-600 hover:text-gray-800 text-sm transition-colors py-1 px-2 rounded hover:bg-[#e0e7ff]"
                             >
-                              <span className="flex-shrink-0 w-6 h-6 flex items-center justify-center bg-[#FFD6A5] text-sm text-gray-600 hover:bg-[#f0c08a] hover:text-gray-800 rounded">
+                              <span className="flex-shrink-0 w-6 h-6 flex items-center justify-center bg-[#e0e7ff] text-sm text-gray-600 hover:bg-[#c7d2fe] hover:text-gray-800 rounded">
                                 {item.code}
                               </span>
                               <span>{item.name}</span>
@@ -356,12 +356,12 @@ export default function Home() {
           {searchQuery && (
             <div className="text-center mb-4">
               <span className="text-gray-600">
-                搜索 "<span className="font-semibold text-[#8b4513]">{searchQuery}</span>" 
+                搜索 "<span className="font-semibold text-[#6366f1]">{searchQuery}</span>" 
                 找到 {filteredSoftware.reduce((acc, group) => acc + group.items.length, 0)} 个结果
               </span>
               <button
                 onClick={() => setSearchQuery('')}
-                className="ml-4 text-[#FFD6A5] hover:text-[#e8b883] underline"
+                className="ml-4 text-[#6366f1] hover:text-[#818cf8] underline"
               >
                 清除搜索
               </button>
@@ -374,7 +374,7 @@ export default function Home() {
           {filteredSoftware.length > 0 ? (
             filteredSoftware.map(group => (
               <div key={group.group}>
-                <h2 className="text-lg md:text-2xl font-bold mb-2 md:mb-3 text-gray-800 border-l-4 border-[#FFD6A5] pl-2 md:pl-3 bg-[#FFD6A5] py-1 rounded-r">
+                <h2 className="text-lg md:text-2xl font-bold mb-2 md:mb-3 text-gray-800 border-l-4 border-[#6366f1] pl-2 md:pl-3 bg-[#e0e7ff] py-1 rounded-r">
                   {group.group} ({group.items.length})
                 </h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-2 md:gap-4">
@@ -414,8 +414,8 @@ export default function Home() {
         {/* 算法可视化入口 */}
         <div className="mt-12 mb-8">
           <Link href="/code-editor">
-            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#4a3728] via-[#6b5a45] to-[#4a3728] p-1 hover:shadow-2xl transition-all duration-300 transform hover:scale-[1.02]">
-              <div className="bg-[#3d2e20] rounded-xl p-8 text-center">
+            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#0C1F3D] via-[#3d4f6b] to-[#0C1F3D] p-1 hover:shadow-2xl transition-all duration-300 transform hover:scale-[1.02]">
+              <div className="bg-[#1a2d4a] rounded-xl p-8 text-center">
                 <div className="text-6xl mb-4">🎨</div>
                 <h3 className="text-3xl font-bold text-white mb-3">
                   编程实验室 - 代码编辑 + 3D 算法可视化
@@ -424,21 +424,21 @@ export default function Home() {
                   在线编写代码，沉浸式体验算法的魅力
                 </p>
                 <div className="flex justify-center gap-4 flex-wrap">
-                  <span className="px-4 py-2 bg-[#FFD6A5]/30 text-[#d4c8b8] rounded-full text-sm border border-[#FFD6A5]/30">
+                  <span className="px-4 py-2 bg-[#e0e7ff]/30 text-[#b8bfcc] rounded-full text-sm border border-[#e0e7ff]/30">
                     💻 在线编辑
                   </span>
-                  <span className="px-4 py-2 bg-[#4a6741]/30 text-[#c4d4b8] rounded-full text-sm border border-[#4a6741]/30">
+                  <span className="px-4 py-2 bg-[#6366f1]/30 text-[#c7d2fe] rounded-full text-sm border border-[#6366f1]/30">
                     🫧 冒泡排序
                   </span>
-                  <span className="px-4 py-2 bg-[#8b4513]/30 text-[#d4a888] rounded-full text-sm border border-[#8b4513]/30">
+                  <span className="px-4 py-2 bg-[#818cf8]/30 text-[#c7d2fe] rounded-full text-sm border border-[#818cf8]/30">
                     ⚡ 快速排序
                   </span>
-                  <span className="px-4 py-2 bg-[#2c3e6b]/30 text-[#b8c8e8] rounded-full text-sm border border-[#2c3e6b]/30">
+                  <span className="px-4 py-2 bg-[#3d4f6b]/30 text-[#c7d2fe] rounded-full text-sm border border-[#3d4f6b]/30">
                     🔍 二分查找
                   </span>
                 </div>
                 <div className="mt-6">
-                  <span className="inline-block px-6 py-3 bg-[#FFD6A5] text-gray-800 rounded-full font-semibold hover:shadow-lg transition-all hover:bg-[#e8b883]">
+                  <span className="inline-block px-6 py-3 bg-[#6366f1] text-white rounded-full font-semibold hover:shadow-lg transition-all hover:bg-[#4f46e5]">
                     立即体验 →
                   </span>
                 </div>
@@ -449,8 +449,8 @@ export default function Home() {
       </main>
 
       {/* 水墨山水底部装饰 */}
-      <InkWashDecoration variant="landscape" height={260} className="bg-[#e5dfd0]" />
-      <InkWashDecoration variant="bamboo" height={120} className="bg-[#e5dfd0] -mt-2" />
+      <InkWashDecoration variant="landscape" height={260} className="bg-[#d1d6e0]" />
+      <InkWashDecoration variant="bamboo" height={120} className="bg-[#d1d6e0] -mt-2" />
 
       {/* 回到顶部按钮 */}
       <BackToTop />

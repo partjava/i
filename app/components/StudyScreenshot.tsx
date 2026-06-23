@@ -55,7 +55,7 @@ export default function StudyScreenshot() {
       if (!mainEl) return;
       const canvas = await html2canvas(mainEl as HTMLElement, {
         useCORS: true, allowTaint: true, scale: 2,
-        backgroundColor: '#faf6f0', logging: false,
+        backgroundColor: '#f5f7fa', logging: false,
       });
       setBaseImage(canvas.toDataURL('image/png'));
       setEditorOpen(true);
@@ -554,9 +554,9 @@ export default function StudyScreenshot() {
         style={{
           position: 'fixed', bottom: 96, right: 24, zIndex: 25,
           width: 44, height: 44, borderRadius: 22,
-          background: capturing ? '#a0a0a0' : 'linear-gradient(135deg, #8b7355, #6b5640)',
+          background: capturing ? '#a0a0a0' : 'linear-gradient(135deg, #6366f1, #4f46e5)',
           color: '#fff', border: 'none',
-          boxShadow: '0 4px 14px rgba(107,86,64,0.35)',
+          boxShadow: '0 4px 14px rgba(99,102,241,0.35)',
           cursor: capturing ? 'wait' : 'pointer',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           fontSize: 18, transition: 'all 0.2s', opacity: capturing ? 0.7 : 1,
