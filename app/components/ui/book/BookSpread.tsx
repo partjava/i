@@ -45,7 +45,7 @@ function BookPage({
   return (
     <div
       className={`
-        relative flex flex-col bg-[#f5f1eb] select-none
+        relative flex flex-col bg-[#EDF0F5] select-none
         ${side === 'left'
           ? 'rounded-l-sm shadow-page-left'
           : 'rounded-r-sm shadow-page-right'
@@ -75,7 +75,7 @@ function BookTabs({
   tabs,
   activeIndex,
   onChange,
-  accentColor = '#a67c52',
+  accentColor = '#6366f1',
 }: {
   tabs: { label: string }[]
   activeIndex: number
@@ -115,7 +115,7 @@ function BookProgressBar({
   totalChapters,
   spreadIndex,
   totalSpreads,
-  accentColor = '#a67c52',
+  accentColor = '#6366f1',
 }: {
   percent: number
   label: string
@@ -159,7 +159,7 @@ export default function BookSpread(props: BookSpreadProps) {
     className = '',
     theme,
   } = props
-  const accentColor = theme?.accent || '#a67c52'
+  const accentColor = theme?.accent || '#6366f1'
   const [currentSpread, setCurrentSpread] = useState(0)
   const [phase, setPhase] = useState<'idle' | 'exiting' | 'entering'>('idle')
   const [direction, setDirection] = useState<'forward' | 'back'>('forward')
@@ -354,11 +354,11 @@ export default function BookSpread(props: BookSpreadProps) {
 
               {/* 底部纸张厚度 */}
               <div className="h-3 sm:h-4 rounded-b-sm overflow-hidden" style={{
-                background: 'linear-gradient(180deg, #e8e0d0, #e0d8c8)',
+                background: 'linear-gradient(180deg, #d1d6e0, #d1d6e0)',
                 boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.3), inset 0 -1px 0 rgba(0,0,0,0.04)',
               }}>
                 <div className="h-full w-full" style={{
-                  background: 'repeating-linear-gradient(to bottom, transparent 0px, transparent 2px, rgba(180,170,155,0.12) 2px, rgba(180,170,155,0.12) 2.5px)',
+                  background: 'repeating-linear-gradient(to bottom, transparent 0px, transparent 2px, rgba(160,174,192,0.12) 2px, rgba(160,174,192,0.12) 2.5px)',
                 }} />
               </div>
             </div>

@@ -128,7 +128,7 @@ export default function GamePage() {
 
 			<style jsx>{`
 				.header {
-					background: linear-gradient(90deg, #5c4033 0%, #8b7355 100%);
+					background: linear-gradient(90deg, #0C1F3D 0%, #6b7d99 100%);
 					color: #fff;
 					padding: 20px 0;
 					text-align: center;
@@ -148,10 +148,10 @@ export default function GamePage() {
 				}
 				.game-card {
 					height: 120px;
-					background: #faf6f0;
+					background: #f5f7fa;
 					border-radius: 12px;
 					box-shadow: 0 2px 12px rgba(139,115,85,0.1);
-					border: 1px solid #d4c8b8;
+					border: 1px solid #b8bfcc;
 					display: flex;
 					flex-direction: column;
 					align-items: center;
@@ -162,10 +162,10 @@ export default function GamePage() {
 				}
 				.game-card:hover { transform: translateY(-6px); box-shadow: 0 10px 30px rgba(139,115,85,0.15); }
 				.game-icon { font-size: 2.2em; margin-bottom: 8px; }
-				.game-title { color: #8b7355; font-weight: 600; }
+				.game-title { color: #6b7d99; font-weight: 600; }
 
 				.game-modal-overlay { position: fixed; inset:0; background: rgba(0,0,0,0.7); display:flex; align-items:center; justify-content:center; z-index:1000; }
-				.game-modal { width: 900px; height: 640px; background: #faf6f0; border-radius: 10px; overflow:hidden; position:relative; }
+				.game-modal { width: 900px; height: 640px; background: #f5f7fa; border-radius: 10px; overflow:hidden; position:relative; }
 				.close-game-btn { position:absolute; right:10px; top:10px; background: rgba(255,255,255,0.9); border:none; width:36px; height:36px; border-radius:18px; cursor:pointer; }
 				.game-iframe { width:100%; height:100%; border:0; }
 

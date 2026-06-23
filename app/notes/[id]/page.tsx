@@ -74,8 +74,8 @@ export default function NoteDetailPage() {
 <style>
   @page { size: A4; margin: 20mm; }
   body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.8; color: #111; max-width: 700px; margin: 0 auto; padding: 20px; }
-  h1 { font-size: 28px; border-bottom: 3px solid #8b7355; padding-bottom: 10px; margin-bottom: 20px; }
-  h2 { font-size: 22px; margin-top: 28px; margin-bottom: 12px; color: #5c4033; border-bottom: 1px solid #d4c8b8; padding-bottom: 6px; }
+  h1 { font-size: 28px; border-bottom: 3px solid #6b7d99; padding-bottom: 10px; margin-bottom: 20px; }
+  h2 { font-size: 22px; margin-top: 28px; margin-bottom: 12px; color: #0C1F3D; border-bottom: 1px solid #b8bfcc; padding-bottom: 6px; }
   h3 { font-size: 18px; margin-top: 22px; margin-bottom: 10px; }
   h4 { font-size: 16px; margin-top: 18px; margin-bottom: 8px; }
   p { margin: 10px 0; }
@@ -83,15 +83,15 @@ export default function NoteDetailPage() {
   code { background: #f4f4f4; padding: 2px 6px; border-radius: 4px; font-size: 13px; }
   pre code { background: none; padding: 0; }
   table { border-collapse: collapse; width: 100%; margin: 12px 0; }
-  th, td { border: 1px solid #d4c8b8; padding: 8px 12px; text-align: left; }
-  th { background: #f5f0e8; font-weight: 600; }
+  th, td { border: 1px solid #b8bfcc; padding: 8px 12px; text-align: left; }
+  th { background: #EDF0F5; font-weight: 600; }
   ul, ol { margin: 10px 0; padding-left: 24px; }
   li { margin: 4px 0; }
-  blockquote { border-left: 4px solid #d4c8b8; padding-left: 16px; margin: 12px 0; color: #5c4033; }
+  blockquote { border-left: 4px solid #b8bfcc; padding-left: 16px; margin: 12px 0; color: #0C1F3D; }
   img { max-width: 100%; }
-  .meta { color: #888; font-size: 13px; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid #e8ddd0; }
+  .meta { color: #888; font-size: 13px; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid #d1d6e0; }
   strong { font-weight: 600; }
-  a { color: #8b7355; }
+  a { color: #6b7d99; }
   @media print { body { padding: 0; } }
 </style></head>
 <body>

@@ -8,44 +8,44 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        // ===== 纸墨色系 — 书本设计系统 =====
+        // ===== 纸墨色系 — 全站统一冷色调 =====
         paper: {
-          50:  '#f5f7fa',  // 最白（偏冷）
+          50:  '#f5f7fa',  // 最白（卡片背景）
           100: '#EDF0F5',  // 宣纸（主背景）冷白
-          200: '#e2e6ed',  // 素笺（卡片/区块）
-          300: '#d1d6e0',  // 纸边（边框）
-          400: '#b8bfcc',  // 旧纸（分割线）
+          200: '#e2e6ed',  // 素笺（区块/卡片背景）
+          300: '#d1d6e0',  // 纸边（边框/分割线）
+          400: '#b8bfcc',  // 旧纸（更淡装饰）
         },
         ink: {
           DEFAULT: '#0C1F3D',  // 深藏青（正文）
-          light:   '#3d4f6b',  // 蓝灰（辅助）
-          lighter: '#6b7d99',  // 浅灰蓝（注释）
-          fade:    '#a0aec0',  // 更淡
+          light:   '#3d4f6b',  // 蓝灰（辅助文字）
+          lighter: '#6b7d99',  // 浅灰蓝（注释文字）
+          fade:    '#a0aec0',  // 更淡（装饰文字）
         },
-        // ===== 页面背景（全局根背景） =====
+        // ===== 页面背景 =====
         page: {
-          bg:   '#EDF0F5',  // 冷白根背景
-          dark: '#0C1F3D',  // 深色模式根背景
+          bg:   '#EDF0F5',  // 冷白（同 paper-100）
+          dark: '#0C1F3D',  // 深色模式（同 ink）
         },
-        // ===== 点缀色 =====
+        // ===== 点缀色（冷色调） =====
         amber: {
-          DEFAULT: '#a67c52',  // 琥珀（主色/装饰）
-          light:   '#c4a88a',
-          dark:    '#7d5e3e',
-          pale:    '#ebe0d4',
+          DEFAULT: '#6366f1',  // 靛蓝（主色/强调）
+          light:   '#818cf8',
+          dark:    '#4f46e5',
+          pale:    '#e0e7ff',
         },
         jade: {
-          DEFAULT: '#BBFF5C',  // 荧光绿（成功/完成/高亮）
+          DEFAULT: '#BBFF5C',  // 荧光绿（成功/高亮）
           light:   '#ccff7a',
           pale:    '#e8ffcc',
         },
         rust: {
-          DEFAULT: '#b85a48',  // 赭石（危险/删除）
-          light:   '#d07a68',
-          pale:    '#f0ddd8',
+          DEFAULT: '#8b5cf6',  // 紫罗兰（危险/删除 — 冷色版）
+          light:   '#a78bfa',
+          pale:    '#ede9fe',
         },
         azure: {
-          DEFAULT: '#044BB5',  // 亮蓝（链接/强调）
+          DEFAULT: '#044BB5',  // 亮蓝（链接）
           light:   '#2a6fd4',
           pale:    '#dce8f7',
         },
