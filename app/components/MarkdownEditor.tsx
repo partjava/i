@@ -62,26 +62,26 @@ export default function MarkdownEditor({ value, onChange, placeholder, className
   };
 
   return (
-    <div className={`border border-gray-300 rounded-lg overflow-hidden ${className}`}>
+    <div className={`overflow-hidden rounded-lg border border-line-subtle bg-surface-raised ${className}`}>
       {/* 工具栏 */}
-      <div className="bg-gray-50 border-b border-gray-300 p-2 flex items-center justify-between flex-wrap gap-2">
+      <div className="border-b border-line-subtle bg-surface-muted p-2 flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-1 flex-wrap">
           {/* 模式切换 */}
-          <button type="button" onClick={() => setMode('edit')} className={`px-3 py-1 rounded text-sm ${mode === 'edit' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}`}>编辑</button>
-          <button type="button" onClick={() => setMode('split')} className={`px-3 py-1 rounded text-sm ${mode === 'split' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}`}>分屏</button>
-          <button type="button" onClick={() => setMode('preview')} className={`px-3 py-1 rounded text-sm ${mode === 'preview' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}`}>预览</button>
+          <button type="button" onClick={() => setMode('edit')} className={`px-3 py-1 rounded text-sm ${mode === 'edit' ? 'bg-brand-primary text-content-inverse' : 'bg-control-fill text-content-secondary hover:bg-control-fill-hover'}`}>编辑</button>
+          <button type="button" onClick={() => setMode('split')} className={`px-3 py-1 rounded text-sm ${mode === 'split' ? 'bg-brand-primary text-content-inverse' : 'bg-control-fill text-content-secondary hover:bg-control-fill-hover'}`}>分屏</button>
+          <button type="button" onClick={() => setMode('preview')} className={`px-3 py-1 rounded text-sm ${mode === 'preview' ? 'bg-brand-primary text-content-inverse' : 'bg-control-fill text-content-secondary hover:bg-control-fill-hover'}`}>预览</button>
 
-          <span className="text-gray-300 mx-1">|</span>
+          <span className="mx-1 text-line-strong">|</span>
 
           {/* 格式快捷键 */}
-          <button type="button" title="粗体" onClick={() => insertAtCursor('**', '**')} className="px-2 py-1 rounded text-sm bg-gray-200 hover:bg-gray-300 font-bold">B</button>
-          <button type="button" title="斜体" onClick={() => insertAtCursor('*', '*')} className="px-2 py-1 rounded text-sm bg-gray-200 hover:bg-gray-300 italic">I</button>
-          <button type="button" title="行内代码" onClick={() => insertAtCursor('`', '`')} className="px-2 py-1 rounded text-sm bg-gray-200 hover:bg-gray-300 font-mono">`</button>
-          <button type="button" title="代码块" onClick={() => insertAtCursor('```\n', '\n```')} className="px-2 py-1 rounded text-sm bg-gray-200 hover:bg-gray-300 font-mono text-xs">{'{}'}</button>
-          <button type="button" title="标题" onClick={() => insertAtCursor('## ')} className="px-2 py-1 rounded text-sm bg-gray-200 hover:bg-gray-300">H</button>
-          <button type="button" title="链接" onClick={() => insertAtCursor('[', '](url)')} className="px-2 py-1 rounded text-sm bg-gray-200 hover:bg-gray-300">🔗</button>
+          <button type="button" title="粗体" onClick={() => insertAtCursor('**', '**')} className="px-2 py-1 rounded text-sm bg-control-fill hover:bg-control-fill-hover font-bold">B</button>
+          <button type="button" title="斜体" onClick={() => insertAtCursor('*', '*')} className="px-2 py-1 rounded text-sm bg-control-fill hover:bg-control-fill-hover italic">I</button>
+          <button type="button" title="行内代码" onClick={() => insertAtCursor('`', '`')} className="px-2 py-1 rounded text-sm bg-control-fill hover:bg-control-fill-hover font-mono">`</button>
+          <button type="button" title="代码块" onClick={() => insertAtCursor('```\n', '\n```')} className="px-2 py-1 rounded text-sm bg-control-fill hover:bg-control-fill-hover font-mono text-xs">{'{}'}</button>
+          <button type="button" title="标题" onClick={() => insertAtCursor('## ')} className="px-2 py-1 rounded text-sm bg-control-fill hover:bg-control-fill-hover">H</button>
+          <button type="button" title="链接" onClick={() => insertAtCursor('[', '](url)')} className="px-2 py-1 rounded text-sm bg-control-fill hover:bg-control-fill-hover">🔗</button>
 
-          <span className="text-gray-300 mx-1">|</span>
+          <span className="mx-1 text-line-strong">|</span>
 
           {/* 图片上传 */}
           <button
@@ -89,7 +89,7 @@ export default function MarkdownEditor({ value, onChange, placeholder, className
             title="上传图片"
             disabled={uploading}
             onClick={() => fileInputRef.current?.click()}
-            className="px-2 py-1 rounded text-sm bg-blue-100 hover:bg-blue-200 text-blue-700 disabled:opacity-50 flex items-center gap-1"
+            className="btn btn-soft btn-sm disabled:opacity-50"
           >
             {uploading ? '上传中...' : '🖼️ 图片'}
           </button>
@@ -106,14 +106,14 @@ export default function MarkdownEditor({ value, onChange, placeholder, className
           />
         </div>
 
-        <span className="text-xs text-gray-500">支持拖拽图片</span>
+        <span className="text-xs text-content-muted">支持拖拽图片</span>
       </div>
 
       {/* 编辑器内容区 */}
       <div className="flex" style={{ height: '400px' }}>
         {/* 编辑区域 */}
         {(mode === 'edit' || mode === 'split') && (
-          <div className={`${mode === 'split' ? 'w-1/2 border-r border-gray-300' : 'w-full'}`}>
+          <div className={`${mode === 'split' ? 'w-1/2 border-r border-line-subtle' : 'w-full'}`}>
             <textarea
               ref={textareaRef}
               value={value}
@@ -121,7 +121,7 @@ export default function MarkdownEditor({ value, onChange, placeholder, className
               onDrop={handleDrop}
               onDragOver={(e) => e.preventDefault()}
               placeholder={placeholder || '请输入Markdown格式的内容...\n\n示例：\n# 标题\n## 子标题\n**粗体** *斜体*\n\n```javascript\nconsole.log("代码块");\n```\n\n- 列表项1\n- 列表项2\n\n可直接拖拽图片到此处上传'}
-              className="w-full h-full p-4 resize-none border-none outline-none font-mono text-sm bg-white text-gray-900"
+              className="w-full h-full p-4 resize-none border-none outline-none font-mono text-sm bg-control-fill text-content-primary"
               style={{ fontFamily: 'Consolas, Monaco, "Courier New", monospace', lineHeight: '1.6' }}
             />
           </div>
@@ -129,7 +129,7 @@ export default function MarkdownEditor({ value, onChange, placeholder, className
 
         {/* 预览区域 */}
         {(mode === 'preview' || mode === 'split') && (
-          <div className={`${mode === 'split' ? 'w-1/2' : 'w-full'} bg-white overflow-auto`}>
+          <div className={`${mode === 'split' ? 'w-1/2' : 'w-full'} bg-surface-raised overflow-auto`}>
             <div className="p-4 prose prose-sm max-w-none">
               <ReactMarkdown
                 remarkPlugins={[remarkGfm]}
@@ -180,10 +180,10 @@ export default function MarkdownEditor({ value, onChange, placeholder, className
       </div>
 
       {/* 底部状态栏 */}
-      <div className="bg-gray-50 border-t border-gray-300 px-4 py-2 text-xs text-gray-600 flex justify-between">
+      <div className="border-t border-line-subtle bg-surface-muted px-4 py-2 text-xs text-content-muted flex justify-between">
         <span>字符数: {value.length}</span>
         <span>行数: {value.split('\n').length}</span>
       </div>
     </div>
   );
-} 
+}

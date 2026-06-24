@@ -111,8 +111,8 @@ export default function CodeEditorPage() {
                     onClick={() => setSelectedAlgorithm(algo.id)}
                     className={`w-full text-left px-3 py-2 rounded-lg transition-all text-sm ${
                       selectedAlgorithm === algo.id
-                        ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg scale-105'
-                        : 'bg-[#d1d6e0] text-gray-700 hover:bg-[#b8bfcc]'
+                        ? 'bg-gradient-to-r from-brand-primary to-brand-hover text-content-inverse shadow-lg scale-105'
+                        : 'bg-surface-page text-content-secondary hover:bg-surface-muted'
                     }`}
                   >
                     <div className="flex items-center gap-2">
@@ -143,7 +143,7 @@ export default function CodeEditorPage() {
                 <textarea
                   value={inputData}
                   onChange={(e) => handleDataChange(e.target.value)}
-                  className="w-full px-3 py-2 bg-[#d1d6e0] border border-[#b8bfcc] rounded-lg focus:border-[#6b7d99] focus:outline-none text-sm"
+                  className="w-full px-3 py-2 bg-surface-page border border-line-strong rounded-lg focus:border-content-muted focus:outline-none text-sm"
                   rows={3}
                   placeholder="输入数字，用逗号分隔"
                 />
@@ -209,9 +209,9 @@ export default function CodeEditorPage() {
               </div>
 
               {/* 算法说明 */}
-              <div className="mt-6 p-4 bg-[#d1d6e0] rounded-lg">
+              <div className="mt-6 p-4 bg-surface-page rounded-lg">
                 <h3 className="text-base font-bold mb-2">算法说明</h3>
-                <div className="text-sm text-gray-700 space-y-1">
+                <div className="text-sm text-content-secondary space-y-1">
                   {getAlgorithmDescription(selectedAlgorithm)}
                 </div>
               </div>
@@ -223,18 +223,18 @@ export default function CodeEditorPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#d1d6e0] py-4 md:py-8">
+    <div className="min-h-screen bg-surface-page py-4 md:py-8">
       {/* 水墨画顶部装饰 */}
-      <InkWashDecoration variant="landscape" height={160} className="bg-[#d1d6e0] -mt-4 md:-mt-8" />
-      <InkWashDecoration variant="birds" height={50} className="bg-[#d1d6e0] -mt-2" />
+      <InkWashDecoration variant="landscape" height={160} className="bg-surface-page -mt-4 md:-mt-8" />
+      <InkWashDecoration variant="birds" height={50} className="bg-surface-page -mt-2" />
 
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
         {/* 页面标题 */}
         <div className="text-center mb-4 md:mb-8">
-          <h1 className="text-2xl md:text-4xl font-bold text-gray-900 mb-2 md:mb-4">
+          <h1 className="text-2xl md:text-4xl font-bold text-content-primary mb-2 md:mb-4">
             PartJava 编程实验室
           </h1>
-          <p className="text-base md:text-xl text-gray-600">
+          <p className="text-base md:text-xl text-content-secondary">
             在线代码编辑 + 3D 算法可视化
           </p>
         </div>
@@ -244,7 +244,7 @@ export default function CodeEditorPage() {
           defaultActiveKey="editor" 
           items={tabItems}
           size="large"
-          className="bg-[#f5f7fa] rounded-lg shadow-lg p-4"
+          className="bg-surface-raised rounded-lg shadow-lg p-4"
         />
 
         {/* 功能说明 */}
@@ -284,8 +284,8 @@ export default function CodeEditorPage() {
       </div>
 
       {/* 水墨画底部装饰 */}
-      <InkWashDecoration variant="bamboo" height={100} className="bg-[#d1d6e0] mt-8" />
-      <InkWashDecoration variant="landscape" height={200} className="bg-[#d1d6e0]" />
+      <InkWashDecoration variant="bamboo" height={100} className="bg-surface-page mt-8" />
+      <InkWashDecoration variant="landscape" height={200} className="bg-surface-page" />
     </div>
   );
 }

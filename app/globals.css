@@ -337,11 +337,11 @@ body {
     padding-left: max(0px, env(safe-area-inset-left));
     padding-right: max(0px, env(safe-area-inset-right));
   }
-  
+
   .safe-area-inset-top {
     padding-top: max(0px, env(safe-area-inset-top));
   }
-  
+
   .safe-area-inset-bottom {
     padding-bottom: max(0px, env(safe-area-inset-bottom));
   }
@@ -350,47 +350,47 @@ body {
 /* 移动端触摸优化 */
 @media (max-width: 768px) {
   /* 更大的触摸目标 */
-  button, 
-  a[href], 
-  input[type="button"], 
+  button,
+  a[href],
+  input[type="button"],
   input[type="submit"] {
     min-height: 44px;
     min-width: 44px;
   }
-  
+
   /* 表单元素优化 */
-  input, 
-  textarea, 
+  input,
+  textarea,
   select {
     font-size: 16px; /* 防止iOS Safari缩放 */
   }
-  
+
   /* 滚动优化 */
   .scroll-container {
     -webkit-overflow-scrolling: touch;
     overscroll-behavior: contain;
   }
-  
+
   /* 移动端专用类 */
   .mobile-padding {
     padding: 1rem;
   }
-  
+
   .mobile-text-sm {
     font-size: 0.875rem;
   }
-  
+
   .mobile-gap-2 {
     gap: 0.5rem;
   }
-  
+
   /* 移动端卡片优化 */
   .mobile-card {
     border-radius: 0.5rem;
     padding: 0.75rem;
     margin-bottom: 0.5rem;
   }
-  
+
   /* 移动端按钮优化 */
   .mobile-button {
     padding: 0.75rem 1rem;
@@ -520,7 +520,7 @@ body {
   .no-print {
     display: none !important;
   }
-  
+
   body {
     background: white !important;
     color: black !important;
@@ -532,7 +532,7 @@ body {
   .card {
     border: 2px solid #000;
   }
-  
+
   button {
     border: 2px solid currentColor;
   }
@@ -591,19 +591,19 @@ body {
       padding-right: max(1rem, env(safe-area-inset-right));
     }
   }
-  
+
   /* 移动端导航优化 */
   .mobile-nav-item {
     padding: 0.75rem;
     border-radius: 0.5rem;
     transition: all 0.2s ease;
   }
-  
+
   .mobile-nav-item:active {
     transform: scale(0.95);
     background-color: rgba(59, 130, 246, 0.1);
   }
-  
+
   /* 移动端输入框优化 */
   .mobile-input {
     padding: 0.875rem;
@@ -611,13 +611,13 @@ body {
     font-size: 1rem;
     border: 2px solid #e5e7eb;
   }
-  
+
   .mobile-input:focus {
     border-color: #3b82f6;
     outline: none;
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
   }
-  
+
   /* 移动端模态框优化 */
   .mobile-modal {
     margin: 1rem;
@@ -659,7 +659,7 @@ body {
     background-color: #1f2937;
     color: #f9fafb;
   }
-  
+
   .dark-mode-border {
     border-color: #374151;
   }
@@ -757,17 +757,17 @@ body {
   .global-search .ant-input-search {
     font-size: 0.875rem;
   }
-  
+
   .global-search-dropdown {
     max-width: 24rem;
     margin-left: auto;
     margin-right: auto;
   }
-  
+
   .search-result-item {
     padding: 0.5rem;
   }
-  
+
   .search-result-item .ant-tag {
     font-size: 0.75rem;
   }
@@ -879,16 +879,16 @@ body {
     flex-direction: column;
     align-items: stretch;
   }
-  
+
   .search-filters .ant-radio-group {
     width: 100%;
   }
-  
+
   .search-filters .ant-radio-button-wrapper {
     flex: 1;
     text-align: center;
   }
-  
+
   .search-result-card {
     margin-left: 0.5rem;
     margin-right: 0.5rem;
@@ -902,21 +902,21 @@ body {
     border-color: #4b5563;
     color: white;
   }
-  
+
   .global-search .ant-input {
     background-color: #1f2937;
     color: white;
   }
-  
+
   .global-search-dropdown {
     background-color: #1f2937;
     border-color: #4b5563;
   }
-  
+
   .search-result-item:hover {
     background-color: #374151;
   }
-  
+
   .search-history-item:hover {
     background-color: #374151;
   }
@@ -964,6 +964,113 @@ body {
 
 /* 使用系统字体栈，无需加载外部字体 */
 body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", 
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB",
     "Microsoft YaHei", "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+
+/* Semantic color migration tokens */
+:root {
+  --surface-page: #EDF0F5;
+  --surface-raised: #f5f7fa;
+  --surface-muted: #e2e6ed;
+  --surface-inverse: #0C1F3D;
+  --content-primary: #0C1F3D;
+  --content-secondary: #3d4f6b;
+  --content-muted: #6b7d99;
+  --content-inverse: #ffffff;
+  --content-link: #044BB5;
+  --line-subtle: #d1d6e0;
+  --line-strong: #b8bfcc;
+  --brand-primary: #6366f1;
+  --brand-hover: #4f46e5;
+  --brand-active: #3730a3;
+  --brand-soft: #e0e7ff;
+  --state-success: #10b981;
+  --state-success-soft: #d1fae5;
+  --state-warning: #f59e0b;
+  --state-warning-soft: #fef3c7;
+  --state-danger: #ef4444;
+  --state-danger-soft: #fee2e2;
+  --state-info: #0ea5e9;
+  --state-info-soft: #e0f2fe;
+  --control-fill: #ffffff;
+  --control-fill-hover: #e8ecf2;
+  --control-disabled: #a0aec0;
+  --control-ring: #818cf8;
+}
+
+body.dark {
+  --surface-page: #111827;
+  --surface-raised: #1f2937;
+  --surface-muted: #374151;
+  --surface-inverse: #f9fafb;
+  --content-primary: #f9fafb;
+  --content-secondary: #e5e7eb;
+  --content-muted: #9ca3af;
+  --content-inverse: #111827;
+  --content-link: #93c5fd;
+  --line-subtle: #374151;
+  --line-strong: #4b5563;
+  --brand-primary: #818cf8;
+  --brand-hover: #6366f1;
+  --brand-active: #4f46e5;
+  --brand-soft: #1e1b4b;
+  --state-success: #34d399;
+  --state-success-soft: #064e3b;
+  --state-warning: #fbbf24;
+  --state-warning-soft: #451a03;
+  --state-danger: #f87171;
+  --state-danger-soft: #450a0a;
+  --state-info: #38bdf8;
+  --state-info-soft: #082f49;
+  --control-fill: #1f2937;
+  --control-fill-hover: #374151;
+  --control-disabled: #4b5563;
+  --control-ring: #a5b4fc;
+}
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-md border border-transparent px-4 py-2 text-sm font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-control-ring disabled:pointer-events-none disabled:opacity-50;
+  }
+
+  .btn-sm {
+    @apply h-8 px-3 text-xs;
+  }
+
+  .btn-md {
+    @apply h-10 px-4 text-sm;
+  }
+
+  .btn-lg {
+    @apply h-11 px-5 text-base;
+  }
+
+  .btn-primary {
+    @apply bg-brand-primary text-content-inverse shadow-sm hover:bg-brand-hover active:bg-brand-active;
+  }
+
+  .btn-secondary {
+    @apply border-line-subtle bg-surface-raised text-content-primary shadow-sm hover:bg-control-fillHover;
+  }
+
+  .btn-soft {
+    @apply bg-brand-soft text-brand-active hover:bg-control-fillHover;
+  }
+
+  .btn-ghost {
+    @apply bg-transparent text-content-secondary hover:bg-control-fillHover hover:text-content-primary;
+  }
+
+  .btn-danger {
+    @apply bg-state-danger text-content-inverse shadow-sm hover:bg-red-600 active:bg-red-700;
+  }
+
+  .btn-icon {
+    @apply h-10 w-10 p-0;
+  }
+
+  .input-field {
+    @apply rounded-md border border-line-subtle bg-control-fill px-3 py-2 text-sm text-content-primary placeholder:text-content-muted transition-colors focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-control-ring disabled:bg-surface-muted disabled:text-content-muted;
+  }
 }

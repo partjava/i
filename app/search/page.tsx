@@ -4,10 +4,10 @@ import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Input, Card, Button, Tabs, Tag, Empty, Spin, Radio, Select } from 'antd';
-import { 
-  SearchOutlined, 
-  BookOutlined, 
-  ToolOutlined, 
+import {
+  SearchOutlined,
+  BookOutlined,
+  ToolOutlined,
   FileTextOutlined,
   LinkOutlined,
   FilterOutlined,
@@ -46,10 +46,10 @@ function SearchContent() {
   const [currentQuery, setCurrentQuery] = useState('');
   const [selectedType, setSelectedType] = useState('all');
   const [selectedCategory, setSelectedCategory] = useState('');
-  
+
   const searchParams = useSearchParams();
   const router = useRouter();
-  
+
   const initialQuery = searchParams.get('q') || '';
 
   useEffect(() => {
@@ -74,7 +74,7 @@ function SearchContent() {
         type,
         limit: '50'
       });
-      
+
       if (category) {
         params.append('category', category);
       }
@@ -101,11 +101,11 @@ function SearchContent() {
   const handleSearch = (value: string) => {
     const trimmedValue = value.trim();
     setCurrentQuery(trimmedValue);
-    
+
     // 更新URL
     const newUrl = trimmedValue ? `/search?q=${encodeURIComponent(trimmedValue)}` : '/search';
     router.push(newUrl, { scroll: false });
-    
+
     performSearch(trimmedValue, selectedType, selectedCategory);
   };
 
@@ -164,20 +164,20 @@ function SearchContent() {
   const categories = Array.from(new Set(searchResults.map(r => r.category))).filter(Boolean);
 
   return (
-    <div className="min-h-screen bg-[#d1d6e0]">
+    <div className="min-h-screen bg-surface-page">
       {/* 水墨画顶部装饰 */}
-      <InkWashDecoration variant="landscape" height={160} className="bg-[#d1d6e0]" />
-      <InkWashDecoration variant="mist" height={50} className="bg-[#d1d6e0] -mt-4" />
+      <InkWashDecoration variant="landscape" height={160} className="bg-surface-page" />
+      <InkWashDecoration variant="mist" height={50} className="bg-surface-page -mt-4" />
 
       <div className="py-6">
         {/* 搜索头部 */}
-        <div className="bg-[#f5f7fa] shadow-sm p-6 mb-6 border-b border-[#b8bfcc]">
+        <div className="bg-surface-raised shadow-sm p-6 mb-6 border-b border-line-subtle">
           <div className="max-w-4xl mx-auto">
-            <h1 className="text-2xl font-bold text-gray-900 mb-4 flex items-center">
+            <h1 className="text-2xl font-bold text-content-primary mb-4 flex items-center">
               <SearchOutlined className="mr-2" />
               全局搜索
             </h1>
-            
+
             <Search
               placeholder="搜索课程、工具、笔记..."
               allowClear
@@ -192,7 +192,7 @@ function SearchContent() {
             {/* 搜索建议 */}
             {suggestions.length > 0 && (
               <div className="mb-4">
-                <span className="text-sm text-gray-600 mr-2">相关搜索:</span>
+                <span className="text-sm text-content-secondary mr-2">相关搜索:</span>
                 {suggestions.map((suggestion, index) => (
                   <Tag
                     key={index}
@@ -208,8 +208,8 @@ function SearchContent() {
             {/* 筛选选项 */}
             <div className="flex flex-wrap gap-4 items-center">
               <div className="flex items-center gap-2">
-                <FilterOutlined className="text-gray-500" />
-                <span className="text-sm text-gray-600">类型:</span>
+                <FilterOutlined className="text-content-muted" />
+                <span className="text-sm text-content-secondary">类型:</span>
                 <Radio.Group
                   value={selectedType}
                   onChange={(e) => handleTypeChange(e.target.value)}
@@ -224,7 +224,7 @@ function SearchContent() {
 
               {categories.length > 0 && (
                 <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-600">分类:</span>
+                  <span className="text-sm text-content-secondary">分类:</span>
                   <Select
                     placeholder="选择分类"
                     size="small"
@@ -250,14 +250,14 @@ function SearchContent() {
           {loading && (
             <div className="text-center py-8">
               <Spin size="large" />
-              <p className="text-gray-500 mt-2">搜索中...</p>
+              <p className="text-content-muted mt-2">搜索中...</p>
             </div>
           )}
 
           {!loading && currentQuery && (
             <div className="mb-4">
-              <p className="text-sm text-gray-600">
-                找到 <span className="font-semibold text-[#6b7d99]">{total}</span> 条结果，
+              <p className="text-sm text-content-secondary">
+                找到 <span className="font-semibold text-content-secondary">{total}</span> 条结果，
                 关键词 "<span className="font-semibold">{currentQuery}</span>"
               </p>
             </div>
@@ -268,12 +268,12 @@ function SearchContent() {
               description="没有找到相关结果"
               image={Empty.PRESENTED_IMAGE_SIMPLE}
             >
-              <p className="text-gray-500 mb-4">
+              <p className="text-content-muted mb-4">
                 尝试使用不同的关键词或调整筛选条件
               </p>
               {suggestions.length > 0 && (
                 <div>
-                  <p className="text-sm text-gray-600 mb-2">推荐搜索:</p>
+                  <p className="text-sm text-content-secondary mb-2">推荐搜索:</p>
                   {suggestions.map((suggestion, index) => (
                     <Tag
                       key={index}
@@ -298,27 +298,27 @@ function SearchContent() {
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-2">
                             {getResultIcon(result.type)}
-                            <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                            <span className="text-xs text-content-muted bg-surface-muted px-2 py-1 rounded">
                               {getResultTypeText(result.type)}
                             </span>
                             {result.category && (
-                              <span className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded">
+                              <span className="text-xs text-content-link bg-brand-soft px-2 py-1 rounded">
                                 {result.category}
                               </span>
                             )}
                           </div>
-                          
+
                           <h3 className="text-lg font-semibold text-gray-900 mb-2">
                             {result.title}
                           </h3>
-                          
+
                           <p className="text-gray-600 mb-3 line-clamp-2">
                             {result.description}
                           </p>
-                          
+
                           <div className="flex items-center gap-4">
                             {result.path && (
-                              <Link 
+                              <Link
                                 href={result.path}
                                 className="text-blue-600 hover:text-blue-800 flex items-center gap-1"
                               >
@@ -327,7 +327,7 @@ function SearchContent() {
                               </Link>
                             )}
                             {result.url && (
-                              <a 
+                              <a
                                 href={result.url}
                                 target="_blank"
                                 rel="noopener noreferrer"
@@ -339,9 +339,9 @@ function SearchContent() {
                             )}
                           </div>
                         </div>
-                        
+
                         <div className="text-right">
-                          <div className="text-sm text-gray-500">
+                          <div className="text-sm text-content-muted">
                             相关度: {Math.round(result.score * 100)}%
                           </div>
                         </div>
@@ -363,17 +363,17 @@ function SearchContent() {
                               {result.category}
                             </span>
                           </div>
-                          
+
                           <h3 className="text-lg font-semibold text-gray-900 mb-2">
                             {result.title}
                           </h3>
-                          
+
                           <p className="text-gray-600 mb-3">
                             {result.description}
                           </p>
-                          
+
                           {result.path && (
-                            <Link 
+                            <Link
                               href={result.path}
                               className="text-blue-600 hover:text-blue-800 flex items-center gap-1"
                             >
@@ -400,17 +400,17 @@ function SearchContent() {
                               {result.category}
                             </span>
                           </div>
-                          
+
                           <h3 className="text-lg font-semibold text-gray-900 mb-2">
                             {result.title}
                           </h3>
-                          
+
                           <p className="text-gray-600 mb-3">
                             {result.description}
                           </p>
-                          
+
                           {result.url && (
-                            <a 
+                            <a
                               href={result.url}
                               target="_blank"
                               rel="noopener noreferrer"
@@ -439,17 +439,17 @@ function SearchContent() {
                               {result.category}
                             </span>
                           </div>
-                          
+
                           <h3 className="text-lg font-semibold text-gray-900 mb-2">
                             {result.title}
                           </h3>
-                          
+
                           <p className="text-gray-600 mb-3">
                             {result.description}
                           </p>
-                          
+
                           {result.path && (
-                            <Link 
+                            <Link
                               href={result.path}
                               className="text-purple-600 hover:text-purple-800 flex items-center gap-1"
                             >
@@ -469,18 +469,18 @@ function SearchContent() {
       </div>
 
       {/* 水墨画底部装饰 */}
-      <InkWashDecoration variant="bamboo" height={100} className="bg-[#d1d6e0] mt-8" />
-      <InkWashDecoration variant="landscape" height={200} className="bg-[#d1d6e0]" />
+      <InkWashDecoration variant="bamboo" height={100} className="bg-surface-page mt-8" />
+      <InkWashDecoration variant="landscape" height={200} className="bg-surface-page" />
     </div>
   );
 }
 
 export default function SearchPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-[#d1d6e0] flex items-center justify-center">
+    <Suspense fallback={<div className="min-h-screen bg-surface-page flex items-center justify-center">
       <Spin size="large" />
     </div>}>
       <SearchContent />
     </Suspense>
   );
-} 
+}

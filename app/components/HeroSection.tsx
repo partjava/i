@@ -14,7 +14,7 @@ export default function HeroSection() {
   return (
     <div className="relative min-h-[560px] flex items-center justify-center overflow-hidden">
       {/* 冷色宣纸底色 */}
-      <div className="absolute inset-0 bg-gradient-to-b from-[#EDF0F5] via-[#e8ecf2] to-[#e2e6ed]" />
+      <div className="absolute inset-0 bg-gradient-to-b from-surface-page via-surface-muted to-surface-muted" />
 
       {/* 远山层叠 - 极淡 */}
       <div className="absolute inset-0 opacity-20">
@@ -86,7 +86,7 @@ export default function HeroSection() {
           <div className={`flex flex-col sm:flex-row gap-4 justify-center items-center transition-all duration-800 delay-800 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'}`}>
             <Link
               href="/study"
-              className="px-8 py-4 bg-gray-800 text-[#e8ecf2] rounded-full font-semibold text-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 hover:bg-gray-700 border border-gray-600"
+              className="px-8 py-4 bg-surface-inverse text-content-inverse rounded-full font-semibold text-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 hover:bg-content-primary border border-content-secondary"
             >
               开始学习之旅 🚀
             </Link>

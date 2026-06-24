@@ -19,9 +19,9 @@ export default function NoteEditor({ onSave }: NoteEditorProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 p-4 bg-white rounded-lg shadow">
+    <form onSubmit={handleSubmit} className="space-y-4 rounded-lg border border-line-subtle bg-surface-raised p-4 shadow-frost">
       <div>
-        <label htmlFor="title" className="block text-sm font-medium text-gray-700">
+        <label htmlFor="title" className="block text-sm font-medium text-content-secondary">
           标题
         </label>
         <input
@@ -29,13 +29,13 @@ export default function NoteEditor({ onSave }: NoteEditorProps) {
           id="title"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+          className="input-field mt-1 block w-full"
           placeholder="输入笔记标题"
         />
       </div>
 
       <div>
-        <label htmlFor="content" className="block text-sm font-medium text-gray-700">
+        <label htmlFor="content" className="block text-sm font-medium text-content-secondary">
           内容
         </label>
         <textarea
@@ -43,7 +43,7 @@ export default function NoteEditor({ onSave }: NoteEditorProps) {
           rows={8}
           value={content}
           onChange={(e) => setContent(e.target.value)}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+          className="input-field mt-1 block w-full"
           placeholder="输入笔记内容"
         />
       </div>
@@ -51,11 +51,11 @@ export default function NoteEditor({ onSave }: NoteEditorProps) {
       <div className="flex justify-end">
         <button
           type="submit"
-          className="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+          className="btn btn-primary"
         >
           保存笔记
         </button>
       </div>
     </form>
   );
-} 
+}
