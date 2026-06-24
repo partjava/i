@@ -43,7 +43,7 @@ export default function FlipCard({ name, icon: Icon, url, desc, color }: FlipCar
               e.preventDefault();
             }
           }}
-          className="absolute inset-0 flex items-center rounded-xl shadow-md hover:shadow-2xl transition-all p-4 border border-[#b8bfcc]"
+          className="absolute inset-0 flex items-center rounded-xl shadow-md hover:shadow-2xl transition-all p-4 border border-line-strong"
           style={{
             backfaceVisibility: 'hidden',
             WebkitBackfaceVisibility: 'hidden',

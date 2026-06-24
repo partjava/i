@@ -4,11 +4,11 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { useState } from 'react';
 import dynamic from 'next/dynamic';
-import { 
-  HomeOutlined, 
-  BookOutlined, 
-  EditOutlined, 
-  CodeOutlined, 
+import {
+  HomeOutlined,
+  BookOutlined,
+  EditOutlined,
+  CodeOutlined,
   UserOutlined,
   SearchOutlined,
   AppstoreOutlined,
@@ -109,7 +109,7 @@ export default function BottomNavigation() {
     if (navigator.vibrate) {
       navigator.vibrate(10);
     }
-    
+
     setMoreOpen(false);
     router.push(item.href);
   };
@@ -124,20 +124,20 @@ export default function BottomNavigation() {
   return (
     <>
       {/* 底部导航栏 */}
-      <div className="fixed bottom-0 left-0 right-0 bg-[#f5f7fa] border-t border-[#b8bfcc] z-50 lg:hidden shadow-lg">
+      <div className="fixed bottom-0 left-0 right-0 bg-surface-raised border-t border-line-subtle z-50 lg:hidden shadow-lg">
         <div className="flex items-center justify-around px-1 py-2 pb-safe">
           {primaryNavItems.map((item) => {
             const active = isActive(item.href);
-            
+
             return (
               <button
                 key={item.key}
                 onClick={() => handleNavClick(item)}
                 className={`
                   flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-200
-                  ${active 
-                    ? 'text-blue-600 bg-blue-50 scale-105' 
-                    : 'text-gray-600 hover:text-gray-800 hover:bg-[#EDF0F5] active:bg-[#d1d6e0] active:scale-95'
+                  ${active
+                    ? 'text-brand-primary bg-brand-soft scale-105'
+                    : 'text-content-secondary hover:text-content-primary hover:bg-control-fill-hover active:bg-surface-muted active:scale-95'
                   }
                   min-w-0 flex-1 relative touch-manipulation
                 `}
@@ -156,18 +156,18 @@ export default function BottomNavigation() {
                     </div>
                   )}
                 </div>
-                <span className={`text-xs mt-1 font-medium ${active ? 'text-blue-600' : 'text-gray-600'}`}>
+                <span className={`text-xs mt-1 font-medium ${active ? 'text-brand-primary' : 'text-content-secondary'}`}>
                   {item.label}
                 </span>
-                
+
                 {/* 活动指示器 */}
                 {active && (
-                  <div className="absolute top-1 left-1/2 transform -translate-x-1/2 w-8 h-1 bg-blue-600 rounded-full"></div>
+                  <div className="absolute top-1 left-1/2 transform -translate-x-1/2 w-8 h-1 bg-brand-primary rounded-full"></div>
                 )}
               </button>
             );
           })}
-          
+
           {/* 袋子 AI 按钮 - 悬浮在中间 */}
           <div className="relative flex flex-col items-center justify-center" style={{ minWidth: '60px' }}>
             <button
@@ -178,11 +178,11 @@ export default function BottomNavigation() {
               className="absolute -top-7 flex flex-col items-center justify-center touch-manipulation"
               style={{ transform: 'translateY(-50%)' }}
             >
-              <div className="w-14 h-14 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center shadow-lg border-4 border-white"
+              <div className="w-14 h-14 rounded-full bg-gradient-to-br from-brand-primary to-content-link flex items-center justify-center shadow-lg border-4 border-surface-raised"
                 style={{ boxShadow: '0 4px 20px rgba(99,102,241,0.5)' }}>
                 <span className="text-2xl">🤖</span>
               </div>
-              <span className="text-xs mt-1 font-medium text-purple-600">袋子</span>
+              <span className="text-xs mt-1 font-medium text-brand-primary">袋子</span>
             </button>
           </div>
 
@@ -192,13 +192,13 @@ export default function BottomNavigation() {
               if (navigator.vibrate) navigator.vibrate(10);
               setMoreOpen(true);
             }}
-            className="flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-200 text-gray-600 hover:text-gray-800 hover:bg-[#EDF0F5] active:bg-[#d1d6e0] active:scale-95 min-w-0 flex-1 touch-manipulation"
+            className="flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-200 text-content-secondary hover:text-content-primary hover:bg-control-fill-hover active:bg-surface-muted active:scale-95 min-w-0 flex-1 touch-manipulation"
             style={{ minHeight: '60px', minWidth: '60px' }}
           >
             <div className="text-xl">
               <AppstoreOutlined />
             </div>
-            <span className="text-xs mt-1 font-medium text-gray-600">
+            <span className="text-xs mt-1 font-medium text-content-secondary">
               更多
             </span>
           </button>
@@ -212,7 +212,7 @@ export default function BottomNavigation() {
             <span className="text-lg font-semibold">更多功能</span>
             <button
               onClick={() => setMoreOpen(false)}
-              className="p-2 rounded-lg hover:bg-[#d1d6e0] active:bg-[#a0aec0] transition-colors"
+              className="btn btn-ghost btn-icon transition-colors"
             >
               <CloseOutlined />
             </button>
@@ -231,16 +231,16 @@ export default function BottomNavigation() {
         <div className="grid grid-cols-4 gap-4 pb-4">
           {moreNavItems.map((item) => {
             const active = isActive(item.href);
-            
+
             return (
               <button
                 key={item.key}
                 onClick={() => handleNavClick(item)}
                 className={`
                   flex flex-col items-center justify-center p-4 rounded-2xl transition-all duration-200
-                  ${active 
-                    ? 'text-blue-600 bg-blue-50 shadow-md' 
-                    : 'text-gray-700 bg-[#EDF0F5] hover:bg-[#d1d6e0] active:bg-[#a0aec0] active:scale-95'
+                  ${active
+                    ? 'text-brand-primary bg-brand-soft shadow-md'
+                    : 'text-content-secondary bg-surface-muted hover:bg-control-fill-hover active:bg-surface-muted active:scale-95'
                   }
                   touch-manipulation
                 `}
@@ -249,7 +249,7 @@ export default function BottomNavigation() {
                 <div className={`text-2xl mb-2 ${active ? 'scale-110' : ''} transition-transform`}>
                   {item.icon}
                 </div>
-                <span className={`text-xs font-medium text-center ${active ? 'text-blue-600' : 'text-gray-700'}`}>
+                <span className={`text-xs font-medium text-center ${active ? 'text-brand-primary' : 'text-content-secondary'}`}>
                   {item.label}
                 </span>
               </button>
@@ -258,27 +258,27 @@ export default function BottomNavigation() {
         </div>
 
         {/* 快捷操作 */}
-        <div className="mt-4 pt-4 border-t border-gray-200">
-          <div className="text-sm font-semibold text-gray-500 mb-3">快捷操作</div>
+        <div className="mt-4 pt-4 border-t border-line-subtle">
+          <div className="text-sm font-semibold text-content-muted mb-3">快捷操作</div>
           <div className="space-y-2">
             <button
               onClick={() => {
                 setMoreOpen(false);
                 router.push('/notes/new');
               }}
-              className="w-full flex items-center justify-between p-3 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700 active:scale-98 transition-all touch-manipulation"
+              className="w-full flex items-center justify-between p-3 rounded-xl bg-brand-primary text-content-inverse hover:bg-brand-hover active:scale-98 transition-all touch-manipulation"
             >
               <span className="font-medium">创建新笔记</span>
               <EditOutlined className="text-lg" />
             </button>
-            
+
             {session && (
               <button
                 onClick={() => {
                   setMoreOpen(false);
                   router.push('/profile');
                 }}
-                className="w-full flex items-center justify-between p-3 rounded-xl bg-[#d1d6e0] text-gray-700 hover:bg-[#b8bfcc] active:scale-98 transition-all touch-manipulation"
+                className="w-full flex items-center justify-between p-3 rounded-xl bg-surface-muted text-content-primary hover:bg-control-fill-hover active:scale-98 transition-all touch-manipulation"
               >
                 <span className="font-medium">查看学习统计</span>
                 <UserOutlined className="text-lg" />
@@ -295,24 +295,24 @@ export default function BottomNavigation() {
         .pb-safe {
           padding-bottom: env(safe-area-inset-bottom);
         }
-        
+
         .mobile-drawer .ant-drawer-body {
           padding-bottom: calc(16px + env(safe-area-inset-bottom));
         }
-        
+
         .touch-manipulation {
           touch-action: manipulation;
           -webkit-tap-highlight-color: transparent;
         }
-        
+
         .active\\:scale-95:active {
           transform: scale(0.95);
         }
-        
+
         .active\\:scale-98:active {
           transform: scale(0.98);
         }
       `}</style>
     </>
   );
-} 
+}

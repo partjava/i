@@ -85,7 +85,7 @@ export default function StatsSection() {
   ];
 
   return (
-    <div ref={ref} className="py-16 bg-gradient-to-b from-[#e2e6ed] to-[#d1d6e0]">
+    <div ref={ref} className="py-16 bg-gradient-to-b from-surface-muted to-surface-page">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className={`text-center mb-12 transition-all duration-600 ${inView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'}`}>
           <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4 tracking-wide">
@@ -104,7 +104,7 @@ export default function StatsSection() {
               style={{ transitionDelay: `${index * 100}ms` }}
             >
               <div 
-                className="rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-[#b8bfcc]"
+                className="rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-line-strong"
                 style={{
                   background: 'linear-gradient(135deg, #f5f7fa 0%, #f0f3f8 30%, #f5f7fa 60%, #eef1f6 100%)',
                 }}

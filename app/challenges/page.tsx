@@ -2,9 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { Card, Row, Col, Select, Tag, Button, Input, Pagination, Spin, message } from 'antd';
-import { 
-  TrophyOutlined, 
-  ClockCircleOutlined, 
+import {
+  TrophyOutlined,
+  ClockCircleOutlined,
   DatabaseOutlined,
   SearchOutlined,
   FilterOutlined
@@ -114,19 +114,19 @@ const ChallengePage: React.FC = () => {
 
   return (
     <>
-    <div className="min-h-screen bg-[#d1d6e0] py-8">
+    <div className="min-h-screen bg-surface-page py-8">
       {/* 水墨画顶部装饰 */}
-      <InkWashDecoration variant="landscape" height={180} className="bg-[#d1d6e0] -mt-8" />
-      <InkWashDecoration variant="mist" height={50} className="bg-[#d1d6e0] -mt-4" />
+      <InkWashDecoration variant="landscape" height={180} className="bg-surface-page -mt-8" />
+      <InkWashDecoration variant="mist" height={50} className="bg-surface-page -mt-4" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* 页面标题 */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
+          <h1 className="text-4xl font-bold text-content-primary mb-4">
             <TrophyOutlined className="mr-3 text-yellow-500" />
             代码挑战
           </h1>
-          <p className="text-xl text-gray-600">
+          <p className="text-xl text-content-secondary">
             通过编程挑战提升你的算法和编程技能
           </p>
           <div className="mt-4">
@@ -139,7 +139,7 @@ const ChallengePage: React.FC = () => {
         </div>
 
         {/* 筛选和搜索 */}
-        <div className="bg-[#f5f7fa] rounded-lg shadow-md p-6 mb-8 border border-[#b8bfcc]">
+        <div className="rounded-lg border border-line-subtle bg-surface-raised p-6 mb-8 shadow-frost">
           <Row gutter={[16, 16]} align="middle">
             <Col xs={24} sm={12} md={6}>
               <div className="flex items-center gap-2">
@@ -188,9 +188,9 @@ const ChallengePage: React.FC = () => {
 
         {/* 挑战列表 */}
         {loading ? (
-          <div className="text-center py-12">
+          <div className="text-center py-12 text-content-secondary">
             <Spin size="large" />
-            <p className="mt-4 text-gray-600">加载挑战中...</p>
+            <p className="mt-4 text-content-secondary">加载挑战中...</p>
           </div>
         ) : (
           <>
@@ -201,7 +201,7 @@ const ChallengePage: React.FC = () => {
                     hoverable
                     className="h-full challenge-card"
                     cover={
-                      <div className="p-4 bg-gradient-to-r from-[#0C1F3D] to-[#6b7d99] text-white">
+                      <div className="p-4 bg-gradient-to-r from-surface-inverse to-content-muted text-content-inverse">
                         <div className="flex justify-between items-start mb-2">
                           <Tag
                             color={difficultyColors[challenge.difficulty]}
@@ -241,13 +241,13 @@ const ChallengePage: React.FC = () => {
                       <div className="mb-3">
                         <Tag color="blue">{challenge.category}</Tag>
                       </div>
-                      
-                      <p className="text-gray-600 text-sm mb-3 line-clamp-3">
+
+                      <p className="text-content-secondary text-sm mb-3 line-clamp-3">
                         {challenge.description.substring(0, 100)}...
                       </p>
-                      
+
                       <div className="mb-3">
-                        <div className="text-xs text-gray-500 mb-1">支持语言:</div>
+                        <div className="text-xs text-content-muted mb-1">支持语言:</div>
                         <div className="flex flex-wrap gap-1">
                                                      {challenge.languages.slice(0, 3).map(lang => (
                              <Tag key={lang} className="text-xs">
@@ -259,7 +259,7 @@ const ChallengePage: React.FC = () => {
                            )}
                         </div>
                       </div>
-                      
+
                                              <div className="flex flex-wrap gap-1">
                          {challenge.tags.slice(0, 2).map(tag => (
                            <Tag key={tag} className="text-xs" color="geekblue">
@@ -297,8 +297,8 @@ const ChallengePage: React.FC = () => {
       </div>
 
       {/* 水墨画底部装饰 */}
-      <InkWashDecoration variant="bamboo" height={100} className="bg-[#d1d6e0] mt-8" />
-      <InkWashDecoration variant="landscape" height={200} className="bg-[#d1d6e0]" />
+      <InkWashDecoration variant="bamboo" height={100} className="bg-surface-page mt-8" />
+      <InkWashDecoration variant="landscape" height={200} className="bg-surface-page" />
 
       <style jsx>{`
         .challenge-card {
@@ -326,4 +326,4 @@ const ChallengePage: React.FC = () => {
   );
 };
 
-export default ChallengePage; 
+export default ChallengePage;

@@ -87,18 +87,18 @@ export function StudyProgressBar() {
       {collapsed ? (
         <button
           onClick={() => setCollapsed(false)}
-          className="bg-[#f5f7fa] rounded-full shadow-lg border border-[#b8bfcc] w-11 h-11 flex items-center justify-center hover:shadow-xl transition-shadow"
+          className="bg-surface-raised rounded-full shadow-lg border border-line-strong w-11 h-11 flex items-center justify-center hover:shadow-xl transition-shadow"
           title="学习进度"
         >
-          <svg className="w-5 h-5 text-[#6b7d99]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-5 h-5 text-content-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
           </svg>
         </button>
       ) : (
-        <div className="bg-[#f5f7fa] rounded-xl shadow-lg border border-[#b8bfcc] p-4 flex flex-col gap-3 min-w-[200px]">
+        <div className="bg-surface-raised rounded-xl shadow-lg border border-line-strong p-4 flex flex-col gap-3 min-w-[200px]">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-[#3d4f6b]">学习进度</span>
-            <button onClick={() => setCollapsed(true)} className="text-[#6b7d99] hover:text-[#0C1F3D]">
+            <span className="text-xs font-medium text-content-secondary">学习进度</span>
+            <button onClick={() => setCollapsed(true)} className="text-content-muted hover:text-content-primary">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
@@ -108,16 +108,16 @@ export function StudyProgressBar() {
           onClick={toggleComplete}
           className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all ${
             completed
-              ? 'bg-[#6366f1]/15 text-[#6366f1] hover:bg-[#6366f1]/25 border border-[#6366f1]/30'
-              : 'bg-[#EDF0F5] text-[#0C1F3D] hover:bg-[#d1d6e0] hover:text-[#0C1F3D] border border-[#b8bfcc]'
+              ? 'bg-brand-primary/15 text-brand-primary hover:bg-brand-primary/25 border border-brand-primary/30'
+              : 'bg-surface-page text-content-primary hover:bg-surface-muted hover:text-content-primary border border-line-strong'
           }`}
         >
           {completed ? (
-            <svg className="w-5 h-5 text-[#6366f1]" fill="currentColor" viewBox="0 0 20 20">
+            <svg className="w-5 h-5 text-brand-primary" fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
             </svg>
           ) : (
-            <svg className="w-5 h-5 text-[#6b7d99]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5 text-content-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           )}
@@ -126,13 +126,13 @@ export function StudyProgressBar() {
 
         {categoryProgress.total > 0 && (
           <div className="px-1">
-            <div className="flex justify-between text-xs text-[#6b7d99] mb-1">
+            <div className="flex justify-between text-xs text-content-muted mb-1">
               <span>当前分类进度</span>
               <span>{categoryProgress.done}/{categoryProgress.total}</span>
             </div>
-            <div className="w-full h-2 bg-[#d1d6e0] rounded-full overflow-hidden">
+            <div className="w-full h-2 bg-surface-page rounded-full overflow-hidden">
               <div
-                className="h-full bg-[#6366f1] rounded-full transition-all duration-500"
+                className="h-full bg-brand-primary rounded-full transition-all duration-500"
                 style={{ width: `${categoryProgress.total > 0 ? Math.round((categoryProgress.done / categoryProgress.total) * 100) : 0}%` }}
               />
             </div>

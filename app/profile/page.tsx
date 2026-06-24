@@ -907,17 +907,17 @@ export default function ProfilePage() {
 
 
   return (
-    <div className="min-h-screen bg-[#d1d6e0] dark:bg-[#0C1F3D]">
+    <div className="min-h-screen bg-surface-page dark:bg-surface-inverse">
       {/* 水墨画顶部装饰 */}
-      <InkWashDecoration variant="landscape" height={180} className="bg-[#d1d6e0]" />
-      <InkWashDecoration variant="birds" height={50} className="bg-[#d1d6e0] -mt-4" />
+      <InkWashDecoration variant="landscape" height={180} className="bg-surface-page" />
+      <InkWashDecoration variant="birds" height={50} className="bg-surface-page -mt-4" />
 
       {/* 未登录提示横幅 */}
       {isGuest && (
         <div className="bg-gradient-to-r from-[#0C1F3D] to-[#3d4f6b] text-white py-4 px-6 shadow-lg">
           <div className="max-w-4xl mx-auto flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-[#f5f7fa] bg-opacity-20 rounded-full flex items-center justify-center">
+              <div className="w-10 h-10 bg-surface-raised bg-opacity-20 rounded-full flex items-center justify-center">
                 <BarChartOutlined className="text-xl" />
               </div>
               <div>
@@ -936,7 +936,7 @@ export default function ProfilePage() {
               type="default"
               size="large"
               onClick={() => router.push('/login')}
-              className="bg-[#f5f7fa] text-[#3d4f6b] border-0 hover:bg-[#d1d6e0] font-semibold px-6"
+              className="bg-surface-raised text-content-secondary border-0 hover:bg-surface-page font-semibold px-6"
             >
               立即登录
             </Button>
@@ -990,7 +990,7 @@ export default function ProfilePage() {
                         size="large"
                         icon={<EditOutlined />}
                         loading={uploading}
-                        className="shadow-lg bg-[#f5f7fa] text-[#3d4f6b] border-0 hover:bg-[#d1d6e0]"
+                        className="shadow-lg bg-surface-raised text-content-secondary border-0 hover:bg-surface-page"
                         onClick={() => fileInputRef.current?.click()}
                       />
                     </div>
@@ -1005,7 +1005,7 @@ export default function ProfilePage() {
                     {profileForm.name || session?.user?.name || '未设置用户名'}
                   </Title>
                   {isGuest && (stats?.notes?.total || 0) > 0 && (
-                    <span className="px-3 py-1 bg-[#f5f7fa] bg-opacity-20 rounded-full text-sm font-semibold">
+                    <span className="px-3 py-1 bg-surface-raised bg-opacity-20 rounded-full text-sm font-semibold">
                       平台数据
                     </span>
                   )}
@@ -1040,14 +1040,14 @@ export default function ProfilePage() {
                 {/* 个人信息标签 */}
                 <div className="flex flex-wrap justify-center gap-3 mb-8">
                   {profileForm.location && (
-                    <Tag icon={<EnvironmentOutlined />} className="bg-[#f5f7fa] bg-opacity-20 text-white border-white border-opacity-30 text-base px-4 py-2">
+                    <Tag icon={<EnvironmentOutlined />} className="bg-surface-raised bg-opacity-20 text-white border-white border-opacity-30 text-base px-4 py-2">
                       {profileForm.location}
                     </Tag>
                   )}
                   {profileForm.github && (
                     <Tag 
                       icon={<GithubOutlined />} 
-                      className="bg-[#f5f7fa] bg-opacity-20 text-white border-white border-opacity-30 text-base px-4 py-2 cursor-pointer hover:bg-opacity-30"
+                      className="bg-surface-raised bg-opacity-20 text-white border-white border-opacity-30 text-base px-4 py-2 cursor-pointer hover:bg-opacity-30"
                       onClick={() => window.open(`https://github.com/${profileForm.github}`, '_blank')}
                     >
                       {profileForm.github}
@@ -1056,7 +1056,7 @@ export default function ProfilePage() {
                   {profileForm.website && (
                     <Tag 
                       icon={<GlobalOutlined />} 
-                      className="bg-[#f5f7fa] bg-opacity-20 text-white border-white border-opacity-30 text-base px-4 py-2 cursor-pointer hover:bg-opacity-30"
+                      className="bg-surface-raised bg-opacity-20 text-white border-white border-opacity-30 text-base px-4 py-2 cursor-pointer hover:bg-opacity-30"
                       onClick={() => window.open(profileForm.website, '_blank')}
                     >
                       个人网站
@@ -1091,7 +1091,7 @@ export default function ProfilePage() {
                         size="large"
                         icon={<EditOutlined />}
                         onClick={() => setEditMode(!editMode)}
-                        className="bg-[#f5f7fa] bg-opacity-20 text-white border-white border-opacity-30 hover:bg-[#f5f7fa] hover:bg-opacity-30 px-6 py-2 h-auto"
+                        className="bg-surface-raised bg-opacity-20 text-white border-white border-opacity-30 hover:bg-surface-raised hover:bg-opacity-30 px-6 py-2 h-auto"
                       >
                         {editMode ? '取消编辑' : '编辑资料'}
                       </Button>
@@ -1103,7 +1103,7 @@ export default function ProfilePage() {
                         </svg>}
                         onClick={refreshData}
                         loading={refreshing}
-                        className="bg-[#6366f1] bg-opacity-20 text-white border-indigo-300 border-opacity-30 hover:bg-[#6366f1] hover:bg-opacity-30 px-6 py-2 h-auto"
+                        className="bg-brand-primary bg-opacity-20 text-white border-indigo-300 border-opacity-30 hover:bg-brand-primary hover:bg-opacity-30 px-6 py-2 h-auto"
                       >
                         刷新数据
                       </Button>
@@ -1121,7 +1121,7 @@ export default function ProfilePage() {
                       type="default"
                       size="large"
                       onClick={() => router.push('/login')}
-                      className="bg-[#f5f7fa] text-[#6366f1] border-0 hover:bg-[#d1d6e0] px-8 py-2 h-auto font-semibold"
+                      className="bg-surface-raised text-brand-primary border-0 hover:bg-surface-page px-8 py-2 h-auto font-semibold"
                     >
                       登录查看真实数据
                     </Button>
@@ -1272,10 +1272,10 @@ export default function ProfilePage() {
                 >
                   <div className="p-2">
                     <BookOutlined className="text-2xl text-blue-500 mb-2" />
-                    <div className="text-3xl font-bold text-[#6b7d99] mb-2">
+                    <div className="text-3xl font-bold text-content-muted mb-2">
                       {stats?.notes?.total || 0}
                     </div>
-                    <div className="text-sm text-gray-600">笔记总数</div>
+                    <div className="text-sm text-content-secondary">笔记总数</div>
                   </div>
                 </Card>
                 <Card 
@@ -1284,10 +1284,10 @@ export default function ProfilePage() {
                 >
                   <div className="p-2">
                     <CalendarOutlined className="text-2xl text-green-500 mb-2" />
-                    <div className="text-3xl font-bold text-green-600 mb-2">
+                    <div className="text-3xl font-bold text-state-success mb-2">
                       {stats?.learning?.studyDaysTotal || 0}
                     </div>
-                    <div className="text-sm text-gray-600">学习天数</div>
+                    <div className="text-sm text-content-secondary">学习天数</div>
                   </div>
                 </Card>
                 <Card 
@@ -1299,7 +1299,7 @@ export default function ProfilePage() {
                     <div className="text-3xl font-bold text-pink-600 mb-2">
                       {stats?.engagement?.likesReceived || 0}
                     </div>
-                    <div className="text-sm text-gray-600">获得点赞</div>
+                    <div className="text-sm text-content-secondary">获得点赞</div>
                   </div>
                 </Card>
                 <Card 
@@ -1311,7 +1311,7 @@ export default function ProfilePage() {
                     <div className="text-3xl font-bold text-orange-600 mb-2">
                       {stats?.learning?.technologiesStudied || 0}
                     </div>
-                    <div className="text-sm text-gray-600">技术栈</div>
+                    <div className="text-sm text-content-secondary">技术栈</div>
                   </div>
                 </Card>
               </div>
@@ -1342,7 +1342,7 @@ export default function ProfilePage() {
                         size={140}
                         strokeWidth={8}
                       />
-                      <p className="mt-4 text-xl font-semibold text-gray-700">公开笔记</p>
+                      <p className="mt-4 text-xl font-semibold text-content-primary">公开笔记</p>
                     </div>
                   </Col>
                   <Col xs={24} md={12}>
@@ -1358,7 +1358,7 @@ export default function ProfilePage() {
                         size={140}
                         strokeWidth={8}
                       />
-                      <p className="mt-4 text-xl font-semibold text-gray-700">学习领域</p>
+                      <p className="mt-4 text-xl font-semibold text-content-primary">学习领域</p>
                     </div>
                   </Col>
                 </Row>
@@ -1369,10 +1369,10 @@ export default function ProfilePage() {
                   <Col xs={24} md={8}>
                     <div className="text-center p-6 bg-gradient-to-br from-[#EDF0F5] to-[#e2e6ed] rounded-lg">
                       <ClockCircleOutlined className="text-3xl text-purple-500 mb-3" />
-                      <div className="text-xl font-semibold text-gray-700 mb-1">
+                      <div className="text-xl font-semibold text-content-primary mb-1">
                         {formatStudyTime(stats?.learning?.totalStudyTime || 0)}
                       </div>
-                      <div className="text-sm text-gray-500">总学习时间</div>
+                      <div className="text-sm text-content-muted">总学习时间</div>
                     </div>
                   </Col>
                   <Col xs={24} md={8}>
@@ -1381,19 +1381,19 @@ export default function ProfilePage() {
                       onClick={() => !isGuest && router.push('/bookmarks')}
                     >
                       <BookOutlined className="text-3xl text-yellow-500 mb-3" />
-                      <div className="text-xl font-semibold text-gray-700 mb-1">
+                      <div className="text-xl font-semibold text-content-primary mb-1">
                         {stats?.engagement?.bookmarksReceived || 0}
                       </div>
-                      <div className="text-sm text-gray-500">我的收藏</div>
+                      <div className="text-sm text-content-muted">我的收藏</div>
                     </div>
                   </Col>
                   <Col xs={24} md={8}>
                     <div className="text-center p-6 bg-gradient-to-br from-[#EDF0F5] to-[#e2e6ed] rounded-lg">
                       <CommentOutlined className="text-3xl text-cyan-500 mb-3" />
-                      <div className="text-xl font-semibold text-gray-700 mb-1">
+                      <div className="text-xl font-semibold text-content-primary mb-1">
                         {stats?.engagement?.commentsReceived || 0}
                       </div>
-                      <div className="text-sm text-gray-500">评论数</div>
+                      <div className="text-sm text-content-muted">评论数</div>
                     </div>
                   </Col>
                 </Row>
@@ -1436,7 +1436,7 @@ export default function ProfilePage() {
                     <div className="w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-[#a5b4fc] to-[#6b7d99] rounded-full flex items-center justify-center">
                       <TrophyOutlined style={{ fontSize: 40, color: 'white' }} />
                     </div>
-                    <div className="text-2xl font-semibold text-gray-800 mb-4">
+                    <div className="text-2xl font-semibold text-content-primary mb-4">
                       {stats?.achievements?.earned || 0} / {stats?.achievements?.total || 10}
                     </div>
                     <Progress
@@ -1457,22 +1457,22 @@ export default function ProfilePage() {
 
                 {/* 成就列表 */}
                 <div className="space-y-4">
-                  <h3 className="text-lg font-semibold text-gray-800 mb-4">可获得的成就</h3>
+                  <h3 className="text-lg font-semibold text-content-primary mb-4">可获得的成就</h3>
                   
                   <Row gutter={[16, 16]}>
                     {/* 学习相关成就 */}
                     <Col xs={24} md={12}>
-                      <div className="p-4 bg-gradient-to-br from-[#EDF0F5] to-[#e2e6ed] rounded-lg border border-[#b8bfcc]">
+                      <div className="p-4 bg-gradient-to-br from-[#EDF0F5] to-[#e2e6ed] rounded-lg border border-line-strong">
                         <div className="flex items-center mb-3">
-                          <div className="w-10 h-10 bg-[#6b7d99] rounded-full flex items-center justify-center mr-3">
+                          <div className="w-10 h-10 bg-content-muted rounded-full flex items-center justify-center mr-3">
                             <BookOutlined style={{ color: 'white', fontSize: 16 }} />
                           </div>
                           <div>
                             <h4 className="font-semibold text-blue-800">学习达人</h4>
-                            <p className="text-sm text-[#6b7d99]">连续学习 7 天</p>
+                            <p className="text-sm text-content-muted">连续学习 7 天</p>
                           </div>
                         </div>
-                        <div className="text-xs text-gray-600">
+                        <div className="text-xs text-content-secondary">
                           当前进度: {stats?.learning?.studyDaysTotal || 0}/7 天
                         </div>
                         <Progress 
@@ -1485,9 +1485,9 @@ export default function ProfilePage() {
                     </Col>
 
                     <Col xs={24} md={12}>
-                      <div className="p-4 bg-gradient-to-br from-[#EDF0F5] to-[#e2e6ed] rounded-lg border border-[#b8bfcc]">
+                      <div className="p-4 bg-gradient-to-br from-[#EDF0F5] to-[#e2e6ed] rounded-lg border border-line-strong">
                         <div className="flex items-center mb-3">
-                          <div className="w-10 h-10 bg-[#4f6b8a] rounded-full flex items-center justify-center mr-3">
+                          <div className="w-10 h-10 bg-content-secondary rounded-full flex items-center justify-center mr-3">
                             <EditOutlined style={{ color: 'white', fontSize: 16 }} />
                           </div>
                           <div>
@@ -1495,7 +1495,7 @@ export default function ProfilePage() {
                             <p className="text-sm text-green-600">创建 {Math.max(10, stats?.notes?.total || 0)} 篇笔记</p>
                           </div>
                         </div>
-                        <div className="text-xs text-gray-600">
+                        <div className="text-xs text-content-secondary">
                           当前进度: {stats?.notes?.total || 0}/{Math.max(10, stats?.notes?.total || 0)} 篇
                         </div>
                         <Progress 
@@ -1508,9 +1508,9 @@ export default function ProfilePage() {
                     </Col>
 
                     <Col xs={24} md={12}>
-                      <div className="p-4 bg-gradient-to-br from-[#EDF0F5] to-[#e2e6ed] rounded-lg border border-[#b8bfcc]">
+                      <div className="p-4 bg-gradient-to-br from-[#EDF0F5] to-[#e2e6ed] rounded-lg border border-line-strong">
                         <div className="flex items-center mb-3">
-                          <div className="w-10 h-10 bg-[#0C1F3D] rounded-full flex items-center justify-center mr-3">
+                          <div className="w-10 h-10 bg-surface-inverse rounded-full flex items-center justify-center mr-3">
                             <HeartOutlined style={{ color: 'white', fontSize: 16 }} />
                           </div>
                           <div>
@@ -1518,7 +1518,7 @@ export default function ProfilePage() {
                             <p className="text-sm text-purple-600">获得 50 个点赞</p>
                           </div>
                         </div>
-                        <div className="text-xs text-gray-600">
+                        <div className="text-xs text-content-secondary">
                           当前进度: {stats?.engagement?.likesReceived || 0}/50 个
                         </div>
                         <Progress 
@@ -1531,9 +1531,9 @@ export default function ProfilePage() {
                     </Col>
 
                     <Col xs={24} md={12}>
-                      <div className="p-4 bg-gradient-to-br from-[#EDF0F5] to-[#e2e6ed] rounded-lg border border-[#b8bfcc]">
+                      <div className="p-4 bg-gradient-to-br from-[#EDF0F5] to-[#e2e6ed] rounded-lg border border-line-strong">
                         <div className="flex items-center mb-3">
-                          <div className="w-10 h-10 bg-[#5a6b8a] rounded-full flex items-center justify-center mr-3">
+                          <div className="w-10 h-10 bg-content-muted rounded-full flex items-center justify-center mr-3">
                             <FireOutlined style={{ color: 'white', fontSize: 16 }} />
                           </div>
                           <div>
@@ -1541,7 +1541,7 @@ export default function ProfilePage() {
                             <p className="text-sm text-orange-600">学习 5 个技术栈</p>
                           </div>
                         </div>
-                        <div className="text-xs text-gray-600">
+                        <div className="text-xs text-content-secondary">
                           当前进度: {stats?.learning?.technologiesStudied || 0}/5 个
                         </div>
                         <Progress 
@@ -1554,9 +1554,9 @@ export default function ProfilePage() {
                     </Col>
 
                     <Col xs={24} md={12}>
-                      <div className="p-4 bg-gradient-to-br from-[#EDF0F5] to-[#e2e6ed] rounded-lg border border-[#b8bfcc]">
+                      <div className="p-4 bg-gradient-to-br from-[#EDF0F5] to-[#e2e6ed] rounded-lg border border-line-strong">
                         <div className="flex items-center mb-3">
-                          <div className="w-10 h-10 bg-[#4a5d7a] rounded-full flex items-center justify-center mr-3">
+                          <div className="w-10 h-10 bg-content-secondary rounded-full flex items-center justify-center mr-3">
                             <ClockCircleOutlined style={{ color: 'white', fontSize: 16 }} />
                           </div>
                           <div>
@@ -1564,7 +1564,7 @@ export default function ProfilePage() {
                             <p className="text-sm text-cyan-600">累计学习 100 小时</p>
                           </div>
                         </div>
-                        <div className="text-xs text-gray-600">
+                        <div className="text-xs text-content-secondary">
                           当前进度: {Math.floor((stats?.learning?.totalStudyTime || 0) / 60)}/100 小时
                         </div>
                         <Progress 
@@ -1577,9 +1577,9 @@ export default function ProfilePage() {
                     </Col>
 
                     <Col xs={24} md={12}>
-                      <div className="p-4 bg-gradient-to-br from-[#EDF0F5] to-[#e2e6ed] rounded-lg border border-[#b8bfcc]">
+                      <div className="p-4 bg-gradient-to-br from-[#EDF0F5] to-[#e2e6ed] rounded-lg border border-line-strong">
                         <div className="flex items-center mb-3">
-                          <div className="w-10 h-10 bg-[#5a6b8a] rounded-full flex items-center justify-center mr-3">
+                          <div className="w-10 h-10 bg-content-muted rounded-full flex items-center justify-center mr-3">
                             <CommentOutlined style={{ color: 'white', fontSize: 16 }} />
                           </div>
                           <div>
@@ -1587,7 +1587,7 @@ export default function ProfilePage() {
                             <p className="text-sm text-pink-600">收到 20 条评论</p>
                           </div>
                         </div>
-                        <div className="text-xs text-gray-600">
+                        <div className="text-xs text-content-secondary">
                           当前进度: {stats?.engagement?.commentsReceived || 0}/20 条
                         </div>
                         <Progress 
@@ -1601,9 +1601,9 @@ export default function ProfilePage() {
                   </Row>
 
                   {(stats?.achievements?.earned || 0) === 0 && (
-                    <div className="mt-6 p-4 bg-[#d1d6e0] rounded-lg text-center">
-                      <p className="text-gray-600 mb-2">🎯 开始您的学习之旅，解锁第一个成就！</p>
-                      <p className="text-sm text-gray-500">每个成就都会让您的学习更有成就感</p>
+                    <div className="mt-6 p-4 bg-surface-page rounded-lg text-center">
+                      <p className="text-content-secondary mb-2">🎯 开始您的学习之旅，解锁第一个成就！</p>
+                      <p className="text-sm text-content-muted">每个成就都会让您的学习更有成就感</p>
                     </div>
                   )}
                 </div>
@@ -1632,7 +1632,7 @@ export default function ProfilePage() {
                       }
                     >
                       <div className="ml-4 pb-4">
-                        <p className="mb-2 text-gray-800 font-medium text-base">{activity.content}</p>
+                        <p className="mb-2 text-content-primary font-medium text-base">{activity.content}</p>
                         <Text type="secondary" className="text-sm">
                           {new Date(activity.date).toLocaleDateString('zh-CN', {
                             year: 'numeric',
@@ -1663,8 +1663,8 @@ export default function ProfilePage() {
       </div>
 
       {/* 水墨画底部装饰 */}
-      <InkWashDecoration variant="bamboo" height={100} className="bg-[#d1d6e0] mt-8" />
-      <InkWashDecoration variant="landscape" height={200} className="bg-[#d1d6e0]" />
+      <InkWashDecoration variant="bamboo" height={100} className="bg-surface-page mt-8" />
+      <InkWashDecoration variant="landscape" height={200} className="bg-surface-page" />
     </div>
   );
 } 

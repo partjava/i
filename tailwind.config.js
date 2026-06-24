@@ -49,6 +49,46 @@ module.exports = {
           light:   '#2a6fd4',
           pale:    '#dce8f7',
         },
+        // Semantic tokens for new UI migration. Prefer these in new or touched code.
+        surface: {
+          page: 'var(--surface-page)',
+          raised: 'var(--surface-raised)',
+          muted: 'var(--surface-muted)',
+          inverse: 'var(--surface-inverse)',
+        },
+        content: {
+          primary: 'var(--content-primary)',
+          secondary: 'var(--content-secondary)',
+          muted: 'var(--content-muted)',
+          inverse: 'var(--content-inverse)',
+          link: 'var(--content-link)',
+        },
+        line: {
+          subtle: 'var(--line-subtle)',
+          strong: 'var(--line-strong)',
+        },
+        brand: {
+          primary: 'var(--brand-primary)',
+          hover: 'var(--brand-hover)',
+          active: 'var(--brand-active)',
+          soft: 'var(--brand-soft)',
+        },
+        state: {
+          success: 'var(--state-success)',
+          successSoft: 'var(--state-success-soft)',
+          warning: 'var(--state-warning)',
+          warningSoft: 'var(--state-warning-soft)',
+          danger: 'var(--state-danger)',
+          dangerSoft: 'var(--state-danger-soft)',
+          info: 'var(--state-info)',
+          infoSoft: 'var(--state-info-soft)',
+        },
+        control: {
+          fill: 'var(--control-fill)',
+          fillHover: 'var(--control-fill-hover)',
+          disabled: 'var(--control-disabled)',
+          ring: 'var(--control-ring)',
+        },
       },
       fontFamily: {
         display: ['"Noto Serif SC"', '"Source Han Serif SC"', 'Georgia', 'serif'],

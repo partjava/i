@@ -259,19 +259,19 @@ export default function NotesPage() {
     try {
       setLoading(true);
       const limit = pagination?.limit || 10; // 使用默认值10，避免undefined
-      
-      
+
+
       // 统一使用一个API端点
       let url = `/api/notes?page=${page}&limit=${limit}`;
-      
+
       // 如果是公开模式或未登录，使用公开API
       if (viewMode === 'public' || status !== 'authenticated') {
         url = `/api/public-notes?page=${page}&limit=${limit}`;
       }
-      
+
       // 始终添加时间戳以避免缓存问题
       url += `&_t=${new Date().getTime()}`;
-      
+
       // 设置正确的凭证和请求头
       const response = await fetch(url, {
         method: 'GET',
@@ -284,10 +284,10 @@ export default function NotesPage() {
         credentials: 'include', // 包含凭证
         cache: 'no-store' // 禁用缓存
       });
-      
+
       if (response.ok) {
         const data = await response.json();
-        
+
         // 灵活处理不同格式的数据
         let notesData = [];
         let paginationData = {
@@ -298,7 +298,7 @@ export default function NotesPage() {
           hasNext: false,
           hasPrev: false
         };
-        
+
         if (data && data.data && Array.isArray(data.data.notes)) {
           // 格式: { success: true, data: { notes: [], pagination: {} } }
           notesData = data.data.notes;
@@ -311,7 +311,7 @@ export default function NotesPage() {
           // 格式: [...]
           notesData = data;
         }
-        
+
         setNotes(notesData);
         const finalPagination = paginationData || {
           page: page, limit: limit, total: 0, totalPages: 0, hasNext: false, hasPrev: false
@@ -380,10 +380,10 @@ export default function NotesPage() {
       if (searchPersonal) {
         searchParams += '&searchPersonal=true';
       }
-      
+
       // 添加时间戳避免缓存问题
       searchParams += `&_t=${new Date().getTime()}`;
-      
+
       const response = await fetch(`/api/notes/search?${searchParams}`, {
         method: 'GET',
         headers: {
@@ -423,29 +423,29 @@ export default function NotesPage() {
       setIsSearching(false);
       return;
     }
-    
+
     // 搜索词长度至少为2
     if (searchQuery.trim().length < 2) {
       return;
     }
-    
+
     // 如果是"我的笔记"视图但用户未登录，不执行搜索
     if (viewMode === 'my' && status !== 'authenticated') {
       return;
     }
-    
+
     // 设置防抖定时器
     const timer = setTimeout(() => {
       handleSearch(searchQuery);
     }, 800); // 增加防抖时间到800ms
 
     return () => clearTimeout(timer);
-    
+
   }, [searchQuery, viewMode, status, handleSearch]);
 
   const handleCreateNote = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!newNote.title.trim()) {
       alert('请填写标题');
       return;
@@ -463,20 +463,20 @@ export default function NotesPage() {
         credentials: 'include',
         cache: 'no-store'
       });
-      
+
       if (!sessionResponse.ok) {
         alert('会话已过期，请重新登录');
         router.push('/login');
         return;
       }
-      
+
       const sessionData = await sessionResponse.json();
       if (!sessionData.authenticated) {
         alert('请先登录再创建笔记');
         router.push('/login');
         return;
       }
-      
+
       // 会话有效，继续创建笔记
       const response = await fetch('/api/notes', {
         method: 'POST',
@@ -492,7 +492,7 @@ export default function NotesPage() {
 
       if (response.ok) {
         const data = await response.json();
-        
+
         setShowCreateForm(false);
         setNewNote({
           title: '',
@@ -503,10 +503,10 @@ export default function NotesPage() {
           tags: '',
           isPublic: false,
         });
-        
+
         // 重新获取第一页笔记
         fetchNotes(1, true); // 传入true表示忽略缓存
-        
+
         // 显示成功消息
         alert('笔记创建成功！');
       } else {
@@ -523,7 +523,7 @@ export default function NotesPage() {
   const handleDeleteNote = async (noteId: string) => {
     if (confirm('确定要删除这个笔记吗？')) {
       try {
-        
+
         const response = await fetch(`/api/notes/${noteId}`, {
           method: 'DELETE',
           credentials: 'include',
@@ -545,24 +545,24 @@ export default function NotesPage() {
       }
     }
   };
-  
+
   // 批量删除笔记
   const handleBatchDeleteNotes = async () => {
     try {
       setIsDeleting(true);
-      
+
       // 获取所有选中的笔记ID
       const noteIdsToDelete = Object.entries(selectedNotes)
         .filter(([_, isSelected]) => isSelected)
         .map(([noteId, _]) => noteId);
-      
+
       if (noteIdsToDelete.length === 0) {
         alert('请选择要删除的笔记');
         setIsDeleting(false);
         return;
       }
-      
-      
+
+
       const response = await fetch('/api/notes/batch-delete', {
         method: 'POST',
         headers: {
@@ -571,17 +571,17 @@ export default function NotesPage() {
         credentials: 'include',
         body: JSON.stringify({ noteIds: noteIdsToDelete }),
       });
-      
+
       if (response.ok) {
         const result = await response.json();
-        
+
         // 清除选择状态
         setSelectedNotes({});
         // 关闭多选模式
         setIsMultiSelectMode(false);
         // 重新获取笔记列表
         fetchNotes(pagination.page);
-        
+
         alert(`成功删除 ${result.data.deletedCount} 篇笔记`);
       } else {
         const errorData = await response.json();
@@ -613,27 +613,27 @@ export default function NotesPage() {
     .filter(n => selectedCategory === 'all' || n.category === selectedCategory);
 
   return (
-    <div className="min-h-screen bg-[#d1d6e0]">
+    <div className="min-h-screen bg-surface-page">
       {/* 水墨画顶部装饰 */}
-      <InkWashDecoration variant="landscape" height={160} className="bg-[#d1d6e0]" />
-      <InkWashDecoration variant="mist" height={40} className="bg-[#d1d6e0] -mt-4" />
+      <InkWashDecoration variant="landscape" height={160} className="bg-surface-page" />
+      <InkWashDecoration variant="mist" height={40} className="bg-surface-page -mt-4" />
 
     <div className="flex p-8 gap-6">
       {/* 左侧分类侧边栏 */}
       <aside className="hidden md:block w-56 flex-shrink-0">
-        <div className="bg-[#f5f7fa] rounded-lg shadow-md p-4 sticky top-8">
-          <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">分类筛选</h3>
+        <div className="rounded-lg border border-line-subtle bg-surface-raised p-4 shadow-frost sticky top-8">
+          <h3 className="text-sm font-semibold text-content-muted uppercase tracking-wider mb-3">分类筛选</h3>
           <div className="space-y-1">
             <button
               onClick={() => setSelectedCategory('all')}
               className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                 selectedCategory === 'all'
-                  ? 'bg-[#d1d6e0] text-[#0C1F3D]'
-                  : 'text-gray-600 hover:bg-[#EDF0F5] hover:text-gray-900'
+                  ? 'bg-brand-soft text-content-primary'
+                  : 'text-content-secondary hover:bg-control-fill-hover hover:text-content-primary'
               }`}
             >
               全部
-              <span className="ml-2 text-xs text-gray-400">{notes.length}</span>
+              <span className="ml-2 text-xs text-content-muted">{notes.length}</span>
             </button>
             {allCategories.map(cat => {
               const count = notes.filter(n => n.category === cat).length;
@@ -643,31 +643,31 @@ export default function NotesPage() {
                   onClick={() => setSelectedCategory(cat)}
                   className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                     selectedCategory === cat
-                      ? 'bg-[#d1d6e0] text-[#0C1F3D]'
-                      : 'text-gray-600 hover:bg-[#EDF0F5] hover:text-gray-900'
+                      ? 'bg-brand-soft text-content-primary'
+                      : 'text-content-secondary hover:bg-control-fill-hover hover:text-content-primary'
                   }`}
                 >
                   {cat}
-                  <span className="ml-2 text-xs text-gray-400">{count}</span>
+                  <span className="ml-2 text-xs text-content-muted">{count}</span>
                 </button>
               );
             })}
           </div>
           {allCategories.length === 0 && (
-            <p className="text-xs text-gray-400 mt-2">暂无分类</p>
+            <p className="mt-2 text-xs text-content-muted">暂无分类</p>
           )}
         </div>
       </aside>
 
       {/* 右侧主内容区 */}
       <div className="flex-1 min-w-0">
-      
+
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">
           {viewMode === 'my' ? '我的笔记' : '公开笔记'}
         </h1>
         <div className="flex items-center space-x-4">
-          <div className="flex bg-[#b8bfcc] rounded-lg p-1" style={{ marginTop: '50px' }}>
+          <div className="flex rounded-lg border border-line-subtle bg-surface-muted p-1" style={{ marginTop: '50px' }}>
             {/* 只有登录用户才能看到"我的笔记"按钮 */}
             {status === 'authenticated' && session?.user && (
               <button
@@ -680,8 +680,8 @@ export default function NotesPage() {
                 }}
                 className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                   viewMode === 'my'
-                    ? 'bg-[#f5f7fa] text-gray-900 shadow-sm'
-                    : 'text-gray-600 hover:text-gray-900'
+                    ? 'bg-surface-raised text-content-primary shadow-sm'
+                    : 'text-content-secondary hover:text-content-primary'
                 }`}
               >
                 我的笔记
@@ -697,8 +697,8 @@ export default function NotesPage() {
               }}
               className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                 viewMode === 'public'
-                  ? 'bg-[#f5f7fa] text-gray-900 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900'
+                  ? 'bg-surface-raised text-content-primary shadow-sm'
+                  : 'text-content-secondary hover:text-content-primary'
               }`}
             >
               公开笔记
@@ -714,7 +714,7 @@ export default function NotesPage() {
                     alert('请先登录');
                   }
                 }}
-                className="bg-[#6b7d99] text-white px-4 py-2 rounded-lg hover:bg-[#4a5d7a] transition-colors"
+                className="btn btn-primary"
               >
                 新建笔记
               </button>
@@ -723,10 +723,10 @@ export default function NotesPage() {
                   setIsMultiSelectMode(!isMultiSelectMode);
                   setSelectedNotes({});
                 }}
-                className={`px-4 py-2 rounded-lg transition-colors ${
-                  isMultiSelectMode 
-                    ? 'bg-[#0C1F3D] text-white hover:bg-gray-700' 
-                    : 'bg-[#b8bfcc] text-gray-700 hover:bg-[#a0aec0]'
+                className={`btn ${
+                  isMultiSelectMode
+                    ? 'btn-primary'
+                    : 'btn-secondary'
                 }`}
               >
                 {isMultiSelectMode ? '取消多选' : '多选'}
@@ -740,7 +740,7 @@ export default function NotesPage() {
                     }
                   }}
                   disabled={isDeleting}
-                  className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
+                  className="btn btn-danger disabled:opacity-50"
                 >
                   {isDeleting ? '删除中...' : '删除所选'}
                 </button>
@@ -758,11 +758,11 @@ export default function NotesPage() {
             placeholder="搜索笔记..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full px-4 py-2 border border-[#b8bfcc] rounded-lg focus:ring-2 focus:ring-[#6b7d99] focus:border-transparent"
+            className="input-field w-full"
           />
           {isSearching && (
             <div className="absolute right-3 top-2.5">
-              <div className="animate-spin h-5 w-5 border-2 border-[#b8bfcc] border-t-blue-600 rounded-full"></div>
+              <div className="animate-spin h-5 w-5 border-2 border-line-strong border-t-blue-600 rounded-full"></div>
             </div>
           )}
         </div>
@@ -770,15 +770,15 @@ export default function NotesPage() {
 
       {/* 显示笔记统计信息 */}
       {!searchQuery.trim() && pagination?.total > 0 && (
-        <div className="mb-4 text-sm text-gray-600 note-count" data-notes-count={pagination?.total || 0} data-view-mode={viewMode}>
+        <div className="mb-4 text-sm text-content-secondary note-count" data-notes-count={pagination?.total || 0} data-view-mode={viewMode}>
           共 {pagination?.total || 0} 篇{viewMode === 'my' ? '我的' : '公开'}笔记，第 {pagination?.page || 1} / {pagination?.totalPages || 1} 页
         </div>
       )}
 
       {/* 刷新时的细 loading 条，不影响已有内容显示 */}
       {loading && notes.length > 0 && (
-        <div className="fixed top-0 left-0 right-0 z-50 h-1 bg-[#d1d6e0]">
-          <div className="h-full bg-[#3d4f6b] animate-pulse" style={{ width: '60%' }} />
+        <div className="fixed top-0 left-0 right-0 z-50 h-1 bg-surface-page">
+          <div className="h-full bg-content-secondary animate-pulse" style={{ width: '60%' }} />
         </div>
       )}
 
@@ -787,10 +787,10 @@ export default function NotesPage() {
       <div className="grid gap-6">
         {!displayNotes || displayNotes.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-gray-500 text-lg">
-              {searchQuery.trim() ? '没有找到相关笔记' : 
-                viewMode === 'my' && status === 'authenticated' ? 
-                  '还没有笔记，快去创建一个吧！' : 
+            <p className="text-content-muted text-lg">
+              {searchQuery.trim() ? '没有找到相关笔记' :
+                viewMode === 'my' && status === 'authenticated' ?
+                  '还没有笔记，快去创建一个吧！' :
                   '暂时没有公开笔记可以查看'
               }
             </p>
@@ -800,8 +800,8 @@ export default function NotesPage() {
             <div
               key={note.id || note._id}
               id={`note-${note.id || note._id}`}
-              className={`bg-[#f5f7fa] rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow ${
-              isMultiSelectMode && viewMode === 'my' ? 'border-2 ' + (selectedNotes[note.id || note._id || ''] ? 'border-[#6b7d99]' : 'border-transparent') : ''
+              className={`bg-surface-raised rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow ${
+              isMultiSelectMode && viewMode === 'my' ? 'border-2 ' + (selectedNotes[note.id || note._id || ''] ? 'border-content-muted' : 'border-transparent') : ''
               } ${!isMultiSelectMode ? 'cursor-pointer' : ''}`}
               onClick={() => {
                 if (isMultiSelectMode) return;
@@ -823,7 +823,7 @@ export default function NotesPage() {
                           [noteId]: e.target.checked
                         }));
                       }}
-                      className="h-5 w-5 rounded border-[#b8bfcc] text-[#6b7d99] focus:ring-[#6b7d99]"
+                      className="h-5 w-5 rounded border-line-strong text-content-muted focus:ring-content-muted"
                     />
                   </div>
                 )}
@@ -831,7 +831,7 @@ export default function NotesPage() {
                   <h3 className="text-xl font-semibold mb-2">
                     <Link
                       href={`/notes/${note.id || note._id}`}
-                      className="text-[#6b7d99] hover:text-[#0C1F3D]"
+                      className="text-content-muted hover:text-content-primary"
                       onClick={(e) => {
                         e.stopPropagation();
                         rememberListPosition(note.id || note._id);
@@ -840,14 +840,14 @@ export default function NotesPage() {
                       {note.title}
                     </Link>
                   </h3>
-                  <div className="flex items-center space-x-4 text-sm text-gray-500 mb-2">
+                  <div className="flex items-center space-x-4 text-sm text-content-muted mb-2">
                     {note.category && (
-                      <span className="bg-[#d1d6e0] text-[#0C1F3D] px-2 py-1 rounded">
+                      <span className="bg-surface-page text-content-primary px-2 py-1 rounded">
                         {note.category}
                       </span>
                     )}
                     {note.technology && (
-                      <span className="bg-[#b8bfcc] text-[#4f6b8a] px-2 py-1 rounded">
+                      <span className="bg-surface-muted text-content-secondary px-2 py-1 rounded">
                         {note.technology}
                       </span>
                     )}
@@ -859,9 +859,9 @@ export default function NotesPage() {
                 </div>
                 {viewMode === 'my' && !isMultiSelectMode && (
                   <div className="flex space-x-2">
-                    <Link 
+                    <Link
                       href={`/notes/${note.id || note._id}/edit`}
-                      className="text-[#6b7d99] hover:text-[#0C1F3D] text-sm"
+                      className="text-content-muted hover:text-content-primary text-sm"
                       onClick={(e) => {
                         e.stopPropagation();
                         rememberListPosition(note.id || note._id);
@@ -889,7 +889,7 @@ export default function NotesPage() {
                   </div>
                 )}
               </div>
-              
+
               <div className="prose max-w-none mb-4">
                 <ReactMarkdown remarkPlugins={[remarkGfm]}>
                   {note.content.length > 200 ? note.content.substring(0, 200) + '...' : note.content}
@@ -900,7 +900,7 @@ export default function NotesPage() {
               {note.tags && note.tags.length > 0 && (
                 <div className="flex flex-wrap gap-2 mb-4">
                   {note.tags.map((tag, index) => (
-                    <span key={index} className="bg-[#d1d6e0] text-gray-800 px-2 py-1 text-xs rounded">
+                    <span key={index} className="bg-surface-page text-content-primary px-2 py-1 text-xs rounded">
                       #{tag}
                     </span>
                   ))}
@@ -908,7 +908,7 @@ export default function NotesPage() {
               )}
 
               {/* 统计信息 */}
-              <div className="flex items-center space-x-4 text-sm text-gray-500">
+              <div className="flex items-center space-x-4 text-sm text-content-muted">
                 <span>👍 {note.likeCount || note.like_count || 0}</span>
                 <span>🔖 {note.bookmarkCount || note.bookmark_count || 0}</span>
                 <span>💬 {note.commentCount || note.comment_count || 0}</span>
@@ -927,20 +927,20 @@ export default function NotesPage() {
             disabled={!(pagination?.hasPrev || false)}
             className={`px-3 py-2 rounded-md text-sm font-medium ${
               (pagination?.hasPrev || false)
-                ? 'bg-[#f5f7fa] border border-[#b8bfcc] text-gray-700 hover:bg-[#EDF0F5]'
-                : 'bg-[#d1d6e0] text-gray-400 cursor-not-allowed'
+                ? 'bg-surface-raised border border-line-strong text-content-primary hover:bg-surface-page'
+                : 'bg-surface-page text-gray-400 cursor-not-allowed'
             }`}
           >
             上一页
           </button>
-          
+
           {/* 页码 */}
           <div className="flex space-x-1">
             {Array.from({ length: Math.min(5, pagination?.totalPages || 1) }, (_, i) => {
               let pageNum;
               const page = pagination?.page || 1;
               const totalPages = pagination?.totalPages || 1;
-              
+
               if (totalPages <= 5) {
                 pageNum = i + 1;
               } else if (page <= 3) {
@@ -950,15 +950,15 @@ export default function NotesPage() {
               } else {
                 pageNum = page - 2 + i;
               }
-              
+
               return (
                 <button
                   key={pageNum}
                   onClick={() => handlePageChange(pageNum)}
                   className={`px-3 py-2 rounded-md text-sm font-medium ${
                     pageNum === page
-                      ? 'bg-[#6b7d99] text-white'
-                      : 'bg-[#f5f7fa] border border-[#b8bfcc] text-gray-700 hover:bg-[#EDF0F5]'
+                      ? 'bg-content-muted text-white'
+                      : 'bg-surface-raised border border-line-strong text-content-primary hover:bg-surface-page'
                   }`}
                 >
                   {pageNum}
@@ -966,14 +966,14 @@ export default function NotesPage() {
               );
             })}
           </div>
-          
+
           <button
             onClick={() => handlePageChange((pagination?.page || 1) + 1)}
             disabled={!(pagination?.hasNext || false)}
             className={`px-3 py-2 rounded-md text-sm font-medium ${
               (pagination?.hasNext || false)
-                ? 'bg-[#f5f7fa] border border-[#b8bfcc] text-gray-700 hover:bg-[#EDF0F5]'
-                : 'bg-[#d1d6e0] text-gray-400 cursor-not-allowed'
+                ? 'bg-surface-raised border border-line-strong text-content-primary hover:bg-surface-page'
+                : 'bg-surface-page text-gray-400 cursor-not-allowed'
             }`}
           >
             下一页
@@ -984,13 +984,13 @@ export default function NotesPage() {
       {/* 创建笔记表单模态框 */}
       {showCreateForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-[#f5f7fa] rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="bg-surface-raised rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-2xl font-bold">创建新笔记</h2>
                 <button
                   onClick={() => setShowCreateForm(false)}
-                  className="text-gray-500 hover:text-gray-700"
+                  className="text-content-muted hover:text-content-primary"
                 >
                   ✕
                 </button>
@@ -998,7 +998,7 @@ export default function NotesPage() {
 
               {/* 模板选择区域 */}
               <div className="mb-4">
-                <p className="text-sm font-medium text-gray-700 mb-2">选择模板（可选）</p>
+                <p className="text-sm font-medium text-content-primary mb-2">选择模板（可选）</p>
                 <div className="flex gap-2 overflow-x-auto pb-2">
                   {[
                     { label: '📚 学习笔记', icon: '📚', category: '学习', technology: '', subcategory: '', tags: '学习,笔记', content: '## 学习目标\n\n\n## 核心知识点\n\n\n## 示例代码\n\n```\n\n```\n\n## 总结\n\n' },
@@ -1019,7 +1019,7 @@ export default function NotesPage() {
                         tags: tpl.tags,
                         content: tpl.content,
                       }))}
-                      className="flex-shrink-0 px-3 py-2 text-sm border border-gray-200 rounded-lg hover:border-blue-400 hover:bg-[#d1d6e0] hover:text-[#0C1F3D] transition-colors whitespace-nowrap"
+                      className="flex-shrink-0 px-3 py-2 text-sm border border-line-subtle rounded-lg hover:border-brand-primary hover:bg-surface-page hover:text-content-primary transition-colors whitespace-nowrap"
                     >
                       {tpl.label}
                     </button>
@@ -1029,60 +1029,60 @@ export default function NotesPage() {
 
               <form onSubmit={handleCreateNote} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">标题</label>
+                  <label className="block text-sm font-medium text-content-primary mb-2">标题</label>
                   <input
                     type="text"
                     value={newNote.title}
                     onChange={(e) => setNewNote({ ...newNote, title: e.target.value })}
-                    className="w-full px-3 py-2 border border-[#b8bfcc] rounded-md focus:ring-[#6b7d99] focus:border-[#6b7d99] bg-[#f5f7fa] text-gray-900"
+                    className="w-full px-3 py-2 border border-line-strong rounded-md focus:ring-content-muted focus:border-content-muted bg-surface-raised text-content-primary"
                     required
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">分类</label>
+                    <label className="block text-sm font-medium text-content-primary mb-2">分类</label>
                     <input
                       type="text"
                       value={newNote.category}
                       onChange={(e) => setNewNote({ ...newNote, category: e.target.value })}
-                      className="w-full px-3 py-2 border border-[#b8bfcc] rounded-md focus:ring-[#6b7d99] focus:border-[#6b7d99] bg-[#f5f7fa] text-gray-900"
+                      className="w-full px-3 py-2 border border-line-strong rounded-md focus:ring-content-muted focus:border-content-muted bg-surface-raised text-content-primary"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">技术栈</label>
+                    <label className="block text-sm font-medium text-content-primary mb-2">技术栈</label>
                     <input
                       type="text"
                       value={newNote.technology}
                       onChange={(e) => setNewNote({ ...newNote, technology: e.target.value })}
-                      className="w-full px-3 py-2 border border-[#b8bfcc] rounded-md focus:ring-[#6b7d99] focus:border-[#6b7d99] bg-[#f5f7fa] text-gray-900"
+                      className="w-full px-3 py-2 border border-line-strong rounded-md focus:ring-content-muted focus:border-content-muted bg-surface-raised text-content-primary"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">子分类</label>
+                  <label className="block text-sm font-medium text-content-primary mb-2">子分类</label>
                   <input
                     type="text"
                     value={newNote.subcategory}
                     onChange={(e) => setNewNote({ ...newNote, subcategory: e.target.value })}
-                    className="w-full px-3 py-2 border border-[#b8bfcc] rounded-md focus:ring-[#6b7d99] focus:border-[#6b7d99] bg-[#f5f7fa] text-gray-900"
+                    className="w-full px-3 py-2 border border-line-strong rounded-md focus:ring-content-muted focus:border-content-muted bg-surface-raised text-content-primary"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">标签（用逗号分隔）</label>
+                  <label className="block text-sm font-medium text-content-primary mb-2">标签（用逗号分隔）</label>
                   <input
                     type="text"
                     value={newNote.tags}
                     onChange={(e) => setNewNote({ ...newNote, tags: e.target.value })}
-                    className="w-full px-3 py-2 border border-[#b8bfcc] rounded-md focus:ring-[#6b7d99] focus:border-[#6b7d99] bg-[#f5f7fa] text-gray-900"
+                    className="w-full px-3 py-2 border border-line-strong rounded-md focus:ring-content-muted focus:border-content-muted bg-surface-raised text-content-primary"
                     placeholder="例如：JavaScript, React, 前端"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">内容</label>
+                  <label className="block text-sm font-medium text-content-primary mb-2">内容</label>
                   <MarkdownEditor
                     value={newNote.content}
                     onChange={(value) => setNewNote({ ...newNote, content: value })}
@@ -1095,9 +1095,9 @@ export default function NotesPage() {
                     id="isPublic"
                     checked={newNote.isPublic}
                     onChange={(e) => setNewNote({ ...newNote, isPublic: e.target.checked })}
-                    className="h-4 w-4 text-[#6b7d99] focus:ring-[#6b7d99] border-[#b8bfcc] rounded bg-[#f5f7fa]"
+                    className="h-4 w-4 text-brand-primary focus:ring-brand-primary border-line-subtle rounded bg-control-fill"
                   />
-                  <label htmlFor="isPublic" className="ml-2 block text-sm text-gray-900">
+                  <label htmlFor="isPublic" className="ml-2 block text-sm text-content-primary">
                     公开笔记（其他用户可以查看）
                   </label>
                 </div>
@@ -1106,13 +1106,13 @@ export default function NotesPage() {
                   <button
                     type="button"
                     onClick={() => setShowCreateForm(false)}
-                    className="px-4 py-2 text-gray-700 bg-[#b8bfcc] rounded-md hover:bg-[#a0aec0]"
+                    className="btn btn-secondary"
                   >
                     取消
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-2 bg-[#6b7d99] text-white rounded-md hover:bg-[#4a5d7a]"
+                    className="btn btn-primary"
                   >
                     创建笔记
                   </button>
@@ -1126,8 +1126,8 @@ export default function NotesPage() {
     </div>
 
       {/* 水墨画底部装饰 */}
-      <InkWashDecoration variant="bamboo" height={80} className="bg-[#d1d6e0] mt-8" />
-      <InkWashDecoration variant="landscape" height={180} className="bg-[#d1d6e0]" />
+      <InkWashDecoration variant="bamboo" height={80} className="bg-surface-page mt-8" />
+      <InkWashDecoration variant="landscape" height={180} className="bg-surface-page" />
     </div>
   );
 }
