@@ -1,329 +1,156 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { Card, Row, Col, Select, Tag, Button, Input, Pagination, Spin, message } from 'antd';
-import {
-  TrophyOutlined,
-  ClockCircleOutlined,
-  DatabaseOutlined,
-  SearchOutlined,
-  FilterOutlined
-} from '@ant-design/icons';
-import Link from 'next/link';
-import { challengeCategories, difficultyColors, difficultyLabels } from '@/app/data/challenges';
-import InkWashDecoration from '@/app/components/InkWashDecoration';
+import React, { useState } from 'react';
+import { 
+  Globe, 
+  Compass, 
+  Award, 
+  BarChart2, 
+  FileText, 
+  Trophy, 
+  ArrowLeft,
+  Zap,
+  CheckCircle
+} from 'lucide-react';
+import { SpaceDust } from './components/SpaceDust';
+import SpaceUniverse from './components/SpaceUniverse';
+import { KnowledgeTree } from './components/KnowledgeTree';
+import { QuizWorkspace } from './components/QuizWorkspace';
+import { STAGES, Stage } from './components/data';
 
-const { Search } = Input;
+export default function UniversePage() {
+  // 核心层级切换状态: 
+  // 'universe' -> 宇宙探索星球图层
+  // 'tree' -> 知识节点树图层
+  // 'quiz' -> 编程练习和AI答疑层
+  const [currentLayer, setCurrentLayer] = useState<'universe' | 'tree' | 'quiz'>('universe');
+  
+  // 选中的 Stage 与子节点知识点
+  const [selectedStage, setSelectedStage] = useState<Stage>(STAGES[3]); // 默认第四阶段-机器学习
+  const [selectedNodeName, setSelectedNodeName] = useState<string>("支持向量机 (SVM)");
 
-interface Challenge {
-  id: string;
-  title: string;
-  description: string;
-  difficulty: 'easy' | 'medium' | 'hard';
-  category: string;
-  tags: string[];
-  languages: string[];
-  timeLimit: number;
-  memoryLimit: number;
-  points: number;
-}
-
-const ChallengePage: React.FC = () => {
-  const [challenges, setChallenges] = useState<Challenge[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [filters, setFilters] = useState({
-    difficulty: 'all',
-    category: 'all',
-    search: ''
-  });
-  const [pagination, setPagination] = useState({
-    page: 1,
-    limit: 12,
-    total: 0,
-    totalPages: 0
-  });
-
-  // 获取挑战列表
-  const fetchChallenges = async () => {
-    setLoading(true);
-    try {
-      const params = new URLSearchParams({
-        page: pagination.page.toString(),
-        limit: pagination.limit.toString(),
-      });
-
-      if (filters.difficulty !== 'all') {
-        params.append('difficulty', filters.difficulty);
-      }
-      if (filters.category !== 'all') {
-        params.append('category', filters.category);
-      }
-
-      const response = await fetch(`/api/challenges?${params}`);
-      const result = await response.json();
-
-      if (result.success) {
-        let filteredChallenges = result.data.challenges;
-
-        // 客户端搜索过滤
-        if (filters.search) {
-          filteredChallenges = filteredChallenges.filter((challenge: Challenge) =>
-            challenge.title.toLowerCase().includes(filters.search.toLowerCase()) ||
-            challenge.description.toLowerCase().includes(filters.search.toLowerCase()) ||
-            challenge.tags.some(tag => tag.toLowerCase().includes(filters.search.toLowerCase()))
-          );
-        }
-
-        setChallenges(filteredChallenges);
-        setPagination(prev => ({
-          ...prev,
-          total: result.data.pagination.total,
-          totalPages: result.data.pagination.totalPages
-        }));
-      } else {
-        message.error('获取挑战列表失败');
-      }
-    } catch (error) {
-      console.error('获取挑战列表失败:', error);
-      message.error('获取挑战列表失败');
-    } finally {
-      setLoading(false);
+  const handleSelectStage = (stage: Stage) => {
+    setSelectedStage(stage);
+    // 默认选中该 Stage 下第一个 Topic 的第一个 Child
+    if (stage.topics.length > 0 && stage.topics[0].children.length > 0) {
+      setSelectedNodeName(stage.topics[0].children[0]);
     }
-  };
-
-  useEffect(() => {
-    fetchChallenges();
-  }, [pagination.page, filters.difficulty, filters.category]);
-
-  // 处理搜索
-  const handleSearch = (value: string) => {
-    setFilters(prev => ({ ...prev, search: value }));
-    fetchChallenges();
-  };
-
-  // 处理筛选
-  const handleFilter = (type: string, value: string) => {
-    setFilters(prev => ({ ...prev, [type]: value }));
-    setPagination(prev => ({ ...prev, page: 1 }));
-  };
-
-  // 处理分页
-  const handlePageChange = (page: number) => {
-    setPagination(prev => ({ ...prev, page }));
+    setCurrentLayer('tree');
   };
 
   return (
-    <>
-    <div className="min-h-screen bg-surface-page py-8">
-      {/* 水墨画顶部装饰 */}
-      <InkWashDecoration variant="landscape" height={180} className="bg-surface-page -mt-8" />
-      <InkWashDecoration variant="mist" height={50} className="bg-surface-page -mt-4" />
+    // 去除 fixed inset-0 z-50，改用 relative w-full h-[calc(100vh-4.5rem)] 嵌入父页面流中
+    <div className="relative w-full h-[calc(100vh-4.5rem)] min-h-[650px] overflow-hidden bg-black text-slate-100 flex font-sans antialiased">
+      {/* 粒子背景 */}
+      <SpaceDust />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* 页面标题 */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-content-primary mb-4">
-            <TrophyOutlined className="mr-3 text-yellow-500" />
-            代码挑战
-          </h1>
-          <p className="text-xl text-content-secondary">
-            通过编程挑战提升你的算法和编程技能
-          </p>
-          <div className="mt-4">
-            <Link href="/challenges/leaderboard">
-              <Button type="default" className="mr-4">
-                查看排行榜
-              </Button>
-            </Link>
-          </div>
-        </div>
-
-        {/* 筛选和搜索 */}
-        <div className="rounded-lg border border-line-subtle bg-surface-raised p-6 mb-8 shadow-frost">
-          <Row gutter={[16, 16]} align="middle">
-            <Col xs={24} sm={12} md={6}>
-              <div className="flex items-center gap-2">
-                <FilterOutlined />
-                <span className="font-medium">难度:</span>
-                <Select
-                  value={filters.difficulty}
-                  onChange={(value) => handleFilter('difficulty', value)}
-                  style={{ width: 120 }}
-                  options={[
-                    { label: '全部', value: 'all' },
-                    { label: '简单', value: 'easy' },
-                    { label: '中等', value: 'medium' },
-                    { label: '困难', value: 'hard' }
-                  ]}
-                />
-              </div>
-            </Col>
-            <Col xs={24} sm={12} md={6}>
-              <div className="flex items-center gap-2">
-                <FilterOutlined />
-                <span className="font-medium">分类:</span>
-                <Select
-                  value={filters.category}
-                  onChange={(value) => handleFilter('category', value)}
-                  style={{ width: 120 }}
-                  options={[
-                    { label: '全部', value: 'all' },
-                    ...challengeCategories.map(cat => ({ label: cat, value: cat }))
-                  ]}
-                />
-              </div>
-            </Col>
-            <Col xs={24} sm={24} md={12}>
-              <Search
-                placeholder="搜索挑战标题、描述或标签..."
-                allowClear
-                enterButton={<SearchOutlined />}
-                size="large"
-                onSearch={handleSearch}
-                style={{ width: '100%' }}
-              />
-            </Col>
-          </Row>
-        </div>
-
-        {/* 挑战列表 */}
-        {loading ? (
-          <div className="text-center py-12 text-content-secondary">
-            <Spin size="large" />
-            <p className="mt-4 text-content-secondary">加载挑战中...</p>
-          </div>
-        ) : (
-          <>
-            <Row gutter={[24, 24]}>
-              {challenges.map((challenge) => (
-                <Col xs={24} sm={12} lg={8} xl={6} key={challenge.id}>
-                  <Card
-                    hoverable
-                    className="h-full challenge-card"
-                    cover={
-                      <div className="p-4 bg-gradient-to-r from-surface-inverse to-content-muted text-content-inverse">
-                        <div className="flex justify-between items-start mb-2">
-                          <Tag
-                            color={difficultyColors[challenge.difficulty]}
-                            className="font-medium"
-                          >
-                            {difficultyLabels[challenge.difficulty]}
-                          </Tag>
-                          <div className="flex items-center text-sm">
-                            <TrophyOutlined className="mr-1" />
-                            {challenge.points}分
-                          </div>
-                        </div>
-                        <h3 className="text-lg font-bold mb-2 line-clamp-2">
-                          {challenge.title}
-                        </h3>
-                        <div className="flex items-center justify-between text-sm opacity-90">
-                          <div className="flex items-center">
-                            <ClockCircleOutlined className="mr-1" />
-                            {challenge.timeLimit}s
-                          </div>
-                          <div className="flex items-center">
-                            <DatabaseOutlined className="mr-1" />
-                            {challenge.memoryLimit}MB
-                          </div>
-                        </div>
-                      </div>
-                    }
-                    actions={[
-                      <Link key="solve" href={`/challenges/${challenge.id}`}>
-                        <Button type="primary" block>
-                          开始挑战
-                        </Button>
-                      </Link>
-                    ]}
-                  >
-                    <div className="p-2">
-                      <div className="mb-3">
-                        <Tag color="blue">{challenge.category}</Tag>
-                      </div>
-
-                      <p className="text-content-secondary text-sm mb-3 line-clamp-3">
-                        {challenge.description.substring(0, 100)}...
-                      </p>
-
-                      <div className="mb-3">
-                        <div className="text-xs text-content-muted mb-1">支持语言:</div>
-                        <div className="flex flex-wrap gap-1">
-                                                     {challenge.languages.slice(0, 3).map(lang => (
-                             <Tag key={lang} className="text-xs">
-                               {lang.toUpperCase()}
-                             </Tag>
-                           ))}
-                           {challenge.languages.length > 3 && (
-                             <Tag className="text-xs">+{challenge.languages.length - 3}</Tag>
-                           )}
-                        </div>
-                      </div>
-
-                                             <div className="flex flex-wrap gap-1">
-                         {challenge.tags.slice(0, 2).map(tag => (
-                           <Tag key={tag} className="text-xs" color="geekblue">
-                             {tag}
-                           </Tag>
-                         ))}
-                         {challenge.tags.length > 2 && (
-                           <Tag className="text-xs" color="geekblue">+{challenge.tags.length - 2}</Tag>
-                         )}
-                       </div>
-                    </div>
-                  </Card>
-                </Col>
-              ))}
-            </Row>
-
-            {/* 分页 */}
-            {pagination.total > pagination.limit && (
-              <div className="mt-8 text-center">
-                <Pagination
-                  current={pagination.page}
-                  total={pagination.total}
-                  pageSize={pagination.limit}
-                  onChange={handlePageChange}
-                  showSizeChanger={false}
-                  showQuickJumper
-                  showTotal={(total, range) =>
-                    `第 ${range[0]}-${range[1]} 条，共 ${total} 条挑战`
-                  }
-                />
-              </div>
+      {/* 🌌 主视图区 */}
+      <div className="flex-1 flex flex-col overflow-hidden relative">
+        
+        {/* 顶部通栏玻璃态 Header - 放在全局导航栏下方 */}
+        <header className="h-14 border-b border-slate-900/60 bg-slate-950/40 backdrop-blur-md px-6 flex justify-between items-center z-10 shrink-0">
+          <div className="flex items-center gap-3">
+            {currentLayer !== 'universe' && (
+              <button 
+                onClick={() => {
+                  if (currentLayer === 'quiz') setCurrentLayer('tree');
+                  else if (currentLayer === 'tree') setCurrentLayer('universe');
+                }}
+                className="p-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-400 hover:text-white hover:bg-slate-800 transition"
+              >
+                <ArrowLeft className="w-4 h-4" />
+              </button>
             )}
-          </>
-        )}
+            <h1 className="text-base font-bold tracking-wider bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-indigo-200 to-purple-400">
+              AI LEARNING UNIVERSE <span className="text-xs px-2 py-0.5 ml-2 border border-indigo-500/30 rounded bg-indigo-950/40 text-indigo-300 font-normal">宇宙探索系统</span>
+            </h1>
+          </div>
+
+          <div className="flex items-center gap-6 text-xs text-slate-400">
+            <span className="flex items-center gap-1.5"><Zap className="w-3.5 h-3.5 text-amber-400" /> 探索进度: <strong className="text-white">7/9 阶段</strong></span>
+            <span className="flex items-center gap-1.5"><CheckCircle className="w-3.5 h-3.5 text-emerald-400" /> 已做题目: <strong className="text-white">324 题</strong></span>
+            <span className="w-px h-4 bg-slate-800" />
+            <div className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="text-[11px] text-emerald-400">沙箱运行中</span>
+            </div>
+          </div>
+        </header>
+
+        {/* 主视口 */}
+        <div className="flex-1 overflow-hidden relative">
+          {currentLayer === 'universe' && (
+            <SpaceUniverse onSelectStage={handleSelectStage} />
+          )}
+
+          {currentLayer === 'tree' && (
+            <KnowledgeTree 
+              selectedStage={selectedStage}
+              selectedNodeName={selectedNodeName}
+              onSelectNode={setSelectedNodeName}
+              onBackToUniverse={() => setCurrentLayer('universe')}
+              onStartQuiz={() => setCurrentLayer('quiz')}
+            />
+          )}
+
+          {currentLayer === 'quiz' && (
+            <QuizWorkspace selectedNodeName={selectedNodeName} />
+          )}
+        </div>
       </div>
 
-      {/* 水墨画底部装饰 */}
-      <InkWashDecoration variant="bamboo" height={100} className="bg-surface-page mt-8" />
-      <InkWashDecoration variant="landscape" height={200} className="bg-surface-page" />
+      {/* 🌐 导航 Sidebar 改为右侧放置，修改为 border-l 贴合右边缘 */}
+      <div className="w-16 border-l border-slate-900 bg-slate-950/70 backdrop-blur-md flex flex-col items-center py-6 gap-6 z-10 shrink-0">
+        <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center filter drop-shadow-[0_0_6px_rgba(99,102,241,0.4)]">
+          <Trophy className="w-4 h-4 text-white" />
+        </div>
+        
+        <div className="flex-1 flex flex-col gap-5 w-full px-1.5">
+          <button 
+            onClick={() => { setCurrentLayer('universe'); }}
+            className={`w-full py-2.5 rounded-xl flex flex-col items-center gap-1 group transition-all ${currentLayer === 'universe' ? 'bg-indigo-600/30 text-indigo-400' : 'text-slate-500 hover:text-slate-300'}`}
+          >
+            <Globe className="w-4.5 h-4.5 group-hover:scale-110 transition-transform" />
+            <span className="text-[9px] font-medium tracking-wider">星空</span>
+          </button>
+          
+          <button 
+            onClick={() => { setCurrentLayer('tree'); }}
+            className={`w-full py-2.5 rounded-xl flex flex-col items-center gap-1 group transition-all ${currentLayer === 'tree' ? 'bg-indigo-600/30 text-indigo-400' : 'text-slate-500 hover:text-slate-300'}`}
+          >
+            <Compass className="w-4.5 h-4.5 group-hover:scale-110 transition-transform" />
+            <span className="text-[9px] font-medium tracking-wider">知识</span>
+          </button>
 
-      <style jsx>{`
-        .challenge-card {
-          transition: all 0.3s ease;
-        }
-        .challenge-card:hover {
-          transform: translateY(-4px);
-          box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-        }
-        .line-clamp-2 {
-          display: -webkit-box;
-          -webkit-line-clamp: 2;
-          -webkit-box-orient: vertical;
-          overflow: hidden;
-        }
-        .line-clamp-3 {
-          display: -webkit-box;
-          -webkit-line-clamp: 3;
-          -webkit-box-orient: vertical;
-          overflow: hidden;
-        }
-      `}</style>
+          <button 
+            className="w-full py-2.5 rounded-xl flex flex-col items-center gap-1 text-slate-700 cursor-not-allowed"
+            title="开发中..."
+          >
+            <Award className="w-4.5 h-4.5" />
+            <span className="text-[9px] font-medium tracking-wider">成就</span>
+          </button>
+
+          <button 
+            className="w-full py-2.5 rounded-xl flex flex-col items-center gap-1 text-slate-700 cursor-not-allowed"
+            title="开发中..."
+          >
+            <BarChart2 className="w-4.5 h-4.5" />
+            <span className="text-[9px] font-medium tracking-wider">排行</span>
+          </button>
+
+          <button 
+            className="w-full py-2.5 rounded-xl flex flex-col items-center gap-1 text-slate-700 cursor-not-allowed"
+            title="开发中..."
+          >
+            <FileText className="w-4.5 h-4.5" />
+            <span className="text-[9px] font-medium tracking-wider">笔记</span>
+          </button>
+        </div>
+
+        <div className="w-8 h-8 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center text-[10px] text-slate-400 font-mono">
+          AI
+        </div>
+      </div>
     </div>
-    </>
   );
-};
-
-export default ChallengePage;
+}
