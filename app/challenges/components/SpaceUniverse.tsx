@@ -348,6 +348,7 @@ export default function SpaceUniverse({ onSelectStage }: Props) {
                   }}
                 >
                   {/* 高清动物图像 */}
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={STAGE_ANIMAL_IMAGES[stage.id]}
                     alt={stage.name}
