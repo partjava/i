@@ -99,6 +99,18 @@ export interface SubtopicDetail {
   }[];
   thinkingQuestion: string;
   aiPrompt: string;
+  solutionCode?: string;
+  authorId?: number | null;
+  isOfficial?: boolean;
+  levelIndex?: number;
+  levelTitle?: string;
+  stageId?: number;
+  userRecord?: {
+    codePassed?: boolean;
+    quizAnswers?: any;
+    thinkingScore?: number;
+    thinkingFeedback?: string;
+  } | null;
 }
 
 export interface Topic {
@@ -430,6 +442,166 @@ class SVMClassifier:
     ],
     thinkingQuestion: "既然核函数（Kernel Trick）能将低维数据映射到无穷维高维空间，为什么 SVM 在高维空间中不会轻易面临‘维度灾难’和严重的过拟合问题？",
     aiPrompt: "评估学生对SVM抗过拟合机制的理解。核心得分点：1. SVM的复杂度是由支持向量的个数（而不是特征维数）决定的；2. SVM目标函数是最大化分类间隔（正则化项 1/2||w||^2 起到泛化控制作用）。请给打分（0-10分）并附上中文指导建议。"
+  },
+  "图像滤波与增强": {
+    id: "image-filtering",
+    name: "图像滤波与增强 (Image Filtering)",
+    theory: `### 图像滤波与增强
+图像滤波与增强是计算机视觉和图像处理中基础而关键的步骤。其基本原理是利用卷积核（Kernel）在图像上进行滑动窗口乘积和求和，以实现噪声平滑（如高斯滤波）或边缘提取。
+
+#### 1. 离散二维图像卷积
+给定一个 $M \\times N$ 的输入图像 $f(x, y)$ 和大小为 $(2k+1) \\times (2k+1)$ 的卷积核 $h(i, j)$，卷积操作公式为：
+$$g(x, y) = \\sum_{i=-k}^{k} \\sum_{j=-k}^{k} f(x-i, y-j) \\cdot h(i, j)$$
+
+#### 2. 高斯核算子定义
+高斯滤波常用于消除图像的随机高斯噪声。二维高斯分布公式表示为：
+$$G(x, y) = \\frac{1}{2\\pi\\sigma^2} e^{-\\frac{x^2 + y^2}{2\\sigma^2}}$$`,
+    latexFormulas: [
+      "g(x, y) = \\sum_{i=-k}^{k} \\sum_{j=-k}^{k} f(x-i, y-j) \\cdot h(i, j)",
+      "G(x, y) = \\frac{1}{2\\pi\\sigma^2} e^{-\\frac{x^2 + y^2}{2\\sigma^2}}"
+    ],
+    starterCode: `import numpy as np
+
+class ImageFilter:
+    def convolve2d(self, image: np.ndarray, kernel: np.ndarray) -> np.ndarray:
+        """
+        待补全：编写标准的二维图像零填充（Zero Padding）卷积计算逻辑。
+        输入参数：
+        - image: 二维 numpy 数组，大小为 (H, W)
+        - kernel: 二维 numpy 卷积核，大小为 (kh, kw)，保证奇数行奇数列
+        返回值：
+        - 卷积运算后的二维 numpy 数组，大小保持为 (H, W)
+        """
+        H, W = image.shape
+        kh, kw = kernel.shape
+        ph = kh // 2
+        pw = kw // 2
+        
+        # 1. 对原始图像进行 Zero Padding
+        padded_img = np.pad(image, ((ph, ph), (pw, pw)), mode='constant', constant_values=0)
+        
+        # 2. 补全卷积运算逻辑
+        output = np.zeros((H, W))
+        # --- 在此补全你的代码逻辑 ---
+        
+        return output
+`,
+    expectedOutput: "[4 8 12 16]",
+    conceptualQuizzes: [
+      {
+        question: "在对灰度图像进行低通（如均值/高斯）滤波处理时，以下哪个说法是正确的？",
+        options: [
+          "A. 滤波处理可以使图像边缘对比度更加强烈，细节更明显",
+          "B. 滤波能有效平滑图像高频噪声，但同时会使图像边界产生一定模糊",
+          "C. 每一个滤波核中的数值加起来一定要等于 0",
+          "D. 高斯滤波器中的方差（sigma）值越小，图像越模糊"
+        ],
+        answer: 1,
+        explanation: "低通滤波器通过滤除高频分量来平滑图像。因为图像的边缘细节通常是高频部分，因此噪声消除的同时也会使边缘产生轻微的模糊效应。"
+      }
+    ],
+    thinkingQuestion: "均值滤波、中值滤波和高斯滤波在消除图像噪声时，各自在什么场景下表现最佳？为什么中值滤波非常擅长消除椒盐噪声（Salt & Pepper Noise）？",
+    aiPrompt: "评估学生对不同滤波器的理解。核心点：1. 均值/高斯滤除高斯随机噪声，高斯对近邻权重大；2. 中值滤除突变噪点（椒盐噪声），因为中值取中位数可直接滤除极值点。"
+  },
+  "梯度下降算法": {
+    id: "gradient-descent",
+    name: "梯度下降优化算法 (Gradient Descent)",
+    theory: `### 梯度下降算法 (Gradient Descent)
+梯度下降是机器学习中最基础且最重要的优化算法。它的核心理念是通过沿着目标函数梯度的反方向单步迭代，来寻找函数的局部极小值。
+
+#### 1. 梯度更新公式
+设待优化参数为 $w$，学习率为 $\\eta$，损失函数为 $L(w)$，更新公式表示为：
+$$w_{t+1} = w_t - \\eta \\cdot \\nabla L(w_t)$$
+
+#### 2. 一维函数极小值优化
+以一元二次二次损失函数为例：
+$$L(x) = x^2$$
+其导数（梯度）为 $\\nabla L(x) = 2x$。`,
+    latexFormulas: [
+      "w_{t+1} = w_t - \\eta \\cdot \\nabla L(w_t)"
+    ],
+    starterCode: `import numpy as np
+
+class Optimizer:
+    def gradient_descent(self, start_x: float, learning_rate: float, steps: int) -> float:
+        """
+        待补全：对目标函数 f(x) = x^2 进行梯度下降迭代寻优。
+        要求：
+        - 从 start_x 出发，每次迭代更新：x = x - learning_rate * (2 * x)
+        - 返回迭代 steps 步之后的极值坐标 x
+        """
+        x = start_x
+        # --- 在此补全你的梯度更新代码 ---
+        
+        return x
+`,
+    expectedOutput: "0.0001",
+    conceptualQuizzes: [
+      {
+        question: "如果梯度下降的学习率设得过大，会发生什么？",
+        options: [
+          "A. 优化过程更加稳定，快速收敛",
+          "B. 参数更新出现震荡或发散，导致损失函数无法收敛甚至溢出",
+          "C. 梯度值会迅速变为 0，陷入局部最优",
+          "D. 目标函数会自动变为凸函数"
+        ],
+        answer: 1,
+        explanation: "学习率过大会导致更新步长超出谷底范围，导致参数在最优值两侧来回震荡，严重时损失值直接飞起发散。"
+      }
+    ],
+    thinkingQuestion: "为什么在面对拥有数十万甚至百万参数的深层神经网络时，人们通常采用随机梯度下降（SGD）或 Adam 优化器，而不使用标准的全批量梯度下降（Batch Gradient Descent）？",
+    aiPrompt: "评估学生对SGD和BGD的效率差异理解。核心点：全批量（BGD）需要对所有样本计算梯度，在大数据集上内存开销和时间开销难以承受；SGD通过单样本或小批量估计梯度，计算速度快，且引入的随机性有利于跳过鞍点。"
+  },
+  "K-Means聚类": {
+    id: "kmeans",
+    name: "K-Means 聚类算法 (K-Means)",
+    theory: `### K-Means 聚类算法 (K-Means)
+K-Means 是一种简单且高效的无监督聚类算法。它通过迭代不断划分样本到最近的质心（Centroid），并重新计算各类的几何中心，直至聚类分配不再发生改变。
+
+#### 1. 损失函数 (WCSS)
+K-Means 的优化目标是最小化类内平方和：
+$$J = \\sum_{i=1}^{k} \\sum_{x \\in S_i} ||x - \\mu_i||^2$$
+其中 $\\mu_i$ 是第 $i$ 个簇的均值向量（质心）。`,
+    latexFormulas: [
+      "J = \\sum_{i=1}^{k} \\sum_{x \\in S_i} ||x - \\mu_i||^2"
+    ],
+    starterCode: `import numpy as np
+
+class KMeansClustering:
+    def fit(self, X: np.ndarray, k: int, max_iters: int) -> np.ndarray:
+        """
+        待补全：实现 K-Means 质心更新。
+        输入：
+        - X: 样本矩阵，大小为 (N, D)
+        - k: 聚类簇数
+        - max_iters: 最大迭代次数
+        输出：
+        - 质心矩阵，大小为 (k, D)
+        """
+        N, D = X.shape
+        # 简单随机初始化质心
+        centroids = X[np.random.choice(N, k, replace=False)]
+        
+        # --- 补全聚类循环逻辑并计算簇内均值 ---
+        
+        return centroids
+`,
+    expectedOutput: "[3, 3]",
+    conceptualQuizzes: [
+      {
+        question: "K-Means 算法在划分数据集时，依赖哪个距离度量标准？",
+        options: [
+          "A. 余弦相似度 (Cosine)",
+          "B. 欧氏距离 (Euclidean Distance)",
+          "C. 曼哈顿距离 (Manhattan)",
+          "D. 切比雪夫距离 (Chebyshev)"
+        ],
+        answer: 1,
+        explanation: "标准 K-Means 使用欧氏距离来分配每一个点到距离其最近的几何均值中心。"
+      }
+    ],
+    thinkingQuestion: "K-Means 聚类算法的最终聚类效果很大程度上依赖于随机的初始质心。如果初始质心选择不佳，可能会导致什么问题？有什么经典改进方案（如 K-Means++）能有效缓解这一缺陷？",
+    aiPrompt: "评估学生对K-Means初始化敏感性的认识。核心得分点：1. 随机初始化质心可能会使算法收敛到局部最优，而非全局最优；2. K-Means++ 的改进思想是让初始质心尽量相互远离（选择新质心的概率与当前样本到已有质心的最短距离平方成正比）。"
   }
 };
 

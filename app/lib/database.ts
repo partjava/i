@@ -414,6 +414,94 @@ export async function initDatabase() {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
     `)
 
+    // 宇宙探索关卡挑战主表 (星空关卡)
+    await executeQuery(`
+      CREATE TABLE IF NOT EXISTS star_challenges (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        stage_id INT NOT NULL COMMENT '关卡ID (1-11, 对应星空11个星球)',
+        subtopic_name VARCHAR(255) NOT NULL COMMENT '子话题名称 (如 SVM)',
+        theory_content LONGTEXT COMMENT 'Markdown格式理论讲解内容',
+        latex_formulas JSON COMMENT 'LaTeX公式数组',
+        starter_code TEXT COMMENT 'Python起手代码',
+        expected_output VARCHAR(255) COMMENT '期望输出结果',
+        thinking_question TEXT COMMENT '开放思考题',
+        ai_prompt TEXT COMMENT 'AI评分提示词',
+        author_id INT DEFAULT NULL COMMENT '出题人ID (NULL=官方题目)',
+        status VARCHAR(50) DEFAULT 'published' COMMENT 'draft/published/rejected',
+        solution_code TEXT COMMENT '标准参考答案代码',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        UNIQUE KEY uk_stage_subtopic (stage_id, subtopic_name),
+        INDEX idx_stage_id (stage_id),
+        INDEX idx_author_id (author_id)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    `)
+
+    // 兼容已有数据库：确保 star_challenges 表有 topic_name 字段
+    try {
+      const existingTopicName = await executeQuery(
+        `SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS 
+         WHERE TABLE_SCHEMA = DATABASE() 
+           AND TABLE_NAME = 'star_challenges' 
+           AND COLUMN_NAME = 'topic_name'`,
+        []
+      ) as any[]
+      if (!Array.isArray(existingTopicName) || existingTopicName.length === 0) {
+        await executeQuery("ALTER TABLE star_challenges ADD COLUMN topic_name VARCHAR(255) NOT NULL DEFAULT '其它' COMMENT '所属分类', ADD INDEX idx_topic_name (topic_name)")
+      }
+    } catch (e) {
+      console.error('检查/补充 star_challenges.topic_name 失败:', e)
+    }
+
+    // 兼容已有数据库：确保 star_challenges 表有 solution_code 字段
+    try {
+      const existingSolution = await executeQuery(
+        `SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS 
+         WHERE TABLE_SCHEMA = DATABASE() 
+           AND TABLE_NAME = 'star_challenges' 
+           AND COLUMN_NAME = 'solution_code'`,
+        []
+      ) as any[]
+      if (!Array.isArray(existingSolution) || existingSolution.length === 0) {
+        await executeQuery("ALTER TABLE star_challenges ADD COLUMN solution_code TEXT NULL COMMENT '标准参考答案代码'")
+      }
+    } catch (e) {
+      console.error('检查/补充 star_challenges.solution_code 失败:', e)
+    }
+
+
+    // 宇宙探索选择题表 (每题有4个选项)
+    await executeQuery(`
+      CREATE TABLE IF NOT EXISTS star_challenge_quizzes (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        challenge_id INT NOT NULL COMMENT '关联 star_challenges.id',
+        question_text TEXT NOT NULL COMMENT '选择题题干',
+        options JSON NOT NULL COMMENT '选项数组, 如 ["A","B","C","D"]',
+        correct_index INT NOT NULL COMMENT '正确答案索引 0-3',
+        explanation TEXT COMMENT '答案解析说明',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_challenge_id (challenge_id),
+        FOREIGN KEY (challenge_id) REFERENCES star_challenges(id) ON DELETE CASCADE
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    `)
+
+    // 用户关卡挑战完成/做题记录表
+    await executeQuery(`
+      CREATE TABLE IF NOT EXISTS star_challenge_records (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NOT NULL,
+        challenge_id INT NOT NULL,
+        code_passed TINYINT(1) DEFAULT 0 COMMENT '代码测试是否通过',
+        quiz_answers JSON COMMENT '用户选择题的作答情况',
+        thinking_score INT DEFAULT 0 COMMENT '思考题AI打分',
+        thinking_feedback TEXT COMMENT '思考题AI评语',
+        completed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        UNIQUE KEY uk_user_challenge (user_id, challenge_id),
+        INDEX idx_user_id (user_id)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    `)
+
+
   } catch (error) {
     dbInitialized = false; // 失败时重置，允许下次重试
     console.error('❌ 数据库初始化失败:', error)

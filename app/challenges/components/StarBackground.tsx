@@ -34,6 +34,7 @@ export default function StarBackground() {
         window.addEventListener("resize", resize);
 
         // 🧠 稠密的 AI 词汇墙粒子（增加到 85 个词汇，实现满屏背景效果）
+        // 🧠 稠密的 AI 词汇墙粒子（增加到 85 个词汇，实现满屏背景效果）
         const terms = Array.from({ length: 85 }, () => {
             const word = AI_TERMS[Math.floor(Math.random() * AI_TERMS.length)];
             return {
@@ -50,12 +51,58 @@ export default function StarBackground() {
             };
         });
 
+        // 🌨️ 随机生成 60 颗羽化细雪粒子
+        const snowflakes = Array.from({ length: 60 }, () => ({
+            x: Math.random() * window.innerWidth,
+            y: Math.random() * window.innerHeight,
+            r: Math.random() * 2.2 + 0.8, // 雪花大小: 0.8px 到 3.0px
+            speedY: Math.random() * 0.4 + 0.15, // 缓缓飘落
+            speedX: Math.random() * 0.1 - 0.05, // 轻微侧风
+            opacity: Math.random() * 0.6 + 0.2, // 透明度
+            swingSpeed: Math.random() * 0.015 + 0.005, // 摆动频率
+            swingRange: Math.random() * 1.0 + 0.3, // 摆动幅度
+            swingAngle: Math.random() * Math.PI * 2
+        }));
+
         const draw = () => {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
             // 绘制纯黑背景底色
             ctx.fillStyle = "#000000";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // 🌨️ 绘制并更新缓缓飘落的雪花粒子
+            snowflakes.forEach(flake => {
+                ctx.beginPath();
+                const flakeGrad = ctx.createRadialGradient(
+                    flake.x,
+                    flake.y,
+                    0,
+                    flake.x,
+                    flake.y,
+                    flake.r
+                );
+                flakeGrad.addColorStop(0, `rgba(255, 255, 255, ${flake.opacity})`);
+                flakeGrad.addColorStop(0.3, `rgba(255, 255, 255, ${flake.opacity * 0.5})`);
+                flakeGrad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+                ctx.fillStyle = flakeGrad;
+                ctx.arc(flake.x, flake.y, flake.r, 0, Math.PI * 2);
+                ctx.fill();
+
+                // 更新雪花下落与正弦摆动
+                flake.swingAngle += flake.swingSpeed;
+                const swing = Math.sin(flake.swingAngle) * flake.swingRange;
+                flake.y += flake.speedY;
+                flake.x += flake.speedX + swing;
+
+                // 越界回收
+                if (flake.y > canvas.height) {
+                    flake.y = -10;
+                    flake.x = Math.random() * canvas.width;
+                }
+                if (flake.x < -10) flake.x = canvas.width + 10;
+                if (flake.x > canvas.width + 10) flake.x = -10;
+            });
 
             // 绘制大字体、不透明的“AI 术语背景墙”
             ctx.globalAlpha = 1.0;

@@ -15,38 +15,54 @@
 ```sql
 CREATE TABLE users (
   id INT AUTO_INCREMENT PRIMARY KEY,
+  username VARCHAR(255) UNIQUE NOT NULL,
   name VARCHAR(255) NOT NULL,
   email VARCHAR(255) UNIQUE NOT NULL,
   password VARCHAR(255) NOT NULL,
+  role VARCHAR(50) DEFAULT 'USER',
+  status VARCHAR(50) DEFAULT 'ACTIVE',
   bio TEXT,
   location VARCHAR(255),
   website VARCHAR(500),
   github VARCHAR(255),
   avatar VARCHAR(500),
+  vip TINYINT(1) DEFAULT 0 COMMENT '会员状态: 0-普通用户, 1-VIP会员',
+  vip_level INT DEFAULT 0 COMMENT '会员等级: 1-体验会员(1.99), 2-进阶会员(9.99), 3-永久共创(99.99)',
+  vip_expire_time TIMESTAMP NULL COMMENT '会员到期截止时间（永久会员设为 9999-12-31）',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX idx_username (username),
   INDEX idx_email (email),
-  INDEX idx_created_at (created_at)
+  INDEX idx_created_at (created_at),
+  INDEX idx_vip (vip)
 )
 ```
 
 | 字段名 | 类型 | 说明 | 约束 |
 |-------|------|------|------|
 | id | INT | 主键，自增 | PRIMARY KEY |
-| name | VARCHAR(255) | 用户名称 | NOT NULL |
+| username | VARCHAR(255) | 登录用户名 (只能是英文与数字的组合) | UNIQUE, NOT NULL |
+| name | VARCHAR(255) | 用户展示昵称 | NOT NULL |
 | email | VARCHAR(255) | 邮箱地址 | UNIQUE, NOT NULL |
 | password | VARCHAR(255) | 密码（加密） | NOT NULL |
+| role | VARCHAR(50) | 学员角色 (USER / ADMIN) | DEFAULT 'USER' |
+| status | VARCHAR(50) | 账户状态 (ACTIVE / BANNED) | DEFAULT 'ACTIVE' |
 | bio | TEXT | 个人简介（用于公共资料） | |
 | location | VARCHAR(255) | 所在地 | |
 | website | VARCHAR(500) | 个人网站 | |
-| github | VARCHAR(255) | GitHub用户名 | |
+| github | VARCHAR(255) | GitHub 用户名 | |
 | avatar | VARCHAR(500) | 头像图片URL | |
+| vip | TINYINT(1) | 会员状态 (0=普通用户, 1=VIP会员) | DEFAULT 0 |
+| vip_level | INT | 会员等级 (1=体验 ¥1.99, 2=进阶 ¥9.99, 3=永久共创 ¥99.99) | DEFAULT 0 |
+| vip_expire_time | TIMESTAMP | 会员到期时间（永久会员写 9999-12-31 23:59:59） | NULL |
 | created_at | TIMESTAMP | 创建时间 | DEFAULT CURRENT_TIMESTAMP |
 | updated_at | TIMESTAMP | 更新时间 | ON UPDATE CURRENT_TIMESTAMP |
 
 **索引：**
+- `idx_username`: username字段唯一索引
 - `idx_email`: email字段索引
 - `idx_created_at`: created_at字段索引
+- `idx_vip`: vip字段索引，用于快速筛选会员列表
 
 ---
 

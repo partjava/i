@@ -1,0 +1,982 @@
+[
+  {
+    "slug": "rl-mdpsimulator",
+    "stageId": 9,
+    "topicName": "强化学习",
+    "subtopicName": "马尔可夫决策(MDP)",
+    "levelIndex": 1,
+    "levelTitle": "MDP 价值迭代求解器",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "rl",
+      "mdp",
+      "value-iteration",
+      "bellman"
+    ],
+    "theoryContent": "### 编程挑战：MDP 价值迭代求解器\n\n马尔可夫决策过程 (MDP) 由状态、动作、转移概率、奖励和折扣因子组成。价值迭代求解最优策略。\n\n实现：\n- `value_iteration(states, actions, transitions, rewards, gamma, theta)`: 价值迭代\n- `extract_policy(V, states, actions, transitions, rewards)`: 从价值函数提取策略\n- `simulate_episode(policy, start_state, transitions, max_steps)`: 模拟一个回合",
+    "latexFormulas": [
+      "V_{k+1}(s) = max_a sum_{s'} P(s'|s,a)[R(s,a,s') + gamma V_k(s')]",
+      "pi^*(s) = argmax_a sum_{s'} P(s'|s,a)[R + gamma V^*(s')]"
+    ],
+    "starterCode": "import numpy as np\ndef value_iteration(states, actions, trans, rewards, gamma, theta): pass\ndef extract_policy(V, states, actions, trans, rewards): pass",
+    "solutionCode": "import numpy as np\ndef value_iteration(states, actions, trans, rewards, gamma=0.9, theta=0.01):\n    V = np.zeros(len(states))\n    while True:\n        delta = 0\n        for s in range(len(states)):\n            v = V[s]\n            V[s] = max(sum(trans[s][a][s_next] * (rewards[s][a][s_next] + gamma*V[s_next]) for s_next in range(len(states))) for a in range(len(actions)))\n            delta = max(delta, abs(v - V[s]))\n        if delta < theta: break\n    return V\ndef extract_policy(V, states, actions, trans, rewards):\n    policy = []\n    for s in range(len(states)):\n        best_a = np.argmax([sum(trans[s][a][s_next] * (rewards[s][a][s_next] + 0.9*V[s_next]) for s_next in range(len(states))) for a in range(len(actions))])\n        policy.append(best_a)\n    return policy",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "simple 2-state mdp",
+        "input": {
+          "states": 2,
+          "actions": 2,
+          "trans": [
+            [
+              [
+                0.5,
+                0.5
+              ],
+              [
+                0.8,
+                0.2
+              ]
+            ],
+            [
+              [
+                0.3,
+                0.7
+              ],
+              [
+                0.9,
+                0.1
+              ]
+            ]
+          ],
+          "rewards": [
+            [
+              [
+                1,
+                0
+              ],
+              [
+                0,
+                2
+              ]
+            ],
+            [
+              [
+                0,
+                1
+              ],
+              [
+                2,
+                0
+              ]
+            ]
+          ],
+          "gamma": 0.9,
+          "theta": 0.1
+        },
+        "expected": true
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "价值迭代中 V 值更新公式基于什么原理？",
+        "options": [
+          "A. Bellman 最优方程",
+          "B. 贝叶斯公式",
+          "C. 梯度下降",
+          "D. 泰勒展开"
+        ],
+        "answer": 0,
+        "explanation": "价值迭代基于 Bellman 最优方程，递归更新状态价值函数。"
+      }
+    ],
+    "thinkingQuestion": "策略迭代和价值迭代的区别是什么？什么场景下策略迭代更高效？",
+    "aiPrompt": "评估学生对 MDP、价值迭代、Bellman 方程的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "rl-qlearning",
+    "stageId": 9,
+    "topicName": "强化学习",
+    "subtopicName": "Q-Learning",
+    "levelIndex": 1,
+    "levelTitle": "Q-Learning 离线学习器",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "rl",
+      "qlearning",
+      "off-policy",
+      "temporal-difference"
+    ],
+    "theoryContent": "### 编程挑战：Q-Learning 离线学习器\n\nQ-Learning 是一种 off-policy 的时序差分学习算法。Q 表记录每个状态-动作的期望回报。\n\n实现：\n- `q_learning(env, episodes, alpha, gamma, epsilon)`: Q-Learning 训练\n- `epsilon_greedy(Q, state, epsilon)`: epsilon 贪心策略\n- `q_update(Q, s, a, r, s_next, alpha, gamma)`: Q 值更新\n- `evaluate_policy(Q, env)`: 评估策略的平均回报",
+    "latexFormulas": [
+      "Q(s,a) <- Q(s,a) + alpha[r + gamma max_a' Q(s',a') - Q(s,a)]"
+    ],
+    "starterCode": "import numpy as np\ndef epsilon_greedy(Q, state, epsilon): pass\ndef q_learning(env, episodes, alpha, gamma, epsilon): pass\ndef q_update(Q, s, a, r, s_next, alpha, gamma): pass",
+    "solutionCode": "import numpy as np\ndef epsilon_greedy(Q, state, epsilon):\n    if np.random.random() < epsilon:\n        return np.random.randint(Q.shape[1])\n    return int(np.argmax(Q[state]))\ndef q_update(Q, s, a, r, s_next, alpha=0.1, gamma=0.9):\n    Q[s,a] += alpha * (r + gamma * np.max(Q[s_next]) - Q[s,a])\ndef q_learning(env, episodes=100, alpha=0.1, gamma=0.9, epsilon=0.1):\n    Q = np.zeros((env['n_states'], env['n_actions']))\n    rewards = []\n    for _ in range(episodes):\n        s = 0; total = 0\n        for _ in range(50):\n            a = epsilon_greedy(Q, s, epsilon)\n            s_next = int(np.random.choice(env['n_states'], p=env['trans'][s][a]))\n            r = env['rewards'][s][a][s_next]\n            q_update(Q, s, a, r, s_next, alpha, gamma)\n            s = s_next; total += r\n        rewards.append(total)\n    return {'Q': Q, 'avg_return': round(sum(rewards[-20:])/20, 2)}",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "q learning trains",
+        "input": {
+          "env": {
+            "n_states": 4,
+            "n_actions": 2,
+            "trans": [
+              [
+                [
+                  0,
+                  1,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  1,
+                  0
+                ]
+              ],
+              [
+                [
+                  0,
+                  0,
+                  1,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              ],
+              [
+                [
+                  0,
+                  0,
+                  0,
+                  1
+                ],
+                [
+                  1,
+                  0,
+                  0,
+                  0
+                ]
+              ],
+              [
+                [
+                  0,
+                  0,
+                  0,
+                  1
+                ],
+                [
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              ]
+            ],
+            "rewards": [
+              [
+                [
+                  0,
+                  -1,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  -1,
+                  0
+                ]
+              ],
+              [
+                [
+                  0,
+                  0,
+                  -1,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  0,
+                  10
+                ]
+              ],
+              [
+                [
+                  0,
+                  0,
+                  0,
+                  10
+                ],
+                [
+                  -1,
+                  0,
+                  0,
+                  0
+                ]
+              ],
+              [
+                [
+                  0,
+                  0,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  0,
+                  0
+                ]
+              ]
+            ]
+          },
+          "episodes": 50,
+          "alpha": 0.1,
+          "gamma": 0.9,
+          "epsilon": 0.3
+        },
+        "expected": true
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "Q-Learning 是 off-policy 算法，这意味着什么？",
+        "options": [
+          "A. 它用贪心策略更新 Q 值，但行为策略可以不同",
+          "B. 它不能离线学习",
+          "C. 只能在环境中运行",
+          "D. 策略和更新无关"
+        ],
+        "answer": 0,
+        "explanation": "Off-policy 意味着目标策略（贪心）和行为策略（epsilon-贪心）可以不同。"
+      }
+    ],
+    "thinkingQuestion": "Q-Learning 和 SARSA 的核心区别是什么？在什么场景下 SARSA 更安全？",
+    "aiPrompt": "评估学生对 Q-Learning、off-policy、epsilon 贪心的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "rl-sarsa",
+    "stageId": 9,
+    "topicName": "强化学习",
+    "subtopicName": "SARSA",
+    "levelIndex": 1,
+    "levelTitle": "SARSA On-Policy 控制器",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "rl",
+      "sarsa",
+      "on-policy",
+      "td"
+    ],
+    "theoryContent": "### 编程挑战：SARSA On-Policy 控制器\n\nSARSA 是 on-policy 的时序差分算法：用当前策略选择的下一个动作来更新 Q 值。\n\n实现：\n- `sarsa(env, episodes, alpha, gamma, epsilon)`: SARSA 训练\n- `sarsa_update(Q, s, a, r, s_next, a_next, alpha, gamma)`: SARSA 更新公式\n- `compare_q_vs_sarsa(env, episodes)`: 比较两种算法学习曲线",
+    "latexFormulas": [
+      "Q(s,a) <- Q(s,a) + alpha[r + gamma Q(s',a') - Q(s,a)]"
+    ],
+    "starterCode": "import numpy as np\ndef sarsa_update(Q, s, a, r, s_next, a_next, alpha, gamma): pass\ndef sarsa(env, episodes, alpha, gamma, epsilon): pass",
+    "solutionCode": "import numpy as np\ndef sarsa_update(Q, s, a, r, s_next, a_next, alpha=0.1, gamma=0.9):\n    Q[s,a] += alpha * (r + gamma * Q[s_next,a_next] - Q[s,a])\ndef epsilon_greedy(Q, state, epsilon):\n    if np.random.random() < epsilon:\n        return np.random.randint(Q.shape[1])\n    return int(np.argmax(Q[state]))\ndef sarsa(env, episodes=100, alpha=0.1, gamma=0.9, epsilon=0.1):\n    Q = np.zeros((env['n_states'], env['n_actions']))\n    rewards = []\n    for _ in range(episodes):\n        s = 0; a = epsilon_greedy(Q, s, epsilon); total = 0\n        for _ in range(50):\n            s_next = int(np.random.choice(env['n_states'], p=env['trans'][s][a]))\n            r = env['rewards'][s][a][s_next]\n            a_next = epsilon_greedy(Q, s_next, epsilon)\n            sarsa_update(Q, s, a, r, s_next, a_next, alpha, gamma)\n            s, a = s_next, a_next; total += r\n        rewards.append(total)\n    return {'Q': Q, 'avg_return': round(sum(rewards[-20:])/20, 2)}",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "sarsa basic",
+        "input": {
+          "env": {
+            "n_states": 3,
+            "n_actions": 2,
+            "trans": [
+              [
+                [
+                  0,
+                  1,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  1
+                ]
+              ],
+              [
+                [
+                  0,
+                  0,
+                  1
+                ],
+                [
+                  1,
+                  0,
+                  0
+                ]
+              ],
+              [
+                [
+                  0,
+                  0,
+                  1
+                ],
+                [
+                  0,
+                  0,
+                  1
+                ]
+              ]
+            ],
+            "rewards": [
+              [
+                [
+                  0,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  1
+                ]
+              ],
+              [
+                [
+                  0,
+                  0,
+                  1
+                ],
+                [
+                  0,
+                  0,
+                  0
+                ]
+              ],
+              [
+                [
+                  0,
+                  0,
+                  0
+                ],
+                [
+                  0,
+                  0,
+                  0
+                ]
+              ]
+            ]
+          },
+          "episodes": 30,
+          "alpha": 0.1,
+          "gamma": 0.9,
+          "epsilon": 0.3
+        },
+        "expected": true
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "On-policy 和 Off-policy 的区别？",
+        "options": [
+          "A. On-policy 用同一策略生成数据并更新",
+          "B. On-policy 不能用 epsilon-greedy",
+          "C. Off-policy 更慢",
+          "D. 没有区别"
+        ],
+        "answer": 0,
+        "explanation": "On-policy 使用当前策略采样的数据更新同一策略，SARSA 是典型代表。"
+      }
+    ],
+    "thinkingQuestion": "SARSA 在悬崖行走（Cliff Walking）环境中通常比 Q-Learning 学到的策略更保守，为什么？",
+    "aiPrompt": "评估学生对 SARSA、on-policy、TD 学习的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "rl-dqn",
+    "stageId": 9,
+    "topicName": "强化学习",
+    "subtopicName": "DQN算法",
+    "levelIndex": 1,
+    "levelTitle": "DQN 深度 Q 网络",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "rl",
+      "dqn",
+      "deep-q",
+      "experience-replay"
+    ],
+    "theoryContent": "### 编程挑战：DQN 深度 Q 网络\n\nDQN 用神经网络替代 Q 表，并引入经验回放和目标网络来稳定训练。\n\n实现：\n- `ReplayBuffer(capacity)`: 经验回放缓冲区\n- `dqn_learn(env, episodes, batch_size, gamma)`: DQN 训练\n- `target_update(online_net, target_net, tau)`: 软更新目标网络\n- `compute_td_loss(batch, online_net, target_net, gamma)`: TD 损失",
+    "latexFormulas": [
+      "L = E[(r + gamma max_{a'} Q_{target}(s',a') - Q_{online}(s,a))^2]",
+      "theta_target <- tau * theta_online + (1-tau) * theta_target"
+    ],
+    "starterCode": "import numpy as np\nclass ReplayBuffer:\n    def __init__(self, capacity): pass\n    def push(self, s, a, r, s_next, done): pass\n    def sample(self, batch_size): pass\ndef compute_td_loss(batch, online, target, gamma): pass",
+    "solutionCode": "import numpy as np\nclass ReplayBuffer:\n    def __init__(self, cap): self.buf=[];self.cap=cap;self.pos=0\n    def push(self, s, a, r, s2, d):\n        if len(self.buf)<self.cap: self.buf.append((s,a,r,s2,d))\n        else: self.buf[self.pos]=(s,a,r,s2,d)\n        self.pos=(self.pos+1)%self.cap\n    def sample(self,n):\n        idx=np.random.choice(len(self.buf),n)\n        return [self.buf[i] for i in idx]\ndef compute_td_loss(batch, online, target, gamma=0.9):\n    loss = 0\n    for s, a, r, s2, d in batch:\n        q_target = r if d else r + gamma * np.max(target[s2])\n        q_current = online[s][a]\n        loss += (q_current - q_target) ** 2\n    return loss / len(batch)",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "replay buffer push and sample",
+        "input": {
+          "capacity": 10,
+          "pushes": null,
+          "sampleSize": 3
+        },
+        "expected": true
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "经验回放（Experience Replay）的作用是什么？",
+        "options": [
+          "A. 打破数据相关性，提高样本效率",
+          "B. 增加数据量",
+          "C. 降低方差",
+          "D. 减少计算量"
+        ],
+        "answer": 0,
+        "explanation": "经验回放打破时序相关性，使训练数据独立同分布，同时提高样本利用率。"
+      }
+    ],
+    "thinkingQuestion": "目标网络（Target Network）为什么可以稳定 DQN 训练？不加目标网络会怎样？",
+    "aiPrompt": "评估学生对 DQN、经验回放、目标网络的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "rl-ppo",
+    "stageId": 9,
+    "topicName": "强化学习",
+    "subtopicName": "PPO优化",
+    "levelIndex": 1,
+    "levelTitle": "PPO 裁剪策略优化",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "rl",
+      "ppo",
+      "policy-gradient",
+      "clip"
+    ],
+    "theoryContent": "### 编程挑战：PPO 裁剪策略优化\n\nPPO 通过裁剪目标函数来限制策略更新幅度，实现稳定高效的策略梯度训练。\n\n实现：\n- `compute_advantages(rewards, values, gamma, lam)`: GAE 优势估计\n- `ppo_clip_surrogate(old_log_prob, new_log_prob, adv, epsilon)`: 裁剪代理目标\n- `ppo_update(policy, old_policy, states, actions, advantages, epsilon)`: PPO 更新",
+    "latexFormulas": [
+      "L^{CLIP} = -E[min(r_t(theta) A_t, clip(r_t(theta), 1-eps, 1+eps) A_t)]",
+      "r_t(theta) = pi_theta(a_t|s_t) / pi_{theta_old}(a_t|s_t)"
+    ],
+    "starterCode": "import numpy as np\ndef compute_advantages(rewards, values, gamma, lam): pass\ndef ppo_clip_surrogate(old_logp, new_logp, adv, eps): pass",
+    "solutionCode": "import numpy as np\ndef compute_advantages(rewards, values, gamma=0.99, lam=0.95):\n    advantages = []\n    gae = 0\n    for t in reversed(range(len(rewards))):\n        delta = rewards[t] + gamma * (values[t+1] if t+1<len(values) else 0) - values[t]\n        gae = delta + gamma * lam * gae\n        advantages.insert(0, gae)\n    return np.array(advantages, dtype=float)\ndef ppo_clip_surrogate(old_logp, new_logp, adv, eps=0.2):\n    ratio = np.exp(new_logp - old_logp)\n    clipped = np.clip(ratio, 1-eps, 1+eps)\n    return -min(ratio * adv, clipped * adv)",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "gae advantages",
+        "input": {
+          "rewards": [
+            0,
+            0,
+            1
+          ],
+          "values": [
+            0.5,
+            0.6,
+            0.8
+          ],
+          "gamma": 0.9,
+          "lam": 0.95
+        },
+        "expected": true
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "PPO 中裁剪（clip）的目的是什么？",
+        "options": [
+          "A. 限制策略更新幅度，防止崩溃性更新",
+          "B. 降低计算量",
+          "C. 减少内存使用",
+          "D. 提高准确率"
+        ],
+        "answer": 0,
+        "explanation": "裁剪限制新老策略的比率在 [1-eps, 1+eps] 内，避免单步更新过大导致策略崩溃。"
+      }
+    ],
+    "thinkingQuestion": "PPO 和 TRPO 的核心区别是什么？为什么 PPO 在工程上更受欢迎？",
+    "aiPrompt": "评估学生对 PPO、策略梯度、GAE 的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "rl-actor-critic",
+    "stageId": 9,
+    "topicName": "强化学习",
+    "subtopicName": "AC双网络架构",
+    "levelIndex": 1,
+    "levelTitle": "Actor-Critic 双网络",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "rl",
+      "actor-critic",
+      "policy",
+      "value"
+    ],
+    "theoryContent": "### 编程挑战：Actor-Critic 双网络架构\n\nActor-Critic 同时学习策略（Actor）和价值函数（Critic）。Actor 选择动作，Critic 评估动作好坏。\n\n实现：\n- `actor_forward(state, theta)`: Actor 输出动作概率\n- `critic_forward(state, w)`: Critic 输出状态价值\n- `actor_critic_train(env, episodes, lr_actor, lr_critic, gamma)`: A2C 训练\n- `compute_policy_gradient(log_prob, td_error)`: 策略梯度",
+    "latexFormulas": [
+      "nabla J = E[nabla log pi(a|s) * A(s,a)]",
+      "A(s,a) = r + gamma V(s') - V(s) (TD error)"
+    ],
+    "starterCode": "import numpy as np\ndef actor_forward(state, theta): pass\ndef critic_forward(state, w): pass\ndef actor_critic_train(env, episodes, lr_actor, lr_critic, gamma): pass",
+    "solutionCode": "import numpy as np\ndef actor_forward(state, theta):\n    logits = state @ theta\n    exp = np.exp(logits - np.max(logits))\n    return exp / np.sum(exp)\ndef critic_forward(state, w):\n    return state @ w\ndef actor_critic_train(env, episodes=100, lr_a=0.01, lr_c=0.01, gamma=0.9):\n    n_s = env['n_states']; n_a = env['n_actions']\n    theta = np.zeros((n_s, n_a)); w = np.zeros(n_s)\n    returns = []\n    for _ in range(episodes):\n        s_idx = 0; total = 0\n        for _ in range(50):\n            s = np.eye(n_s)[s_idx]\n            probs = actor_forward(s, theta)\n            a = np.random.choice(n_a, p=probs)\n            s_next = int(np.random.choice(n_s, p=env['trans'][s_idx][a]))\n            r = env['rewards'][s_idx][a][s_next]\n            s_next_onehot = np.eye(n_s)[s_next]\n            v = critic_forward(s, w); v_next = critic_forward(s_next_onehot, w)\n            td = r + gamma * v_next - v\n            theta += lr_a * np.outer(s, (td * (np.eye(n_a)[a] - probs)))\n            w += lr_c * td * s\n            s_idx = s_next; total += r\n        returns.append(total)\n    return {'avg_return': round(sum(returns[-20:])/20, 2)}",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "actor forward sum to 1",
+        "input": {
+          "state": [
+            1,
+            0,
+            0
+          ],
+          "theta": [
+            [
+              0.1,
+              0.3
+            ],
+            [
+              0.2,
+              0.4
+            ],
+            [
+              0.3,
+              0.5
+            ]
+          ]
+        },
+        "expected": true
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "Actor-Critic 中 Critic 的作用是什么？",
+        "options": [
+          "A. 评估状态价值，指导 Actor 更新",
+          "B. 选择动作",
+          "C. 与环境交互",
+          "D. 存储经验"
+        ],
+        "answer": 0,
+        "explanation": "Critic 估计价值函数，其输出的 TD error 作为 Actor 策略梯度的优势函数。"
+      }
+    ],
+    "thinkingQuestion": "A2C（同步 Advantage Actor-Critic）和 A3C（异步）的核心区别是什么？",
+    "aiPrompt": "评估学生对 Actor-Critic、策略梯度、TD error 的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "rl-bellman-l2",
+    "stageId": 9,
+    "topicName": "强化学习",
+    "subtopicName": "马尔可夫决策(MDP)",
+    "levelIndex": 2,
+    "levelTitle": "Bellman 方程求解",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "马尔可夫决策(MDP)"
+    ],
+    "theoryContent": "实现 Bellman 期望方程和最优方程，计算状态价值和动作价值。",
+    "latexFormulas": [
+      "V(s) = max_a sum P(s'|s,a)[R+gamma*V(s')]",
+      "Q(s,a) = sum P(s'|s,a)[R+gamma*max_a'Q(s',a')]"
+    ],
+    "starterCode": "import numpy as np\ndef bellman_expectation(V, P, R, gamma): pass\ndef bellman_optimal(V, P, R, gamma): pass",
+    "solutionCode": "import numpy as np\ndef bellman_expectation(V,P,R,gamma=0.9):\n    n=len(V);newV=np.zeros(n)\n    for s in range(n):\n        q_vals=[]\n        for a in range(len(P[s])):\n            q=sum(P[s][a][s2]*(R[s][a][s2]+gamma*V[s2])for s2 in range(n))\n            q_vals.append(q)\n        newV[s]=np.mean(q_vals)\n    return newV\ndef bellman_optimal(V,P,R,gamma=0.9):\n    n=len(V);newV=np.zeros(n)\n    for s in range(n):\n        q_vals=[]\n        for a in range(len(P[s])):\n            q=sum(P[s][a][s2]*(R[s][a][s2]+gamma*V[s2])for s2 in range(n))\n            q_vals.append(q)\n        newV[s]=max(q_vals)\n    return newV",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "bellman",
+        "input": {
+          "V": [
+            0,
+            0
+          ],
+          "P": [
+            [
+              [
+                0.5,
+                0.5
+              ],
+              [
+                0.8,
+                0.2
+              ]
+            ],
+            [
+              [
+                0.3,
+                0.7
+              ],
+              [
+                0.9,
+                0.1
+              ]
+            ]
+          ],
+          "R": [
+            [
+              [
+                1,
+                0
+              ],
+              [
+                0,
+                2
+              ]
+            ],
+            [
+              [
+                0,
+                1
+              ],
+              [
+                2,
+                0
+              ]
+            ]
+          ],
+          "gamma": 0.9
+        },
+        "expected": true
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "Bellman 最优方程和期望方程的区别？",
+        "options": [
+          "A. 最优方程取 max，期望方程取平均",
+          "B. 相同",
+          "C. 最优方程更慢",
+          "D. 期望方程最优"
+        ],
+        "answer": 0,
+        "explanation": "Bellman 最优方程在动作选择上取最大化，期望方程按策略取期望。"
+      }
+    ],
+    "thinkingQuestion": "策略迭代和价值迭代的区别？哪种收敛更快？",
+    "aiPrompt": "评估学生对 Bellman 方程、MDP 的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "rl-epsilon-decay-l2",
+    "stageId": 9,
+    "topicName": "强化学习",
+    "subtopicName": "Q-Learning",
+    "levelIndex": 2,
+    "levelTitle": "强化学习",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "Q-Learning"
+    ],
+    "theoryContent": "epsilon 衰减策略",
+    "latexFormulas": "实现 epsilon 贪心策略的衰减：训练初期探索多，后期利用多。",
+    "starterCode": [
+      "epsilon = max(eps_end, eps_start*decay^step)"
+    ],
+    "solutionCode": "import numpy as np\ndef epsilon_greedy(Q, state, epsilon): pass\ndef decay_schedule(eps_start, eps_end, decay, steps): pass",
+    "expectedOutput": "True",
+    "testCases": [],
+    "quizzes": [
+      {
+        "question": "训练策略相关",
+        "options": [
+          "A. 正确",
+          "B. 错误"
+        ],
+        "answer": 0,
+        "explanation": "请参考教程"
+      }
+    ],
+    "thinkingQuestion": [
+      {
+        "question": "训练初期 epsilon 大有什么好处？",
+        "options": [
+          "A. 更多探索，发现更多策略",
+          "B. 更稳定",
+          "C. 更快收敛",
+          "D. 减少计算"
+        ],
+        "answer": 0,
+        "explanation": "训练初期高 epsilon 鼓励探索未知动作，避免过早陷入次优策略。"
+      }
+    ],
+    "aiPrompt": "epsilon 衰减速度对 Q-Learning 性能的影响？太快要太慢各有什么问题？",
+    "status": "published"
+  },
+  {
+    "slug": "rl-sarsa-lambda-l2",
+    "stageId": 9,
+    "topicName": "强化学习",
+    "subtopicName": "SARSA",
+    "levelIndex": 2,
+    "levelTitle": "强化学习",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "SARSA"
+    ],
+    "theoryContent": "SARSA(lambda) 实现",
+    "latexFormulas": "实现 SARSA(lambda) 使用资格迹（Eligibility Traces），加速 TD 学习。",
+    "starterCode": [
+      "E(s,a) <- gamma*lambda*E(s,a)+1",
+      "Q(s,a) += alpha*delta*E(s,a)"
+    ],
+    "solutionCode": "import numpy as np\ndef sarsa_lambda(env, episodes, alpha, gamma, epsilon, lam): pass",
+    "expectedOutput": "True",
+    "testCases": [],
+    "quizzes": [
+      {
+        "question": "训练策略相关",
+        "options": [
+          "A. 正确",
+          "B. 错误"
+        ],
+        "answer": 0,
+        "explanation": "请参考教程"
+      }
+    ],
+    "thinkingQuestion": [
+      {
+        "question": "资格迹的作用？",
+        "options": [
+          "A. 将奖励回溯到先前访问过的状态-动作对",
+          "B. 加速矩阵运算",
+          "C. 减少内存",
+          "D. 增加随机性"
+        ],
+        "answer": 0,
+        "explanation": "资格迹让奖励可以回溯到之前访问过的状态-动作对，加速学习。"
+      }
+    ],
+    "aiPrompt": "lambda=0 和 lambda=1 分别等价于什么算法？",
+    "status": "published"
+  },
+  {
+    "slug": "rl-double-dqn-l2",
+    "stageId": 9,
+    "topicName": "强化学习",
+    "subtopicName": "DQN算法",
+    "levelIndex": 2,
+    "levelTitle": "Double DQN",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "DQN算法"
+    ],
+    "theoryContent": "实现 Double DQN，用在线网络选动作，目标网络估值，减少 Q 值过估计。",
+    "latexFormulas": [
+      "q_target = r + gamma*Q_target(s', argmax Q_online(s', a))"
+    ],
+    "starterCode": "import numpy as np\ndef double_dqn_update(online, target, batch, gamma): pass",
+    "solutionCode": "import numpy as np\ndef double_dqn_update(online,target,batch,gamma=0.9):\n    loss=0\n    for s,a,r,s2,d in batch:\n        best_a=int(np.argmax(online[s2]))\n        q_target=r if d else r+gamma*target[s2][best_a]\n        loss+=(online[s][a]-q_target)**2\n    return loss/len(batch)",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "double dqn",
+        "input": {
+          "online": [
+            [
+              0.1,
+              0.2
+            ],
+            [
+              0.3,
+              0.4
+            ],
+            [
+              0.5,
+              0.6
+            ],
+            [
+              0.7,
+              0.8
+            ]
+          ],
+          "target": [
+            [
+              0.15,
+              0.25
+            ],
+            [
+              0.35,
+              0.45
+            ],
+            [
+              0.55,
+              0.65
+            ],
+            [
+              0.75,
+              0.85
+            ]
+          ],
+          "batch": [
+            false
+          ],
+          "gamma": 0.9
+        },
+        "expected": true
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "Double DQN 解决了 DQN 的什么问题？",
+        "options": [
+          "A. Q 值过估计",
+          "B. 训练太慢",
+          "C. 内存太大",
+          "D. 动作空间过大"
+        ],
+        "answer": 0,
+        "explanation": "DQN 的 max 操作导致 Q 值被高估，Double DQN 通过分离动作选择和估值来解决。"
+      }
+    ],
+    "thinkingQuestion": "Dueling DQN 将 Q 值分解为 V(s)+A(s,a)，这对学习有什么帮助？",
+    "aiPrompt": "评估学生对 DQN、Double DQN 的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "rl-gae-l2",
+    "stageId": 9,
+    "topicName": "强化学习",
+    "subtopicName": "PPO优化",
+    "levelIndex": 2,
+    "levelTitle": "GAE 优势估计",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "PPO优化"
+    ],
+    "theoryContent": "实现 Generalized Advantage Estimation，在偏差和方差间权衡。",
+    "latexFormulas": [
+      "GAE: A_t = sum (gamma*lambda)^l * delta_{t+l}",
+      "delta_t = r_t + gamma*V(s_{t+1}) - V(s_t)"
+    ],
+    "starterCode": "import numpy as np\ndef compute_gae(rewards, values, gamma, lam): pass",
+    "solutionCode": "import numpy as np\ndef compute_gae(rewards,values,gamma=0.99,lam=0.95):\n    T=len(rewards);adv=np.zeros(T)\n    gae=0\n    for t in reversed(range(T)):\n        delta=rewards[t]+gamma*(values[t+1]if t+1<len(values)else 0)-values[t]\n        gae=delta+gamma*lam*gae\n        adv[t]=gae\n    return adv",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "gae",
+        "input": {
+          "rewards": [
+            0,
+            0,
+            1
+          ],
+          "values": [
+            0.5,
+            0.6,
+            0.8
+          ],
+          "gamma": 0.9,
+          "lam": 0.95
+        },
+        "expected": true
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "GAE 中 lambda=0 和 lambda=1 分别对应什么？",
+        "options": [
+          "A. lambda=0 高偏差,lambda=1 高方差",
+          "B. 相反",
+          "C. 都一样",
+          "D. lambda=0 最好"
+        ],
+        "answer": 0,
+        "explanation": "lambda=0 只看即时 TD 误差（高偏差），lambda=1 看完整回报（高方差）。"
+      }
+    ],
+    "thinkingQuestion": "GAE 的 lambda 参数如何控制偏差-方差权衡？",
+    "aiPrompt": "评估学生对 PPO、GAE 的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "rl-actor-critic-continuous-l2",
+    "stageId": 9,
+    "topicName": "强化学习",
+    "subtopicName": "AC双网络架构",
+    "levelIndex": 2,
+    "levelTitle": "连续动作 Actor-Critic",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "AC双网络架构"
+    ],
+    "theoryContent": "实现连续动作空间的 Actor-Critic：Actor 输出高斯分布的均值和方差，Critic 评估状态价值。",
+    "latexFormulas": [
+      "mu(s) = Actor(s)",
+      "sigma = exp(log_sigma)",
+      "A = r+V(s')-V(s)"
+    ],
+    "starterCode": "import numpy as np\ndef normal_log_prob(mu, sigma, action): pass\ndef actor_critic_continuous(state, mu_head, sigma_head, critic_w): pass",
+    "solutionCode": "import numpy as np\ndef normal_log_prob(mu,sigma,action):\n    return -0.5*(((action-mu)/sigma)**2+np.log(2*np.pi*sigma**2))\ndef actor_critic_cont(state,mu_h,sigma_h,critic_w):\n    mu=state@mu_h\n    sigma=np.exp(state@sigma_h)\n    val=state@critic_w\n    return {\"mu\":float(mu),\"sigma\":float(sigma),\"value\":float(val)}",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "continuous ac",
+        "input": {
+          "state": [
+            1,
+            0
+          ],
+          "muHead": [
+            [
+              0.1,
+              0.2
+            ],
+            [
+              0.3,
+              0.4
+            ]
+          ],
+          "sigmaHead": [
+            [
+              -0.1,
+              -0.2
+            ],
+            [
+              -0.3,
+              -0.4
+            ]
+          ],
+          "criticW": [
+            0.1,
+            0.2
+          ]
+        },
+        "expected": true
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "连续动作空间和离散动作空间的 Actor-Critic 有什么不同？",
+        "options": [
+          "A. 连续用高斯分布输出概率密度，离散用 softmax",
+          "B. 完全相同",
+          "C. 连续不能用 AC",
+          "D. 离散更复杂"
+        ],
+        "answer": 0,
+        "explanation": "连续动作空间通常假设策略为高斯分布，Actor 输出均值和方差。"
+      }
+    ],
+    "thinkingQuestion": "PPO 在连续动作空间中如何实现？为什么需要 clip 操作？",
+    "aiPrompt": "评估学生对 Actor-Critic、连续控制的理解。按 0-10 分打分。",
+    "status": "published"
+  }
+]

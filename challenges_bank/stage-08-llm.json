@@ -1,0 +1,1714 @@
+[
+  {
+    "slug": "llm-few-shot-prompting",
+    "stageId": 8,
+    "topicName": "大模型（LLM）",
+    "subtopicName": "Few-shot提示",
+    "levelIndex": 1,
+    "levelTitle": "Few-shot 示例选择器",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "llm",
+      "few-shot",
+      "prompt",
+      "in-context"
+    ],
+    "theoryContent": "### 编程挑战：Few-shot 示例选择器\n\nFew-shot 提示通过在 Prompt 中添加示例来引导大模型。示例的选择直接影响效果：选相似的示例比随机选效果好。\n\n实现：\n- `cosine_sim(a, b)`: 余弦相似度\n- `select_examples(query, examples, k)`: 基于相似度选择 k 个示例\n- `build_few_shot_prompt(query, selected, template)`: 构建 prompt",
+    "latexFormulas": [
+      "P(answer|query) approx P(answer|query, examples_{1..k})",
+      "sim(q,e_i) = (q * e_i)/(||q||*||e_i||)"
+    ],
+    "starterCode": "import numpy as np\ndef cosine_sim(a, b): pass\ndef select_examples(query, examples, k): pass",
+    "solutionCode": "import numpy as np\ndef cosine_sim(a, b):\n    d = np.linalg.norm(a)*np.linalg.norm(b)\n    return float(np.dot(a,b)/d) if d>0 else 0\ndef select_examples(query, examples, k=3):\n    scored = [(cosine_sim(query, e['emb']), e) for e in examples]\n    scored.sort(key=lambda x:-x[0])\n    return [e for _,e in scored[:k]]",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "select returns k examples",
+        "input": {
+          "query": [
+            0.1,
+            0.2,
+            0.3
+          ],
+          "examples": [
+            {
+              "emb": [
+                0.9,
+                0.8,
+                0.7
+              ],
+              "text": "好"
+            },
+            {
+              "emb": [
+                0.1,
+                0.2,
+                0.3
+              ],
+              "text": "最好"
+            },
+            {
+              "emb": [
+                0.5,
+                0.5,
+                0.5
+              ],
+              "text": "中"
+            },
+            {
+              "emb": [
+                0,
+                0,
+                0.1
+              ],
+              "text": "差"
+            }
+          ],
+          "k": 2
+        },
+        "expected": true
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "Few-shot 中示例数量通常如何选择？",
+        "options": [
+          "A. 3-5 个效果较好，太多可能超出上下文窗口",
+          "B. 越多越好",
+          "C. 只能 1 个",
+          "D. 不需要示例"
+        ],
+        "answer": 0,
+        "explanation": "3-5 个示例通常足够，太多会占用上下文窗口且边际收益递减。"
+      }
+    ],
+    "thinkingQuestion": "Few-shot 和 Zero-shot 的区别是什么？什么场景下 Few-shot 特别有效？",
+    "aiPrompt": "评估学生对 Few-shot 提示、示例选择和相似度检索的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "llm-cot-reasoning",
+    "stageId": 8,
+    "topicName": "大模型（LLM）",
+    "subtopicName": "CoT链式思维",
+    "levelIndex": 1,
+    "levelTitle": "Chain-of-Thought 推理器",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "llm",
+      "cot",
+      "reasoning",
+      "chain-of-thought"
+    ],
+    "theoryContent": "### 编程挑战：Chain-of-Thought 推理器\n\nChain-of-Thought（CoT）引导模型逐步推理，显著提升数学和逻辑问题的准确性。\n\n实现：\n- `parse_math_problem(text)`: 提取数字和运算符\n- `cot_reasoning(problem)`: 分步推理\n- `verify_step(step)`: 验证单步的正确性\n- `final_answer(steps)`: 从步骤中提取最终答案",
+    "latexFormulas": [
+      "P(answer|problem) = sum_{steps} P(answer|steps) P(steps|problem)"
+    ],
+    "starterCode": "import re\ndef parse_math_problem(text): pass\ndef cot_reasoning(problem): pass\ndef verify_answer(steps, expected): pass",
+    "solutionCode": "import re\ndef parse_math_problem(text):\n    nums = list(map(int, re.findall(r'\\d+', text)))\n    ops = re.findall(r'[+\\-*/]', text)\n    return {'numbers': nums, 'operators': ops}\ndef cot_reasoning(problem):\n    parsed = parse_math_problem(problem)\n    steps = []\n    if '+' in problem:\n        total = sum(parsed['numbers'])\n        for n in parsed['numbers']:\n            steps.append(f'当前数字: {n}')\n        steps.append(f'相加得: {total}')\n    return {'steps': steps, 'answer': total if '+' in problem else None}\ndef verify_answer(steps, expected):\n    return steps.get('answer') == expected if isinstance(steps, dict) else False",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "cot addition",
+        "input": {
+          "problem": "12 + 34 + 5"
+        },
+        "expected": true
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "CoT 和普通 Prompt 在回答数学题时的主要区别？",
+        "options": [
+          "A. CoT 先生成推理步骤再给出答案",
+          "B. CoT 直接给出答案",
+          "C. CoT 不需要示例",
+          "D. CoT 更慢"
+        ],
+        "answer": 0,
+        "explanation": "CoT 引导模型逐步推理，先生成中间步骤再给出最终答案。"
+      }
+    ],
+    "thinkingQuestion": "Zero-shot CoT（在 Prompt 后加 'Let's think step by step'）为什么有效？它的局限性是什么？",
+    "aiPrompt": "评估学生对 CoT、分步推理和提示工程的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "llm-react-agent",
+    "stageId": 8,
+    "topicName": "大模型（LLM）",
+    "subtopicName": "ReAct框架",
+    "levelIndex": 1,
+    "levelTitle": "ReAct 推理-行动框架",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "llm",
+      "react",
+      "agent",
+      "reasoning",
+      "action"
+    ],
+    "theoryContent": "### 编程挑战：ReAct 推理-行动框架\n\nReAct 结合推理（Reasoning）和行动（Acting）：模型思考当前状态，决定要执行的行动，观察结果后再思考下一步。\n\n实现简化版 ReAct Agent：\n- `think(state, tools)`: 基于当前状态决定下一步行动\n- `act(action, tools)`: 执行行动，返回观察结果\n- `react_agent(task, tools, max_steps)`: ReAct 主循环",
+    "latexFormulas": [
+      "Thought -> Action -> Observation -> Thought -> ... -> Answer"
+    ],
+    "starterCode": "def think(state, tools): pass\ndef act(action, tools): pass\ndef react_agent(task, tools, max_steps): pass",
+    "solutionCode": "def think(state, tools):\n    if not state['steps']:\n        return 'search'\n    last = state['steps'][-1]\n    if 'result:' in last:\n        return 'answer'\n    return 'search'\ndef act(action, tools):\n    if action in tools:\n        return tools[action]()\n    return f'unknown action: {action}'\ndef react_agent(task, tools, max_steps=5):\n    state = {'task': task, 'steps': []}\n    for _ in range(max_steps):\n        action = think(state, tools)\n        if action == 'answer':\n            return {'answer': state['steps'][-1], 'steps': state['steps']}\n        obs = act(action, tools)\n        state['steps'].append(f'{action} -> {obs}')\n    return {'answer': 'max steps reached', 'steps': state['steps']}",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "react basic",
+        "input": {
+          "task": "查找天气",
+          "tools": {},
+          "maxSteps": 5
+        },
+        "expected": true
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "ReAct 中的 Thought 和 Action 分别代表什么？",
+        "options": [
+          "A. Thought 是推理，Action 是执行",
+          "B. Thought 是执行，Action 是推理",
+          "C. 两者相同",
+          "D. 与推理无关"
+        ],
+        "answer": 0,
+        "explanation": "Thought 是模型的推理步骤（当前状态→下一步计划），Action 是具体执行。"
+      }
+    ],
+    "thinkingQuestion": "ReAct 和单纯的 CoT 或单纯的行动调用（Tool Use）相比，核心优势是什么？",
+    "aiPrompt": "评估学生对 ReAct 框架、Agent 循环的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "llm-lora-finetuning",
+    "stageId": 8,
+    "topicName": "大模型（LLM）",
+    "subtopicName": "LoRA轻量化微调",
+    "levelIndex": 1,
+    "levelTitle": "LoRA 矩阵分解模拟器",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "llm",
+      "lora",
+      "finetuning",
+      "peft"
+    ],
+    "theoryContent": "### 编程挑战：LoRA 矩阵分解模拟器\n\nLoRA（Low-Rank Adaptation）通过低秩矩阵 A、B 来近似参数更新，冻结原始权重 W，只训练 A 和 B。\n\n实现：\n- `lora_forward(x, W, A, B)`: LoRA 前向传播 Wx + BAx\n- `compute_lora_params(W, rank)`: 初始化 LoRA 参数\n- `count_trainable_params(W_shape, rank)`: 计算可训练参数量\n- `compression_ratio(W_shape, rank)`: 与全量微调的参数量比",
+    "latexFormulas": [
+      "W' = W + BA, B in R^{d x r}, A in R^{r x d}",
+      "r << min(d, d_model)，通常 r=8 或 16"
+    ],
+    "starterCode": "import numpy as np\ndef lora_forward(x, W, A, B): pass\ndef count_trainable_params(d, rank): pass\ndef compression_ratio(d, rank): pass",
+    "solutionCode": "import numpy as np\ndef lora_forward(x, W, A, B):\n    return x @ W.T + (x @ A.T) @ B.T\ndef count_trainable_params(d, rank):\n    return 2 * d * rank\ndef compression_ratio(d, rank):\n    full = d * d\n    lora = 2 * d * rank\n    return round(lora / full, 4)",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "lora compression",
+        "input": {
+          "d": 1024,
+          "rank": 8
+        },
+        "expected": 0.0156
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "LoRA 的核心思想是什么？",
+        "options": [
+          "A. 用低秩矩阵近似参数更新量，冻结原权重",
+          "B. 微调所有参数",
+          "C. 只修改网络结构",
+          "D. 减少训练数据"
+        ],
+        "answer": 0,
+        "explanation": "LoRA 认为参数更新量是低秩的，用 BA 两个小矩阵来近似，原权重冻结。"
+      }
+    ],
+    "thinkingQuestion": "LoRA 的秩 r 对模型效果和可训练参数量有什么影响？r 过大或过小各有什么问题？",
+    "aiPrompt": "评估学生对 LoRA、低秩分解、参数高效微调的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "llm-rlhf-alignment",
+    "stageId": 8,
+    "topicName": "大模型（LLM）",
+    "subtopicName": "RLHF对齐",
+    "levelIndex": 1,
+    "levelTitle": "RLHF 奖励模型模拟器",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "llm",
+      "rlhf",
+      "alignment",
+      "reward"
+    ],
+    "theoryContent": "### 编程挑战：RLHF 奖励模型模拟器\n\nRLHF（Reinforcement Learning from Human Feedback）通过人类偏好训练奖励模型，再用强化学习优化策略。\n\n实现：\n- `reward_model(preferences, responses)`: 基于比较结果训练简化奖励模型\n- `compute_log_prob(policy_logits, token)`: 计算某个 token 的对数概率\n- `ppo_clip_loss(new_prob, old_prob, advantage, eps)`: PPO 裁剪损失\n- `kl_divergence(p_logits, q_logits)`: KL 散度",
+    "latexFormulas": [
+      "R(x) = E[reward | x]",
+      "L^{CLIP} = -E[min(r_t A_t, clip(r_t,1-eps,1+eps) A_t)]"
+    ],
+    "starterCode": "import numpy as np\ndef compute_log_prob(logits, token): pass\ndef kl_divergence(p, q): pass\ndef ppo_clip_loss(new_prob, old_prob, advantage, eps): pass",
+    "solutionCode": "import numpy as np\ndef compute_log_prob(logits, token):\n    shifted = logits - np.max(logits)\n    probs = np.exp(shifted) / np.sum(np.exp(shifted))\n    return np.log(probs[token] + 1e-10)\ndef kl_divergence(p, q):\n    p_sft = np.exp(p - np.max(p)); p_sft /= np.sum(p_sft)\n    q_sft = np.exp(q - np.max(q)); q_sft /= np.sum(q_sft)\n    return float(np.sum(p_sft * np.log(p_sft / (q_sft + 1e-10) + 1e-10)))\ndef ppo_clip_loss(new_prob, old_prob, advantage, eps=0.2):\n    ratio = new_prob / (old_prob + 1e-10)\n    clipped = np.clip(ratio, 1-eps, 1+eps)\n    return -min(ratio * advantage, clipped * advantage)",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "kl divergence basic",
+        "input": {
+          "p": [
+            1,
+            2,
+            3,
+            4
+          ],
+          "q": [
+            1,
+            2,
+            3,
+            4
+          ]
+        },
+        "expected": 0
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "RLHF 的三个阶段是什么？",
+        "options": [
+          "A. SFT → 奖励建模 → PPO 优化",
+          "B. 预训练 → 微调 → 推理",
+          "C. 数据收集 → 训练 → 部署",
+          "D. 提示 → 生成 → 排序"
+        ],
+        "answer": 0,
+        "explanation": "RLHF 先 SFT 微调，再训练奖励模型，最后用 PPO 优化策略。"
+      }
+    ],
+    "thinkingQuestion": "RLHF 中奖励模型训练和策略优化的循环可能导致 reward hacking。你会如何缓解这个问题？",
+    "aiPrompt": "评估学生对 RLHF、PPO、奖励模型和 KL 散度的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "llm-qwen-api",
+    "stageId": 8,
+    "topicName": "大模型（LLM）",
+    "subtopicName": "Qwen开源大模型",
+    "levelIndex": 1,
+    "levelTitle": "Qwen API 调用封装器",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "llm",
+      "qwen",
+      "api",
+      "open-source"
+    ],
+    "theoryContent": "### 编程挑战：Qwen API 调用封装器\n\n调用大模型 API 时需处理流式响应、重试、token 计数和成本估算。\n\n实现：\n- `estimate_tokens(text)`: 估算 token 数（中文约 1.5 token/字）\n- `estimate_cost(input_tokens, output_tokens, model)`: 估算成本\n- `truncate_to_limit(text, max_tokens)`: 截断到最大 token 数\n- `build_messages(system, history, user)`: 构建消息数组",
+    "latexFormulas": [
+      "cost = input_tokens * price_input + output_tokens * price_output"
+    ],
+    "starterCode": "def estimate_tokens(text): pass\ndef estimate_cost(in_tokens, out_tokens, model): pass\ndef truncate_to_limit(text, max_tokens): pass",
+    "solutionCode": "def estimate_tokens(text):\n    cn = sum(1 for c in text if ord(c) > 127)\n    en = len(text) - cn\n    return int(cn * 1.5 + en * 0.25) + 1\ndef estimate_cost(in_t, out_t, model='qwen-max'):\n    prices = {'qwen-turbo': (0.3,0.6), 'qwen-plus': (0.8,1.2), 'qwen-max': (2.0,6.0)}\n    p_in, p_out = prices.get(model, (2.0,6.0))\n    return round(in_t*p_in/1e6 + out_t*p_out/1e6, 6)\ndef truncate_to_limit(text, max_tokens):\n    while estimate_tokens(text) > max_tokens and text:\n        text = text[:-100]\n    return text if text else ''",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "estimate tokens",
+        "input": {
+          "text": "你好世界 hello"
+        },
+        "expected": 8
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "为什么中文的 token 数通常比英文多？",
+        "options": [
+          "A. 中文字符在 BPE 分词中通常被拆分成多个 token",
+          "B. 中文更复杂",
+          "C. tokenizer 对中文不友好",
+          "D. 中文不需要分词"
+        ],
+        "answer": 0,
+        "explanation": "BPE tokenizer 基于字符频率，中文字符出现频率较低，常被拆成多个 token。"
+      }
+    ],
+    "thinkingQuestion": "流式响应（SSE）相比一次性返回有什么优势？在实现流式输出时需要注意什么？",
+    "aiPrompt": "评估学生对 LLM API、token 计算和成本估算的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "llm-text-splitter",
+    "stageId": 8,
+    "topicName": "大模型（LLM）",
+    "subtopicName": "文本切分与清洗",
+    "levelIndex": 1,
+    "levelTitle": "文档切片引擎",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "llm",
+      "rag",
+      "text-split",
+      "chunk"
+    ],
+    "theoryContent": "### 编程挑战：文档切片引擎\n\nRAG 中需要将长文档切分成合适的 chunk。切片策略影响检索质量：chunk 太小缺乏上下文，太大则噪声多。\n\n实现：\n- `split_by_chars(text, chunk_size, overlap)`: 按字符数切分\n- `split_by_sentences(text, max_sentences)`: 按句子切分\n- `split_semantic(text, max_chars)`: 简单语义切分（按空行/标题）\n- `compute_chunk_stats(chunks)`: 统计 chunk 大小分布",
+    "latexFormulas": [
+      "Chunk_i = text[start_i:end_i], start_{i+1} = end_i - overlap"
+    ],
+    "starterCode": "import re\ndef split_by_chars(text, chunk_size, overlap): pass\ndef split_by_sentences(text, max_sentences): pass\ndef compute_chunk_stats(chunks): pass",
+    "solutionCode": "import re\ndef split_by_chars(text, chunk_size=500, overlap=50):\n    chunks = []\n    start = 0\n    while start < len(text):\n        end = min(start + chunk_size, len(text))\n        chunks.append(text[start:end])\n        if end == len(text): break\n        start = end - overlap\n    return chunks\ndef split_by_sentences(text, max_sentences=5):\n    sents = re.split(r'[。！？\\n]', text)\n    sents = [s.strip() for s in sents if s.strip()]\n    return ['。'.join(sents[i:i+max_sentences]) + '。' for i in range(0,len(sents),max_sentences)]\ndef compute_chunk_stats(chunks):\n    lens = [len(c) for c in chunks]\n    return {'count': len(chunks), 'avg_len': round(sum(lens)/len(lens),1), 'min': min(lens), 'max': max(lens)}",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "split basic",
+        "input": {
+          "text": "一二三四五六七八九十",
+          "chunkSize": 5,
+          "overlap": 2
+        },
+        "expected": [
+          "一二三四五",
+          "四五六七八",
+          "七八九十"
+        ]
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "RAG 中 chunk 太小会有什么问题？",
+        "options": [
+          "A. 检索到的片段可能缺乏完整上下文",
+          "B. 检索更快",
+          "C. 占用更多存储",
+          "D. 模型推理更快"
+        ],
+        "answer": 0,
+        "explanation": "chunk 太小则片段信息不完整，LLM 难以基于有限上下文正确回答。"
+      }
+    ],
+    "thinkingQuestion": "语义切分（如按段落、标题）相比固定长度切分的优势是什么？",
+    "aiPrompt": "评估学生对 RAG 切片策略、chunk 大小和 overlap 的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "llm-embedding",
+    "stageId": 8,
+    "topicName": "大模型（LLM）",
+    "subtopicName": "向量Embedding",
+    "levelIndex": 1,
+    "levelTitle": "文本向量嵌入器",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "llm",
+      "embedding",
+      "vector",
+      "semantic"
+    ],
+    "theoryContent": "### 编程挑战：文本向量嵌入器\n\n向量嵌入将文本转换为固定长度的向量，语义相近的文本向量距离也近。\n\n实现：\n- `tokenize(text, vocab)`: 简化分词\n- `embed_text(text, vocab, emb_matrix)`: 文本向量化（词向量平均）\n- `batch_embed(texts, vocab, emb_matrix)`: 批量嵌入\n- `similarity_search(query, texts, embeddings, k)`: 语义搜索",
+    "latexFormulas": [
+      "v_{doc} = 1/N sum_i v_{w_i}",
+      "sim(q, d) = cos(v_q, v_d)"
+    ],
+    "starterCode": "import numpy as np\ndef tokenize(text, vocab): pass\ndef embed_text(text, vocab, emb_matrix): pass\ndef similarity_search(query_emb, embeddings, texts, k): pass",
+    "solutionCode": "import numpy as np\ndef tokenize(text, vocab):\n    return [vocab.get(w, 0) for w in text.split() if w in vocab]\ndef embed_text(text, vocab, emb_matrix):\n    ids = tokenize(text, vocab)\n    if not ids: return np.zeros(emb_matrix.shape[1])\n    return np.mean(emb_matrix[ids], axis=0)\ndef similarity_search(query_emb, embeddings, texts, k=3):\n    scores = embeddings @ query_emb\n    norms = np.linalg.norm(embeddings, axis=1) * np.linalg.norm(query_emb)\n    scores = scores / (norms + 1e-10)\n    idx = np.argsort(scores)[::-1][:k]\n    return [{'text': texts[i], 'score': round(float(scores[i]),4)} for i in idx]",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "embed shape",
+        "input": {
+          "texts": [
+            "hello world",
+            "world peace",
+            "hello there"
+          ],
+          "vocab": {
+            "hello": 0,
+            "world": 1,
+            "peace": 2,
+            "there": 3
+          },
+          "embSize": 4
+        },
+        "expected": true
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "文本向量化后语义相似的文本在向量空间中有什么特点？",
+        "options": [
+          "A. 距离较近（余弦相似度高）",
+          "B. 距离较远",
+          "C. 随机分布",
+          "D. 完全相同"
+        ],
+        "answer": 0,
+        "explanation": "语义相似的文本在向量空间中距离近，余弦相似度高。"
+      }
+    ],
+    "thinkingQuestion": "词向量平均的嵌入方式有什么局限？BERT 的 [CLS] 向量或 Mean Pooling 如何改进？",
+    "aiPrompt": "评估学生对文本嵌入、向量检索和语义相似度的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "llm-vector-db-retrieval",
+    "stageId": 8,
+    "topicName": "大模型（LLM）",
+    "subtopicName": "向量数据库检索",
+    "levelIndex": 1,
+    "levelTitle": "向量数据库 ANN 检索器",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "llm",
+      "vector-db",
+      "ann",
+      "retrieval",
+      "faiss"
+    ],
+    "theoryContent": "### 编程挑战：向量数据库 ANN 检索器\n\n向量数据库用近似最近邻（ANN）算法在大规模向量中快速检索。实现简化版 IVF（倒排文件索引）。\n\n实现：\n- `train_ivf(embeddings, n_centroids)`: K-Means 训练聚类中心\n- `ivf_search(query, centroids, embeddings, ids, n_probe, top_k)`: 搜索最近的 n_probe 个簇\n- `brute_force_search(query, embeddings, ids, top_k)`: 暴力搜索（基准）\n- `recall_at_k(brute_force_results, ivf_results, k)`: 计算召回率",
+    "latexFormulas": [
+      "IVF: 先找最近的 n_probe 个簇，再在这些簇中搜索",
+      "Recall@k = |relevant_results ∩ retrieved_results| / k"
+    ],
+    "starterCode": "import numpy as np\ndef train_ivf(embeddings, n_centroids): pass\ndef ivf_search(query, centroids, embeddings, ids, n_probe, top_k): pass\ndef brute_force_search(query, embeddings, ids, top_k): pass",
+    "solutionCode": "import numpy as np\ndef train_ivf(embeddings, n_centroids):\n    idx = np.random.choice(len(embeddings), n_centroids, replace=False)\n    centroids = embeddings[idx]\n    return centroids\ndef brute_force_search(query, embeddings, ids, top_k=3):\n    scores = embeddings @ query\n    idx = np.argsort(scores)[::-1][:top_k]\n    return [(int(ids[i]), float(scores[i])) for i in idx]\ndef ivf_search(query, centroids, embeddings, ids, n_probe=2, top_k=3):\n    dists = np.linalg.norm(centroids - query, axis=1)\n    nearest = np.argsort(dists)[:n_probe]\n    candidates = []\n    for c in nearest:\n        in_cluster = np.where(np.argmin(np.linalg.norm(embeddings[:,None]-centroids[None,:],axis=2),axis=1)==c)[0]\n        for i in in_cluster:\n            candidates.append((ids[i], float(embeddings[i] @ query)))\n    candidates.sort(key=lambda x:-x[1])\n    return candidates[:top_k]",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "ivf search shape",
+        "input": {
+          "embeddings": [
+            [
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8
+            ],
+            [
+              8,
+              7,
+              6,
+              5,
+              4,
+              3,
+              2,
+              1
+            ],
+            [
+              1,
+              1,
+              1,
+              1,
+              2,
+              2,
+              2,
+              2
+            ],
+            [
+              2,
+              2,
+              2,
+              2,
+              1,
+              1,
+              1,
+              1
+            ],
+            [
+              3,
+              3,
+              3,
+              3,
+              4,
+              4,
+              4,
+              4
+            ],
+            [
+              4,
+              4,
+              4,
+              4,
+              3,
+              3,
+              3,
+              3
+            ],
+            [
+              5,
+              5,
+              5,
+              5,
+              6,
+              6,
+              6,
+              6
+            ],
+            [
+              6,
+              6,
+              6,
+              6,
+              5,
+              5,
+              5,
+              5
+            ],
+            [
+              7,
+              7,
+              7,
+              7,
+              8,
+              8,
+              8,
+              8
+            ],
+            [
+              8,
+              8,
+              8,
+              8,
+              7,
+              7,
+              7,
+              7
+            ],
+            [
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8
+            ],
+            [
+              8,
+              7,
+              6,
+              5,
+              4,
+              3,
+              2,
+              1
+            ],
+            [
+              1,
+              3,
+              5,
+              7,
+              2,
+              4,
+              6,
+              8
+            ],
+            [
+              8,
+              6,
+              4,
+              2,
+              7,
+              5,
+              3,
+              1
+            ],
+            [
+              2,
+              4,
+              6,
+              8,
+              1,
+              3,
+              5,
+              7
+            ],
+            [
+              7,
+              5,
+              3,
+              1,
+              8,
+              6,
+              4,
+              2
+            ],
+            [
+              3,
+              1,
+              4,
+              1,
+              5,
+              9,
+              2,
+              6
+            ],
+            [
+              6,
+              2,
+              9,
+              5,
+              1,
+              4,
+              1,
+              3
+            ],
+            [
+              9,
+              8,
+              7,
+              6,
+              5,
+              4,
+              3,
+              2
+            ],
+            [
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              9
+            ]
+          ],
+          "ids": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19
+          ],
+          "query": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8
+          ],
+          "nCentroids": 4,
+          "nProbe": 2,
+          "topK": 3
+        },
+        "expected": true
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "ANN（近似最近邻）相比暴力搜索的优势是什么？",
+        "options": [
+          "A. 在海量数据中大幅降低检索延迟",
+          "B. 准确率更高",
+          "C. 不需要索引",
+          "D. 支持更多距离度量"
+        ],
+        "answer": 0,
+        "explanation": "ANN 牺牲少量精度换取数量级的速度提升，适合百万级以上向量检索。"
+      }
+    ],
+    "thinkingQuestion": "IVF 中 n_probe 参数如何影响检索速度与召回率的 trade-off？",
+    "aiPrompt": "评估学生对 ANN、向量检索、IVF 的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "llm-tool-use",
+    "stageId": 8,
+    "topicName": "大模型（LLM）",
+    "subtopicName": "工具调用 (Tool Use)",
+    "levelIndex": 1,
+    "levelTitle": "工具调用执行器",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "llm",
+      "tool-use",
+      "function",
+      "plugin"
+    ],
+    "theoryContent": "### 编程挑战：工具调用执行器\n\n大模型可以通过调用外部工具来获取实时信息、执行计算或操作外部系统。\n\n实现：\n- `register_tool(name, func, schema)`: 注册工具\n- `parse_tool_call(response)`: 从模型回复中解析工具调用\n- `execute_tool(tool_name, args, tools)`: 执行工具\n- `tool_use_loop(prompt, tools, model, max_turns)`: 工具调用循环",
+    "latexFormulas": [
+      "Model -> ToolCall(args) -> ToolResult -> Model -> ... -> FinalAnswer"
+    ],
+    "starterCode": "import json\ndef register_tool(name, func, schema): pass\ndef parse_tool_call(response): pass\ndef execute_tool(tool_name, args, tools): pass",
+    "solutionCode": "import json\ndef register_tool(name, func, schema):\n    return {'name': name, 'func': func, 'schema': schema}\ndef parse_tool_call(response):\n    if '<tool>' in response:\n        start = response.index('<tool>')+6\n        end = response.index('</tool>', start)\n        return json.loads(response[start:end])\n    return None\ndef execute_tool(tool_name, args, tools):\n    for t in tools:\n        if t['name'] == tool_name:\n            return t['func'](**args)\n    return f'unknown tool: {tool_name}'",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "parse tool call",
+        "input": {
+          "response": "计算结果是 <tool>{\"name\":\"calc\",\"args\":{\"a\":1,\"b\":2}}</tool>"
+        },
+        "expected": {
+          "name": "calc",
+          "args": {
+            "a": 1,
+            "b": 2
+          }
+        }
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "工具调用中 function calling 的 schema 通常用什么格式描述？",
+        "options": [
+          "A. JSON Schema",
+          "B. XML",
+          "C. YAML",
+          "D. CSV"
+        ],
+        "answer": 0,
+        "explanation": "OpenAI 等主流模型使用 JSON Schema 描述函数参数。"
+      }
+    ],
+    "thinkingQuestion": "如果模型连续调用同一个工具多次（如死循环），你会怎么防止？",
+    "aiPrompt": "评估学生对工具调用、函数调用和 Agent 的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "llm-function-calling",
+    "stageId": 8,
+    "topicName": "大模型（LLM）",
+    "subtopicName": "Function Calling",
+    "levelIndex": 1,
+    "levelTitle": "Function Calling 调度器",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "llm",
+      "function-calling",
+      "api",
+      "structured-output"
+    ],
+    "theoryContent": "### 编程挑战：Function Calling 调度器\n\nFunction Calling 让模型输出结构化 JSON，直接映射到函数调用。比文本解析更可靠。\n\n实现：\n- `execute_function_call(func_call, registry)`: 执行函数调用\n- `build_function_definitions(functions)`: 生成 function definitions\n- `validate_arguments(args, schema)`: 校验参数类型\n- `call_with_retry(func, args, max_retries)`: 带重试的函数调用",
+    "latexFormulas": [
+      "function_call = {name: string, arguments: object}",
+      "validate(args, schema) -> bool"
+    ],
+    "starterCode": "import json\ndef execute_function_call(func_call, registry): pass\ndef validate_arguments(args, schema): pass\ndef call_with_retry(func, args, max_retries): pass",
+    "solutionCode": "import json\ndef execute_function_call(func_call, registry):\n    name = func_call.get('name') if isinstance(func_call, dict) else func_call['name']\n    args = func_call.get('arguments',{}) if isinstance(func_call, dict) else func_call['arguments']\n    fn = registry.get(name)\n    if not fn: return f'unknown function: {name}'\n    return fn(**args)\ndef validate_arguments(args, schema):\n    for key, props in schema.get('properties',{}).items():\n        if key in args:\n            expected = props.get('type')\n            actual = type(args[key]).__name__\n            if actual != expected and not (expected=='number' and actual=='int'):\n                return False\n        elif props.get('required', False):\n            return False\n    return True\ndef call_with_retry(func, args, max_retries=3):\n    for _ in range(max_retries):\n        try:\n            return func(**args)\n        except Exception as e:\n            last = e\n    raise last",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "validate types",
+        "input": {
+          "args": {
+            "name": "Alice",
+            "age": 30
+          },
+          "schema": {
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "age": {
+                "type": "number"
+              }
+            }
+          }
+        },
+        "expected": true
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "Function Calling 相比文本解析 Tool Call 的主要优势？",
+        "options": [
+          "A. 输出结构化 JSON，不需要正则解析",
+          "B. 速度更快",
+          "C. 不需要定义函数",
+          "D. 准确率更低"
+        ],
+        "answer": 0,
+        "explanation": "Function Calling 让模型直接输出结构化 JSON 函数参数，避免文本解析的不确定性。"
+      }
+    ],
+    "thinkingQuestion": "Function Calling 中如果模型生成了不存在的函数名或参数缺失，你的调度器应该怎么处理？",
+    "aiPrompt": "评估学生对 Function Calling、参数校验、结构化输出的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "llm-langchain-workflow",
+    "stageId": 8,
+    "topicName": "大模型（LLM）",
+    "subtopicName": "LangChain/CrewAI",
+    "levelIndex": 1,
+    "levelTitle": "LangChain 链式工作流",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "llm",
+      "langchain",
+      "crewai",
+      "workflow",
+      "chain"
+    ],
+    "theoryContent": "### 编程挑战：LangChain 链式工作流\n\nLangChain 通过 Chain 将多个 LLM 调用串联成工作流。CrewAI 让多个 Agent 协作完成任务。\n\n实现简化版 Chain 和 Agent 协作框架：\n- `LLMChain(prompt_template, llm)`: 单步链\n- `SequentialChain(chains)`: 顺序链\n- `Agent(name, tools, role)`: 简化 Agent\n- `Crew(agents, task)`: 多 Agent 协作",
+    "latexFormulas": [
+      "Chain: Input -> Prompt -> LLM -> Output -> Next Chain",
+      "Agent: Think -> Act -> Observe -> Repeat"
+    ],
+    "starterCode": "class LLMChain:\n    def __init__(self, prompt_template, llm): pass\n    def run(self, inputs): pass\nclass SequentialChain:\n    def __init__(self, chains): pass\n    def run(self, inputs): pass\nclass Agent:\n    def __init__(self, name, tools, role): pass\n    def run(self, task): pass",
+    "solutionCode": "class LLMChain:\n    def __init__(self, prompt_template, llm):\n        self.template = prompt_template\n        self.llm = llm\n    def run(self, inputs):\n        prompt = self.template.format(**inputs)\n        return self.llm(prompt)\nclass SequentialChain:\n    def __init__(self, chains):\n        self.chains = chains\n    def run(self, inputs):\n        result = inputs\n        for chain in self.chains:\n            if isinstance(result, dict):\n                result = chain.run(result)\n            else:\n                result = chain.run({'input': result})\n        return result\nclass Agent:\n    def __init__(self, name, tools, role):\n        self.name = name; self.tools = tools; self.role = role\n    def run(self, task):\n        return f'{self.name}({self.role})执行: {task}'",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "sequential chain",
+        "input": {
+          "chains": [],
+          "inputs": {
+            "input": "test"
+          }
+        },
+        "expected": "test"
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "LangChain 的 Chain 和 Agent 的区别是什么？",
+        "options": [
+          "A. Chain 是固定流程，Agent 是动态决策",
+          "B. Chain 更智能",
+          "C. Agent 不能调用工具",
+          "D. 两者完全相同"
+        ],
+        "answer": 0,
+        "explanation": "Chain 执行预定义的步骤序列，Agent 根据环境动态决定下一步操作。"
+      }
+    ],
+    "thinkingQuestion": "多 Agent 协作中可能出现死锁（互相等待），你会如何设计超时和降级机制？",
+    "aiPrompt": "aiPrompt: 评估学生对 LangChain、Agent、工作流编排的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "llm-prompt-template-l2",
+    "stageId": 8,
+    "topicName": "大模型（LLM）",
+    "subtopicName": "Few-shot提示",
+    "levelIndex": 2,
+    "levelTitle": "Prompt 模板引擎",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "Few-shot提示"
+    ],
+    "theoryContent": "实现 Prompt 模板引擎，支持变量插值、条件段落、示例注入。",
+    "latexFormulas": [
+      "Prompt = Template(inputs, examples)"
+    ],
+    "starterCode": "def render_prompt(template, variables): pass\ndef inject_examples(prompt, examples): pass",
+    "solutionCode": "def render_prompt(template,var):\n    for k,v in var.items():template=template.replace(\"{{\"+k+\"}}\",str(v))\n    return template\ndef inject_examples(prompt,examples,sep=\"\\n\"):\n    return prompt+\"\\n\\nExamples:\\n\"+sep.join(f\"Q: {e[0]}\\nA: {e[1]}\" for e in examples)",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "render",
+        "input": {
+          "template": "Hello {{name}}",
+          "variables": {
+            "name": "World"
+          }
+        },
+        "expected": "Hello World"
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "Prompt 模板注入示例时，示例顺序对效果有影响吗？",
+        "options": [
+          "A. 有影响，相关示例靠近 query 效果更好",
+          "B. 没影响",
+          "C. 随机最好",
+          "D. 按字母序"
+        ],
+        "answer": 0,
+        "explanation": "示例顺序影响效果，与 query 最相似的示例排在最后（最靠近 query）效果更好。"
+      }
+    ],
+    "thinkingQuestion": "Few-shot 示例数量超过上下文窗口长度时怎么处理？",
+    "aiPrompt": "评估学生对 Prompt 工程的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "llm-cot-verify-l2",
+    "stageId": 8,
+    "topicName": "大模型（LLM）",
+    "subtopicName": "CoT链式思维",
+    "levelIndex": 2,
+    "levelTitle": "CoT 验证器",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "CoT链式思维"
+    ],
+    "theoryContent": "验证 CoT 推理步骤的正确性，检测中间步骤的数学错误。",
+    "latexFormulas": [
+      "StepVerify: logic_step -> bool"
+    ],
+    "starterCode": "def verify_cot_steps(steps): pass\ndef detect_step_error(step, expected): pass",
+    "solutionCode": "import re\ndef verify_cot_steps(steps):\n    errors=[]\n    for i,s in enumerate(steps):\n        nums=re.findall(r\"\\d+\",s)\n        if len(nums)>=2:\n            a,b=int(nums[-2]),int(nums[-1])\n            if \"+\" in s and a+b!=int(nums[-1]):errors.append((i,\"addition error\"))\n    return {\"valid\":len(errors)==0,\"errors\":errors}\ndef detect_step_error(step,expected):\n    return {\"match\":str(step).strip()==str(expected).strip()}",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "verify",
+        "input": {
+          "steps": [
+            "Alice has 5 apples",
+            "Bob gives 3 more",
+            "Total = 5+3 = 8"
+          ]
+        },
+        "expected": true
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "CoT 验证为什么重要？",
+        "options": [
+          "A. LLM 可能生成看似合理但错误的推理",
+          "B. 加速推理",
+          "C. 减少 token",
+          "D. 不需要验证"
+        ],
+        "answer": 0,
+        "explanation": "LLM 可能产生幻觉，CoT 验证器能检测出中间步骤的逻辑或数学错误。"
+      }
+    ],
+    "thinkingQuestion": "Self-Consistency（自洽性）如何通过多次采样提高 CoT 准确性？",
+    "aiPrompt": "评估学生对 CoT 推理的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "llm-tool-plan-l2",
+    "stageId": 8,
+    "topicName": "大模型（LLM）",
+    "subtopicName": "ReAct框架",
+    "levelIndex": 2,
+    "levelTitle": "工具调度执行器",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "ReAct框架"
+    ],
+    "theoryContent": "实现 ReAct 的 Tool Execution 模块：根据模型选择的工具和参数执行并返回结果。",
+    "latexFormulas": [
+      "Thought-Action-Observation循环"
+    ],
+    "starterCode": "def execute_tool(name, args, tools): pass\ndef react_step(state, tool_registry): pass",
+    "solutionCode": "import json\ndef execute_tool(name,args,tools):\n    t=tools.get(name)\n    if not t:return f\"Error: unknown tool {name}\"\n    try:return str(t(**args))\n    except Exception as e:return f\"Error: {e}\"\ndef react_step(state,registry):\n    thought=state.get(\"thought\",\"\")\n    action=state.get(\"action\",\"\")\n    args=state.get(\"args\",{})\n    obs=execute_tool(action,args,registry)\n    return {\"observation\":obs,\"thought\":f\"Executed {action}, got: {obs[:50]}\"}",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "tool exec",
+        "input": {
+          "name": "search",
+          "args": {
+            "q": "weather"
+          },
+          "tools": {}
+        },
+        "expected": true
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "ReAct 中 Observation 的作用？",
+        "options": [
+          "A. 作为下一步思考的输入",
+          "B. 最终输出",
+          "C. 跳过思考",
+          "D. 无关"
+        ],
+        "answer": 0,
+        "explanation": "Observation 提供工具执行结果，供模型继续推理下一步。"
+      }
+    ],
+    "thinkingQuestion": "工具调用失败（如 API 超时）时 ReAct 应如何设计降级策略？",
+    "aiPrompt": "评估学生对 ReAct、工具调用的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "llm-qlora-l2",
+    "stageId": 8,
+    "topicName": "大模型（LLM）",
+    "subtopicName": "LoRA轻量化微调",
+    "levelIndex": 2,
+    "levelTitle": "QLoRA 量化模拟",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "LoRA轻量化微调"
+    ],
+    "theoryContent": "QLoRA 将预训练权重量化为 4bit（NF4），大幅降低显存占用。",
+    "latexFormulas": [
+      "NF4: 归一化4位量化",
+      "QLoRA = 4bit权重 + LoRA适配器"
+    ],
+    "starterCode": "import numpy as np\ndef quantize_nf4(weights): pass\ndef dequantize_nf4(quantized, absmax): pass",
+    "solutionCode": "import numpy as np\ndef quantize_nf4(w):\n    w=np.array(w);absmax=np.max(np.abs(w))\n    normalized=w/absmax;n=16\n    levels=np.linspace(-1,1,n)\n    idx=np.digitize(normalized,levels)-1\n    idx=np.clip(idx,0,n-1)\n    return {\"indices\":idx.astype(np.uint8),\"absmax\":absmax}\ndef dequantize_nf4(q,absmax):\n    n=16;levels=np.linspace(-1,1,n)\n    return levels[q[\"indices\"]]*absmax",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "quantize roundtrip",
+        "input": {
+          "weights": [
+            0.43051740206767564,
+            0.14505686712596777,
+            0.7965397243355299,
+            -0.49674148200291324,
+            -0.7236827548993827,
+            -0.2696360961700388,
+            0.9711929582517689,
+            -0.45204188762113384,
+            -0.022866540233388744,
+            -0.3146711769184223,
+            0.6707749361577542,
+            0.3879423623855054,
+            -0.1506576456427866,
+            -0.8392696887677653,
+            0.12648580231001816,
+            -0.5209313091464018,
+            -0.17700916136838085,
+            -0.8622228450573117,
+            -0.14963076619563775,
+            -0.7459177095453993,
+            -0.9362387019634721,
+            0.9530512851818251,
+            -0.20409522559002635,
+            0.26002722730295424,
+            0.39767228654150344,
+            -0.3756746386367835,
+            0.6819229519686383,
+            -0.39540008663813175,
+            -0.20695900948761903,
+            -0.36275637760632007,
+            -0.04578440059854172,
+            0.49716796359883375
+          ]
+        },
+        "expected": true
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "QLoRA 相比 LoRA 节省了什么？",
+        "options": [
+          "A. 将预训练权重量化为 4bit 减少显存",
+          "B. 减少训练数据",
+          "C. 减少层数",
+          "D. 降低精度"
+        ],
+        "answer": 0,
+        "explanation": "QLoRA 将预训练权重用 NF4 量化存储，大幅度降低显存占用。"
+      }
+    ],
+    "thinkingQuestion": "NF4 量化和普通 INT4 量化的区别？Double Quantization 进一步节省了什么？",
+    "aiPrompt": "评估学生对 QLoRA、量化的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "llm-dpo-l2",
+    "stageId": 8,
+    "topicName": "大模型（LLM）",
+    "subtopicName": "RLHF对齐",
+    "levelIndex": 2,
+    "levelTitle": "DPO 偏好优化",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "RLHF对齐"
+    ],
+    "theoryContent": "DPO 直接偏好优化通过偏好对直接优化策略，无需训练奖励模型。",
+    "latexFormulas": [
+      "L_DPO = -E[log sigma(beta*(log pi(y_w|x) - pi_ref(y_w|x) - log pi(y_l|x) + pi_ref(y_l|x)))"
+    ],
+    "starterCode": "import numpy as np\ndef dpo_loss(chosen_logps, rejected_logps, ref_chosen_logps, ref_rejected_logps, beta): pass",
+    "solutionCode": "import numpy as np\ndef sigmoid(x):return 1/(1+np.exp(-np.clip(x,-100,100)))\ndef dpo_loss(sel,rej,sel_ref,rej_ref,beta=0.1):\n    pi_diff=sel-sel_ref-rej+rej_ref\n    loss=-np.log(sigmoid(beta*pi_diff)+1e-10)\n    return round(float(np.mean(loss)),4)",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "dpo loss",
+        "input": {
+          "chosen_logps": [
+            -0.1,
+            -0.2
+          ],
+          "rejected_logps": [
+            -0.5,
+            -0.6
+          ],
+          "ref_chosen_logps": [
+            -0.15,
+            -0.25
+          ],
+          "ref_rejected_logps": [
+            -0.45,
+            -0.55
+          ],
+          "beta": 0.1
+        },
+        "expected": true
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "DPO 相比 RLHF 的优势？",
+        "options": [
+          "A. 无需训练奖励模型，简化流程",
+          "B. 更准确",
+          "C. 更慢",
+          "D. 需要更多数据"
+        ],
+        "answer": 0,
+        "explanation": "DPO 直接通过偏好对优化策略，跳过了 RLHF 中的奖励模型训练阶段。"
+      }
+    ],
+    "thinkingQuestion": "DPO 的 beta 参数控制什么？取值太大会怎样？",
+    "aiPrompt": "评估学生对 DPO、偏好优化的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "llm-kv-cache-l2",
+    "stageId": 8,
+    "topicName": "大模型（LLM）",
+    "subtopicName": "Qwen开源大模型",
+    "levelIndex": 2,
+    "levelTitle": "KV Cache 实现",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "Qwen开源大模型"
+    ],
+    "theoryContent": "实现 Transformer 推理时的 KV Cache，避免重复计算已生成的 key 和 value。",
+    "latexFormulas": [
+      "cache = concat(cache, K_new)",
+      "Attention = softmax(Q * cache_K^T/sqrt(d)) * cache_V"
+    ],
+    "starterCode": "import numpy as np\ndef init_kv_cache(): pass\ndef update_kv_cache(cache, K, V): pass\ndef attention_with_cache(Q, cache): pass",
+    "solutionCode": "import numpy as np\ndef softmax(x):\n    xm=x-np.max(x,axis=-1,keepdims=True);e=np.exp(xm);return e/np.sum(e,axis=-1,keepdims=True)\ndef init_kv_cache():\n    return {\"K\":None,\"V\":None}\ndef update_kv_cache(c,K,V):\n    if c[\"K\"] is None:c[\"K\"],c[\"V\"]=K,V\n    else:c[\"K\"]=np.concatenate([c[\"K\"],K],axis=2);c[\"V\"]=np.concatenate([c[\"V\"],V],axis=2)\n    return c\ndef attention_with_cache(Q,cache):\n    K=K=cache[\"K\"];V=cache[\"V\"]\n    d=Q.shape[-1];scores=Q@K.transpose(0,1,3,2)/np.sqrt(d)\n    w=softmax(scores);return w@V",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "kv cache",
+        "input": {
+          "Q": [
+            0.310927959437572,
+            0.9946834810490688,
+            0.6871076966007816,
+            0.09065333308717438,
+            -0.8334717068600974,
+            -0.8744488816299216,
+            0.12180341299063313,
+            0.2407865536773941,
+            0.8838634196699546,
+            0.10454318166710763,
+            0.7681840938171436,
+            -0.7963217598138543,
+            -0.3845298974547604,
+            -0.13730973496760823,
+            0.8430602059322432,
+            0.10225869023754841,
+            0.09314177658085043,
+            0.5593766583020434,
+            -0.1258008148858769,
+            0.9817207658969562,
+            -0.8024152414619596,
+            0.5783369977942181,
+            0.5398650377415342,
+            -0.3172890315775665,
+            -0.9582270168401892,
+            0.38102695624762717,
+            0.3571560607915134,
+            -0.4229542420412744,
+            0.47029193523161483,
+            -0.6886909434446213,
+            0.54991683134583,
+            -0.6993001030989423
+          ],
+          "K": [
+            -0.5549321889481313,
+            0.1867215072818862,
+            0.6449750639707714,
+            -0.6153122295303453,
+            0.4724553523515662,
+            -0.5241239800311672,
+            -0.38182048528628343,
+            -0.2760126149418154,
+            -0.5640129705226067,
+            0.685004886981841,
+            -0.0865503358225781,
+            -0.12618427294105405,
+            0.9396211835240669,
+            0.8305512646456252,
+            0.1799570368707042,
+            -0.4768435361852279,
+            0.777304461694313,
+            -0.7908435507649814,
+            -0.917255175139756,
+            0.8494968385731063,
+            -0.8463718988885938,
+            -0.940321213836222,
+            -0.0733713185678817,
+            -0.9479948360806909,
+            -0.4058508311902318,
+            0.43250727464803385,
+            -0.376900027910986,
+            -0.8229179547953,
+            -0.5900012431016983,
+            0.9319755636193148,
+            -0.7181437247069895,
+            0.224012926181691
+          ],
+          "V": [
+            -0.18226294212060834,
+            0.8942937911476343,
+            0.00662472289324656,
+            -0.15057537136852606,
+            -0.16655790171837515,
+            0.18467821339531554,
+            0.00008284771857969275,
+            0.8386328192187564,
+            -0.19147847951011654,
+            0.2639978359770181,
+            -0.6317789763317752,
+            -0.33065465532787286,
+            -0.26630302574921716,
+            0.7255327297410528,
+            0.6695240331073347,
+            -0.9990649135357961,
+            -0.709796919918865,
+            0.12046567566179345,
+            -0.6008599760484046,
+            -0.9612918565678239,
+            -0.13825479738137858,
+            -0.5797905033084558,
+            0.46531507377076764,
+            0.6285365505235743,
+            0.4658457789208095,
+            0.5600706752280686,
+            -0.5534698318536999,
+            0.7043660029279244,
+            0.9133923276284484,
+            0.07985225783406857,
+            0.6799675616039376,
+            0.47355625189412986
+          ]
+        },
+        "expected": true
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "KV Cache 节省了哪部分计算？",
+        "options": [
+          "A. 避免重复计算已生词的 K/V",
+          "B. 节省 Q 的计算",
+          "C. 节省 softmax",
+          "D. 节省层数"
+        ],
+        "answer": 0,
+        "explanation": "KV Cache 缓存已生成 token 的 K 和 V 矩阵，避免每步重新计算。"
+      }
+    ],
+    "thinkingQuestion": "Prefill 阶段和 Decode 阶段在 KV Cache 使用上有什么不同？",
+    "aiPrompt": "评估学生对 KV Cache、推理加速的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "llm-chunk-optimize-l2",
+    "stageId": 8,
+    "topicName": "大模型（LLM）",
+    "subtopicName": "文本切分与清洗",
+    "levelIndex": 2,
+    "levelTitle": "智能切片器",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "文本切分与清洗"
+    ],
+    "theoryContent": "实现智能文本切分，支持按段落、句子边界切片，并统计切片质量。",
+    "latexFormulas": [
+      "chunk_i = text[start_i:end_i]",
+      "overlap = start_{i+1} - end_i"
+    ],
+    "starterCode": "def smart_chunk(text, chunk_size, overlap): pass\ndef chunk_stats(chunks): pass",
+    "solutionCode": "import re\ndef smart_chunk(text,size=500,overlap=50):\n    paras=re.split(r\"\\n\\s*\\n\",text)\n    chunks=[];cur=\"\"\n    for p in paras:\n        if len(cur)+len(p)<size:cur+=(\"\\n\\n\"+p if cur else p)\n        else:\n            if cur:chunks.append(cur)\n            cur=p\n    if cur:chunks.append(cur)\n    if overlap>0 and len(chunks)>1:\n        result=[chunks[0]]\n        for i in range(1,len(chunks)):\n            prev=result[-1];tail=prev[-overlap:] if len(prev)>overlap else prev\n            result.append(tail+chunks[i])\n        chunks=result\n    return chunks\ndef chunk_stats(chunks):\n    lens=[len(c)for c in chunks]\n    return {\"count\":len(chunks),\"avg\":round(sum(lens)/len(lens),1)if lens else 0}",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "smart chunk",
+        "input": {
+          "text": "P1\\n\\nP2\\n\\nP3\\n\\nP4\\n\\nP5",
+          "chunkSize": 100,
+          "overlap": 0
+        },
+        "expected": true
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "按段落切分比固定长度切分好在哪里？",
+        "options": [
+          "A. 保持语义完整性",
+          "B. 更省 token",
+          "C. 更简单",
+          "D. 无区别"
+        ],
+        "answer": 0,
+        "explanation": "按段落切分保持文本语义完整性，检索时上下文更连贯。"
+      }
+    ],
+    "thinkingQuestion": "RAG 中 chunk 大小对检索质量有什么影响？如何选择最佳 chunk 大小？",
+    "aiPrompt": "评估学生对 RAG 切片策略的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "llm-embed-alignment-l2",
+    "stageId": 8,
+    "topicName": "大模型（LLM）",
+    "subtopicName": "向量Embedding",
+    "levelIndex": 2,
+    "levelTitle": "向量对齐评估",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "向量Embedding"
+    ],
+    "theoryContent": "评估嵌入向量的对齐质量：计算相似样本的余弦相似度 vs 不相似样本的余弦相似度。",
+    "latexFormulas": [
+      "Alignment = mean(sim_pos) - mean(sim_neg)"
+    ],
+    "starterCode": "import numpy as np\ndef cosine_sim(a, b): pass\ndef compute_alignment(embeddings, labels): pass",
+    "solutionCode": "import numpy as np\ndef cosine_sim(a,b):\n    return float(a@b/(np.linalg.norm(a)*np.linalg.norm(b)+1e-10))\ndef compute_alignment(embs,labels):\n    embs=np.array(embs)\n    pos,neg=[],[]\n    for i in range(len(embs)):\n        for j in range(i+1,len(embs)):\n            s=cosine_sim(embs[i],embs[j])\n            if labels[i]==labels[j]:pos.append(s)\n            else:neg.append(s)\n    return {\"alignment\":round(np.mean(pos)-np.mean(neg),4),\"pos_sim\":round(np.mean(pos),4),\"neg_sim\":round(np.mean(neg),4)}",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "alignment",
+        "input": {
+          "embeddings": [
+            [
+              1,
+              0
+            ],
+            [
+              0.9,
+              0.1
+            ],
+            [
+              0,
+              1
+            ],
+            [
+              0.1,
+              0.9
+            ]
+          ],
+          "labels": [
+            0,
+            0,
+            1,
+            1
+          ]
+        },
+        "expected": true
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "好的嵌入模型在向量对齐上有什么特征？",
+        "options": [
+          "A. 同类相似度高，异类相似度低",
+          "B. 所有向量接近",
+          "C. 所有向量分散",
+          "D. 与类别无关"
+        ],
+        "answer": 0,
+        "explanation": "好的嵌入模型使同类样本在向量空间中聚集，异类样本远离。"
+      }
+    ],
+    "thinkingQuestion": "对比学习（Contrastive Learning）如何通过正负样本对来训练嵌入模型？",
+    "aiPrompt": "评估学生对向量嵌入、对齐的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "llm-hnsw-l2",
+    "stageId": 8,
+    "topicName": "大模型（LLM）",
+    "subtopicName": "向量数据库检索",
+    "levelIndex": 2,
+    "levelTitle": "HNSW 索引模拟",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "向量数据库检索"
+    ],
+    "theoryContent": "实现 HNSW（Hierarchical Navigable Small World）图的简化版本，用于近似最近邻搜索。",
+    "latexFormulas": [
+      "HNSW: 多层图, 上层跳过远距离节点",
+      "Search: 从顶层贪心搜索到底层"
+    ],
+    "starterCode": "import numpy as np\ndef euclidean(a,b): return float(np.sqrt(np.sum((a-b)**2)))\ndef hnsw_search(query, nodes, levels, top_k): pass",
+    "solutionCode": "import numpy as np\ndef euclidean(a,b):return float(np.sqrt(np.sum((a-b)**2)))\ndef hnsw_search(query,nodes,levels,top_k=3):\n    n=len(nodes)\n    for level in reversed(range(levels)):\n        candidates=list(range(n)) if level==0 else list(range(0,n,2**(level+1)))\n        if not candidates:candidates=list(range(n))\n        dists=[(euclidean(query,nodes[i]),i)for i in candidates]\n        dists.sort(key=lambda x:x[0])\n        nearest=dists[:top_k]\n    nearest.sort(key=lambda x:x[0])\n    return [int(i)for _,i in nearest]",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "hnsw",
+        "input": {
+          "query": [
+            0.5,
+            0.5
+          ],
+          "nodes": [
+            [
+              0,
+              0
+            ],
+            [
+              1,
+              1
+            ],
+            [
+              0,
+              1
+            ],
+            [
+              1,
+              0
+            ],
+            [
+              0.4,
+              0.6
+            ],
+            [
+              0.6,
+              0.4
+            ]
+          ],
+          "levels": 2,
+          "topK": 3
+        },
+        "expected": true
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "HNSW 相比暴力搜索的优势？",
+        "options": [
+          "A. 对数复杂度搜索",
+          "B. 准确率更高",
+          "C. 更省内存",
+          "D. 不需要训练"
+        ],
+        "answer": 0,
+        "explanation": "HNSW 通过多层图结构实现对数时间复杂度的近似最近邻搜索。"
+      }
+    ],
+    "thinkingQuestion": "HNSW 的构建参数 M（连接数）和 efConstruction 对搜索质量有什么影响？",
+    "aiPrompt": "评估学生对 ANN 检索、HNSW 的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "llm-tool-rag-l2",
+    "stageId": 8,
+    "topicName": "大模型（LLM）",
+    "subtopicName": "工具调用 (Tool Use)",
+    "levelIndex": 2,
+    "levelTitle": "RAG 检索增强生成",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "工具调用 (Tool Use)"
+    ],
+    "theoryContent": "实现 RAG pipeline：检索 -> 增强 -> 生成。",
+    "latexFormulas": [
+      "RAG = Retrieve + Augment + Generate"
+    ],
+    "starterCode": "def retrieve(query, docs, top_k): pass\ndef augment(query, docs): pass\ndef rag_pipeline(query, docs, llm): pass",
+    "solutionCode": "import numpy as np\ndef cosine_sim(a,b):\n  return float(a@b/(np.linalg.norm(a)*np.linalg.norm(b)+1e-10))\ndef retrieve(query,docs,top_k=2):\n  sc=[(cosine_sim(query,d[1]),d)for d in docs]\n  sc.sort(key=lambda x:-x[0])\n  return [d for _,d in sc[:top_k]]\ndef augment(query,relevant):\n  ctx=\"\\n\".join(f\"[{i+1}] {r[2]}\" for i,r in enumerate(relevant))\n  return f\"Context:\\n{ctx}\\n\\nQuestion: {query}\\nAnswer:\"\ndef rag_pipeline(query,docs,llm):\n  rl=retrieve(query,docs)\n  pm=augment(query,rl)\n  return {\"response\":llm(pm),\"documents\":rl}",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "rag",
+        "input": {
+          "query": [
+            0.1,
+            0.2,
+            0.3
+          ],
+          "docs": [
+            [
+              0.9,
+              0.8,
+              0.7,
+              "doc1"
+            ],
+            [
+              0.1,
+              0.2,
+              0.3,
+              "doc2"
+            ]
+          ]
+        },
+        "expected": true
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "RAG 中检索返回的文档越多越好吗？",
+        "options": [
+          "A. 适量最好，过多可能引入噪声",
+          "B. 越多越好",
+          "C. 越少越好",
+          "D. 无关"
+        ],
+        "answer": 0,
+        "explanation": "检索过多文档可能引入不相关信息，噪声稀释有用信号。"
+      }
+    ],
+    "thinkingQuestion": "RAG 中检索和生成的衔接（如何将检索结果注入到 prompt 中）对生成质量有什么影响？",
+    "aiPrompt": "评估学生对 RAG 的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "llm-stream-output-l2",
+    "stageId": 8,
+    "topicName": "大模型（LLM）",
+    "subtopicName": "Function Calling",
+    "levelIndex": 2,
+    "levelTitle": "流式输出解析器",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "Function Calling"
+    ],
+    "theoryContent": "实现流式输出的解析器：从 SSE（Server-Sent Events）流中逐步解析 Function Call 参数。",
+    "latexFormulas": [
+      "SSE: data: {...}\\n\\n",
+      "逐块解析直到完整 JSON"
+    ],
+    "starterCode": "import json\ndef parse_sse_stream(chunks): pass\ndef is_complete_json(text): pass",
+    "solutionCode": "import json\ndef is_complete_json(text):\n    try:json.loads(text);return True\n    except:return False\ndef parse_sse_stream(chunks):\n    buffer=\"\";results=[]\n    for chunk in chunks:\n        for line in chunk.split(\"\\n\"):\n            if line.startswith(\"data: \"):\n                buffer+=line[6:]\n                if is_complete_json(buffer):\n                    results.append(json.loads(buffer));buffer=\"\"\n    return results",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "parse sse",
+        "input": {
+          "chunks": [
+            "data: {\"name\":",
+            "\"test\"}\\n\\n"
+          ]
+        },
+        "expected": [
+          {
+            "name": "test"
+          }
+        ]
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "流式解析为什么需要处理不完整的 JSON？",
+        "options": [
+          "A. LLM 逐步生成 token，可能一个 JSON 跨多个 chunk",
+          "B. 网络延迟",
+          "C. 服务器分批发送",
+          "D. 编码问题"
+        ],
+        "answer": 0,
+        "explanation": "LLM 逐步生成 token，Function Call 的 JSON 可能被拆到多个 chunk 中。"
+      }
+    ],
+    "thinkingQuestion": "SSE 流中单个 chunk 可能包含多个 data 行也可能只有半个字段，如何处理这种情况？",
+    "aiPrompt": "评估学生对流式输出、SSE 的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "llm-agent-memory-l2",
+    "stageId": 8,
+    "topicName": "大模型（LLM）",
+    "subtopicName": "LangChain/CrewAI",
+    "levelIndex": 2,
+    "levelTitle": "Agent 记忆模块",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "LangChain/CrewAI"
+    ],
+    "theoryContent": "实现 Agent 的记忆系统，支持短期记忆（对话窗口）和长期记忆（摘要压缩）。",
+    "latexFormulas": [
+      "Memory = ShortTerm(window) + LongTerm(summary)"
+    ],
+    "starterCode": "class AgentMemory:\n    def __init__(self, window): pass\n    def add(self, message): pass\n    def get_context(self): pass\n    def summarize(self): pass",
+    "solutionCode": "class AgentMemory:\n    def __init__(self,w=10):\n        self.window=w;self.messages=[];self.summary=\"\"\n    def add(self,msg):\n        self.messages.append(msg)\n        if len(self.messages)>self.window:\n            oldest=self.messages.pop(0)\n            self.summary+=oldest[:50]+\"\\n\"\n    def get_context(self):\n        ctx=self.messages[-self.window:] if self.messages else []\n        if self.summary:ctx=[f\"Summary: {self.summary[:100]}...\"]+ctx\n        return ctx\n    def summarize(self):\n        return self.summary[:200]",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "memory",
+        "input": {
+          "messages": [
+            "hello",
+            "how are you",
+            "bye",
+            "ok"
+          ],
+          "window": 2
+        },
+        "expected": {
+          "context": [
+            "bye",
+            "ok"
+          ]
+        }
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "Agent 记忆为什么需要压缩摘要？",
+        "options": [
+          "A. 超出上下文窗口限制时保留关键信息",
+          "B. 加速推理",
+          "C. 减少存储",
+          "D. 提高准确率"
+        ],
+        "answer": 0,
+        "explanation": "上下文窗口有限，当历史对话超出时需压缩为摘要保留关键信息。"
+      }
+    ],
+    "thinkingQuestion": "MemPrompt 和 RAG 记忆的异同？",
+    "aiPrompt": "评估学生对 Agent 记忆的理解。按 0-10 分打分。",
+    "status": "published"
+  }
+]

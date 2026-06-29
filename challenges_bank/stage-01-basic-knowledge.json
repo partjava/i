@@ -1,0 +1,1974 @@
+[
+  {
+    "slug": "computer-architecture-pipeline-stall-profiler",
+    "stageId": 1,
+    "topicName": "计算机基础",
+    "subtopicName": "计算机组成原理",
+    "levelIndex": 1,
+    "levelTitle": "流水线性能瓶颈分析器",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "cpu",
+      "pipeline",
+      "cpi",
+      "performance"
+    ],
+    "theoryContent": "### 编程挑战：流水线性能瓶颈分析器\n\n在真实后端服务中，性能下降不一定来自代码逻辑，也可能来自 CPU 流水线停顿、缓存未命中或分支预测失败。处理器性能常用 CPI、指令数和频率估算：\n\n$$CPUTime = \\frac{Instructions \\times CPI}{Frequency}$$\n\n本题要求实现一个简化的性能分析器。给定一批指令类型的执行数量、每类指令的基础 CPI，以及额外停顿周期，计算总执行时间，并找出贡献停顿最多的指令类型。\n\n你需要补全 `profile_pipeline_workload(instruction_stats, frequency_hz)`，返回包含总时间和瓶颈类型的字典。",
+    "latexFormulas": [
+      "CPUTime = \\frac{Instructions \\times CPI}{Frequency}",
+      "Cycles = \\sum_i count_i \\times (baseCpi_i + stall_i)"
+    ],
+    "starterCode": "def profile_pipeline_workload(instruction_stats: dict, frequency_hz: int) -> dict:\n    # instruction_stats 示例:\n    # {\n    #   \"load\": {\"count\": 1000, \"base_cpi\": 1.0, \"stall\": 2.0},\n    #   \"alu\": {\"count\": 3000, \"base_cpi\": 1.0, \"stall\": 0.1}\n    # }\n    # 请返回 {\"time_ms\": 0.0, \"bottleneck\": \"load\"}\n    pass",
+    "solutionCode": "def profile_pipeline_workload(instruction_stats: dict, frequency_hz: int) -> dict:\n    if frequency_hz <= 0:\n        raise ValueError(\"frequency_hz must be positive\")\n\n    total_cycles = 0.0\n    worst_type = None\n    worst_stall_cycles = -1.0\n\n    for inst_type, stat in instruction_stats.items():\n        count = stat.get(\"count\", 0)\n        base_cpi = stat.get(\"base_cpi\", 0.0)\n        stall = stat.get(\"stall\", 0.0)\n        total_cycles += count * (base_cpi + stall)\n        stall_cycles = count * stall\n        if stall_cycles > worst_stall_cycles:\n            worst_stall_cycles = stall_cycles\n            worst_type = inst_type\n\n    time_ms = total_cycles / frequency_hz * 1000\n    return {\"time_ms\": round(time_ms, 4), \"bottleneck\": worst_type}",
+    "expectedOutput": "{\"time_ms\": 0.0033, \"bottleneck\": \"load\"}",
+    "testCases": [
+      {
+        "name": "load stalls dominate",
+        "input": {
+          "instructionStats": {
+            "load": {
+              "count": 1000,
+              "base_cpi": 1,
+              "stall": 2
+            },
+            "alu": {
+              "count": 3000,
+              "base_cpi": 1,
+              "stall": 0.1
+            }
+          },
+          "frequencyHz": 2000000000
+        },
+        "expected": {
+          "time_ms": 0.0032,
+          "bottleneck": "load"
+        }
+      },
+      {
+        "name": "branch stalls dominate",
+        "input": {
+          "instructionStats": {
+            "branch": {
+              "count": 400,
+              "base_cpi": 1,
+              "stall": 4
+            },
+            "alu": {
+              "count": 2000,
+              "base_cpi": 1,
+              "stall": 0.2
+            }
+          },
+          "frequencyHz": 1000000000
+        },
+        "expected": {
+          "time_ms": 0.004,
+          "bottleneck": "branch"
+        }
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "为什么只看 CPU 主频不能准确判断程序运行速度？",
+        "options": [
+          "A. 主频越高程序一定越慢",
+          "B. 程序时间还受指令数、CPI、缓存和流水线停顿影响",
+          "C. 主频只影响内存容量",
+          "D. CPI 与性能无关"
+        ],
+        "answer": 1,
+        "explanation": "CPU 时间由指令数、CPI 和主频共同决定，流水线停顿会提高实际 CPI。"
+      },
+      {
+        "question": "本题中 bottleneck 按什么标准判断？",
+        "options": [
+          "A. 指令名称最长",
+          "B. 基础 CPI 最小",
+          "C. 贡献的停顿周期最多",
+          "D. 指令数量最少"
+        ],
+        "answer": 2,
+        "explanation": "瓶颈类型由 count * stall 得到的停顿周期贡献决定。"
+      }
+    ],
+    "thinkingQuestion": "如果真实系统中 load 指令停顿最多，你会从缓存局部性、数据布局和预取策略三个角度如何优化？",
+    "aiPrompt": "评估学生是否理解 CPI、流水线停顿、缓存局部性、数据布局和性能瓶颈定位。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "operating-system-lru-cache-pressure-simulator",
+    "stageId": 1,
+    "topicName": "计算机基础",
+    "subtopicName": "操作系统",
+    "levelIndex": 1,
+    "levelTitle": "内存页缓存压力模拟器",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "os",
+      "memory",
+      "lru",
+      "page-cache"
+    ],
+    "theoryContent": "### 编程挑战：内存页缓存压力模拟器\n\n操作系统通过页缓存减少磁盘 I/O。当缓存容量有限时，必须淘汰旧页面。LRU 会淘汰最近最少使用的页面。\n\n本题要求你模拟一个页面访问序列，统计缺页次数、命中次数和命中率。这个问题与数据库缓冲池、Redis 缓存和浏览器缓存都有相似思想。\n\n命中率定义为：\n\n$$HitRate = \\frac{Hits}{Hits + Misses}$$",
+    "latexFormulas": [
+      "HitRate = \\frac{Hits}{Hits + Misses}"
+    ],
+    "starterCode": "def simulate_page_cache(page_requests: list, capacity: int) -> dict:\n    # 返回 {\"hits\": 0, \"misses\": 0, \"hit_rate\": 0.0}\n    pass",
+    "solutionCode": "def simulate_page_cache(page_requests: list, capacity: int) -> dict:\n    if capacity <= 0:\n        return {\"hits\": 0, \"misses\": len(page_requests), \"hit_rate\": 0.0}\n\n    cache = []\n    hits = 0\n    misses = 0\n\n    for page in page_requests:\n        if page in cache:\n            hits += 1\n            cache.remove(page)\n            cache.append(page)\n        else:\n            misses += 1\n            if len(cache) >= capacity:\n                cache.pop(0)\n            cache.append(page)\n\n    total = hits + misses\n    return {\"hits\": hits, \"misses\": misses, \"hit_rate\": round(hits / total, 4) if total else 0.0}",
+    "expectedOutput": "{\"hits\": 2, \"misses\": 6, \"hit_rate\": 0.25}",
+    "testCases": [
+      {
+        "name": "basic lru pressure",
+        "input": {
+          "pageRequests": [
+            1,
+            2,
+            3,
+            1,
+            4,
+            1,
+            2,
+            5
+          ],
+          "capacity": 3
+        },
+        "expected": {
+          "hits": 2,
+          "misses": 6,
+          "hit_rate": 0.25
+        }
+      },
+      {
+        "name": "zero capacity",
+        "input": {
+          "pageRequests": [
+            1,
+            1,
+            1
+          ],
+          "capacity": 0
+        },
+        "expected": {
+          "hits": 0,
+          "misses": 3,
+          "hit_rate": 0
+        }
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "LRU 淘汰策略优先移除哪类页面？",
+        "options": [
+          "A. 最近刚访问的页面",
+          "B. 最近最少使用的页面",
+          "C. 页号最大的页面",
+          "D. 文件名最短的页面"
+        ],
+        "answer": 1,
+        "explanation": "LRU 的核心假设是最近没被访问的页面，未来再次访问概率较低。"
+      },
+      {
+        "question": "容量为 0 的缓存会出现什么结果？",
+        "options": [
+          "A. 所有请求都命中",
+          "B. 所有请求都缺页",
+          "C. 命中率固定 50%",
+          "D. 缓存容量自动扩容"
+        ],
+        "answer": 1,
+        "explanation": "没有可用缓存空间时，无法保留任何页面，因此每次访问都是 miss。"
+      }
+    ],
+    "thinkingQuestion": "为什么真实操作系统不一定使用纯 LRU？请从实现开销、并发访问和近似算法角度分析。",
+    "aiPrompt": "评估学生是否理解 LRU、缺页、缓存命中率，以及 Clock 等近似 LRU 算法的工程取舍。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "network-longest-prefix-match-engine",
+    "stageId": 1,
+    "topicName": "计算机基础",
+    "subtopicName": "计算机网络",
+    "levelIndex": 1,
+    "levelTitle": "路由表最长前缀匹配引擎",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "network",
+      "cidr",
+      "routing",
+      "algorithm"
+    ],
+    "theoryContent": "### 编程挑战：路由表最长前缀匹配引擎\n\n真实路由器收到目标 IP 后，会在路由表中执行最长前缀匹配。如果多个网段都能匹配目标地址，应选择前缀最长的一条，因为它表示更具体的路由。\n\n例如 `10.1.2.33` 同时匹配 `10.0.0.0/8`、`10.1.0.0/16` 和 `10.1.2.0/24`，最终应选择 `/24` 对应的下一跳。\n\n核心匹配关系：\n\n$$targetIp \\& mask = networkIp \\& mask$$",
+    "latexFormulas": [
+      "targetIp \\& mask = networkIp \\& mask",
+      "mask = 2^{32} - 2^{32-prefix}"
+    ],
+    "starterCode": "def ip_to_int(ip: str) -> int:\n    # TODO: 将 IPv4 字符串转换为 32 位整数\n    pass\n\ndef lookup_route(routes: list, target_ip: str) -> str:\n    # TODO: 实现最长前缀匹配，没有匹配则返回 \"DROP\"\n    pass",
+    "solutionCode": "def ip_to_int(ip: str) -> int:\n    value = 0\n    for part in ip.split('.'):\n        value = value * 256 + int(part)\n    return value\n\ndef lookup_route(routes: list, target_ip: str) -> str:\n    target = ip_to_int(target_ip)\n    best_prefix = -1\n    best_next_hop = \"DROP\"\n\n    for route in routes:\n        network, prefix_text = route[\"cidr\"].split('/')\n        prefix = int(prefix_text)\n        network_int = ip_to_int(network)\n        mask = ((0xFFFFFFFF << (32 - prefix)) & 0xFFFFFFFF) if prefix > 0 else 0\n        if (target & mask) == (network_int & mask) and prefix > best_prefix:\n            best_prefix = prefix\n            best_next_hop = route[\"next_hop\"]\n\n    return best_next_hop",
+    "expectedOutput": "eth2",
+    "testCases": [
+      {
+        "name": "longest prefix wins",
+        "input": {
+          "routes": [
+            {
+              "cidr": "10.0.0.0/8",
+              "next_hop": "eth0"
+            },
+            {
+              "cidr": "10.1.0.0/16",
+              "next_hop": "eth1"
+            },
+            {
+              "cidr": "10.1.2.0/24",
+              "next_hop": "eth2"
+            }
+          ],
+          "targetIp": "10.1.2.33"
+        },
+        "expected": "eth2"
+      },
+      {
+        "name": "no route drops",
+        "input": {
+          "routes": [
+            {
+              "cidr": "192.168.0.0/16",
+              "next_hop": "lan"
+            }
+          ],
+          "targetIp": "8.8.8.8"
+        },
+        "expected": "DROP"
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "当多个 CIDR 网段同时匹配一个目标 IP 时，应该选择哪一条？",
+        "options": [
+          "A. 最先插入的路由",
+          "B. 前缀最长的路由",
+          "C. IP 数值最大的路由",
+          "D. next_hop 最短的路由"
+        ],
+        "answer": 1,
+        "explanation": "最长前缀表示匹配范围更小、更具体，是路由查找的基本规则。"
+      },
+      {
+        "question": "`10.1.2.0/24` 中 `/24` 表示什么？",
+        "options": [
+          "A. 前 24 位是网络前缀",
+          "B. 后 24 位是网络前缀",
+          "C. 网段只有 24 个地址",
+          "D. 地址必须经过 24 个路由器"
+        ],
+        "answer": 0,
+        "explanation": "/24 表示 IPv4 地址前 24 位用于网络号，剩余 8 位用于主机。"
+      }
+    ],
+    "thinkingQuestion": "如果路由表规模从几十条增长到几十万条，逐条扫描会出现什么问题？真实路由器可能使用哪些结构优化最长前缀匹配？",
+    "aiPrompt": "评估学生是否理解 CIDR、最长前缀匹配、线性扫描复杂度，以及 Trie、Patricia Trie、TCAM 等工程优化方向。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "encoding-system-log-charset-detector",
+    "stageId": 1,
+    "topicName": "计算机基础",
+    "subtopicName": "编码系统",
+    "levelIndex": 1,
+    "levelTitle": "日志编码异常探测器",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "encoding",
+      "unicode",
+      "utf-8",
+      "logs"
+    ],
+    "theoryContent": "### 编程挑战：日志编码异常探测器\n\n线上系统常见问题之一是日志乱码。常见原因包括 UTF-8 字节被错误地按 Latin-1 解码，或混入非法字节。\n\n本题要求实现一个简化编码探测器：尝试把字节流按 UTF-8 解码；如果失败，返回 `INVALID_UTF8`；如果成功但包含替换字符 `�`，返回 `SUSPECT_REPLACEMENT`；否则返回正常文本。\n\n这类能力常用于日志采集、数据清洗和跨系统消息传输。",
+    "latexFormulas": [
+      "Unicode \\rightarrow CodePoint \\rightarrow UTF8Bytes"
+    ],
+    "starterCode": "def decode_log_payload(payload: bytes) -> dict:\n    # 返回 {\"status\": \"OK\", \"text\": \"...\"}\n    pass",
+    "solutionCode": "def decode_log_payload(payload: bytes) -> dict:\n    try:\n        text = payload.decode('utf-8')\n    except UnicodeDecodeError:\n        return {\"status\": \"INVALID_UTF8\", \"text\": \"\"}\n\n    if '\\ufffd' in text:\n        return {\"status\": \"SUSPECT_REPLACEMENT\", \"text\": text}\n    return {\"status\": \"OK\", \"text\": text}",
+    "expectedOutput": "{\"status\": \"OK\", \"text\": \"hello\"}",
+    "testCases": [
+      {
+        "name": "valid utf8",
+        "input": {
+          "payloadHex": "68656c6c6f"
+        },
+        "expected": {
+          "status": "OK",
+          "text": "hello"
+        }
+      },
+      {
+        "name": "invalid utf8",
+        "input": {
+          "payloadHex": "fffe6869"
+        },
+        "expected": {
+          "status": "INVALID_UTF8",
+          "text": ""
+        }
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "为什么 UTF-8 能兼容 ASCII？",
+        "options": [
+          "A. ASCII 字符在 UTF-8 中仍使用单字节相同编码",
+          "B. UTF-8 不支持英文",
+          "C. ASCII 必须用 4 字节保存",
+          "D. UTF-8 只能保存中文"
+        ],
+        "answer": 0,
+        "explanation": "ASCII 的 0-127 编码在 UTF-8 中保持单字节不变。"
+      },
+      {
+        "question": "日志乱码问题最可能发生在哪类场景？",
+        "options": [
+          "A. 编码和解码使用了不同字符集",
+          "B. 磁盘容量太大",
+          "C. CPU 主频太低",
+          "D. 函数名太短"
+        ],
+        "answer": 0,
+        "explanation": "字节流必须用正确字符集解码，否则会出现乱码或解码异常。"
+      }
+    ],
+    "thinkingQuestion": "如果日志采集链路中同时存在 UTF-8、GBK 和 Latin-1 数据，你会如何设计编码识别、标记和降级策略？",
+    "aiPrompt": "评估学生是否理解 Unicode、UTF-8、解码异常、替换字符和日志清洗链路的工程设计。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "linux-command-safe-batch-runner",
+    "stageId": 1,
+    "topicName": "Linux基础",
+    "subtopicName": "常用命令",
+    "levelIndex": 1,
+    "levelTitle": "安全批处理命令生成器",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "linux",
+      "shell",
+      "command",
+      "safety"
+    ],
+    "theoryContent": "### 编程挑战：安全批处理命令生成器\n\n运维脚本常需要批量处理文件，但直接拼接 shell 命令容易产生注入风险。例如文件名中包含空格、分号或引号时，命令可能被错误解析。\n\n本题要求实现一个安全的 grep 命令参数生成器。不要返回完整 shell 字符串，而是返回参数数组，供 `subprocess.run(args)` 这类 API 使用。\n\n安全原则：\n\n$$Command = Executable + Args[]$$\n\n不要把不可信输入拼成一整段 shell 文本。",
+    "latexFormulas": [
+      "Command = Executable + Args[]"
+    ],
+    "starterCode": "def build_grep_args(keyword: str, filename: str) -> list:\n    # 返回适合 subprocess.run(args) 使用的参数数组\n    pass",
+    "solutionCode": "def build_grep_args(keyword: str, filename: str) -> list:\n    if not keyword:\n        raise ValueError(\"keyword must not be empty\")\n    if not filename:\n        raise ValueError(\"filename must not be empty\")\n    return [\"grep\", \"--\", keyword, filename]",
+    "expectedOutput": "[\"grep\", \"--\", \"error\", \"app.log\"]",
+    "testCases": [
+      {
+        "name": "normal grep args",
+        "input": {
+          "keyword": "error",
+          "filename": "app.log"
+        },
+        "expected": [
+          "grep",
+          "--",
+          "error",
+          "app.log"
+        ]
+      },
+      {
+        "name": "dangerous filename stays argument",
+        "input": {
+          "keyword": "error",
+          "filename": "app.log; rm -rf /"
+        },
+        "expected": [
+          "grep",
+          "--",
+          "error",
+          "app.log; rm -rf /"
+        ]
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "为什么返回参数数组比拼接 shell 字符串更安全？",
+        "options": [
+          "A. 参数数组可以避免 shell 重新解释特殊字符",
+          "B. 参数数组会自动删除文件",
+          "C. shell 字符串永远更快",
+          "D. 参数数组不能传递中文"
+        ],
+        "answer": 0,
+        "explanation": "不经过 shell 解释时，分号、管道等字符只是普通参数的一部分。"
+      },
+      {
+        "question": "`grep -- pattern file` 中 `--` 的作用是什么？",
+        "options": [
+          "A. 表示后续内容不再解析为选项",
+          "B. 表示删除文件",
+          "C. 表示开启网络",
+          "D. 表示输出 JSON"
+        ],
+        "answer": 0,
+        "explanation": "`--` 常用于阻止后续以短横线开头的参数被误认为命令选项。"
+      }
+    ],
+    "thinkingQuestion": "如果你要允许用户在 Web 页面上提交日志搜索关键词，后端执行 grep，你会如何防止命令注入和资源耗尽？",
+    "aiPrompt": "评估学生是否理解 shell 注入、参数数组、输入校验、超时控制和资源限制。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "linux-filesystem-inode-capacity-planner",
+    "stageId": 1,
+    "topicName": "Linux基础",
+    "subtopicName": "文件系统",
+    "levelIndex": 1,
+    "levelTitle": "小文件存储容量规划器",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "linux",
+      "filesystem",
+      "inode",
+      "capacity"
+    ],
+    "theoryContent": "### 编程挑战：小文件存储容量规划器\n\n在日志、爬虫和图片缩略图系统中，磁盘空间可能还没用完，inode 却先耗尽。每个文件至少消耗一个 inode，小文件越多，inode 压力越明显。\n\n本题要求根据预计文件数量、平均文件大小、块大小和 inode 总量，判断瓶颈是磁盘容量还是 inode 数量。\n\n文件占用块数：\n\n$$Blocks = \\lceil \\frac{FileSize}{BlockSize} \\rceil$$",
+    "latexFormulas": [
+      "Blocks = \\lceil \\frac{FileSize}{BlockSize} \\rceil",
+      "TotalBlocks = FileCount \\times Blocks"
+    ],
+    "starterCode": "def plan_small_file_storage(file_count: int, avg_file_size: int, block_size: int, total_blocks: int, total_inodes: int) -> dict:\n    # 返回 {\"fits\": True, \"bottleneck\": \"none\"}\n    pass",
+    "solutionCode": "import math\n\ndef plan_small_file_storage(file_count: int, avg_file_size: int, block_size: int, total_blocks: int, total_inodes: int) -> dict:\n    if block_size <= 0:\n        raise ValueError(\"block_size must be positive\")\n    needed_blocks = file_count * math.ceil(avg_file_size / block_size)\n    needed_inodes = file_count\n\n    if needed_inodes > total_inodes:\n        return {\"fits\": False, \"bottleneck\": \"inode\"}\n    if needed_blocks > total_blocks:\n        return {\"fits\": False, \"bottleneck\": \"block\"}\n    return {\"fits\": True, \"bottleneck\": \"none\"}",
+    "expectedOutput": "{\"fits\": false, \"bottleneck\": \"inode\"}",
+    "testCases": [
+      {
+        "name": "inode exhausted first",
+        "input": {
+          "fileCount": 1000000,
+          "avgFileSize": 100,
+          "blockSize": 4096,
+          "totalBlocks": 2000000,
+          "totalInodes": 500000
+        },
+        "expected": {
+          "fits": false,
+          "bottleneck": "inode"
+        }
+      },
+      {
+        "name": "block exhausted first",
+        "input": {
+          "fileCount": 1000,
+          "avgFileSize": 9000,
+          "blockSize": 4096,
+          "totalBlocks": 2000,
+          "totalInodes": 5000
+        },
+        "expected": {
+          "fits": false,
+          "bottleneck": "block"
+        }
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "为什么海量小文件可能导致 inode 先耗尽？",
+        "options": [
+          "A. 每个文件至少占用一个 inode",
+          "B. 小文件不占磁盘",
+          "C. inode 只给目录使用",
+          "D. inode 与文件数量无关"
+        ],
+        "answer": 0,
+        "explanation": "文件系统用 inode 保存文件元数据，文件数量越多 inode 消耗越大。"
+      },
+      {
+        "question": "`df -h` 显示空间足够但仍无法创建文件，可能还需要检查什么？",
+        "options": [
+          "A. `df -i` 查看 inode 使用率",
+          "B. `date` 查看日期",
+          "C. `whoami` 查看用户名长度",
+          "D. `pwd` 查看路径颜色"
+        ],
+        "answer": 0,
+        "explanation": "`df -i` 可以查看 inode 是否耗尽。"
+      }
+    ],
+    "thinkingQuestion": "面对海量小文件系统，你会选择直接落盘、打包归档、对象存储还是数据库？请比较它们的取舍。",
+    "aiPrompt": "评估学生是否理解 inode、小文件问题、块浪费、对象存储和归档策略。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "linux-permission-policy-auditor",
+    "stageId": 1,
+    "topicName": "Linux基础",
+    "subtopicName": "权限管理",
+    "levelIndex": 1,
+    "levelTitle": "权限策略审计器",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "linux",
+      "permission",
+      "security",
+      "audit"
+    ],
+    "theoryContent": "### 编程挑战：权限策略审计器\n\n生产环境中，过宽的文件权限会带来安全风险。例如配置文件如果对 others 可写，攻击者可能篡改服务行为。\n\n本题要求实现一个权限审计函数，检查八进制权限是否违反策略：\n\n- 配置文件不能被 group 或 others 写入。\n- 可执行脚本允许 owner 执行，但不允许 others 写入。\n- 权限字符串使用 Linux 常见格式，如 `644`、`755`、`600`。\n\n权限位计算：\n\n$$r=4, w=2, x=1$$",
+    "latexFormulas": [
+      "r=4, w=2, x=1"
+    ],
+    "starterCode": "def audit_permission(octal: str, file_type: str) -> list:\n    # file_type: \"config\" 或 \"script\"\n    # 返回风险列表，例如 [\"group_writable\", \"others_writable\"]\n    pass",
+    "solutionCode": "def audit_permission(octal: str, file_type: str) -> list:\n    if len(octal) != 3 or not octal.isdigit():\n        raise ValueError(\"octal permission must look like 644\")\n\n    owner, group, others = [int(ch) for ch in octal]\n    risks = []\n\n    if group & 2:\n        risks.append(\"group_writable\")\n    if others & 2:\n        risks.append(\"others_writable\")\n\n    if file_type == \"config\" and owner & 1:\n        risks.append(\"config_executable\")\n    if file_type == \"script\" and not (owner & 1):\n        risks.append(\"owner_not_executable\")\n\n    return risks",
+    "expectedOutput": "[\"group_writable\", \"others_writable\"]",
+    "testCases": [
+      {
+        "name": "dangerous config",
+        "input": {
+          "octal": "666",
+          "fileType": "config"
+        },
+        "expected": [
+          "group_writable",
+          "others_writable"
+        ]
+      },
+      {
+        "name": "safe script",
+        "input": {
+          "octal": "750",
+          "fileType": "script"
+        },
+        "expected": []
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "Linux 权限 `755` 中最后一位 5 表示 others 有哪些权限？",
+        "options": [
+          "A. 读和执行",
+          "B. 写和执行",
+          "C. 只有写",
+          "D. 没有权限"
+        ],
+        "answer": 0,
+        "explanation": "5 = 4 + 1，表示读和执行。"
+      },
+      {
+        "question": "配置文件对 others 可写有什么风险？",
+        "options": [
+          "A. 可能被非授权用户篡改",
+          "B. 会让 CPU 降频",
+          "C. 会自动删除日志",
+          "D. 会改变文件编码"
+        ],
+        "answer": 0,
+        "explanation": "配置文件被篡改可能导致服务被劫持、越权或泄露敏感信息。"
+      }
+    ],
+    "thinkingQuestion": "为什么生产环境中仅靠 chmod 不够？还需要从用户、用户组、sudo、ACL 和密钥管理哪些方面做权限治理？",
+    "aiPrompt": "评估学生是否理解 rwx、最小权限原则、配置文件安全、ACL 和生产权限治理。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "linux-process-zombie-detector",
+    "stageId": 1,
+    "topicName": "Linux基础",
+    "subtopicName": "进程管理",
+    "levelIndex": 1,
+    "levelTitle": "进程状态异常探测器",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "linux",
+      "process",
+      "zombie",
+      "monitoring"
+    ],
+    "theoryContent": "### 编程挑战：进程状态异常探测器\n\nLinux 进程可能处于运行、睡眠、僵尸等状态。僵尸进程已经退出，但父进程尚未回收其退出状态。如果大量僵尸进程堆积，可能耗尽 PID 或暴露父进程逻辑问题。\n\n本题要求分析 `ps` 采样结果，统计异常进程并给出是否需要告警。\n\n告警规则：\n\n$$ZombieRate = \\frac{ZombieCount}{TotalProcessCount}$$\n\n当僵尸进程数大于等于阈值，或僵尸比例超过阈值时触发告警。",
+    "latexFormulas": [
+      "ZombieRate = \\frac{ZombieCount}{TotalProcessCount}"
+    ],
+    "starterCode": "def detect_process_anomaly(processes: list, zombie_count_threshold: int, zombie_rate_threshold: float) -> dict:\n    # processes 示例: [{\"pid\": 1, \"state\": \"S\"}, {\"pid\": 2, \"state\": \"Z\"}]\n    pass",
+    "solutionCode": "def detect_process_anomaly(processes: list, zombie_count_threshold: int, zombie_rate_threshold: float) -> dict:\n    total = len(processes)\n    zombie_count = sum(1 for p in processes if p.get(\"state\") == \"Z\")\n    zombie_rate = zombie_count / total if total else 0.0\n    alert = zombie_count >= zombie_count_threshold or zombie_rate > zombie_rate_threshold\n    return {\"zombies\": zombie_count, \"zombie_rate\": round(zombie_rate, 4), \"alert\": alert}",
+    "expectedOutput": "{\"zombies\": 2, \"zombie_rate\": 0.5, \"alert\": true}",
+    "testCases": [
+      {
+        "name": "alert by zombie rate",
+        "input": {
+          "processes": [
+            {
+              "pid": 1,
+              "state": "S"
+            },
+            {
+              "pid": 2,
+              "state": "Z"
+            },
+            {
+              "pid": 3,
+              "state": "Z"
+            },
+            {
+              "pid": 4,
+              "state": "R"
+            }
+          ],
+          "zombieCountThreshold": 5,
+          "zombieRateThreshold": 0.2
+        },
+        "expected": {
+          "zombies": 2,
+          "zombie_rate": 0.5,
+          "alert": true
+        }
+      },
+      {
+        "name": "empty process list",
+        "input": {
+          "processes": [],
+          "zombieCountThreshold": 1,
+          "zombieRateThreshold": 0.1
+        },
+        "expected": {
+          "zombies": 0,
+          "zombie_rate": 0,
+          "alert": false
+        }
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "僵尸进程是什么？",
+        "options": [
+          "A. 已退出但父进程尚未回收状态的进程",
+          "B. 正在高速运行的进程",
+          "C. 没有 PID 的线程",
+          "D. 被压缩的文件"
+        ],
+        "answer": 0,
+        "explanation": "僵尸进程保留进程表项，等待父进程通过 wait 回收。"
+      },
+      {
+        "question": "大量僵尸进程通常说明什么？",
+        "options": [
+          "A. 父进程没有正确回收子进程",
+          "B. 内存一定被清空",
+          "C. 网络一定断开",
+          "D. 文件系统只读"
+        ],
+        "answer": 0,
+        "explanation": "父进程没有 wait 子进程退出状态时，僵尸进程会堆积。"
+      }
+    ],
+    "thinkingQuestion": "如果线上服务持续产生僵尸进程，你会如何定位父进程、修复回收逻辑，并设置监控告警？",
+    "aiPrompt": "评估学生是否理解进程状态、僵尸进程、wait/waitpid、监控指标和告警策略。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "shell-script-pipeline-failure-guard",
+    "stageId": 1,
+    "topicName": "Linux基础",
+    "subtopicName": "Shell脚本",
+    "levelIndex": 1,
+    "levelTitle": "Shell 管道失败保护器",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "shell",
+      "bash",
+      "pipefail",
+      "reliability"
+    ],
+    "theoryContent": "### 编程挑战：Shell 管道失败保护器\n\n生产脚本中常见错误是管道前半段失败，但最后一个命令成功，导致整体退出码看起来成功。例如：\n\n```bash\ncat missing.log | grep ERROR | wc -l\n```\n\n如果没有 `set -o pipefail`，脚本可能掩盖前序错误。\n\n本题要求根据脚本步骤退出码模拟 Bash 管道的最终状态：普通模式只看最后一步；pipefail 模式下，只要任意一步非零，就返回最右侧的非零退出码。",
+    "latexFormulas": [
+      "ExitCode = 0 \\Rightarrow Success"
+    ],
+    "starterCode": "def evaluate_pipeline(exit_codes: list, pipefail: bool) -> int:\n    # exit_codes 示例: [1, 0, 0]\n    pass",
+    "solutionCode": "def evaluate_pipeline(exit_codes: list, pipefail: bool) -> int:\n    if not exit_codes:\n        return 0\n    if not pipefail:\n        return exit_codes[-1]\n    for code in reversed(exit_codes):\n        if code != 0:\n            return code\n    return 0",
+    "expectedOutput": "1",
+    "testCases": [
+      {
+        "name": "pipefail catches earlier failure",
+        "input": {
+          "exitCodes": [
+            1,
+            0,
+            0
+          ],
+          "pipefail": true
+        },
+        "expected": 1
+      },
+      {
+        "name": "normal mode hides earlier failure",
+        "input": {
+          "exitCodes": [
+            1,
+            0,
+            0
+          ],
+          "pipefail": false
+        },
+        "expected": 0
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "`set -o pipefail` 的主要作用是什么？",
+        "options": [
+          "A. 捕获管道中任意命令失败",
+          "B. 自动创建文件",
+          "C. 增加 CPU 核心",
+          "D. 禁止所有输出"
+        ],
+        "answer": 0,
+        "explanation": "pipefail 让管道整体退出码反映管道中失败命令，而不是只看最后一个命令。"
+      },
+      {
+        "question": "Shell 中退出码 0 通常表示什么？",
+        "options": [
+          "A. 成功",
+          "B. 文件不存在",
+          "C. 权限不足",
+          "D. 网络超时"
+        ],
+        "answer": 0,
+        "explanation": "Unix/Linux 程序约定退出码 0 表示成功，非 0 表示异常。"
+      }
+    ],
+    "thinkingQuestion": "一个生产备份脚本应该如何组合 `set -e`、`set -u`、`pipefail`、日志和回滚策略？",
+    "aiPrompt": "评估学生是否理解 Shell 退出码、pipefail、脚本可靠性、日志和失败回滚。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "git-init-clone-repo-health-checker",
+    "stageId": 1,
+    "topicName": "Git版本控制",
+    "subtopicName": "init/clone",
+    "levelIndex": 1,
+    "levelTitle": "仓库初始化健康检查器",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "git",
+      "repository",
+      "init",
+      "clone"
+    ],
+    "theoryContent": "### 编程挑战：仓库初始化健康检查器\n\n团队项目中，新成员经常因为仓库初始化不完整、remote 缺失或默认分支错误而无法协作。\n\n本题要求根据仓库元信息判断一个 Git 仓库是否具备最小协作条件：\n\n- 必须存在 `.git`。\n- 必须配置 origin remote。\n- 必须有默认分支。\n- 工作区不能处于 detached HEAD 状态。\n\n这类检查可以用于脚手架、CI 预检和开发环境诊断。",
+    "latexFormulas": [
+      "RepoReady = GitDir \\land Origin \\land Branch \\land \\neg DetachedHEAD"
+    ],
+    "starterCode": "def check_repo_ready(repo: dict) -> dict:\n    # 返回 {\"ready\": True, \"issues\": []}\n    pass",
+    "solutionCode": "def check_repo_ready(repo: dict) -> dict:\n    issues = []\n    if not repo.get(\"has_git_dir\"):\n        issues.append(\"missing_git_dir\")\n    if not repo.get(\"origin_url\"):\n        issues.append(\"missing_origin\")\n    if not repo.get(\"default_branch\"):\n        issues.append(\"missing_default_branch\")\n    if repo.get(\"detached_head\"):\n        issues.append(\"detached_head\")\n    return {\"ready\": len(issues) == 0, \"issues\": issues}",
+    "expectedOutput": "{\"ready\": false, \"issues\": [\"missing_origin\"]}",
+    "testCases": [
+      {
+        "name": "missing origin",
+        "input": {
+          "repo": {
+            "has_git_dir": true,
+            "origin_url": "",
+            "default_branch": "main",
+            "detached_head": false
+          }
+        },
+        "expected": {
+          "ready": false,
+          "issues": [
+            "missing_origin"
+          ]
+        }
+      },
+      {
+        "name": "healthy repo",
+        "input": {
+          "repo": {
+            "has_git_dir": true,
+            "origin_url": "git@example.com:a/b.git",
+            "default_branch": "main",
+            "detached_head": false
+          }
+        },
+        "expected": {
+          "ready": true,
+          "issues": []
+        }
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "`git init` 和 `git clone` 的核心区别是什么？",
+        "options": [
+          "A. init 创建本地仓库，clone 从远端复制已有仓库",
+          "B. clone 只能创建空目录",
+          "C. init 会自动上传代码",
+          "D. clone 不能配置 remote"
+        ],
+        "answer": 0,
+        "explanation": "`git init` 初始化本地仓库，`git clone` 会复制远端仓库并配置 remote。"
+      },
+      {
+        "question": "detached HEAD 状态意味着什么？",
+        "options": [
+          "A. 当前 HEAD 指向提交而不是分支",
+          "B. 仓库没有文件",
+          "C. 远程仓库不存在",
+          "D. Git 被卸载"
+        ],
+        "answer": 0,
+        "explanation": "detached HEAD 下提交不挂在普通分支上，容易造成提交丢失或难以追踪。"
+      }
+    ],
+    "thinkingQuestion": "你会如何设计一个团队脚手架，在开发者首次拉取项目时自动检查 Git、Node、环境变量和数据库连接？",
+    "aiPrompt": "评估学生是否理解 Git 初始化、clone、remote、默认分支、detached HEAD 和项目预检脚本设计。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "git-add-commit-push-change-batch-planner",
+    "stageId": 1,
+    "topicName": "Git版本控制",
+    "subtopicName": "add/commit/push",
+    "levelIndex": 1,
+    "levelTitle": "提交批次规划器",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "git",
+      "commit",
+      "staging",
+      "workflow"
+    ],
+    "theoryContent": "### 编程挑战：提交批次规划器\n\n高质量提交应该聚焦单一意图。把修 bug、改样式、重构和配置变更混在一个 commit 中，会增加 Code Review 和回滚成本。\n\n本题要求根据文件变更列表，把变更按类型分组，生成建议的提交批次。\n\n分类规则：\n\n- `test` 路径或 `.test` 文件归为 `test`。\n- `docs/` 或 `.md` 归为 `docs`。\n- `package.json`、配置文件归为 `config`。\n- 其他归为 `code`。",
+    "latexFormulas": [
+      "Commit = Cohesive(ChangeSet)"
+    ],
+    "starterCode": "def plan_commit_batches(files: list) -> dict:\n    # 返回 {\"code\": [...], \"test\": [...], \"docs\": [...], \"config\": [...]}\n    pass",
+    "solutionCode": "def plan_commit_batches(files: list) -> dict:\n    batches = {\"code\": [], \"test\": [], \"docs\": [], \"config\": []}\n    config_names = {\"package.json\", \"package-lock.json\", \"tsconfig.json\", \"next.config.js\", \".eslintrc.json\"}\n\n    for path in files:\n        name = path.split('/')[-1]\n        if '/test/' in path or '.test.' in path or '.spec.' in path:\n            batches[\"test\"].append(path)\n        elif path.startswith('docs/') or path.endswith('.md'):\n            batches[\"docs\"].append(path)\n        elif name in config_names or path.startswith('.github/'):\n            batches[\"config\"].append(path)\n        else:\n            batches[\"code\"].append(path)\n    return batches",
+    "expectedOutput": "{\"code\": [\"app/page.tsx\"], \"test\": [\"app/page.test.ts\"], \"docs\": [\"docs/api.md\"], \"config\": [\"package.json\"]}",
+    "testCases": [
+      {
+        "name": "mixed changes",
+        "input": {
+          "files": [
+            "app/page.tsx",
+            "app/page.test.ts",
+            "docs/api.md",
+            "package.json"
+          ]
+        },
+        "expected": {
+          "code": [
+            "app/page.tsx"
+          ],
+          "test": [
+            "app/page.test.ts"
+          ],
+          "docs": [
+            "docs/api.md"
+          ],
+          "config": [
+            "package.json"
+          ]
+        }
+      },
+      {
+        "name": "github workflow is config",
+        "input": {
+          "files": [
+            ".github/workflows/ci.yml"
+          ]
+        },
+        "expected": {
+          "code": [],
+          "test": [],
+          "docs": [],
+          "config": [
+            ".github/workflows/ci.yml"
+          ]
+        }
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "为什么不建议把多个无关改动塞进同一个 commit？",
+        "options": [
+          "A. 会增加 review 和回滚成本",
+          "B. Git 不允许这样做",
+          "C. commit 越大运行越快",
+          "D. 这样会删除远程分支"
+        ],
+        "answer": 0,
+        "explanation": "聚焦提交便于审查、定位问题和回滚。"
+      },
+      {
+        "question": "`git add` 的作用是什么？",
+        "options": [
+          "A. 把改动加入暂存区",
+          "B. 立即推送远端",
+          "C. 删除历史",
+          "D. 创建远程仓库"
+        ],
+        "answer": 0,
+        "explanation": "`git add` 将工作区改动加入暂存区，供下一次 commit 使用。"
+      }
+    ],
+    "thinkingQuestion": "如果一个需求同时包含重构和行为变更，你会如何拆分 commit，让审查者更容易确认风险？",
+    "aiPrompt": "评估学生是否理解暂存区、提交粒度、review 友好性和回滚策略。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "git-branch-merge-conflict-risk-estimator",
+    "stageId": 1,
+    "topicName": "Git版本控制",
+    "subtopicName": "branch/merge",
+    "levelIndex": 1,
+    "levelTitle": "分支合并冲突风险评估器",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "git",
+      "branch",
+      "merge",
+      "conflict"
+    ],
+    "theoryContent": "### 编程挑战：分支合并冲突风险评估器\n\n多人协作中，分支存在时间越长、修改文件重叠越多，合并冲突风险越高。本题要求根据两个分支的变更文件和变更行范围，估算冲突风险。\n\n如果两个分支修改同一文件，并且行范围有重叠，则认为存在高风险冲突。\n\n区间重叠关系：\n\n$$overlap = max(startA, startB) \\le min(endA, endB)$$",
+    "latexFormulas": [
+      "overlap = max(startA, startB) \\le min(endA, endB)"
+    ],
+    "starterCode": "def estimate_merge_conflicts(branch_a: list, branch_b: list) -> dict:\n    # 每项格式: {\"file\": \"app.ts\", \"start\": 10, \"end\": 20}\n    pass",
+    "solutionCode": "def estimate_merge_conflicts(branch_a: list, branch_b: list) -> dict:\n    conflicts = []\n    for a in branch_a:\n        for b in branch_b:\n            if a[\"file\"] != b[\"file\"]:\n                continue\n            if max(a[\"start\"], b[\"start\"]) <= min(a[\"end\"], b[\"end\"]):\n                conflicts.append(a[\"file\"])\n    unique = sorted(set(conflicts))\n    return {\"risk\": \"high\" if unique else \"low\", \"files\": unique}",
+    "expectedOutput": "{\"risk\": \"high\", \"files\": [\"app.ts\"]}",
+    "testCases": [
+      {
+        "name": "overlapping same file",
+        "input": {
+          "branchA": [
+            {
+              "file": "app.ts",
+              "start": 10,
+              "end": 20
+            }
+          ],
+          "branchB": [
+            {
+              "file": "app.ts",
+              "start": 15,
+              "end": 30
+            }
+          ]
+        },
+        "expected": {
+          "risk": "high",
+          "files": [
+            "app.ts"
+          ]
+        }
+      },
+      {
+        "name": "same file no overlap",
+        "input": {
+          "branchA": [
+            {
+              "file": "app.ts",
+              "start": 1,
+              "end": 5
+            }
+          ],
+          "branchB": [
+            {
+              "file": "app.ts",
+              "start": 10,
+              "end": 15
+            }
+          ]
+        },
+        "expected": {
+          "risk": "low",
+          "files": []
+        }
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "Git 分支的主要价值是什么？",
+        "options": [
+          "A. 隔离不同开发线上的改动",
+          "B. 自动修复所有 bug",
+          "C. 让文件不能被修改",
+          "D. 替代数据库"
+        ],
+        "answer": 0,
+        "explanation": "分支允许不同功能、修复和实验并行推进。"
+      },
+      {
+        "question": "合并冲突通常发生在什么情况下？",
+        "options": [
+          "A. 不同分支修改了同一文件的相近区域",
+          "B. 两个分支名字不同",
+          "C. 电脑没有联网",
+          "D. 文件太小"
+        ],
+        "answer": 0,
+        "explanation": "当 Git 无法自动判断应保留哪一侧修改时，会产生冲突。"
+      }
+    ],
+    "thinkingQuestion": "团队如何通过短生命周期分支、频繁同步主干和小 PR 来降低合并冲突风险？",
+    "aiPrompt": "评估学生是否理解分支隔离、merge、冲突风险、短分支和团队协作策略。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "git-rebase-commit-history-rewriter",
+    "stageId": 1,
+    "topicName": "Git版本控制",
+    "subtopicName": "rebase",
+    "levelIndex": 1,
+    "levelTitle": "提交历史重放模拟器",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "git",
+      "rebase",
+      "history",
+      "workflow"
+    ],
+    "theoryContent": "### 编程挑战：提交历史重放模拟器\n\n`git rebase` 会把当前分支的一组提交复制到新的基底之后，使历史更线性。它不会移动原提交，而是创建新的提交对象，因此提交哈希会变化。\n\n本题要求模拟 rebase 后的提交历史。给定 base 分支提交、feature 分支独有提交，返回重放后的线性历史，并为重放提交生成新 ID。\n\n简化规则：新提交 ID 用 `rebased-原ID` 表示。",
+    "latexFormulas": [
+      "Rebase(feature, newBase) = newBase + replay(featureCommits)"
+    ],
+    "starterCode": "def simulate_rebase(base_commits: list, feature_commits: list) -> list:\n    # 返回 rebase 后的线性提交 ID 列表\n    pass",
+    "solutionCode": "def simulate_rebase(base_commits: list, feature_commits: list) -> list:\n    rebased = list(base_commits)\n    for commit in feature_commits:\n        rebased.append(\"rebased-\" + commit)\n    return rebased",
+    "expectedOutput": "[\"A\", \"B\", \"rebased-C\", \"rebased-D\"]",
+    "testCases": [
+      {
+        "name": "basic rebase",
+        "input": {
+          "baseCommits": [
+            "A",
+            "B"
+          ],
+          "featureCommits": [
+            "C",
+            "D"
+          ]
+        },
+        "expected": [
+          "A",
+          "B",
+          "rebased-C",
+          "rebased-D"
+        ]
+      },
+      {
+        "name": "no feature commits",
+        "input": {
+          "baseCommits": [
+            "A"
+          ],
+          "featureCommits": []
+        },
+        "expected": [
+          "A"
+        ]
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "为什么 rebase 后提交哈希通常会变化？",
+        "options": [
+          "A. 因为提交对象的父提交发生变化",
+          "B. 因为文件名必须变长",
+          "C. 因为 Git 删除了代码",
+          "D. 因为 remote 必须为空"
+        ],
+        "answer": 0,
+        "explanation": "提交哈希与内容、作者、时间和父提交等信息有关，父提交变化会产生新提交对象。"
+      },
+      {
+        "question": "公共分支上随意 rebase 的风险是什么？",
+        "options": [
+          "A. 改写他人已经基于其工作的历史",
+          "B. 自动提升性能",
+          "C. 让所有冲突消失",
+          "D. 创建数据库索引"
+        ],
+        "answer": 0,
+        "explanation": "公共历史被重写后，其他协作者的本地历史可能与远端分叉。"
+      }
+    ],
+    "thinkingQuestion": "什么时候适合 rebase，什么时候应该 merge？请从个人分支整理、公共历史稳定性和审查可读性角度分析。",
+    "aiPrompt": "评估学生是否理解 rebase 重写历史、提交哈希变化、公共分支风险和工作流选择。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "git-conflict-resolution-marker-parser",
+    "stageId": 1,
+    "topicName": "Git版本控制",
+    "subtopicName": "conflict解决",
+    "levelIndex": 1,
+    "levelTitle": "冲突标记解析器",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "git",
+      "conflict",
+      "merge",
+      "parser"
+    ],
+    "theoryContent": "### 编程挑战：冲突标记解析器\n\nGit 合并冲突时，文件中会出现冲突标记：\n\n```txt\n<<<<<<< HEAD\n当前分支内容\n=======\n传入分支内容\n>>>>>>> feature\n```\n\n本题要求解析包含冲突标记的文本，提取每个冲突块中的 ours 和 theirs 内容，并统计冲突数量。\n\n这个能力可用于 CI 检查、编辑器插件和代码审查辅助工具。",
+    "latexFormulas": [
+      "ConflictBlock = Ours + Theirs"
+    ],
+    "starterCode": "def parse_conflict_blocks(text: str) -> dict:\n    # 返回 {\"count\": 0, \"blocks\": [{\"ours\": \"...\", \"theirs\": \"...\"}]}\n    pass",
+    "solutionCode": "def parse_conflict_blocks(text: str) -> dict:\n    lines = text.splitlines()\n    blocks = []\n    i = 0\n    while i < len(lines):\n        if lines[i].startswith('<<<<<<<'):\n            i += 1\n            ours = []\n            while i < len(lines) and not lines[i].startswith('======='):\n                ours.append(lines[i])\n                i += 1\n            i += 1\n            theirs = []\n            while i < len(lines) and not lines[i].startswith('>>>>>>>'):\n                theirs.append(lines[i])\n                i += 1\n            blocks.append({\"ours\": \"\\n\".join(ours), \"theirs\": \"\\n\".join(theirs)})\n        i += 1\n    return {\"count\": len(blocks), \"blocks\": blocks}",
+    "expectedOutput": "{\"count\": 1, \"blocks\": [{\"ours\": \"old\", \"theirs\": \"new\"}]}",
+    "testCases": [
+      {
+        "name": "single conflict",
+        "input": {
+          "text": "<<<<<<< HEAD\nold\n=======\nnew\n>>>>>>> feature"
+        },
+        "expected": {
+          "count": 1,
+          "blocks": [
+            {
+              "ours": "old",
+              "theirs": "new"
+            }
+          ]
+        }
+      },
+      {
+        "name": "no conflict",
+        "input": {
+          "text": "clean file"
+        },
+        "expected": {
+          "count": 0,
+          "blocks": []
+        }
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "`<<<<<<< HEAD` 通常表示什么？",
+        "options": [
+          "A. 当前分支一侧的冲突内容开始",
+          "B. 文件被压缩",
+          "C. Git 初始化完成",
+          "D. 网络请求失败"
+        ],
+        "answer": 0,
+        "explanation": "`HEAD` 一侧通常表示当前检出的分支内容。"
+      },
+      {
+        "question": "解决冲突后为什么必须删除冲突标记？",
+        "options": [
+          "A. 冲突标记不是合法业务代码，会污染最终文件",
+          "B. Git 会自动忽略它们",
+          "C. 删除标记会删除远程仓库",
+          "D. 标记能提升性能"
+        ],
+        "answer": 0,
+        "explanation": "冲突标记只是 Git 插入的人工处理提示，最终文件中不应保留。"
+      }
+    ],
+    "thinkingQuestion": "解决冲突时，为什么不能机械选择 ours 或 theirs？你会如何结合测试、业务语义和提交历史做判断？",
+    "aiPrompt": "评估学生是否理解 Git 冲突标记、ours/theirs、语义合并、测试验证和代码审查。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "cpu-cache-simulator-l2",
+    "stageId": 1,
+    "topicName": "计算机基础",
+    "subtopicName": "计算机组成原理",
+    "levelIndex": 2,
+    "levelTitle": "缓存命中率分析器",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "计算机组成原理"
+    ],
+    "theoryContent": "### 编程挑战：缓存命中率分析器\n\nCPU 缓存通过缓存行存储最近访问的数据。当程序访问连续内存时缓存命中率高，随机访问则容易缓存未命中。\n\n实现：\n- `simulate_cache(accesses, cache_lines, line_size)`: 模拟缓存，返回命中次数\n- `cache_hit_rate(hits, total)`: 命中率\n- `compare_strategies(accesses, cache_lines, line_size)`: 比较顺序 vs 随机访问",
+    "latexFormulas": [
+      "HitRate = Hits / Total",
+      "缓存行 = floor(address / line_size)"
+    ],
+    "starterCode": "def simulate_cache(accesses, cache_lines, line_size):\n    cache = [-1]*cache_lines\n    hits = 0\n    for addr in accesses:\n        line = addr // line_size\n        if line in cache:\n            hits += 1\n        else:\n            if len(cache) >= cache_lines:\n                cache.pop(0)\n            cache.append(line)\n    return hits",
+    "solutionCode": "def simulate_cache(accesses, cache_lines, line_size):\n    cache = [-1]*cache_lines\n    hits = 0\n    for addr in accesses:\n        line = addr // line_size\n        if line in cache:\n            hits += 1\n        else:\n            if len(cache) >= cache_lines:\n                cache.pop(0)\n            cache.append(line)\n    return hits\ndef cache_hit_rate(hits, total):\n    return round(hits/total,4) if total else 0",
+    "expectedOutput": "3",
+    "testCases": [
+      {
+        "name": "sequential high hit",
+        "input": {
+          "accesses": [
+            0,
+            4,
+            8,
+            12,
+            16,
+            20,
+            24,
+            28
+          ],
+          "cacheLines": 4,
+          "lineSize": 8
+        },
+        "expected": 7
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "空间局部性指的是什么？",
+        "options": [
+          "A. 访问了某地址后很可能访问邻近地址",
+          "B. 访问了某地址后很可能再次访问同一地址",
+          "C. 代码在内存中连续存放",
+          "D. 多线程共享数据"
+        ],
+        "answer": 0,
+        "explanation": "空间局部性：最近访问地址附近的数据也可能被访问。"
+      }
+    ],
+    "thinkingQuestion": "缓存行大小对命中率有什么影响？行越大越好还是越小越好？为什么？",
+    "aiPrompt": "评估学生对 CPU 缓存、空间局部性、命中率的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "os-memory-allocator-l2",
+    "stageId": 1,
+    "topicName": "计算机基础",
+    "subtopicName": "操作系统",
+    "levelIndex": 2,
+    "levelTitle": "内存分配器模拟",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "操作系统"
+    ],
+    "theoryContent": "### 编程挑战：内存分配器模拟\n\n操作系统内核管理物理内存分配。首次适应（First-Fit）和最佳适应（Best-Fit）是两种经典策略。\n\n实现：\n- `first_fit(free_list, size)`: 首次适应分配\n- `best_fit(free_list, size)`: 最佳适应分配\n- `free_memory(free_list, block)`: 释放内存块（合并相邻空闲块）",
+    "latexFormulas": [
+      "First-Fit: 选第一个够用的空闲块",
+      "Best-Fit: 选最小的够用空闲块"
+    ],
+    "starterCode": "def first_fit(free_list, size):\n    for i, (start, end) in enumerate(free_list):\n        if end-start >= size:\n            return i, start, start+size\n    return -1,0,0",
+    "solutionCode": "def first_fit(free_list, size):\n    for i, (start, end) in enumerate(free_list):\n        if end-start >= size:\n            return i, start, start+size\n    return -1,0,0\ndef best_fit(free_list, size):\n    best_i, best_sz = -1, float('inf')\n    for i, (start, end) in enumerate(free_list):\n        sz = end-start\n        if sz >= size and sz < best_sz:\n            best_i, best_sz = i, sz\n    if best_i>=0: return best_i, free_list[best_i][0], free_list[best_i][0]+size\n    return -1,0,0",
+    "expectedOutput": "0",
+    "testCases": [
+      {
+        "name": "first fit basic",
+        "input": {
+          "freeList": [
+            [
+              0,
+              100
+            ],
+            [
+              200,
+              300
+            ],
+            [
+              400,
+              600
+            ]
+          ],
+          "size": 50
+        },
+        "expected": 0
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "首次适应和最佳适应的主要区别？",
+        "options": [
+          "A. 首次适应快但可能碎片多",
+          "B. 最佳适应总是更快",
+          "C. 首次适应碎片更少",
+          "D. 两者没有区别"
+        ],
+        "answer": 0,
+        "explanation": "首次适应更快但外部碎片可能更多，最佳适应找最小合适块。"
+      }
+    ],
+    "thinkingQuestion": "外部碎片和内部碎片的区别是什么？伙伴系统（Buddy System）如何减少碎片？",
+    "aiPrompt": "评估学生对内存分配、碎片、First-Fit/Best-Fit 的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "network-subnet-calculator-l2",
+    "stageId": 1,
+    "topicName": "计算机基础",
+    "subtopicName": "计算机网络",
+    "levelIndex": 2,
+    "levelTitle": "子网划分计算器",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "计算机网络"
+    ],
+    "theoryContent": "### 编程挑战：子网划分计算器\n\n子网划分将 IP 网络分成更小的子网。给定一个 CIDR 地址和需要的子网数，计算每个子网的网络地址、广播地址和可用主机范围。",
+    "latexFormulas": [
+      "子网数 = 2^借位数",
+      "可用主机数 = 2^(32-前缀) - 2"
+    ],
+    "starterCode": "def subnet_calc(network_cidr, num_subnets):\n    ip, prefix = network_cidr.split('/')\n    prefix = int(prefix)\n    bits_needed = 0\n    while (1<<bits_needed) < num_subnets:\n        bits_needed += 1\n    return bits_needed",
+    "solutionCode": "def subnet_calc(network_cidr, num_subnets):\n    ip, prefix = network_cidr.split('/')\n    prefix = int(prefix)\n    bits_needed = 0\n    while (1<<bits_needed) < num_subnets:\n        bits_needed += 1\n    new_prefix = prefix + bits_needed\n    hosts_per_subnet = (1 << (32 - new_prefix)) - 2\n    return {'new_prefix': new_prefix, 'subnets': num_subnets, 'hosts_per_subnet': max(0,hosts_per_subnet), 'bits_borrowed': bits_needed}",
+    "expectedOutput": "3",
+    "testCases": [
+      {
+        "name": "/24 to 8 subnets",
+        "input": {
+          "networkCidr": "192.168.0.0/24",
+          "numSubnets": 8
+        },
+        "expected": {
+          "new_prefix": 27,
+          "subnets": 8,
+          "hosts_per_subnet": 30,
+          "bits_borrowed": 3
+        }
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "子网掩码 255.255.255.0 对应的 CIDR 前缀是多少？",
+        "options": [
+          "A. /24",
+          "B. /16",
+          "C. /8",
+          "D. /32"
+        ],
+        "answer": 0,
+        "explanation": "255.255.255.0 前 24 位为网络位，即 /24。"
+      }
+    ],
+    "thinkingQuestion": "VLSM（可变长子网掩码）相比等长子网划分的优势是什么？",
+    "aiPrompt": "评估学生对 CIDR、子网划分、主机数的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "encoding-base64-tool-l2",
+    "stageId": 1,
+    "topicName": "计算机基础",
+    "subtopicName": "编码系统",
+    "levelIndex": 2,
+    "levelTitle": "Base64 编码解码器",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "编码系统"
+    ],
+    "theoryContent": "### 编程挑战：Base64 编码解码器\n\nBase64 将二进制数据编码为 64 个可打印字符，常用于在文本协议中传输二进制数据（如邮件附件、JSON 中的图片）。",
+    "latexFormulas": [
+      "Base64: 3字节 -> 4字符",
+      "= 填充使输出长度为 4 的倍数"
+    ],
+    "starterCode": "import base64\ndef encode_base64(data):\n    return base64.b64encode(data).decode()\ndef decode_base64(encoded):\n    return base64.b64decode(encoded)",
+    "solutionCode": "import base64\ndef encode_base64(data):\n    return base64.b64encode(data).decode()\ndef decode_base64(encoded):\n    return base64.b64decode(encoded).decode('utf-8',errors='replace')",
+    "expectedOutput": "SGVsbG8=",
+    "testCases": [
+      {
+        "name": "encode hello",
+        "input": {
+          "data": "Hello"
+        },
+        "expected": "SGVsbG8="
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "Base64 输出末尾的 = 是什么作用？",
+        "options": [
+          "A. 填充使输出长度为 4 的倍数",
+          "B. 表示结束",
+          "C. 校验和",
+          "D. 版本号"
+        ],
+        "answer": 0,
+        "explanation": "输入字节数不是3的倍数时，用 = 填充到4的倍数。"
+      }
+    ],
+    "thinkingQuestion": "Base64 编码后数据膨胀约 33%。在什么场景下这种膨胀是可以接受的？什么场景下不合适？",
+    "aiPrompt": "评估学生对 Base64、编码原理的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "linux-find-grep-tool-l2",
+    "stageId": 1,
+    "topicName": "Linux基础",
+    "subtopicName": "常用命令",
+    "levelIndex": 2,
+    "levelTitle": "批量文件搜索工具",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "常用命令"
+    ],
+    "theoryContent": "### 编程挑战：批量文件搜索工具\n\nLinux 中 find 和 grep 是最常用的搜索命令。本题模拟一个批量文件搜索器，在文件列表中按文件名模式或内容关键词搜索。",
+    "latexFormulas": [
+      "glob匹配: *.txt 等价于 endsWith('.txt')"
+    ],
+    "starterCode": "import fnmatch\ndef search_by_name(files, pattern):\n    return [f for f in files if fnmatch.fnmatch(f, pattern)]\ndef search_by_content(files, keyword):\n    return [f for f in files if keyword in f['content']]",
+    "solutionCode": "import fnmatch\ndef search_by_name(files, pattern):\n    return [f for f in files if fnmatch.fnmatch(f, pattern)]\ndef search_by_content(files, keyword):\n    return [f['name'] for f in files if keyword in f.get('content','')]",
+    "expectedOutput": "[\"readme.md\"]",
+    "testCases": [
+      {
+        "name": "glob matching",
+        "input": {
+          "files": [
+            "readme.md",
+            "main.py",
+            "test.py",
+            "notes.txt"
+          ],
+          "pattern": "*.md"
+        },
+        "expected": [
+          "readme.md"
+        ]
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "grep -r 'error' /var/log 的作用是什么？",
+        "options": [
+          "A. 递归搜索 /var/log 下包含 error 的文件",
+          "B. 删除 error 文件",
+          "C. 统计 error 出现次数",
+          "D. 列出所有目录"
+        ],
+        "answer": 0,
+        "explanation": "grep -r 递归搜索目录中匹配内容的文件。"
+      }
+    ],
+    "thinkingQuestion": "find 和 grep 组合使用（find ... | xargs grep ...）比单独 grep -r 有什么优势？",
+    "aiPrompt": "评估学生对文件搜索、glob 匹配的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "linux-disk-quota-analyzer-l2",
+    "stageId": 1,
+    "topicName": "Linux基础",
+    "subtopicName": "文件系统",
+    "levelIndex": 2,
+    "levelTitle": "磁盘配额分析器",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "文件系统"
+    ],
+    "theoryContent": "### 编程挑战：磁盘配额分析器\n\n大型系统中不同用户的磁盘使用量需要监控。当用户超过软限制时发出警告，超过硬限制时阻止写入。",
+    "latexFormulas": [
+      "软限制: 超过后开始计时, 超时后视为硬限制",
+      "硬限制: 不可超过的绝对上限"
+    ],
+    "starterCode": "def check_quota(usage, soft_limit, hard_limit):\n    if usage >= hard_limit: return 'blocked'\n    if usage >= soft_limit: return 'warning'\n    return 'ok'",
+    "solutionCode": "def check_quota(usage, soft_limit, hard_limit):\n    if usage >= hard_limit:\n        return {'status':'blocked','usage':usage,'limit':hard_limit}\n    if usage >= soft_limit:\n        return {'status':'warning','usage':usage,'limit':soft_limit}\n    return {'status':'ok','usage':usage}",
+    "expectedOutput": "warning",
+    "testCases": [
+      {
+        "name": "over soft limit",
+        "input": {
+          "usage": 85,
+          "softLimit": 80,
+          "hardLimit": 100
+        },
+        "expected": {
+          "status": "warning",
+          "usage": 85,
+          "limit": 80
+        }
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "硬限制被超过时系统通常怎么做？",
+        "options": [
+          "A. 拒绝写入操作",
+          "B. 删除旧文件",
+          "C. 增加配额",
+          "D. 发送邮件"
+        ],
+        "answer": 0,
+        "explanation": "硬限制是绝对上限，超过时系统通常会阻止进一步写入。"
+      }
+    ],
+    "thinkingQuestion": "Soft limit 和 hard limit 分开设置的设计目的是什么？",
+    "aiPrompt": "评估学生对磁盘配额、软硬限制的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "linux-sudo-auditor-l2",
+    "stageId": 1,
+    "topicName": "Linux基础",
+    "subtopicName": "权限管理",
+    "levelIndex": 2,
+    "levelTitle": "sudo 权限审计器",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "权限管理"
+    ],
+    "theoryContent": "### 编程挑战：sudo 权限审计器\n\nsudo 允许用户以超级用户权限执行命令。安全审计需要检查哪些用户可以执行 sudo、以及他们能执行什么命令。",
+    "latexFormulas": [
+      "sudo: user -> command as root",
+      "%group ALL=(ALL) ALL"
+    ],
+    "starterCode": "def audit_sudoers(entries):\n    risks = []\n    for e in entries:\n        if e.get('commands')=='ALL' and e.get('target')=='ALL':\n            risks.append(e['user'])\n    return risks",
+    "solutionCode": "def audit_sudoers(entries):\n    risks = []\n    for e in entries:\n        if e.get('commands')=='ALL' and e.get('target')=='ALL':\n            risks.append(f\"{e['user']} - FULL ACCESS\")\n        elif e.get('nopasswd'):\n            risks.append(f\"{e['user']} - NOPASSWD\")\n    return risks",
+    "expectedOutput": "[\"alice - FULL ACCESS\"]",
+    "testCases": [
+      {
+        "name": "detect full access",
+        "input": {
+          "entries": [
+            {
+              "user": "alice",
+              "commands": "ALL",
+              "target": "ALL",
+              "nopasswd": false
+            },
+            {
+              "user": "bob",
+              "commands": "/usr/bin/ls",
+              "target": "ALL",
+              "nopasswd": true
+            }
+          ]
+        },
+        "expected": [
+          "alice - FULL ACCESS",
+          "bob - NOPASSWD"
+        ]
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "sudo NOPASSWD 存在什么风险？",
+        "options": [
+          "A. 获取密码即可执行任意命令",
+          "B. 任何会话无需密码即可 sudo",
+          "C. 只能执行一个命令",
+          "D. 日志将不可用"
+        ],
+        "answer": 1,
+        "explanation": "NOPASSWD 让用户在 sudo 时不需要输入密码，一旦终端被攻击者可随意 sudo。"
+      }
+    ],
+    "thinkingQuestion": "最小权限原则在 sudo 配置中如何体现？为什么应该限制命令而不是直接给 ALL？",
+    "aiPrompt": "评估学生对 sudo 安全、权限配置的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "linux-process-priority-l2",
+    "stageId": 1,
+    "topicName": "Linux基础",
+    "subtopicName": "进程管理",
+    "levelIndex": 2,
+    "levelTitle": "进程优先级调度器",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "进程管理"
+    ],
+    "theoryContent": "### 编程挑战：进程优先级调度器\n\nLinux 使用 nice 值（-20 到 19）调整进程优先级。值越小优先级越高。CFS（完全公平调度器）用虚拟运行时间来实现公平调度。",
+    "latexFormulas": [
+      "Nice值: -20(最高) ~ 19(最低)",
+      "vruntime = 实际运行时间 / weight"
+    ],
+    "starterCode": "def calculate_vruntime(runtime, nice):\n    weight = 1024 / (1.25 ** nice)\n    return runtime / weight",
+    "solutionCode": "def calculate_vruntime(runtime, nice):\n    weight = 1024 / (1.25 ** nice)\n    return round(runtime / weight, 2)\ndef schedule_next(processes):\n    return min(processes, key=lambda p: p['vruntime'])['pid']",
+    "expectedOutput": "1",
+    "testCases": [
+      {
+        "name": "lower nice = higher priority",
+        "input": {
+          "processes": [
+            {
+              "pid": 1,
+              "runtime": 10,
+              "nice": 0
+            },
+            {
+              "pid": 2,
+              "runtime": 10,
+              "nice": 5
+            }
+          ]
+        },
+        "expected": 1
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "nice 值为负需要什么权限？",
+        "options": [
+          "A. root 或 CAP_SYS_NICE",
+          "B. 任何用户都可以",
+          "C. 只有管理员登录后才可",
+          "D. 不需要特殊权限"
+        ],
+        "answer": 0,
+        "explanation": "设置负 nice 值（更高优先级）需要 root 权限。"
+      }
+    ],
+    "thinkingQuestion": "完全公平调度器（CFS）与传统的 O(1) 调度器相比，主要改进是什么？",
+    "aiPrompt": "评估学生对进程优先级、nice 值、CFS 的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "shell-log-rotate-l2",
+    "stageId": 1,
+    "topicName": "Linux基础",
+    "subtopicName": "Shell脚本",
+    "levelIndex": 2,
+    "levelTitle": "日志轮转脚本模拟器",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "Shell脚本"
+    ],
+    "theoryContent": "### 编程挑战：日志轮转脚本模拟器\n\n日志文件会持续增长，填满磁盘。logrotate 定期压缩、归档和清理旧日志。",
+    "latexFormulas": [
+      "logrotate: compress -> rotate -> delete old"
+    ],
+    "starterCode": "def simulate_logrotate(log_files, max_age_days, max_size_mb):\n    rotated = []\n    for f in log_files:\n        if f['size_mb'] > max_size_mb:\n            rotated.append(f['name']+'.1.gz')\n            f['size_mb'] = 0\n    return rotated",
+    "solutionCode": "def simulate_logrotate(log_files, max_age_days, max_size_mb):\n    rotated = []\n    for f in log_files:\n        if f['size_mb'] > max_size_mb:\n            rotated.append({'original':f['name'],'rotated':f['name']+'.1.gz','compressed_size':round(f['size_mb']*0.2,1)})\n            f['size_mb'] = 0\n        elif f['age_days'] > max_age_days:\n            rotated.append({'original':f['name'],'action':'deleted'})\n    return rotated",
+    "expectedOutput": "1",
+    "testCases": [
+      {
+        "name": "rotate large file",
+        "input": {
+          "logFiles": [
+            {
+              "name": "app.log",
+              "size_mb": 150,
+              "age_days": 1
+            },
+            {
+              "name": "debug.log",
+              "size_mb": 5,
+              "age_days": 30
+            }
+          ],
+          "maxAgeDays": 7,
+          "maxSizeMb": 100
+        },
+        "expected": 1
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "日志轮转为什么要压缩归档而不是直接删除？",
+        "options": [
+          "A. 保留历史日志用于审计和故障排查",
+          "B. 压缩节省空间",
+          "C. 两者都是",
+          "D. 不需要保留"
+        ],
+        "answer": 2,
+        "explanation": "压缩归档既节省空间又保留历史日志，符合审计和排查需求。"
+      }
+    ],
+    "thinkingQuestion": "如果日志写入速度超过轮转速度（写 100MB/小时，但轮转每天一次），会有什么问题？怎么解决？",
+    "aiPrompt": "评估学生对日志管理、轮转策略的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "git-branch-cleaner-l2",
+    "stageId": 1,
+    "topicName": "Git版本控制",
+    "subtopicName": "init/clone",
+    "levelIndex": 2,
+    "levelTitle": "分支清理工具",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "init/clone"
+    ],
+    "theoryContent": "### 编程挑战：分支清理工具\n\n协作仓库中常累积大量已合并的过时分支。定期清理有助于保持仓库整洁。",
+    "latexFormulas": [
+      "git branch -d branch_name: 删除已合并分支",
+      "git branch -D: 强制删除未合并分支"
+    ],
+    "starterCode": "def cleanup_branches(branches, merged_branches, default_branch):\n    safe_to_delete = [b for b in branches if b in merged_branches and b != default_branch]\n    return safe_to_delete",
+    "solutionCode": "def cleanup_branches(branches, merged_branches, default_branch):\n    safe = [b for b in branches if b in merged_branches and b != default_branch]\n    unsafe = [b for b in branches if b not in merged_branches and b != default_branch]\n    return {'safe_to_delete': safe, 'needs_review': unsafe}",
+    "expectedOutput": "[\"feature-old\"]",
+    "testCases": [
+      {
+        "name": "safe branches",
+        "input": {
+          "branches": [
+            "main",
+            "feature-old",
+            "feature-wip"
+          ],
+          "mergedBranches": [
+            "feature-old"
+          ],
+          "defaultBranch": "main"
+        },
+        "expected": {
+          "safe_to_delete": [
+            "feature-old"
+          ],
+          "needs_review": [
+            "feature-wip"
+          ]
+        }
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "为什么不能删除当前所在分支？",
+        "options": [
+          "A. Git 禁止删除 HEAD 指向的分支",
+          "B. 当前分支总是最新的",
+          "C. 删除会丢失工作区",
+          "D. 没有限制"
+        ],
+        "answer": 0,
+        "explanation": "Git 不允许删除当前 HEAD 指向的分支，需要先切到其他分支再删除。"
+      }
+    ],
+    "thinkingQuestion": "删除远程分支（git push -d origin branch）和本地分支的区别是什么？如何同步清理？",
+    "aiPrompt": "评估学生对分支管理、清理策略的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "git-commit-squasher-l2",
+    "stageId": 1,
+    "topicName": "Git版本控制",
+    "subtopicName": "add/commit/push",
+    "levelIndex": 2,
+    "levelTitle": "提交压缩整理器",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "add/commit/push"
+    ],
+    "theoryContent": "### 编程挑战：提交压缩整理器\n\n开发中会有一堆 WIP（Work In Progress）提交。合并 PR 前需要用 rebase -i 或 reset 将这些提交压缩成有意义的提交。",
+    "latexFormulas": [
+      "git rebase -i HEAD~N: 交互式变基",
+      "pick/squash/fixup/reword"
+    ],
+    "starterCode": "def simulate_squash(commits, target_count):\n    if len(commits) <= target_count: return commits\n    result = []\n    for i, c in enumerate(commits):\n        if i == 0: result.append(c)\n        elif i < len(commits) - (target_count-1):\n            result[-1]['message'] += '; '+c['message']\n        else: result.append(c)\n    return result",
+    "solutionCode": "def simulate_squash(commits, target_count):\n    if len(commits) <= target_count:\n        return commits\n    result = []\n    for i, c in enumerate(commits):\n        if i == 0:\n            result.append(c)\n        elif i < len(commits) - (target_count-1):\n            result[-1]['message'] += '; ' + c['message']\n        else:\n            result.append(c)\n    return result",
+    "expectedOutput": "2",
+    "testCases": [
+      {
+        "name": "squash 3 to 2",
+        "input": {
+          "commits": [
+            {
+              "id": "a",
+              "message": "WIP 1"
+            },
+            {
+              "id": "b",
+              "message": "WIP 2"
+            },
+            {
+              "id": "c",
+              "message": "final"
+            }
+          ],
+          "targetCount": 2
+        },
+        "expected": 2
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "squash 和 fixup 的区别？",
+        "options": [
+          "A. squash 保留日志，fixup 丢弃日志",
+          "B. fixup 保留日志，squash 丢弃",
+          "C. 两者相同",
+          "D. squash 只能用于最后一个提交"
+        ],
+        "answer": 0,
+        "explanation": "squash 合并时保留该提交的日志信息，fixup 则丢弃。"
+      }
+    ],
+    "thinkingQuestion": "rebase 和 merge 在合并分支时对提交历史的组织方式有什么本质区别？",
+    "aiPrompt": "评估学生对 commit 整理、squash、rebase 的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "git-conflict-auto-resolver-l2",
+    "stageId": 1,
+    "topicName": "Git版本控制",
+    "subtopicName": "branch/merge",
+    "levelIndex": 2,
+    "levelTitle": "合并冲突自动解决器",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "branch/merge"
+    ],
+    "theoryContent": "### 编程挑战：合并冲突自动解决器\n\n当合并两个分支修改了同一文件的不同区域时，Git 可能自动合并成功。当修改了相同区域时产生冲突，需要人工解决。",
+    "latexFormulas": [
+      "Auto-merge: 不同行修改 -> 自动合并",
+      "Conflict: 同区域修改 -> 人工处理"
+    ],
+    "starterCode": "def auto_merge(base, a_changes, b_changes):\n    conflicts = []\n    for line in set(a_changes) & set(b_changes):\n        if a_changes[line] != b_changes[line]:\n            conflicts.append(line)\n    return len(conflicts)",
+    "solutionCode": "def auto_merge(base, a_changes, b_changes):\n    conflicts = []\n    for line in set(a_changes) & set(b_changes):\n        if a_changes[line] != b_changes[line]:\n            conflicts.append(line)\n    return {'conflicts': len(conflicts), 'auto_merged': len(a_changes)+len(b_changes)-len(conflicts), 'status': 'conflict' if conflicts else 'clean'}",
+    "expectedOutput": "clean",
+    "testCases": [
+      {
+        "name": "no conflict",
+        "input": {
+          "base": {
+            "10": "a"
+          },
+          "aChanges": {
+            "10": "a",
+            "15": "new"
+          },
+          "bChanges": {
+            "10": "a",
+            "20": "new2"
+          }
+        },
+        "expected": {
+          "conflicts": 0,
+          "auto_merged": 2,
+          "status": "clean"
+        }
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "Git 合并冲突标记中的 HEAD 代表什么？",
+        "options": [
+          "A. 当前分支的内容",
+          "B. 被合并分支的内容",
+          "C. 共同祖先的内容",
+          "D. 最终结果"
+        ],
+        "answer": 0,
+        "explanation": "<<<<<<< HEAD 到 ======= 之间是当前分支的内容。"
+      }
+    ],
+    "thinkingQuestion": "三路合并（Three-way merge）相比两路合并的优势是什么？",
+    "aiPrompt": "评估学生对 Git 合并、冲突解决的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "git-rebase-detector-l2",
+    "stageId": 1,
+    "topicName": "Git版本控制",
+    "subtopicName": "rebase",
+    "levelIndex": 2,
+    "levelTitle": "Rebase 冲突预测器",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "rebase"
+    ],
+    "theoryContent": "### 编程挑战：Rebase 冲突预测器\n\nRebase 将当前分支的提交在目标分支上重放。如果目标分支也在相同区域有修改，每次重放都可能产生冲突。",
+    "latexFormulas": [
+      "Rebase = 在目标分支的 HEAD 上逐个应用提交",
+      "冲突数 = 累积计算"
+    ],
+    "starterCode": "def predict_rebase_conflicts(feature_commits, target_commits):\n    total_conflicts = 0\n    for fc in feature_commits:\n        for tc in target_commits:\n            if fc['file'] == tc['file']:\n                if max(fc['start'],tc['start']) <= min(fc['end'],tc['end']):\n                    total_conflicts += 1\n    return total_conflicts",
+    "solutionCode": "def predict_rebase_conflicts(feature_commits, target_commits):\n    total = 0\n    for fc in feature_commits:\n        for tc in target_commits:\n            if fc['file'] == tc['file']:\n                if max(fc['start'],tc['start']) <= min(fc['end'],tc['end']):\n                    total += 1\n    return {'total_conflicts': total, 'recommendation': 'merge instead' if total > 2 else 'rebase ok'}",
+    "expectedOutput": "rebase ok",
+    "testCases": [
+      {
+        "name": "low conflict",
+        "input": {
+          "featureCommits": [
+            {
+              "file": "a.py",
+              "start": 1,
+              "end": 5
+            }
+          ],
+          "targetCommits": [
+            {
+              "file": "a.py",
+              "start": 10,
+              "end": 15
+            }
+          ]
+        },
+        "expected": {
+          "total_conflicts": 0,
+          "recommendation": "rebase ok"
+        }
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "什么时候应该用 merge 而不是 rebase？",
+        "options": [
+          "A. 公共分支上，避免重写历史",
+          "B. 个人分支上",
+          "C. 任何时候",
+          "D. 只有小改动时"
+        ],
+        "answer": 0,
+        "explanation": "公共分支上 rebase 会重写历史，导致协作者历史分叉，应使用 merge。"
+      }
+    ],
+    "thinkingQuestion": "git pull --rebase 和 git pull 的区别是什么？为什么推荐用 --rebase？",
+    "aiPrompt": "评估学生对 rebase、冲突预测、工作流选择的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "git-conflict-resolution-strategies-l2",
+    "stageId": 1,
+    "topicName": "Git版本控制",
+    "subtopicName": "conflict解决",
+    "levelIndex": 2,
+    "levelTitle": "合并策略选择器",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "conflict解决"
+    ],
+    "theoryContent": "### 编程挑战：合并策略选择器\n\nGit 提供多种合并策略：recursive（默认）、ours、theirs、octopus 等。不同场景需要不同策略。",
+    "latexFormulas": [
+      "recursive: 默认三路合并",
+      "ours: 完全保留当前分支",
+      "theirs: 完全接受传入分支"
+    ],
+    "starterCode": "def recommend_strategy(branch_a, branch_b, situation):\n    if situation == 'long-lived': return 'merge --squash'\n    if situation == 'experimental': return 'rebase'\n    return 'recursive'",
+    "solutionCode": "def recommend_strategy(branch_a, branch_b, situation):\n    strategies = {\n        'standard': 'recursive (default)',\n        'long-lived': 'merge --squash (压缩为1个提交)',\n        'experimental': 'rebase (保持历史线性)',\n        'collaborative': 'merge --no-ff (保留分支痕迹)',\n        'trivial': 'merge --ff-only (快进)'\n    }\n    return strategies.get(situation, 'recursive')",
+    "expectedOutput": "merge --no-ff",
+    "testCases": [
+      {
+        "name": "collaborative project",
+        "input": {
+          "branchA": "feature",
+          "branchB": "main",
+          "situation": "collaborative"
+        },
+        "expected": "merge --no-ff (保留分支痕迹)"
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "git merge --no-ff 的作用是什么？",
+        "options": [
+          "A. 强制创建 merge commit，保留分支痕迹",
+          "B. 快进合并",
+          "C. 禁用合并",
+          "D. 自动解决冲突"
+        ],
+        "answer": 0,
+        "explanation": "--no-ff 强制创建一个 merge commit，即使可以快进也保留分支历史。"
+      }
+    ],
+    "thinkingQuestion": "Squash merge 和普通 merge 对提交历史的影响有什么不同？分别适合什么场景？",
+    "aiPrompt": "评估学生对合并策略、工作流选择的理解。按 0-10 分打分。",
+    "status": "published"
+  }
+]

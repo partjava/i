@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { useSession } from 'next-auth/react';
+import { useAuth } from '@/app/hooks/useAuth';
 import { Button, Input, Spin, Alert, message } from 'antd';
 import { SendOutlined, RobotOutlined, UserOutlined, CopyOutlined } from '@ant-design/icons';
 
@@ -25,7 +25,7 @@ interface CodeContent {
 }
 
 export default function AIAssistantPage() {
-  const { data: session } = useSession();
+  const { data: session } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);

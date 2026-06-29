@@ -1,0 +1,1218 @@
+[
+  {
+    "slug": "nlp-tokenizer-pos-tagger",
+    "stageId": 7,
+    "topicName": "自然语言处理",
+    "subtopicName": "分词与词性标注",
+    "levelIndex": 1,
+    "levelTitle": "分词与词性标注器",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "nlp",
+      "tokenizer",
+      "pos",
+      "segmentation"
+    ],
+    "theoryContent": "### 编程挑战：分词与词性标注器\n\n分词是 NLP 的第一步。本题用正向最大匹配算法实现中文分词，并基于词典标注词性。\n\n实现：\n- `fmm_segment(text, vocab)`: 正向最大匹配分词\n- `pos_tag(tokens, pos_dict)`: 基于词典的词性标注\n- `sentiment_token_stats(tokens)`: 统计词长分布",
+    "latexFormulas": [
+      "text{FMM: }w = argmax_{w in V} |w| s.t. w in prefix(text)"
+    ],
+    "starterCode": "def fmm_segment(text, vocab, max_len=5):\n    tokens = []\n    i = 0\n    while i < len(text):\n        matched = False\n        for L in range(min(max_len, len(text)-i), 0, -1):\n            if text[i:i+L] in vocab:\n                tokens.append(text[i:i+L])\n                i += L\n                matched = True\n                break\n        if not matched:\n            tokens.append(text[i])\n            i += 1\n    return tokens\ndef pos_tag(tokens, pos_dict):\n    return [{'word': t, 'pos': pos_dict.get(t, 'UNK')} for t in tokens]",
+    "solutionCode": "def fmm_segment(text, vocab, max_len=5):\n    tokens = []\n    i = 0\n    while i < len(text):\n        matched = False\n        for L in range(min(max_len, len(text)-i), 0, -1):\n            if text[i:i+L] in vocab:\n                tokens.append(text[i:i+L])\n                i += L\n                matched = True\n                break\n        if not matched:\n            tokens.append(text[i])\n            i += 1\n    return tokens\ndef pos_tag(tokens, pos_dict):\n    return [{'word': t, 'pos': pos_dict.get(t, 'UNK')} for t in tokens]",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "fmm basic",
+        "input": {
+          "text": "我们在野生动物园玩",
+          "vocab": [
+            "我们",
+            "在",
+            "野生",
+            "野生动物",
+            "动物园",
+            "玩"
+          ],
+          "maxLen": 5
+        },
+        "expected": [
+          "我们",
+          "在",
+          "野生动物园",
+          "玩"
+        ]
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "正向最大匹配的缺点是？",
+        "options": [
+          "A. 对未登录词处理差，歧义较多",
+          "B. 速度太慢",
+          "C. 不能处理中文",
+          "D. 需要 GPU"
+        ],
+        "answer": 0,
+        "explanation": "FMM 依赖词典，未登录词无法识别；且只考虑正向，可能产生错误的分词边界。"
+      }
+    ],
+    "thinkingQuestion": "HMM（隐马尔可夫模型）如何解决未登录词识别问题？它与词典匹配的本质区别是什么？",
+    "aiPrompt": "评估学生对分词算法、FMM、词性标注的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "nlp-tfidf-retriever",
+    "stageId": 7,
+    "topicName": "自然语言处理",
+    "subtopicName": "TF-IDF特征",
+    "levelIndex": 1,
+    "levelTitle": "TF-IDF 文档检索器",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "nlp",
+      "tfidf",
+      "ir",
+      "retrieval"
+    ],
+    "theoryContent": "### 编程挑战：TF-IDF 文档检索器\n\nTF-IDF 衡量词语对文档的重要程度。实现 TF（词频）、IDF（逆文档频率）、TF-IDF 和搜索函数。",
+    "latexFormulas": [
+      "text{TF}(t,d) = f_{t,d}/sum f_{t',d}",
+      "text{IDF}(t,D) = log(|D|/(1+|{d in D: t in d}|))"
+    ],
+    "starterCode": "import math\ndef tf(term, doc): pass\ndef idf(term, docs): pass\ndef tfidf(term, doc, docs): pass\ndef search(query, docs, top_k): pass",
+    "solutionCode": "import math\ndef tf(term, doc):\n    return doc.count(term)/len(doc) if doc else 0\ndef idf(term, docs):\n    n = sum(1 for d in docs if term in d)\n    return math.log((len(docs)+1)/(n+1))+1\ndef tfidf(term, doc, docs):\n    return round(tf(term,doc)*idf(term,docs),4)\ndef search(query, docs, top_k=2):\n    scores = []\n    for i, doc in enumerate(docs):\n        score = sum(tfidf(w,doc,docs) for w in query.split())\n        scores.append((i, round(score,4)))\n    scores.sort(key=lambda x:-x[1])\n    return scores[:top_k]",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "tfidf basic",
+        "input": {
+          "doc": [
+            "苹果",
+            "香蕉",
+            "苹果"
+          ],
+          "docs": [
+            [
+              "苹果",
+              "香蕉",
+              "苹果"
+            ],
+            [
+              "香蕉",
+              "橙子"
+            ],
+            [
+              "苹果",
+              "葡萄"
+            ]
+          ]
+        },
+        "expected": true
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "IDF 越大说明什么？",
+        "options": [
+          "A. 该词在少数文档中出现，区分度强",
+          "B. 该词很常见",
+          "C. 该词出现频率高",
+          "D. 该词不重要"
+        ],
+        "answer": 0,
+        "explanation": "IDF 大说明只在少数文档中出现，有强区分能力。"
+      }
+    ],
+    "thinkingQuestion": "TF-IDF 的局限是什么？BERT 的向量表示如何弥补这些局限？",
+    "aiPrompt": "评估学生对 TF-IDF、信息检索和文档排序的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "nlp-word2vec-embedding",
+    "stageId": 7,
+    "topicName": "自然语言处理",
+    "subtopicName": "Word2Vec词向量",
+    "levelIndex": 1,
+    "levelTitle": "Word2Vec CBOW 嵌入训练器",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "nlp",
+      "word2vec",
+      "embedding",
+      "cbow"
+    ],
+    "theoryContent": "### 编程挑战：Word2Vec CBOW 嵌入训练器\n\nCBOW 用上下文词预测目标词。实现词表构建、独热编码和余弦相似度。",
+    "latexFormulas": [
+      "h = 1/C sum W_1 x_c",
+      "hat{y} = softmax(W_2 h)"
+    ],
+    "starterCode": "import numpy as np\ndef build_vocab(sentences): pass\ndef one_hot(idx, size): pass\ndef cosine_similarity(v1, v2): pass",
+    "solutionCode": "import numpy as np\ndef build_vocab(sentences):\n    words = set()\n    for s in sentences: words.update(s)\n    return {w:i for i,w in enumerate(sorted(words))}\ndef one_hot(idx, size):\n    v = np.zeros(size); v[idx]=1; return v\ndef cosine_similarity(v1, v2):\n    d = np.linalg.norm(v1)*np.linalg.norm(v2)\n    return float(np.dot(v1,v2)/d) if d>0 else 0",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "vocab build",
+        "input": {
+          "sentences": [
+            [
+              "我",
+              "爱",
+              "NLP"
+            ],
+            [
+              "NLP",
+              "很",
+              "有趣"
+            ]
+          ]
+        },
+        "expected": true
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "词向量的核心思想是什么？",
+        "options": [
+          "A. 分布式语义：相似上下文的词意思相近",
+          "B. 每个词独立表示",
+          "C. 按字母顺序编码",
+          "D. 随机初始化"
+        ],
+        "answer": 0,
+        "explanation": "Word2Vec 的核心是分布式假设。"
+      }
+    ],
+    "thinkingQuestion": "Word2Vec 生成的静态词向量无法处理一词多义。ELMo 和 BERT 是如何解决这个问题的？",
+    "aiPrompt": "评估学生对词向量、Word2Vec、CBOW 的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "nlp-bert-pretraining",
+    "stageId": 7,
+    "topicName": "自然语言处理",
+    "subtopicName": "BERT预训练模型",
+    "levelIndex": 1,
+    "levelTitle": "BERT MLM 预训练模拟器",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "nlp",
+      "bert",
+      "mlm",
+      "pretraining"
+    ],
+    "theoryContent": "### 编程挑战：BERT MLM 预训练模拟器\n\nBERT 使用掩码语言模型（MLM）进行预训练：随机遮挡词，让模型预测被遮挡的词。实现 MLM 流程。",
+    "latexFormulas": [
+      "P(w_i|context) = softmax(W_o h_i)",
+      "L_{MLM} = -sum log P(w_i|context)"
+    ],
+    "starterCode": "import numpy as np\ndef mask_tokens(tokens, mask_id, mask_prob=0.15): pass\ndef mlm_loss(logits, target_ids): pass",
+    "solutionCode": "import numpy as np\ndef mask_tokens(tokens, mask_id, mask_prob=0.15):\n    masked = tokens.copy(); labels = [-100]*len(tokens)\n    for i in range(len(tokens)):\n        if np.random.random() < mask_prob:\n            labels[i] = tokens[i]; masked[i] = mask_id\n    return {'masked': masked, 'labels': labels}\ndef mlm_loss(logits, target_ids):\n    loss=0;n=0\n    for logit,tid in zip(logits,target_ids):\n        if tid<0: continue\n        exp=np.exp(logit-np.max(logit)); probs=exp/np.sum(exp)\n        loss+=-np.log(probs[tid]+1e-10);n+=1\n    return round(float(loss/n),4) if n else 0",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "mask basic",
+        "input": {
+          "tokens": [
+            0,
+            1,
+            2,
+            3,
+            4
+          ],
+          "maskId": 100
+        },
+        "expected": true
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "BERT MLM 中 15% 被选中的 token 实际被替换为 [MASK] 的比例是多少？",
+        "options": [
+          "A. 80%",
+          "B. 15%",
+          "C. 100%",
+          "D. 50%"
+        ],
+        "answer": 0,
+        "explanation": "80% 替换成 [MASK]，10% 换成随机词，10% 保持不变。"
+      }
+    ],
+    "thinkingQuestion": "为什么 BERT 预训练要同时使用 MLM 和 NSP 两个目标？",
+    "aiPrompt": "评估学生对 BERT、MLM、预训练任务的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "nlp-lstm-sequence-model",
+    "stageId": 7,
+    "topicName": "自然语言处理",
+    "subtopicName": "LSTM/GRU序列建模",
+    "levelIndex": 1,
+    "levelTitle": "LSTM 序列情感分类器",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "nlp",
+      "lstm",
+      "rnn",
+      "sentiment"
+    ],
+    "theoryContent": "### 编程挑战：LSTM 序列情感分类器\n\nLSTM 通过遗忘门、输入门和输出门控制信息流。实现 LSTM 单元前向传播。",
+    "latexFormulas": [
+      "f_t = sigmoid(W_f x_t + U_f h_{t-1} + b_f)",
+      "c_t = f_t * c_{t-1} + i_t * tilde{c}_t"
+    ],
+    "starterCode": "import numpy as np\ndef sigmoid(x): pass\ndef lstm_cell(x, h_prev, c_prev, params): pass\ndef lstm_forward(X, params): pass",
+    "solutionCode": "import numpy as np\nsig = lambda x: 1/(1+np.exp(-np.clip(x,-100,100)))\ndef lstm_cell(x, h_prev, c_prev, p):\n    f = sig(x@p['Wf']+h_prev@p['Uf']+p['bf'])\n    i = sig(x@p['Wi']+h_prev@p['Ui']+p['bi'])\n    o = sig(x@p['Wo']+h_prev@p['Uo']+p['bo'])\n    cc = np.tanh(x@p['Wc']+h_prev@p['Uc']+p['bc'])\n    c = f*c_prev + i*cc\n    h = o*np.tanh(c)\n    return h,c\ndef lstm_forward(X, p):\n    h = np.zeros(p['Wf'].shape[1]); c = np.zeros_like(h)\n    hs = []\n    for x in X:\n        h,c = lstm_cell(x,h,c,p); hs.append(h)\n    return hs",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "lstm forward shape",
+        "input": {
+          "X": [
+            [
+              1,
+              0
+            ],
+            [
+              0,
+              1
+            ],
+            [
+              1,
+              1
+            ]
+          ],
+          "params": {
+            "Wf": [
+              [
+                0.1
+              ]
+            ],
+            "Uf": [
+              [
+                0.2
+              ]
+            ],
+            "bf": [
+              0
+            ],
+            "Wi": [
+              [
+                0.1
+              ]
+            ],
+            "Ui": [
+              [
+                0.2
+              ]
+            ],
+            "bi": [
+              0
+            ],
+            "Wo": [
+              [
+                0.1
+              ]
+            ],
+            "Uo": [
+              [
+                0.2
+              ]
+            ],
+            "bo": [
+              0
+            ],
+            "Wc": [
+              [
+                0.1
+              ]
+            ],
+            "Uc": [
+              [
+                0.2
+              ]
+            ],
+            "bc": [
+              0
+            ]
+          }
+        },
+        "expected": true
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "LSTM 中遗忘门的输出范围是？",
+        "options": [
+          "A. (0,1)，控制历史信息保留比例",
+          "B. (-1,1)",
+          "C. [0,inf)",
+          "D. 整数值"
+        ],
+        "answer": 0,
+        "explanation": "遗忘门使用 sigmoid 激活，输出 (0,1)。"
+      }
+    ],
+    "thinkingQuestion": "GRU 相比 LSTM 减少了哪些门？参数减少对训练和效果有什么影响？",
+    "aiPrompt": "评估学生对 LSTM、门控机制、序列建模的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "nlp-self-attention",
+    "stageId": 7,
+    "topicName": "自然语言处理",
+    "subtopicName": "Self-Attention自注意力",
+    "levelIndex": 1,
+    "levelTitle": "Self-Attention 自注意力计算器",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "nlp",
+      "attention",
+      "self-attention",
+      "transformer"
+    ],
+    "theoryContent": "### 编程挑战：Self-Attention 自注意力计算器\n\nSelf-Attention 让每个位置关注序列中其他所有位置。实现缩放点积注意力。\n\nAttention(Q,K,V) = softmax(QK^T / sqrt(d_k)) V",
+    "latexFormulas": [
+      "Attention(Q,K,V) = softmax(QK^T / sqrt(d_k)) V"
+    ],
+    "starterCode": "import numpy as np\ndef scaled_dot_product_attention(Q, K, V): pass\ndef self_attention(X, W_q, W_k, W_v): pass",
+    "solutionCode": "import numpy as np\ndef scaled_dot_product_attention(Q,K,V):\n    d_k = Q.shape[-1]\n    scores = Q @ K.T / np.sqrt(d_k)\n    exp_s = np.exp(scores-np.max(scores,axis=-1,keepdims=True))\n    weights = exp_s / np.sum(exp_s,axis=-1,keepdims=True)\n    return {'output': weights @ V, 'weights': weights}\ndef self_attention(X, W_q, W_k, W_v):\n    return scaled_dot_product_attention(X@W_q, X@W_k, X@W_v)",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "attention shape",
+        "input": {
+          "Q": [
+            [
+              1,
+              2
+            ],
+            [
+              3,
+              4
+            ]
+          ],
+          "K": [
+            [
+              1,
+              2
+            ],
+            [
+              3,
+              4
+            ]
+          ],
+          "V": [
+            [
+              1,
+              0
+            ],
+            [
+              0,
+              1
+            ]
+          ]
+        },
+        "expected": true
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "为什么 Self-Attention 中要除以 sqrt(d_k)？",
+        "options": [
+          "A. 防止 softmax 梯度消失",
+          "B. 加速计算",
+          "C. 增加模型容量",
+          "D. 没有原因"
+        ],
+        "answer": 0,
+        "explanation": "d_k 较大时点积结果方差大，softmax 梯度会消失，除以 sqrt(d_k) 缩放使梯度稳定。"
+      }
+    ],
+    "thinkingQuestion": "Self-Attention 的复杂度是 O(n^2)。在处理长序列时有什么优化方法？",
+    "aiPrompt": "评估学生对 Self-Attention、缩放点积的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "nlp-multi-head-attention",
+    "stageId": 7,
+    "topicName": "自然语言处理",
+    "subtopicName": "多头注意力机制",
+    "levelIndex": 1,
+    "levelTitle": "多头注意力聚合器",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "nlp",
+      "multi-head",
+      "attention",
+      "transformer"
+    ],
+    "theoryContent": "### 编程挑战：多头注意力聚合器\n\n多头注意力并行计算 h 个自注意力头，将结果拼接后投影。实现 split_heads、multi_head_attention、concat_heads。",
+    "latexFormulas": [
+      "MultiHead(Q,K,V) = Concat(head_1,...,head_h) W_O"
+    ],
+    "starterCode": "import numpy as np\ndef split_heads(X, h): pass\ndef concat_heads(heads): pass\ndef multi_head_attention(X, params, h): pass",
+    "solutionCode": "import numpy as np\ndef split_heads(X, h):\n    n,d = X.shape\n    return X.reshape(n,h,d//h).transpose(1,0,2)\ndef concat_heads(heads):\n    h,n,dh = heads.shape\n    return heads.transpose(1,0,2).reshape(n,h*dh)\ndef multi_head_attention(X, p, h):\n    Q = X@p['Wq']; K = X@p['Wk']; V = X@p['Wv']\n    heads = []\n    for i in range(h):\n        qi = split_heads(Q,h)[i]; ki = split_heads(K,h)[i]; vi = split_heads(V,h)[i]\n        dk = qi.shape[-1]\n        scores = qi@ki.T/np.sqrt(dk)\n        exp_s = np.exp(scores-np.max(scores,axis=-1,keepdims=True))\n        attn = exp_s/np.sum(exp_s,axis=-1,keepdims=True)\n        heads.append(attn@vi)\n    cat = concat_heads(np.array(heads))\n    return {'output': cat@p['Wo'], 'heads': heads}",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "multi-head shape",
+        "input": {
+          "X": [
+            [
+              1,
+              2,
+              3,
+              4
+            ],
+            [
+              5,
+              6,
+              7,
+              8
+            ],
+            [
+              9,
+              10,
+              11,
+              12
+            ],
+            [
+              13,
+              14,
+              15,
+              16
+            ]
+          ],
+          "h": 2
+        },
+        "expected": true
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "多头注意力中每个头学到什么？",
+        "options": [
+          "A. 不同表示子空间的特征关系",
+          "B. 相同的信息",
+          "C. 平均分配权重",
+          "D. 只关注相邻词"
+        ],
+        "answer": 0,
+        "explanation": "不同头关注不同的语义和句法关系。"
+      }
+    ],
+    "thinkingQuestion": "如果一个注意力头总是关注 [CLS] 标记，这可能说明什么？",
+    "aiPrompt": "评估学生对多头注意力、表示子空间的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "nlp-encoder-decoder",
+    "stageId": 7,
+    "topicName": "自然语言处理",
+    "subtopicName": "编码与解码器",
+    "levelIndex": 1,
+    "levelTitle": "Seq2Seq 翻译模型",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "nlp",
+      "seq2seq",
+      "encoder",
+      "decoder",
+      "transformer"
+    ],
+    "theoryContent": "### 编程挑战：Seq2Seq 翻译模型\n\n编码器-解码器架构是机器翻译的基础。编码器读取源序列，解码器生成目标序列。实现简化的贪心解码。",
+    "latexFormulas": [
+      "h_t^{enc} = f(x_t, h_{t-1}^{enc})",
+      "P(y_t|y_{<t},X) = softmax(W_o h_t^{dec})"
+    ],
+    "starterCode": "import numpy as np\ndef encoder_forward(tokens, W_emb, W_enc): pass\ndef decoder_step(y_t, h_prev, W_emb, W_dec, W_out): pass\ndef greedy_decode(enc_h, start_id, end_id, max_len, params): pass",
+    "solutionCode": "import numpy as np\ndef encoder_forward(tokens, W_emb, W_enc):\n    h = np.zeros(W_enc.shape[1])\n    for t in tokens:\n        x = W_emb[t]; h = np.tanh(x@W_enc + h)\n    return h\ndef decoder_step(y_t, h_prev, W_emb, W_dec, W_out):\n    x = W_emb[y_t]; h = np.tanh(x@W_dec + h_prev)\n    logits = h@W_out; return h, logits\ndef greedy_decode(enc_h, start_id, end_id, max_len, p):\n    y = start_id; h = enc_h; result = []\n    for _ in range(max_len):\n        h, logits = decoder_step(y, h, p['W_emb'], p['W_dec'], p['W_out'])\n        y = int(np.argmax(logits))\n        if y == end_id: break\n        result.append(y)\n    return result",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "encode decode shape",
+        "input": {
+          "tokens": [
+            0,
+            1,
+            2
+          ],
+          "vocabSize": 10,
+          "embSize": 8,
+          "hiddenSize": 8
+        },
+        "expected": true
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "教师强迫（Teacher Forcing）在训练时做什么？",
+        "options": [
+          "A. 用真实目标词而不是预测词作为解码器输入",
+          "B. 强迫教师更努力",
+          "C. 加速推理",
+          "D. 增加随机性"
+        ],
+        "answer": 0,
+        "explanation": "教师强迫在训练时将真实目标序列作为解码器输入，加速收敛。"
+      }
+    ],
+    "thinkingQuestion": "教师强迫会导致训练和推理时的 exposure bias。Scheduled Sampling 是如何缓解的？",
+    "aiPrompt": "评估学生对 Seq2Seq、编码器-解码器的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "nlp-bpe-tokenizer-l2",
+    "stageId": 7,
+    "topicName": "自然语言处理",
+    "subtopicName": "分词与词性标注",
+    "levelIndex": 2,
+    "levelTitle": "BPE 分词器",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "分词与词性标注"
+    ],
+    "theoryContent": "实现 BPE 分词：统计相邻字符对频次，合并最频繁的对。",
+    "latexFormulas": [
+      "BPE: 统计合并最频繁对"
+    ],
+    "starterCode": "import numpy as np\ndef get_stats(vocab): pass\ndef bpe_tokenize(word, n): pass",
+    "solutionCode": "import re\ndef get_stats(vocab):\n  pairs={}\n  for word,tokens in vocab.items():\n    for i in range(len(tokens)-1):\n      pair=(tokens[i],tokens[i+1])\n      pairs[pair]=pairs.get(pair,0)+len(tokens)\n  return pairs\ndef merge_vocab(pair,vocab):\n  new={}\n  for word,tokens in vocab.items():\n    nt=[];i=0\n    while i<len(tokens):\n      if i<len(tokens)-1 and (tokens[i],tokens[i+1])==pair:\n        nt.append(tokens[i]+tokens[i+1]);i+=2\n      else:nt.append(tokens[i]);i+=1\n    new[word]=nt\n  return new\ndef bpe_tokenize(word,merges,n):\n  vocab={word:list(word)}\n  for _ in range(n):\n    p=get_stats(vocab)\n    if not p:break\n    best=max(p,key=p.get)\n    vocab=merge_vocab(best,vocab)\n  return vocab[word]",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "bpe merge",
+        "input": {
+          "word": "lowest",
+          "merges": {},
+          "n": 2
+        },
+        "expected": true
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "BPE 分词的优势？",
+        "options": [
+          "A. 处理未登录词拆分子词",
+          "B. 速度最快",
+          "C. 不需要训练",
+          "D. 词表最小"
+        ],
+        "answer": 0,
+        "explanation": "BPE 将词拆为子词，可组合出词表中没有的词。"
+      }
+    ],
+    "thinkingQuestion": "WordPiece 和 BPE 的区别？",
+    "aiPrompt": "评估学生对 BPE 的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "nlp-bm25-l2",
+    "stageId": 7,
+    "topicName": "自然语言处理",
+    "subtopicName": "TF-IDF特征",
+    "levelIndex": 2,
+    "levelTitle": "BM25 检索算法",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "TF-IDF特征"
+    ],
+    "theoryContent": "实现 BM25 排序算法，考虑词频饱和和文档长度归一化。",
+    "latexFormulas": [
+      "BM25 = IDF*(TF/(k1*(1-b+b*|D|/avgDL)+TF))"
+    ],
+    "starterCode": "import numpy as np\ndef bm25(query, docs, k1, b): pass",
+    "solutionCode": "import math\ndef bm25(query,docs,k1=1.5,b=0.75):\n  N=len(docs);avgDL=sum(len(d)for d in docs)/N\n  scores=[]\n  for i,doc in enumerate(docs):\n    score=0;dl=len(doc)\n    for q in query.split():\n      tf=doc.count(q)\n      df=sum(1 for d in docs if q in d)\n      idf=math.log((N-df+0.5)/(df+0.5)+1)\n      score+=idf*(tf*(k1+1))/(tf+k1*(1-b+b*dl/avgDL))\n    scores.append((i,round(score,4)))\n  return sorted(scores,key=lambda x:-x[1])",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "bm25 scores",
+        "input": {
+          "query": "hello",
+          "docs": [
+            "hello world",
+            "hello there",
+            "hi world"
+          ],
+          "k1": 1.5,
+          "b": 0.75
+        },
+        "expected": true
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "BM25 相比 TF-IDF 的改进？",
+        "options": [
+          "A. 词频饱和+长度归一化",
+          "B. 更快",
+          "C. 支持中文",
+          "D. 不需要 IDF"
+        ],
+        "answer": 0,
+        "explanation": "BM25 用 k1 控制词频饱和，b 控制文档长度归一化。"
+      }
+    ],
+    "thinkingQuestion": "k1 和 b 对排序结果的影响？",
+    "aiPrompt": "评估学生对 BM25 的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "nlp-skipgram-l2",
+    "stageId": 7,
+    "topicName": "自然语言处理",
+    "subtopicName": "Word2Vec词向量",
+    "levelIndex": 2,
+    "levelTitle": "Skip-Gram 训练器",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "Word2Vec词向量"
+    ],
+    "theoryContent": "实现 Skip-Gram：用中心词预测上下文词。",
+    "latexFormulas": [
+      "P(w_c|w_t) = softmax(v_c*u_t)"
+    ],
+    "starterCode": "import numpy as np\ndef skipgram_forward(center, W_in, W_out): pass",
+    "solutionCode": "import numpy as np\ndef softmax(z):\n  zs=z-np.max(z,axis=-1,keepdims=True);e=np.exp(zs)\n  return e/np.sum(e,axis=-1,keepdims=True)\ndef skipgram_forward(center,W_in,W_out):\n  h=W_in[center];scores=h@W_out.T\n  return softmax(scores)\ndef skipgram_loss(probs,target):\n  return -np.log(probs[target]+1e-10)",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "forward",
+        "input": {
+          "center": 0,
+          "vocabSize": 5,
+          "embSize": 3
+        },
+        "expected": true
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "Skip-Gram 和 CBOW 的区别？",
+        "options": [
+          "A. SG 用中心词预测上下文,CBOW 反之",
+          "B. 相同",
+          "C. SG 更快",
+          "D. CBOW 更准"
+        ],
+        "answer": 0,
+        "explanation": "Skip-Gram 从中心词预测上下文词。"
+      }
+    ],
+    "thinkingQuestion": "负采样相比 Softmax 的优势？",
+    "aiPrompt": "评估学生对 Word2Vec 的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "nlp-bert-pretrain-l2",
+    "stageId": 7,
+    "topicName": "自然语言处理",
+    "subtopicName": "BERT预训练模型",
+    "levelIndex": 2,
+    "levelTitle": "BERT MLM 实现",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "BERT预训练模型"
+    ],
+    "theoryContent": "实现 MLM 和 NSP 损失函数。",
+    "latexFormulas": [
+      "L = L_MLM + L_NSP"
+    ],
+    "starterCode": "import numpy as np\ndef mlm_loss(logits, target_ids, mask): pass\ndef nsp_loss(seq_logits, is_next): pass",
+    "solutionCode": "import numpy as np\ndef ce(logits,target):\n  s=logits-np.max(logits,axis=-1,keepdims=True)\n  p=np.exp(s)/np.sum(np.exp(s),axis=-1,keepdims=True)\n  return -np.log(p[range(len(target)),target]+1e-10)\ndef mlm_loss(logits,target_ids,mask):\n  mask=np.array(mask);logits=np.array(logits)\n  total=0;cnt=np.sum(mask)\n  for i in range(len(mask)):\n    if mask[i]:total+=ce(logits[i],[target_ids[i]])[0]\n  return round(float(total/cnt),4) if cnt else 0\ndef nsp_loss(seq_logits,is_next):\n  return round(float(np.mean(ce(seq_logits,is_next))),4)",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "mlm loss",
+        "input": {
+          "logits": [
+            [
+              0,
+              0
+            ],
+            [
+              0,
+              0
+            ]
+          ],
+          "target_ids": [
+            1,
+            1
+          ],
+          "mask": [
+            1,
+            0
+          ]
+        },
+        "expected": true
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "BERT 预训练的两个任务？",
+        "options": [
+          "A. MLM+NSP",
+          "B. CLM+NSP",
+          "C. MLM+CLM",
+          "D. BPE+NSP"
+        ],
+        "answer": 0,
+        "explanation": "MLM 掩码语言模型, NSP 下一句预测。"
+      }
+    ],
+    "thinkingQuestion": "RoBERTa 去掉 NSP 效果更好说明什么？",
+    "aiPrompt": "评估学生对 BERT 的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "nlp-gru-l2",
+    "stageId": 7,
+    "topicName": "自然语言处理",
+    "subtopicName": "LSTM/GRU序列建模",
+    "levelIndex": 2,
+    "levelTitle": "GRU 序列分类器",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "LSTM/GRU序列建模"
+    ],
+    "theoryContent": "实现 GRU 单元前向传播。GRU 有更新门和重置门。",
+    "latexFormulas": [
+      "z = sigmoid(W_z*x+U_z*h)",
+      "h_new = z*h + (1-z)*tanh(...)"
+    ],
+    "starterCode": "import numpy as np\ndef gru_cell(x, h, params): pass\ndef gru_forward(X, params): pass",
+    "solutionCode": "import numpy as np\nsig=lambda x:1/(1+np.exp(-np.clip(x,-100,100)))\ndef gru_cell(x,h,p):\n  z=sig(x@p.Wz+h@p.Uz+p.bz)\n  r=sig(x@p.Wr+h@p.Ur+p.br)\n  n=np.tanh(x@p.Wh+(r*h)@p.Uh+p.bh)\n  return (1-z)*n+z*h\ndef gru_forward(X,p):\n  import collections\n  if isinstance(p,dict):p=collections.namedtuple(\"P\",p.keys())(**p)\n  h=np.zeros(p.Wz.shape[1])\n  hs=[]\n  for x in X:\n    h=gru_cell(x,h,p);hs.append(h)\n  return hs",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "gru forward",
+        "input": {
+          "X": [
+            [
+              1,
+              0
+            ],
+            [
+              0,
+              1
+            ]
+          ],
+          "params": {
+            "Wz": [
+              [
+                0.1,
+                -0.1
+              ],
+              [
+                0.2,
+                -0.2
+              ]
+            ],
+            "Uz": [
+              [
+                0.1,
+                -0.1
+              ],
+              [
+                0.2,
+                -0.2
+              ]
+            ],
+            "bz": [
+              0,
+              0
+            ],
+            "Wr": [
+              [
+                0.1,
+                -0.1
+              ],
+              [
+                0.2,
+                -0.2
+              ]
+            ],
+            "Ur": [
+              [
+                0.1,
+                -0.1
+              ],
+              [
+                0.2,
+                -0.2
+              ]
+            ],
+            "br": [
+              0,
+              0
+            ],
+            "Wh": [
+              [
+                0.1,
+                -0.1
+              ],
+              [
+                0.2,
+                -0.2
+              ]
+            ],
+            "Uh": [
+              [
+                0.1,
+                -0.1
+              ],
+              [
+                0.2,
+                -0.2
+              ]
+            ],
+            "bh": [
+              0,
+              0
+            ]
+          }
+        },
+        "expected": true
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "GRU 比 LSTM 少了什么门？",
+        "options": [
+          "A. 输出门",
+          "B. 输入门",
+          "C. 遗忘门",
+          "D. 更新门"
+        ],
+        "answer": 0,
+        "explanation": "GRU 只有更新门和重置门，没有输出门。"
+      }
+    ],
+    "thinkingQuestion": "GRU 训练速度为什么通常比 LSTM 快？",
+    "aiPrompt": "评估学生对 GRU 的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "nlp-cross-attention-l2",
+    "stageId": 7,
+    "topicName": "自然语言处理",
+    "subtopicName": "Self-Attention自注意力",
+    "levelIndex": 2,
+    "levelTitle": "交叉注意力",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "Self-Attention自注意力"
+    ],
+    "theoryContent": "实现交叉注意力：Q 来自解码器，K/V 来自编码器。",
+    "latexFormulas": [
+      "CrossAttn = softmax(Q*K^T/sqrt(d))*V"
+    ],
+    "starterCode": "import numpy as np\ndef cross_attention(Q, K, V): pass",
+    "solutionCode": "import numpy as np\ndef softmax(x):\n  xm=x-np.max(x,axis=-1,keepdims=True);e=np.exp(xm);return e/np.sum(e,axis=-1,keepdims=True)\ndef cross_attention(Q,K,V):\n  d=Q.shape[-1];scores=Q@K.T/np.sqrt(d);w=softmax(scores);return w@V\ndef cross_attention_forward(Xd,Xe,Wq,Wk,Wv):\n  return cross_attention(Xd@Wq,Xe@Wk,Xe@Wv)",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "cross attn",
+        "input": {
+          "X_dec": [
+            [
+              0.2,
+              0.3
+            ],
+            [
+              0.1,
+              0.4
+            ]
+          ],
+          "X_enc": [
+            [
+              0.5,
+              0.1
+            ],
+            [
+              0.3,
+              0.6
+            ]
+          ],
+          "W_q": [
+            [
+              0.1,
+              -0.2
+            ],
+            [
+              0.3,
+              0.1
+            ]
+          ],
+          "W_k": [
+            [
+              -0.1,
+              0.2
+            ],
+            [
+              0.3,
+              -0.1
+            ]
+          ],
+          "W_v": [
+            [
+              0.2,
+              0.1
+            ],
+            [
+              -0.1,
+              0.2
+            ]
+          ]
+        },
+        "expected": true
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "交叉注意力和自注意力的区别？",
+        "options": [
+          "A. 交叉 Q/K 不同源,自注意力同源",
+          "B. 相同",
+          "C. 交叉更快",
+          "D. 自注意力不能跨序列"
+        ],
+        "answer": 0,
+        "explanation": "自注意力 Q/K/V 同源，交叉注意力 Q 来自解码器 K/V 来自编码器。"
+      }
+    ],
+    "thinkingQuestion": "Masked Self-Attention 为什么需要掩码？",
+    "aiPrompt": "评估学生对注意力机制的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "nlp-mha-l2",
+    "stageId": 7,
+    "topicName": "自然语言处理",
+    "subtopicName": "多头注意力机制",
+    "levelIndex": 2,
+    "levelTitle": "多头注意力",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "多头注意力机制"
+    ],
+    "theoryContent": "实现多头注意力，拼接各头的输出后投影。",
+    "latexFormulas": [
+      "head_i = Attn(QW_i^Q, KW_i^K, VW_i^V)"
+    ],
+    "starterCode": "import numpy as np\ndef multihead_attention(X, Wq, Wk, Wv, Wo, h): pass",
+    "solutionCode": "import numpy as np\ndef softmax(x):\n  xm=x-np.max(x,axis=-1,keepdims=True);e=np.exp(xm);return e/np.sum(e,axis=-1,keepdims=True)\ndef multihead_attention(X,Wq,Wk,Wv,Wo,h=2):\n  n,d=X.shape;dk=d//h;Q=X@Wq;K=X@Wk;V=X@Wv;heads=[]\n  for i in range(h):\n    qi=Q[:,i*dk:(i+1)*dk];ki=K[:,i*dk:(i+1)*dk];vi=V[:,i*dk:(i+1)*dk]\n    scores=qi@ki.T/np.sqrt(dk);w=softmax(scores);heads.append(w@vi)\n  return np.concatenate(heads,axis=1)@Wo\ndef get_weights(X,Wq,Wk,h=2):\n  n,d=X.shape;dk=d//h;Q=X@Wq;K=X@Wk;ws=[]\n  for i in range(h):\n    scores=Q[:,i*dk:(i+1)*dk]@K[:,i*dk:(i+1)*dk].T/np.sqrt(dk)\n    ws.append(softmax(scores))\n  return ws",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "mha",
+        "input": {
+          "X": [
+            [
+              1,
+              0,
+              0,
+              1
+            ],
+            [
+              0,
+              1,
+              1,
+              0
+            ]
+          ],
+          "Wq": [
+            [
+              1,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              1,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              1,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              1
+            ]
+          ],
+          "Wk": [
+            [
+              1,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              1,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              1,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              1
+            ]
+          ],
+          "Wv": [
+            [
+              1,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              1,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              1,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              1
+            ]
+          ],
+          "Wo": [
+            [
+              1,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              1,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              1,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              1
+            ]
+          ],
+          "h": 2
+        },
+        "expected": true
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "多头中不同头关注什么？",
+        "options": [
+          "A. 不同表示子空间",
+          "B. 相同",
+          "C. 只关注相邻",
+          "D. 平均"
+        ],
+        "answer": 0,
+        "explanation": "不同头关注不同的语义和句法关系。"
+      }
+    ],
+    "thinkingQuestion": "如何分析注意力头的行为？",
+    "aiPrompt": "评估学生对多头注意力的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "nlp-beam-search-l2",
+    "stageId": 7,
+    "topicName": "自然语言处理",
+    "subtopicName": "编码与解码器",
+    "levelIndex": 2,
+    "levelTitle": "Beam Search 解码",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "编码与解码器"
+    ],
+    "theoryContent": "实现 Beam Search 解码算法。",
+    "latexFormulas": [
+      "每步保留 top-K 个候选"
+    ],
+    "starterCode": "import numpy as np\ndef beam_search(init_logits, decoder, beam, max_len, end_id): pass",
+    "solutionCode": "import numpy as np\ndef beam_search(init_logits,decoder,beam=3,max_len=10,end=2):\n  probs=np.exp(init_logits-np.max(init_logits))\n  probs/=np.sum(probs)\n  cand=[(np.log(probs[i]),[i]) for i in range(len(probs))]\n  cand.sort(key=lambda x:-x[0]);cand=cand[:beam]\n  for _ in range(max_len):\n    nw=[]\n    for sc,seq in cand:\n      if seq[-1]==end:nw.append((sc,seq));continue\n      logits=decoder(seq)\n      probs=np.exp(logits-np.max(logits));probs/=np.sum(probs)\n      for i in range(min(beam,len(probs))):\n        nw.append((sc+np.log(probs[i]),seq+[i]))\n    nw.sort(key=lambda x:-x[0]);cand=nw[:beam]\n  return cand[0][1]",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "beam",
+        "input": {
+          "initLogits": [
+            0,
+            0,
+            0
+          ],
+          "beamSize": 3,
+          "maxLen": 5,
+          "endId": 2
+        },
+        "expected": true
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "Beam Size 对生成质量的影响？",
+        "options": [
+          "A. 越大质量可能越高但计算量大",
+          "B. 越小越好",
+          "C. 不影响",
+          "D. 越大越差"
+        ],
+        "answer": 0,
+        "explanation": "Beam Size 增大搜索更多路径但计算量线性增长。"
+      }
+    ],
+    "thinkingQuestion": "Beam Search 和 Greedy Decoding 的区别？",
+    "aiPrompt": "评估学生对解码策略的理解。按 0-10 分打分。",
+    "status": "published"
+  }
+]

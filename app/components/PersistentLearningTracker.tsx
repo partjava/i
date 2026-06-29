@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { useSession } from 'next-auth/react';
+import { useAuth } from '@/app/hooks/useAuth';
 import { usePathname } from 'next/navigation';
 
 interface LearningSession {
@@ -13,7 +13,7 @@ interface LearningSession {
 }
 
 export default function PersistentLearningTracker() {
-  const { data: session } = useSession();
+  const { data: session } = useAuth();
   const pathname = usePathname();
   const isActiveRef = useRef<boolean>(true);
   const [sessionData, setSessionData] = useState<LearningSession | null>(null);

@@ -1,6 +1,6 @@
 'use client';
 
-import { useSession } from 'next-auth/react';
+import { useAuth } from '@/app/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import CodeEditor from '@/app/components/CodeEditor';
@@ -10,7 +10,7 @@ import { CodeOutlined, PlayCircleOutlined, SaveOutlined } from '@ant-design/icon
 const { Title, Paragraph } = Typography;
 
 export default function CodeEditorPage() {
-  const { data: session, status } = useSession();
+  const { data: session, status } = useAuth();
   const router = useRouter();
 
   useEffect(() => {

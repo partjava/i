@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { useSession } from 'next-auth/react';
+import { useAuth } from '@/app/hooks/useAuth';
 import { Input, Dropdown, Card, Tag, Spin, Empty, Button, message } from 'antd';
 import { 
   SearchOutlined, 
@@ -69,7 +69,7 @@ export default function GlobalSearch({
   const [searchHistory, setSearchHistory] = useState<SearchHistoryItem[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
   
-  const { data: session } = useSession();
+  const { data: session } = useAuth();
   const router = useRouter();
   const searchRef = useRef<any>(null);
   const debounceRef = useRef<NodeJS.Timeout>();

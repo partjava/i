@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useSession } from 'next-auth/react';
+import { useAuth } from '@/app/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import MarkdownEditor from '@/app/components/MarkdownEditor';
@@ -40,7 +40,7 @@ interface Pagination {
 }
 
 export default function NotesPage() {
-  const { data: session, status } = useSession();
+  const { data: session, status } = useAuth();
   const router = useRouter();
 
   // 初始化时直接从缓存读数据，避免白屏

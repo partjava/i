@@ -2,6 +2,7 @@ import './globals.css'
 import type { Metadata, Viewport } from 'next'
 import RootLayoutClient from './components/RootLayoutClient'
 import 'antd/dist/reset.css'
+import 'katex/dist/katex.min.css'
 
 export const metadata: Metadata = {
   title: 'PartJava - 编程学习与开发工具导航平台',

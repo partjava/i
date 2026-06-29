@@ -1,19 +1,13 @@
-'use client'
+'use client';
 
-import { SessionProvider } from 'next-auth/react'
-
+/**
+ * SessionProvider.tsx
+ * 已从 NextAuth SessionProvider 迁移为 JWT 认证，此组件保留为空壳以避免修改 import。
+ */
 export default function NextAuthSessionProvider({
   children,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
-  return (
-    <SessionProvider 
-      refetchInterval={0} // 禁用自动刷新，手动控制
-      refetchOnWindowFocus={true} // 窗口获得焦点时刷新
-      refetchWhenOffline={false} // 离线时不刷新
-    >
-      {children}
-    </SessionProvider>
-  )
-} 
+  return <>{children}</>;
+}

@@ -2,6 +2,9 @@
 
 本指南详细梳理了当前 [i](file:///home/liming/partjava/i) 目录下需要迁移到 [partjava-backend](file:///home/liming/partjava/partjava-backend) 的所有核心模块、文件映射以及具体的代码转换逻辑。
 
+> [!IMPORTANT]
+> **在你（用户）说觉得没问题并且测试验证通过之前，绝对不要删除或修改原有的 Next.js BFF 接口代码或老代码**。我们应当保持新旧后端代码“双轨并行”的开发和测试方式，确保原平台能够正常平稳运行。
+
 ---
 
 ## 1. 核心模块迁移概览

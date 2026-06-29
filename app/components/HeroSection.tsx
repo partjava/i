@@ -46,13 +46,17 @@ export default function HeroSection() {
             </div>
           </div>
 
-          {/* 主标题 - 水墨黑金 */}
-          <h1 className="text-5xl md:text-7xl font-bold mb-6 tracking-wide">
-            <span className="text-gray-800">
-              Part
-              <span className="text-red-700">Java</span>
-            </span>
-          </h1>
+          {/* 主标题 - 飞逸水墨毛笔字 (使用原生透明无损 PNG 实现完美水墨渲染) */}
+          <div className="flex justify-center mb-4">
+            {mounted && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img 
+                src="/images/logo-calligraphy-transparent.png" 
+                alt="PartJava" 
+                className="w-[400px] md:w-[660px] h-auto pointer-events-none select-none animate-[fadeIn_1.2s_ease-out]"
+              />
+            )}
+          </div>
 
           {/* 动态打字效果 */}
           <div className="text-2xl md:text-4xl font-semibold text-gray-600 mb-8 h-20">

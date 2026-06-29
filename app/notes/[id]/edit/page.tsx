@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { useSession } from 'next-auth/react';
+import { useAuth } from '@/app/hooks/useAuth';
 import { useRouter, useParams } from 'next/navigation';
 import MarkdownEditor from '@/app/components/MarkdownEditor';
 
@@ -16,7 +16,7 @@ interface Note {
 }
 
 export default function EditNotePage() {
-  const { data: session, status } = useSession();
+  const { data: session, status } = useAuth();
   const router = useRouter();
   const params = useParams();
   const [note, setNote] = useState<Note | null>(null);

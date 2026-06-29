@@ -1,0 +1,584 @@
+[
+  {
+    "slug": "project-ai-customer-service",
+    "stageId": 11,
+    "topicName": "项目实战",
+    "subtopicName": "AI客服代理",
+    "levelIndex": 1,
+    "levelTitle": "AI 客服工单分类器",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "project",
+      "ai",
+      "customer-service",
+      "classification"
+    ],
+    "theoryContent": "### 编程挑战：AI 客服工单分类器\n\n智能客服系统需要自动理解用户问题并分类。实现一个精简版客服代理的语义理解和路由逻辑。\n\n实现：\n- `classify_intent(text, categories)`: 基于关键词匹配的意图分类\n- `extract_entities(text)`: 提取关键实体（订单号、产品名等）\n- `route_to_department(intent, departments)`: 路由到对应部门\n- `generate_response(intent, entities, templates)`: 生成回复\n- `escalate_to_human(ticket, rules)`: 判断是否需转人工",
+    "latexFormulas": [
+      "Intent = argmax_cat sim(text, cat_examples)",
+      "转人工规则: sentiment < threshold or 3+ failed attempts"
+    ],
+    "starterCode": "import re\ndef classify_intent(text, categories): pass\ndef extract_entities(text): pass\ndef generate_response(intent, entities, templates): pass",
+    "solutionCode": "import re\ndef classify_intent(text, categories):\n    text_lower = text.lower()\n    best_cat = None; best_score = 0\n    for cat, keywords in categories.items():\n        score = sum(1 for kw in keywords if kw.lower() in text_lower)\n        if score > best_score:\n            best_score = score; best_cat = cat\n    return {'intent': best_cat, 'confidence': round(best_score / max(best_score,1), 2)}\ndef extract_entities(text):\n    order_pattern = r'[A-Z]{2}\\d{8}'\n    orders = re.findall(order_pattern, text)\n    product_pattern = r'(手机|电脑|耳机|鼠标|键盘|充电器)'\n    products = re.findall(product_pattern, text)\n    return {'order_ids': orders, 'products': products}\ndef generate_response(intent, entities, templates):\n    template = templates.get(intent, '感谢您的咨询，我们已收到您的请求。')\n    return template.format(**entities)",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "classify returns intent",
+        "input": {
+          "text": "我的手机订单ABC12345678一直没到货",
+          "categories": {
+            "退货": [
+              "退货",
+              "退款"
+            ],
+            "物流查询": [
+              "物流",
+              "到货",
+              "快递",
+              "发货"
+            ],
+            "投诉": [
+              "投诉",
+              "差评",
+              "不满"
+            ]
+          }
+        },
+        "expected": {
+          "intent": "物流查询",
+          "confidence": 1
+        }
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "AI 客服中意图识别和实体提取的关系是什么？",
+        "options": [
+          "A. 意图确定做什么，实体确定具体对象",
+          "B. 两者完全相同",
+          "C. 实体提取先于意图识别",
+          "D. 不需要意图识别"
+        ],
+        "answer": 0,
+        "explanation": "意图分类决定用户想要什么操作，实体提取找出操作涉及的参数（订单号、产品等）。"
+      }
+    ],
+    "thinkingQuestion": "如果客户情绪明显激动（负面词汇多），系统应该如何处理？转人工的决策逻辑怎么设计？",
+    "aiPrompt": "评估学生对意图识别、实体提取、客服系统的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "project-code-assistant",
+    "stageId": 11,
+    "topicName": "项目实战",
+    "subtopicName": "自动编程助手",
+    "levelIndex": 1,
+    "levelTitle": "AI 代码助手补全器",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "project",
+      "code-assistant",
+      "completion",
+      "suggestion"
+    ],
+    "theoryContent": "### 编程挑战：AI 代码助手补全器\n\nAI 编程助手根据上下文提供代码补全和建议。实现一个简化版的代码分析引擎。\n\n实现：\n- `extract_context(code, position)`: 提取光标处上下文（缩进、前一行等）\n- `suggest_completions(context, snippet_library)`: 基于模板的补全\n- `format_snippet(snippet, indent)`: 格式化补全片段\n- `calculate_relevance(context, snippet)`: 计算补全相关性分数",
+    "latexFormulas": [
+      "P(next_tokens | context) = max over snippet_library sim(context, snippet)"
+    ],
+    "starterCode": "def extract_context(code, pos): pass\ndef suggest_completions(context, snippets): pass\ndef calculate_relevance(context, snippet): pass",
+    "solutionCode": "def extract_context(code, pos):\n    lines = code.split('\\n')\n    line_idx = code[:pos].count('\\n')\n    cur_line = lines[line_idx] if line_idx < len(lines) else ''\n    indent = len(cur_line) - len(cur_line.lstrip())\n    prev_line = lines[line_idx-1] if line_idx > 0 else ''\n    return {'line': cur_line, 'indent': indent, 'prev_line': prev_line, 'line_idx': line_idx}\ndef suggest_completions(context, snippets):\n    scored = []\n    for s in snippets:\n        score = calculate_relevance(context, s)\n        if score > 0:\n            scored.append((score, s))\n    scored.sort(key=lambda x:-x[0])\n    return [s for _, s in scored[:5]]\ndef calculate_relevance(context, snippet):\n    score = 0\n    for kw in snippet.get('keywords', []):\n        if kw.lower() in context['line'].lower():\n            score += 1\n    return score",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "basic completion",
+        "input": {
+          "code": "def hello()\n    pri",
+          "pos": 20,
+          "snippets": [
+            {
+              "keywords": [
+                "print"
+              ],
+              "code": "print()"
+            },
+            {
+              "keywords": [
+                "return"
+              ],
+              "code": "return None"
+            },
+            {
+              "keywords": [
+                "import"
+              ],
+              "code": "import os"
+            }
+          ]
+        },
+        "expected": true
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "AI 编程助手在什么场景下最容易出错？",
+        "options": [
+          "A. 需要理解业务逻辑上下文的复杂重构",
+          "B. 简单循环",
+          "C. 字符串操作",
+          "D. 变量命名"
+        ],
+        "answer": 0,
+        "explanation": "AI 编程助手擅长局部模式匹配，但对跨文件的业务逻辑理解有限，复杂重构可能产生不合理代码。"
+      }
+    ],
+    "thinkingQuestion": "AI 编程助手可能生成不安全的代码（如 SQL 注入、命令注入）。你会如何设计安全检查机制？",
+    "aiPrompt": "评估学生对代码补全、上下文分析、AI 编程助手的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "project-multi-agent",
+    "stageId": 11,
+    "topicName": "项目实战",
+    "subtopicName": "多Agent协同工作流",
+    "levelIndex": 1,
+    "levelTitle": "多 Agent 会议安排系统",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "project",
+      "multi-agent",
+      "workflow",
+      "coordination"
+    ],
+    "theoryContent": "### 编程挑战：多 Agent 会议安排系统\n\n多 Agent 系统中不同 Agent 负责不同职能，需要协作完成任务。本题实现会议安排的多 Agent 协作流程。\n\n实现：\n- `SchedulerAgent(participants, calendar)`: 调度代理，查空闲时间\n- `NotifierAgent(participants, message)`: 通知代理，发送邀请\n- `ConflictResolverAgent(schedules)`: 冲突解决代理\n- `MeetingOrchestrator(agents)`: 编排多个 Agent 协作",
+    "latexFormulas": [
+      "FinalSchedule = Resolver(Notify(Scheduler(participants)))"
+    ],
+    "starterCode": "class SchedulerAgent:\n    def __init__(self, calendar): pass\n    def find_slots(self, participants, duration): pass\nclass NotifierAgent:\n    def notify(self, participants, meeting): pass\nclass MeetingOrchestrator:\n    def __init__(self, scheduler, notifier, resolver): pass\n    def arrange_meeting(self, request): pass",
+    "solutionCode": "class SchedulerAgent:\n    def __init__(self, calendar):\n        self.calendar = calendar\n    def find_slots(self, participants, duration):\n        busy = set(self.calendar.get('busy', []))\n        all_slots = ['09:00','10:00','11:00','14:00','15:00','16:00']\n        free = [s for s in all_slots if s not in busy]\n        return free[:3] if free else []\nclass NotifierAgent:\n    def notify(self, participants, meeting):\n        return {'sent': len(participants), 'meeting': meeting, 'status': 'invited'}\nclass ConflictResolverAgent:\n    def resolve(self, schedules):\n        if not schedules: return None\n        counts = {}\n        for s in schedules:\n            for t in s:\n                counts[t] = counts.get(t,0)+1\n        best = max(counts, key=counts.get)\n        return best\nclass MeetingOrchestrator:\n    def __init__(self, scheduler, notifier, resolver):\n        self.scheduler = scheduler; self.notifier = notifier; self.resolver = resolver\n    def arrange_meeting(self, request):\n        slots = self.scheduler.find_slots(request['participants'], request['duration'])\n        if not slots: return {'status': 'failed', 'reason': 'no available slot'}\n        chosen = self.resolver.resolve([slots])\n        result = self.notifier.notify(request['participants'], {'time': chosen, 'date': request['date']})\n        return {'status': 'success', 'meeting': result['meeting'], 'notified': result['sent']}",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "orchestrator arranges meeting",
+        "input": {
+          "request": {
+            "participants": [
+              "A",
+              "B"
+            ],
+            "duration": "1h",
+            "date": "2025-01-15"
+          }
+        },
+        "expected": {
+          "status": "success"
+        }
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "多 Agent 协作相比单 Agent 的优势是什么？",
+        "options": [
+          "A. 职责分离，可扩展，容错性强",
+          "B. 更复杂",
+          "C. 需要更多资源",
+          "D. 速度更慢"
+        ],
+        "answer": 0,
+        "explanation": "多 Agent 系统将不同职责分离到独立 Agent，便于扩展、测试和维护。"
+      }
+    ],
+    "thinkingQuestion": "Agent 之间通信可能失败（消息丢失、超时）。你会如何设计 Agent 通信的可靠性机制？",
+    "aiPrompt": "评估学生对多 Agent 系统、协作编排、职责分离的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "project-gradio-demo",
+    "stageId": 11,
+    "topicName": "项目实战",
+    "subtopicName": "Gradio模型演示",
+    "levelIndex": 1,
+    "levelTitle": "Gradio 演示界面构建器",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "project",
+      "gradio",
+      "demo",
+      "ui"
+    ],
+    "theoryContent": "### 编程挑战：Gradio 演示界面构建器\n\nGradio 快速构建 ML 模型演示界面。本题模拟 Gradio 界面组件的布局和交互逻辑。\n\n实现：\n- `build_interface(inputs, outputs, fn, title)`: 构建界面\n- `process_with_status(fn, inputs)`: 带状态处理的模型调用\n- `create_tab_group(tabs)`: 多标签界面\n- `queue_request(fn, inputs, queue_size)`: 请求排队",
+    "latexFormulas": [
+      "Interface = Gradio(inputs, outputs, fn, title) -> Web UI"
+    ],
+    "starterCode": "import json, time\ndef build_interface(inputs, outputs, fn, title): pass\ndef create_tab_group(tabs): pass\ndef queue_request(fn, inputs, queue_size): pass",
+    "solutionCode": "import json, time\ndef build_interface(inputs, outputs, fn, title):\n    return {'title': title, 'num_inputs': len(inputs), 'num_outputs': len(outputs), 'fn_name': fn.__name__ if hasattr(fn,'__name__') else 'callable', 'status': 'ready'}\ndef create_tab_group(tabs):\n    return {'type': 'tabs', 'tabs': [{'name': t['name'], 'num_components': len(t.get('components',[]))} for t in tabs], 'active': tabs[0]['name'] if tabs else None}\ndef queue_request(fn, inputs, queue_size=5):\n    queue = list(range(queue_size))\n    results = []\n    for i in queue:\n        result = fn(*inputs) if callable(fn) else f'processed_{i}'\n        results.append(result)\n    return {'processed': len(results), 'status': 'completed'}",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "build interface",
+        "input": {
+          "inputs": [
+            "text",
+            "image"
+          ],
+          "outputs": [
+            "label"
+          ],
+          "fn": "classify",
+          "title": "Image Classifier"
+        },
+        "expected": {
+          "title": "Image Classifier",
+          "num_inputs": 2,
+          "num_outputs": 1,
+          "status": "ready"
+        }
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "Gradio 和 Streamlit 的主要区别？",
+        "options": [
+          "A. Gradio 专注于 ML 演示，Streamlit 更通用",
+          "B. Streamlit 不能展示模型",
+          "C. Gradio 不支持表格",
+          "D. 两者完全相同"
+        ],
+        "answer": 0,
+        "explanation": "Gradio 专为 ML 模型交互设计，内置输入/输出组件；Streamlit 是通用数据应用框架。"
+      }
+    ],
+    "thinkingQuestion": "如果多个用户同时访问 Gradio 演示，你会如何管理推理请求队列和 GPU 显存分配？",
+    "aiPrompt": "评估学生对 Gradio、模型演示、交互界面的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "project-streamlit-dashboard",
+    "stageId": 11,
+    "topicName": "项目实战",
+    "subtopicName": "Streamlit数据看板",
+    "levelIndex": 1,
+    "levelTitle": "Streamlit 数据监控看板",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "project",
+      "streamlit",
+      "dashboard",
+      "visualization"
+    ],
+    "theoryContent": "### 编程挑战：Streamlit 数据监控看板\n\nStreamlit 可快速构建数据驱动应用。本题模拟构建一个 ML 模型监控看板的数据处理和展示逻辑。\n\n实现：\n- `compute_metrics(predictions, labels)`: 计算准确率、精确率、召回率、F1\n- `detect_drift(reference_data, current_data, threshold)`: 检测数据漂移\n- `build_confusion_matrix(y_true, y_pred, labels)`: 混淆矩阵\n- `generate_report(metrics, drift, threshold)`: 生成监控报告",
+    "latexFormulas": [
+      "F1 = 2 * precision * recall / (precision + recall)",
+      "PSI = sum((p_i - q_i) * ln(p_i / q_i))"
+    ],
+    "starterCode": "import numpy as np\ndef compute_metrics(y_true, y_pred): pass\ndef build_confusion_matrix(y_true, y_pred, labels): pass\ndef detect_drift(reference, current, threshold): pass",
+    "solutionCode": "import numpy as np\ndef compute_metrics(y_true, y_pred):\n    y_true, y_pred = np.array(y_true), np.array(y_pred)\n    tp = np.sum((y_true==1)&(y_pred==1))\n    fp = np.sum((y_true==0)&(y_pred==1))\n    fn = np.sum((y_true==1)&(y_pred==0))\n    acc = np.mean(y_true==y_pred)\n    prec = tp/(tp+fp) if (tp+fp)>0 else 0\n    rec = tp/(tp+fn) if (tp+fn)>0 else 0\n    f1 = 2*prec*rec/(prec+rec) if (prec+rec)>0 else 0\n    return {'accuracy': round(float(acc),4), 'precision': round(float(prec),4), 'recall': round(float(rec),4), 'f1': round(float(f1),4)}\ndef build_confusion_matrix(y_true, y_pred, labels):\n    y_true, y_pred = np.array(y_true), np.array(y_pred)\n    n = len(labels)\n    mat = np.zeros((n,n), dtype=int)\n    for t,p in zip(y_true,y_pred):\n        mat[t][p] += 1\n    return {'labels': labels, 'matrix': mat.tolist()}\ndef detect_drift(reference, current, threshold=0.1):\n    ref_mean = np.mean(reference); cur_mean = np.mean(current)\n    diff = abs(ref_mean - cur_mean) / (abs(ref_mean)+1e-10)\n    return {'drift_detected': diff > threshold, 'diff': round(float(diff),4), 'threshold': threshold}",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "compute metrics",
+        "input": {
+          "yTrue": [
+            1,
+            0,
+            1,
+            1,
+            0,
+            1,
+            0,
+            0,
+            1,
+            0
+          ],
+          "yPred": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            1,
+            0,
+            1,
+            1,
+            0
+          ]
+        },
+        "expected": true
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "模型监控中概念漂移（Concept Drift）和数据漂移（Data Drift）的区别？",
+        "options": [
+          "A. 概念漂移指 P(Y|X) 变化，数据漂移指 P(X) 变化",
+          "B. 两者相同",
+          "C. 数据漂移更严重",
+          "D. 概念漂移不影响模型"
+        ],
+        "answer": 0,
+        "explanation": "数据漂移是输入分布 P(X) 变化，概念漂移是输入输出关系 P(Y|X) 变化。"
+      }
+    ],
+    "thinkingQuestion": "模型上线后准确率下降的可能原因有哪些？（数据漂移、特征失效、环境变化）你会如何设计告警策略？",
+    "aiPrompt": "评估学生对模型监控、评估指标、漂移检测的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "proj-sentiment-analyzer-l2",
+    "stageId": 11,
+    "topicName": "项目实战",
+    "subtopicName": "AI客服代理",
+    "levelIndex": 2,
+    "levelTitle": "情感分析管道",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "AI客服代理"
+    ],
+    "theoryContent": "实现客服消息的情感分析管道：预处理 -> 特征提取 -> 分类 -> 路由。",
+    "latexFormulas": [
+      "Sentiment = Classify(Features(Text))"
+    ],
+    "starterCode": "def preprocess(text): pass\ndef extract_features(text): pass\ndef classify_sentiment(features): pass\ndef route_by_sentiment(sentiment): pass",
+    "solutionCode": "import re\ndef preprocess(text):\n    text=text.lower()\n    text=re.sub(r\"[^a-z0-9\\s]\",\"\",text)\n    return text\ndef extract_features(text):\n    words=text.split()\n    pos_words=[\"good\",\"great\",\"excellent\",\"happy\",\"love\",\"thank\"]\n    neg_words=[\"bad\",\"terrible\",\"angry\",\"slow\",\"broken\",\"hate\"]\n    pos=sum(1 for w in words if w in pos_words)\n    neg=sum(1 for w in words if w in neg_words)\n    return {\"pos_count\":pos,\"neg_count\":neg,\"total\":len(words)}\ndef classify_sentiment(features):\n    ratio=features[\"pos_count\"]/(features[\"neg_count\"]+1)\n    if ratio>=3:return \"positive\"\n    if ratio>=0.5:return \"neutral\"\n    return \"negative\"\ndef route_by_sentiment(sent):\n    routes={\"positive\":\"auto_reply\",\"neutral\":\"general_queue\",\"negative\":\"priority_agent\"}\n    return routes.get(sent,\"general_queue\")",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "negative route",
+        "input": {
+          "text": "The product is broken and I am very angry"
+        },
+        "expected": "priority_agent"
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "情感分析在客服系统中的价值？",
+        "options": [
+          "A. 优先处理负面情绪用户",
+          "B. 节省成本",
+          "C. 增加用户",
+          "D. 提高速度"
+        ],
+        "answer": 0,
+        "explanation": "情感分析识别负面情绪用户，自动升级到优先处理队列。"
+      }
+    ],
+    "thinkingQuestion": "基于规则的情感分析 vs 基于 ML 的情感分析各有什么优劣？",
+    "aiPrompt": "评估学生对情感分析、客服系统的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "proj-code-reviewer-l2",
+    "stageId": 11,
+    "topicName": "项目实战",
+    "subtopicName": "自动编程助手",
+    "levelIndex": 2,
+    "levelTitle": "代码审查工具",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "自动编程助手"
+    ],
+    "theoryContent": "实现自动化代码审查：检查代码风格、检测潜在 bug、计算圈复杂度。",
+    "latexFormulas": [
+      "CC = E - N + 2P (Cyclomatic Complexity)"
+    ],
+    "starterCode": "def check_style(code): pass\ndef detect_bugs(code): pass\ndef cyclomatic_complexity(code): pass",
+    "solutionCode": "import re\ndef check_style(code):\n  issues=[]\n  for i,line in enumerate(code.split(\"\\n\"),1):\n    if len(line)>80:issues.append(\"Line \"+str(i)+\": too long (\"+str(len(line))+\" chars)\")\n    if \"  \" in line.rstrip():issues.append(\"Line \"+str(i)+\": double spaces\")\n    if line.endswith(\" \"):issues.append(\"Line \"+str(i)+\": trailing space\")\n  return issues\ndef detect_bugs(code):\n  bugs=[]\n  if \"==\" in code:\n    bugs.append(\"Use is instead of ==\");\n  return bugs\ndef cyclomatic_complexity(code):\n  return code.count(\"if\")+code.count(\"for\")+code.count(\"while\")+1",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "review",
+        "input": {
+          "code": "x==True\\n try:\\n  pass\\nexcept:\\n  pass"
+        },
+        "expected": true
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "圈复杂度高的代码通常意味着什么？",
+        "options": [
+          "A. 可测试性差，容易有 bug",
+          "B. 运行更快",
+          "C. 更易读",
+          "D. 更短"
+        ],
+        "answer": 0,
+        "explanation": "圈复杂度高的代码分支多、路径复杂，难以充分测试且容易隐藏 bug。"
+      }
+    ],
+    "thinkingQuestion": "AI 代码审查和人工代码审查如何互补？AI 擅长什么、不擅长什么？",
+    "aiPrompt": "评估学生对代码审查、圈复杂度的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "proj-task-decomposer-l2",
+    "stageId": 11,
+    "topicName": "项目实战",
+    "subtopicName": "多Agent协同工作流",
+    "levelIndex": 2,
+    "levelTitle": "任务分解与分配",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "多Agent协同工作流"
+    ],
+    "theoryContent": "实现多 Agent 协作的任务分解器：将复杂任务分解为子任务，分派给不同 Agent。",
+    "latexFormulas": [
+      "Task = subTask_1 + subTask_2 + ... + subTask_n"
+    ],
+    "starterCode": "def decompose_task(task, agent_capabilities): pass\ndef assign_subtasks(subtasks, agents): pass",
+    "solutionCode": "def decompose_task(task,capabilities):\n    steps=[]\n    if \"data\" in task.lower():steps.append(\"fetch_data\")\n    if \"analy\" in task.lower():steps.append(\"analyze\")\n    if \"report\" in task.lower() or \"summar\" in task.lower():steps.append(\"generate_report\")\n    if \"plot\" in task.lower() or \"chart\" in task.lower():steps.append(\"visualize\")\n    if not steps:steps.append(\"process\")\n    return steps\ndef assign_subtasks(subtasks,agents):\n    assignment={}\n    for st in subtasks:\n        best=None;best_score=-1\n        for a_name,skills in agents.items():\n            if st in skills[\"can_do\"] and skills[\"workload\"]>best_score:\n                best=a_name;best_score=skills[\"workload\"]\n        if best:\n            assignment[st]=best\n            agents[best][\"workload\"]-=1\n        else:assignment[st]=\"unassigned\"\n    return assignment",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "decompose",
+        "input": {
+          "task": "Analyze sales data and generate a report",
+          "capabilities": [
+            "data",
+            "analy",
+            "report"
+          ]
+        },
+        "expected": [
+          "fetch_data",
+          "analyze",
+          "generate_report"
+        ]
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "任务分解在多 Agent 系统中的重要性？",
+        "options": [
+          "A. 将复杂问题拆解为独立可执行的子任务",
+          "B. 减少通信",
+          "C. 加快速度",
+          "D. 简化 Agent"
+        ],
+        "answer": 0,
+        "explanation": "任务分解将复杂任务拆为子任务，每个 Agent 专注自己的职责。"
+      }
+    ],
+    "thinkingQuestion": "如果某个 Agent 执行子任务失败，整个工作流应如何处理？",
+    "aiPrompt": "评估学生对多 Agent 协作、任务分解的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "proj-interactive-dashboard-l2",
+    "stageId": 11,
+    "topicName": "项目实战",
+    "subtopicName": "Gradio模型演示",
+    "levelIndex": 2,
+    "levelTitle": "交互式模型演示",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "Gradio模型演示"
+    ],
+    "theoryContent": "构建交互式 ML 模型演示：支持多输入、参数调整和实时可视化。",
+    "latexFormulas": [
+      "Interface = Gradio(inputs, outputs, fn, live=True)"
+    ],
+    "starterCode": "def build_demo(model, input_schema): pass\ndef update_plot(params, model): pass\ndef process_feedback(user_input, model_output): pass",
+    "solutionCode": "import json\ndef build_demo(model,input_schema):\n    return {\"model\":model,\"inputs\":input_schema,\"outputs\":[\"prediction\",\"confidence\"],\"live\":True}\ndef update_plot(params,model):\n    import math\n    pred=sum(v*k for v,k in zip(params,model))if params else 0\n    return {\"prediction\":round(pred,3),\"confidence\":round(1/(1+math.exp(-pred)),3)}\ndef process_feedback(ui,mo):\n    return {\"user_input\":ui,\"model_output\":mo,\"logged\":True}",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "demo",
+        "input": {
+          "model": [
+            0.5,
+            -0.3,
+            0.8
+          ],
+          "inputSchema": [
+            "feature1",
+            "feature2",
+            "feature3"
+          ]
+        },
+        "expected": true
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "Gradio 的 live 模式有什么优势？",
+        "options": [
+          "A. 实时更新结果，更好的交互体验",
+          "B. 更快推理",
+          "C. 更省资源",
+          "D. 更安全"
+        ],
+        "answer": 0,
+        "explanation": "Live 模式下用户调整参数立即看到结果变化，交互体验更流畅。"
+      }
+    ],
+    "thinkingQuestion": "Gradio 的 Queue 机制如何管理多个用户的并发请求？",
+    "aiPrompt": "评估学生对 Gradio、模型演示的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "proj-ml-pipeline-l2",
+    "stageId": 11,
+    "topicName": "项目实战",
+    "subtopicName": "Streamlit数据看板",
+    "levelIndex": 2,
+    "levelTitle": "ML 训练监控看板",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "Streamlit数据看板"
+    ],
+    "theoryContent": "实现 ML 训练的实时监控看板：损失曲线、学习率、验证指标。",
+    "latexFormulas": [
+      "Dashboard = Streamlit(metrics + plots + logs)"
+    ],
+    "starterCode": "def compute_metrics(y_true, y_pred): pass\ndef detect_overfitting(train_loss, val_loss, threshold): pass\ndef build_report(history): pass",
+    "solutionCode": "import math\ndef compute_metrics(y_true,y_pred):\n    n=len(y_true);errors=[t-p for t,p in zip(y_true,y_pred)]\n    mse=sum(e*e for e in errors)/n\n    return {\"mse\":round(mse,4),\"rmse\":round(math.sqrt(mse),4),\"mae\":round(sum(abs(e)for e in errors)/n,4)}\ndef detect_overfitting(train_loss,val_loss,th=0.15):\n    gap=val_loss-train_loss\n    return {\"overfitting\":gap>th,\"gap\":round(gap,4),\"recommendation\":\"add regularization or early stop\"if gap>th else \"ok\"}\ndef build_report(history):\n    latest={k:v[-1] for k,v in history.items()}\n    return {\"latest_metrics\":latest,\"total_epochs\":len(history.get(\"train_loss\",[])),\"trend\":\"improving\"if history.get(\"val_acc\",[0])[-1]>0.8 else \"needs_tuning\"}",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "metrics",
+        "input": {
+          "y_true": [
+            1,
+            0,
+            1,
+            1
+          ],
+          "y_pred": [
+            0.9,
+            0.1,
+            0.8,
+            0.7
+          ]
+        },
+        "expected": true
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "训练监控看板中验证损失突然上升说明什么？",
+        "options": [
+          "A. 可能过拟合",
+          "B. 训练数据不够",
+          "C. 学习率太小",
+          "D. 正常现象"
+        ],
+        "answer": 0,
+        "explanation": "验证损失在训练后期上升而训练损失持续下降，是典型的过拟合信号。"
+      }
+    ],
+    "thinkingQuestion": "MLOps 中训练监控和部署监控有什么不同？分别需要关注哪些指标？",
+    "aiPrompt": "评估学生对训练监控、MLOps 的理解。按 0-10 分打分。",
+    "status": "published"
+  }
+]
