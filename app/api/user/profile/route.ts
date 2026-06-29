@@ -19,9 +19,9 @@ export async function GET(request: NextRequest) {
     try {
       const { executeQuery } = await import('@/app/lib/database');
       
-      // 先从users表获取基础信息（包括头像）
+      // 先从users表获取基础信息（包括头像、用户名和角色）
       const userResult = await executeQuery(
-        `SELECT id, name, email, image, bio, location, github, website FROM users WHERE id = ?`,
+        `SELECT id, username, name, email, role, image, bio, location, github, website, vip, vip_level, vip_expire_time FROM users WHERE id = ?`,
         [userId]
       );
       
@@ -31,6 +31,11 @@ export async function GET(request: NextRequest) {
       let userLocation = '';
       let userGithub = '';
       let userWebsite = '';
+      let userUsername = '';
+      let userRole = 'USER';
+      let userVip = 0;
+      let userVipLevel = 0;
+      let userVipExpireTime: string | null = null;
       
       if (Array.isArray(userResult) && userResult.length > 0) {
         const user = userResult[0] as any;
@@ -40,7 +45,11 @@ export async function GET(request: NextRequest) {
         userLocation = user.location || '';
         userGithub = user.github || '';
         userWebsite = user.website || '';
-
+        userUsername = user.username || '';
+        userRole = user.role || 'USER';
+        userVip = user.vip || 0;
+        userVipLevel = user.vip_level || 0;
+        userVipExpireTime = user.vip_expire_time || null;
       }
       
       // 再从user_profiles表获取扩展信息
@@ -64,6 +73,11 @@ export async function GET(request: NextRequest) {
           location: (userProfile.location as string) || userLocation,
           github: (userProfile.github as string) || userGithub,
           website: (userProfile.website as string) || userWebsite,
+          username: userUsername,
+          role: userRole,
+          vip: userVip === 1,
+          vipLevel: userVipLevel,
+          vipExpireTime: userVipExpireTime,
           skills: userProfile.skills ? (typeof userProfile.skills === 'string' ? JSON.parse(userProfile.skills) : userProfile.skills) : [],
           socialLinks: userProfile.social_links ? (typeof userProfile.social_links === 'string' ? JSON.parse(userProfile.social_links) : userProfile.social_links) : {}
         };
@@ -82,6 +96,11 @@ export async function GET(request: NextRequest) {
           location: userLocation,
           github: userGithub,
           website: userWebsite,
+          username: userUsername,
+          role: userRole,
+          vip: userVip === 1,
+          vipLevel: userVipLevel,
+          vipExpireTime: userVipExpireTime,
           skills: [],
           socialLinks: {}
         };
@@ -105,6 +124,8 @@ export async function GET(request: NextRequest) {
       location: '',
       github: '',
       website: '',
+      username: (session.user as any).username || '',
+      role: (session.user as any).role || 'USER',
       skills: [],
       socialLinks: {}
     };
@@ -134,6 +155,20 @@ export async function PUT(request: NextRequest) {
     try {
       const { executeQuery } = await import('@/app/lib/database');
       
+      // 验证新用户名格式与占用情况
+      if (data.username) {
+        if (!/^[a-zA-Z0-9]+$/.test(data.username)) {
+          return NextResponse.json({ error: '用户名只能是英文和数字的组合' }, { status: 400 });
+        }
+        const existingUser = await executeQuery(
+          'SELECT id FROM users WHERE username = ? AND id != ?',
+          [data.username, userId]
+        );
+        if (Array.isArray(existingUser) && existingUser.length > 0) {
+          return NextResponse.json({ error: '该用户名已被其他账号占用' }, { status: 400 });
+        }
+      }
+
       // 检查用户资料是否存在
       const existingProfile = await executeQuery(
         `SELECT id FROM user_profiles WHERE user_id = ?`,
@@ -185,9 +220,10 @@ export async function PUT(request: NextRequest) {
       // 同时更新 users 表中的基础个人信息
       await executeQuery(
         `UPDATE users 
-         SET name = ?, bio = ?, location = ?, github = ?, website = ?, image = ?, updated_at = NOW()
+         SET username = ?, name = ?, bio = ?, location = ?, github = ?, website = ?, image = ?, updated_at = NOW()
          WHERE id = ?`,
         [
+          data.username || '',
           data.name || '', 
           data.bio || '', 
           data.location || '', 

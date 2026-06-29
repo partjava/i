@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useSession, signOut } from 'next-auth/react';
+import { useAuth } from '@/app/hooks/useAuth';
 import { useUser } from '../providers/UserProvider';
 import { useRouter } from 'next/navigation';
 import { Button, Dropdown, Avatar, Badge, Tooltip } from 'antd';
@@ -23,36 +23,22 @@ import { useSidebar } from './Sidebar';
 import SettingModal from './SettingModal';
 import AI3DRobot from './AI3DRobot';
 import StitchLogo from './StitchLogo';
+import VipModal from './VipModal';
 
 export default function Navbar() {
-  const { data: session, status, update } = useSession();
+  const { data: session, status, signOut } = useAuth();
   const { user } = useUser();
   const router = useRouter();
   const { setIsOpen } = useSidebar();
   const [settingOpen, setSettingOpen] = useState(false);
   const [showRobot, setShowRobot] = useState(false);
   const [robotPreloaded, setRobotPreloaded] = useState(false);
+  const [showVip, setShowVip] = useState(false);
 
-  // 强制检查session状态
+  // JWT 认证无需轮询 session 检查，401 由 FetchInterceptor 处理
   useEffect(() => {
-    const checkSession = async () => {
-      try {
-        const response = await fetch('/api/auth/session');
-        const sessionData = await response.json();
-        if (!sessionData.user && session?.user) {
-          // 前端有session但后端没有，强制退出登录
-          await signOut({ redirect: false });
-          router.push('/login');
-        }
-      } catch (error) {
-        console.error('检查session失败:', error);
-      }
-    };
-
-    if (status !== 'loading') {
-      checkSession();
-    }
-  }, [session, status, router]);
+    // 无操作：FetchInterceptor 自动处理 token 过期跳转
+  }, []);
 
   // 预加载机器人资源
   useEffect(() => {
@@ -68,52 +54,12 @@ export default function Navbar() {
 
   const handleSignOut = async () => {
     try {
-      // 首先使用NextAuth库内置功能清除前端会话，但不重定向
-      await signOut({ redirect: false });
-
-      // 然后调用自定义API清除所有相关cookie
-      const res = await fetch('/api/auth/signout', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        credentials: 'include',
-        cache: 'no-store'
-      });
-
-      // 清除本地存储中可能存在的用户数据
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('user_data');
-        sessionStorage.removeItem('user_data');
-        localStorage.removeItem('next-auth.session-token');
-        sessionStorage.removeItem('next-auth.session-token');
-        localStorage.removeItem('next-auth.callback-url');
-        sessionStorage.removeItem('next-auth.callback-url');
-        localStorage.removeItem('next-auth.csrf-token');
-        sessionStorage.removeItem('next-auth.csrf-token');
-
-        // 清除所有可能的身份验证cookie
-        document.cookie.split(';').forEach(cookie => {
-          const [name] = cookie.split('=');
-          if (name.trim().startsWith('next-auth') || name.trim().includes('token') || name.trim().includes('session')) {
-            document.cookie = `${name.trim()}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/;`;
-            document.cookie = `${name.trim()}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=${window.location.hostname};`;
-          }
-        });
-      }
-
-      // 强制清除会话状态
-      if (update) {
-        await update({ user: null });
-      }
-
-      // 最后才强制刷新页面（不使用路由跳转，完全重载页面）
+      signOut({ redirect: false });
       setTimeout(() => {
-        window.location.replace('/login?expired=true');
+        window.location.replace('/login');
       }, 100);
     } catch (error) {
       console.error('退出失败', error);
-      // 强制刷新页面，即使有错误
       window.location.replace('/login?error=true');
     }
   };
@@ -143,6 +89,18 @@ export default function Navbar() {
       label: '设置',
       onClick: () => setSettingOpen(true),
     },
+    // 如果具备管理员权限，动态增加“后台管理”入口链接
+    ...(user?.role === 'ADMIN' ? [
+      {
+        key: 'admin',
+        icon: <SettingOutlined style={{ color: '#6366f1' }} />,
+        label: (
+          <Link href="/admin" className="font-semibold text-indigo-600 dark:text-indigo-400">
+            后台管理
+          </Link>
+        ),
+      }
+    ] : []),
     {
       type: 'divider' as const,
     },
@@ -260,6 +218,20 @@ export default function Navbar() {
                 </svg>
                 <span className="text-xs">机器人</span>
               </button>
+              {/* 👑 VIP 会员入口 */}
+              <button
+                onClick={() => setShowVip(true)}
+                className="flex flex-col items-center transition-all duration-200 transform hover:scale-110 relative group"
+                title="开通/续费 VIP 会员"
+              >
+                <div className="relative">
+                  <svg className="w-5 h-5 mb-1 text-yellow-400 group-hover:text-yellow-300 drop-shadow-[0_0_6px_rgba(250,204,21,0.8)]" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm2 3h10v1a1 1 0 01-1 1H8a1 1 0 01-1-1v-1z"/>
+                  </svg>
+                  <span className="absolute -top-1 -right-1 w-1.5 h-1.5 rounded-full bg-yellow-400 animate-pulse" />
+                </div>
+                <span className="text-xs text-yellow-400 group-hover:text-yellow-300 font-semibold">VIP</span>
+              </button>
             </div>
           </div>
 
@@ -356,6 +328,14 @@ export default function Navbar() {
       {showRobot && (
         <AI3DRobot onClose={() => setShowRobot(false)} />
       )}
+
+      {/* 👑 VIP 会员弹窗 */}
+      <VipModal
+        open={showVip}
+        onClose={() => setShowVip(false)}
+        currentVipLevel={(user as any)?.vipLevel || 0}
+        onActivated={() => window.location.reload()}
+      />
     </nav>
   );
 }

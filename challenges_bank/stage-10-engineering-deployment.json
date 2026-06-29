@@ -1,0 +1,564 @@
+[
+  {
+    "slug": "deploy-fastapi-service",
+    "stageId": 10,
+    "topicName": "工程部署",
+    "subtopicName": "FastAPI开发",
+    "levelIndex": 1,
+    "levelTitle": "FastAPI REST 服务构建器",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "deploy",
+      "fastapi",
+      "rest",
+      "api"
+    ],
+    "theoryContent": "### 编程挑战：FastAPI REST 服务构建器\n\nFastAPI 是高性能 Python Web 框架，专为构建 API 设计。本题实现模型预测服务的核心逻辑。\n\n实现（不依赖 FastAPI 框架，纯函数逻辑）：\n- `validate_input(data, schema)`: 校验输入数据\n- `predict_wrapper(model, input_data)`: 封装模型预测\n- `format_response(prediction, confidence)`: 格式化 API 响应\n- `build_openapi_spec(endpoints)`: 生成 OpenAPI 规范",
+    "latexFormulas": [
+      "Response = {prediction: ..., confidence: ..., latency_ms: ...}"
+    ],
+    "starterCode": "import json\ndef validate_input(data, schema): pass\ndef format_response(prediction, confidence): pass\ndef build_openapi_spec(endpoints): pass",
+    "solutionCode": "import json\ndef validate_input(data, schema):\n    for field, expected_type in schema.items():\n        if field not in data:\n            return False, f'missing field: {field}'\n        if not isinstance(data[field], expected_type):\n            return False, f'{field} should be {expected_type.__name__}'\n    return True, None\ndef format_response(prediction, confidence):\n    return {'success': True, 'prediction': prediction, 'confidence': round(confidence, 4), 'latency_ms': 0}\ndef build_openapi_spec(endpoints):\n    spec = {'openapi': '3.0.0', 'info': {'title': 'ML API', 'version': '1.0'}, 'paths': {}}\n    for ep in endpoints:\n        spec['paths'][ep['path']] = {ep['method']: {'summary': ep['summary'], 'responses': {'200': {'description': 'OK'}}}}\n    return spec",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "validate passes",
+        "input": {
+          "data": {
+            "text": "hello",
+            "count": 3
+          },
+          "schema": {}
+        },
+        "expected": true
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "FastAPI 相比 Flask 的主要性能优势来自什么？",
+        "options": [
+          "A. Starlette 异步框架和 Pydantic 校验",
+          "B. 同样基于 WSGI",
+          "C. 不支持异步",
+          "D. 必须用 GPU"
+        ],
+        "answer": 0,
+        "explanation": "FastAPI 基于 Starlette（异步）和 Pydantic（数据校验），自动生成 OpenAPI 文档。"
+      }
+    ],
+    "thinkingQuestion": "生产环境中 API 服务需要考虑哪些方面（认证、限流、日志、健康检查）？",
+    "aiPrompt": "评估学生对 FastAPI、API 设计、输入校验的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "deploy-onnx-export",
+    "stageId": 10,
+    "topicName": "工程部署",
+    "subtopicName": "模型序列化(ONNX)",
+    "levelIndex": 1,
+    "levelTitle": "ONNX 模型导出器",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "deploy",
+      "onnx",
+      "export",
+      "serialization"
+    ],
+    "theoryContent": "### 编程挑战：ONNX 模型导出器\n\nONNX（Open Neural Network Exchange）是开放的模型交换格式。本题模拟将模型参数导出为 ONNX 格式。\n\n实现：\n- `export_onnx(params, input_shape, output_shape)`: 模拟导出 ONNX\n- `onnx_inference(onnx_model, input_data)`: 模拟 ONNX 推理\n- `compare_outputs(pytorch_output, onnx_output)`: 比较误差\n- `optimize_for_inference(onnx_model)`: 简化推理优化",
+    "latexFormulas": [
+      "ONNX = {ir_version, graph {nodes, inputs, outputs, initializers}}",
+      "误差 < 1e-4 通常认为精度可接受"
+    ],
+    "starterCode": "import numpy as np\ndef export_onnx(params, input_shape, output_shape): pass\ndef onnx_inference(model, input_data): pass\ndef compare_outputs(torch_out, onnx_out): pass",
+    "solutionCode": "import numpy as np\ndef export_onnx(params, input_shape, output_shape):\n    return {'version': 7, 'graph': {'inputs': [{'shape': input_shape}], 'outputs': [{'shape': output_shape}], 'initializers': {k: v.tolist() for k,v in params.items()}}}\ndef onnx_inference(model, input_data):\n    W = np.array(model['graph']['initializers'].get('weight', [[1]]))\n    b = np.array(model['graph']['initializers'].get('bias', [0]))\n    return np.dot(input_data, W) + b\ndef compare_outputs(torch_out, onnx_out):\n    return {'max_diff': round(float(np.max(np.abs(np.array(torch_out) - np.array(onnx_out)))), 6), 'pass': True}",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "onnx export and inference",
+        "input": {
+          "params": {
+            "weight": [
+              [
+                0.5,
+                0.3
+              ],
+              [
+                0.2,
+                0.8
+              ]
+            ],
+            "bias": [
+              0.1,
+              0.2
+            ]
+          },
+          "inputShape": [
+            1,
+            2
+          ],
+          "outputShape": [
+            1,
+            2
+          ],
+          "inputData": [
+            [
+              1,
+              2
+            ]
+          ]
+        },
+        "expected": true
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "ONNX 的主要作用是什么？",
+        "options": [
+          "A. 在不同深度学习框架之间交换模型",
+          "B. 加速训练",
+          "C. 替代 PyTorch",
+          "D. 数据增强"
+        ],
+        "answer": 0,
+        "explanation": "ONNX 是开放的模型交换格式，让模型可以在 PyTorch、TensorFlow 等不同框架间迁移。"
+      }
+    ],
+    "thinkingQuestion": "ONNX Runtime 相比原始 PyTorch 推理有什么性能优势？量化（INT8）是怎么进一步加速的？",
+    "aiPrompt": "评估学生对 ONNX、模型导出、推理优化的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "deploy-docker-packaging",
+    "stageId": 10,
+    "topicName": "工程部署",
+    "subtopicName": "Docker镜像打包",
+    "levelIndex": 1,
+    "levelTitle": "Docker 镜像构建器",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "deploy",
+      "docker",
+      "container",
+      "image"
+    ],
+    "theoryContent": "### 编程挑战：Docker 镜像构建器\n\nDocker 通过分层镜像和容器化实现环境一致性。本题模拟 Dockerfile 解析和镜像构建流程。\n\n实现：\n- `parse_dockerfile(content)`: 解析 Dockerfile 指令\n- `simulate_build(dockerfile, context)`: 模拟镜像构建层\n- `calculate_image_size(layers)`: 计算镜像大小\n- `check_dockerfile_best_practices(dockerfile)`: 检查最佳实践",
+    "latexFormulas": [
+      "Image = Layer_1 + Layer_2 + ... + Layer_n",
+      "FROM -> RUN -> COPY -> CMD"
+    ],
+    "starterCode": "import hashlib, json\ndef parse_dockerfile(content): pass\ndef simulate_build(dockerfile, context): pass\ndef calculate_image_size(layers): pass",
+    "solutionCode": "import hashlib, json\ndef parse_dockerfile(content):\n    instructions = []\n    for line in content.split('\n'):\n        line = line.strip()\n        if not line or line.startswith('#'): continue\n        parts = line.split(None, 1)\n        if parts[0].upper() in ('FROM','RUN','COPY','CMD','WORKDIR','ENV','EXPOSE'):\n            instructions.append({'cmd': parts[0].upper(), 'args': parts[1] if len(parts)>1 else ''})\n    return instructions\ndef simulate_build(dockerfile, context):\n    layers = []\n    for inst in dockerfile:\n        layer_id = hashlib.md5(json.dumps(inst, sort_keys=True).encode()).hexdigest()[:12]\n        size = len(inst['args']) * 10\n        layers.append({'id': layer_id, 'instruction': inst['cmd'], 'size': size})\n    return layers\ndef calculate_image_size(layers):\n    return sum(l['size'] for l in layers)",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "parse dockerfile",
+        "input": {
+          "content": "FROM python:3.11\nRUN pip install torch\nCOPY . /app\nCMD python main.py"
+        },
+        "expected": true
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "Docker 分层构建的好处是什么？",
+        "options": [
+          "A. 缓存不变层，加速构建",
+          "B. 减少网络传输",
+          "C. 提高安全性",
+          "D. 所有选项都对"
+        ],
+        "answer": 3,
+        "explanation": "分层构建利用缓存，不变层复用；只传输变化层；隔离运行环境。"
+      }
+    ],
+    "thinkingQuestion": "多阶段构建（Multi-stage Build）是如何减少最终镜像大小的？",
+    "aiPrompt": "评估学生对 Docker、镜像层、容器化的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "deploy-ollama-inference",
+    "stageId": 10,
+    "topicName": "工程部署",
+    "subtopicName": "Ollama本地推理",
+    "levelIndex": 1,
+    "levelTitle": "Ollama 模型管理 CLI",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "deploy",
+      "ollama",
+      "inference",
+      "local"
+    ],
+    "theoryContent": "### 编程挑战：Ollama 模型管理 CLI\n\nOllama 提供本地运行大模型的能力。本题模拟 Ollama 的模型管理和推理接口。\n\n实现：\n- `ollama_pull(model_name)`: 拉取模型（模拟）\n- `ollama_generate(model_name, prompt, options)`: 生成文本\n- `ollama_list_models()`: 列出已安装模型\n- `ollama_chat(model_name, messages)`: 聊天接口\n- `estimate_ram_usage(model_size_billions)`: 估算所需内存",
+    "latexFormulas": [
+      "RAM ~ model_size_B * 2GB (FP16)",
+      "Generate: y_t = argmax P(y | x, y_{<t})"
+    ],
+    "starterCode": "import json\ndef ollama_generate(model, prompt, options): pass\ndef ollama_list_models(): pass\ndef estimate_ram_usage(model_size_b): pass",
+    "solutionCode": "import json\ndef ollama_generate(model, prompt, options={}):\n    max_tokens = options.get('max_tokens', 128)\n    sim_response = f'[{model} 模拟回复] 收到: {prompt[:50]}... ({max_tokens} tokens)'\n    return {'model': model, 'response': sim_response, 'tokens_generated': max_tokens, 'done': True}\ndef ollama_list_models():\n    return [{'name': 'llama3:8b', 'size': '8.0GB', 'ram_required': '16GB'},\n            {'name': 'qwen2:7b', 'size': '7.0GB', 'ram_required': '14GB'},\n            {'name': 'qwen2:1.5b', 'size': '1.5GB', 'ram_required': '4GB'}]\ndef estimate_ram_usage(model_size_b):\n    gb = round(model_size_b * 2.0, 1)\n    return {'model_size_billions': model_size_b, 'fp16_ram_gb': gb, 'int8_ram_gb': round(gb/2, 1), 'recommended_gb': max(8, int(gb*1.5))}",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "ram estimation",
+        "input": {
+          "modelSizeB": 7
+        },
+        "expected": {
+          "model_size_billions": 7,
+          "fp16_ram_gb": 14,
+          "int8_ram_gb": 7,
+          "recommended_gb": 21
+        }
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "Ollama 为什么在本地运行大模型需要大内存？",
+        "options": [
+          "A. 模型参数需要全部加载到内存",
+          "B. 需要很多硬盘空间",
+          "C. 需要高性能 GPU",
+          "D. 内存不重要"
+        ],
+        "answer": 0,
+        "explanation": "模型参数以 FP16（每参数 2 字节）加载，7B 模型需要约 14GB 内存。"
+      }
+    ],
+    "thinkingQuestion": "FP16（半精度）和 INT8（量化）推理在内存占用和精度上有什么区别？你会如何选择？",
+    "aiPrompt": "评估学生对本地推理、Ollama、模型量化的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "deploy-vllm-serving",
+    "stageId": 10,
+    "topicName": "工程部署",
+    "subtopicName": "vLLM加速部署",
+    "levelIndex": 1,
+    "levelTitle": "vLLM 推理加速器",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "deploy",
+      "vllm",
+      "inference",
+      "paged-attention"
+    ],
+    "theoryContent": "### 编程挑战：vLLM 推理加速器\n\nvLLM 通过 PagedAttention 高效管理 KV Cache，大幅提升 LLM 推理吞吐。\n\n实现：\n- `paged_attention(query, key_cache, page_table, block_size)`: PagedAttention\n- `estimate_kv_cache_size(max_batch, max_len, num_layers, hidden_size)`: KV Cache 估算\n- `schedule_requests(requests, max_batch_size)`: 请求调度\n- `compute_throughput(total_tokens, total_time)`: 计算吞吐量",
+    "latexFormulas": [
+      "Throughput = tokens / second",
+      "KV Cache = 2 * num_layers * hidden_size * max_len * bytes_per_elem"
+    ],
+    "starterCode": "import numpy as np\ndef paged_attention(query, key_cache, page_table): pass\ndef estimate_kv_cache_size(layers, hidden, max_len, batch): pass\ndef compute_throughput(total_tokens, total_time): pass",
+    "solutionCode": "import numpy as np\ndef paged_attention(query, key_cache, page_table, block_size=16):\n    scores = np.dot(key_cache, query) / np.sqrt(query.shape[-1])\n    weights = np.exp(scores - np.max(scores))\n    weights /= np.sum(weights)\n    output = np.dot(weights, key_cache)\n    return {'output': output, 'scores': scores}\ndef estimate_kv_cache_size(layers=32, hidden=4096, max_len=2048, batch=1):\n    bytes_per_elem = 2  # FP16\n    size = 2 * layers * hidden * max_len * batch * bytes_per_elem\n    return {'bytes': size, 'gb': round(size / (1024**3), 2)}\ndef compute_throughput(total_tokens, total_time):\n    return {'tokens_per_sec': round(total_tokens / total_time, 2), 'total_tokens': total_tokens, 'total_time': total_time}",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "kv cache size",
+        "input": {
+          "layers": 32,
+          "hidden": 4096,
+          "maxLen": 2048,
+          "batch": 4
+        },
+        "expected": {
+          "bytes": 4294967296,
+          "gb": 4
+        }
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "vLLM 的 PagedAttention 解决了什么问题？",
+        "options": [
+          "A. KV Cache 内存碎片和管理开销",
+          "B. 模型精度",
+          "C. 网络延迟",
+          "D. 训练速度"
+        ],
+        "answer": 0,
+        "explanation": "PagedAttention 将 KV Cache 分页管理，类似操作系统虚拟内存，减少碎片和浪费。"
+      }
+    ],
+    "thinkingQuestion": "Continuous Batching 和传统 Static Batching 在推理吞吐上的区别是什么？",
+    "aiPrompt": "评估学生对 vLLM、PagedAttention、推理加速的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "deploy-async-handler-l2",
+    "stageId": 10,
+    "topicName": "工程部署",
+    "subtopicName": "FastAPI开发",
+    "levelIndex": 2,
+    "levelTitle": "异步请求处理器",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "FastAPI开发"
+    ],
+    "theoryContent": "实现 FastAPI 风格的异步请求处理：支持并发请求、超时控制和请求排队。",
+    "latexFormulas": [
+      "async def handler(request): await process(request)"
+    ],
+    "starterCode": "import asyncio\ndef async_process(requests, timeout): pass\ndef rate_limiter(max_rps): pass",
+    "solutionCode": "import asyncio\ndef async_process(requests,timeout=5):\n    async def proc(req):\n        await asyncio.sleep(0.1)\n        return f\"ok:{req}\"\n    async def run():\n        tasks=[asyncio.wait_for(proc(r),timeout=timeout) for r in requests]\n        results=await asyncio.gather(*tasks,return_exceptions=True)\n        return [r if not isinstance(r,Exception) else f\"timeout:{r}\" for r in results]\n    return asyncio.run(run())\ndef rate_limiter(max_rps=10):\n    tokens=max_rps\n    def check():\n        nonlocal tokens\n        if tokens<=0:return False\n        tokens-=1;return True\n    return check",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "async process",
+        "input": {
+          "requests": [
+            "a",
+            "b",
+            "c"
+          ],
+          "timeout": 5
+        },
+        "expected": [
+          "ok:a",
+          "ok:b",
+          "ok:c"
+        ]
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "异步处理相比同步处理在 Web 服务中的优势？",
+        "options": [
+          "A. IO 等待时不阻塞线程，提高并发",
+          "B. 运行更快",
+          "C. 更省内存",
+          "D. 更简单"
+        ],
+        "answer": 0,
+        "explanation": "异步 IO 在等待时释放线程处理其他请求，显著提升并发能力。"
+      }
+    ],
+    "thinkingQuestion": "FastAPI 的异步支持基于什么框架？Gunicorn + Uvicorn 的部署架构是怎样的？",
+    "aiPrompt": "评估学生对异步编程、FastAPI 的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "deploy-onnx-optimize-l2",
+    "stageId": 10,
+    "topicName": "工程部署",
+    "subtopicName": "模型序列化(ONNX)",
+    "levelIndex": 2,
+    "levelTitle": "ONNX 图优化",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "模型序列化(ONNX)"
+    ],
+    "theoryContent": "实现 ONNX 模型的图优化：常量折叠、算子融合、无用节点消除。",
+    "latexFormulas": [
+      "GraphOpt: fuse(conv+bn) -> constant_fold -> dead_code_elim"
+    ],
+    "starterCode": "def fuse_conv_bn(graph): pass\ndef constant_folding(graph): pass\ndef optimize_onnx(graph): pass",
+    "solutionCode": "import json\ndef fuse_conv_bn(graph):\n    nodes=graph.get(\"nodes\",[]);new=[];skipped=set()\n    for i,n in enumerate(nodes):\n        if i in skipped:continue\n        if n[\"op\"]==\"Conv\" and i+1<len(nodes) and nodes[i+1][\"op\"]==\"BatchNormalization\":\n            new.append({\"op\":\"ConvBN\",\"input\":n[\"input\"],\"output\":nodes[i+1][\"output\"],\"fused\":True})\n            skipped.add(i+1)\n        else:new.append(n)\n    return {\"nodes\":new}\ndef constant_folding(graph):\n    return graph\ndef optimize_onnx(graph):\n    g=fuse_conv_bn(graph)\n    g=constant_folding(g)\n    g[\"optimized\"]=True\n    return g",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "fuse conv bn",
+        "input": {
+          "graph": {
+            "nodes": [
+              {
+                "op": "Conv",
+                "input": "x",
+                "output": "c"
+              },
+              {
+                "op": "BatchNormalization",
+                "input": "c",
+                "output": "y"
+              },
+              {
+                "op": "Relu",
+                "input": "y",
+                "output": "z"
+              }
+            ]
+          }
+        },
+        "expected": true
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "Conv+BN 融合为什么能加速推理？",
+        "options": [
+          "A. 减少内核启动次数和内存访问",
+          "B. 提高精度",
+          "C. 减少层数",
+          "D. 降低功耗"
+        ],
+        "answer": 0,
+        "explanation": "融合减少两次内核调用，省去 BN 的额外读写带宽，直接合并到 Conv 权重中。"
+      }
+    ],
+    "thinkingQuestion": "ONNX Runtime 的图优化策略分为几个级别？哪级优化可能改变数值精度？",
+    "aiPrompt": "评估学生对 ONNX、模型优化的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "deploy-docker-multi-stage-l2",
+    "stageId": 10,
+    "topicName": "工程部署",
+    "subtopicName": "Docker镜像打包",
+    "levelIndex": 2,
+    "levelTitle": "多阶段 Docker 构建",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "Docker镜像打包"
+    ],
+    "theoryContent": "实现多阶段 Docker 构建，减小最终镜像大小：编译阶段 -> 运行阶段。",
+    "latexFormulas": [
+      "FROM python:3.11-slim AS builder",
+      "FROM python:3.11-slim AS runtime",
+      "COPY --from=builder"
+    ],
+    "starterCode": "def multi_stage_build(dockerfile, stages): pass\ndef parse_stages(dockerfile): pass",
+    "solutionCode": "def parse_stages(df):\n    stages=[];cur=None\n    for line in df.split(\"\\n\"):\n        line=line.strip()\n        if not line:continue\n        if line.upper().startswith(\"FROM\"):\n            cur={\"from\":line[5:].strip(),\"cmds\":[]};stages.append(cur)\n        elif cur is not None:cur[\"cmds\"].append(line)\n    return stages\ndef multi_stage_build(df):\n    stages=parse_stages(df);result=[]\n    for i,s in enumerate(stages):\n        stage_size=len(s[\"cmds\"])*5\n        result.append({\"stage\":i,\"base\":s[\"from\"],\"layers\":len(s[\"cmds\"]),\"size_mb\":stage_size,\"final\":i==len(stages)-1})\n    return {\"stages\":result,\"total_size\":sum(r[\"size_mb\"]for r in result)}",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "parse",
+        "input": {
+          "dockerfile": "FROM python:3.11 AS builder\\nRUN pip install torch\\nCOPY . /app\\nFROM python:3.11-slim\\nCOPY --from=builder /app /app\\nCMD python main.py"
+        },
+        "expected": true
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "多阶段构建的主要好处？",
+        "options": [
+          "A. 最终镜像不包含构建工具和中间文件",
+          "B. 构建更快",
+          "C. 运行更快",
+          "D. 更安全"
+        ],
+        "answer": 0,
+        "explanation": "多阶段构建的最终镜像只含运行所需文件，不含编译器等构建工具。"
+      }
+    ],
+    "thinkingQuestion": "Docker 的 COPY --from=builder 和普通 COPY 有什么区别？",
+    "aiPrompt": "评估学生对 Docker 多阶段构建的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "deploy-model-quantization-l2",
+    "stageId": 10,
+    "topicName": "工程部署",
+    "subtopicName": "Ollama本地推理",
+    "levelIndex": 2,
+    "levelTitle": "模型量化推理",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "Ollama本地推理"
+    ],
+    "theoryContent": "实现模型量化推理：FP16 和 INT8 量化，评估量化后的精度损失。",
+    "latexFormulas": [
+      "FP16: 2字节/参数",
+      "INT8: 1字节/参数",
+      "精度损失 = |FP32-FP16| / FP32"
+    ],
+    "starterCode": "import numpy as np\ndef quantize_fp16(weights): pass\ndef quantize_int8(weights): pass\ndef quantization_error(original, quantized): pass",
+    "solutionCode": "import numpy as np\ndef quantize_fp16(w):\n    w=np.array(w);return w.astype(np.float16)\ndef quantize_int8(w):\n    w=np.array(w)\n    absmax=np.max(np.abs(w))\n    scale=127/absmax;q=np.clip(np.round(w*scale),-127,127)\n    return {\"quantized\":q.astype(np.int8),\"scale\":scale}\ndef quantization_error(orig,quant):\n    orig=np.array(orig)\n    if isinstance(quant,dict):deq=quant[\"quantized\"].astype(float)/quant[\"scale\"]\n    else:deq=quant.astype(float) if quant.dtype==np.float16 else quant\n    mse=np.mean((orig-deq)**2)\n    max_err=np.max(np.abs(orig-deq))\n    return {\"mse\":round(float(mse),6),\"max_error\":round(float(max_err),6)}",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "int8 quantize",
+        "input": {
+          "weights": [
+            0.5,
+            -0.3,
+            1.2,
+            -0.8,
+            0.1
+          ]
+        },
+        "expected": true
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "INT8 量化相比 FP16 节省多少内存？",
+        "options": [
+          "A. 一半",
+          "B. 四分之一",
+          "C. 相同",
+          "D. 两倍"
+        ],
+        "answer": 0,
+        "explanation": "INT8 1字节/参数，FP16 2字节/参数，INT8 节省一半内存。"
+      }
+    ],
+    "thinkingQuestion": "量化感知训练（QAT）和训练后量化（PTQ）的区别？哪种精度更高？",
+    "aiPrompt": "评估学生对模型量化的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "deploy-continuous-batching-l2",
+    "stageId": 10,
+    "topicName": "工程部署",
+    "subtopicName": "vLLM加速部署",
+    "levelIndex": 2,
+    "levelTitle": "Continuous Batching",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "vLLM加速部署"
+    ],
+    "theoryContent": "实现 continuous batching：动态调度请求，每步将新请求加入运行批次，完成时移出。",
+    "latexFormulas": [
+      "Batch = Running + Pending",
+      "Scheduling: 每步检查可加入的新请求"
+    ],
+    "starterCode": "def continuous_batching(requests, max_batch, max_len): pass",
+    "solutionCode": "def continuous_batching(requests,max_batch=4,max_len=10):\n    running=[];pending=list(requests);completed=[];step=0\n    while (running or pending) and step<max_len*len(requests):\n        step+=1\n        while len(running)<max_batch and pending:\n            running.append({\"id\":pending.pop(0),\"tokens\":[0],\"done\":False})\n        for r in running[:]:\n            if not r[\"done\"]:\n                r[\"tokens\"].append(r[\"tokens\"][-1]+1)\n                if len(r[\"tokens\"])>=max_len:\n                    r[\"done\"]=True;completed.append(r[\"id\"]);running.remove(r)\n    return {\"completed\":completed,\"steps\":step,\"throughput\":round(len(completed)/step,4)}",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "continuous batching",
+        "input": {
+          "requests": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8
+          ],
+          "maxBatch": 4,
+          "maxLen": 5
+        },
+        "expected": true
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "Continuous Batching 相比 Static Batching 的优势？",
+        "options": [
+          "A. 减少等待时间，提高 GPU 利用率",
+          "B. 更简单",
+          "C. 更省内存",
+          "D. 更少通信"
+        ],
+        "answer": 0,
+        "explanation": "Continuous Batching 每步动态调度请求进出批次，减少空闲等待。"
+      }
+    ],
+    "thinkingQuestion": "vLLM 的 PagedAttention 如何和 Continuous Batching 配合工作？",
+    "aiPrompt": "评估学生对 Continuous Batching、推理加速的理解。按 0-10 分打分。",
+    "status": "published"
+  }
+]

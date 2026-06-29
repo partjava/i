@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { useSession } from 'next-auth/react';
+import { useAuth } from '@/app/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
@@ -47,7 +47,7 @@ function getCategoryStyle(cat: string) {
 }
 
 export default function BookmarksPage() {
-  const { data: session, status } = useSession();
+  const { data: session, status } = useAuth();
   const router = useRouter();
   const [notes, setNotes] = useState<BookmarkedNote[]>([]);
   const [loading, setLoading] = useState(true);

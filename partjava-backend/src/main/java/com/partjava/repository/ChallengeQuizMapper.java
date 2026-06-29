@@ -1,0 +1,9 @@
+package com.partjava.repository;
+
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.partjava.entity.ChallengeQuiz;
+import org.apache.ibatis.annotations.Mapper;
+
+@Mapper
+public interface ChallengeQuizMapper extends BaseMapper<ChallengeQuiz> {
+}

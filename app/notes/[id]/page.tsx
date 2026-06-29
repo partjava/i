@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { useSession } from 'next-auth/react';
+import { useAuth } from '@/app/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
@@ -11,6 +11,8 @@ import html2canvas from 'html2canvas';
 import 'highlight.js/styles/github.css';
 import CommentSection from '@/app/components/CommentSection';
 import QRCode from 'qrcode';
+import { useUser } from '@/app/providers/UserProvider';
+import { message } from 'antd';
 
 interface Note {
   _id: string;
@@ -32,7 +34,8 @@ interface Note {
 }
 
 export default function NoteDetailPage() {
-  const { data: session, status } = useSession();
+  const { data: session, status } = useAuth();
+  const { user } = useUser();
   const router = useRouter();
   const params = useParams();
   const noteId = params.id as string;
@@ -47,6 +50,31 @@ export default function NoteDetailPage() {
   const [showShareModal, setShowShareModal] = useState(false);
   const [qrDataUrl, setQrDataUrl] = useState('');
   const [copyTip, setCopyTip] = useState('');
+  const [cloning, setCloning] = useState(false);
+
+  // 一键复用笔记（进阶 VIP 专属）
+  const handleClone = async () => {
+    if (!session) { message.warning('请先登录'); return; }
+    if (!user?.vipLevel || user.vipLevel < 2) {
+      message.warning('🌟 该功能需要进阶 VIP（¥9.99）或以上会员，请先升级！');
+      return;
+    }
+    setCloning(true);
+    try {
+      const res = await fetch(`/api/notes/${noteId}/clone`, { method: 'POST' });
+      const data = await res.json();
+      if (data.success) {
+        message.success('✅ ' + data.message);
+        setTimeout(() => router.push(`/notes/${data.newNoteId}`), 1200);
+      } else {
+        message.error(data.error || '复用失败');
+      }
+    } catch {
+      message.error('网络错误，请稍后再试');
+    } finally {
+      setCloning(false);
+    }
+  };
 
   // 导出 Markdown
   const handleExportMd = () => {
@@ -308,6 +336,26 @@ export default function NoteDetailPage() {
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" /></svg>
                   <span>分享</span>
                 </button>
+
+                {/* 一键复用（进阶 VIP 专属，不能复用自己的笔记） */}
+                {note?.isPublic && note?.author_id !== parseInt((session?.user as any)?.id || '0') && (
+                  <button
+                    onClick={handleClone}
+                    disabled={cloning}
+                    className={`w-full flex items-center justify-center space-x-2 px-4 py-3 rounded-lg text-base font-medium border transition-all duration-200
+                      ${(user?.vipLevel ?? 0) >= 2
+                        ? 'bg-gradient-to-r from-purple-600 to-cyan-500 text-white border-transparent hover:opacity-90 hover:scale-105 shadow-lg shadow-purple-500/20'
+                        : 'bg-purple-50 text-purple-400 border-purple-200 cursor-pointer hover:bg-purple-100'
+                      }
+                    `}
+                    title={(user?.vipLevel ?? 0) >= 2 ? '一键复用此笔记到我的笔记库' : '进阶 VIP 专属功能'}
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                    <span>{cloning ? '复用中...' : (user?.vipLevel ?? 0) >= 2 ? '🌟 一键复用' : '🌟 复用（进阶VIP）'}</span>
+                  </button>
+                )}
 
                 {/* 导出按钮组 */}
                 <div className="border border-gray-200 rounded-lg overflow-hidden">

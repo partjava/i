@@ -11,6 +11,7 @@ import SimpleLearningTracker from './SimpleLearningTracker';
 import PWAProvider from './PWAProvider';
 import DevTools from './DevTools';
 import AiChat from './AiChat';
+import FetchInterceptor from './FetchInterceptor';
 
 interface RootLayoutClientProps {
   children: React.ReactNode;
@@ -73,6 +74,7 @@ export default function RootLayoutClient({ children }: RootLayoutClientProps) {
 
   return (
     <NextAuthSessionProvider>
+      <FetchInterceptor />
       <UserProvider>
         <PWAProvider />
         <SimpleLearningTracker />

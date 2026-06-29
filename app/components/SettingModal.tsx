@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, Switch, Select, Space, Divider, Tag, Button, Alert, Form, Input, message, Tabs, Slider, Radio } from 'antd';
-import { useSession } from 'next-auth/react';
+import { useAuth } from '@/app/hooks/useAuth';
 import { 
   BellOutlined, 
   LockOutlined, 
@@ -36,7 +36,7 @@ interface SettingModalProps {
 }
 
 export default function SettingModal({ open, onClose }: SettingModalProps) {
-  const { data: session } = useSession();
+  const { data: session } = useAuth();
   const [theme, setTheme] = useState('light');
   const [language, setLanguage] = useState('zh');
   const [emailVerified, setEmailVerified] = useState<boolean | null>(null);
@@ -264,89 +264,114 @@ export default function SettingModal({ open, onClose }: SettingModalProps) {
   return (
     <>
       <Modal
-        title="设置"
+        title={<span className="text-white font-bold text-lg font-serif">系统设置 Spec Settings</span>}
         open={open}
         onCancel={onClose}
         footer={null}
         width={700}
-        className="setting-modal"
+        styles={{
+          content: {
+            backgroundColor: '#0C1F3D',
+            border: '1px solid #234272',
+            borderRadius: '24px',
+            color: '#EDF0F5',
+            boxShadow: '0 8px 32px 0 rgba(12, 31, 61, 0.4)',
+          },
+          header: {
+            backgroundColor: '#0C1F3D',
+            color: '#EDF0F5',
+            borderBottom: '1px solid #1E3E6E',
+            paddingBottom: '16px',
+            marginBottom: '16px',
+          },
+          body: {
+            backgroundColor: '#0C1F3D',
+            color: '#EDF0F5',
+          }
+        }}
+        closeIcon={<span className="text-[#b8bfcc] hover:text-white transition-colors text-base">✕</span>}
       >
         <Tabs
           defaultActiveKey="general"
+          tabBarStyle={{ color: '#b8bfcc', borderBottom: '1px solid #1E3E6E' }}
           items={[
             {
               key: 'general',
               label: (
-                <span>
+                <span className="flex items-center gap-1.5 text-[#EDF0F5] font-semibold">
                   <SettingOutlined />
-                  <span className="ml-2">通用</span>
+                  <span>通用</span>
                 </span>
               ),
               children: (
-                <Space direction="vertical" size="large" style={{ width: '100%' }}>
-                  <div className="flex items-center justify-between">
+                <Space direction="vertical" size="large" style={{ width: '100%', paddingTop: '12px' }}>
+                  <div className="flex items-center justify-between border-b border-[#1E3E6E]/30 pb-4">
                     <div>
-                      <div className="font-semibold">深色模式</div>
-                      <div className="text-sm text-gray-500">切换界面主题颜色</div>
+                      <div className="font-semibold text-white">深色模式 Theme</div>
+                      <div className="text-xs text-[#b8bfcc] mt-0.5">切换界面高对比度纸墨主题</div>
                     </div>
                     <Switch
                       checked={theme === 'dark'}
                       onChange={handleThemeChange}
                       checkedChildren="深色"
                       unCheckedChildren="浅色"
+                      style={{ backgroundColor: theme === 'dark' ? '#6366f1' : '#b8bfcc' }}
                     />
                   </div>
 
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between border-b border-[#1E3E6E]/30 pb-4">
                     <div>
-                      <div className="font-semibold">语言</div>
-                      <div className="text-sm text-gray-500">选择界面显示语言</div>
+                      <div className="font-semibold text-white">语言 Language</div>
+                      <div className="text-xs text-[#b8bfcc] mt-0.5">选择平台展示语系</div>
                     </div>
                     <Select
                       value={language}
                       onChange={handleLanguageChange}
                       options={LANG_OPTIONS}
                       style={{ width: 120 }}
+                      dropdownStyle={{ backgroundColor: '#0C1F3D', border: '1px solid #234272' }}
                     />
                   </div>
 
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between border-b border-[#1E3E6E]/30 pb-4">
                     <div>
-                      <div className="font-semibold">字体大小</div>
-                      <div className="text-sm text-gray-500">调整界面文字大小</div>
+                      <div className="font-semibold text-white">字号大小 Text Size</div>
+                      <div className="text-xs text-[#b8bfcc] mt-0.5">调整全站文字比例</div>
                     </div>
                     <Radio.Group
                       value={fontSize}
                       onChange={(e) => handleFontSizeChange(e.target.value)}
                       buttonStyle="solid"
                     >
-                      <Radio.Button value="small">小</Radio.Button>
-                      <Radio.Button value="medium">中</Radio.Button>
-                      <Radio.Button value="large">大</Radio.Button>
+                      <Radio.Button value="small" style={{ backgroundColor: fontSize === 'small' ? '#6366f1' : 'transparent', color: '#fff', borderColor: '#234272' }}>小</Radio.Button>
+                      <Radio.Button value="medium" style={{ backgroundColor: fontSize === 'medium' ? '#6366f1' : 'transparent', color: '#fff', borderColor: '#234272' }}>中</Radio.Button>
+                      <Radio.Button value="large" style={{ backgroundColor: fontSize === 'large' ? '#6366f1' : 'transparent', color: '#fff', borderColor: '#234272' }}>大</Radio.Button>
                     </Radio.Group>
                   </div>
 
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between border-b border-[#1E3E6E]/30 pb-4">
                     <div>
-                      <div className="font-semibold">自动保存</div>
-                      <div className="text-sm text-gray-500">编辑笔记时自动保存草稿</div>
+                      <div className="font-semibold text-white">自动保存 Auto Save</div>
+                      <div className="text-xs text-[#b8bfcc] mt-0.5">随堂笔记编辑时自动持久化草稿</div>
                     </div>
                     <Switch
                       checked={autoSave}
                       onChange={handleAutoSaveChange}
+                      style={{ backgroundColor: autoSave ? '#6366f1' : '#b8bfcc' }}
                     />
                   </div>
 
                   <div className="flex items-center justify-between">
                     <div>
-                      <div className="font-semibold">代码编辑器主题</div>
-                      <div className="text-sm text-gray-500">选择代码编辑器配色方案</div>
+                      <div className="font-semibold text-white">代码编辑器主题 IDE Theme</div>
+                      <div className="text-xs text-[#b8bfcc] mt-0.5">设定在线沙箱终端的配色方案</div>
                     </div>
                     <Select
                       value={codeTheme}
                       onChange={handleCodeThemeChange}
                       options={CODE_THEME_OPTIONS}
                       style={{ width: 160 }}
+                      dropdownStyle={{ backgroundColor: '#0C1F3D', border: '1px solid #234272' }}
                     />
                   </div>
                 </Space>
@@ -355,40 +380,43 @@ export default function SettingModal({ open, onClose }: SettingModalProps) {
             {
               key: 'notification',
               label: (
-                <span>
+                <span className="flex items-center gap-1.5 text-[#EDF0F5] font-semibold">
                   <BellOutlined />
-                  <span className="ml-2">通知</span>
+                  <span>通知</span>
                 </span>
               ),
               children: (
-                <Space direction="vertical" size="large" style={{ width: '100%' }}>
-                  <div className="flex items-center justify-between">
+                <Space direction="vertical" size="large" style={{ width: '100%', paddingTop: '12px' }}>
+                  <div className="flex items-center justify-between border-b border-[#1E3E6E]/30 pb-4">
                     <div>
-                      <div className="font-semibold">学习提醒</div>
-                      <div className="text-sm text-gray-500">每日学习打卡提醒</div>
+                      <div className="font-semibold text-white">每日提醒 Daily Reminder</div>
+                      <div className="text-xs text-[#b8bfcc] mt-0.5">每日学习与行星闯关打卡提醒</div>
                     </div>
                     <Switch
                       checked={studyReminder}
                       onChange={handleStudyReminderChange}
+                      style={{ backgroundColor: studyReminder ? '#6366f1' : '#b8bfcc' }}
                     />
                   </div>
 
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between border-b border-[#1E3E6E]/30 pb-4">
                     <div>
-                      <div className="font-semibold">邮件通知</div>
-                      <div className="text-sm text-gray-500">接收重要更新和活动通知</div>
+                      <div className="font-semibold text-white">邮件通知 Email Alert</div>
+                      <div className="text-xs text-[#b8bfcc] mt-0.5">接收关卡开放与重要系统通知</div>
                     </div>
                     <Switch
                       checked={emailNotification}
                       onChange={handleEmailNotificationChange}
+                      style={{ backgroundColor: emailNotification ? '#6366f1' : '#b8bfcc' }}
                     />
                   </div>
 
                   <Alert
-                    message="提示"
-                    description="开启学习提醒后，系统会在每天固定时间提醒您进行学习打卡。"
+                    message={<span className="text-white font-semibold">学习打卡规则</span>}
+                    description={<span className="text-[#b8bfcc] text-xs">开启学习提醒后，系统将在检测到浏览器上线时推送消息，帮助您每天维持热力打卡。</span>}
                     type="info"
                     showIcon
+                    style={{ backgroundColor: '#132A4F', border: '1px solid #1E3E6E' }}
                   />
                 </Space>
               ),
@@ -396,52 +424,60 @@ export default function SettingModal({ open, onClose }: SettingModalProps) {
             {
               key: 'privacy',
               label: (
-                <span>
+                <span className="flex items-center gap-1.5 text-[#EDF0F5] font-semibold">
                   <LockOutlined />
-                  <span className="ml-2">隐私</span>
+                  <span>隐私</span>
                 </span>
               ),
               children: (
-                <Space direction="vertical" size="large" style={{ width: '100%' }}>
-                  <div className="flex items-center justify-between">
+                <Space direction="vertical" size="large" style={{ width: '100%', paddingTop: '12px' }}>
+                  <div className="flex items-center justify-between border-b border-[#1E3E6E]/30 pb-4">
                     <div>
-                      <div className="font-semibold">公开个人资料</div>
-                      <div className="text-sm text-gray-500">允许其他用户查看您的个人资料</div>
+                      <div className="font-semibold text-white">公开个人资料 Public Profile</div>
+                      <div className="text-xs text-[#b8bfcc] mt-0.5">允许外部同伴浏览您的成就与笔记</div>
                     </div>
                     <Switch
                       checked={publicProfile}
                       onChange={handlePublicProfileChange}
+                      style={{ backgroundColor: publicProfile ? '#6366f1' : '#b8bfcc' }}
                     />
                   </div>
 
-                  <Divider>账号安全</Divider>
+                  <Divider style={{ borderColor: '#1E3E6E', color: '#fff' }}><span className="text-[#b8bfcc] text-xs font-semibold">账号安全</span></Divider>
                   
-                  <div>
-                    <div className="mb-2">
-                      <span className="font-semibold">邮箱：</span>
-                      <Tag color={emailVerified ? 'green' : 'orange'} className="ml-2">
+                  <div className="bg-[#08172F]/50 p-4 rounded-xl border border-[#234272] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div>
+                      <span className="font-semibold text-[#b8bfcc]">认证邮箱：</span>
+                      <span className="text-white font-mono">{email}</span>
+                      <Tag color={emailVerified ? 'green' : 'orange'} className="ml-2 border-0">
                         {emailVerified ? '已验证' : '未验证'}
                       </Tag>
-                      <span className="ml-2 text-gray-600">{email}</span>
                     </div>
                     {!emailVerified && (
-                      <Button size="small" type="link" onClick={handleSendVerify}>
+                      <Button size="small" type="link" onClick={handleSendVerify} style={{ color: '#BBFF5C' }} className="hover:text-[#ccff7a] p-0">
                         发送验证邮件
                       </Button>
                     )}
                   </div>
 
                   <div>
-                    <Button type="primary" onClick={() => setChangePwdOpen(true)} block>
-                      修改密码
+                    <Button 
+                      type="primary" 
+                      onClick={() => setChangePwdOpen(true)} 
+                      style={{ backgroundColor: '#6366f1', borderColor: '#6366f1' }}
+                      className="hover:bg-[#818cf8] font-bold"
+                      block
+                    >
+                      修改账户登录密码
                     </Button>
                   </div>
 
                   <Alert
-                    message="隐私保护"
-                    description="我们重视您的隐私安全，所有数据都经过加密存储。您可以随时导出或删除您的数据。"
+                    message={<span className="text-emerald-400 font-semibold">隐私合规保护</span>}
+                    description={<span className="text-[#b8bfcc] text-xs">我们采用加盐散列对您的账户密码进行非对称防护，所有数据只在数据库内加密存放。</span>}
                     type="success"
                     showIcon
+                    style={{ backgroundColor: '#0f272c', border: '1px solid #143e2b' }}
                   />
                 </Space>
               ),
@@ -449,63 +485,68 @@ export default function SettingModal({ open, onClose }: SettingModalProps) {
             {
               key: 'data',
               label: (
-                <span>
+                <span className="flex items-center gap-1.5 text-[#EDF0F5] font-semibold">
                   <DatabaseOutlined />
-                  <span className="ml-2">数据</span>
+                  <span>数据</span>
                 </span>
               ),
               children: (
-                <Space direction="vertical" size="large" style={{ width: '100%' }}>
-                  <div>
-                    <div className="font-semibold mb-2">安装应用</div>
-                    <div className="text-sm text-gray-500 mb-3">
-                      将 PartJava 添加到桌面，像原生 App 一样使用
+                <Space direction="vertical" size="large" style={{ width: '100%', paddingTop: '12px' }}>
+                  <div className="border-b border-[#1E3E6E]/30 pb-4">
+                    <div className="font-semibold text-white mb-1">安装渐进式应用 PWA</div>
+                    <div className="text-xs text-[#b8bfcc] mb-3">
+                      将 PartJava 水墨终端添加到主屏幕，获取与原生 APP 一致的离线沙箱探索体验。
                     </div>
                     <Button 
                       icon={<SettingOutlined />}
                       onClick={handleInstallPWA}
-                      type="primary"
+                      style={{ backgroundColor: '#6366f1', borderColor: '#6366f1', color: '#fff' }}
+                      className="hover:bg-[#818cf8] font-bold"
                       block
                     >
-                      添加到主屏幕
+                      安装到主屏幕 / 桌面
                     </Button>
                   </div>
 
-                  <div>
-                    <div className="font-semibold mb-2">导出数据</div>
-                    <div className="text-sm text-gray-500 mb-3">
-                      导出您的所有笔记和学习数据为 JSON 格式
+                  <div className="border-b border-[#1E3E6E]/30 pb-4">
+                    <div className="font-semibold text-white mb-1">一键导出数据 Export JSON</div>
+                    <div className="text-xs text-[#b8bfcc] mb-3">
+                      将您的所有笔记文档、打卡习惯记录、通关成果打包为规范的可携带 JSON 文件。
                     </div>
                     <Button 
                       icon={<ExportOutlined />} 
                       onClick={handleExportData}
+                      style={{ backgroundColor: 'rgba(255,255,255,0.1)', color: '#fff', borderColor: 'rgba(255,255,255,0.2)' }}
+                      className="hover:bg-white/20 font-semibold"
                       block
                     >
-                      导出我的数据
+                      立即导出我的数据
                     </Button>
                   </div>
 
-                  <Divider />
-
                   <div>
-                    <div className="font-semibold mb-2">清除缓存</div>
-                    <div className="text-sm text-gray-500 mb-3">
-                      清除本地缓存数据，不会删除您的笔记和学习记录
+                    <div className="font-semibold text-white mb-1">清除本地缓存 Reset Cache</div>
+                    <div className="text-xs text-[#b8bfcc] mb-3">
+                      清空浏览器 localStorage 等缓存介质，数据本身将不会受损。
                     </div>
                     <Button 
                       icon={<DeleteOutlined />} 
                       onClick={handleClearCache}
+                      danger
+                      style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)', borderColor: 'rgba(239, 68, 68, 0.25)' }}
+                      className="hover:bg-red-600/20 font-semibold"
                       block
                     >
-                      清除缓存
+                      清除浏览器缓存数据
                     </Button>
                   </div>
 
                   <Alert
-                    message="数据安全"
-                    description="导出的数据包含您的所有笔记、学习记录和个人设置。请妥善保管导出的文件。"
+                    message={<span className="text-amber-400 font-semibold">数据备份建议</span>}
+                    description={<span className="text-[#b8bfcc] text-xs">导出的 JSON 记录为标准加密传输包，建议您妥善保管该文件，切勿泄露给第三方。</span>}
                     type="warning"
                     showIcon
+                    style={{ backgroundColor: '#2b2316', border: '1px solid #4a3e21' }}
                   />
                 </Space>
               ),
@@ -515,32 +556,58 @@ export default function SettingModal({ open, onClose }: SettingModalProps) {
       </Modal>
 
       <Modal
-        title="修改密码"
+        title={<span className="text-white font-bold text-lg font-serif">修改账户密码</span>}
         open={changePwdOpen}
         onCancel={() => setChangePwdOpen(false)}
         footer={null}
+        styles={{
+          content: {
+            backgroundColor: '#0C1F3D',
+            border: '1px solid #234272',
+            borderRadius: '24px',
+            color: '#EDF0F5',
+            boxShadow: '0 8px 32px 0 rgba(12, 31, 61, 0.4)',
+          },
+          header: {
+            backgroundColor: '#0C1F3D',
+            color: '#EDF0F5',
+            borderBottom: '1px solid #1E3E6E',
+            paddingBottom: '16px',
+          }
+        }}
+        closeIcon={<span className="text-[#b8bfcc] hover:text-white transition-colors text-base">✕</span>}
       >
-        <Form layout="vertical" onFinish={handleChangePassword}>
+        <Form layout="vertical" onFinish={handleChangePassword} style={{ paddingTop: '16px' }}>
           <Form.Item 
             name="oldPassword" 
-            label="当前密码" 
+            label={<span className="text-[#b8bfcc] font-semibold text-xs uppercase tracking-wider">当前密码</span>} 
             rules={[{ required: true, message: '请输入当前密码' }]}
           > 
-            <Input.Password autoComplete="current-password" size="large" />
+            <Input.Password 
+              autoComplete="current-password" 
+              size="large" 
+              style={{ backgroundColor: '#08172F/50', color: '#fff', borderColor: '#234272' }}
+              className="bg-[#08172F]/50 hover:border-[#6366f1] focus:border-[#6366f1] text-white"
+            />
           </Form.Item>
           <Form.Item 
             name="newPassword" 
-            label="新密码" 
+            label={<span className="text-[#b8bfcc] font-semibold text-xs uppercase tracking-wider">新密码</span>} 
             rules={[
               { required: true, message: '请输入新密码' },
               { min: 6, message: '密码至少6个字符' }
             ]}
           > 
-            <Input.Password autoComplete="new-password" size="large" />
+            <Input.Password 
+              autoComplete="new-password" 
+              size="large" 
+              style={{ backgroundColor: '#08172F/50', color: '#fff', borderColor: '#234272' }}
+              className="bg-[#08172F]/50 hover:border-[#6366f1] focus:border-[#6366f1] text-white"
+            />
           </Form.Item>
           <Form.Item 
             name="confirmPassword" 
-            label="确认新密码" 
+            label={<span className="text-[#b8bfcc] font-semibold text-xs uppercase tracking-wider">确认新密码</span>} 
             dependencies={["newPassword"]} 
             rules={[
               { required: true, message: '请再次输入新密码' },
@@ -554,11 +621,24 @@ export default function SettingModal({ open, onClose }: SettingModalProps) {
               }),
             ]}
           >
-            <Input.Password autoComplete="new-password" size="large" />
+            <Input.Password 
+              autoComplete="new-password" 
+              size="large" 
+              style={{ backgroundColor: '#08172F/50', color: '#fff', borderColor: '#234272' }}
+              className="bg-[#08172F]/50 hover:border-[#6366f1] focus:border-[#6366f1] text-white"
+            />
           </Form.Item>
-          <Form.Item>
-            <Button type="primary" htmlType="submit" loading={pwdLoading} size="large" block>
-              修改密码
+          <Form.Item style={{ marginTop: '24px', marginBottom: 0 }}>
+            <Button 
+              type="primary" 
+              htmlType="submit" 
+              loading={pwdLoading} 
+              size="large" 
+              style={{ backgroundColor: '#6366f1', borderColor: '#6366f1' }}
+              className="hover:bg-[#818cf8] font-bold"
+              block
+            >
+              确认提交并更新密码
             </Button>
           </Form.Item>
         </Form>

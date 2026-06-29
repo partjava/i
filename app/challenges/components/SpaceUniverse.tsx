@@ -338,15 +338,42 @@ export default function SpaceUniverse({ onSelectStage }: Props) {
                   />
                 </div>
 
+                {/* 🪐 已通关关卡外部 3D 环绕星环 (Saturn outer ring) - 放置在外部以防被 overflow-hidden 裁剪 */}
+                {[1, 2, 3].includes(stage.id) && (
+                  <div
+                    className="absolute w-26 h-26 md:w-30 md:h-30 rounded-full pointer-events-none animate-[spin_15s_linear_infinite]"
+                    style={{
+                      border: `2px double ${stage.color}`,
+                      boxShadow: `0 0 15px ${stage.color}, inset 0 0 8px ${stage.color}`,
+                      transform: 'rotateX(75deg) rotateY(15deg)',
+                      opacity: 0.9,
+                      zIndex: 1
+                    }}
+                  />
+                )}
+
                 {/* 🌎 星球本体：大幅放大 */}
                 <div
                   className="w-20 h-20 md:w-24 md:h-24 rounded-full border border-white/10 bg-slate-950 flex items-center justify-center relative overflow-hidden transition duration-300 shadow-2xl"
                   style={{
                     boxShadow: isHovered
-                      ? `0 0 30px ${stage.color}cc, inset 0 0 15px ${stage.color}`
-                      : `0 0 12px ${stage.color}44, inset 0 0 8px rgba(255,255,255,0.05)`
+                      ? `0 0 35px ${stage.color}ff, inset 0 0 15px ${stage.color}`
+                      : `0 0 15px ${stage.color}66, inset 0 0 8px rgba(255,255,255,0.05)`
                   }}
                 >
+                  {/* 🪐 已通关关卡的内部发光特效 */}
+                  {[1, 2, 3].includes(stage.id) && (
+                    <div
+                      className="absolute inset-0 rounded-full pointer-events-none"
+                      style={{
+                        boxShadow: `0 0 25px ${stage.color}, inset 0 0 15px ${stage.color}`,
+                        border: `2px solid ${stage.color}`,
+                        opacity: 0.9,
+                        zIndex: 2,
+                        animation: 'pulse 2s ease-in-out infinite'
+                      }}
+                    />
+                  )}
                   {/* 高清动物图像 */}
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img

@@ -1,11 +1,11 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { useSession } from 'next-auth/react';
+import { useAuth } from '@/app/hooks/useAuth';
 import { usePathname } from 'next/navigation';
 
 export default function SimpleLearningTracker() {
-  const { data: session } = useSession();
+  const { data: session } = useAuth();
   const pathname = usePathname();
   const [seconds, setSeconds] = useState(0);
   const [isActive, setIsActive] = useState(true);

@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿import { NextRequest } from 'next/server'
+﻿﻿﻿﻿﻿﻿﻿﻿import { NextRequest } from 'next/server'
 import { UserService } from '@/app/lib/services/UserService'
 import { handleApiError, createSuccessResponse, createErrorResponse } from '@/app/lib/api/middleware'
 import { validateRequiredFields } from '@/app/lib/api/utils'
@@ -10,12 +10,17 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
 
     // 验证输入
-    const validationError = validateRequiredFields(body, ['name', 'email', 'password'])
+    const validationError = validateRequiredFields(body, ['username', 'name', 'email', 'password'])
     if (validationError) {
       return createErrorResponse(validationError)
     }
 
-    const { name, email, password, bio, location, website, github } = body
+    const { username, name, email, password, bio, location, website, github } = body
+
+    // 验证用户名格式（只能是英文和数字组合）
+    if (!/^[a-zA-Z0-9]+$/.test(username)) {
+      return createErrorResponse('用户名只能是英文和数字的组合')
+    }
 
     // 验证邮箱格式
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -30,6 +35,7 @@ export async function POST(request: NextRequest) {
 
     // 注册用户
     const userId = await userService.registerUser({
+      username,
       name,
       email,
       password,
@@ -41,7 +47,7 @@ export async function POST(request: NextRequest) {
 
     return createSuccessResponse(
       { userId },
-      '注册成功！请使用邮箱登录'
+      '注册成功！请使用用户名或邮箱登录'
     )
 
   } catch (error) {

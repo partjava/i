@@ -64,6 +64,12 @@ logs
 # Build artifacts
 dist/logs/
 
+# Spring Boot Maven 构建产物
+partjava-backend/target/
+
+# Claude 项目配置
+.claude/
+
 # 用户上传的图片
 public/uploads/
 

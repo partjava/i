@@ -10,6 +10,7 @@ export class UserService {
   }
 
   async registerUser(userData: {
+    username: string;
     name: string;
     email: string;
     password: string;
@@ -23,9 +24,15 @@ export class UserService {
       throw new Error('邮箱已被注册');
     }
 
+    const existingUserByUsername = await this.userRepository.findByUsername(userData.username);
+    if (existingUserByUsername) {
+      throw new Error('用户名已被注册');
+    }
+
     const hashedPassword = await bcrypt.hash(userData.password, 12);
 
     return this.userRepository.create({
+      username: userData.username,
       name: userData.name,
       email: userData.email,
       password: hashedPassword,

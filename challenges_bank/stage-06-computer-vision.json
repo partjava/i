@@ -1,0 +1,3504 @@
+[
+  {
+    "slug": "cv-image-filter-kernel",
+    "stageId": 6,
+    "topicName": "计算机视觉",
+    "subtopicName": "图像滤波与增强",
+    "levelIndex": 1,
+    "levelTitle": "图像卷积滤波引擎",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "cv",
+      "convolution",
+      "filter",
+      "kernel"
+    ],
+    "theoryContent": "### 编程挑战：图像卷积滤波引擎\n\n图像滤波通过卷积核（kernel）在图像上滑动，实现模糊、锐化、边缘检测等效果。\n\n实现：\n- `convolve(img, kernel)`: 2D 卷积（步长 1，padding='same'）\n- `gaussian_blur(img, size, sigma)`: 高斯模糊\n- `sharpen(img)`: 锐化（用拉普拉斯核）\n- `sobel_edge_magnitude(img)`: Sobel 梯度幅值图",
+    "latexFormulas": [
+      "(I * K)_{x,y} = \\sum_i \\sum_j I_{x+i, y+j} \\cdot K_{i,j}",
+      "G(x,y) = \\frac{1}{2\\pi\\sigma^2}e^{-\\frac{x^2+y^2}{2\\sigma^2}}"
+    ],
+    "starterCode": "import numpy as np\n\ndef convolve(img: np.ndarray, kernel: np.ndarray) -> np.ndarray:\n    \"\"\"2D 卷积，padding='same'\"\"\"\n    pass\n\ndef gaussian_kernel(size: int, sigma: float) -> np.ndarray:\n    pass\n\ndef gaussian_blur(img: np.ndarray, size: int = 5, sigma: float = 1.0) -> np.ndarray:\n    pass\n\ndef sharpen(img: np.ndarray) -> np.ndarray:\n    \"\"\"用拉普拉斯核锐化\"\"\"\n    pass",
+    "solutionCode": "import numpy as np\n\ndef convolve(img, kernel):\n    kh, kw = kernel.shape\n    h, w = img.shape\n    pad_h, pad_w = kh // 2, kw // 2\n    padded = np.pad(img, ((pad_h, pad_h), (pad_w, pad_w)), mode='constant')\n    out = np.zeros_like(img)\n    for y in range(h):\n        for x in range(w):\n            out[y, x] = np.sum(padded[y:y+kh, x:x+kw] * kernel)\n    return out\n\ndef gaussian_kernel(size, sigma):\n    ax = np.arange(-size//2+1, size//2+1)\n    xx, yy = np.meshgrid(ax, ax)\n    kernel = np.exp(-(xx**2 + yy**2) / (2 * sigma**2))\n    return kernel / np.sum(kernel)\n\ndef gaussian_blur(img, size=5, sigma=1.0):\n    k = gaussian_kernel(size, sigma)\n    return convolve(img, k)\n\ndef sharpen(img):\n    kernel = np.array([[0,-1,0],[-1,5,-1],[0,-1,0]])\n    return convolve(img, kernel)",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "gaussian kernel sums to 1",
+        "input": {
+          "size": 3,
+          "sigma": 1
+        },
+        "expected": true
+      },
+      {
+        "name": "sharpen shape",
+        "input": {
+          "img": [
+            [
+              1,
+              1,
+              1,
+              1,
+              1
+            ],
+            [
+              1,
+              1,
+              1,
+              1,
+              1
+            ],
+            [
+              1,
+              1,
+              1,
+              1,
+              1
+            ],
+            [
+              1,
+              1,
+              1,
+              1,
+              1
+            ],
+            [
+              1,
+              1,
+              1,
+              1,
+              1
+            ]
+          ]
+        },
+        "expected": true
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "高斯模糊的 σ 越大图像越怎样？",
+        "options": [
+          "A. 越模糊",
+          "B. 越清晰",
+          "C. 不变",
+          "D. 出现噪点"
+        ],
+        "answer": 0,
+        "explanation": "σ 越大，高斯核越平滑，滤波后的图像越模糊。"
+      },
+      {
+        "question": "拉普拉斯核（Laplacian）主要用于什么？",
+        "options": [
+          "A. 边缘检测和锐化",
+          "B. 模糊降噪",
+          "C. 颜色变换",
+          "D. 缩放"
+        ],
+        "answer": 0,
+        "explanation": "拉普拉斯算子检测二阶导数过零点，用于边缘检测和锐化。"
+      }
+    ],
+    "thinkingQuestion": "可分离滤波（Separable Filter）如何加速大核卷积？高斯核为什么是可分离的？",
+    "aiPrompt": "评估学生对图像卷积、滤波和核函数的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "cv-canny-edge-detector",
+    "stageId": 6,
+    "topicName": "计算机视觉",
+    "subtopicName": "边缘检测 (Canny)",
+    "levelIndex": 1,
+    "levelTitle": "Canny 边缘检测管道",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "cv",
+      "canny",
+      "edge-detection",
+      "gradient"
+    ],
+    "theoryContent": "### 编程挑战：Canny 边缘检测管道\n\nCanny 边缘检测是最经典的边缘检测算法，分四步：\n1. 高斯模糊降噪\n2. Sobel 计算梯度幅值和方向\n3. 非极大值抑制（NMS）\n4. 双阈值检测 + 滞后连接\n\n实现简化的 Canny 检测器。",
+    "latexFormulas": [
+      "G = \\sqrt{G_x^2 + G_y^2}",
+      "\\theta = \\arctan(G_y / G_x)",
+      "\\text{Edge} = \\text{NMS}(G, \\theta) \\land (G > T_{low}) \\land (\\text{connected to } G > T_{high})"
+    ],
+    "starterCode": "import numpy as np\n\ndef sobel_gradients(img: np.ndarray) -> dict:\n    \"\"\"返回 {\"magnitude\": ..., \"direction\": ...}\"\"\"\n    pass\n\ndef non_max_suppression(magnitude: np.ndarray, direction: np.ndarray) -> np.ndarray:\n    pass\n\ndef double_threshold(nms: np.ndarray, low: float, high: float) -> np.ndarray:\n    \"\"\"0=背景, 1=弱边缘, 2=强边缘\"\"\"\n    pass\n\ndef hysteresis(edges: np.ndarray) -> np.ndarray:\n    \"\"\"弱边缘若连接强边缘则保留\"\"\"\n    pass",
+    "solutionCode": "import numpy as np\n\ndef sobel_gradients(img):\n    Kx = np.array([[-1,0,1],[-2,0,2],[-1,0,1]])\n    Ky = np.array([[-1,-2,-1],[0,0,0],[1,2,1]])\n    h, w = img.shape\n    pad = np.pad(img, 1, mode='constant')\n    Gx, Gy = np.zeros_like(img), np.zeros_like(img)\n    for y in range(h):\n        for x in range(w):\n            region = pad[y:y+3, x:x+3]\n            Gx[y,x] = np.sum(region * Kx)\n            Gy[y,x] = np.sum(region * Ky)\n    mag = np.sqrt(Gx**2 + Gy**2)\n    dir = np.arctan2(Gy, Gx + 1e-10)\n    return {'magnitude': mag, 'direction': dir}\n\ndef non_max_suppression(mag, dir):\n    h, w = mag.shape\n    out = mag.copy()\n    angle = dir * 180 / np.pi\n    angle[angle < 0] += 180\n    for y in range(1, h-1):\n        for x in range(1, w-1):\n            if (15 <= angle[y,x] < 75):  # diagonal\n                neighbors = (mag[y-1,x-1], mag[y+1,x+1])\n            elif (75 <= angle[y,x] < 105):  # vertical\n                neighbors = (mag[y-1,x], mag[y+1,x])\n            elif (105 <= angle[y,x] < 165):  # anti-diagonal\n                neighbors = (mag[y-1,x+1], mag[y+1,x-1])\n            else:  # horizontal\n                neighbors = (mag[y,x-1], mag[y,x+1])\n            if mag[y,x] < max(neighbors):\n                out[y,x] = 0\n    return out\n\ndef double_threshold(nms, low, high):\n    edges = np.zeros_like(nms, dtype=int)\n    edges[nms >= high] = 2\n    edges[(nms >= low) & (nms < high)] = 1\n    return edges\n\ndef hysteresis(edges):\n    h, w = edges.shape\n    result = edges.copy()\n    changed = True\n    while changed:\n        changed = False\n        for y in range(1, h-1):\n            for x in range(1, w-1):\n                if result[y,x] == 1:\n                    if np.any(result[y-1:y+2, x-1:x+2] == 2):\n                        result[y,x] = 2\n                        changed = True\n    result[result == 1] = 0\n    result[result == 2] = 255\n    return result",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "sobel shape",
+        "input": {
+          "img": [
+            [
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1
+            ],
+            [
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1
+            ],
+            [
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1
+            ],
+            [
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1
+            ],
+            [
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1
+            ],
+            [
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1
+            ],
+            [
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1
+            ],
+            [
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1
+            ],
+            [
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1
+            ],
+            [
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1
+            ]
+          ]
+        },
+        "expected": true
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "非极大值抑制的作用是什么？",
+        "options": [
+          "A. 沿梯度方向只保留局部最大点，细化边缘",
+          "B. 降低噪声",
+          "C. 增强边缘",
+          "D. 模糊图像"
+        ],
+        "answer": 0,
+        "explanation": "NMS 沿梯度方向只保留最大值，使边缘细到单像素宽。"
+      },
+      {
+        "question": "双阈值中高于 high 的像素被标记为什么？",
+        "options": [
+          "A. 强边缘，肯定保留",
+          "B. 弱边缘，可能丢弃",
+          "C. 背景",
+          "D. 噪声"
+        ],
+        "answer": 0,
+        "explanation": "高于 high 阈值的像素确定为强边缘，低于 low 的丢弃，介于之间的弱边缘通过连通性决定。"
+      }
+    ],
+    "thinkingQuestion": "Canny 的双阈值参数如何影响检测结果？如何自适应地选择阈值？",
+    "aiPrompt": "评估学生对 Canny 边缘检测、梯度、NMS 和阈值化的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "cv-color-space-converter",
+    "stageId": 6,
+    "topicName": "计算机视觉",
+    "subtopicName": "色彩空间转换",
+    "levelIndex": 1,
+    "levelTitle": "色彩空间转换器",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "cv",
+      "color-space",
+      "rgb",
+      "hsv"
+    ],
+    "theoryContent": "### 编程挑战：色彩空间转换器\n\n不同色彩空间适用于不同任务：RGB 适合显示，HSV 适合颜色分割，灰度适合形态学处理。\n\n实现：\n- `rgb_to_grayscale(img)`: 加权灰度：0.299R + 0.587G + 0.114B\n- `rgb_to_hsv(img)`: RGB 转 HSV\n- `hsv_to_rgb(img)`: HSV 转 RGB\n- `rgb_to_lab_simplified(img)`: 简化版 LAB",
+    "latexFormulas": [
+      "Y = 0.299R + 0.587G + 0.114B",
+      "H = \\arctan\\left(\\frac{\\sqrt{3}(G-B)}{(R-G)+(R-B)}\\right)",
+      "V = \\max(R,G,B)"
+    ],
+    "starterCode": "import numpy as np\n\ndef rgb_to_grayscale(img: np.ndarray) -> np.ndarray:\n    \"\"\"(H,W,3) -> (H,W)\"\"\"\n    pass\n\ndef rgb_to_hsv(img: np.ndarray) -> np.ndarray:\n    \"\"\"RGB [0,1] -> HSV H[0,360), S[0,1], V[0,1]\"\"\"\n    pass\n\ndef hsv_to_rgb(img: np.ndarray) -> np.ndarray:\n    pass",
+    "solutionCode": "import numpy as np\n\ndef rgb_to_grayscale(img):\n    return 0.299 * img[:,:,0] + 0.587 * img[:,:,1] + 0.114 * img[:,:,2]\n\ndef rgb_to_hsv(img):\n    r, g, b = img[:,:,0], img[:,:,1], img[:,:,2]\n    mx, mn = np.maximum(np.maximum(r,g),b), np.minimum(np.minimum(r,g),b)\n    v = mx\n    c = mx - mn\n    s = np.where(mx == 0, 0, c / mx)\n    h = np.zeros_like(v)\n    mask = c != 0\n    idx_r = mask & (mx == r); h[idx_r] = 60 * (((g[idx_r]-b[idx_r])/c[idx_r]) % 6)\n    idx_g = mask & (mx == g); h[idx_g] = 60 * (((b[idx_g]-r[idx_g])/c[idx_g]) + 2)\n    idx_b = mask & (mx == b); h[idx_b] = 60 * (((r[idx_b]-g[idx_b])/c[idx_b]) + 4)\n    h[h < 0] += 360\n    return np.stack([h/360, s, v], axis=-1)\n\ndef hsv_to_rgb(img):\n    h, s, v = img[:,:,0]*360, img[:,:,1], img[:,:,2]\n    c = v * s\n    x = c * (1 - np.abs((h/60) % 2 - 1))\n    m = v - c\n    h6 = h // 60\n    r = np.select([h6==0,h6==1,h6==2,h6==3,h6==4,h6==5],[c,x,0,0,x,c])\n    g = np.select([h6==0,h6==1,h6==2,h6==3,h6==4,h6==5],[x,c,c,x,0,0])\n    b = np.select([h6==0,h6==1,h6==2,h6==3,h6==4,h6==5],[0,0,x,c,c,x])\n    return np.stack([r+m,g+m,b+m], axis=-1)",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "gray shape",
+        "input": {
+          "img": [
+            [
+              [
+                1,
+                2,
+                3
+              ],
+              [
+                1,
+                2,
+                3
+              ],
+              [
+                1,
+                2,
+                3
+              ],
+              [
+                1,
+                2,
+                3
+              ]
+            ],
+            [
+              [
+                1,
+                2,
+                3
+              ],
+              [
+                1,
+                2,
+                3
+              ],
+              [
+                1,
+                2,
+                3
+              ],
+              [
+                1,
+                2,
+                3
+              ]
+            ],
+            [
+              [
+                1,
+                2,
+                3
+              ],
+              [
+                1,
+                2,
+                3
+              ],
+              [
+                1,
+                2,
+                3
+              ],
+              [
+                1,
+                2,
+                3
+              ]
+            ],
+            [
+              [
+                1,
+                2,
+                3
+              ],
+              [
+                1,
+                2,
+                3
+              ],
+              [
+                1,
+                2,
+                3
+              ],
+              [
+                1,
+                2,
+                3
+              ]
+            ]
+          ]
+        },
+        "expected": true
+      },
+      {
+        "name": "rgb_hsv_roundtrip",
+        "input": {
+          "img": [
+            [
+              [
+                0.2,
+                0.4,
+                0.6
+              ]
+            ]
+          ]
+        },
+        "expected": true
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "HSV 色彩空间中 H（色相）的取值范围？",
+        "options": [
+          "A. 0-360°",
+          "B. 0-1",
+          "C. 0-255",
+          "D. 0-100"
+        ],
+        "answer": 0,
+        "explanation": "H 是色相角，取值 0-360°，分别对应红橙黄绿青蓝紫。"
+      },
+      {
+        "question": "用 HSV 做颜色分割比 RGB 好在哪？",
+        "options": [
+          "A. HSV 分离了色相和亮度，不受光照变化影响",
+          "B. HSV 计算更快",
+          "C. RGB 不能做分割",
+          "D. HSV 维度更少"
+        ],
+        "answer": 0,
+        "explanation": "HSV 将颜色信息（H）和亮度（V）分离，在 H 通道上做颜色分割更鲁棒。"
+      }
+    ],
+    "thinkingQuestion": "RGB 到 HSV 转换中，为什么同一颜色在不同光照下的 H 值保持不变，而 RGB 值变化很大？",
+    "aiPrompt": "评估学生对色彩空间、RGB/HSV 转换的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "cv-sift-feature-matcher",
+    "stageId": 6,
+    "topicName": "计算机视觉",
+    "subtopicName": "SIFT特征提取",
+    "levelIndex": 1,
+    "levelTitle": "SIFT 特征检测与匹配模拟器",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "cv",
+      "sift",
+      "feature",
+      "keypoint"
+    ],
+    "theoryContent": "### 编程挑战：SIFT 特征检测与匹配模拟器\n\nSIFT 检测图像中的关键点并提取局部特征描述子，对尺度变化、旋转和光照具有不变性。\n\n本题实现简化版 SIFT 核心思想：\n- detect_keypoints(img): 基于 DoG（Difference of Gaussian）的角点检测\n- compute_descriptor(img, keypoints): 提取局部梯度直方图描述子\n- match_features(desc1, desc2, ratio_thresh): 用最近邻距离比匹配",
+    "latexFormulas": [
+      "D(x,\\sigma) = (G(x,k\\sigma)-G(x,\\sigma)) * I(x)",
+      "\\text{descriptor}_i = \\text{histogram}(\\text{gradient}_{patch_i})"
+    ],
+    "starterCode": "import numpy as np\n\ndef dog_keypoints(img: np.ndarray, sigma: float = 1.0, k: float = 1.6, threshold: float = 0.03) -> list:\n    \"\"\"返回 [(x, y, scale), ...]\"\"\"\n    pass\n\ndef compute_descriptor(img: np.ndarray, keypoints: list, patch_size: int = 8) -> np.ndarray:\n    \"\"\"返回 (N, 128) 描述子矩阵\"\"\"\n    pass\n\ndef match_features(desc1: np.ndarray, desc2: np.ndarray, ratio_thresh: float = 0.75) -> list:\n    \"\"\"返回 [(idx1, idx2, distance), ...]\"\"\"\n    pass",
+    "solutionCode": "import numpy as np\nfrom scipy.ndimage import gaussian_filter\n\ndef dog_keypoints(img, sigma=1.0, k=1.6, threshold=0.03):\n    g1 = gaussian_filter(img, sigma)\n    g2 = gaussian_filter(img, sigma * k)\n    dog = g2 - g1\n    h, w = dog.shape\n    keypoints = []\n    for y in range(1, h-1):\n        for x in range(1, w-1):\n            patch = dog[y-1:y+2, x-1:x+2]\n            if dog[y,x] == np.max(patch) and dog[y,x] > threshold:\n                keypoints.append((x, y, sigma))\n            elif dog[y,x] == np.min(patch) and abs(dog[y,x]) > threshold:\n                keypoints.append((x, y, sigma))\n    return keypoints\n\ndef compute_descriptor(img, keypoints, patch_size=8):\n    descriptors = []\n    for x, y, _ in keypoints:\n        patch = img[max(0,y-patch_size//2):y+patch_size//2+1, max(0,x-patch_size//2):x+patch_size//2+1]\n        if patch.shape != (patch_size, patch_size):\n            continue\n        grad_y, grad_x = np.gradient(patch)\n        mag = np.sqrt(grad_x**2 + grad_y**2)\n        ori = np.arctan2(grad_y, grad_x) * 180 / np.pi\n        hist, _ = np.histogram(ori, bins=8, range=(-180,180), weights=mag)\n        desc = np.tile(hist, 16)[:128]\n        desc = desc / (np.linalg.norm(desc) + 1e-10)\n        descriptors.append(desc)\n    return np.array(descriptors) if descriptors else np.zeros((0,128))\n\ndef match_features(desc1, desc2, ratio_thresh=0.75):\n    matches = []\n    for i in range(len(desc1)):\n        dists = np.linalg.norm(desc2 - desc1[i], axis=1)\n        idx = np.argsort(dists)\n        if len(idx) >= 2 and dists[idx[0]] < ratio_thresh * dists[idx[1]]:\n            matches.append((i, int(idx[0]), float(dists[idx[0]])))\n    return matches",
+    "expectedOutput": "0",
+    "testCases": [
+      {
+        "name": "dog finds keypoints",
+        "input": {
+          "img": [
+            [
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1
+            ],
+            [
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1
+            ],
+            [
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1
+            ],
+            [
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1
+            ],
+            [
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1
+            ],
+            [
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1
+            ],
+            [
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1
+            ],
+            [
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1
+            ],
+            [
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1
+            ],
+            [
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1
+            ],
+            [
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1
+            ],
+            [
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1
+            ],
+            [
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1
+            ],
+            [
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1
+            ],
+            [
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1
+            ],
+            [
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1
+            ],
+            [
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1
+            ],
+            [
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1
+            ],
+            [
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1
+            ],
+            [
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1
+            ],
+            [
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1
+            ],
+            [
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1
+            ],
+            [
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1
+            ],
+            [
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1
+            ],
+            [
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1
+            ],
+            [
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1
+            ],
+            [
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1
+            ],
+            [
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1
+            ],
+            [
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1
+            ],
+            [
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1
+            ],
+            [
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1
+            ],
+            [
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1
+            ]
+          ]
+        },
+        "expected": true
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "SIFT 描述子通常是多少维？",
+        "options": [
+          "A. 128",
+          "B. 64",
+          "C. 256",
+          "D. 512"
+        ],
+        "answer": 0,
+        "explanation": "标准 SIFT 描述子是 128 维：16 个格子 × 8 个方向。"
+      },
+      {
+        "question": "为什么 SIFT 对尺度变化具有不变性？",
+        "options": [
+          "A. 在不同尺度空间检测关键点",
+          "B. 使用了固定大小的窗口",
+          "C. 只检测角点",
+          "D. 不需要尺度信息"
+        ],
+        "answer": 0,
+        "explanation": "SIFT 在 DoG 尺度空间中检测极值点，从而在不同尺度下都能检测到相同特征。"
+      }
+    ],
+    "thinkingQuestion": "深度学习时代的特征匹配（如 SuperPoint + SuperGlue）相比 SIFT 有哪些关键改进？",
+    "aiPrompt": "评估学生对特征检测、描述子和特征匹配的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "cv-cnn-classifier",
+    "stageId": 6,
+    "topicName": "计算机视觉",
+    "subtopicName": "LeNet/ResNet分类",
+    "levelIndex": 1,
+    "levelTitle": "CNN 卷积分类器",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "cv",
+      "cnn",
+      "lenet",
+      "classification"
+    ],
+    "theoryContent": "### 编程挑战：CNN 卷积分类器\n\n卷积神经网络通过局部连接和参数共享提取图像特征。LeNet 是最早的 CNN 之一。\n\n实现简化版 CNN 的前向传播：\n- `conv2d_forward(img, kernel, bias)`: 2D 卷积\n- `max_pool2d(img, pool_size)`: 最大池化\n- `flatten(x)`: 展平\n- `cnn_forward(img, params)`: LeNet-like 前向传播",
+    "latexFormulas": [
+      "(I * K)_{x,y} = \\sum_i \\sum_j I_{sx+i, sy+j} \\cdot K_{i,j}",
+      "\\text{MaxPool}(I)_{x,y} = \\max_{i,j \\in pool} I_{sx+i, sy+j}"
+    ],
+    "starterCode": "import numpy as np\n\ndef conv2d_forward(img: np.ndarray, kernel: np.ndarray, bias: float = 0, stride: int = 1) -> np.ndarray:\n    \"\"\"img: (H,W), kernel: (kh,kw)\"\"\"\n    pass\n\ndef max_pool2d(img: np.ndarray, pool_size: int = 2, stride: int = 2) -> np.ndarray:\n    pass\n\ndef cnn_forward(img: np.ndarray, params: dict) -> np.ndarray:\n    \"\"\"LeNet-like: Conv -> Pool -> Conv -> Pool -> Flatten -> FC\"\"\"\n    pass",
+    "solutionCode": "import numpy as np\n\ndef conv2d_forward(img, kernel, bias=0, stride=1):\n    kh, kw = kernel.shape\n    h, w = img.shape\n    oh, ow = (h-kh)//stride+1, (w-kw)//stride+1\n    out = np.zeros((oh, ow))\n    for y in range(oh):\n        for x in range(ow):\n            out[y,x] = np.sum(img[y*stride:y*stride+kh, x*stride:x*stride+kw] * kernel) + bias\n    return np.maximum(0, out)\n\ndef max_pool2d(img, pool_size=2, stride=2):\n    h, w = img.shape\n    oh, ow = h//stride, w//stride\n    out = np.zeros((oh, ow))\n    for y in range(oh):\n        for x in range(ow):\n            out[y,x] = np.max(img[y*stride:y*stride+pool_size, x*stride:x*stride+pool_size])\n    return out\n\ndef cnn_forward(img, params):\n    x = conv2d_forward(img, params['conv1_w'], params['conv1_b'])\n    x = max_pool2d(x, 2, 2)\n    x = conv2d_forward(x, params['conv2_w'], params['conv2_b'])\n    x = max_pool2d(x, 2, 2)\n    x = x.flatten()\n    x = x @ params['fc_w'] + params['fc_b']\n    return x",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "conv basic",
+        "input": {
+          "img": [
+            [
+              1,
+              1,
+              1,
+              1,
+              1
+            ],
+            [
+              1,
+              1,
+              1,
+              1,
+              1
+            ],
+            [
+              1,
+              1,
+              1,
+              1,
+              1
+            ],
+            [
+              1,
+              1,
+              1,
+              1,
+              1
+            ],
+            [
+              1,
+              1,
+              1,
+              1,
+              1
+            ]
+          ],
+          "kernel": [
+            [
+              1,
+              1,
+              1
+            ],
+            [
+              1,
+              1,
+              1
+            ],
+            [
+              1,
+              1,
+              1
+            ]
+          ]
+        },
+        "expected": true
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "卷积层的参数共享是什么意思？",
+        "options": [
+          "A. 同一卷积核在整个图像上滑动",
+          "B. 所有层共用参数",
+          "C. 不同通道共享参数",
+          "D. 不同批次共享参数"
+        ],
+        "answer": 0,
+        "explanation": "参数共享意味着同一个卷积核应用于图像的所有位置，大大减少了参数量。"
+      },
+      {
+        "question": "Max Pooling 的作用是什么？",
+        "options": [
+          "A. 降采样，保留最显著特征，增加平移不变性",
+          "B. 增加参数量",
+          "C. 提取颜色信息",
+          "D. 归一化"
+        ],
+        "answer": 0,
+        "explanation": "最大池化降低特征图尺寸，保留最显著响应，使模型对微小位移更鲁棒。"
+      }
+    ],
+    "thinkingQuestion": "ResNet 的残差连接（skip connection）解决了深层网络的什么问题？为什么它能训练 100+ 层的网络？",
+    "aiPrompt": "评估学生对 CNN、卷积、池化和参数共享的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "cv-yolo-anchor-detector",
+    "stageId": 6,
+    "topicName": "计算机视觉",
+    "subtopicName": "目标检测 (YOLO)",
+    "levelIndex": 1,
+    "levelTitle": "YOLO 锚框与 IoU 计算器",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "cv",
+      "yolo",
+      "object-detection",
+      "iou"
+    ],
+    "theoryContent": "### 编程挑战：YOLO 锚框与 IoU 计算器\n\n目标检测需要在图像中找到物体的位置和类别。YOLO 将图像分成网格，每个网格预测边界框和类别概率。\n\n实现：\n- `iou(box1, box2)`: 交并比 `[x1,y1,x2,y2]`\n- `nms(boxes, scores, iou_threshold)`: 非极大值抑制\n- `yolo_decode(grid_cell, anchor, offset)`: 解码 YOLO 输出为边界框\n- `map_score(pred_boxes, gt_boxes, iou_thresh)`: 计算 mAP（简化版）",
+    "latexFormulas": [
+      "IoU = \\frac{|A \\cap B|}{|A \\cup B|}",
+      "\\text{Score}_{ij} = P(Obj) \\times IoU_{pred}^{truth}"
+    ],
+    "starterCode": "import numpy as np\n\ndef iou(box1: np.ndarray, box2: np.ndarray) -> float:\n    \"\"\"box: [x1, y1, x2, y2]\"\"\"\n    pass\n\ndef nms(boxes: np.ndarray, scores: np.ndarray, iou_threshold: float) -> list:\n    \"\"\"返回保留的 box 索引\"\"\"\n    pass\n\ndef map_score(pred_boxes: list, gt_boxes: list, iou_thresh: float = 0.5) -> float:\n    pass",
+    "solutionCode": "import numpy as np\n\ndef iou(box1, box2):\n    x1, y1 = max(box1[0], box2[0]), max(box1[1], box2[1])\n    x2, y2 = min(box1[2], box2[2]), min(box1[3], box2[3])\n    inter = max(0, x2-x1) * max(0, y2-y1)\n    area1 = (box1[2]-box1[0]) * (box1[3]-box1[1])\n    area2 = (box2[2]-box2[0]) * (box2[3]-box2[1])\n    union = area1 + area2 - inter\n    return inter / union if union > 0 else 0\n\ndef nms(boxes, scores, iou_threshold=0.5):\n    idx = np.argsort(scores)[::-1]\n    keep = []\n    while len(idx) > 0:\n        i = idx[0]\n        keep.append(i)\n        if len(idx) == 1:\n            break\n        rest = idx[1:]\n        ious = np.array([iou(boxes[i], boxes[j]) for j in rest])\n        idx = rest[ious <= iou_threshold]\n    return keep\n\ndef map_score(pred_boxes, gt_boxes, iou_thresh=0.5):\n    if len(gt_boxes) == 0:\n        return 0.0\n    tp = 0\n    used_gt = set()\n    for pb in sorted(pred_boxes, key=lambda x: -x[4]):\n        best_iou = 0\n        best_gt = -1\n        for gi, gb in enumerate(gt_boxes):\n            if gi not in used_gt:\n                i = iou(pb[:4], gb[:4])\n                if i > best_iou:\n                    best_iou = i\n                    best_gt = gi\n        if best_iou >= iou_thresh:\n            tp += 1\n            used_gt.add(best_gt)\n    return tp / len(gt_boxes) if len(gt_boxes) > 0 else 0",
+    "expectedOutput": "0.5",
+    "testCases": [
+      {
+        "name": "iou of same box",
+        "input": {
+          "box1": [
+            0,
+            0,
+            2,
+            2
+          ],
+          "box2": [
+            0,
+            0,
+            2,
+            2
+          ]
+        },
+        "expected": 1
+      },
+      {
+        "name": "iou no overlap",
+        "input": {
+          "box1": [
+            0,
+            0,
+            1,
+            1
+          ],
+          "box2": [
+            2,
+            2,
+            3,
+            3
+          ]
+        },
+        "expected": 0
+      },
+      {
+        "name": "nms suppresses overlapping",
+        "input": {
+          "boxes": [
+            [
+              0,
+              0,
+              2,
+              2
+            ],
+            [
+              0,
+              0,
+              2,
+              2
+            ],
+            [
+              5,
+              5,
+              7,
+              7
+            ]
+          ],
+          "scores": [
+            0.9,
+            0.1,
+            0.8
+          ]
+        },
+        "expected": 2
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "NMS（非极大值抑制）的作用是什么？",
+        "options": [
+          "A. 去除同一目标的重复检测框",
+          "B. 增加检测框数量",
+          "C. 提高分类准确率",
+          "D. 降低计算量"
+        ],
+        "answer": 0,
+        "explanation": "NMS 按得分排序，移除与最高分框重叠过多的低分框，避免同一目标输出多个检测。"
+      },
+      {
+        "question": "IoU 的阈值越高（如 0.9），对检测结果的什么要求越严格？",
+        "options": [
+          "A. 预测框和真实框的位置重合度",
+          "B. 分类准确率",
+          "C. 检测速度",
+          "D. 置信度分数"
+        ],
+        "answer": 0,
+        "explanation": "高 IoU 阈值要求预测框和真实框高度重合，位置精度要求更严格。"
+      }
+    ],
+    "thinkingQuestion": "YOLO 将检测视为回归问题（直接预测坐标），而两阶段检测器（Faster R-CNN）先生成候选区域再分类。两者的优劣各是什么？",
+    "aiPrompt": "评估学生对目标检测、IoU、NMS 和 mAP 的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "cv-unet-segmenter",
+    "stageId": 6,
+    "topicName": "计算机视觉",
+    "subtopicName": "图像分割 (U-Net)",
+    "levelIndex": 1,
+    "levelTitle": "U-Net 图像分割模拟器",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "cv",
+      "unet",
+      "segmentation",
+      "skip-connection"
+    ],
+    "theoryContent": "### 编程挑战：U-Net 图像分割模拟器\n\nU-Net 采用编码器-解码器架构，通过跳跃连接保留空间信息，在医学图像分割中表现优异。\n\n实现简化版 U-Net 的核心组件：\n- `encoder_block(img, n_filters)`: 卷积 + 池化下采样\n- `decoder_block(features, skip, n_filters)`: 上采样 + 跳跃连接拼接 + 卷积\n- `unet_forward(img, params)`: 简化 U-Net 前向传播\n- `dice_loss(pred, target)`: Dice 损失",
+    "latexFormulas": [
+      "\\text{Dice} = \\frac{2|P \\cap T|}{|P| + |T|}",
+      "\\text{Skip}: x_{decoder} = \\text{Concat}(x_{up}, x_{encoder})"
+    ],
+    "starterCode": "import numpy as np\n\ndef dice_coefficient(pred: np.ndarray, target: np.ndarray) -> float:\n    \"\"\"pred, target 是二值分割图\"\"\"\n    pass\n\ndef dice_loss(pred: np.ndarray, target: np.ndarray) -> float:\n    pass\n\ndef unet_forward(img: np.ndarray, params: dict) -> np.ndarray:\n    \"\"\"简化 U-Net：2层下采样 + 2层上采样 + 1x1 卷积输出\"\"\"\n    pass",
+    "solutionCode": "import numpy as np\n\ndef dice_coefficient(pred, target):\n    smooth = 1e-7\n    intersection = np.sum(pred * target)\n    return float((2 * intersection + smooth) / (np.sum(pred) + np.sum(target) + smooth))\n\ndef dice_loss(pred, target):\n    return 1 - dice_coefficient(pred, target)\n\ndef _conv2d(img, kernel):\n    kh, kw = kernel.shape\n    h, w = img.shape\n    pad_h, pad_w = kh//2, kw//2\n    padded = np.pad(img, ((pad_h,pad_h),(pad_w,pad_w)), mode='constant')\n    out = np.zeros_like(img)\n    for y in range(h):\n        for x in range(w):\n            out[y,x] = np.sum(padded[y:y+kh, x:x+kw] * kernel)\n    return np.maximum(0, out)\n\ndef _upsample2d(img, scale=2):\n    h, w = img.shape\n    out = np.zeros((h*scale, w*scale))\n    for y in range(h):\n        for x in range(w):\n            out[y*scale:(y+1)*scale, x*scale:(x+1)*scale] = img[y,x]\n    return out\n\ndef unet_forward(img, params):\n    # Encoder\n    e1 = _conv2d(img, params['e1'])\n    p1 = e1[::2, ::2]\n    e2 = _conv2d(p1, params['e2'])\n    p2 = e2[::2, ::2]\n    # Bottleneck\n    b = _conv2d(p2, params['b'])\n    # Decoder\n    u1 = _upsample2d(b)\n    u1 = u1[:e2.shape[0], :e2.shape[1]]\n    c1 = u1 + e2\n    d1 = _conv2d(c1, params['d1'])\n    u2 = _upsample2d(d1)\n    u2 = u2[:e1.shape[0], :e1.shape[1]]\n    c2 = u2 + e1\n    d2 = _conv2d(c2, params['d2'])\n    # Output\n    return _conv2d(d2, params['out'])",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "dice identical",
+        "input": {
+          "pred": [
+            [
+              1,
+              1,
+              1,
+              1
+            ],
+            [
+              1,
+              1,
+              1,
+              1
+            ],
+            [
+              1,
+              1,
+              1,
+              1
+            ],
+            [
+              1,
+              1,
+              1,
+              1
+            ]
+          ],
+          "target": [
+            [
+              1,
+              1,
+              1,
+              1
+            ],
+            [
+              1,
+              1,
+              1,
+              1
+            ],
+            [
+              1,
+              1,
+              1,
+              1
+            ],
+            [
+              1,
+              1,
+              1,
+              1
+            ]
+          ]
+        },
+        "expected": 1
+      },
+      {
+        "name": "dice no overlap",
+        "input": {
+          "pred": [
+            [
+              1,
+              1,
+              1,
+              1
+            ],
+            [
+              1,
+              1,
+              1,
+              1
+            ],
+            [
+              1,
+              1,
+              1,
+              1
+            ],
+            [
+              1,
+              1,
+              1,
+              1
+            ]
+          ],
+          "target": [
+            [
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0
+            ]
+          ]
+        },
+        "expected": 0
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "U-Net 跳跃连接的作用是什么？",
+        "options": [
+          "A. 将编码器的空间信息传递到解码器",
+          "B. 加深网络",
+          "C. 增加参数",
+          "D. 加速训练"
+        ],
+        "answer": 0,
+        "explanation": "跳跃连接将下采样过程中的高分辨率特征图拼接到对应的上采样层，保留边界细节。"
+      },
+      {
+        "question": "Dice 损失的取值范围？",
+        "options": [
+          "A. [0, 1]，0 最好 1 最差",
+          "B. [-1, 1]",
+          "C. [0, ∞)",
+          "D. [0, 1]，1 最好 0 最差"
+        ],
+        "answer": 0,
+        "explanation": "Dice 系数范围 [0,1]，Dice Loss = 1 - Dice，0 表示完美分割。"
+      }
+    ],
+    "thinkingQuestion": "U-Net 对于小目标和目标边界的分割质量通常不同。你会如何改进 U-Net 来提升小目标的分割效果？",
+    "aiPrompt": "评估学生对图像分割、U-Net、Dice 损失和跳跃连接的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "cv-sam-prompt-segmenter",
+    "stageId": 6,
+    "topicName": "计算机视觉",
+    "subtopicName": "SAM分割大模型",
+    "levelIndex": 1,
+    "levelTitle": "SAM 提示分割模拟器",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "cv",
+      "sam",
+      "segment-anything",
+      "prompt"
+    ],
+    "theoryContent": "### 编程挑战：SAM 提示分割模拟器\n\nSAM（Segment Anything Model）是一个提示分割大模型。给定一张图像和一个提示（点、框或掩码），SAM 输出分割掩码。\n\n本题实现 SAM 的简化核心逻辑：\n- point_to_mask(mask_logits, point, label): 根据正负点提示调整掩码\n- box_to_mask(img, box): 根据边界框生成初始掩码\n- iou_scores(masks): 计算不同掩码之间的 IoU 矩阵，用于 NMS\n- ensemble_masks(masks, weights): 加权集成多个掩码",
+    "latexFormulas": [
+      "\\text{Mask} = \\text{Decoder}(\\text{ImageEmbedding}, \\text{Prompt})",
+      "M_{ensemble} = \\sum w_i \\cdot M_i / \\sum w_i"
+    ],
+    "starterCode": "import numpy as np\n\ndef point_to_mask(mask_logits: np.ndarray, point: tuple, label: int, radius: int = 5) -> np.ndarray:\n    \"\"\"\n    用正/负点提示修正掩码。\n    label=1: 该点应为前景，增加该区域 logits\n    label=0: 该点应为背景，减少该区域 logits\n    mask_logits: (H,W)\n    返回修正后 logits。\n    \"\"\"\n    pass\n\ndef box_to_mask(img: np.ndarray, box: tuple) -> np.ndarray:\n    \"\"\"\n    box: (x1, y1, x2, y2)\n    初始化为框内填充 1，框外为 0 的布尔掩码，再模糊边缘。\n    \"\"\"\n    pass\n\ndef iou_matrix(masks: np.ndarray) -> np.ndarray:\n    \"\"\"masks: (N,H,W)，返回 (N,N) IoU 矩阵\"\"\"\n    pass\n\ndef ensemble_masks(masks: np.ndarray, weights: np.ndarray) -> np.ndarray:\n    \"\"\"加权集成，返回 (H,W) 概率图\"\"\"\n    pass",
+    "solutionCode": "import numpy as np\n\ndef point_to_mask(mask_logits, point, label, radius=5):\n    x, y = point\n    h, w = mask_logits.shape\n    result = mask_logits.copy()\n    for dy in range(-radius, radius+1):\n        for dx in range(-radius, radius+1):\n            py, px = y+dy, x+dx\n            if 0 <= py < h and 0 <= px < w:\n                dist = np.sqrt(dy**2 + dx**2)\n                if dist <= radius:\n                    val = 10 * (1 - dist/radius)\n                    if label == 1:\n                        result[py,px] += val\n                    else:\n                        result[py,px] -= val\n    return result\n\ndef box_to_mask(img, box):\n    x1, y1, x2, y2 = map(int, box)\n    mask = np.zeros(img.shape[:2])\n    mask[y1:y2, x1:x2] = 1\n    from scipy.ndimage import gaussian_filter\n    return gaussian_filter(mask, sigma=3)\n\ndef iou_matrix(masks):\n    n = len(masks)\n    mat = np.eye(n)\n    for i in range(n):\n        for j in range(i+1, n):\n            inter = np.sum(masks[i] * masks[j])\n            union = np.sum(np.clip(masks[i] + masks[j], 0, 1))\n            iou = inter / union if union > 0 else 0\n            mat[i,j] = mat[j,i] = iou\n    return mat\n\ndef ensemble_masks(masks, weights):\n    weights = weights / np.sum(weights)\n    return np.sum(masks * weights[:, None, None], axis=0)",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "box mask within bounds",
+        "input": {
+          "img": [
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          ],
+          "box": 15
+        },
+        "expected": true
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "SAM 的'提示分割'是什么意思？",
+        "options": [
+          "A. 用户通过点、框等交互提示生成分割",
+          "B. 自动分割所有物体",
+          "C. 只能分割特定类别",
+          "D. 不需要输入图像"
+        ],
+        "answer": 0,
+        "explanation": "SAM 支持交互式提示（点、框、掩码），根据提示灵活分割。"
+      },
+      {
+        "question": "SAM 属于什么类型的学习范式？",
+        "options": [
+          "A. 提示工程 + 基础模型",
+          "B. 传统监督学习",
+          "C. 无监督聚类",
+          "D. 强化学习"
+        ],
+        "answer": 0,
+        "explanation": "SAM 是一个基础模型（Foundation Model），通过提示工程适应各种分割任务。"
+      }
+    ],
+    "thinkingQuestion": "SAM 的零样本分割能力来自什么？它的训练数据（SA-1B 数据集）规模对于模型能力有什么影响？",
+    "aiPrompt": "评估学生对 SAM、提示分割、基础模型的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "cv-histogram-l2",
+    "stageId": 6,
+    "topicName": "计算机视觉",
+    "subtopicName": "图像滤波与增强",
+    "levelIndex": 2,
+    "levelTitle": "直方图均衡化",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "图像滤波与增强"
+    ],
+    "theoryContent": "实现直方图均衡化：计算累积分布函数 CDF 并映射像素值，增强对比度。",
+    "latexFormulas": [
+      "CDF(v) = sum P(i)",
+      "v' = round(CDF(v)*255)"
+    ],
+    "starterCode": "import numpy as np\ndef histogram_equalize(img):\n    \"\"\"返回 uint8 均衡化图像\"\"\"\n    pass",
+    "solutionCode": "import numpy as np\ndef histogram_equalize(img):\n    hist,_=np.histogram(img.flatten(),256,(0,255))\n    c=hist.cumsum();cn=c*255/c[-1]\n    return np.interp(img.flatten(),np.arange(256),cn).reshape(img.shape).astype(np.uint8)",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "verify shape",
+        "input": {
+          "img": [
+            [
+              76,
+              113,
+              64,
+              192,
+              254,
+              174,
+              169,
+              224
+            ],
+            [
+              71,
+              10,
+              165,
+              231,
+              120,
+              188,
+              221,
+              193
+            ],
+            [
+              77,
+              194,
+              21,
+              146,
+              138,
+              13,
+              205,
+              178
+            ],
+            [
+              200,
+              4,
+              130,
+              205,
+              180,
+              104,
+              121,
+              238
+            ],
+            [
+              54,
+              227,
+              71,
+              127,
+              194,
+              200,
+              22,
+              159
+            ],
+            [
+              16,
+              67,
+              60,
+              16,
+              137,
+              130,
+              57,
+              208
+            ],
+            [
+              85,
+              49,
+              38,
+              167,
+              225,
+              146,
+              195,
+              83
+            ],
+            [
+              172,
+              3,
+              69,
+              132,
+              81,
+              154,
+              157,
+              103
+            ]
+          ]
+        },
+        "expected": true
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "均衡化后的累积直方图近似什么形状？",
+        "options": [
+          "A. 直线",
+          "B. 阶梯",
+          "C. 指数",
+          "D. 正弦"
+        ],
+        "answer": 0,
+        "explanation": "像素均匀分布时累积直方图为直线。"
+      }
+    ],
+    "thinkingQuestion": "CLAHE 和普通直方图均衡化的区别？",
+    "aiPrompt": "评估学生对直方图均衡化的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "cv-hough-l2",
+    "stageId": 6,
+    "topicName": "计算机视觉",
+    "subtopicName": "边缘检测 (Canny)",
+    "levelIndex": 2,
+    "levelTitle": "霍夫变换直线检测",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "边缘检测 (Canny)"
+    ],
+    "theoryContent": "用霍夫变换检测直线：r=xcos+ysin，实现累加器投票和峰值检测。",
+    "latexFormulas": [
+      "r = x*cos(theta) + y*sin(theta)",
+      "H[theta,r] += 1"
+    ],
+    "starterCode": "import numpy as np\ndef hough_lines(edges, theta_res, rho_res): pass\ndef find_peaks(H, threshold): pass",
+    "solutionCode": "import numpy as np\ndef hough_lines(edges, tr=1, rr=1):\n    thetas=np.deg2rad(np.arange(-90,90,tr))\n    h,w=edges.shape;d=int(np.sqrt(h*h+w*w))\n    rhos=np.arange(-d,d,rr);H=np.zeros((len(thetas),len(rhos)),dtype=int)\n    ys,xs=np.where(edges>0)\n    for y,x in zip(ys,xs):\n        for ti,t in enumerate(thetas):\n            r=x*np.cos(t)+y*np.sin(t);ri=int((r+d)/rr)\n            if 0<=ri<len(rhos):H[ti,ri]+=1\n    return H,thetas,rhos\ndef find_peaks(H,th=100):return np.argwhere(H>th)",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "hough basic",
+        "input": {
+          "edges": 0,
+          "theta_res": 1,
+          "rho_res": 1
+        },
+        "expected": true
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "边缘点在参数空间对应什么？",
+        "options": [
+          "A. 正弦曲线",
+          "B. 直线",
+          "C. 点",
+          "D. 圆"
+        ],
+        "answer": 0,
+        "explanation": "图像空间的点对应参数空间的正弦曲线。"
+      }
+    ],
+    "thinkingQuestion": "霍夫变换复杂度 O(边数*theta_bins)，如何加速？",
+    "aiPrompt": "评估学生对霍夫变换的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "cv-color-transfer-l2",
+    "stageId": 6,
+    "topicName": "计算机视觉",
+    "subtopicName": "色彩空间转换",
+    "levelIndex": 2,
+    "levelTitle": "颜色迁移算法",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "色彩空间转换"
+    ],
+    "theoryContent": "将源图颜色迁移到目标图：RGB->LAB，统计匹配各个通道的均值和方差。",
+    "latexFormulas": [
+      "L_out = (L_src-mu_src)*std_tgt/std_src+mu_tgt"
+    ],
+    "starterCode": "import numpy as np\ndef color_transfer(source, target):\n    \"\"\"返回迁移后的图像\"\"\"\n    pass",
+    "solutionCode": "from skimage.color import rgb2lab,lab2rgb\nimport numpy as np\ndef color_transfer(src,tgt):\n    s=rgb2lab(src);t=rgb2lab(tgt);r=np.zeros_like(s)\n    for c in range(3):\n        sm,ss=np.mean(s[:,:,c]),np.std(s[:,:,c])\n        tm,ts=np.mean(t[:,:,c]),np.std(t[:,:,c])\n        r[:,:,c]=ts*(s[:,:,c]-sm)/ss+tm\n    return lab2rgb(np.clip(r,0,100))",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "transfer shape",
+        "input": {
+          "source": [
+            [
+              0.7851057592662274,
+              0.3923220151585842,
+              0.20705277918518084,
+              0.9607694915513032,
+              0.10307071851118743,
+              0.021867980277412435,
+              0.9357513116967657,
+              0.8585204118058796
+            ],
+            [
+              0.5333753511109258,
+              0.5201695963720225,
+              0.007700568229098925,
+              0.8727972934695558,
+              0.6385388960482683,
+              0.903569293805982,
+              0.48695960294271545,
+              0.038045951289173985
+            ],
+            [
+              0.24222019831015928,
+              0.48147586592926195,
+              0.9244981603331999,
+              0.21187110330456882,
+              0.012393575966732406,
+              0.31872622879932555,
+              0.31073011328425104,
+              0.7786390600975064
+            ],
+            [
+              0.8620825206923362,
+              0.10268342572982792,
+              0.7330285894561765,
+              0.4156930202229865,
+              0.862042790925724,
+              0.737814073518541,
+              0.18440214520432074,
+              0.8392314040139572
+            ],
+            [
+              0.847036734784059,
+              0.923379765070665,
+              0.6561064213810166,
+              0.9442430409504143,
+              0.11195436627599409,
+              0.9740671013949171,
+              0.7745458054081114,
+              0.8107055354024495
+            ],
+            [
+              0.4413500396741732,
+              0.7303800608721838,
+              0.15259932591057201,
+              0.11127835586100443,
+              0.3020032002751485,
+              0.2174481630903502,
+              0.08201806900187258,
+              0.10307863038680254
+            ],
+            [
+              0.758309340448182,
+              0.3010811308924475,
+              0.07796449809043793,
+              0.6331526026783265,
+              0.27972864662139285,
+              0.7181407596551876,
+              0.2742911234742007,
+              0.5912797929223066
+            ],
+            [
+              0.4525850576848742,
+              0.6314093196542199,
+              0.892237211609133,
+              0.11371735893968471,
+              0.5670857915425294,
+              0.6136398395317035,
+              0.03959071920247048,
+              0.22898682098404
+            ]
+          ],
+          "target": [
+            [
+              0.18372961015606748,
+              0.4336221679110308,
+              0.3758222014821069,
+              0.8707954668648954,
+              0.4689386816854948,
+              0.07186886133696757,
+              0.4018409311367732,
+              0.2949636276907006
+            ],
+            [
+              0.6299348529988702,
+              0.9432485232702852,
+              0.1427723712827733,
+              0.20228074781476746,
+              0.5625408325699333,
+              0.7314254161699778,
+              0.8811939706391108,
+              0.8746947670598342
+            ],
+            [
+              0.5471227999918322,
+              0.8144415037328847,
+              0.5849108443719184,
+              0.7048324279827347,
+              0.551735362470523,
+              0.3336474207327804,
+              0.774028911462235,
+              0.913710770502032
+            ],
+            [
+              0.06398275479849791,
+              0.21149144306752854,
+              0.13113284475661224,
+              0.20542086807083138,
+              0.5654514458856126,
+              0.47782264557802256,
+              0.761078257240198,
+              0.4999427532183067
+            ],
+            [
+              0.660797962919627,
+              0.012935380265626018,
+              0.4463455491465069,
+              0.07407503015318362,
+              0.16542390497522574,
+              0.652387574164885,
+              0.4903021980422919,
+              0.6516391617898412
+            ],
+            [
+              0.16837047800002458,
+              0.6662290279168397,
+              0.42011486464487713,
+              0.5858934321370672,
+              0.5925914541691433,
+              0.4868833417666387,
+              0.6783961387033854,
+              0.5120124007160773
+            ],
+            [
+              0.4929154294509597,
+              0.6871267942978969,
+              0.6159386990593583,
+              0.7667609406704146,
+              0.1253377767031285,
+              0.633708390593879,
+              0.04359549704126886,
+              0.3719830467193146
+            ],
+            [
+              0.042274400011595104,
+              0.8203737176592132,
+              0.8680301936713866,
+              0.1239647956373846,
+              0.3261213986984599,
+              0.2840709707095319,
+              0.5619379971748795,
+              0.20651685620738158
+            ]
+          ]
+        },
+        "expected": true
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "LAB 相比 RGB 做颜色迁移的优势？",
+        "options": [
+          "A. L 分离亮度,A/B 分离颜色",
+          "B. LAB 更快",
+          "C. RGB 不支持运算",
+          "D. 无优势"
+        ],
+        "answer": 0,
+        "explanation": "LAB 分离亮度和颜色，可在颜色通道独立操作。"
+      }
+    ],
+    "thinkingQuestion": "Reinhard 颜色迁移和直方图匹配的区别？",
+    "aiPrompt": "评估学生对色彩空间、颜色迁移的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "cv-harris-l2",
+    "stageId": 6,
+    "topicName": "计算机视觉",
+    "subtopicName": "SIFT特征提取",
+    "levelIndex": 2,
+    "levelTitle": "Harris 角点检测",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "SIFT特征提取"
+    ],
+    "theoryContent": "Harris 角点检测用自相关矩阵 M 判断角点：R=det(M)-k*tr(M)^2。",
+    "latexFormulas": [
+      "R = det(M) - k*tr(M)^2",
+      "R>0 角点,R<0 边缘"
+    ],
+    "starterCode": "import numpy as np\ndef harris_corner(img, k, threshold): pass",
+    "solutionCode": "import numpy as np\nfrom scipy.ndimage import sobel,gaussian_filter\ndef harris_corner(img,k=0.04,th=1e-6):\n    Ix=sobel(img,axis=1);Iy=sobel(img,axis=0)\n    Ixx=gaussian_filter(Ix*Ix,1);Ixy=gaussian_filter(Ix*Iy,1);Iyy=gaussian_filter(Iy*Iy,1)\n    R=Ixx*Iyy-Ixy*Ixy-k*(Ixx+Iyy)**2;R[R<th]=0;return R",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "harris shape",
+        "input": {
+          "img": [
+            [
+              0.5271934900666098,
+              0.7993782386568848,
+              0.3229330894422535,
+              0.32923517109746436,
+              0.05005026338657226,
+              0.2934243769944509,
+              0.07662014119074034,
+              0.08078197212069194
+            ],
+            [
+              0.7816712628861651,
+              0.24438224836558686,
+              0.6049471405747635,
+              0.9757965047021717,
+              0.8000239952788386,
+              0.20421207010206865,
+              0.9098087625464415,
+              0.5059174733135374
+            ],
+            [
+              0.5889774559436343,
+              0.19865359627518253,
+              0.39367851653787644,
+              0.8941497443961433,
+              0.5717420663915143,
+              0.7673588631638875,
+              0.39323523013293027,
+              0.17089659506200672
+            ],
+            [
+              0.4979436623069273,
+              0.22599749877565367,
+              0.2066710527497193,
+              0.14702894192517824,
+              0.764458039295915,
+              0.9782937897274517,
+              0.015773325131414273,
+              0.8820418267092638
+            ],
+            [
+              0.6866629468523799,
+              0.2042297694353823,
+              0.24580975129433735,
+              0.907114253666145,
+              0.011082151911839144,
+              0.9277620350171749,
+              0.5474926696617426,
+              0.862171261161814
+            ],
+            [
+              0.9509131479719066,
+              0.16812920794991637,
+              0.3694180878661404,
+              0.31968249581069275,
+              0.5511493097810809,
+              0.5975628216822848,
+              0.7883716654965616,
+              0.28449870366530394
+            ],
+            [
+              0.4719104737906641,
+              0.9582624162053459,
+              0.11562819034993521,
+              0.663607031651184,
+              0.28723633194000997,
+              0.5317541846508045,
+              0.8708688166670546,
+              0.6798641648418897
+            ],
+            [
+              0.42423178086867797,
+              0.4321748820121183,
+              0.7636656469092165,
+              0.308545456791931,
+              0.34025655435113666,
+              0.3257950891285901,
+              0.627090054077998,
+              0.1365806838025323
+            ]
+          ],
+          "k": 0.04,
+          "threshold": 0.000001
+        },
+        "expected": true
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "R>0 表示什么？",
+        "options": [
+          "A. 角点",
+          "B. 边缘",
+          "C. 平坦",
+          "D. 噪声"
+        ],
+        "answer": 0,
+        "explanation": "Harris 响应 R>0 为角点。"
+      }
+    ],
+    "thinkingQuestion": "Harris 对尺度变化敏感吗？SIFT 如何解决尺度不变性？",
+    "aiPrompt": "评估学生对角点检测的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "cv-resnet-l2",
+    "stageId": 6,
+    "topicName": "计算机视觉",
+    "subtopicName": "LeNet/ResNet分类",
+    "levelIndex": 2,
+    "levelTitle": "ResNet 残差块",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "LeNet/ResNet分类"
+    ],
+    "theoryContent": "实现 ResNet 残差块 y=F(x)+x。包含 conv->BN->ReLU->conv 和 shortcut 连接。",
+    "latexFormulas": [
+      "y = relu(conv2(relu(bn(conv1(x)))) + x)"
+    ],
+    "starterCode": "import numpy as np\ndef residual_block(x, W1, W2): pass",
+    "solutionCode": "import numpy as np\ndef relu(x):return np.maximum(0,x)\ndef residual_block(x,W1,W2):\n    F=relu(conv2d(x,W1));F=conv2d(F,W2)\n    return relu(F+x)\ndef conv2d(x,W,stride=1):\n    co,ci,h,w=W.shape;p=h//2;x=np.pad(x,((0,0),(0,0),(p,p),(p,p)))\n    n,_,H,W=x.shape;oh=(H-h)//stride+1;ow=(W-w)//stride+1;out=np.zeros((n,co,oh,ow))\n    for i in range(oh):\n        for j in range(ow):\n            out[:,:,i,j]=np.sum(x[:,:,:,i*stride:i*stride+h,j*stride:j*stride+w][:,:,:,:,None]*W[None,:,:,:,:],axis=(2,3,4))\n    return out",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "res block shape",
+        "input": {
+          "x": [
+            [
+              0.8777726077467842,
+              0.10978035669942443,
+              0.30953391807775654,
+              0.40768316177633546,
+              0.25779716978761114,
+              0.6784450430670108,
+              0.45912463676571447,
+              0.7182823940067131
+            ],
+            [
+              0.6350461696172842,
+              0.9726773409389815,
+              0.34519589124452144,
+              0.24705965741439928,
+              0.1500381534157924,
+              0.2595305867275759,
+              0.19369796922271476,
+              0.32423283201658837
+            ],
+            [
+              0.2529542606051929,
+              0.7248837548841225,
+              0.8891707784217262,
+              0.9836011687224087,
+              0.6321490675790218,
+              0.5040805167855824,
+              0.8286405750517885,
+              0.6496460379089164
+            ],
+            [
+              0.7556064962440021,
+              0.5115183469946551,
+              0.04261044108186107,
+              0.1569441110902976,
+              0.02864624819031958,
+              0.0755865853890525,
+              0.42587166700308465,
+              0.5510545909885305
+            ],
+            [
+              0.07539796240089092,
+              0.3959302879071547,
+              0.3579918358946752,
+              0.6453470717162726,
+              0.4255129781053679,
+              0.8513741568473332,
+              0.6123072103904683,
+              0.6985772810409481
+            ],
+            [
+              0.12337818066679751,
+              0.8413698049918696,
+              0.3382653735632166,
+              0.5789926153448806,
+              0.06130597603906529,
+              0.9807258102118133,
+              0.931929600519517,
+              0.21255709412803214
+            ],
+            [
+              0.4651007279325039,
+              0.46774377989070937,
+              0.019816639710238615,
+              0.7779641996679227,
+              0.46471771076495205,
+              0.6952426434220409,
+              0.9475487720305626,
+              0.11883489648281897
+            ],
+            [
+              0.42972296615219574,
+              0.8927323319431275,
+              0.2245140913615571,
+              0.89276364142936,
+              0.06629416954297285,
+              0.9430871033598425,
+              0.9841479185995561,
+              0.9776496816631142
+            ]
+          ],
+          "W1": [
+            [
+              0.22252048383808454,
+              0.9983555222248774,
+              0.4757632904963667,
+              0.5726740456978117,
+              0.5614661448290694,
+              0.8968938555265256,
+              0.6927786895524806,
+              0.010249893349642214
+            ],
+            [
+              0.7263183641299868,
+              0.14077849658120623,
+              0.15987094728743534,
+              0.21470668635493229,
+              0.9487522751936392,
+              0.33901853248221925,
+              0.401624531936317,
+              0.9872618674492
+            ],
+            [
+              0.5449993693777428,
+              0.7051672654884662,
+              0.14833976094317491,
+              0.9445109817743269,
+              0.975817344147121,
+              0.5004389919787662,
+              0.19931176809367246,
+              0.9211978133700618
+            ],
+            [
+              0.3744671973563489,
+              0.2157552853267124,
+              0.7077048857658623,
+              0.8008336197030346,
+              0.3653767284233942,
+              0.34319195492047805,
+              0.6842510278678424,
+              0.16350493634575392
+            ],
+            [
+              0.041961020000261584,
+              0.28868930530936043,
+              0.1278949249097443,
+              0.9667340061312724,
+              0.8771289844548014,
+              0.506949137065076,
+              0.336146499614981,
+              0.8925781488846014
+            ],
+            [
+              0.28174090137645535,
+              0.9339026527964287,
+              0.7109521707547013,
+              0.7173849263680114,
+              0.6913368335754937,
+              0.8206096688782094,
+              0.3190723896377812,
+              0.3008512029065826
+            ],
+            [
+              0.08028090379852171,
+              0.8483269813623784,
+              0.07077740119835796,
+              0.17074643099464648,
+              0.7096373494762938,
+              0.23302348225093317,
+              0.1192752795854124,
+              0.3070389533926783
+            ],
+            [
+              0.7121790527666869,
+              0.9683464836247515,
+              0.15388910789935983,
+              0.8950528156175248,
+              0.981565025170893,
+              0.12996819574687923,
+              0.17658519335693446,
+              0.6105527357360536
+            ]
+          ],
+          "W2": [
+            [
+              0.741288095985887,
+              0.9358812063588928,
+              0.0033718731941978497,
+              0.15012500116418215,
+              0.25095288760357914,
+              0.06565087596874641,
+              0.0031142608427001672,
+              0.05952705407847558
+            ],
+            [
+              0.9531241636991907,
+              0.12834153887587352,
+              0.935662297828384,
+              0.628814749257874,
+              0.32609964722168905,
+              0.5318775752823353,
+              0.6022960252050478,
+              0.3911309792748887
+            ],
+            [
+              0.08674572787585544,
+              0.9387066971302374,
+              0.20417831197589775,
+              0.3332919559196592,
+              0.41830087174170694,
+              0.2565382122615527,
+              0.6454104853331921,
+              0.6051946275321816
+            ],
+            [
+              0.5844827492094387,
+              0.7879639598370973,
+              0.7355114074070963,
+              0.5431473250390679,
+              0.09430732549907272,
+              0.9915355960733543,
+              0.747389239559801,
+              0.3134375897879176
+            ],
+            [
+              0.6461891280583076,
+              0.8459434722870924,
+              0.612095460908803,
+              0.7675774694696331,
+              0.2866823755495367,
+              0.5656405826273776,
+              0.08023140446256205,
+              0.39128397424920713
+            ],
+            [
+              0.48726606932976346,
+              0.8964314451056654,
+              0.0321477139284958,
+              0.5753914704746315,
+              0.3466921764021702,
+              0.28358763599929415,
+              0.7205265351468022,
+              0.8600951641603012
+            ],
+            [
+              0.470281375687031,
+              0.7321703579013414,
+              0.3433787324103328,
+              0.2728628708610903,
+              0.04457844483212092,
+              0.4507471610980094,
+              0.09421674910844446,
+              0.9671364561305056
+            ],
+            [
+              0.6264666690999448,
+              0.44727875546715423,
+              0.6395993760604834,
+              0.19768773189541267,
+              0.7881930288279835,
+              0.9946967391163275,
+              0.988908861898925,
+              0.8505402627348801
+            ]
+          ]
+        },
+        "expected": true
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "残差连接解决什么问题？",
+        "options": [
+          "A. 梯度消失",
+          "B. 过拟合",
+          "C. 推理慢",
+          "D. 参数量大"
+        ],
+        "answer": 0,
+        "explanation": "残差连接让梯度直接通过 shortcut 回传，缓解梯度消失。"
+      }
+    ],
+    "thinkingQuestion": "shortcut 在通道数不匹配时需要怎么处理？",
+    "aiPrompt": "评估学生对 ResNet 的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "cv-yolo-loss-l2",
+    "stageId": 6,
+    "topicName": "计算机视觉",
+    "subtopicName": "目标检测 (YOLO)",
+    "levelIndex": 2,
+    "levelTitle": "YOLO 损失函数",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "目标检测 (YOLO)"
+    ],
+    "theoryContent": "实现 YOLO 损失：坐标损失、置信度损失、分类损失。",
+    "latexFormulas": [
+      "L = lambda*L_coord + L_conf + L_cls"
+    ],
+    "starterCode": "import numpy as np\ndef yolo_loss(pred_box,true_box,pred_conf,true_conf,pred_cls,true_cls,lambda_c=5): pass",
+    "solutionCode": "import numpy as np\ndef yolo_loss(pb,tb,pc,tc,pcl,tcl,lc=5):\n    pb,tb=np.array(pb),np.array(tb)\n    cl=lc*np.sum((pb[:,:2]-tb[:,:2])**2)\n    wh=lc*np.sum((np.sqrt(np.abs(pb[:,2:]+1e-6))-np.sqrt(tb[:,2:]+1e-6))**2)\n    conf=np.sum((pc-tc)**2);cls=np.sum((np.array(pcl)-np.array(tcl))**2)\n    return round(float(cl+wh+conf+cls),4)",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "zero loss",
+        "input": {
+          "pb": [
+            [
+              0.5,
+              0.5,
+              0.2,
+              0.3
+            ]
+          ],
+          "tb": [
+            [
+              0.5,
+              0.5,
+              0.2,
+              0.3
+            ]
+          ],
+          "pc": [
+            1
+          ],
+          "tc": [
+            1
+          ],
+          "pcl": [
+            [
+              0,
+              1,
+              0
+            ]
+          ],
+          "tcl": [
+            [
+              0,
+              1,
+              0
+            ]
+          ]
+        },
+        "expected": 0
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "对 w,h 用平方根的原因？",
+        "options": [
+          "A. 均衡大框和小框的误差贡献",
+          "B. 加速",
+          "C. 平滑",
+          "D. 防梯度爆炸"
+        ],
+        "answer": 0,
+        "explanation": "平方根减少大框和小框的尺度差异。"
+      }
+    ],
+    "thinkingQuestion": "YOLO 如何确定哪个锚框负责检测目标？",
+    "aiPrompt": "评估学生对 YOLO 损失的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "cv-dice-l2",
+    "stageId": 6,
+    "topicName": "计算机视觉",
+    "subtopicName": "图像分割 (U-Net)",
+    "levelIndex": 2,
+    "levelTitle": "Dice 与 IoU 评估",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "图像分割 (U-Net)"
+    ],
+    "theoryContent": "实现分割评估指标：Dice、IoU、像素准确率。",
+    "latexFormulas": [
+      "Dice=2|P*T|/(|P|+|T|)",
+      "IoU=|P*T|/|P+T|"
+    ],
+    "starterCode": "import numpy as np\ndef dice_coef(pred,target): pass\ndef iou_score(pred,target): pass\ndef pixel_accuracy(pred,target): pass",
+    "solutionCode": "import numpy as np\ndef dice_coef(p,t,s=1e-7):\n    i=np.sum(p*t);return round(float((2*i+s)/(np.sum(p)+np.sum(t)+s)),4)\ndef iou_score(p,t,s=1e-7):\n    i=np.sum(p*t);u=np.sum(np.clip(p+t,0,1))\n    return round(float((i+s)/(u+s)),4)\ndef pixel_accuracy(p,t):\n    return round(float(np.mean((np.array(p)>0.5)==(np.array(t)>0.5))),4)",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "perfect",
+        "input": {
+          "pred": [
+            [
+              1,
+              1
+            ],
+            [
+              1,
+              1
+            ]
+          ],
+          "target": [
+            [
+              1,
+              1
+            ],
+            [
+              1,
+              1
+            ]
+          ]
+        },
+        "expected": {
+          "dice": 1,
+          "iou": 1,
+          "accuracy": 1
+        }
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "Dice 和交叉熵在分割中的区别？",
+        "options": [
+          "A. Dice 优化区域重叠,CE 优化像素概率",
+          "B. 相同",
+          "C. Dice 不支持多类",
+          "D. CE 更稳定"
+        ],
+        "answer": 0,
+        "explanation": "Dice 直接优化预测和真实区域的重叠度。"
+      }
+    ],
+    "thinkingQuestion": "前景只占 1% 时 Dice Loss 和交叉熵哪个更合适？",
+    "aiPrompt": "评估学生对分割指标的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "cv-sam-l2",
+    "stageId": 6,
+    "topicName": "计算机视觉",
+    "subtopicName": "SAM分割大模型",
+    "levelIndex": 2,
+    "levelTitle": "嵌入提取与掩码解码",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "SAM分割大模型"
+    ],
+    "theoryContent": "模拟 SAM 的图像嵌入提取和基于提示的掩码解码。",
+    "latexFormulas": [
+      "Embedding = Encoder(I)",
+      "Mask = Decoder(E, prompt)"
+    ],
+    "starterCode": "import numpy as np\ndef extract_embedding(img, dim): pass\ndef decode_mask(emb, prompt, size): pass",
+    "solutionCode": "import numpy as np\ndef extract_embedding(img,dim=256):\n    img=np.array(img);h,w=img.shape\n    p=img[:h-h%16,:w-w%16].reshape(-1,16,16).mean(axis=(1,2))\n    np.random.seed(42);W=np.random.randn(len(p),dim)*0.01\n    return p@W\ndef decode_mask(emb,prompt,size=32):\n    np.random.seed(42)\n    return (np.random.rand(size,size)>0.5).astype(float).tolist()",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "embed shape",
+        "input": {
+          "img": 0,
+          "dim": 256
+        },
+        "expected": true
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "SAM 编码器通常用什么架构？",
+        "options": [
+          "A. ViT",
+          "B. ResNet",
+          "C. VGG",
+          "D. LeNet"
+        ],
+        "answer": 0,
+        "explanation": "SAM 使用 Vision Transformer 作为图像编码器。"
+      }
+    ],
+    "thinkingQuestion": "SAM 的解码器如何融合图像和提示嵌入？",
+    "aiPrompt": "评估学生对 SAM 的理解。按 0-10 分打分。",
+    "status": "published"
+  }
+]

@@ -1,0 +1,2113 @@
+[
+  {
+    "slug": "ml-linear-regression-trainer",
+    "stageId": 4,
+    "topicName": "机器学习",
+    "subtopicName": "线性回归",
+    "levelIndex": 1,
+    "levelTitle": "线性回归闭式求解器",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "ml",
+      "linear-regression",
+      "least-squares",
+      "normal-equation"
+    ],
+    "theoryContent": "### 编程挑战：线性回归闭式求解器\n\n线性回归通过最小化均方误差来拟合线性模型。有两种求解方式：\n1. 闭式解（正规方程）：$w = (X^T X)^{-1} X^T y$\n2. 梯度下降：迭代优化\n\n实现：\n- `fit_normal_equation(X, y)`: 用正规方程求解\n- `predict(w, X)`: 预测\n- `mse(y_true, y_pred)`: 均方误差",
+    "latexFormulas": [
+      "w = (X^T X)^{-1} X^T y",
+      "\\text{MSE} = \\frac{1}{n}\\sum(y_i - \\hat{y}_i)^2"
+    ],
+    "starterCode": "import numpy as np\n\ndef fit_normal_equation(X: np.ndarray, y: np.ndarray) -> np.ndarray:\n    \"\"\"正规方程求解 w，X 已包含偏置列\"\"\"\n    pass\n\ndef predict(w: np.ndarray, X: np.ndarray) -> np.ndarray:\n    \"\"\"预测 y_hat = X @ w\"\"\"\n    pass\n\ndef mse(y_true: np.ndarray, y_pred: np.ndarray) -> float:\n    \"\"\"均方误差\"\"\"\n    pass",
+    "solutionCode": "import numpy as np\n\ndef fit_normal_equation(X: np.ndarray, y: np.ndarray) -> np.ndarray:\n    return np.linalg.inv(X.T @ X) @ X.T @ y\n\ndef predict(w: np.ndarray, X: np.ndarray) -> np.ndarray:\n    return X @ w\n\ndef mse(y_true: np.ndarray, y_pred: np.ndarray) -> float:\n    return float(np.mean((y_true - y_pred) ** 2))",
+    "expectedOutput": "1.0",
+    "testCases": [
+      {
+        "name": "fit line y=2x+1",
+        "input": {
+          "X": [
+            [
+              1,
+              1
+            ],
+            [
+              1,
+              2
+            ],
+            [
+              1,
+              3
+            ]
+          ],
+          "y": [
+            3,
+            5,
+            7
+          ]
+        },
+        "expected": [
+          1,
+          2
+        ]
+      },
+      {
+        "name": "mse zero for perfect",
+        "input": {
+          "yTrue": [
+            1,
+            2,
+            3
+          ],
+          "yPred": [
+            1,
+            2,
+            3
+          ]
+        },
+        "expected": 0
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "正规方程的时间复杂度是多少？",
+        "options": [
+          "A. O(n³)，因为矩阵求逆",
+          "B. O(n)，线性时间",
+          "C. O(log n)",
+          "D. O(n!)"
+        ],
+        "answer": 0,
+        "explanation": "矩阵求逆的复杂度为 O(n³)，n 为特征数。"
+      },
+      {
+        "question": "正规方程在特征维度很大时有什么问题？",
+        "options": [
+          "A. 求逆计算量太大",
+          "B. 无法处理数值数据",
+          "C. 不需要偏置项",
+          "D. 只能处理二分类"
+        ],
+        "answer": 0,
+        "explanation": "特征维度大时矩阵求逆的计算量和内存消耗都难以承受。"
+      }
+    ],
+    "thinkingQuestion": "当 X^T X 不可逆时（特征相关或样本少于特征），你会如何处理？有哪些替代解法？",
+    "aiPrompt": "评估学生对线性回归、正规方程、矩阵求逆的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "ml-logistic-regression-classifier",
+    "stageId": 4,
+    "topicName": "机器学习",
+    "subtopicName": "Logistic回归",
+    "levelIndex": 1,
+    "levelTitle": "Logistic 回归分类器",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "ml",
+      "logistic-regression",
+      "sigmoid",
+      "classification"
+    ],
+    "theoryContent": "### 编程挑战：Logistic 回归分类器\n\nLogistic 回归用 sigmoid 函数将线性输出映射到 (0,1) 区间，用于二分类。\n\n实现：\n- `sigmoid(z)`: sigmoid 函数\n- `fit_gd(X, y, lr, steps)`: 梯度下降训练（交叉熵损失）\n- `predict_proba(w, X)`: 预测概率\n- `predict(w, X, threshold)`: 预测类别",
+    "latexFormulas": [
+      "\\sigma(z) = \\frac{1}{1+e^{-z}}",
+      "L = -\\frac{1}{n}\\sum[y\\log\\hat{y} + (1-y)\\log(1-\\hat{y})]"
+    ],
+    "starterCode": "import numpy as np\n\ndef sigmoid(z: np.ndarray) -> np.ndarray:\n    pass\n\ndef fit_gd(X: np.ndarray, y: np.ndarray, lr: float = 0.01, steps: int = 1000) -> np.ndarray:\n    pass\n\ndef predict_proba(w: np.ndarray, X: np.ndarray) -> np.ndarray:\n    pass\n\ndef predict(w: np.ndarray, X: np.ndarray, threshold: float = 0.5) -> np.ndarray:\n    pass",
+    "solutionCode": "import numpy as np\n\ndef sigmoid(z: np.ndarray) -> np.ndarray:\n    return 1 / (1 + np.exp(-np.clip(z, -100, 100)))\n\ndef fit_gd(X: np.ndarray, y: np.ndarray, lr: float = 0.01, steps: int = 1000) -> np.ndarray:\n    m, n = X.shape\n    w = np.zeros(n)\n    for _ in range(steps):\n        z = X @ w\n        h = sigmoid(z)\n        gradient = X.T @ (h - y) / m\n        w -= lr * gradient\n    return w\n\ndef predict_proba(w: np.ndarray, X: np.ndarray) -> np.ndarray:\n    return sigmoid(X @ w)\n\ndef predict(w: np.ndarray, X: np.ndarray, threshold: float = 0.5) -> np.ndarray:\n    return (predict_proba(w, X) >= threshold).astype(int)",
+    "expectedOutput": "[0 1 0]",
+    "testCases": [
+      {
+        "name": "linearly separable",
+        "input": {
+          "X": [
+            [
+              1,
+              0
+            ],
+            [
+              1,
+              1
+            ],
+            [
+              1,
+              -1
+            ]
+          ],
+          "y": [
+            0,
+            1,
+            0
+          ]
+        },
+        "expected": [
+          0,
+          1,
+          0
+        ]
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "Sigmoid 函数的输出范围是多少？",
+        "options": [
+          "A. (0, 1)",
+          "B. (-1, 1)",
+          "C. [0, ∞)",
+          "D. (-∞, ∞)"
+        ],
+        "answer": 0,
+        "explanation": "Sigmoid 将任意实数映射到 (0,1) 开区间。"
+      },
+      {
+        "question": "为什么 Logistic 回归用交叉熵而不用均方误差？",
+        "options": [
+          "A. 交叉熵损失函数是凸的，MSE 不是",
+          "B. MSE 计算更复杂",
+          "C. 两者没有区别",
+          "D. 交叉熵要求输出是概率"
+        ],
+        "answer": 0,
+        "explanation": "交叉熵在分类问题上是凸函数，MSE 在 sigmoid 下非凸，不易优化。"
+      }
+    ],
+    "thinkingQuestion": "当数据完全可分时，梯度下降的损失函数会怎么变化？为什么需要正则化？",
+    "aiPrompt": "评估学生对 Logistic 回归、sigmoid、交叉熵和梯度下降的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "ml-svm-hinge-classifier",
+    "stageId": 4,
+    "topicName": "机器学习",
+    "subtopicName": "支持向量机 (SVM)",
+    "levelIndex": 1,
+    "levelTitle": "SVM 铰链损失分类器",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "ml",
+      "svm",
+      "hinge-loss",
+      "max-margin"
+    ],
+    "theoryContent": "### 编程挑战：SVM 铰链损失分类器\n\nSVM 通过最大化分类间隔来寻找最优超平面。铰链损失函数为 $\\max(0, 1 - y \\cdot f(x))$。\n\n实现：\n- `hinge_loss(y_true, scores)`: 铰链损失\n- `fit_svm_sgd(X, y, lr, steps, lambda_reg)`: SGD 训练线性 SVM\n- `predict(w, X)`: 预测类别（±1）\n- `margin(w, X, y)`: 返回几何间隔",
+    "latexFormulas": [
+      "L_{hinge} = \\max(0, 1 - y \\cdot (w^T x + b))",
+      "\\text{Margin} = \\frac{2}{\\|w\\|}"
+    ],
+    "starterCode": "import numpy as np\n\ndef hinge_loss(y_true: np.ndarray, scores: np.ndarray) -> float:\n    \"\"\"铰链损失（y_true 为 ±1）\"\"\"\n    pass\n\ndef fit_svm_sgd(X: np.ndarray, y: np.ndarray, lr: float, steps: int, lambda_reg: float) -> np.ndarray:\n    pass\n\ndef predict(w: np.ndarray, X: np.ndarray) -> np.ndarray:\n    pass\n\ndef margin(w: np.ndarray) -> float:\n    pass",
+    "solutionCode": "import numpy as np\n\ndef hinge_loss(y_true: np.ndarray, scores: np.ndarray) -> float:\n    return float(np.mean(np.maximum(0, 1 - y_true * scores)))\n\ndef fit_svm_sgd(X: np.ndarray, y: np.ndarray, lr: float, steps: int, lambda_reg: float) -> np.ndarray:\n    m, n = X.shape\n    w = np.zeros(n)\n    for _ in range(steps):\n        scores = X @ w\n        mask = y * scores < 1\n        grad = 2 * lambda_reg * w - (X[mask] * y[mask][:, None]).sum(axis=0) / m\n        w -= lr * grad\n    return w\n\ndef predict(w: np.ndarray, X: np.ndarray) -> np.ndarray:\n    return np.sign(X @ w)\n\ndef margin(w: np.ndarray) -> float:\n    return 2.0 / np.linalg.norm(w)",
+    "expectedOutput": "1.0",
+    "testCases": [
+      {
+        "name": "linear svm prediction",
+        "input": {
+          "X": [
+            [
+              1,
+              1
+            ],
+            [
+              2,
+              2
+            ]
+          ],
+          "w": [
+            1,
+            -1
+          ]
+        },
+        "expected": [
+          -1,
+          -1
+        ]
+      },
+      {
+        "name": "margin calculation",
+        "input": {
+          "w": [
+            1,
+            0
+          ]
+        },
+        "expected": 2
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "SVM 的目标是最大化什么？",
+        "options": [
+          "A. 分类间隔 (margin)",
+          "B. 训练准确率",
+          "C. 模型参数量",
+          "D. 特征数量"
+        ],
+        "answer": 0,
+        "explanation": "SVM 的核心思想是最大化分类超平面到最近样本的几何间隔。"
+      },
+      {
+        "question": "铰链损失在 score >= 1 时的梯度是多少？",
+        "options": [
+          "A. 0",
+          "B. 1",
+          "C. -1",
+          "D. 无穷大"
+        ],
+        "answer": 0,
+        "explanation": "铰链损失在正确分类且置信度足够时损失为 0，梯度为 0。"
+      }
+    ],
+    "thinkingQuestion": "线性 SVM 和 Logistic 回归的决策边界有何异同？在什么场景下 SVM 比 Logistic 回归更合适？",
+    "aiPrompt": "评估学生对 SVM、铰链损失、最大间隔的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "ml-decision-tree-splitter",
+    "stageId": 4,
+    "topicName": "机器学习",
+    "subtopicName": "决策树",
+    "levelIndex": 1,
+    "levelTitle": "决策树信息增益分裂器",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "ml",
+      "decision-tree",
+      "entropy",
+      "information-gain"
+    ],
+    "theoryContent": "### 编程挑战：决策树信息增益分裂器\n\n决策树通过递归分裂数据来构建。每次分裂选择信息增益最大的特征。\n\n实现：\n- `entropy(y)`: 计算熵\n- `information_gain(X_col, y, threshold)`: 按阈值分裂的信息增益\n- `best_split(X, y)`: 找到最佳分裂特征和阈值\n- `gini(y)`: 基尼系数",
+    "latexFormulas": [
+      "H(Y) = -\\sum_k p_k \\log p_k",
+      "IG = H(Y) - \\sum \\frac{|Y_i|}{|Y|} H(Y_i)"
+    ],
+    "starterCode": "import numpy as np\n\ndef entropy(y: np.ndarray) -> float:\n    pass\n\ndef gini(y: np.ndarray) -> float:\n    pass\n\ndef information_gain(X_col: np.ndarray, y: np.ndarray, threshold: float) -> float:\n    pass\n\ndef best_split(X: np.ndarray, y: np.ndarray) -> dict:\n    \"\"\"返回 {\"feature\": int, \"threshold\": float, \"gain\": float}\"\"\"\n    pass",
+    "solutionCode": "import numpy as np\n\ndef entropy(y: np.ndarray) -> float:\n    _, counts = np.unique(y, return_counts=True)\n    probs = counts / len(y)\n    return float(-np.sum(probs * np.log2(probs + 1e-10)))\n\ndef gini(y: np.ndarray) -> float:\n    _, counts = np.unique(y, return_counts=True)\n    probs = counts / len(y)\n    return float(1 - np.sum(probs**2))\n\ndef information_gain(X_col: np.ndarray, y: np.ndarray, threshold: float) -> float:\n    H_parent = entropy(y)\n    left = y[X_col <= threshold]\n    right = y[X_col > threshold]\n    if len(left) == 0 or len(right) == 0:\n        return 0\n    H_child = len(left)/len(y)*entropy(left) + len(right)/len(y)*entropy(right)\n    return H_parent - H_child\n\ndef best_split(X: np.ndarray, y: np.ndarray) -> dict:\n    best = {'feature': -1, 'threshold': 0, 'gain': -1}\n    n_features = X.shape[1]\n    for f in range(n_features):\n        values = np.unique(X[:, f])\n        for v in values:\n            gain = information_gain(X[:, f], y, v)\n            if gain > best['gain']:\n                best = {'feature': f, 'threshold': float(v), 'gain': round(gain, 4)}\n    return best",
+    "expectedOutput": "0",
+    "testCases": [
+      {
+        "name": "best split feature 0",
+        "input": {
+          "X": [
+            [
+              1,
+              3
+            ],
+            [
+              1,
+              4
+            ],
+            [
+              2,
+              5
+            ],
+            [
+              2,
+              6
+            ]
+          ],
+          "y": [
+            0,
+            0,
+            1,
+            1
+          ]
+        },
+        "expected": {
+          "feature": 0,
+          "threshold": 1,
+          "gain": 1
+        }
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "熵为 0 时说明什么？",
+        "options": [
+          "A. 样本全部属于同一类",
+          "B. 样本均匀分布",
+          "C. 样本数最多",
+          "D. 特征维度最多"
+        ],
+        "answer": 0,
+        "explanation": "熵为 0 表示数据纯净，所有样本属于同一类别。"
+      },
+      {
+        "question": "信息增益倾向于选择什么样的特征？",
+        "options": [
+          "A. 取值多的特征",
+          "B. 取值少的特征",
+          "C. 与目标无关的特征",
+          "D. 数值型特征"
+        ],
+        "answer": 0,
+        "explanation": "信息增益偏向取值多的特征，可以通过信息增益比来修正。"
+      }
+    ],
+    "thinkingQuestion": "决策树很容易过拟合。你会用哪些剪枝策略（预剪枝/后剪枝）来控制模型复杂度？",
+    "aiPrompt": "评估学生对决策树、信息增益、熵、基尼系数的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "ml-random-forest-ensemble",
+    "stageId": 4,
+    "topicName": "机器学习",
+    "subtopicName": "随机森林",
+    "levelIndex": 1,
+    "levelTitle": "随机森林 Bagging 集成",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "ml",
+      "random-forest",
+      "bagging",
+      "ensemble"
+    ],
+    "theoryContent": "### 编程挑战：随机森林 Bagging 集成\n\n随机森林通过 Bagging（Bootstrap Aggregating）训练多棵决策树，然后用投票或平均来集成预测。\n\n本题要求实现简化版的随机森林：\n- `bootstrap_sample(X, y)`: 自助采样\n- `fit_random_forest(X, y, n_trees, max_depth)`: 训练森林\n- `predict_forest(trees, X)`: 投票预测",
+    "latexFormulas": [
+      "\\hat{y} = \\text{mode}\\{\\hat{y}_1, \\hat{y}_2, \\ldots, \\hat{y}_T\\}",
+      "Bagging: P(\\text{样本被抽中}) \\approx 0.632"
+    ],
+    "starterCode": "import numpy as np\nfrom collections import Counter\n\ndef bootstrap_sample(X: np.ndarray, y: np.ndarray) -> tuple:\n    \"\"\"返回自助采样后的 X_sample, y_sample\"\"\"\n    pass\n\ndef fit_random_forest(X: np.ndarray, y: np.ndarray, n_trees: int, max_depth: int) -> list:\n    \"\"\"返回树列表，每棵树用 dict 表示\"\"\"\n    pass\n\ndef predict_forest(trees: list, X: np.ndarray) -> np.ndarray:\n    \"\"\"多数投票\"\"\"\n    pass",
+    "solutionCode": "import numpy as np\nfrom collections import Counter\n\ndef bootstrap_sample(X: np.ndarray, y: np.ndarray) -> tuple:\n    n = len(X)\n    idx = np.random.choice(n, n, replace=True)\n    return X[idx], y[idx]\n\ndef _build_stump(X, y, depth=0, max_depth=3):\n    if len(set(y)) == 1 or depth >= max_depth:\n        return {'pred': Counter(y).most_common(1)[0][0], 'leaf': True}\n    best_gain, best_f, best_t = -1, -1, 0\n    for f in range(X.shape[1]):\n        for v in np.unique(X[:, f]):\n            left = y[X[:, f] <= v]\n            right = y[X[:, f] > v]\n            if len(left) == 0 or len(right) == 0:\n                continue\n            H = lambda y: -sum((c/len(y))*np.log2(c/len(y)+1e-10) for c in Counter(y).values())\n            gain = H(y) - len(left)/len(y)*H(left) - len(right)/len(y)*H(right)\n            if gain > best_gain:\n                best_gain, best_f, best_t = gain, f, v\n    if best_f == -1:\n        return {'pred': Counter(y).most_common(1)[0][0], 'leaf': True}\n    left_idx = X[:, best_f] <= best_t\n    return {'feature': best_f, 'threshold': best_t, 'leaf': False,\n            'left': _build_stump(X[left_idx], y[left_idx], depth+1, max_depth),\n            'right': _build_stump(X[~left_idx], y[~left_idx], depth+1, max_depth)}\n\ndef fit_random_forest(X, y, n_trees=5, max_depth=3):\n    trees = []\n    for _ in range(n_trees):\n        Xs, ys = bootstrap_sample(X, y)\n        trees.append(_build_stump(Xs, ys, 0, max_depth))\n    return trees\n\ndef _predict_tree(tree, x):\n    if tree.get('leaf'):\n        return tree['pred']\n    if x[tree['feature']] <= tree['threshold']:\n        return _predict_tree(tree['left'], x)\n    return _predict_tree(tree['right'], x)\n\ndef predict_forest(trees, X):\n    result = []\n    for x in X:\n        votes = [_predict_tree(t, x) for t in trees]\n        result.append(Counter(votes).most_common(1)[0][0])\n    return np.array(result)",
+    "expectedOutput": "[0 1]",
+    "testCases": [
+      {
+        "name": "ensemble prediction",
+        "input": {
+          "X": [
+            [
+              1
+            ],
+            [
+              2
+            ],
+            [
+              3
+            ],
+            [
+              10
+            ],
+            [
+              11
+            ],
+            [
+              12
+            ]
+          ],
+          "y": [
+            0,
+            0,
+            0,
+            1,
+            1,
+            1
+          ],
+          "nTrees": 3,
+          "maxDepth": 2
+        },
+        "expected": [
+          0,
+          1
+        ]
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "Bagging 中自助采样大约会留下多少比例的样本未被抽到？",
+        "options": [
+          "A. 36.8%",
+          "B. 50%",
+          "C. 10%",
+          "D. 63.2%"
+        ],
+        "answer": 0,
+        "explanation": "n 很大时，样本未被抽到的概率约 1/e ≈ 36.8%，用作袋外评估。"
+      },
+      {
+        "question": "随机森林比单棵决策树的主要优势是什么？",
+        "options": [
+          "A. 降低方差，减少过拟合",
+          "B. 降低偏差",
+          "C. 训练更快",
+          "D. 解释性更强"
+        ],
+        "answer": 0,
+        "explanation": "Bagging 集成多棵树，通过平均/投票降低方差，减少过拟合。"
+      }
+    ],
+    "thinkingQuestion": "随机森林的'随机'体现在哪两个方面？为什么需要这两重随机性？",
+    "aiPrompt": "评估学生对 Bagging、随机森林、自助采样和集成学习的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "ml-xgboost-gbdt-simulator",
+    "stageId": 4,
+    "topicName": "机器学习",
+    "subtopicName": "XGBoost",
+    "levelIndex": 1,
+    "levelTitle": "XGBoost 梯度提升模拟器",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "ml",
+      "xgboost",
+      "gradient-boosting",
+      "gbdt"
+    ],
+    "theoryContent": "### 编程挑战：XGBoost 梯度提升模拟器\n\n梯度提升决策树（GBDT）通过逐步添加决策树来修正前一步的残差。XGBoost 在 GBDT 基础上加入正则化。\n\n本题实现简化版 GBDT：\n- `fit_gbdt(X, y, n_estimators, lr, max_depth)`: 训练 GBDT\n- `predict_gbdt(model, X)`: 预测\n每棵树拟合当前残差：$r_i = y_i - F_{m-1}(x_i)$",
+    "latexFormulas": [
+      "F_m(x) = F_{m-1}(x) + \\eta \\cdot h_m(x)",
+      "r_i^{(m)} = y_i - F_{m-1}(x_i)"
+    ],
+    "starterCode": "import numpy as np\nfrom collections import Counter\n\ndef fit_gbdt(X: np.ndarray, y: np.ndarray, n_estimators: int, lr: float) -> list:\n    \"\"\"返回 [{\"tree\": ..., \"weight\": ...}, ...]\"\"\"\n    pass\n\ndef predict_gbdt(model: list, X: np.ndarray) -> np.ndarray:\n    pass",
+    "solutionCode": "import numpy as np\nfrom collections import Counter\n\ndef _stump_predict(tree, x):\n    if tree.get('leaf'):\n        return tree['pred']\n    if x[tree['feature']] <= tree['threshold']:\n        return _stump_predict(tree['left'], x)\n    return _stump_predict(tree['right'], x)\n\ndef _simple_stump(X, y, depth=0, max_depth=2):\n    if len(set(y)) == 1 or depth >= max_depth:\n        return {'leaf': True, 'pred': np.mean(y)}\n    best_f, best_t, best_var = -1, 0, float('inf')\n    for f in range(X.shape[1]):\n        for v in np.unique(X[:, f]):\n            left = y[X[:, f] <= v]\n            right = y[X[:, f] > v]\n            if len(left) == 0 or len(right) == 0: continue\n            var = np.var(left)*len(left) + np.var(right)*len(right)\n            if var < best_var:\n                best_f, best_t, best_var = f, v, var\n    if best_f == -1:\n        return {'leaf': True, 'pred': np.mean(y)}\n    left_idx = X[:, best_f] <= best_t\n    return {'feature': best_f, 'threshold': best_t, 'leaf': False,\n            'left': _simple_stump(X[left_idx], y[left_idx], depth+1, max_depth),\n            'right': _simple_stump(X[~left_idx], y[~left_idx], depth+1, max_depth)}\n\ndef fit_gbdt(X, y, n_estimators=5, lr=0.1):\n    model = []\n    F = np.zeros(len(y))\n    for _ in range(n_estimators):\n        residuals = y - F\n        tree = _simple_stump(X, residuals)\n        preds = np.array([_stump_predict(tree, x) for x in X])\n        F += lr * preds\n        model.append({'tree': tree, 'weight': lr})\n    return model\n\ndef predict_gbdt(model, X):\n    F = np.zeros(len(X))\n    for m in model:\n        preds = np.array([_stump_predict(m['tree'], x) for x in X])\n        F += m['weight'] * preds\n    return F",
+    "expectedOutput": "1.0",
+    "testCases": [
+      {
+        "name": "gbdt fits decreasing mse",
+        "input": {
+          "X": [
+            [
+              1
+            ],
+            [
+              2
+            ],
+            [
+              3
+            ],
+            [
+              4
+            ]
+          ],
+          "y": [
+            1,
+            2,
+            3,
+            4
+          ],
+          "nEstimators": 3,
+          "lr": 0.3
+        },
+        "expected": true
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "GBDT 中每棵新树拟合的是什么？",
+        "options": [
+          "A. 当前残差",
+          "B. 原始标签",
+          "C. 上一棵树的输出",
+          "D. 随机噪声"
+        ],
+        "answer": 0,
+        "explanation": "每棵新树拟合当前集成模型的残差，逐步修正错误。"
+      },
+      {
+        "question": "学习率 η 在 GBDT 中的作用是什么？",
+        "options": [
+          "A. 控制每棵树的贡献量，防止过拟合",
+          "B. 控制训练速度",
+          "C. 控制树深度",
+          "D. 控制样本权重"
+        ],
+        "answer": 0,
+        "explanation": "较小的学习率配合更多弱学习器可以降低过拟合风险。"
+      }
+    ],
+    "thinkingQuestion": "XGBoost 相比 GBDT 加入了哪些关键改进（正则化、二阶梯度、列采样等）？为什么这些改进有效？",
+    "aiPrompt": "评估学生对梯度提升、残差拟合、学习率和集成学习的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "ml-knn-classifier",
+    "stageId": 4,
+    "topicName": "机器学习",
+    "subtopicName": "KNN",
+    "levelIndex": 1,
+    "levelTitle": "K 近邻分类器",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "ml",
+      "knn",
+      "distance",
+      "classification"
+    ],
+    "theoryContent": "### 编程挑战：K 近邻分类器\n\nKNN 是一种基于实例的惰性学习算法。新样本的类别由距离最近的 K 个训练样本投票决定。\n\n实现：\n- `euclidean_distance(a, b)`: 欧氏距离\n- `fit_knn(X_train, y_train)`: 存储训练数据\n- `predict_knn(X_test, k)`: KNN 预测\n- `predict_weighted(X_test, k)`: 距离加权投票",
+    "latexFormulas": [
+      "d(x, x') = \\sqrt{\\sum_i (x_i - x'_i)^2}",
+      "\\hat{y} = \\arg\\max_c \\sum_{i \\in N_k} 1(y_i=c)"
+    ],
+    "starterCode": "import numpy as np\nfrom collections import Counter\n\ndef euclidean_distance(a: np.ndarray, b: np.ndarray) -> float:\n    pass\n\ndef fit_knn(X_train: np.ndarray, y_train: np.ndarray) -> dict:\n    pass\n\ndef predict_knn(model: dict, X_test: np.ndarray, k: int) -> np.ndarray:\n    pass",
+    "solutionCode": "import numpy as np\nfrom collections import Counter\n\ndef euclidean_distance(a: np.ndarray, b: np.ndarray) -> float:\n    return float(np.sqrt(np.sum((a - b) ** 2)))\n\ndef fit_knn(X_train, y_train):\n    return {'X': X_train, 'y': y_train}\n\ndef predict_knn(model, X_test, k=3):\n    X, y = model['X'], model['y']\n    result = []\n    for x in X_test:\n        dists = [euclidean_distance(x, xt) for xt in X]\n        idx = np.argsort(dists)[:k]\n        nearest = y[idx]\n        result.append(Counter(nearest).most_common(1)[0][0])\n    return np.array(result)",
+    "expectedOutput": "[0 1]",
+    "testCases": [
+      {
+        "name": "knn prediction",
+        "input": {
+          "X_train": [
+            [
+              1,
+              1
+            ],
+            [
+              1,
+              2
+            ],
+            [
+              9,
+              9
+            ],
+            [
+              10,
+              10
+            ]
+          ],
+          "y_train": [
+            0,
+            0,
+            1,
+            1
+          ],
+          "X_test": [
+            [
+              1,
+              1.5
+            ],
+            [
+              9,
+              9.5
+            ]
+          ],
+          "k": 3
+        },
+        "expected": [
+          0,
+          1
+        ]
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "KNN 的时间复杂度在预测时是多少？",
+        "options": [
+          "A. O(n*d)，n 为样本数，d 为维度",
+          "B. O(log n)",
+          "C. O(1)",
+          "D. O(n²)"
+        ],
+        "answer": 0,
+        "explanation": "KNN 预测需要计算新样本与每个训练样本的距离。"
+      },
+      {
+        "question": "K 值越小，模型越容易？",
+        "options": [
+          "A. 过拟合",
+          "B. 欠拟合",
+          "C. 训练更慢",
+          "D. 内存更大"
+        ],
+        "answer": 0,
+        "explanation": "K 值小意味着只参考极少数近邻，对局部噪声敏感，容易过拟合。"
+      }
+    ],
+    "thinkingQuestion": "当特征维度很高时，欧氏距离的区分度会下降（维度灾难）。你会用什么方法缓解？",
+    "aiPrompt": "评估学生对 KNN、距离度量、K 值选择和维度灾难的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "ml-kmeans-clusterer",
+    "stageId": 4,
+    "topicName": "机器学习",
+    "subtopicName": "K-Means聚类",
+    "levelIndex": 1,
+    "levelTitle": "K-Means 聚类引擎",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "ml",
+      "kmeans",
+      "clustering",
+      "unsupervised"
+    ],
+    "theoryContent": "### 编程挑战：K-Means 聚类引擎\n\nK-Means 将数据划分为 K 个簇，使每个点到其簇中心的距离和最小。\n\n实现：\n- `initialize_centroids(X, k)`: 随机初始化（简单版）\n- `assign_clusters(X, centroids)`: 分配每个点最近的簇\n- `update_centroids(X, assignments, k)`: 更新簇中心为均值\n- `kmeans(X, k, max_iter)`: K-Means 主循环",
+    "latexFormulas": [
+      "J = \\sum_{i=1}^n \\min_{\\mu_j} \\|x_i - \\mu_j\\|^2",
+      "\\mu_j = \\frac{1}{|C_j|}\\sum_{x \\in C_j} x"
+    ],
+    "starterCode": "import numpy as np\n\ndef initialize_centroids(X: np.ndarray, k: int) -> np.ndarray:\n    pass\n\ndef assign_clusters(X: np.ndarray, centroids: np.ndarray) -> np.ndarray:\n    \"\"\"返回每个点的簇分配索引\"\"\"\n    pass\n\ndef update_centroids(X: np.ndarray, assignments: np.ndarray, k: int) -> np.ndarray:\n    pass\n\ndef kmeans(X: np.ndarray, k: int, max_iter: int) -> dict:\n    \"\"\"返回 {\"centroids\": ..., \"assignments\": ..., \"inertia\": ...}\"\"\"\n    pass",
+    "solutionCode": "import numpy as np\n\ndef initialize_centroids(X, k):\n    idx = np.random.choice(len(X), k, replace=False)\n    return X[idx]\n\ndef assign_clusters(X, centroids):\n    dists = np.linalg.norm(X[:, None] - centroids[None, :], axis=2)\n    return np.argmin(dists, axis=1)\n\ndef update_centroids(X, assignments, k):\n    return np.array([X[assignments == j].mean(axis=0) for j in range(k)])\n\ndef kmeans(X, k, max_iter=100):\n    centroids = initialize_centroids(X, k)\n    for _ in range(max_iter):\n        assignments = assign_clusters(X, centroids)\n        new_centroids = update_centroids(X, assignments, k)\n        if np.allclose(centroids, new_centroids):\n            break\n        centroids = new_centroids\n    inertia = sum(np.sum((X[assignments == j] - centroids[j])**2) for j in range(k))\n    return {'centroids': centroids, 'assignments': assignments, 'inertia': float(inertia)}",
+    "expectedOutput": "2",
+    "testCases": [
+      {
+        "name": "kmeans two clusters",
+        "input": {
+          "X": [
+            [
+              1,
+              0
+            ],
+            [
+              2,
+              0
+            ],
+            [
+              10,
+              10
+            ],
+            [
+              11,
+              10
+            ]
+          ],
+          "k": 2
+        },
+        "expected": true
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "K-Means 保证找到全局最优解吗？",
+        "options": [
+          "A. 不一定，依赖初始质心",
+          "B. 一定可以",
+          "C. 取决于 K 值",
+          "D. 和数据量有关"
+        ],
+        "answer": 0,
+        "explanation": "K-Means 对初始质心敏感，可能收敛到局部最优。"
+      },
+      {
+        "question": "K-Means 的 inertia（惯量）是什么？",
+        "options": [
+          "A. 样本到簇中心的距离平方和",
+          "B. 簇之间的平均距离",
+          "C. 样本的方差",
+          "D. 数据的总和"
+        ],
+        "answer": 0,
+        "explanation": "Inertia 衡量簇内紧凑程度，值越小簇越紧密。"
+      }
+    ],
+    "thinkingQuestion": "K-Means++ 如何改进初始质心的选择来避免局部最优？它与随机初始化的核心区别是什么？",
+    "aiPrompt": "评估学生对 K-Means、聚类、惯量和初始化策略的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "ml-dbscan-clusterer",
+    "stageId": 4,
+    "topicName": "机器学习",
+    "subtopicName": "DBSCAN",
+    "levelIndex": 1,
+    "levelTitle": "DBSCAN 密度聚类器",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "ml",
+      "dbscan",
+      "clustering",
+      "density"
+    ],
+    "theoryContent": "### 编程挑战：DBSCAN 密度聚类器\n\nDBSCAN 基于密度将高密度区域划分为簇，能发现任意形状的簇并识别噪声点。\n\n核心概念：\n- $\\epsilon$ 邻域：距离某点不超过 $\\epsilon$ 的区域\n- MinPts：成为核心点所需的最少邻域点数\n- 核心点：$|N_\\epsilon(p)| \\ge MinPts$\n- 边界点：非核心点但在核心点邻域内\n- 噪声：既非核心也非边界",
+    "latexFormulas": [
+      "N_\\epsilon(p) = \\{q \\in D \\mid d(p,q) \\le \\epsilon\\}",
+      "\\text{核心点} \\iff |N_\\epsilon(p)| \\ge MinPts"
+    ],
+    "starterCode": "import numpy as np\n\ndef euclidean(a, b):\n    return float(np.sqrt(np.sum((a - b)**2)))\n\ndef region_query(X: np.ndarray, p_idx: int, eps: float) -> list:\n    \"\"\"返回 p_idx 的 epsilon 邻域内点的索引列表\"\"\"\n    pass\n\ndef dbscan(X: np.ndarray, eps: float, min_pts: int) -> dict:\n    \"\"\"\n    返回 {\"labels\": [...], \"n_clusters\": int, \"noise\": int}\n    labels: -1=噪声, 0,1,2...=簇ID\n    \"\"\"\n    pass",
+    "solutionCode": "import numpy as np\n\ndef euclidean(a, b):\n    return float(np.sqrt(np.sum((a - b)**2)))\n\ndef region_query(X, p_idx, eps):\n    neighbors = []\n    for i in range(len(X)):\n        if euclidean(X[p_idx], X[i]) <= eps:\n            neighbors.append(i)\n    return neighbors\n\ndef dbscan(X, eps, min_pts):\n    labels = [-2] * len(X)  # -2 = unvisited\n    cluster_id = 0\n    for i in range(len(X)):\n        if labels[i] != -2:\n            continue\n        neighbors = region_query(X, i, eps)\n        if len(neighbors) < min_pts:\n            labels[i] = -1  # noise\n            continue\n        labels[i] = cluster_id\n        seed = neighbors[:]\n        for q in seed:\n            if labels[q] == -2:\n                labels[q] = cluster_id\n                q_neighbors = region_query(X, q, eps)\n                if len(q_neighbors) >= min_pts:\n                    seed.extend([n for n in q_neighbors if labels[n] == -2])\n        cluster_id += 1\n    return {'labels': labels, 'n_clusters': cluster_id, 'noise': labels.count(-1)}",
+    "expectedOutput": "2",
+    "testCases": [
+      {
+        "name": "two clusters plus noise",
+        "input": {
+          "X": [
+            [
+              1,
+              1
+            ],
+            [
+              1.5,
+              1.5
+            ],
+            [
+              2,
+              1
+            ],
+            [
+              10,
+              10
+            ],
+            [
+              10.5,
+              10.5
+            ],
+            [
+              100,
+              100
+            ]
+          ],
+          "eps": 2,
+          "minPts": 2
+        },
+        "expected": {
+          "n_clusters": 2,
+          "noise": 1
+        }
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "DBSCAN 相比 K-Means 的主要优势是什么？",
+        "options": [
+          "A. 不需要指定簇数，能发现任意形状簇",
+          "B. 速度更快",
+          "C. 不需要距离度量",
+          "D. 内存更小"
+        ],
+        "answer": 0,
+        "explanation": "DBSCAN 自动发现簇数，且能处理非凸形状的簇。"
+      },
+      {
+        "question": "DBSCAN 的 eps 参数过大会怎样？",
+        "options": [
+          "A. 所有点被视为同一簇",
+          "B. 全是噪声",
+          "C. 簇数增加",
+          "D. 不影响结果"
+        ],
+        "answer": 0,
+        "explanation": "eps 过大会将本应分开的簇合并，最终可能所有点都在一个簇。"
+      }
+    ],
+    "thinkingQuestion": "DBSCAN 在面对密度不均匀的数据时效果不佳。OPTICS 算法是如何解决这个问题的？",
+    "aiPrompt": "评估学生对 DBSCAN、密度聚类、邻域和噪声点的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "ml-hierarchical-clustering",
+    "stageId": 4,
+    "topicName": "机器学习",
+    "subtopicName": "层次聚类",
+    "levelIndex": 1,
+    "levelTitle": "层次聚类与树状图",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "ml",
+      "hierarchical",
+      "clustering",
+      "dendrogram"
+    ],
+    "theoryContent": "### 编程挑战：层次聚类与树状图\n\n层次聚类通过逐步合并最相近的簇来构建层次结构。不同连接准则影响聚类形状：\n- Single linkage：簇间最小距离\n- Complete linkage：簇间最大距离\n- Average linkage：簇间平均距离\n\n实现凝聚式层次聚类和树状图构建。",
+    "latexFormulas": [
+      "d_{single}(A,B) = \\min_{a\\in A,b\\in B} d(a,b)",
+      "d_{complete}(A,B) = \\max_{a\\in A,b\\in B} d(a,b)"
+    ],
+    "starterCode": "import numpy as np\n\ndef euclidean(a, b):\n    return float(np.sqrt(np.sum((a - b)**2)))\n\ndef cluster_distance(A: np.ndarray, B: np.ndarray, linkage: str) -> float:\n    \"\"\"linkage: 'single', 'complete', 'average'\"\"\"\n    pass\n\ndef agglomerative_clustering(X: np.ndarray, n_clusters: int, linkage: str) -> list:\n    \"\"\"返回每个样本的簇分配\"\"\"\n    pass",
+    "solutionCode": "import numpy as np\n\ndef euclidean(a, b):\n    return float(np.sqrt(np.sum((a - b)**2)))\n\ndef cluster_distance(A, B, linkage='single'):\n    dists = []\n    for a in A:\n        for b in B:\n            dists.append(euclidean(a, b))\n    if linkage == 'single':\n        return min(dists)\n    elif linkage == 'complete':\n        return max(dists)\n    return sum(dists) / len(dists)\n\ndef agglomerative_clustering(X, n_clusters=2, linkage='single'):\n    clusters = [[i] for i in range(len(X))]\n    while len(clusters) > n_clusters:\n        min_dist = float('inf')\n        merge_pair = (0, 1)\n        for i in range(len(clusters)):\n            for j in range(i+1, len(clusters)):\n                A = X[clusters[i]]\n                B = X[clusters[j]]\n                d = cluster_distance(A, B, linkage)\n                if d < min_dist:\n                    min_dist = d\n                    merge_pair = (i, j)\n        i, j = merge_pair\n        clusters[i].extend(clusters[j])\n        clusters.pop(j)\n    labels = np.zeros(len(X), dtype=int)\n    for cid, cluster in enumerate(clusters):\n        for idx in cluster:\n            labels[idx] = cid\n    return labels.tolist()",
+    "expectedOutput": "[0, 0, 0, 1, 1, 1]",
+    "testCases": [
+      {
+        "name": "two far clusters",
+        "input": {
+          "X": [
+            [
+              1,
+              1
+            ],
+            [
+              2,
+              2
+            ],
+            [
+              3,
+              3
+            ],
+            [
+              10,
+              10
+            ],
+            [
+              11,
+              11
+            ],
+            [
+              12,
+              12
+            ]
+          ],
+          "nClusters": 2,
+          "linkage": "single"
+        },
+        "expected": [
+          0,
+          0,
+          0,
+          1,
+          1,
+          1
+        ]
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "Single linkage 容易产生什么效果？",
+        "options": [
+          "A. 链式效应，簇呈长条形",
+          "B. 紧凑球形簇",
+          "C. 均匀大小的簇",
+          "D. 不受噪声影响"
+        ],
+        "answer": 0,
+        "explanation": "Single linkage 只考虑最近点，容易沿着点之间的间隙连接成长链。"
+      },
+      {
+        "question": "层次聚类的输出可以用什么图来可视化？",
+        "options": [
+          "A. 树状图 (dendrogram)",
+          "B. 直方图",
+          "C. 饼图",
+          "D. 折线图"
+        ],
+        "answer": 0,
+        "explanation": "树状图展示聚类层次和合并顺序，是层次聚类的主要可视化工具。"
+      }
+    ],
+    "thinkingQuestion": "凝聚式层次聚类的时空复杂度是 O(n³) 或 O(n²)。当 n=10 万时，你会用哪些策略来扩展到大规模数据？",
+    "aiPrompt": "评估学生对层次聚类、连接准则和链式效应的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "ml-pca-dimensionality-reducer",
+    "stageId": 4,
+    "topicName": "机器学习",
+    "subtopicName": "PCA主成分分析",
+    "levelIndex": 1,
+    "levelTitle": "PCA 降维与重建",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "ml",
+      "pca",
+      "dimensionality-reduction",
+      "eigenvalue"
+    ],
+    "theoryContent": "### 编程挑战：PCA 降维与重建\n\nPCA 通过特征值分解找到数据方差最大的方向，将高维数据投影到低维空间。\n\n实现：\n- `pca_fit(X)`: 计算主成分、解释方差比\n- `pca_transform(X, n_components)`: 降维\n- `pca_inverse_transform(X_pca, n_components)`: 重建到原空间\n- `explained_variance_ratio(X, n_components)`: 累计可解释方差比",
+    "latexFormulas": [
+      "\\text{Cov}(X)v = \\lambda v",
+      "X_{k} = X W_k W_k^T",
+      "\\text{Explained Variance} = \\frac{\\sum_{i=1}^k \\lambda_i}{\\sum_{i=1}^d \\lambda_i}"
+    ],
+    "starterCode": "import numpy as np\n\ndef pca_fit(X: np.ndarray) -> dict:\n    \"\"\"返回 {\"components\": ..., \"explained_variance_ratio\": [...], \"mean\": ...}\"\"\"\n    pass\n\ndef pca_transform(model: dict, X: np.ndarray, n_components: int) -> np.ndarray:\n    pass\n\ndef pca_inverse_transform(model: dict, X_pca: np.ndarray) -> np.ndarray:\n    pass",
+    "solutionCode": "import numpy as np\n\ndef pca_fit(X):\n    X_center = X - np.mean(X, axis=0)\n    cov = X_center.T @ X_center / (len(X) - 1)\n    vals, vecs = np.linalg.eigh(cov)\n    idx = np.argsort(vals)[::-1]\n    vals, vecs = vals[idx], vecs[:, idx]\n    ratio = vals / np.sum(vals)\n    return {'components': vecs, 'explained_variance_ratio': ratio.tolist(), 'mean': np.mean(X, axis=0)}\n\ndef pca_transform(model, X, n_components):\n    X_center = X - model['mean']\n    return X_center @ model['components'][:, :n_components]\n\ndef pca_inverse_transform(model, X_pca):\n    return X_pca @ model['components'][:, :X_pca.shape[1]].T + model['mean']",
+    "expectedOutput": "0.95",
+    "testCases": [
+      {
+        "name": "explained variance",
+        "input": {
+          "X": [
+            [
+              1,
+              1,
+              1
+            ],
+            [
+              2,
+              2,
+              2
+            ],
+            [
+              3,
+              3,
+              3
+            ],
+            [
+              4,
+              4,
+              4
+            ],
+            [
+              5,
+              5,
+              5
+            ]
+          ]
+        },
+        "expected": true
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "PCA 为什么要对数据进行中心化？",
+        "options": [
+          "A. 协方差矩阵计算需要减去均值",
+          "B. 加速训练",
+          "C. 防止过拟合",
+          "D. 不需要中心化"
+        ],
+        "answer": 0,
+        "explanation": "PCA 基于协方差矩阵，协方差计算隐含了数据中心化。"
+      },
+      {
+        "question": "PCA 的投影方向是什么？",
+        "options": [
+          "A. 协方差矩阵的特征向量方向",
+          "B. 数据均值方向",
+          "C. 随机方向",
+          "D. 标签方向"
+        ],
+        "answer": 0,
+        "explanation": "PCA 选择协方差矩阵的前 k 个最大特征值对应的特征向量作为投影方向。"
+      }
+    ],
+    "thinkingQuestion": "PCA 是无监督方法，不考虑标签信息。LDA（线性判别分析）和 PCA 在目标上的本质区别是什么？",
+    "aiPrompt": "评估学生对 PCA、特征值分解、降维和方差解释的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "ml-feature-standardizer",
+    "stageId": 4,
+    "topicName": "机器学习",
+    "subtopicName": "特征标准化",
+    "levelIndex": 1,
+    "levelTitle": "特征标准化与归一化器",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "ml",
+      "feature-scaling",
+      "standardization",
+      "normalization"
+    ],
+    "theoryContent": "### 编程挑战：特征标准化与归一化器\n\n特征尺度不一致会导致梯度下降收敛慢、距离度量失效。常见的缩放方法：\n- Z-score 标准化：$x' = (x - \\mu) / \\sigma$\n- Min-Max 归一化：$x' = (x - x_{min}) / (x_{max} - x_{min})$\n- Robust 缩放：$x' = (x - median) / IQR$\n\n实现一个 Standardizer 类，支持 fit/transform/inverse_transform。",
+    "latexFormulas": [
+      "z = \\frac{x - \\mu}{\\sigma}",
+      "x_{norm} = \\frac{x - x_{min}}{x_{max} - x_{min}}"
+    ],
+    "starterCode": "import numpy as np\n\nclass FeatureScaler:\n    \"\"\"特征缩放器，支持标准化和归一化\"\"\"\n    def __init__(self, method: str = 'standard'):\n        \"\"\"method: 'standard', 'minmax', 'robust'\"\"\"\n        pass\n\n    def fit(self, X: np.ndarray) -> None:\n        \"\"\"计算并存储缩放参数\"\"\"\n        pass\n\n    def transform(self, X: np.ndarray) -> np.ndarray:\n        pass\n\n    def inverse_transform(self, X_scaled: np.ndarray) -> np.ndarray:\n        pass",
+    "solutionCode": "import numpy as np\n\nclass FeatureScaler:\n    def __init__(self, method='standard'):\n        self.method = method\n        self.params = {}\n\n    def fit(self, X):\n        if self.method == 'standard':\n            self.params['mean'] = np.mean(X, axis=0)\n            self.params['std'] = np.std(X, axis=0)\n            self.params['std'][self.params['std'] == 0] = 1\n        elif self.method == 'minmax':\n            self.params['min'] = np.min(X, axis=0)\n            self.params['range'] = np.max(X, axis=0) - np.min(X, axis=0)\n            self.params['range'][self.params['range'] == 0] = 1\n        elif self.method == 'robust':\n            self.params['median'] = np.median(X, axis=0)\n            q75, q25 = np.percentile(X, 75, axis=0), np.percentile(X, 25, axis=0)\n            self.params['iqr'] = q75 - q25\n            self.params['iqr'][self.params['iqr'] == 0] = 1\n        return self\n\n    def transform(self, X):\n        if self.method == 'standard':\n            return (X - self.params['mean']) / self.params['std']\n        elif self.method == 'minmax':\n            return (X - self.params['min']) / self.params['range']\n        elif self.method == 'robust':\n            return (X - self.params['median']) / self.params['iqr']\n\n    def inverse_transform(self, X_scaled):\n        if self.method == 'standard':\n            return X_scaled * self.params['std'] + self.params['mean']\n        elif self.method == 'minmax':\n            return X_scaled * self.params['range'] + self.params['min']\n        elif self.method == 'robust':\n            return X_scaled * self.params['iqr'] + self.params['median']",
+    "expectedOutput": "[0, 1]",
+    "testCases": [
+      {
+        "name": "standardize to mean 0",
+        "input": {
+          "method": "standard",
+          "X": [
+            [
+              1,
+              2
+            ],
+            [
+              3,
+              4
+            ],
+            [
+              5,
+              6
+            ]
+          ]
+        },
+        "expected": true
+      },
+      {
+        "name": "minmax to [0,1]",
+        "input": {
+          "method": "minmax",
+          "X": [
+            [
+              1
+            ],
+            [
+              2
+            ],
+            [
+              3
+            ],
+            [
+              4
+            ],
+            [
+              5
+            ]
+          ]
+        },
+        "expected": [
+          0,
+          0.25,
+          0.5,
+          0.75,
+          1
+        ]
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "使用梯度下降的算法为什么需要特征缩放？",
+        "options": [
+          "A. 不同尺度的特征会导致梯度方向偏斜，收敛慢",
+          "B. 特征缩放可以让模型更复杂",
+          "C. 特征缩放可以增加训练数据",
+          "D. 不需要，影响不大"
+        ],
+        "answer": 0,
+        "explanation": "特征尺度差异大会使损失函数等高线呈椭圆形，梯度下降 zigzag 收敛慢。"
+      },
+      {
+        "question": "Min-Max 归一化对异常值敏感吗？",
+        "options": [
+          "A. 敏感，异常值会拉伸缩放范围",
+          "B. 不敏感",
+          "C. 完全不受影响",
+          "D. 只对最大值敏感"
+        ],
+        "answer": 0,
+        "explanation": "Min-Max 依赖最大最小值，一个异常值会显著改变缩放范围。"
+      }
+    ],
+    "thinkingQuestion": "在训练集上计算标准化参数（均值、方差）后，对测试集做变换时应该用训练集的参数还是重新计算？为什么？",
+    "aiPrompt": "评估学生对特征缩放、标准化、归一化和数据泄露的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "ml-normalization-techniques",
+    "stageId": 4,
+    "topicName": "机器学习",
+    "subtopicName": "数据归一化",
+    "levelIndex": 1,
+    "levelTitle": "批量归一化层模拟器",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "ml",
+      "batch-norm",
+      "normalization",
+      "deep-learning"
+    ],
+    "theoryContent": "### 编程挑战：批量归一化层模拟器\n\n批量归一化（Batch Normalization）对每层的输入做标准化，然后缩放和平移，加速训练并减少内部协变量偏移。\n\n实现：\n- `batch_norm_forward(X, gamma, beta)`: 前向传播\n- `batch_norm_backward(dout, cache)`: 反向传播（简化版）\n- `layer_norm_forward(X, gamma, beta)`: 层归一化（LN）对比",
+    "latexFormulas": [
+      "\\hat{x}_i = \\frac{x_i - \\mu_B}{\\sqrt{\\sigma^2_B + \\epsilon}}",
+      "y_i = \\gamma \\hat{x}_i + \\beta"
+    ],
+    "starterCode": "import numpy as np\n\ndef batch_norm_forward(X: np.ndarray, gamma: np.ndarray, beta: np.ndarray, eps: float = 1e-5) -> dict:\n    \"\"\"\n    X: (N, D) 批量数据\n    gamma, beta: (D,) 缩放和平移参数\n    返回 {\"out\": ..., \"cache\": {\"X\": ..., \"mu\": ..., \"var\": ..., \"gamma\": ..., \"beta\": ...}}\n    \"\"\"\n    pass\n\ndef layer_norm_forward(X: np.ndarray, gamma: np.ndarray, beta: np.ndarray) -> dict:\n    \"\"\"层归一化：对每个样本在特征维度上标准化\"\"\"\n    pass",
+    "solutionCode": "import numpy as np\n\ndef batch_norm_forward(X, gamma, beta, eps=1e-5):\n    mu = np.mean(X, axis=0)\n    var = np.var(X, axis=0)\n    x_hat = (X - mu) / np.sqrt(var + eps)\n    out = gamma * x_hat + beta\n    return {'out': out, 'cache': {'X': X, 'mu': mu, 'var': var, 'x_hat': x_hat, 'gamma': gamma, 'beta': beta, 'eps': eps}}\n\ndef layer_norm_forward(X, gamma, beta, eps=1e-5):\n    mu = np.mean(X, axis=1, keepdims=True)\n    var = np.var(X, axis=1, keepdims=True)\n    x_hat = (X - mu) / np.sqrt(var + eps)\n    out = gamma * x_hat + beta\n    return {'out': out, 'cache': {'x_hat': x_hat, 'gamma': gamma, 'beta': beta}}",
+    "expectedOutput": "0",
+    "testCases": [
+      {
+        "name": "batch norm zero mean",
+        "input": {
+          "X": [
+            [
+              1,
+              5
+            ],
+            [
+              2,
+              6
+            ],
+            [
+              3,
+              7
+            ]
+          ],
+          "gamma": [
+            1,
+            1
+          ],
+          "beta": [
+            0,
+            0
+          ]
+        },
+        "expected": true
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "Batch Normalization 在测试阶段使用什么统计量？",
+        "options": [
+          "A. 训练集移动平均的均值和方差",
+          "B. 测试批次的均值和方差",
+          "C. 固定值 0 和 1",
+          "D. 不需要统计量"
+        ],
+        "answer": 0,
+        "explanation": "测试时用训练阶段累积的移动平均均值和方差，而不是测试 batch 的统计量。"
+      },
+      {
+        "question": "层归一化（LN）和批量归一化（BN）的核心区别？",
+        "options": [
+          "A. LN 对每个样本归一化，BN 对每个特征归一化",
+          "B. LN 不能和 CNN 一起用",
+          "C. BN 在 RNN 中表现更好",
+          "D. 没有区别"
+        ],
+        "answer": 0,
+        "explanation": "BN 在 batch 维度归一化，LN 在特征维度归一化——LN 不受 batch size 影响。"
+      }
+    ],
+    "thinkingQuestion": "为什么 Transformer 模型使用 Layer Norm 而不是 Batch Norm？这跟序列变长和 batch size 有什么关系？",
+    "aiPrompt": "评估学生对批量归一化、层归一化、内部协变量偏移的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "ml-ridge-regression-l2",
+    "stageId": 4,
+    "topicName": "机器学习",
+    "subtopicName": "线性回归",
+    "levelIndex": 2,
+    "levelTitle": "岭回归闭式解",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "线性回归"
+    ],
+    "theoryContent": "### 题目：岭回归闭式解\n\n岭回归在 MSE 基础上加 L2 正则化，防止过拟合：\n\n$$L = \\|Xw - y\\|^2 + \\lambda\\|w\\|^2$$\n\n闭式解为：$w = (X^T X + \\lambda I)^{-1} X^T y$\n\n实现岭回归，并与普通线性回归对比系数差异。\n\n要求：\n- `fit_ridge(X, y, lambda)` 返回 w\n- `predict(w, X)` 预测\n- `compare_coefs(X, y, lambda_list)` 返回各 lambda 下的系数变化",
+    "latexFormulas": [
+      "w = (X^T X + lambda I)^{-1} X^T y",
+      "L2 正则化: lambda * ||w||^2",
+      "lambda 越大, 系数越接近 0"
+    ],
+    "starterCode": "import numpy as np\ndef fit_ridge(X, y, lambda_reg):\n    \"\"\"岭回归闭式解\"\"\"\n    pass\ndef predict(w, X):\n    pass\ndef compare_coefs(X, y, lambdas):\n    \"\"\"返回每个 lambda 对应的系数向量列表\"\"\"\n    pass",
+    "solutionCode": "import numpy as np\ndef fit_ridge(X, y, lambda_reg):\n    n, d = X.shape\n    I = np.eye(d)\n    I[0,0] = 0  # 不惩罚偏置\n    w = np.linalg.inv(X.T @ X + lambda_reg * I) @ X.T @ y\n    return w\ndef predict(w, X):\n    return X @ w\ndef compare_coefs(X, y, lambdas):\n    coefs = []\n    for lam in lambdas:\n        w = fit_ridge(X, y, lam)\n        coefs.append({\"lambda\": lam, \"coefs\": [round(float(c),4) for c in w]})\n    return coefs",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "ridge shrinks coefs",
+        "input": {
+          "X": [
+            [
+              1,
+              2
+            ],
+            [
+              1,
+              3
+            ],
+            [
+              1,
+              4
+            ],
+            [
+              1,
+              5
+            ]
+          ],
+          "y": [
+            2,
+            3,
+            4,
+            5
+          ],
+          "lambdas": [
+            0,
+            1,
+            10
+          ]
+        },
+        "expected": true
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "当 lambda 趋近于无穷大时，岭回归的系数会怎样？",
+        "options": [
+          "A. 趋近于 0",
+          "B. 趋近于无穷大",
+          "C. 不变",
+          "D. 趋近于 OLS 解"
+        ],
+        "answer": 0,
+        "explanation": "lambda 越大正则化越强，系数被压缩趋近于 0。"
+      }
+    ],
+    "thinkingQuestion": "Lasso 回归（L1 正则化）的闭式解不存在，为什么？L1 和 L2 正则化在特征选择上有什么本质区别？",
+    "aiPrompt": "评估学生对正则化、岭回归、闭式解的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "ml-softmax-regression-l2",
+    "stageId": 4,
+    "topicName": "机器学习",
+    "subtopicName": "Logistic回归",
+    "levelIndex": 2,
+    "levelTitle": "Softmax 多分类器",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "Logistic回归"
+    ],
+    "theoryContent": "### 题目：Softmax 多分类器\n\nSoftmax 回归将 Logistic 回归推广到多分类：\n\n$$P(y=k|x) = \\frac{e^{W_k^T x}}{\\sum_{j=1}^K e^{W_j^T x}}$$\n\n实现 Softmax 回归的梯度下降训练，并计算交叉熵损失。",
+    "latexFormulas": [
+      "P(y=k|x) = exp(W_k x) / sum(exp(W_j x))",
+      "L = -sum log P(y_i|x_i)",
+      "grad = X^T (P - Y_onehot)"
+    ],
+    "starterCode": "import numpy as np\ndef softmax(z):\n    pass\ndef cross_entropy_loss(y_true, y_pred):\n    pass\ndef fit_softmax(X, y, lr, steps, num_classes):\n    \"\"\"返回权重矩阵 W\"\"\"\n    pass\ndef predict(W, X):\n    pass",
+    "solutionCode": "import numpy as np\ndef softmax(z):\n    z_shift = z - np.max(z, axis=1, keepdims=True)\n    exp_z = np.exp(z_shift)\n    return exp_z / np.sum(exp_z, axis=1, keepdims=True)\ndef cross_entropy_loss(y_true, y_pred):\n    m = y_true.shape[0]\n    log_likelihood = -np.log(y_pred[range(m), y_true] + 1e-10)\n    return float(np.mean(log_likelihood))\ndef fit_softmax(X, y, lr=0.01, steps=500, num_classes=3):\n    m, n = X.shape\n    W = np.zeros((n, num_classes))\n    Y_onehot = np.eye(num_classes)[y]\n    for _ in range(steps):\n        scores = X @ W\n        probs = softmax(scores)\n        grad = X.T @ (probs - Y_onehot) / m\n        W -= lr * grad\n    return W\ndef predict(W, X):\n    return np.argmax(X @ W, axis=1)",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "3-class classification",
+        "input": {
+          "X": [
+            [
+              1,
+              0
+            ],
+            [
+              1,
+              1
+            ],
+            [
+              2,
+              0
+            ],
+            [
+              0,
+              2
+            ],
+            [
+              0,
+              1
+            ],
+            [
+              2,
+              2
+            ]
+          ],
+          "y": [
+            0,
+            0,
+            0,
+            1,
+            1,
+            2
+          ],
+          "lr": 0.1,
+          "steps": 1000,
+          "numClasses": 3
+        },
+        "expected": true
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "Softmax 和 Sigmoid 的关系是什么？",
+        "options": [
+          "A. Softmax 是 Sigmoid 的多分类推广",
+          "B. 两者无关",
+          "C. Sigmoid 是 Softmax 的特例 K=2",
+          "D. 两者等价"
+        ],
+        "answer": 2,
+        "explanation": "当类别数 K=2 时，Softmax 可以化为 Sigmoid 形式。"
+      }
+    ],
+    "thinkingQuestion": "当类别数很大（如 1000 类）时，Softmax 的计算有什么问题？Hierarchical Softmax 如何解决？",
+    "aiPrompt": "评估学生对多分类、Softmax、交叉熵的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "ml-svm-kernel-l2",
+    "stageId": 4,
+    "topicName": "机器学习",
+    "subtopicName": "支持向量机 (SVM)",
+    "levelIndex": 2,
+    "levelTitle": "SVM 核函数与对偶",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "支持向量机 (SVM)"
+    ],
+    "theoryContent": "### 题目：SVM 核函数与对偶\n\nSVM 的核技巧通过核函数将数据映射到高维空间，在高维空间中做线性分类。\n\n实现：\n- `linear_kernel(x1, x2)`\n- `poly_kernel(x1, x2, degree, coef)` 多项式核\n- `rbf_kernel(x1, x2, gamma)` 高斯径向基核\n- `kernel_matrix(X, kernel_func)` 计算核矩阵\n- `dual_predict(alpha, X_train, y_train, X_test, kernel_func, b)` 用对偶形式预测",
+    "latexFormulas": [
+      "K_linear(x,y) = x^T y",
+      "K_poly(x,y) = (gamma x^T y + r)^d",
+      "K_rbf(x,y) = exp(-gamma ||x-y||^2)",
+      "f(x) = sum alpha_i y_i K(x_i, x) + b"
+    ],
+    "starterCode": "import numpy as np\ndef linear_kernel(x1, x2):\n    pass\ndef rbf_kernel(x1, x2, gamma):\n    pass\ndef kernel_matrix(X1, X2, kernel_func):\n    \"\"\"返回核矩阵 K, K[i,j] = kernel(X1[i], X2[j])\"\"\"\n    pass\ndef dual_predict(alpha, X_train, y_train, X_test, kernel_func, b):\n    pass",
+    "solutionCode": "import numpy as np\ndef linear_kernel(x1, x2):\n    return np.dot(x1, x2)\ndef rbf_kernel(x1, x2, gamma=1.0):\n    diff = x1 - x2\n    return np.exp(-gamma * np.dot(diff, diff))\ndef kernel_matrix(X1, X2, kernel_func):\n    n1, n2 = len(X1), len(X2)\n    K = np.zeros((n1, n2))\n    for i in range(n1):\n        for j in range(n2):\n            K[i,j] = kernel_func(X1[i], X2[j])\n    return K\ndef dual_predict(alpha, X_train, y_train, X_test, kernel_func, b):\n    K = kernel_matrix(X_train, X_test, kernel_func)\n    scores = np.sum(alpha * y_train[:, None] * K, axis=0) + b\n    return np.sign(scores)",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "rbf kernel matrix is symmetric",
+        "input": {
+          "X": [
+            [
+              1,
+              0
+            ],
+            [
+              0,
+              1
+            ],
+            [
+              -1,
+              0
+            ],
+            [
+              0,
+              -1
+            ]
+          ],
+          "gamma": 0.5
+        },
+        "expected": true
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "RBF 核的 gamma 参数越大，决策边界会怎样？",
+        "options": [
+          "A. 越复杂，容易过拟合",
+          "B. 越平滑，容易欠拟合",
+          "C. 不受影响",
+          "D. 线性性越强"
+        ],
+        "answer": 0,
+        "explanation": "gamma 越大，RBF 核的影响范围越小，决策边界越复杂，容易过拟合。"
+      }
+    ],
+    "thinkingQuestion": "Mercer 定理说明了什么？为什么不是所有相似度函数都能用作核函数？",
+    "aiPrompt": "评估学生对核函数、对偶形式、SVM 的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "ml-decision-tree-regressor-l2",
+    "stageId": 4,
+    "topicName": "机器学习",
+    "subtopicName": "决策树",
+    "levelIndex": 2,
+    "levelTitle": "决策树回归器",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "决策树"
+    ],
+    "theoryContent": "### 题目：决策树回归器\n\n决策树不仅用于分类，也可用于回归。回归树用叶节点的均值作为预测值，分裂时最小化 MSE。\n\n实现：\n- `mse_split(X_col, y, threshold)` 计算分裂后的加权 MSE\n- `best_split(X, y)` 找到最佳分裂\n- `build_tree(X, y, max_depth, min_samples)` 递归构建回归树\n- `predict_tree(tree, X)` 预测",
+    "latexFormulas": [
+      "MSE = (1/n) sum (y_i - bar{y})^2",
+      "Split: argmin (MSE_left + MSE_right)"
+    ],
+    "starterCode": "import numpy as np\ndef mse_split(X_col, y, threshold):\n    \"\"\"返回分裂后的加权 MSE\"\"\"\n    pass\ndef best_split(X, y):\n    pass\ndef build_tree(X, y, max_depth, min_samples):\n    pass\ndef predict_tree(tree, X):\n    pass",
+    "solutionCode": "import numpy as np\ndef mse_split(X_col, y, threshold):\n    left = y[X_col <= threshold]\n    right = y[X_col > threshold]\n    if len(left) == 0 or len(right) == 0:\n        return float(\"inf\")\n    mse_left = np.var(left) * len(left)\n    mse_right = np.var(right) * len(right)\n    return (mse_left + mse_right) / len(y)\ndef best_split(X, y):\n    best_f, best_t, best_loss = -1, 0, float(\"inf\")\n    for f in range(X.shape[1]):\n        vals = np.unique(X[:, f])\n        for v in vals:\n            loss = mse_split(X[:, f], y, v)\n            if loss < best_loss:\n                best_f, best_t, best_loss = f, v, loss\n    return {\"feature\": best_f, \"threshold\": best_t}\ndef build_tree(X, y, max_depth=5, min_samples=2):\n    if len(set(y)) == 1 or len(y) < min_samples or max_depth == 0:\n        return {\"pred\": float(np.mean(y)), \"leaf\": True}\n    split = best_split(X, y)\n    if split[\"feature\"] == -1:\n        return {\"pred\": float(np.mean(y)), \"leaf\": True}\n    left_idx = X[:, split[\"feature\"]] <= split[\"threshold\"]\n    right_idx = ~left_idx\n    return {\n        \"feature\": split[\"feature\"], \"threshold\": split[\"threshold\"],\n        \"left\": build_tree(X[left_idx], y[left_idx], max_depth-1, min_samples),\n        \"right\": build_tree(X[right_idx], y[right_idx], max_depth-1, min_samples)\n    }\ndef predict_tree(tree, x):\n    if tree.get(\"leaf\"):\n        return tree[\"pred\"]\n    if x[tree[\"feature\"]] <= tree[\"threshold\"]:\n        return predict_tree(tree[\"left\"], x)\n    return predict_tree(tree[\"right\"], x)",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "simple regression tree",
+        "input": {
+          "X": [
+            [
+              1
+            ],
+            [
+              2
+            ],
+            [
+              3
+            ],
+            [
+              4
+            ],
+            [
+              5
+            ],
+            [
+              6
+            ]
+          ],
+          "y": [
+            1,
+            2,
+            3,
+            3.5,
+            5,
+            6
+          ],
+          "maxDepth": 3,
+          "minSamples": 2
+        },
+        "expected": true
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "回归树和分类树的主要区别？",
+        "options": [
+          "A. 叶节点输出均值 vs 多数类别",
+          "B. 分裂标准 MSE vs 信息增益",
+          "C. 两者都是",
+          "D. 没有区别"
+        ],
+        "answer": 2,
+        "explanation": "回归树叶节点输出均值，分裂用 MSE；分类树叶节点输出多数类别，分裂用信息增益/基尼。"
+      }
+    ],
+    "thinkingQuestion": "决策树很容易过拟合。剪枝（Pruning）有哪些策略？预剪枝和后剪枝的区别是什么？",
+    "aiPrompt": "评估学生对决策树回归、递归分裂、过拟合的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "ml-random-forest-oob-l2",
+    "stageId": 4,
+    "topicName": "机器学习",
+    "subtopicName": "随机森林",
+    "levelIndex": 2,
+    "levelTitle": "随机森林袋外评估",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "随机森林"
+    ],
+    "theoryContent": "### 题目：随机森林袋外评估\n\n随机森林的 Bagging 机制中，每棵树只用约 63.2% 的样本训练，剩下的 36.8% 作为袋外（OOB）样本，可用于评估模型性能。\n\n实现完整随机森林：\n- `bootstrap_sample(X, y)` 自助采样\n- `fit_tree(X, y, max_depth)` 训练单棵树\n- `fit_random_forest(X, y, n_trees, max_depth)` 训练森林并记录 OOB 样本\n- `oob_predict(trees, oob_samples, X)` 用 OOB 样本预测\n- `oob_score(trees, oob_samples, X, y)` 计算 OOB 准确率",
+    "latexFormulas": [
+      "OOB 误差 ~ 测试集误差",
+      "P(样本被抽中) = 1 - (1-1/N)^N ~ 63.2%"
+    ],
+    "starterCode": "import numpy as np\nfrom collections import Counter\ndef bootstrap_sample(X, y):\n    pass\ndef oob_predict(trees, oob_samples, X):\n    \"\"\"用每棵树的 OOB 样本投票预测\"\"\"\n    pass\ndef oob_score(trees, oob_samples, X, y):\n    pass",
+    "solutionCode": "import numpy as np\nfrom collections import Counter\ndef bootstrap_sample(X, y):\n    n = len(X)\n    idx = np.random.choice(n, n, replace=True)\n    oob = list(set(range(n)) - set(idx))\n    return X[idx], y[idx], oob\n\ndef _stump(X, y, depth=0, max_depth=3):\n    if len(set(y))==1 or depth>=max_depth:\n        return {\"pred\": Counter(y).most_common(1)[0][0], \"leaf\": True}\n    best_f, best_t, best_g = -1, 0, -1\n    def H(y):\n        c = Counter(y)\n        return -sum((cnt/len(y))*np.log2(cnt/len(y)+1e-10) for cnt in c.values())\n    for f in range(X.shape[1]):\n        for v in np.unique(X[:, f]):\n            l = y[X[:, f]<=v]; r = y[X[:, f]>v]\n            if len(l)==0 or len(r)==0: continue\n            g = H(y) - len(l)/len(y)*H(l) - len(r)/len(y)*H(r)\n            if g > best_g: best_f,best_t,best_g = f,v,g\n    if best_f == -1: return {\"pred\": Counter(y).most_common(1)[0][0], \"leaf\": True}\n    li = X[:,best_f]<=best_t\n    return {\"feature\":best_f,\"threshold\":best_t,\"left\":_stump(X[li],y[li],depth+1,max_depth),\"right\":_stump(X[~li],y[~li],depth+1,max_depth)}\n\ndef _predict(t, x):\n    if t.get(\"leaf\"): return t[\"pred\"]\n    return _predict(t[\"left\"],x) if x[t[\"feature\"]]<=t[\"threshold\"] else _predict(t[\"right\"],x)\n\ndef fit_random_forest(X, y, n_trees=10, max_depth=3):\n    trees, oobs = [], []\n    for _ in range(n_trees):\n        Xs, ys, oob = bootstrap_sample(X, y)\n        trees.append(_stump(Xs, ys, 0, max_depth))\n        oobs.append(oob)\n    return {\"trees\": trees, \"oob_samples\": oobs}\ndef oob_predict(trees, oob_samples, X):\n    n = len(X)\n    preds = [[] for _ in range(n)]\n    for i, tree in enumerate(trees):\n        for j in oob_samples[i]:\n            preds[j].append(_predict(tree, X[j]))\n    result = []\n    for p in preds:\n        if p:\n            result.append(Counter(p).most_common(1)[0][0])\n        else:\n            result.append(0)\n    return np.array(result)\ndef oob_score(trees, oob_samples, X, y):\n    pred = oob_predict(trees, oob_samples, X)\n    return round(float(np.mean(pred == y)), 4)",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "oob score",
+        "input": {
+          "X": [
+            [
+              1
+            ],
+            [
+              2
+            ],
+            [
+              3
+            ],
+            [
+              10
+            ],
+            [
+              11
+            ],
+            [
+              12
+            ]
+          ],
+          "y": [
+            0,
+            0,
+            0,
+            1,
+            1,
+            1
+          ],
+          "nTrees": 5,
+          "maxDepth": 3
+        },
+        "expected": true
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "为什么 OOB 误差不需要单独的验证集？",
+        "options": [
+          "A. 每棵树的训练集不同，未使用的样本天然可作为验证",
+          "B. OOB 包含了所有样本",
+          "C. OOB 比测试集更准确",
+          "D. OOB 不需要标签"
+        ],
+        "answer": 0,
+        "explanation": "每棵树只用了约 63% 的样本，剩余 37% 的袋外样本天然适合做验证。"
+      }
+    ],
+    "thinkingQuestion": "随机森林中除了样本随机（Bagging），还有特征随机。特征随机的作用是什么？为什么它能提升模型多样性？",
+    "aiPrompt": "评估学生对随机森林、Bagging、OOB 的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "ml-xgboost-gbdt-regression-l2",
+    "stageId": 4,
+    "topicName": "机器学习",
+    "subtopicName": "XGBoost",
+    "levelIndex": 2,
+    "levelTitle": "XGBoost 回归训练器",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "XGBoost"
+    ],
+    "theoryContent": "### 题目：XGBoost 回归训练器\n\nXGBoost 在 GBDT 基础上加入正则化项和目标函数的二阶泰勒展开。\n\n实现简化版：\n- `gbdt_fit(X, y, n_estimators, lr, max_depth)` 训练 GBDT\n- `gbdt_predict(model, X)` 预测\n- `gradient(y_true, y_pred)` 梯度\n- `hessian(y_true, y_pred)` 二阶梯度（恒为 1 对 MSE）",
+    "latexFormulas": [
+      "L(y,F) = (y-F)^2 / 2",
+      "r_i = y_i - F(x_i)",
+      "h_i = 1 (for MSE)",
+      "F_m(x) = F_{m-1}(x) + lr * h_m(x)"
+    ],
+    "starterCode": "import numpy as np\ndef gradient(y_true, y_pred): pass\ndef hessian(y_true, y_pred): pass\ndef _build_tree(X, residuals, depth): pass\ndef gbdt_fit(X, y, n_estimators, lr, max_depth): pass\ndef gbdt_predict(model, X): pass",
+    "solutionCode": "import numpy as np\ndef gradient(y_true, y_pred):\n    return y_pred - y_true\ndef hessian(y_true, y_pred):\n    return np.ones_like(y_true)\n\ndef _build_stump_reg(X, y, depth=0, max_depth=3):\n    if len(y) < 2 or depth >= max_depth:\n        return {\"pred\": float(np.mean(y)), \"leaf\": True}\n    best_f, best_t, best_loss = -1, 0, float(\"inf\")\n    for f in range(X.shape[1]):\n        for v in np.unique(X[:, f]):\n            l = y[X[:, f]<=v]; r = y[X[:, f]>v]\n            if len(l)==0 or len(r)==0: continue\n            loss = np.var(l)*len(l) + np.var(r)*len(r)\n            if loss < best_loss: best_f,best_t,best_loss = f,v,loss\n    if best_f == -1: return {\"pred\": float(np.mean(y)), \"leaf\": True}\n    li = X[:,best_f]<=best_t\n    return {\"feature\":best_f,\"threshold\":best_t,\"left\":_build_stump_reg(X[li],y[li],depth+1,max_depth),\"right\":_build_stump_reg(X[~li],y[~li],depth+1,max_depth)}\n\ndef _pred_tree(t, x):\n    if t.get(\"leaf\"): return t[\"pred\"]\n    return _pred_tree(t[\"left\"],x) if x[t[\"feature\"]]<=t[\"threshold\"] else _pred_tree(t[\"right\"],x)\n\ndef gbdt_fit(X, y, n_estimators=10, lr=0.1, max_depth=3):\n    model = []\n    F = np.zeros(len(y))\n    for _ in range(n_estimators):\n        res = gradient(y, F)\n        tree = _build_stump_reg(X, res, 0, max_depth)\n        preds = np.array([_pred_tree(tree, x) for x in X])\n        F += lr * preds\n        model.append({\"tree\": tree, \"weight\": lr})\n    return model\ndef gbdt_predict(model, X):\n    F = np.zeros(len(X))\n    for m in model:\n        F += m[\"weight\"] * np.array([_pred_tree(m[\"tree\"], x) for x in X])\n    return F",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "gbdt fits sine",
+        "input": {
+          "X": [
+            [
+              0
+            ],
+            [
+              0.5
+            ],
+            [
+              1
+            ],
+            [
+              1.5
+            ],
+            [
+              2
+            ],
+            [
+              2.5
+            ],
+            [
+              3
+            ],
+            [
+              3.5
+            ]
+          ],
+          "y": [
+            0,
+            0.48,
+            0.84,
+            1,
+            0.84,
+            0.48,
+            0,
+            -0.48
+          ],
+          "nEstimators": 20,
+          "lr": 0.3,
+          "maxDepth": 3
+        },
+        "expected": true
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "GBDT 中每棵新树拟合的是什么？",
+        "options": [
+          "A. 当前残差（负梯度）",
+          "B. 原始标签",
+          "C. 前一棵树的输出",
+          "D. 随机噪声"
+        ],
+        "answer": 0,
+        "explanation": "GBDT 每棵新树拟合当前模型的负梯度方向，即残差。"
+      }
+    ],
+    "thinkingQuestion": "XGBoost 相比 GBDT 的核心改进是什么？为什么二阶梯度信息比一阶梯度更有用？",
+    "aiPrompt": "评估学生对 GBDT、梯度提升、残差拟合的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "ml-knn-regression-l2",
+    "stageId": 4,
+    "topicName": "机器学习",
+    "subtopicName": "KNN",
+    "levelIndex": 2,
+    "levelTitle": "KNN 回归与超参调优",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "KNN"
+    ],
+    "theoryContent": "### 题目：KNN 回归与超参调优\n\nKNN 也可用于回归：取最近 K 个样本的目标值平均作为预测值。\n\n实现 KNN 回归器并找到最佳 K 值：\n- `knn_regression_predict(X_train, y_train, X_test, k)`\n- `weighted_knn_predict(X_train, y_train, X_test, k)` 距离加权 KNN\n- `find_best_k(X_train, y_train, X_val, y_val, k_range)` 交叉验证找最佳 K",
+    "latexFormulas": [
+      "y_pred = (1/k) sum y_i",
+      "Weighted: y_pred = sum(w_i * y_i) / sum(w_i)",
+      "w_i = 1 / (d(x, x_i) + eps)"
+    ],
+    "starterCode": "import numpy as np\ndef euclidean(a, b):\n    return float(np.sqrt(np.sum((a-b)**2)))\ndef knn_regression_predict(X_train, y_train, X_test, k):\n    pass\ndef weighted_knn_predict(X_train, y_train, X_test, k):\n    pass\ndef find_best_k(X_train, y_train, X_val, y_val, k_range):\n    \"\"\"返回 {\"best_k\": int, \"scores\": dict}\"\"\"\n    pass",
+    "solutionCode": "import numpy as np\ndef euclidean(a, b):\n    return float(np.sqrt(np.sum((a-b)**2)))\ndef knn_regression_predict(X_train, y_train, X_test, k):\n    y_pred = []\n    for x in X_test:\n        dists = [(euclidean(x, xt), yt) for xt, yt in zip(X_train, y_train)]\n        dists.sort(key=lambda d: d[0])\n        nearest = dists[:k]\n        y_pred.append(float(np.mean([d[1] for d in nearest])))\n    return np.array(y_pred)\ndef weighted_knn_predict(X_train, y_train, X_test, k):\n    y_pred = []\n    for x in X_test:\n        dists = [(euclidean(x, xt), yt) for xt, yt in zip(X_train, y_train)]\n        dists.sort(key=lambda d: d[0])\n        nearest, eps = dists[:k], 1e-10\n        w = [1.0 / (d[0] + eps) for d in nearest]\n        y_pred.append(float(np.sum(w * np.array([d[1] for d in nearest])) / np.sum(w)))\n    return np.array(y_pred)\ndef find_best_k(X_train, y_train, X_val, y_val, k_range):\n    scores = {}\n    for k in k_range:\n        pred = knn_regression_predict(X_train, y_train, X_val, k)\n        mse = float(np.mean((pred - y_val)**2))\n        scores[k] = round(mse, 4)\n    best_k = min(scores, key=scores.get)\n    return {\"best_k\": best_k, \"scores\": scores}",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "weighted knn",
+        "input": {
+          "X_train": [
+            [
+              1,
+              1
+            ],
+            [
+              2,
+              2
+            ],
+            [
+              10,
+              10
+            ],
+            [
+              11,
+              11
+            ]
+          ],
+          "y_train": [
+            1,
+            2,
+            10,
+            11
+          ],
+          "X_test": [
+            [
+              3,
+              3
+            ]
+          ],
+          "k": 2
+        },
+        "expected": true
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "KNN 回归中 K 值太小会导致什么？",
+        "options": [
+          "A. 过拟合，对噪声敏感",
+          "B. 欠拟合，过于平滑",
+          "C. 训练更慢",
+          "D. 内存消耗更大"
+        ],
+        "answer": 0,
+        "explanation": "K 太小，只参考极少近邻的点，模型对局部噪声过于敏感导致过拟合。"
+      }
+    ],
+    "thinkingQuestion": "当特征维度很高时，欧氏距离的区分度会下降（维度灾难）。你会如何缓解？",
+    "aiPrompt": "评估学生对 KNN 回归、超参调优、距离度量的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "ml-kmeans-plusplus-l2",
+    "stageId": 4,
+    "topicName": "机器学习",
+    "subtopicName": "K-Means聚类",
+    "levelIndex": 2,
+    "levelTitle": "K-Means++ 初始化",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "K-Means聚类"
+    ],
+    "theoryContent": "### 题目：K-Means++ 初始化\n\nK-Means++ 改进了初始质心的选择：以概率正比于到已有质心的距离平方来选择下一个质心，显著提升聚类效果。\n\n实现：\n- `kmeans_plusplus_init(X, k)` K-Means++ 初始化\n- `kmeans_with_init(X, k, init_method)` 支持 random 和 kmeans++ 两种初始化\n- `silhouette_score(X, labels)` 轮廓系数评估聚类质量",
+    "latexFormulas": [
+      "P(选x_i) = D(x_i)^2 / sum D(x_j)^2",
+      "D(x_i) = min ||x_i - mu||^2",
+      "轮廓系数 = (b-a)/max(a,b)"
+    ],
+    "starterCode": "import numpy as np\ndef kmeans_plusplus_init(X, k):\n    \"\"\"K-Means++ 初始化质心\"\"\"\n    pass\ndef kmeans_with_init(X, k, init_method):\n    \"\"\"返回 {\"centroids\": ..., \"assignments\": ..., \"inertia\": float}\"\"\"\n    pass\ndef silhouette_score(X, labels):\n    pass",
+    "solutionCode": "import numpy as np\ndef euclidean(a, b):\n    return float(np.sqrt(np.sum((a-b)**2)))\ndef kmeans_plusplus_init(X, k):\n    centroids = [X[np.random.randint(len(X))]]\n    for _ in range(1, k):\n        dists = np.array([min(euclidean(x, c)**2 for c in centroids) for x in X])\n        probs = dists / np.sum(dists)\n        centroids.append(X[np.random.choice(len(X), p=probs)])\n    return np.array(centroids)\ndef kmeans_with_init(X, k, init_method=\"kmeans++\"):\n    if init_method == \"kmeans++\":\n        centroids = kmeans_plusplus_init(X, k)\n    else:\n        idx = np.random.choice(len(X), k, replace=False)\n        centroids = X[idx]\n    for _ in range(100):\n        dists = np.array([[euclidean(x, c) for c in centroids] for x in X])\n        assignments = np.argmin(dists, axis=1)\n        new_c = np.array([X[assignments==j].mean(axis=0) if np.sum(assignments==j)>0 else centroids[j] for j in range(k)])\n        if np.allclose(centroids, new_c): break\n        centroids = new_c\n    inertia = float(sum(np.min(dists, axis=1)**2))\n    return {\"centroids\": centroids, \"assignments\": assignments.tolist(), \"inertia\": round(inertia, 4)}\ndef silhouette_score(X, labels):\n    labels = np.array(labels)\n    scores = []\n    for i, x in enumerate(X):\n        same = [euclidean(x, X[j]) for j in range(len(X)) if labels[j]==labels[i] and j!=i]\n        other = [euclidean(x, X[j]) for j in range(len(X)) if labels[j]!=labels[i]]\n        a = np.mean(same) if same else 0\n        b = np.min([np.mean([euclidean(x, X[j]) for j in range(len(X)) if labels[j]==c]) for c in set(labels) if c!=labels[i]]) if len(set(labels))>1 else 0\n        scores.append((b-a)/max(a,b) if max(a,b)>0 else 0)\n    return round(float(np.mean(scores)), 4)",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "kmeans++ vs random",
+        "input": {
+          "X": [
+            [
+              1,
+              1
+            ],
+            [
+              2,
+              2
+            ],
+            [
+              8,
+              8
+            ],
+            [
+              9,
+              9
+            ],
+            [
+              10,
+              10
+            ]
+          ],
+          "k": 2
+        },
+        "expected": true
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "K-Means++ 相比随机初始化为什么更好？",
+        "options": [
+          "A. 初始质心分散，减少陷入局部最优",
+          "B. 更快收敛",
+          "C. 不需要指定 K",
+          "D. 更少的迭代次数"
+        ],
+        "answer": 0,
+        "explanation": "K-Means++ 让初始质心尽量分散，降低收敛到局部最优的概率。"
+      }
+    ],
+    "thinkingQuestion": "轮廓系数的取值范围？接近 1、0、-1 分别表示什么？",
+    "aiPrompt": "评估学生对 K-Means++、聚类质量评估的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "ml-dbscan-eps-l2",
+    "stageId": 4,
+    "topicName": "机器学习",
+    "subtopicName": "DBSCAN",
+    "levelIndex": 2,
+    "levelTitle": "DBSCAN eps 参数调优",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "DBSCAN"
+    ],
+    "theoryContent": "### 题目：DBSCAN eps 参数调优\n\nDBSCAN 的 eps 参数决定邻域大小。eps 太小全是噪声，eps 太大所有点成一簇。\n\n实现：\n- `dbscan(X, eps, min_pts)` 完整 DBSCAN\n- `k_distance_plot(X, k)` 计算 k 距离图，用于选择 eps\n- `find_optimal_eps(k_distances, percentile)` 基于 k 距离的拐点选择 eps",
+    "latexFormulas": [
+      "k-dist: 第 k 近邻距离",
+      "eps 选择 k-dist 曲线的拐点"
+    ],
+    "starterCode": "import numpy as np\ndef region_query(X, p_idx, eps):\n    pass\ndef dbscan(X, eps, min_pts):\n    pass\ndef k_distance_plot(X, k):\n    \"\"\"返回每个点的第 k 近邻距离（排序后）\"\"\"\n    pass",
+    "solutionCode": "import numpy as np\ndef euclidean(a, b):\n    return float(np.sqrt(np.sum((a-b)**2)))\ndef region_query(X, p_idx, eps):\n    return [i for i in range(len(X)) if euclidean(X[p_idx], X[i]) <= eps]\ndef dbscan(X, eps, min_pts):\n    labels = [-2] * len(X)\n    cluster = 0\n    for i in range(len(X)):\n        if labels[i] != -2: continue\n        nbrs = region_query(X, i, eps)\n        if len(nbrs) < min_pts:\n            labels[i] = -1\n            continue\n        labels[i] = cluster\n        seed = nbrs[:]\n        for q in seed:\n            if labels[q] == -2:\n                labels[q] = cluster\n                qn = region_query(X, q, eps)\n                if len(qn) >= min_pts:\n                    seed.extend([n for n in qn if labels[n] == -2])\n        cluster += 1\n    return {\"labels\": [int(l) for l in labels], \"n_clusters\": cluster, \"noise\": int(labels.count(-1))}\ndef k_distance_plot(X, k):\n    dists = []\n    for i in range(len(X)):\n        d = sorted([euclidean(X[i], X[j]) for j in range(len(X)) if j != i])\n        dists.append(d[k-1] if len(d) >= k else d[-1])\n    return sorted(dists, reverse=True)",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "dbscan with k-dist",
+        "input": {
+          "X": [
+            [
+              1,
+              1
+            ],
+            [
+              1.5,
+              1
+            ],
+            [
+              2,
+              1
+            ],
+            [
+              8,
+              8
+            ],
+            [
+              8.5,
+              8
+            ],
+            [
+              9,
+              8
+            ],
+            [
+              100,
+              100
+            ]
+          ],
+          "k": 2
+        },
+        "expected": true
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "k 距离图中拐点之前的 eps 值说明什么？",
+        "options": [
+          "A. 对应密集区域的核心点",
+          "B. 全是噪声",
+          "C. 所有点成一簇",
+          "D. 需要更多数据"
+        ],
+        "answer": 0,
+        "explanation": "拐点前距离增长缓慢（密集区域），拐点后快速上升（切换到稀疏区域）。"
+      }
+    ],
+    "thinkingQuestion": "DBSCAN 的时间复杂度是 O(n²)。当数据量很大时，你会使用哪些技术来加速？",
+    "aiPrompt": "评估学生对 DBSCAN、参数调优、k 距离的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "ml-hierarchical-dendrogram-l2",
+    "stageId": 4,
+    "topicName": "机器学习",
+    "subtopicName": "层次聚类",
+    "levelIndex": 2,
+    "levelTitle": "层次聚类与树状图截断",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "层次聚类"
+    ],
+    "theoryContent": "### 题目：层次聚类与树状图截断\n\n凝聚式层次聚类从每个点各自一簇开始，逐步合并最近的两簇。树状图展示了合并过程。\n\n实现：\n- `agglomerative(X, n_clusters, linkage)` 完整凝聚式聚类\n- `dendrogram_heights(X, linkage)` 返回每次合并的距离，用于画树状图\n- `cut_dendrogram(dendrogram, n_clusters)` 在指定簇数处截断树状图",
+    "latexFormulas": [
+      "Single: d_min(C_i, C_j)",
+      "Complete: d_max(C_i, C_j)",
+      "Average: d_mean(C_i, C_j)"
+    ],
+    "starterCode": "import numpy as np\ndef agglomerative(X, n_clusters, linkage):\n    pass\ndef dendrogram_heights(X, linkage):\n    \"\"\"返回每次合并的簇间距离列表\"\"\"\n    pass",
+    "solutionCode": "import numpy as np\ndef euclidean(a, b):\n    return float(np.sqrt(np.sum((a-b)**2)))\ndef cluster_dist(A, B, linkage):\n    dists = [euclidean(a, b) for a in A for b in B]\n    if linkage==\"single\": return min(dists)\n    elif linkage==\"complete\": return max(dists)\n    return sum(dists)/len(dists)\ndef agglomerative(X, n_clusters=2, linkage=\"single\"):\n    clusters = [[i] for i in range(len(X))]\n    while len(clusters) > n_clusters:\n        md, mi, mj = float(\"inf\"), 0, 1\n        for i in range(len(clusters)):\n            for j in range(i+1, len(clusters)):\n                d = cluster_dist(X[clusters[i]], X[clusters[j]], linkage)\n                if d < md: md, mi, mj = d, i, j\n        clusters[mi].extend(clusters[mj])\n        clusters.pop(mj)\n    labels = np.zeros(len(X), dtype=int)\n    for cid, c in enumerate(clusters):\n        for idx in c: labels[idx] = cid\n    return labels.tolist()\ndef dendrogram_heights(X, linkage=\"single\"):\n    clusters = [[i] for i in range(len(X))]\n    heights = []\n    while len(clusters) > 1:\n        md, mi, mj = float(\"inf\"), 0, 1\n        for i in range(len(clusters)):\n            for j in range(i+1, len(clusters)):\n                d = cluster_dist(X[clusters[i]], X[clusters[j]], linkage)\n                if d < md: md, mi, mj = d, i, j\n        heights.append(round(md, 4))\n        clusters[mi].extend(clusters[mj])\n        clusters.pop(mj)\n    return heights",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "dendrogram 2 clusters",
+        "input": {
+          "X": [
+            [
+              1,
+              1
+            ],
+            [
+              2,
+              2
+            ],
+            [
+              10,
+              10
+            ],
+            [
+              11,
+              11
+            ]
+          ],
+          "linkage": "single"
+        },
+        "expected": true
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "Single linkage 容易产生什么问题？",
+        "options": [
+          "A. 链式效应，形成长条簇",
+          "B. 产生球形簇",
+          "C. 对噪声不敏感",
+          "D. 计算太慢"
+        ],
+        "answer": 0,
+        "explanation": "Single linkage 只考虑最近点，容易沿着噪声点将不相关的簇连接成长链。"
+      }
+    ],
+    "thinkingQuestion": "Complete linkage 和 Single linkage 对噪声的敏感度有何不同？为什么？",
+    "aiPrompt": "评估学生对层次聚类、连接准则、树状图的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "ml-pca-whitening-l2",
+    "stageId": 4,
+    "topicName": "机器学习",
+    "subtopicName": "PCA主成分分析",
+    "levelIndex": 2,
+    "levelTitle": "PCA 白化与重建误差",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "PCA主成分分析"
+    ],
+    "theoryContent": "### 题目：PCA 白化与重建误差\n\nPCA 白化（Whitening）在 PCA 降维后进一步缩放各维度，使各维度方差相等（协方差为单位矩阵）。\n\n实现：\n- `pca_fit(X)` PCA 拟合\n- `pca_transform(X, n_components)` 降维\n- `pca_whiten(X, n_components)` PCA + 白化\n- `reconstruction_error(X, X_reconstructed)` 重建误差\n- `explained_variance_ratio(X, n_components)` 可解释方差比",
+    "latexFormulas": [
+      "Z = X W_k (PCA)",
+      "Z_whiten = Z / sqrt(lambda_i) (Whitening)",
+      "Error = ||X - X_k||^2 / ||X||^2"
+    ],
+    "starterCode": "import numpy as np\ndef pca_fit(X):\n    pass\ndef pca_transform(X, n_components):\n    pass\ndef pca_whiten(X, n_components):\n    pass\ndef reconstruction_error(X, X_rec):\n    pass",
+    "solutionCode": "import numpy as np\ndef pca_fit(X):\n    mean = np.mean(X, axis=0)\n    Xc = X - mean\n    cov = Xc.T @ Xc / (len(X)-1)\n    vals, vecs = np.linalg.eigh(cov)\n    idx = np.argsort(vals)[::-1]\n    vals, vecs = vals[idx], vecs[:, idx]\n    return {\"mean\": mean, \"components\": vecs, \"values\": vals}\ndef pca_transform(model, X, n_components):\n    Xc = X - model[\"mean\"]\n    return Xc @ model[\"components\"][:, :n_components]\ndef pca_whiten(model, X, n_components):\n    Xc = X - model[\"mean\"]\n    W = model[\"components\"][:, :n_components]\n    Z = Xc @ W\n    Z_white = Z / np.sqrt(model[\"values\"][:n_components] + 1e-10)\n    return Z_white\ndef reconstruction_error(X, X_rec):\n    return round(float(np.linalg.norm(X - X_rec)**2 / np.linalg.norm(X)**2), 6)\ndef explained_variance_ratio(model, n_components):\n    total = np.sum(model[\"values\"])\n    ratio = [round(float(v/total), 4) for v in model[\"values\"][:n_components]]\n    return {\"ratios\": ratio, \"cumulative\": round(float(np.sum(model[\"values\"][:n_components])/total), 4)}",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "pca whitening",
+        "input": {
+          "X": [
+            [
+              1,
+              0
+            ],
+            [
+              0,
+              1
+            ],
+            [
+              -1,
+              0
+            ],
+            [
+              0,
+              -1
+            ],
+            [
+              2,
+              0
+            ]
+          ],
+          "nComponents": 2
+        },
+        "expected": true
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "PCA 白化后各维度的协方差矩阵是什么？",
+        "options": [
+          "A. 单位矩阵",
+          "B. 对角矩阵",
+          "C. 协方差为 0",
+          "D. 对称矩阵"
+        ],
+        "answer": 0,
+        "explanation": "白化后各维度方差为 1，不同维度协方差为 0，协方差阵是单位矩阵。"
+      }
+    ],
+    "thinkingQuestion": "ZCA 白化和 PCA 白化的区别是什么？在图像预处理中为什么常用 ZCA？",
+    "aiPrompt": "评估学生对 PCA、白化、重建误差的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "ml-robust-scaler-l2",
+    "stageId": 4,
+    "topicName": "机器学习",
+    "subtopicName": "特征标准化",
+    "levelIndex": 2,
+    "levelTitle": "鲁棒缩放与分位数变换",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "特征标准化"
+    ],
+    "theoryContent": "### 题目：鲁棒缩放与分位数变换\n\n鲁棒缩放使用中位数和 IQR（四分位距），对异常值不敏感。分位数变换将数据映射到指定分布。\n\n实现完整的缩放器类：\n- `RobustScaler`：fit/transform/inverse_transform\n- `QuantileTransformer`：将数据映射到均匀分布或正态分布\n- 对比不同缩放方法对含异常值数据的鲁棒性",
+    "latexFormulas": [
+      "Robust: x' = (x - median) / IQR",
+      "IQR = Q3 - Q1",
+      "Quantile: rank -> uniform -> normal"
+    ],
+    "starterCode": "import numpy as np\nclass RobustScaler:\n    def fit(self, X): pass\n    def transform(self, X): pass\n    def inverse_transform(self, X): pass\nclass QuantileTransformer:\n    def fit(self, X): pass\n    def transform(self, X): pass",
+    "solutionCode": "import numpy as np\nclass RobustScaler:\n    def fit(self, X):\n        self.median = np.median(X, axis=0)\n        q75, q25 = np.percentile(X, 75, axis=0), np.percentile(X, 25, axis=0)\n        self.iqr = q75 - q25\n        self.iqr[self.iqr == 0] = 1\n        return self\n    def transform(self, X):\n        return (X - self.median) / self.iqr\n    def inverse_transform(self, X):\n        return X * self.iqr + self.median\nclass QuantileTransformer:\n    def fit(self, X, n_quantiles=100):\n        self.n_quantiles = min(n_quantiles, len(X))\n        self.references = np.linspace(0, 1, self.n_quantiles)\n        self.quantiles = np.percentile(X, np.linspace(0, 100, self.n_quantiles), axis=0)\n        return self\n    def transform(self, X, output_distribution=\"uniform\"):\n        result = np.zeros_like(X)\n        for j in range(X.shape[1]):\n            idx = np.searchsorted(self.quantiles[:, j], X[:, j], side=\"right\") - 1\n            idx = np.clip(idx, 0, self.n_quantiles - 1)\n            ranks = self.references[idx]\n            if output_distribution == \"normal\":\n                from scipy.stats import norm\n                result[:, j] = norm.ppf(np.clip(ranks, 0.001, 0.999))\n            else:\n                result[:, j] = ranks\n        return result\n    def inverse_transform(self, X):\n        result = np.zeros_like(X)\n        for j in range(X.shape[1]):\n            idx = np.clip((X[:, j] * (self.n_quantiles-1)).astype(int), 0, self.n_quantiles-1)\n            result[:, j] = self.quantiles[idx, j]\n        return result",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "robust with outliers",
+        "input": {
+          "X": [
+            [
+              1
+            ],
+            [
+              2
+            ],
+            [
+              3
+            ],
+            [
+              4
+            ],
+            [
+              5
+            ],
+            [
+              100
+            ]
+          ]
+        },
+        "expected": true
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "数据中有异常值时为什么标准化比鲁棒缩放效果差？",
+        "options": [
+          "A. 异常值拉偏均值和方差，Z-score 不再中心化",
+          "B. 标准化不支持逆变换",
+          "C. 鲁棒缩放计算更慢",
+          "D. 标准化会丢失数据"
+        ],
+        "answer": 0,
+        "explanation": "异常值会严重拉偏均值和方差，导致标准化后正常数据不再以 0 为中心。"
+      }
+    ],
+    "thinkingQuestion": "分位数变换一定会使数据变成均匀分布，它的代价是什么？为什么说它破坏了数据的分布形状信息？",
+    "aiPrompt": "评估学生对特征缩放、鲁棒统计、分位数的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "ml-layer-normalization-l2",
+    "stageId": 4,
+    "topicName": "机器学习",
+    "subtopicName": "数据归一化",
+    "levelIndex": 2,
+    "levelTitle": "层归一化与批归一化对比",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "数据归一化"
+    ],
+    "theoryContent": "### 题目：层归一化与批归一化对比\n\nLayer Normalization（LN）和 Batch Normalization（BN）的归一化维度不同：\n- BN：对每个特征在 batch 维度归一化\n- LN：对每个样本在特征维度归一化\n\n实现两者的前向传播、反向传播梯度，并对比参数更新效果。",
+    "latexFormulas": [
+      "BN: x_hat = (x - mu_b) / sigma_b (per feature)",
+      "LN: x_hat = (x - mu_s) / sigma_s (per sample)",
+      "BN 训练用 batch 统计，推理用全局统计"
+    ],
+    "starterCode": "import numpy as np\ndef batch_norm(X, gamma, beta, eps=1e-5):\n    \"\"\"返回 {\"out\": ..., \"mu\": ..., \"var\": ...}\"\"\"\n    pass\ndef layer_norm(X, gamma, beta, eps=1e-5):\n    \"\"\"返回 {\"out\": ..., \"mu\": ..., \"var\": ...}\"\"\"\n    pass\ndef compare_gradients(dout, X, gamma, beta):\n    \"\"\"返回 BN vs LN 的梯度差异\"\"\"\n    pass",
+    "solutionCode": "import numpy as np\ndef batch_norm(X, gamma, beta, eps=1e-5):\n    mu = np.mean(X, axis=0, keepdims=True)\n    var = np.var(X, axis=0, keepdims=True)\n    x_hat = (X - mu) / np.sqrt(var + eps)\n    return {\"out\": gamma * x_hat + beta, \"mu\": mu.flatten(), \"var\": var.flatten()}\ndef layer_norm(X, gamma, beta, eps=1e-5):\n    mu = np.mean(X, axis=1, keepdims=True)\n    var = np.var(X, axis=1, keepdims=True)\n    x_hat = (X - mu) / np.sqrt(var + eps)\n    return {\"out\": gamma * x_hat + beta, \"mu\": mu.flatten(), \"var\": var.flatten()}\ndef compare_gradients(dout, X, gamma, beta):\n    dout = np.array(dout); X = np.array(X)\n    bn = batch_norm(X, gamma, beta)\n    ln = layer_norm(X, gamma, beta)\n    diff = float(np.max(np.abs(bn[\"out\"] - ln[\"out\"])))\n    return {\"max_diff\": round(diff, 6), \"same_shape\": bn[\"out\"].shape == ln[\"out\"].shape}",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "bn vs ln",
+        "input": {
+          "X": [
+            [
+              1,
+              2,
+              3
+            ],
+            [
+              4,
+              5,
+              6
+            ],
+            [
+              7,
+              8,
+              9
+            ]
+          ],
+          "gamma": [
+            1,
+            1,
+            1
+          ],
+          "beta": [
+            0,
+            0,
+            0
+          ]
+        },
+        "expected": true
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "为什么 Transformer 用 Layer Norm 而不用 Batch Norm？",
+        "options": [
+          "A. 序列长度可变，BN 的 batch 统计不稳定",
+          "B. LN 训练更快",
+          "C. BN 不支持注意力机制",
+          "D. LN 对硬件更友好"
+        ],
+        "answer": 0,
+        "explanation": "NLP 任务序列长度可变，BN 跨样本归一化不稳定；LN 对每个样本自身归一化，不受序列长度影响。"
+      }
+    ],
+    "thinkingQuestion": "当 batch size 为 1 时，Batch Norm 会有什么问题？Group Norm 如何缓解？",
+    "aiPrompt": "评估学生对归一化技术、BN/LN 区别的理解。按 0-10 分打分。",
+    "status": "published"
+  }
+]

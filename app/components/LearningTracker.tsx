@@ -1,11 +1,11 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { useSession } from 'next-auth/react';
+import { useAuth } from '@/app/hooks/useAuth';
 import { usePathname } from 'next/navigation';
 
 export default function LearningTracker() {
-  const { data: session } = useSession();
+  const { data: session } = useAuth();
   const pathname = usePathname();
   const startTimeRef = useRef<number>(Date.now());
   const isActiveRef = useRef<boolean>(true);

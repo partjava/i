@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { useSession } from 'next-auth/react';
+import { useAuth } from '@/app/hooks/useAuth';
 
 interface Comment {
   id: number;
@@ -20,7 +20,7 @@ interface CommentSectionProps {
 }
 
 export default function CommentSection({ noteId, isPublic = false }: CommentSectionProps) {
-  const { data: session } = useSession();
+  const { data: session } = useAuth();
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState('');
   const [replyTo, setReplyTo] = useState<number | null>(null);

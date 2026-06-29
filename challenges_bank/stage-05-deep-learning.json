@@ -1,0 +1,1012 @@
+[
+  {
+    "slug": "dl-mlp-classifier",
+    "stageId": 5,
+    "topicName": "深度学习",
+    "subtopicName": "MLP多层感知机",
+    "levelIndex": 1,
+    "levelTitle": "多层感知机前向传播",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "dl",
+      "mlp",
+      "forward",
+      "neural-network"
+    ],
+    "theoryContent": "### 编程挑战：多层感知机前向传播\n\n多层感知机（MLP）由输入层、隐藏层和输出层组成。每层先做线性变换 $z = Wx + b$，再经过激活函数 $a = \\sigma(z)$。\n\n实现 MLP 的前向传播：\n- `linear_forward(x, W, b)`: 线性层 $z = Wx + b$\n- `relu(z)`: ReLU 激活\n- `mlp_forward(x, params)`: 完整前向传播\n- `softmax(z)`: Softmax 输出",
+    "latexFormulas": [
+      "z^{(l)} = W^{(l)}a^{(l-1)} + b^{(l)}",
+      "a^{(l)} = \\sigma(z^{(l)})",
+      "\\text{Softmax}(z_i) = \\frac{e^{z_i}}{\\sum_j e^{z_j}}"
+    ],
+    "starterCode": "import numpy as np\n\ndef linear_forward(x: np.ndarray, W: np.ndarray, b: np.ndarray) -> np.ndarray:\n    pass\n\ndef relu(z: np.ndarray) -> np.ndarray:\n    pass\n\ndef mlp_forward(x: np.ndarray, params: list) -> list:\n    \"\"\"\n    params: [(W1, b1), (W2, b2), ...]\n    返回每层激活值列表 [a0, a1, ..., aL]\n    隐藏层用 ReLU，输出层用 softmax。\n    \"\"\"\n    pass\n\ndef softmax(z: np.ndarray) -> np.ndarray:\n    pass",
+    "solutionCode": "import numpy as np\n\ndef linear_forward(x, W, b):\n    return x @ W + b\n\ndef relu(z):\n    return np.maximum(0, z)\n\ndef softmax(z):\n    z_shift = z - np.max(z, axis=-1, keepdims=True)\n    exp_z = np.exp(z_shift)\n    return exp_z / np.sum(exp_z, axis=-1, keepdims=True)\n\ndef mlp_forward(x, params):\n    activations = [x]\n    a = x\n    for i, (W, b) in enumerate(params):\n        z = linear_forward(a, W, b)\n        if i == len(params) - 1:\n            a = softmax(z)\n        else:\n            a = relu(z)\n        activations.append(a)\n    return activations",
+    "expectedOutput": "[0.5, 0.5]",
+    "testCases": [
+      {
+        "name": "2-layer MLP",
+        "input": {
+          "x": [
+            [
+              1,
+              2
+            ]
+          ],
+          "params": [
+            [
+              [
+                0.1,
+                0.2
+              ],
+              [
+                0.3,
+                0.4
+              ]
+            ],
+            [
+              0.5,
+              0.5
+            ]
+          ],
+          "W2": [
+            [
+              0.1
+            ],
+            [
+              0.2
+            ]
+          ],
+          "b2": [
+            0
+          ]
+        },
+        "expected": true
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "为什么隐藏层不使用 softmax 激活？",
+        "options": [
+          "A. 隐藏层需要非线性，softmax 适合概率输出",
+          "B. softmax 计算太慢",
+          "C. 不能用",
+          "D. 只在输出层用"
+        ],
+        "answer": 0,
+        "explanation": "隐藏层需要 ReLU 等非线性变换，softmax 将输出规范化为概率分布，适合输出层。"
+      },
+      {
+        "question": "MLP 的万能近似定理说明了什么？",
+        "options": [
+          "A. 单隐藏层 MLP 可以逼近任意连续函数",
+          "B. MLP 只能分类",
+          "C. 层数越多越差",
+          "D. 不能处理图像"
+        ],
+        "answer": 0,
+        "explanation": "万能近似定理：只要隐藏层足够宽，单隐藏层 MLP 能逼近任意连续函数。"
+      }
+    ],
+    "thinkingQuestion": "深度 MLP 训练时可能遇到梯度消失/爆炸。ResNet 的残差连接是如何缓解这个问题的？",
+    "aiPrompt": "评估学生对 MLP、前向传播、激活函数和 softmax 的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "dl-activation-functions",
+    "stageId": 5,
+    "topicName": "深度学习",
+    "subtopicName": "激活函数与梯度消失",
+    "levelIndex": 1,
+    "levelTitle": "激活函数梯度分析器",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "dl",
+      "activation",
+      "gradient",
+      "vanishing"
+    ],
+    "theoryContent": "### 编程挑战：激活函数梯度分析器\n\n激活函数的选择直接影响梯度流动。Sigmoid 在两端的饱和区梯度接近 0，导致深层网络梯度消失。ReLU 在正区间梯度恒为 1，缓解了这个问题。\n\n实现：\n- `sigmoid(x)` 及其梯度 `sigmoid_grad(x)`\n- `tanh(x)` 及其梯度 `tanh_grad(x)`\n- `relu(x)` 及其梯度 `relu_grad(x)`\n- `leaky_relu(x, alpha)` 及其梯度\n- `plot_gradients(x_range)`: 比较各激活函数的梯度值",
+    "latexFormulas": [
+      "\\sigma'(x) = \\sigma(x)(1-\\sigma(x))",
+      "\\text{ReLU}'(x) = \\begin{cases}1 & x > 0 \\\\ 0 & x \\le 0\\end{cases}"
+    ],
+    "starterCode": "import numpy as np\n\ndef sigmoid(x: np.ndarray) -> np.ndarray:\n    pass\n\ndef sigmoid_grad(x: np.ndarray) -> np.ndarray:\n    pass\n\ndef relu(x: np.ndarray) -> np.ndarray:\n    pass\n\ndef relu_grad(x: np.ndarray) -> np.ndarray:\n    pass\n\ndef leaky_relu(x: np.ndarray, alpha: float = 0.01) -> np.ndarray:\n    pass\n\ndef leaky_relu_grad(x: np.ndarray, alpha: float = 0.01) -> np.ndarray:\n    pass\n\ndef max_gradient(activation: str, x_range: tuple) -> float:\n    \"\"\"返回给定激活函数在 x_range 内的最大梯度绝对值\"\"\"\n    pass",
+    "solutionCode": "import numpy as np\n\ndef sigmoid(x):\n    return 1 / (1 + np.exp(-np.clip(x, -100, 100)))\n\ndef sigmoid_grad(x):\n    s = sigmoid(x)\n    return s * (1 - s)\n\ndef relu(x):\n    return np.maximum(0, x)\n\ndef relu_grad(x):\n    return (x > 0).astype(float)\n\ndef leaky_relu(x, alpha=0.01):\n    return np.where(x > 0, x, alpha * x)\n\ndef leaky_relu_grad(x, alpha=0.01):\n    return np.where(x > 0, 1.0, alpha)\n\ndef max_gradient(activation, x_range):\n    x = np.linspace(x_range[0], x_range[1], 1000)\n    grads = {'sigmoid': sigmoid_grad, 'relu': relu_grad, 'leaky_relu': leaky_relu_grad}\n    return float(np.max(np.abs(grads[activation](x))))",
+    "expectedOutput": "0.25",
+    "testCases": [
+      {
+        "name": "sigmoid max grad",
+        "input": {
+          "activation": "sigmoid",
+          "xRange": [
+            -10,
+            10
+          ]
+        },
+        "expected": 0.25
+      },
+      {
+        "name": "relu grad positive",
+        "input": {
+          "x": [
+            5
+          ]
+        },
+        "expected": 1
+      },
+      {
+        "name": "relu grad negative zero",
+        "input": {
+          "x": [
+            -5
+          ]
+        },
+        "expected": 0
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "Sigmoid 函数的最大梯度值是多少？",
+        "options": [
+          "A. 0.25",
+          "B. 0.5",
+          "C. 1.0",
+          "D. 0"
+        ],
+        "answer": 0,
+        "explanation": "sigmoid 在 x=0 处梯度最大，为 0.25，两端趋近于 0。"
+      },
+      {
+        "question": "ReLU 在 x<0 时梯度为 0 会导致什么问题？",
+        "options": [
+          "A. 神经元死亡(dying ReLU)",
+          "B. 梯度爆炸",
+          "C. 训练加速",
+          "D. 没有任何问题"
+        ],
+        "answer": 0,
+        "explanation": "ReLU 负区间梯度为 0，一旦神经元进入负区间就再也不会激活。"
+      }
+    ],
+    "thinkingQuestion": "Leaky ReLU 和 PReLU（参数化 ReLU）的区别是什么？PReLU 的可学习参数如何与网络一起训练？",
+    "aiPrompt": "评估学生对激活函数、梯度消失、ReLU 变体的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "dl-loss-functions",
+    "stageId": 5,
+    "topicName": "深度学习",
+    "subtopicName": "损失函数",
+    "levelIndex": 1,
+    "levelTitle": "损失函数计算与对比",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "dl",
+      "loss",
+      "cross-entropy",
+      "mse"
+    ],
+    "theoryContent": "### 编程挑战：损失函数计算与对比\n\n不同的任务需要不同的损失函数。分类用交叉熵（Cross-Entropy），回归用均方误差（MSE）。\n\n实现：\n- `mse_loss(y_pred, y_true)`: 均方误差\n- `cross_entropy_loss(y_pred, y_true)`: 交叉熵（分类）\n- `binary_cross_entropy(y_pred, y_true)`: 二分类交叉熵\n- `huber_loss(y_pred, y_true, delta)`: Huber 损失（对异常值鲁棒）\n- `loss_gradient(loss_type, y_pred, y_true)`: 损失对 y_pred 的梯度",
+    "latexFormulas": [
+      "L_{CE} = -\\sum y_i \\log \\hat{y}_i",
+      "L_{Huber} = \\begin{cases} \\frac{1}{2}(y-\\hat{y})^2 & |y-\\hat{y}| \\le \\delta \\\\ \\delta|y-\\hat{y}| - \\frac{1}{2}\\delta^2 & \\text{otherwise} \\end{cases}"
+    ],
+    "starterCode": "import numpy as np\n\ndef mse_loss(y_pred: np.ndarray, y_true: np.ndarray) -> float:\n    pass\n\ndef cross_entropy_loss(y_pred: np.ndarray, y_true: np.ndarray) -> float:\n    \"\"\"y_pred 是概率分布（softmax 后）\"\"\"\n    pass\n\ndef binary_cross_entropy(y_pred: np.ndarray, y_true: np.ndarray) -> float:\n    pass\n\ndef huber_loss(y_pred: np.ndarray, y_true: np.ndarray, delta: float = 1.0) -> float:\n    pass",
+    "solutionCode": "import numpy as np\n\ndef mse_loss(y_pred, y_true):\n    return float(np.mean((y_pred - y_true) ** 2))\n\ndef cross_entropy_loss(y_pred, y_true):\n    y_pred = np.clip(y_pred, 1e-10, 1 - 1e-10)\n    return float(-np.mean(np.sum(y_true * np.log(y_pred), axis=-1)))\n\ndef binary_cross_entropy(y_pred, y_true):\n    y_pred = np.clip(y_pred, 1e-10, 1 - 1e-10)\n    return float(-np.mean(y_true * np.log(y_pred) + (1 - y_true) * np.log(1 - y_pred)))\n\ndef huber_loss(y_pred, y_true, delta=1.0):\n    diff = y_pred - y_true\n    abs_diff = np.abs(diff)\n    quadratic = np.minimum(abs_diff, delta)\n    linear = abs_diff - quadratic\n    return float(np.mean(0.5 * quadratic**2 + delta * linear))",
+    "expectedOutput": "0.0",
+    "testCases": [
+      {
+        "name": "perfect mse zero",
+        "input": {
+          "yPred": [
+            1,
+            2,
+            3
+          ],
+          "yTrue": [
+            1,
+            2,
+            3
+          ]
+        },
+        "expected": 0
+      },
+      {
+        "name": "cross entropy",
+        "input": {
+          "yPred": [
+            [
+              0.9,
+              0.1
+            ],
+            [
+              0.2,
+              0.8
+            ]
+          ],
+          "yTrue": [
+            [
+              1,
+              0
+            ],
+            [
+              0,
+              1
+            ]
+          ]
+        },
+        "expected": 0.287
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "交叉熵中 y_pred 为 0 时为什么需要 clip？",
+        "options": [
+          "A. log(0) 是 -∞，导致数值错误",
+          "B. 计算更快",
+          "C. 不影响结果",
+          "D. 让损失更大"
+        ],
+        "answer": 0,
+        "explanation": "log(0) 为负无穷，需要 clip 到极小正数避免数值溢出。"
+      },
+      {
+        "question": "Huber 损失相比 MSE 的优势是什么？",
+        "options": [
+          "A. 对异常值更鲁棒",
+          "B. 计算更快",
+          "C. 可导性更好",
+          "D. 参数更少"
+        ],
+        "answer": 0,
+        "explanation": "Huber 在差异大时从平方损失切换为线性损失，减少异常值的影响。"
+      }
+    ],
+    "thinkingQuestion": "在处理类别不平衡数据时，你会如何修改交叉熵损失来缓解偏差？比如加权交叉熵或 Focal Loss。",
+    "aiPrompt": "评估学生对各种损失函数、数值稳定性和异常值鲁棒性的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "dl-backpropagation",
+    "stageId": 5,
+    "topicName": "深度学习",
+    "subtopicName": "反向传播",
+    "levelIndex": 1,
+    "levelTitle": "反向传播自动求导器",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "dl",
+      "backpropagation",
+      "chain-rule",
+      "gradient"
+    ],
+    "theoryContent": "### 编程挑战：反向传播自动求导器\n\n反向传播通过链式法则逐层计算梯度：$\\frac{\\partial L}{\\partial W^{(l)}} = \\frac{\\partial L}{\\partial z^{(l)}} \\cdot \\frac{\\partial z^{(l)}}{\\partial W^{(l)}}$。\n\n实现一个计算图风格的简化反向传播：\n- `linear_backward(dout, cache)`: 线性层反向\n- `relu_backward(dout, cache)`: ReLU 反向\n- `mlp_backward(dLoss, activations, params)`: 完整反向传播\n- `update_params(params, grads, lr)`: SGD 参数更新",
+    "latexFormulas": [
+      "\\frac{\\partial L}{\\partial W} = a^{(l-1)T} \\delta^{(l)}",
+      "\\delta^{(l)} = (W^{(l+1)T}\\delta^{(l+1)}) \\odot \\sigma'(z^{(l)})"
+    ],
+    "starterCode": "import numpy as np\n\ndef linear_backward(dout: np.ndarray, x: np.ndarray, W: np.ndarray) -> tuple:\n    \"\"\"返回 (dW, db, dx)\"\"\"\n    pass\n\ndef relu_backward(dout: np.ndarray, z: np.ndarray) -> np.ndarray:\n    pass\n\ndef mlp_backward(dLoss: np.ndarray, activations: list, params: list) -> list:\n    \"\"\"返回 [(dW1, db1), (dW2, db2), ...]\"\"\"\n    pass",
+    "solutionCode": "import numpy as np\n\ndef linear_backward(dout, x, W):\n    dW = x.T @ dout\n    db = np.sum(dout, axis=0, keepdims=True)\n    dx = dout @ W.T\n    return dW, db.flatten(), dx\n\ndef relu_backward(dout, z):\n    return dout * (z > 0).astype(float)\n\ndef mlp_backward(dLoss, activations, params):\n    grads = []\n    d = dLoss\n    for i in reversed(range(len(params))):\n        W, b = params[i]\n        a = activations[i]\n        if i == 0:\n            z = a  # input doesn't need activation backward\n        else:\n            z = activations[i]  # pre-activation stored in activations\n        dW, db, da = linear_backward(d, a, W)\n        grads.insert(0, (dW, db))\n        if i > 0:\n            d = da\n    return grads",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "linear backward shapes",
+        "input": {
+          "x": [
+            [
+              1,
+              2
+            ]
+          ],
+          "W": [
+            [
+              0.1,
+              0.2
+            ],
+            [
+              0.3,
+              0.4
+            ]
+          ],
+          "b": [
+            0.5,
+            0.5
+          ],
+          "dout": [
+            [
+              0.1,
+              0.2
+            ]
+          ]
+        },
+        "expected": true
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "反向传播基于什么数学法则？",
+        "options": [
+          "A. 链式法则",
+          "B. 乘积法则",
+          "C. 洛必达法则",
+          "D. 牛顿法"
+        ],
+        "answer": 0,
+        "explanation": "反向传播利用链式法则将输出层误差逐层回传，计算各层参数的梯度。"
+      },
+      {
+        "question": "如果中间层梯度为 0，对参数更新有什么影响？",
+        "options": [
+          "A. 该层参数无法更新",
+          "B. 参数更新变快",
+          "C. 没有影响",
+          "D. 梯度变为无穷大"
+        ],
+        "answer": 0,
+        "explanation": "梯度为 0 时参数不会更新，对应的神经元死亡或饱和。"
+      }
+    ],
+    "thinkingQuestion": "自动求导（AutoDiff）的前向模式和反向模式各有什么适用场景？为什么深度学习框架都用反向模式？",
+    "aiPrompt": "评估学生对反向传播、链式法则、梯度计算的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "dl-optimizers-sgd-adam",
+    "stageId": 5,
+    "topicName": "深度学习",
+    "subtopicName": "SGD与Adam优化器",
+    "levelIndex": 1,
+    "levelTitle": "SGD/Adam 优化器实现",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "dl",
+      "sgd",
+      "adam",
+      "optimizer"
+    ],
+    "theoryContent": "### 编程挑战：SGD/Adam 优化器实现\n\nAdam 结合了动量（一阶矩）和 RMSProp（二阶矩），是深度学习中最常用的优化器。\n\n实现优化器类，支持两种方法：\n- SGD: $w = w - \\eta \\cdot g$\n- Adam: 带偏差修正的动量和自适应学习率\n\n每个优化器需要存储内部状态（动量、二阶矩估计）。",
+    "latexFormulas": [
+      "m_t = \\beta_1 m_{t-1} + (1-\\beta_1)g_t",
+      "v_t = \\beta_2 v_{t-1} + (1-\\beta_2)g_t^2",
+      "\\hat{w} = w - \\eta \\frac{\\hat{m}_t}{\\sqrt{\\hat{v}_t} + \\epsilon}"
+    ],
+    "starterCode": "import numpy as np\n\nclass Optimizer:\n    \"\"\"SGD 和 Adam 优化器\"\"\"\n    def __init__(self, method: str = 'sgd', lr: float = 0.01):\n        self.method = method\n        self.lr = lr\n        self.beta1 = 0.9\n        self.beta2 = 0.999\n        self.eps = 1e-8\n        self.t = 0\n        self.m = None\n        self.v = None\n\n    def step(self, params: np.ndarray, grads: np.ndarray) -> np.ndarray:\n        \"\"\"返回更新后的参数\"\"\"\n        pass",
+    "solutionCode": "import numpy as np\n\nclass Optimizer:\n    def __init__(self, method='sgd', lr=0.01):\n        self.method = method\n        self.lr = lr\n        self.beta1 = 0.9\n        self.beta2 = 0.999\n        self.eps = 1e-8\n        self.t = 0\n        self.m = None\n        self.v = None\n\n    def step(self, params, grads):\n        if self.method == 'sgd':\n            return params - self.lr * grads\n        elif self.method == 'adam':\n            self.t += 1\n            if self.m is None:\n                self.m = np.zeros_like(grads)\n                self.v = np.zeros_like(grads)\n            self.m = self.beta1 * self.m + (1 - self.beta1) * grads\n            self.v = self.beta2 * self.v + (1 - self.beta2) * grads**2\n            m_hat = self.m / (1 - self.beta1**self.t)\n            v_hat = self.v / (1 - self.beta2**self.t)\n            return params - self.lr * m_hat / (np.sqrt(v_hat) + self.eps)\n        else:\n            raise ValueError(f'unknown method: {self.method}')",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "sgd decreases loss",
+        "input": {
+          "method": "sgd",
+          "lr": 0.01,
+          "params": [
+            5
+          ],
+          "grads": [
+            2
+          ]
+        },
+        "expected": true
+      },
+      {
+        "name": "adam state maintained",
+        "input": {
+          "method": "adam",
+          "lr": 0.1,
+          "params": [
+            1,
+            2,
+            3
+          ],
+          "grads": [
+            0.5,
+            -0.2,
+            0.1
+          ]
+        },
+        "expected": true
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "Adam 中的偏差修正在训练初期的作用是什么？",
+        "options": [
+          "A. 防止 m 和 v 初始为 0 导致步长过小",
+          "B. 加速收敛",
+          "C. 增加随机性",
+          "D. 减少方差"
+        ],
+        "answer": 0,
+        "explanation": "m 和 v 初始为 0，早期迭代的估计值偏向 0，偏差修正用来补偿。"
+      },
+      {
+        "question": "Adam 相比 SGD 的主要优势？",
+        "options": [
+          "A. 自适应学习率，对不同参数有不同步长",
+          "B. 永远不调参",
+          "C. 收敛更快但精度更低",
+          "D. 不需要梯度"
+        ],
+        "answer": 0,
+        "explanation": "Adam 为每个参数自适应调整学习率，减轻了手动调参的负担。"
+      }
+    ],
+    "thinkingQuestion": "近年来有些研究（如《Adam, What is its good generalization?》）指出 Adam 的泛化性不如 SGD。你认为原因是什么？什么场景下 SGD 比 Adam 更好？",
+    "aiPrompt": "评估学生对 SGD、Adam、动量和自适应学习率的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "dl-batchnorm-training",
+    "stageId": 5,
+    "topicName": "深度学习",
+    "subtopicName": "Batch Normalization",
+    "levelIndex": 1,
+    "levelTitle": "Batch Normalization 训练与推理",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "dl",
+      "batch-norm",
+      "training",
+      "inference"
+    ],
+    "theoryContent": "### 编程挑战：Batch Normalization 训练与推理\n\nBatch Normalization 在训练时用当前 batch 的均值和方差，在推理时用训练集累积的全局统计量。\n\n实现完整的 BatchNorm 层：\n- `batchnorm_train(X, gamma, beta, momentum)`: 训练前向，更新 running 统计量\n- `batchnorm_inference(X, gamma, beta, running_mean, running_var)`: 推理前向\n- 使用指数移动平均：$running\\_mean = momentum \\times running\\_mean + (1-momentum) \\times \\mu$",
+    "latexFormulas": [
+      "\\hat{x} = \\frac{x - \\mu_{running}}{\\sqrt{\\sigma^2_{running} + \\epsilon}}",
+      "\\mu_{running} \\leftarrow \\alpha \\mu_{running} + (1-\\alpha)\\mu_{batch}"
+    ],
+    "starterCode": "import numpy as np\n\ndef batchnorm_train(X: np.ndarray, gamma: np.ndarray, beta: np.ndarray,\n                    running_mean: np.ndarray, running_var: np.ndarray,\n                    momentum: float = 0.9, eps: float = 1e-5) -> dict:\n    \"\"\"\n    返回 {\"out\": ..., \"running_mean\": ..., \"running_var\": ..., \"cache\": ...}\n    \"\"\"\n    pass\n\ndef batchnorm_inference(X: np.ndarray, gamma: np.ndarray, beta: np.ndarray,\n                         running_mean: np.ndarray, running_var: np.ndarray,\n                         eps: float = 1e-5) -> np.ndarray:\n    pass",
+    "solutionCode": "import numpy as np\n\ndef batchnorm_train(X, gamma, beta, running_mean, running_var, momentum=0.9, eps=1e-5):\n    mu = np.mean(X, axis=0)\n    var = np.var(X, axis=0)\n    x_hat = (X - mu) / np.sqrt(var + eps)\n    out = gamma * x_hat + beta\n    running_mean = momentum * running_mean + (1 - momentum) * mu\n    running_var = momentum * running_var + (1 - momentum) * var\n    return {'out': out, 'running_mean': running_mean, 'running_var': running_var,\n            'cache': {'x_hat': x_hat, 'gamma': gamma}}\n\ndef batchnorm_inference(X, gamma, beta, running_mean, running_var, eps=1e-5):\n    x_hat = (X - running_mean) / np.sqrt(running_var + eps)\n    return gamma * x_hat + beta",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "train updates running stats",
+        "input": {
+          "X": [
+            [
+              1,
+              2
+            ],
+            [
+              3,
+              4
+            ],
+            [
+              5,
+              6
+            ]
+          ],
+          "gamma": [
+            1,
+            1
+          ],
+          "beta": [
+            0,
+            0
+          ],
+          "runningMean": [
+            0,
+            0
+          ],
+          "runningVar": [
+            1,
+            1
+          ]
+        },
+        "expected": true
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "为什么推理时不能用 batch 的均值和方差？",
+        "options": [
+          "A. 推理时 batch size 可能为 1，统计量不稳定",
+          "B. 推理不需要标准化",
+          "C. 计算太慢",
+          "D. 会损坏模型"
+        ],
+        "answer": 0,
+        "explanation": "推理时 batch 可能很小，用 batch 统计量不稳定，应用训练集积累的全局统计量。"
+      },
+      {
+        "question": "BatchNorm 的可学习参数 γ 和 β 的维度是多少？",
+        "options": [
+          "A. 和特征维度相同",
+          "B. 和 batch 大小相同",
+          "C. 标量",
+          "D. 和层数相同"
+        ],
+        "answer": 0,
+        "explanation": "γ 和 β 是 D 维向量，D 为特征数，每个特征有自己的缩放和平移参数。"
+      }
+    ],
+    "thinkingQuestion": "当 batch size 很小（如 2 或 4）时，BatchNorm 效果会变差。Group Normalization 是如何解决这个问题的？",
+    "aiPrompt": "评估学生对 Batch Normalization、训练与推理差异的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "dl-dropout-regularizer",
+    "stageId": 5,
+    "topicName": "深度学习",
+    "subtopicName": "Dropout正则化",
+    "levelIndex": 1,
+    "levelTitle": "Dropout 正则化实现",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "dl",
+      "dropout",
+      "regularization",
+      "overfitting"
+    ],
+    "theoryContent": "### 编程挑战：Dropout 正则化实现\n\nDropout 在训练时随机丢弃一部分神经元，迫使网络学习冗余表示，减少过拟合。\n\n训练时每个神经元以概率 p 保留，激活值乘以 1/p 来保持期望不变。\n\n实现：\n- `dropout_forward(x, keep_prob, training)`: 训练时随机丢弃，推理时不丢弃\n- `dropout_backward(dout, mask)`: 反向传播\n- 用二项分布生成 mask",
+    "latexFormulas": [
+      "r_j^{(l)} \\sim \\text{Bernoulli}(p)",
+      "\\tilde{a}^{(l)} = r^{(l)} \\odot a^{(l)}",
+      "a_{test}^{(l)} = p \\cdot a_{train}^{(l)} \\text{（或训练时缩放 1/p）}"
+    ],
+    "starterCode": "import numpy as np\n\ndef dropout_forward(x: np.ndarray, keep_prob: float, training: bool = True) -> dict:\n    \"\"\"返回 {\"out\": ..., \"mask\": ...}\"\"\"\n    pass\n\ndef dropout_backward(dout: np.ndarray, mask: np.ndarray) -> np.ndarray:\n    pass\n\ndef train_with_dropout(X: np.ndarray, y: np.ndarray, hidden_size: int, keep_prob: float, steps: int) -> list:\n    \"\"\"训练一个小网络，返回 loss 历史\"\"\"\n    pass",
+    "solutionCode": "import numpy as np\n\ndef dropout_forward(x, keep_prob=0.5, training=True):\n    if not training or keep_prob >= 1:\n        return {'out': x, 'mask': np.ones_like(x)}\n    mask = (np.random.rand(*x.shape) < keep_prob).astype(float)\n    out = x * mask / keep_prob\n    return {'out': out, 'mask': mask}\n\ndef dropout_backward(dout, mask):\n    return dout * mask\n\ndef train_with_dropout(X, y, hidden_size=10, keep_prob=0.5, steps=100):\n    np.random.seed(42)\n    n, d = X.shape\n    W1 = np.random.randn(d, hidden_size) * 0.1\n    b1 = np.zeros(hidden_size)\n    W2 = np.random.randn(hidden_size, 1) * 0.1\n    b2 = np.zeros(1)\n    losses = []\n    for _ in range(steps):\n        z1 = X @ W1 + b1\n        a1 = np.maximum(0, z1)\n        drop = dropout_forward(a1, keep_prob)\n        a1_drop = drop['out']\n        z2 = a1_drop @ W2 + b2\n        loss = np.mean((z2.flatten() - y)**2)\n        losses.append(float(loss))\n        dloss = 2 * (z2.flatten() - y) / n\n        dW2 = a1_drop.T @ dloss.reshape(-1, 1)\n        db2 = np.sum(dloss)\n        da1 = (dloss.reshape(-1, 1) @ W2.T)\n        da1 = dropout_backward(da1, drop['mask'])\n        dz1 = da1 * (z1 > 0).astype(float)\n        dW1 = X.T @ dz1\n        db1 = np.sum(dz1, axis=0)\n        W1 -= 0.01 * dW1; b1 -= 0.01 * db1\n        W2 -= 0.01 * dW2; b2 -= 0.01 * db2\n    return losses",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "training mask varies",
+        "input": {
+          "x": [
+            [
+              1,
+              2,
+              3
+            ]
+          ],
+          "keepProb": 0.5
+        },
+        "expected": true
+      },
+      {
+        "name": "inference no dropout",
+        "input": {
+          "x": [
+            [
+              1,
+              2,
+              3
+            ]
+          ],
+          "keepProb": 0.5,
+          "training": false
+        },
+        "expected": [
+          [
+            1,
+            2,
+            3
+          ]
+        ]
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "训练时 dropout 后的激活为什么要除以 keep_prob？",
+        "options": [
+          "A. 保持输出的期望不变",
+          "B. 加速训练",
+          "C. 防止梯度爆炸",
+          "D. 没有特殊意义"
+        ],
+        "answer": 0,
+        "explanation": "除以 keep_prob（inverted dropout）使训练时输出期望与推理时一致。"
+      },
+      {
+        "question": "Dropout 可以看作什么的近似？",
+        "options": [
+          "A. Bagging 集成",
+          "B. 特征选择",
+          "C. 数据增强",
+          "D. 学习率衰减"
+        ],
+        "answer": 0,
+        "explanation": "Dropout 可以解释为训练时集成大量子网络，推理时平均这些子网络的输出。"
+      }
+    ],
+    "thinkingQuestion": "Dropout 在 RNN 中为什么不直接用在循环连接上？Variational Dropout 是怎么调整的？",
+    "aiPrompt": "评估学生对 Dropout、正则化、过拟合和 inverted dropout 的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "dl-cnn-forward-l2",
+    "stageId": 5,
+    "topicName": "深度学习",
+    "subtopicName": "MLP多层感知机",
+    "levelIndex": 2,
+    "levelTitle": "CNN 卷积前向传播",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "MLP多层感知机"
+    ],
+    "theoryContent": "### 题目：CNN 卷积前向传播\n\n实现 2D 卷积的前向传播，支持 padding 和 stride。卷积核在输入上滑动，计算逐元素乘积累加。\n\n实现：\n- `conv2d_forward(img, kernel, stride, padding)` 2D 卷积\n- `conv2d_multiple_kernels(img, kernels, stride, padding)` 多卷积核\n- `compute_output_shape(H, W, KH, KW, stride, padding)` 计算输出尺寸",
+    "latexFormulas": [
+      "out_h = (H + 2*pad - KH)/stride + 1",
+      "(I*K)_{i,j} = sum_{u,v} I_{su+i,sv+j}*K_{u,v}"
+    ],
+    "starterCode": "import numpy as np\ndef conv2d_forward(img, kernel, stride=1, padding=0): pass\ndef compute_output_shape(H, W, KH, KW, stride, padding): pass",
+    "solutionCode": "import numpy as np\ndef conv2d_forward(img, kernel, stride=1, padding=0):\n    img = np.array(img); kernel = np.array(kernel)\n    if padding > 0: img = np.pad(img, padding, mode=\"constant\")\n    H, W = img.shape; KH, KW = kernel.shape\n    out_h = (H - KH)//stride + 1; out_w = (W - KW)//stride + 1\n    out = np.zeros((out_h, out_w))\n    for i in range(out_h):\n        for j in range(out_w):\n            out[i,j] = np.sum(img[i*stride:i*stride+KH, j*stride:j*stride+KW] * kernel)\n    return out\ndef compute_output_shape(H, W, KH, KW, stride, padding):\n    oh = (H + 2*padding - KH)//stride + 1\n    ow = (W + 2*padding - KW)//stride + 1\n    return (oh, ow)",
+    "expectedOutput": "(4,4)",
+    "testCases": [
+      {
+        "name": "3x3 kernel valid",
+        "input": {
+          "img": 36,
+          "kernel": 9,
+          "stride": 1,
+          "padding": 0
+        },
+        "expected": 4
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "padding=same 时输出尺寸和输入尺寸的关系？",
+        "options": [
+          "A. 输出尺寸 = 输入尺寸 / stride",
+          "B. 输出尺寸 = 输入尺寸",
+          "C. 输出 = 输入 + padding",
+          "D. 无关"
+        ],
+        "answer": 0,
+        "explanation": "padding=same 时通过补零使输出尺寸等于输入尺寸除以 stride（向上取整）。"
+      }
+    ],
+    "thinkingQuestion": "转置卷积（反卷积）和普通卷积的区别是什么？在哪些任务中会用？",
+    "aiPrompt": "评估学生对卷积、padding、stride 的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "dl-relu-variants-l2",
+    "stageId": 5,
+    "topicName": "深度学习",
+    "subtopicName": "激活函数与梯度消失",
+    "levelIndex": 2,
+    "levelTitle": "ReLU 变体对比",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "激活函数与梯度消失"
+    ],
+    "theoryContent": "### 题目：ReLU 变体对比\n\nReLU 的变体包括 Leaky ReLU、ELU、Swish 等，各解决了 ReLU 的不同问题。实现并比较它们的输出和梯度。",
+    "latexFormulas": [
+      "Leaky: max(alpha*x, x)",
+      "ELU: x if x>0 else alpha*(exp(x)-1)",
+      "Swish: x*sigmoid(x)"
+    ],
+    "starterCode": "import numpy as np\ndef relu(x): pass\ndef leaky_relu(x, alpha=0.01): pass\ndef elu(x, alpha=1.0): pass\ndef swish(x): pass\ndef gradient(activation, x): pass",
+    "solutionCode": "import numpy as np\ndef relu(x): return np.maximum(0, x)\ndef leaky_relu(x, a=0.01): return np.where(x>0, x, a*x)\ndef elu(x, a=1.0): return np.where(x>0, x, a*(np.exp(x)-1))\ndef swish(x): s=1/(1+np.exp(-np.clip(x,-100,100))); return x*s\ndef gradient(activation, x):\n    x=np.array(x); acts={\"relu\":(x>0).astype(float),\"leaky\":np.where(x>0,1,0.01),\"elu\":np.where(x>0,1,np.exp(x)),\"swish\":lambda x:s:=1/(1+np.exp(-np.clip(x,-100,100))),s+x*s*(1-s)}\n    return acts.get(activation, lambda x:x)(x)",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "leaky relu negative",
+        "input": {
+          "x": [
+            -2,
+            0,
+            2
+          ],
+          "activation": "leaky"
+        },
+        "expected": [
+          -0.02,
+          0,
+          2
+        ]
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "Swish 激活函数的性质？",
+        "options": [
+          "A. 自门控，无上界有下界",
+          "B. 无下界有上界",
+          "C. 恒为零",
+          "D. 无界"
+        ],
+        "answer": 0,
+        "explanation": "Swish = x*sigmoid(x)，有下界无上界，平滑且自门控。"
+      }
+    ],
+    "thinkingQuestion": "GELU 激活函数在 Transformer 中被广泛使用，它与 Swish 有什么关系？",
+    "aiPrompt": "评估学生对激活函数、梯度消失的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "dl-focal-loss-l2",
+    "stageId": 5,
+    "topicName": "深度学习",
+    "subtopicName": "损失函数",
+    "levelIndex": 2,
+    "levelTitle": "Focal Loss 实现",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "损失函数"
+    ],
+    "theoryContent": "### 题目：Focal Loss 实现\n\nFocal Loss 通过降低高置信度样本的权重，使模型更关注难分类样本。广泛用于目标检测中的类别不平衡问题。\n\n$$FL(p_t) = -(1-p_t)^\\gamma \\log p_t$$\n\n其中 $p_t = p$ 当 y=1，否则 $p_t = 1-p$。",
+    "latexFormulas": [
+      "FL(p_t) = -(1-p_t)^gamma * log(p_t)",
+      "gamma=0 时退化为交叉熵",
+      "gamma 越大，对高置信度样本惩罚越小"
+    ],
+    "starterCode": "import numpy as np\ndef focal_loss(y_pred, y_true, gamma): pass\ndef cross_entropy_loss(y_pred, y_true): pass\ndef compare_losses(y_pred, y_true): pass",
+    "solutionCode": "import numpy as np\ndef focal_loss(y_pred, y_true, gamma=2.0):\n    y_pred = np.clip(y_pred, 1e-10, 1-1e-10)\n    pt = np.where(y_true==1, y_pred, 1-y_pred)\n    return float(np.mean(-(1-pt)**gamma * np.log(pt)))\ndef cross_entropy_loss(y_pred, y_true):\n    return focal_loss(y_pred, y_true, 0.0)\ndef compare_losses(y_pred, y_true):\n    return {\"ce\": round(cross_entropy_loss(y_pred,y_true),4), \"fl_g1\": round(focal_loss(y_pred,y_true,1),4), \"fl_g2\": round(focal_loss(y_pred,y_true,2),4)}",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "focal vs cross entropy",
+        "input": {
+          "y_pred": [
+            0.9,
+            0.1,
+            0.7,
+            0.3
+          ],
+          "y_true": [
+            1,
+            0,
+            1,
+            0
+          ]
+        },
+        "expected": true
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "gamma=0 时 Focal Loss 等价于什么？",
+        "options": [
+          "A. 交叉熵",
+          "B. MSE",
+          "C. Hinge Loss",
+          "D. KL 散度"
+        ],
+        "answer": 0,
+        "explanation": "gamma=0 时 (1-pt)^0=1，Focal Loss 退化为标准交叉熵。"
+      }
+    ],
+    "thinkingQuestion": "Focal Loss 中 alpha 平衡变体在 gamma 基础上增加类别权重，它和 gamma 的作用有何不同？",
+    "aiPrompt": "评估学生对 Focal Loss、类别不平衡的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "dl-autograd-l2",
+    "stageId": 5,
+    "topicName": "深度学习",
+    "subtopicName": "反向传播",
+    "levelIndex": 2,
+    "levelTitle": "自动微分计算图",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "反向传播"
+    ],
+    "theoryContent": "### 题目：自动微分计算图\n\n实现一个简化版自动微分引擎，支持标量的前向计算和反向传播。\n\n实现 Tensor 类，支持 +、*、sigmoid 操作，自动构建计算图并反向传播梯度。",
+    "latexFormulas": [
+      "dy/dx = dy/dz * dz/dx (Chain Rule)",
+      "计算图: 前向构建, 反向求导"
+    ],
+    "starterCode": "import numpy as np\nclass Tensor:\n    def __init__(self, val, children=None):\n        self.val=val; self.grad=0; self._backward=lambda:None; self._prev=children or ()\n    def __add__(self, other): pass\n    def __mul__(self, other): pass\n    def sigmoid(self): pass\n    def backward(self): pass",
+    "solutionCode": "import numpy as np\nclass Tensor:\n    def __init__(self, val, children=None):\n        self.val=val; self.grad=0; self._backward=lambda:None; self._prev=children or ()\n    def __add__(self, other):\n        other = other if isinstance(other,Tensor) else Tensor(other)\n        out = Tensor(self.val+other.val, (self,other))\n        def _bw(): self.grad += out.grad; other.grad += out.grad\n        out._backward = _bw; return out\n    def __mul__(self, other):\n        other = other if isinstance(other,Tensor) else Tensor(other)\n        out = Tensor(self.val*other.val, (self,other))\n        def _bw(): self.grad += other.val*out.grad; other.grad += self.val*out.grad\n        out._backward = _bw; return out\n    def sigmoid(self):\n        s = 1/(1+np.exp(-self.val))\n        out = Tensor(s, (self,))\n        def _bw(): self.grad += s*(1-s)*out.grad\n        out._backward = _bw; return out\n    def backward(self):\n        order = []; seen = set()\n        def dfs(n):\n            if n not in seen: seen.add(n); [dfs(c) for c in n._prev]; order.append(n)\n        dfs(self)\n        self.grad = 1\n        for n in reversed(order): n._backward()",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "forward and backward",
+        "input": {
+          "a_val": 2,
+          "b_val": 3
+        },
+        "expected": true
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "自动微分的反向模式和前向模式的区别？",
+        "options": [
+          "A. 反向模式一次 forward 一次 backward 得到所有梯度",
+          "B. 前向模式更快",
+          "C. 反向模式不能计算标量",
+          "D. 两者等价"
+        ],
+        "answer": 0,
+        "explanation": "反向模式从输出开始反向传播，一次 forward+backward 得到所有参数梯度。"
+      }
+    ],
+    "thinkingQuestion": "PyTorch 的 autograd 是如何处理 Tensor 的 in-place 操作的？为什么 in-place 操作会破坏计算图？",
+    "aiPrompt": "评估学生对自动微分、计算图、链式法则的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "dl-sgd-momentum-compare-l2",
+    "stageId": 5,
+    "topicName": "深度学习",
+    "subtopicName": "SGD与Adam优化器",
+    "levelIndex": 2,
+    "levelTitle": "SGD 动量对比实验",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "SGD与Adam优化器"
+    ],
+    "theoryContent": "### 题目：SGD 动量对比实验\n\n在 Rosenbrock 函数（香蕉函数）上对比 SGD、Momentum、Adam 的收敛轨迹。\n\n$$f(x,y)=(a-x)^2 + b(y-x^2)^2$$\n\nRosenbrock 函数是经典优化测试函数，狭长的山谷使 SGD 震荡严重。",
+    "latexFormulas": [
+      "SGD: x -= lr*grad",
+      "Momentum: v = beta*v + grad; x -= lr*v",
+      "Adam: 自适应学习率+动量"
+    ],
+    "starterCode": "import numpy as np\ndef rosenbrock(x, y, a=1, b=100): pass\ndef rosenbrock_grad(x, y, a=1, b=100): pass\ndef sgd(x0, lr, steps): pass\ndef momentum_sgd(x0, lr, beta, steps): pass\ndef adam_optimizer(x0, lr, steps): pass",
+    "solutionCode": "import numpy as np\ndef rosenbrock(x, y, a=1, b=100):\n    return (a-x)**2 + b*(y-x**2)**2\ndef rosenbrock_grad(x, y, a=1, b=100):\n    dx = -2*(a-x) - 4*b*x*(y-x**2)\n    dy = 2*b*(y-x**2)\n    return np.array([dx, dy])\ndef sgd(x0, lr=0.001, steps=100):\n    x = np.array(x0, dtype=float); hist = [x.copy()]\n    for _ in range(steps):\n        g = rosenbrock_grad(x[0], x[1])\n        x -= lr*g; hist.append(x.copy())\n    return {\"trajectory\": [h.tolist() for h in hist], \"final\": x.tolist()}\ndef momentum_sgd(x0, lr=0.001, beta=0.9, steps=100):\n    x = np.array(x0, dtype=float); v = np.zeros_like(x); hist = [x.copy()]\n    for _ in range(steps):\n        g = rosenbrock_grad(x[0], x[1])\n        v = beta*v + g; x -= lr*v; hist.append(x.copy())\n    return {\"trajectory\": [h.tolist() for h in hist], \"final\": x.tolist()}\ndef adam_optimizer(x0, lr=0.01, steps=100):\n    x = np.array(x0, dtype=float); m=v=np.zeros_like(x); t=0; hist=[x.copy()]\n    for _ in range(steps):\n        t+=1; g=rosenbrock_grad(x[0],x[1])\n        m=0.9*m+0.1*g; v=0.999*v+0.001*g**2\n        mh=m/(1-0.9**t); vh=v/(1-0.999**t)\n        x -= lr*mh/(np.sqrt(vh)+1e-8); hist.append(x.copy())\n    return {\"trajectory\": [h.tolist() for h in hist], \"final\": x.tolist()}",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "sgd vs adam",
+        "input": {
+          "x0": [
+            1.5,
+            1.5
+          ],
+          "lr": 0.01,
+          "steps": 200
+        },
+        "expected": true
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "Rosenbrock 函数优化为什么困难？",
+        "options": [
+          "A. 狭长山谷，梯度在谷底方向小但在谷壁方向大",
+          "B. 函数不连续",
+          "C. 梯度处处为零",
+          "D. 有多个全局最优"
+        ],
+        "answer": 0,
+        "explanation": "Rosenbrock 的谷底平坦但谷壁陡峭，标准 SGD 会沿谷壁来回震荡，收敛慢。"
+      }
+    ],
+    "thinkingQuestion": "Adam 的偏差修正在训练初期为什么重要？如果去掉偏差修正，参数更新会受什么影响？",
+    "aiPrompt": "评估学生对优化器、SGD、动量、Adam 的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "dl-batchnorm-vs-layernorm-l2",
+    "stageId": 5,
+    "topicName": "深度学习",
+    "subtopicName": "Batch Normalization",
+    "levelIndex": 2,
+    "levelTitle": "BN 训练与推理模式对比",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "Batch Normalization"
+    ],
+    "theoryContent": "### 题目：BN 训练与推理模式对比\n\nBatch Normalization 在训练时使用 batch 统计量，推理时使用全局移动平均统计量。\n\n实现完整的 BN 层，支持训练/推理模式，积累全局统计量，并实现反向传播梯度。",
+    "latexFormulas": [
+      "train: x_hat = (x-mu_b)/sqrt(var_b+eps)",
+      "infer: x_hat = (x-mu_r)/sqrt(var_r+eps)",
+      "running_mu = momentum*momentum+(1-momentum)*mu_b"
+    ],
+    "starterCode": "import numpy as np\nclass BatchNorm:\n    def __init__(self, D, momentum=0.9): pass\n    def forward(self, X, training): pass\n    def backward(self, dout): pass",
+    "solutionCode": "import numpy as np\nclass BatchNorm:\n    def __init__(self, D, momentum=0.9):\n        self.gamma = np.ones(D); self.beta = np.zeros(D)\n        self.rm = np.zeros(D); self.rv = np.ones(D)\n        self.momentum = momentum; self.eps = 1e-5\n        self.cache = None\n    def forward(self, X, training=True):\n        if training:\n            mu = np.mean(X, axis=0); var = np.var(X, axis=0)\n            self.rm = self.momentum*self.rm + (1-self.momentum)*mu\n            self.rv = self.momentum*self.rv + (1-self.momentum)*var\n        else:\n            mu, var = self.rm, self.rv\n        x_hat = (X-mu)/np.sqrt(var+self.eps)\n        self.cache = (x_hat, X, mu, var)\n        return self.gamma*x_hat + self.beta\n    def backward(self, dout):\n        x_hat, X, mu, var = self.cache\n        n, d = X.shape\n        dx_hat = dout * self.gamma\n        dvar = np.sum(dx_hat*(X-mu)*(-0.5)*(var+self.eps)**-1.5, axis=0)\n        dmu = np.sum(dx_hat*-1/np.sqrt(var+self.eps), axis=0) + dvar*np.mean(-2*(X-mu), axis=0)\n        dx = dx_hat/np.sqrt(var+self.eps) + dvar*2*(X-mu)/n + dmu/n\n        dgamma = np.sum(dout*x_hat, axis=0)\n        dbeta = np.sum(dout, axis=0)\n        return dx, dgamma, dbeta",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "bn inference mode",
+        "input": {
+          "X": [
+            [
+              1,
+              2
+            ],
+            [
+              3,
+              4
+            ],
+            [
+              5,
+              6
+            ]
+          ],
+          "gamma": [
+            1,
+            1
+          ],
+          "beta": [
+            0,
+            0
+          ]
+        },
+        "expected": true
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "测试时如果 batch_size=1，直接用 batch 统计量会怎样？",
+        "options": [
+          "A. 方差为 0，导致除零",
+          "B. 方差为 1",
+          "C. 正常",
+          "D. 均值方差不变"
+        ],
+        "answer": 0,
+        "explanation": "batch_size=1 时方差为 0，除以 0 出错。所以推理时不能用 batch 统计量。"
+      }
+    ],
+    "thinkingQuestion": "Layer Norm 和 Batch Norm 的梯度传播有什么不同？为什么 Layer Norm 在 Transformer 中更稳定？",
+    "aiPrompt": "评估学生对 BatchNorm、训练推理差异的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "dl-dropout-variants-l2",
+    "stageId": 5,
+    "topicName": "深度学习",
+    "subtopicName": "Dropout正则化",
+    "levelIndex": 2,
+    "levelTitle": "Dropout 变体与 MC Dropout",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "dropout",
+      "regularization",
+      "mc-dropout",
+      "uncertainty"
+    ],
+    "theoryContent": "### 题目：Dropout 变体与 MC Dropout\n\nMC Dropout 在推理时也启用 Dropout，多次采样得到预测分布，可估计模型不确定性。\n\n实现标准 Dropout、MC Dropout 以及 Alpha Dropout（SELU 激活专用）。",
+    "latexFormulas": [
+      "MC Dropout: P(y|x) = 1/T sum f_t(x)",
+      "Alpha Dropout: 保持 SELU 的归一化性质"
+    ],
+    "starterCode": "import numpy as np\ndef dropout(x, keep_prob, training): pass\ndef mc_dropout_predict(model, x, n_samples): pass",
+    "solutionCode": "import numpy as np\ndef dropout(x,keep_prob=0.5,training=True):\n  if not training or keep_prob>=1:return x\n  mask=(np.random.rand(*x.shape)<keep_prob).astype(float)/keep_prob\n  return x*mask\ndef mc_dropout_predict(model,x,n=10):\n  preds=[]\n  for _ in range(n):\n    model.apply(lambda m:[setattr(m,\"training\",True)])  # enable dropout\n    preds.append(model(x))\n  mean=np.mean(preds,axis=0)\n  var=np.var(preds,axis=0)\n  return {\"mean\":mean.tolist()if hasattr(mean,\"tolist\")else mean,\"variance\":var.tolist()if hasattr(var,\"tolist\")else var}",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "dropout shape",
+        "input": {
+          "x": [
+            [
+              1,
+              2,
+              3
+            ],
+            [
+              4,
+              5,
+              6
+            ]
+          ],
+          "keepProb": 0.5
+        },
+        "expected": true
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "MC Dropout 能提供什么标准 Dropout 没有的能力？",
+        "options": [
+          "A. 预测不确定性估计",
+          "B. 加速训练",
+          "C. 减少过拟合",
+          "D. 增加精度"
+        ],
+        "answer": 0,
+        "explanation": "MC Dropout 通过多次随机前向传播得到预测分布，从而估计不确定性。"
+      }
+    ],
+    "thinkingQuestion": "MC Dropout 的 T 次采样次数对不确定性估计有什么影响？T 越大越好吗？",
+    "aiPrompt": "评估学生对 Dropout、MC Dropout、不确定性的理解。按 0-10 分打分。",
+    "status": "published"
+  }
+]

@@ -4,6 +4,15 @@ const nextConfig = {
   reactStrictMode: true,       // 开发环境下启用React严格模式，帮助发现问题
   swcMinify: true,             // 生产环境使用SWC压缩，提升构建速度
   
+  async rewrites() {
+    return [
+      {
+        source: '/api/:path*',
+        destination: 'http://localhost:8080/api/:path*',
+      },
+    ]
+  },
+  
   // 生成构建ID（每次构建都不同，强制刷新缓存）
   generateBuildId: async () => {
     // 使用时间戳作为构建ID，确保每次构建都不同

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { useSession } from 'next-auth/react';
+import { useAuth } from '@/app/hooks/useAuth';
 import { message } from 'antd';
 
 interface StudyTimerOptions {
@@ -34,7 +34,7 @@ export function useStudyTimer({
   category = '',
   technology = ''
 }: StudyTimerOptions = {}): StudyTimerResult {
-  const { data: session } = useSession();
+  const { data: session } = useAuth();
   const [isActive, setIsActive] = useState(autoStart);
   const [totalSeconds, setTotalSeconds] = useState(0);
   const [lastRecordedTime, setLastRecordedTime] = useState(0);

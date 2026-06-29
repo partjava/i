@@ -14,7 +14,16 @@ export class UserRepository extends BaseRepository {
     return results[0] || null;
   }
 
+  async findByUsername(username: string): Promise<DbUser | null> {
+    const results = await this.executeQuery(
+      'SELECT * FROM users WHERE username = ?',
+      [username]
+    );
+    return results[0] || null;
+  }
+
   async create(userData: {
+    username: string;
     name: string;
     email: string;
     password: string;
@@ -23,8 +32,8 @@ export class UserRepository extends BaseRepository {
     website?: string;
     github?: string;
   }): Promise<number> {
-    const fields = ['name', 'email', 'password'];
-    const values: any[] = [userData.name, userData.email, userData.password];
+    const fields = ['username', 'name', 'email', 'password'];
+    const values: any[] = [userData.username, userData.name, userData.email, userData.password];
     if (userData.bio !== undefined) { fields.push('bio'); values.push(userData.bio); }
     if (userData.location !== undefined) { fields.push('location'); values.push(userData.location); }
     if (userData.website !== undefined) { fields.push('website'); values.push(userData.website); }

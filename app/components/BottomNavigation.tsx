@@ -1,7 +1,7 @@
 'use client';
 
 import { usePathname, useRouter } from 'next/navigation';
-import { useSession } from 'next-auth/react';
+import { useAuth } from '@/app/hooks/useAuth';
 import { useState } from 'react';
 import dynamic from 'next/dynamic';
 import {
@@ -31,7 +31,7 @@ interface NavItem {
 export default function BottomNavigation() {
   const pathname = usePathname();
   const router = useRouter();
-  const { data: session } = useSession();
+  const { data: session } = useAuth();
   const [moreOpen, setMoreOpen] = useState(false);
   const [showRobot, setShowRobot] = useState(false);
 

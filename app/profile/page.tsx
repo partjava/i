@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { useSession, signOut } from 'next-auth/react';
+import { useAuth } from '@/app/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@/app/providers/UserProvider';
 import { 
@@ -53,6 +53,10 @@ interface ProfileFormData {
   website: string;
   image: string;
   skills: string[];
+  username?: string;
+  vip?: boolean;
+  vipLevel?: number;
+  vipExpireTime?: string | null;
   socialLinks: {
     wechat?: string;
     weibo?: string;
@@ -65,7 +69,7 @@ interface ProfileFormData {
 type UserStats = UnifiedUserStats;
 
 export default function ProfilePage() {
-  const { data: session, status, update } = useSession();
+  const { data: session, status, update, signOut } = useAuth();
   const router = useRouter();
   const { refreshUser, updateUser } = useUser();
   const [form] = Form.useForm();
@@ -80,6 +84,7 @@ export default function ProfilePage() {
     website: '',
     image: '',
     skills: [],
+    username: '',
     socialLinks: {}
   });
   const [saving, setSaving] = useState(false);
@@ -91,6 +96,7 @@ export default function ProfilePage() {
   const [heatmapLoading, setHeatmapLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [isGuest, setIsGuest] = useState(false);
+  const [showVip, setShowVip] = useState(false);
 
   // 添加刷新数据的函数
   const refreshData = async () => {
@@ -516,6 +522,10 @@ export default function ProfilePage() {
           website: profileData.website || '',
           image: profileData.image || session?.user?.image || '',
           skills: profileData.skills || [],
+          username: profileData.username || (session?.user as any)?.username || '',
+          vip: profileData.vip || false,
+          vipLevel: profileData.vipLevel || 0,
+          vipExpireTime: profileData.vipExpireTime || null,
           socialLinks: profileData.socialLinks || {}
         };
         
@@ -539,6 +549,7 @@ export default function ProfilePage() {
           website: '',
           image: session?.user?.image || '',
           skills: [],
+          username: (session?.user as any)?.username || '',
           socialLinks: {}
         };
         
@@ -661,14 +672,11 @@ export default function ProfilePage() {
       setProfileForm(submitData);
       form.setFieldsValue(submitData);
       
-      // 更新session
-      await update({
-        ...session,
-        user: {
-          ...session?.user,
-          name: updatedProfile.user?.name || submitData.name,
-          image: updatedProfile.user?.image || submitData.image
-        }
+      // 更新本地缓存的用户状态
+      update({
+        name: updatedProfile.user?.name || submitData.name,
+        image: updatedProfile.user?.image || submitData.image,
+        username: updatedProfile.user?.username || submitData.username,
       });
 
       // 刷新全局用户状态
@@ -769,14 +777,8 @@ export default function ProfilePage() {
             // 更新全局用户状态
             updateUser({ image: data.image });
             
-            // 更新session
-            await update({
-              ...session,
-              user: {
-                ...session?.user,
-                image: data.image
-              }
-            });
+            // 更新本地缓存的用户状态
+            update({ image: data.image });
             
             // 重新加载用户资料
             await loadUserProfile();
@@ -809,26 +811,8 @@ export default function ProfilePage() {
     try {
       message.loading('正在退出登录...', 1);
       
-      // 1. 使用NextAuth库内置功能清除前端会话
-      await signOut({ redirect: false });
-      
-      // 2. 调用自定义API清除服务器端会话
-      try {
-        const res = await fetch('/api/auth/signout', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          credentials: 'include',
-          cache: 'no-store'
-        });
-        
-        const result = await res.json();
-      } catch (apiError) {
-        console.error('API调用失败，继续退出流程', apiError);
-      }
-      
-      // 3. 清除所有存储和cookie
+      // 使用 JWT 认证方式退出：清除 localStorage 中的 token
+      signOut({ redirect: false });
       
       // 清除所有localStorage
       if (typeof localStorage !== 'undefined') {
@@ -1000,7 +984,7 @@ export default function ProfilePage() {
               
               {/* 用户信息 */}
               <div className="mb-6">
-                <div className="flex items-center justify-center gap-3 mb-2">
+                <div className="flex items-center justify-center gap-3 mb-1">
                   <Title level={1} className="mb-0" style={{ color: 'white', margin: 0, fontSize: '2.5rem' }}>
                     {profileForm.name || session?.user?.name || '未设置用户名'}
                   </Title>
@@ -1015,6 +999,41 @@ export default function ProfilePage() {
                     </span>
                   )}
                 </div>
+
+                {/* 登录账户展示 */}
+                {profileForm.username && (
+                  <div className="text-[#BBFF5C] font-mono text-base opacity-90 mb-3 flex items-center justify-center gap-1 font-semibold">
+                    <span>@</span>
+                    <span>{profileForm.username}</span>
+                  </div>
+                )}
+
+                {/* VIP 会员徽章 */}
+                {profileForm.vip && profileForm.vipLevel && profileForm.vipLevel > 0 && (() => {
+                  const badges = [
+                    null,
+                    { emoji: '👑', label: '体验会员', color: 'from-yellow-600 to-yellow-400', glow: 'shadow-yellow-500/40' },
+                    { emoji: '🌟', label: '进阶会员', color: 'from-purple-600 to-cyan-400', glow: 'shadow-purple-500/40' },
+                    { emoji: '🔥', label: '永久共创者', color: 'from-red-500 to-orange-400', glow: 'shadow-orange-500/40' },
+                  ];
+                  const badge = badges[profileForm.vipLevel];
+                  const expireText = profileForm.vipLevel === 3
+                    ? '永久有效'
+                    : profileForm.vipExpireTime
+                      ? `有效至 ${new Date(profileForm.vipExpireTime).toLocaleDateString('zh-CN')}`
+                      : '';
+                  return badge ? (
+                    <div className="flex flex-col items-center gap-1 mb-3">
+                      <div className={`inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-gradient-to-r ${badge.color} shadow-lg ${badge.glow} text-white text-sm font-bold`}>
+                        <span>{badge.emoji}</span>
+                        <span>{badge.label}</span>
+                      </div>
+                      {expireText && (
+                        <span className="text-xs text-slate-400">{expireText}</span>
+                      )}
+                    </div>
+                  ) : null;
+                })()}
                 
                 {/* 职位和公司 */}
                 {(profileForm.jobTitle || profileForm.company) && (
@@ -1040,14 +1059,19 @@ export default function ProfilePage() {
                 {/* 个人信息标签 */}
                 <div className="flex flex-wrap justify-center gap-3 mb-8">
                   {profileForm.location && (
-                    <Tag icon={<EnvironmentOutlined />} className="bg-surface-raised bg-opacity-20 text-white border-white border-opacity-30 text-base px-4 py-2">
+                    <Tag 
+                      icon={<EnvironmentOutlined />} 
+                      style={{ backgroundColor: 'rgba(255, 255, 255, 0.15)', color: '#ffffff', borderColor: 'rgba(255, 255, 255, 0.25)', padding: '6px 16px', height: 'auto', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                      className="text-base"
+                    >
                       {profileForm.location}
                     </Tag>
                   )}
                   {profileForm.github && (
                     <Tag 
                       icon={<GithubOutlined />} 
-                      className="bg-surface-raised bg-opacity-20 text-white border-white border-opacity-30 text-base px-4 py-2 cursor-pointer hover:bg-opacity-30"
+                      style={{ backgroundColor: 'rgba(255, 255, 255, 0.15)', color: '#ffffff', borderColor: 'rgba(255, 255, 255, 0.25)', padding: '6px 16px', height: 'auto', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                      className="text-base cursor-pointer hover:bg-white/25 transition-colors"
                       onClick={() => window.open(`https://github.com/${profileForm.github}`, '_blank')}
                     >
                       {profileForm.github}
@@ -1056,7 +1080,8 @@ export default function ProfilePage() {
                   {profileForm.website && (
                     <Tag 
                       icon={<GlobalOutlined />} 
-                      className="bg-surface-raised bg-opacity-20 text-white border-white border-opacity-30 text-base px-4 py-2 cursor-pointer hover:bg-opacity-30"
+                      style={{ backgroundColor: 'rgba(255, 255, 255, 0.15)', color: '#ffffff', borderColor: 'rgba(255, 255, 255, 0.25)', padding: '6px 16px', height: 'auto', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                      className="text-base cursor-pointer hover:bg-white/25 transition-colors"
                       onClick={() => window.open(profileForm.website, '_blank')}
                     >
                       个人网站
@@ -1091,7 +1116,8 @@ export default function ProfilePage() {
                         size="large"
                         icon={<EditOutlined />}
                         onClick={() => setEditMode(!editMode)}
-                        className="bg-surface-raised bg-opacity-20 text-white border-white border-opacity-30 hover:bg-surface-raised hover:bg-opacity-30 px-6 py-2 h-auto"
+                        style={{ backgroundColor: 'rgba(255, 255, 255, 0.15)', color: '#ffffff', borderColor: 'rgba(255, 255, 255, 0.25)' }}
+                        className="hover:bg-white/25 hover:text-white hover:border-white/40 px-6 py-2 h-auto"
                       >
                         {editMode ? '取消编辑' : '编辑资料'}
                       </Button>
@@ -1103,7 +1129,8 @@ export default function ProfilePage() {
                         </svg>}
                         onClick={refreshData}
                         loading={refreshing}
-                        className="bg-brand-primary bg-opacity-20 text-white border-indigo-300 border-opacity-30 hover:bg-brand-primary hover:bg-opacity-30 px-6 py-2 h-auto"
+                        style={{ backgroundColor: 'rgba(99, 102, 241, 0.25)', color: '#ffffff', borderColor: 'rgba(99, 102, 241, 0.35)' }}
+                        className="hover:bg-indigo-600/30 hover:text-white hover:border-indigo-400/40 px-6 py-2 h-auto"
                       >
                         刷新数据
                       </Button>
@@ -1111,7 +1138,8 @@ export default function ProfilePage() {
                         danger 
                         size="large"
                         onClick={handleSignOut}
-                        className="bg-red-500 bg-opacity-20 text-white border-red-300 border-opacity-30 hover:bg-red-500 hover:bg-opacity-30 px-6 py-2 h-auto"
+                        style={{ backgroundColor: 'rgba(239, 68, 68, 0.2)', color: '#ef4444', borderColor: 'rgba(239, 68, 68, 0.35)' }}
+                        className="hover:bg-red-600/30 hover:text-red-400 hover:border-red-400/40 px-6 py-2 h-auto"
                       >
                         退出登录
                       </Button>
@@ -1150,6 +1178,21 @@ export default function ProfilePage() {
               initialValues={profileForm}
               className="max-w-2xl mx-auto"
             >
+              <Form.Item
+                label={<span className="text-base font-semibold">登录用户名 (只能是英文与数字的组合)</span>}
+                name="username"
+                rules={[
+                  { required: true, message: '请输入登录用户名' },
+                  { pattern: /^[a-zA-Z0-9]+$/, message: '用户名只能由英文和数字组成' }
+                ]}
+              >
+                <Input 
+                  placeholder="请输入您的登录用户名" 
+                  size="large"
+                  className="rounded-lg font-sans"
+                />
+              </Form.Item>
+
               <Form.Item
                 label={<span className="text-base font-semibold">显示名称</span>}
                 name="name"

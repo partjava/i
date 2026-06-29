@@ -18,10 +18,10 @@ export const authOptions: NextAuthOptions = {
         }
 
         try {
-          // 从数据库查询用户
+          // 从数据库查询用户（同时支持邮箱和用户名登录）
           const users = await executeQuery(
-            'SELECT * FROM users WHERE email = ?',
-            [credentials.email]
+            'SELECT * FROM users WHERE email = ? OR username = ?',
+            [credentials.email, credentials.email]
           ) as any[]
 
           if (!users || users.length === 0) {
@@ -46,6 +46,8 @@ export const authOptions: NextAuthOptions = {
             id: authenticatedUser.id.toString(),
             name: authenticatedUser.name,
             email: authenticatedUser.email,
+            username: authenticatedUser.username, // 透传用户名
+            role: authenticatedUser.role, // 透传角色
             // 避免在session中存储大图片数据，只存储路径
             image: authenticatedUser.avatar && authenticatedUser.avatar.length < 200 ? authenticatedUser.avatar : null
           }
@@ -74,6 +76,8 @@ export const authOptions: NextAuthOptions = {
         token.id = user.id
         token.email = user.email
         token.name = user.name
+        token.username = (user as any).username // 透传用户名到 token
+        token.role = (user as any).role // 透传角色到 token
         if (user.image) {
           token.image = user.image
         }
@@ -85,6 +89,8 @@ export const authOptions: NextAuthOptions = {
         session.user.id = String(token.id)
         session.user.email = String(token.email)
         session.user.name = String(token.name)
+        ;(session.user as any).username = String(token.username || '') // 透传用户名到 session
+        ;(session.user as any).role = String(token.role || 'USER') // 强转 any 规避 TS 检查
         if (token.image) {
           session.user.image = token.image
         }

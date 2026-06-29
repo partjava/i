@@ -1,0 +1,1509 @@
+[
+  {
+    "slug": "math-vector-projection-decomposer",
+    "stageId": 3,
+    "topicName": "数学基础",
+    "subtopicName": "向量与空间",
+    "levelIndex": 1,
+    "levelTitle": "向量投影与正交分解器",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "math",
+      "vector",
+      "projection",
+      "orthogonal"
+    ],
+    "theoryContent": "### 编程挑战：向量投影与正交分解器\n\n在图形学、物理模拟和机器学习中，经常需要将一个向量投影到另一个向量方向，或分解为平行和垂直分量。\n\n实现以下函数：\n- `project(v, onto)`: 向量 v 在 onto 方向上的投影向量\n- `orthogonal(v, onto)`: v 垂直于 onto 的分量\n- `decompose(v, onto)`: 返回平行和垂直分量\n\n向量用 NumPy 数组表示。",
+    "latexFormulas": [
+      "proj_u(v) = \\frac{v \\cdot u}{\\|u\\|^2} u",
+      "v_\\perp = v - proj_u(v)"
+    ],
+    "starterCode": "import numpy as np\n\ndef project(v: np.ndarray, onto: np.ndarray) -> np.ndarray:\n    \"\"\"返回 v 在 onto 方向上的投影向量\"\"\"\n    pass\n\ndef orthogonal(v: np.ndarray, onto: np.ndarray) -> np.ndarray:\n    \"\"\"返回 v 垂直于 onto 的分量\"\"\"\n    pass\n\ndef decompose(v: np.ndarray, onto: np.ndarray) -> dict:\n    \"\"\"返回 {\"parallel\": ..., \"perpendicular\": ...}\"\"\"\n    pass",
+    "solutionCode": "import numpy as np\n\ndef project(v: np.ndarray, onto: np.ndarray) -> np.ndarray:\n    denom = np.dot(onto, onto)\n    if denom == 0:\n        raise ValueError('onto vector cannot be zero')\n    scalar = np.dot(v, onto) / denom\n    return scalar * onto\n\ndef orthogonal(v: np.ndarray, onto: np.ndarray) -> np.ndarray:\n    return v - project(v, onto)\n\ndef decompose(v: np.ndarray, onto: np.ndarray) -> dict:\n    p = project(v, onto)\n    return {'parallel': p, 'perpendicular': v - p}",
+    "expectedOutput": "[2. 0.]",
+    "testCases": [
+      {
+        "name": "project onto x-axis",
+        "input": {
+          "v": [
+            3,
+            4
+          ],
+          "onto": [
+            1,
+            0
+          ]
+        },
+        "expected": [
+          3,
+          0
+        ]
+      },
+      {
+        "name": "orthogonal component",
+        "input": {
+          "v": [
+            3,
+            4
+          ],
+          "onto": [
+            1,
+            0
+          ]
+        },
+        "expected": [
+          0,
+          4
+        ]
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "两个正交向量的点积是多少？",
+        "options": [
+          "A. 0",
+          "B. 1",
+          "C. 取决于向量长度",
+          "D. 无穷大"
+        ],
+        "answer": 0,
+        "explanation": "正交向量的点积为 0。"
+      },
+      {
+        "question": "投影向量 proj_u(v) 的方向和谁相同？",
+        "options": [
+          "A. u 的方向",
+          "B. v 的方向",
+          "C. u+v 的方向",
+          "D. 垂直于 u"
+        ],
+        "answer": 0,
+        "explanation": "投影向量与 u 同向，大小由点积决定。"
+      }
+    ],
+    "thinkingQuestion": "施密特正交化过程是如何利用投影来构造一组正交基的？",
+    "aiPrompt": "评估学生对向量投影、点积、正交分解的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "math-linear-system-solver",
+    "stageId": 3,
+    "topicName": "数学基础",
+    "subtopicName": "矩阵乘法与逆",
+    "levelIndex": 1,
+    "levelTitle": "线性方程组求解器",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "math",
+      "matrix",
+      "inverse",
+      "linear-system"
+    ],
+    "theoryContent": "### 编程挑战：线性方程组求解器\n\n线性方程组 $Ax = b$ 广泛出现在工程计算中。解的存在性和唯一性取决于矩阵 A 是否可逆。\n\n实现以下函数：\n- `solve_linear(A, b)`: 如果 A 可逆，返回解 x；否则返回 None\n- `is_invertible(A)`: 判断矩阵是否可逆（行列式非零）\n- `check_solution(A, b, x)`: 验证 $Ax \\approx b$",
+    "latexFormulas": [
+      "Ax = b \\Rightarrow x = A^{-1}b",
+      "\\det(A) \\neq 0 \\iff \\exists A^{-1}"
+    ],
+    "starterCode": "import numpy as np\n\ndef solve_linear(A: np.ndarray, b: np.ndarray) -> np.ndarray | None:\n    \"\"\"求解 Ax = b。不可逆返回 None。\"\"\"\n    pass\n\ndef is_invertible(A: np.ndarray) -> bool:\n    \"\"\"判断矩阵是否可逆（用行列式或秩）\"\"\"\n    pass\n\ndef check_solution(A: np.ndarray, b: np.ndarray, x: np.ndarray) -> float:\n    \"\"\"返回 max(|Ax - b|)，衡量解的精度\"\"\"\n    pass",
+    "solutionCode": "import numpy as np\n\ndef solve_linear(A: np.ndarray, b: np.ndarray) -> np.ndarray | None:\n    if not is_invertible(A):\n        return None\n    return np.linalg.solve(A, b)\n\ndef is_invertible(A: np.ndarray) -> bool:\n    try:\n        return np.linalg.matrix_rank(A) == A.shape[0] and A.shape[0] == A.shape[1]\n    except np.linalg.LinAlgError:\n        return False\n\ndef check_solution(A: np.ndarray, b: np.ndarray, x: np.ndarray) -> float:\n    diff = A @ x - b\n    return float(np.max(np.abs(diff)))",
+    "expectedOutput": "[1. 2.]",
+    "testCases": [
+      {
+        "name": "2x2 invertible",
+        "input": {
+          "A": [
+            [
+              3,
+              1
+            ],
+            [
+              1,
+              2
+            ]
+          ],
+          "b": [
+            5,
+            5
+          ]
+        },
+        "expected": [
+          1,
+          2
+        ]
+      },
+      {
+        "name": "singular matrix",
+        "input": {
+          "A": [
+            [
+              1,
+              2
+            ],
+            [
+              2,
+              4
+            ]
+          ],
+          "b": [
+            1,
+            2
+          ]
+        },
+        "expected": null
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "矩阵可逆的充要条件是什么？",
+        "options": [
+          "A. 行列式不为 0",
+          "B. 行数大于列数",
+          "C. 所有元素非零",
+          "D. 对称矩阵"
+        ],
+        "answer": 0,
+        "explanation": "行列式非零 ↔ 满秩 ↔ 可逆。"
+      },
+      {
+        "question": "奇异矩阵的线性方程组有什么特点？",
+        "options": [
+          "A. 无解或有无穷多解",
+          "B. 一定有唯一解",
+          "C. 解一定是零向量",
+          "D. 不能用矩阵表示"
+        ],
+        "answer": 0,
+        "explanation": "奇异矩阵对应的方程组或矛盾（无解）或有无穷多解。"
+      }
+    ],
+    "thinkingQuestion": "当 A 接近奇异时（病态矩阵），np.linalg.solve 的解可能误差很大。你如何检测和处理这种情况？",
+    "aiPrompt": "评估学生对矩阵求逆、可逆性、线性方程组和数值稳定性的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "math-svd-image-compressor",
+    "stageId": 3,
+    "topicName": "数学基础",
+    "subtopicName": "SVD奇异值分解",
+    "levelIndex": 1,
+    "levelTitle": "SVD 图像压缩模拟器",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "math",
+      "svd",
+      "compression",
+      "decomposition"
+    ],
+    "theoryContent": "### 编程挑战：SVD 图像压缩模拟器\n\nSVD 将任意矩阵分解为 $A = U\\Sigma V^T$。通过只保留最大的 k 个奇异值，可以用更少的数据近似表示原矩阵——这就是图像压缩的核心思想。\n\n实现以下函数：\n- `svd_decompose(A)`: 返回 U, s, Vt\n- `svd_compress(A, k)`: 用前 k 个奇异值近似重建 A\n- `compression_ratio(A, k)`: 计算压缩比",
+    "latexFormulas": [
+      "A = U\\Sigma V^T",
+      "A_k = \\sum_{i=1}^k \\sigma_i u_i v_i^T",
+      "压缩比 = \\frac{k(m+n+1)}{mn}"
+    ],
+    "starterCode": "import numpy as np\n\ndef svd_decompose(A: np.ndarray) -> dict:\n    \"\"\"返回 {\"U\": ..., \"s\": ..., \"Vt\": ...}\"\"\"\n    pass\n\ndef svd_compress(A: np.ndarray, k: int) -> np.ndarray:\n    \"\"\"用前 k 个奇异值重建矩阵\"\"\"\n    pass\n\ndef compression_ratio(A: np.ndarray, k: int) -> float:\n    \"\"\"计算压缩比，保留两位小数\"\"\"\n    pass",
+    "solutionCode": "import numpy as np\n\ndef svd_decompose(A: np.ndarray) -> dict:\n    U, s, Vt = np.linalg.svd(A, full_matrices=False)\n    return {'U': U, 's': s, 'Vt': Vt}\n\ndef svd_compress(A: np.ndarray, k: int) -> np.ndarray:\n    U, s, Vt = np.linalg.svd(A, full_matrices=False)\n    return U[:, :k] @ np.diag(s[:k]) @ Vt[:k, :]\n\ndef compression_ratio(A: np.ndarray, k: int) -> float:\n    m, n = A.shape\n    return round(k * (m + n + 1) / (m * n), 4)",
+    "expectedOutput": "0.6667",
+    "testCases": [
+      {
+        "name": "4x4 matrix compression ratio",
+        "input": {
+          "A": [
+            [
+              1,
+              2,
+              3,
+              4
+            ],
+            [
+              5,
+              6,
+              7,
+              8
+            ],
+            [
+              9,
+              10,
+              11,
+              12
+            ],
+            [
+              13,
+              14,
+              15,
+              16
+            ]
+          ],
+          "k": 2
+        },
+        "expected": 0.6667
+      },
+      {
+        "name": "svd_compress reduces error with more k",
+        "input": {
+          "A": [
+            [
+              1,
+              0
+            ],
+            [
+              0,
+              2
+            ]
+          ],
+          "k": 1
+        },
+        "expected": [
+          [
+            1,
+            0
+          ],
+          [
+            0,
+            0
+          ]
+        ]
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "SVD 分解中奇异值 σᵢ 通常如何排列？",
+        "options": [
+          "A. 从大到小",
+          "B. 从小到大",
+          "C. 随机排列",
+          "D. 按行排列"
+        ],
+        "answer": 0,
+        "explanation": "np.linalg.svd 返回的奇异值总是从大到小排列。"
+      },
+      {
+        "question": "保留的 k 越大，重建误差如何变化？",
+        "options": [
+          "A. 误差越小",
+          "B. 误差越大",
+          "C. 不变",
+          "D. 先大后小"
+        ],
+        "answer": 0,
+        "explanation": "保留的奇异值越多，信息越完整，重建误差越小。"
+      }
+    ],
+    "thinkingQuestion": "在图像压缩中，为什么一张 1024×768 的灰度图用前 50 个奇异值就能达到可接受的质量？这与奇异值的分布有什么关系？",
+    "aiPrompt": "评估学生对 SVD 分解、矩阵近似和压缩比的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "math-eigen-page-rank",
+    "stageId": 3,
+    "topicName": "数学基础",
+    "subtopicName": "特征值与特征向量",
+    "levelIndex": 1,
+    "levelTitle": "特征值分解与网页排名模拟",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "math",
+      "eigenvalue",
+      "eigenvector",
+      "pagerank"
+    ],
+    "theoryContent": "### 编程挑战：特征值分解与网页排名模拟\n\n特征值和特征向量是矩阵的固有属性：$Av = \\lambda v$。Google 的 PageRank 算法核心就是计算一个转移矩阵的主特征向量。\n\n本题要求实现：\n- `eigen_decompose(A)`: 返回特征值和特征向量\n- `power_iteration(A, iterations)`: 用幂迭代法求主特征值和特征向量\n- `page_rank(links, damping, iterations)`: 简化版 PageRank",
+    "latexFormulas": [
+      "Av = \\lambda v",
+      "\\lambda_{max} = \\lim_{k\\to\\infty} \\frac{\\|A^k v\\|}{\\|A^{k-1}v\\|}"
+    ],
+    "starterCode": "import numpy as np\n\ndef eigen_decompose(A: np.ndarray) -> dict:\n    \"\"\"返回 {\"values\": [...], \"vectors\": [...]}\"\"\"\n    pass\n\ndef power_iteration(A: np.ndarray, iters: int = 100) -> dict:\n    \"\"\"幂迭代法求主特征值和特征向量\"\"\"\n    pass\n\ndef page_rank(links: list, damping: float = 0.85, iters: int = 100) -> list:\n    \"\"\"\n    links: [(from_id, to_id), ...]\n    返回 [(page_id, score), ...] 按得分降序\n    \"\"\"\n    pass",
+    "solutionCode": "import numpy as np\n\ndef eigen_decompose(A: np.ndarray) -> dict:\n    vals, vecs = np.linalg.eig(A)\n    return {'values': vals, 'vectors': vecs}\n\ndef power_iteration(A: np.ndarray, iters: int = 100) -> dict:\n    n = A.shape[0]\n    v = np.ones(n) / np.sqrt(n)\n    for _ in range(iters):\n        Av = A @ v\n        v = Av / np.linalg.norm(Av)\n    eigenvalue = float(v @ (A @ v))\n    return {'eigenvalue': round(eigenvalue, 4), 'eigenvector': v}\n\ndef page_rank(links: list, damping: float = 0.85, iters: int = 100) -> list:\n    pages = set()\n    for f, t in links:\n        pages.add(f); pages.add(t)\n    pages = sorted(pages)\n    n = len(pages)\n    idx = {p: i for i, p in enumerate(pages)}\n    M = np.zeros((n, n))\n    out_degree = np.zeros(n)\n    for f, t in links:\n        M[idx[t], idx[f]] += 1\n        out_degree[idx[f]] += 1\n    for j in range(n):\n        if out_degree[j] > 0:\n            M[:, j] /= out_degree[j]\n        else:\n            M[:, j] = 1.0 / n\n    r = np.ones(n) / n\n    for _ in range(iters):\n        r = damping * (M @ r) + (1 - damping) * np.ones(n) / n\n    result = [(pages[i], round(float(r[i]), 4)) for i in range(n)]\n    result.sort(key=lambda x: -x[1])\n    return result",
+    "expectedOutput": "[[\"B\", 0.4], [\"A\", 0.35], [\"C\", 0.25]]",
+    "testCases": [
+      {
+        "name": "basic pagerank",
+        "input": {
+          "links": [
+            [
+              "A",
+              "B"
+            ],
+            [
+              "B",
+              "A"
+            ],
+            [
+              "A",
+              "C"
+            ]
+          ],
+          "damping": 0.85,
+          "iters": 50
+        },
+        "expected": [
+          [
+            "B",
+            0.3875
+          ],
+          [
+            "A",
+            0.3625
+          ],
+          [
+            "C",
+            0.25
+          ]
+        ]
+      },
+      {
+        "name": "power iteration 2x2",
+        "input": {
+          "A": [
+            [
+              2,
+              0
+            ],
+            [
+              0,
+              1
+            ]
+          ],
+          "iters": 50
+        },
+        "expected": 2
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "特征值 $\\lambda$ 和特征向量 $v$ 满足什么关系？",
+        "options": [
+          "A. $Av = \\lambda v$",
+          "B. $A\\lambda = v$",
+          "C. $vA = \\lambda$",
+          "D. $\\lambda v = A$"
+        ],
+        "answer": 0,
+        "explanation": "特征向量经过矩阵变换后方向不变，只缩放 λ 倍。"
+      },
+      {
+        "question": "为什么 PageRank 用的是主特征向量？",
+        "options": [
+          "A. 主特征向量对应稳态分布",
+          "B. 主特征值最大所以最稳定",
+          "C. 其他特征向量是复数",
+          "D. 任意特征向量都可以"
+        ],
+        "answer": 0,
+        "explanation": "转移矩阵的主特征向量对应马尔可夫链的稳态分布。"
+      }
+    ],
+    "thinkingQuestion": "幂迭代法收敛速度取决于两个最大特征值的比值 |λ₂/λ₁|。当这个比值接近 1 时（如某些 PageRank 矩阵），你会如何加速收敛？",
+    "aiPrompt": "评估学生对特征值分解、幂迭代法和 PageRank 算法的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "math-bayes-spam-classifier",
+    "stageId": 3,
+    "topicName": "数学基础",
+    "subtopicName": "贝意斯公式",
+    "levelIndex": 1,
+    "levelTitle": "朴素贝叶斯垃圾邮件分类器",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "math",
+      "bayes",
+      "naive-bayes",
+      "classification"
+    ],
+    "theoryContent": "### 编程挑战：朴素贝叶斯垃圾邮件分类器\n\n贝叶斯公式描述了后验概率与先验概率和似然的关系。朴素贝叶斯分类器假设特征之间相互独立，广泛应用于文本分类。\n\n$$P(类别|特征) = \\frac{P(特征|类别)P(类别)}{P(特征)}$$\n\n实现：\n- `train_naive_bayes(data)`: 计算先验概率和条件概率\n- `predict(priors, likelihoods, features)`: 预测最可能的类别",
+    "latexFormulas": [
+      "P(C_k|x) \\propto P(C_k) \\prod_i P(x_i|C_k)",
+      "\\hat{y} = \\arg\\max_k P(C_k|x)"
+    ],
+    "starterCode": "import numpy as np\n\ndef train_naive_bayes(data: list[dict]) -> dict:\n    \"\"\"\n    data: [{\"features\": [1,0,1,...], \"label\": \"spam\"}, ...]\n    返回 {\"priors\": {\"spam\": 0.4, \"ham\": 0.6}, \"likelihoods\": {...}}\n    条件概率用拉普拉斯平滑 (alpha=1)。\n    \"\"\"\n    pass\n\ndef predict(model: dict, features: list) -> str:\n    \"\"\"返回最可能的类别\"\"\"\n    pass",
+    "solutionCode": "import numpy as np\n\ndef train_naive_bayes(data: list[dict]) -> dict:\n    classes = {}\n    for d in data:\n        lbl = d['label']\n        if lbl not in classes:\n            classes[lbl] = []\n        classes[lbl].append(d['features'])\n    n_total = len(data)\n    priors = {}\n    likelihoods = {}\n    for lbl, samples in classes.items():\n        priors[lbl] = len(samples) / n_total\n        arr = np.array(samples)\n        n_features = arr.shape[1]\n        likelihoods[lbl] = {}\n        for j in range(n_features):\n            col = arr[:, j]\n            total_ones = int(np.sum(col))\n            total = len(col)\n            likelihoods[lbl][j] = (total_ones + 1) / (total + 2)\n    return {'priors': priors, 'likelihoods': likelihoods}\n\ndef predict(model: dict, features: list) -> str:\n    best_label = None\n    best_score = -float('inf')\n    for lbl, prior in model['priors'].items():\n        score = np.log(prior)\n        for j, val in enumerate(features):\n            p = model['likelihoods'][lbl][j]\n            if val == 1:\n                score += np.log(p)\n            else:\n                score += np.log(1 - p)\n        if score > best_score:\n            best_score = score\n            best_label = lbl\n    return best_label",
+    "expectedOutput": "spam",
+    "testCases": [
+      {
+        "name": "predict spam",
+        "input": {
+          "data": [
+            {
+              "features": [
+                1,
+                0,
+                1
+              ],
+              "label": "spam"
+            },
+            {
+              "features": [
+                1,
+                1,
+                1
+              ],
+              "label": "spam"
+            },
+            {
+              "features": [
+                0,
+                0,
+                0
+              ],
+              "label": "ham"
+            },
+            {
+              "features": [
+                0,
+                1,
+                0
+              ],
+              "label": "ham"
+            }
+          ],
+          "features": [
+            1,
+            0,
+            1
+          ]
+        },
+        "expected": "spam"
+      },
+      {
+        "name": "predict ham",
+        "input": {
+          "data": [
+            {
+              "features": [
+                1,
+                0,
+                1
+              ],
+              "label": "spam"
+            },
+            {
+              "features": [
+                1,
+                1,
+                1
+              ],
+              "label": "spam"
+            },
+            {
+              "features": [
+                0,
+                0,
+                0
+              ],
+              "label": "ham"
+            },
+            {
+              "features": [
+                0,
+                1,
+                0
+              ],
+              "label": "ham"
+            }
+          ],
+          "features": [
+            0,
+            1,
+            0
+          ]
+        },
+        "expected": "ham"
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "朴素贝叶斯中的'朴素'指的是什么？",
+        "options": [
+          "A. 特征条件独立假设",
+          "B. 计算简单",
+          "C. 实现代码很少",
+          "D. 不需要数据"
+        ],
+        "answer": 0,
+        "explanation": "朴素指假设所有特征在给定类别下条件独立。"
+      },
+      {
+        "question": "拉普拉斯平滑的作用是什么？",
+        "options": [
+          "A. 避免零概率问题",
+          "B. 加速训练",
+          "C. 降低内存",
+          "D. 增加模型复杂度"
+        ],
+        "answer": 0,
+        "explanation": "如果某个特征值在训练集中未出现，直接乘零会导致整个概率为零，拉普拉斯平滑避免了这个问题。"
+      }
+    ],
+    "thinkingQuestion": "朴素贝叶斯的独立性假设在真实文本分类中显然不成立（单词之间有关联），但它仍然表现良好。你认为原因是什么？",
+    "aiPrompt": "评估学生对贝叶斯定理、条件概率、拉普拉斯平滑和分类器的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "math-gaussian-bernoulli-simulator",
+    "stageId": 3,
+    "topicName": "数学基础",
+    "subtopicName": "高斯/伯努利分布",
+    "levelIndex": 1,
+    "levelTitle": "概率分布统计模拟器",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "math",
+      "gaussian",
+      "bernoulli",
+      "distribution",
+      "statistics"
+    ],
+    "theoryContent": "### 编程挑战：概率分布统计模拟器\n\n高斯分布（正态分布）和伯努利分布是两种最基础的分布。本题从这些分布中采样，计算统计量并与理论值比较。\n\n实现：\n- `sample_gaussian(mu, sigma, n)`: 生成 n 个高斯样本\n- `sample_bernoulli(p, n)`: 生成 n 个伯努利样本\n- `compare_with_theory(samples, dist_type)`: 计算样本均值/方差并与理论值对比",
+    "latexFormulas": [
+      "\\mathcal{N}(x|\\mu,\\sigma) = \\frac{1}{\\sqrt{2\\pi\\sigma^2}}e^{-\\frac{(x-\\mu)^2}{2\\sigma^2}}",
+      "Bernoulli(x|p) = p^x(1-p)^{1-x}",
+      "\\bar{x} \\approx \\mu,\\quad s^2 \\approx \\sigma^2"
+    ],
+    "starterCode": "import numpy as np\n\ndef sample_gaussian(mu: float, sigma: float, n: int) -> np.ndarray:\n    \"\"\"生成 n 个 N(mu, sigma^2) 样本\"\"\"\n    pass\n\ndef sample_bernoulli(p: float, n: int) -> np.ndarray:\n    \"\"\"生成 n 个 Bernoulli(p) 样本 (0/1)\"\"\"\n    pass\n\ndef compare_with_theory(samples: np.ndarray, dist_type: str) -> dict:\n    \"\"\"\n    dist_type: 'gaussian' 或 'bernoulli'\n    返回 {\"sample_mean\": ..., \"sample_var\": ..., \"theoretical_mean\": ..., \"theoretical_var\": ...}\n    gaussian 理论值从样本反推，bernoulli 的 p 从样本均值推算。\n    \"\"\"\n    pass",
+    "solutionCode": "import numpy as np\n\ndef sample_gaussian(mu: float, sigma: float, n: int) -> np.ndarray:\n    return np.random.normal(mu, sigma, n)\n\ndef sample_bernoulli(p: float, n: int) -> np.ndarray:\n    return np.random.binomial(1, p, n)\n\ndef compare_with_theory(samples: np.ndarray, dist_type: str) -> dict:\n    sample_mean = float(np.mean(samples))\n    sample_var = float(np.var(samples))\n    if dist_type == 'gaussian':\n        return {'sample_mean': round(sample_mean, 4), 'sample_var': round(sample_var, 4), 'theoretical_mean': 'mu', 'theoretical_var': 'sigma^2'}\n    elif dist_type == 'bernoulli':\n        p_est = sample_mean\n        return {'sample_mean': round(sample_mean, 4), 'sample_var': round(sample_var, 4), 'theoretical_mean': round(p_est, 4), 'theoretical_var': round(p_est * (1 - p_est), 4)}\n    else:\n        raise ValueError(f'unknown distribution: {dist_type}')",
+    "expectedOutput": "0.25",
+    "testCases": [
+      {
+        "name": "bernoulli stats",
+        "input": {
+          "samples": [
+            1,
+            0,
+            1,
+            1,
+            0
+          ],
+          "distType": "bernoulli"
+        },
+        "expected": 0.25
+      },
+      {
+        "name": "gaussian shape",
+        "input": {
+          "mu": 0,
+          "sigma": 1,
+          "n": 1000
+        },
+        "expected": true
+      },
+      {
+        "name": "momentum converges faster",
+        "input": {
+          "grad": "lambda x: 2*x",
+          "initX": 5,
+          "lr": 0.1,
+          "beta": 0.9,
+          "steps": 50
+        },
+        "expected": true
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "大数定律说明样本均值随着 n 增大趋近于什么？",
+        "options": [
+          "A. 总体期望",
+          "B. 0",
+          "C. 中位数",
+          "D. 最大值"
+        ],
+        "answer": 0,
+        "explanation": "大数定律说明样本均值依概率收敛于总体期望。"
+      },
+      {
+        "question": "伯努利分布的方差公式是什么？",
+        "options": [
+          "A. p(1-p)",
+          "B. p²",
+          "C. 1-p",
+          "D. p"
+        ],
+        "answer": 0,
+        "explanation": "Bernoulli(p) 的方差为 p(1-p)。"
+      }
+    ],
+    "thinkingQuestion": "如果样本量 n 很小（如 n=5），样本均值和理论期望可能有较大差距。这体现了什么统计概念？在工程中你如何确保估计的可靠性？",
+    "aiPrompt": "评估学生对高斯分布、伯努利分布、大数定律和统计估计的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "math-mle-parameter-estimator",
+    "stageId": 3,
+    "topicName": "数学基础",
+    "subtopicName": "最大似然估计(MLE)",
+    "levelIndex": 1,
+    "levelTitle": "最大似然估计参数求解器",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "math",
+      "mle",
+      "estimation",
+      "optimization"
+    ],
+    "theoryContent": "### 编程挑战：最大似然估计参数求解器\n\n最大似然估计通过最大化观测数据的似然函数来估计模型参数。对于高斯分布，MLE 的解是解析的：$\\hat{\\mu} = \\bar{x}$，$\\hat{\\sigma} = \\sqrt{\\frac{1}{n}\\sum(x_i-\\bar{x})^2}$。\n\n实现：\n- `gaussian_mle(data)`: 用 MLE 估计高斯分布的均值和方差\n- `bernoulli_mle(data)`: 用 MLE 估计伯努利分布的 p\n- `negative_log_likelihood(data, mu, sigma)`: 计算负对数似然（越小越好）",
+    "latexFormulas": [
+      "\\hat{\\mu}_{MLE} = \\frac{1}{n}\\sum x_i",
+      "\\hat{\\sigma}^2_{MLE} = \\frac{1}{n}\\sum (x_i - \\bar{x})^2"
+    ],
+    "starterCode": "import numpy as np\n\ndef gaussian_mle(data: np.ndarray) -> dict:\n    \"\"\"返回 {\"mu\": ..., \"sigma\": ...}\"\"\"\n    pass\n\ndef bernoulli_mle(data: np.ndarray) -> dict:\n    \"\"\"返回 {\"p\": ...}\"\"\"\n    pass\n\ndef negative_log_likelihood(data: np.ndarray, mu: float, sigma: float) -> float:\n    \"\"\"计算高斯分布负对数似然\"\"\"\n    pass",
+    "solutionCode": "import numpy as np\n\ndef gaussian_mle(data: np.ndarray) -> dict:\n    mu = float(np.mean(data))\n    sigma = float(np.std(data, ddof=0))\n    return {'mu': round(mu, 4), 'sigma': round(sigma, 4)}\n\ndef bernoulli_mle(data: np.ndarray) -> dict:\n    p = float(np.mean(data))\n    return {'p': round(p, 4)}\n\ndef negative_log_likelihood(data: np.ndarray, mu: float, sigma: float) -> float:\n    n = len(data)\n    if sigma <= 0:\n        return float('inf')\n    nll = n / 2 * np.log(2 * np.pi * sigma**2) + np.sum((data - mu)**2) / (2 * sigma**2)\n    return round(float(nll), 4)",
+    "expectedOutput": "1.0",
+    "testCases": [
+      {
+        "name": "gaussian MLE",
+        "input": {
+          "data": [
+            1,
+            2,
+            3
+          ]
+        },
+        "expected": {
+          "mu": 2,
+          "sigma": 0.8165
+        }
+      },
+      {
+        "name": "bernoulli MLE",
+        "input": {
+          "data": [
+            1,
+            0,
+            1,
+            1
+          ]
+        },
+        "expected": {
+          "p": 0.75
+        }
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "MLE 中为什么常用负对数似然而不是直接最大化似然？",
+        "options": [
+          "A. 取对数将连乘变连加，避免数值下溢",
+          "B. 负号将最大化问题转最小化，方便优化",
+          "C. 两者都对",
+          "D. 取对数可以加速计算"
+        ],
+        "answer": 2,
+        "explanation": "取对数避免连乘下溢，负号转成最小化问题。"
+      },
+      {
+        "question": "高斯分布的 MLE 方差估计是有偏的还是无偏的？",
+        "options": [
+          "A. 有偏，分母用 n 而不是 n-1",
+          "B. 无偏的",
+          "C. 取决于数据量",
+          "D. 无法判断"
+        ],
+        "answer": 0,
+        "explanation": "高斯 MLE 的方差用 n 做分母，是有偏估计。无偏估计用 n-1。"
+      }
+    ],
+    "thinkingQuestion": "MLE 在有偏估计（用 n 做分母）和样本方差（用 n-1 做分母）之间如何选择？在什么场景下用 MLE 的方差更合适？",
+    "aiPrompt": "评估学生对最大似然估计、高斯分布参数估计和有偏/无偏估计的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "math-gradient-numerical-checker",
+    "stageId": 3,
+    "topicName": "数学基础",
+    "subtopicName": "偏导数与梯度",
+    "levelIndex": 1,
+    "levelTitle": "数值梯度检查器",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "math",
+      "gradient",
+      "partial-derivative",
+      "numerical"
+    ],
+    "theoryContent": "### 编程挑战：数值梯度检查器\n\n在实现梯度下降或反向传播时，需要用数值梯度来验证解析梯度的正确性（梯度检查）。数值梯度用差分近似定义：\n\n实现：\n- `numerical_gradient(f, x, h)`: 对每个维度计算中心差分\n- `check_gradient(f, grad_f, x)`: 比较数值梯度和解析梯度的相对误差\n- `relative_error(num_grad, analytic_grad)`: 计算最大相对误差",
+    "latexFormulas": [
+      "\\frac{\\partial f}{\\partial x_i} \\approx \\frac{f(x+he_i) - f(x-he_i)}{2h}",
+      "相对误差 = \\frac{\\|num - analytic\\|}{\\|num\\| + \\|analytic\\|}"
+    ],
+    "starterCode": "import numpy as np\n\ndef numerical_gradient(f, x: np.ndarray, h: float = 1e-5) -> np.ndarray:\n    \"\"\"中心差分求数值梯度\"\"\"\n    pass\n\ndef check_gradient(f, grad_f, x: np.ndarray) -> dict:\n    \"\"\"返回 {\"max_relative_error\": ..., \"pass\": bool}\"\"\"\n    pass\n\ndef relative_error(num: np.ndarray, analytic: np.ndarray) -> float:\n    pass",
+    "solutionCode": "import numpy as np\n\ndef numerical_gradient(f, x: np.ndarray, h: float = 1e-5) -> np.ndarray:\n    grad = np.zeros_like(x)\n    for i in range(len(x)):\n        x_plus = x.copy()\n        x_minus = x.copy()\n        x_plus[i] += h\n        x_minus[i] -= h\n        grad[i] = (f(x_plus) - f(x_minus)) / (2 * h)\n    return grad\n\ndef relative_error(num: np.ndarray, analytic: np.ndarray) -> float:\n    denom = np.linalg.norm(num) + np.linalg.norm(analytic)\n    if denom == 0:\n        return 0.0\n    return float(np.linalg.norm(num - analytic) / denom)\n\ndef check_gradient(f, grad_f, x: np.ndarray) -> dict:\n    num = numerical_gradient(f, x)\n    analytic = grad_f(x)\n    err = relative_error(num, analytic)\n    return {'max_relative_error': round(err, 8), 'pass': err < 1e-4}",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "quadratic function passes",
+        "input": {
+          "f": "lambda x: x[0]**2 + x[1]**2",
+          "grad": "lambda x: np.array([2*x[0], 2*x[1]])",
+          "x": [
+            1,
+            2
+          ]
+        },
+        "expected": true
+      },
+      {
+        "name": "wrong gradient fails",
+        "input": {
+          "f": "lambda x: x[0]**2",
+          "grad": "lambda x: np.array([0])",
+          "x": [
+            3
+          ]
+        },
+        "expected": false
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "中心差分和单侧差分相比优势是什么？",
+        "options": [
+          "A. 中心差分误差 O(h²)，单侧 O(h)",
+          "B. 中心差分更快",
+          "C. 单侧差分更精确",
+          "D. 没有区别"
+        ],
+        "answer": 0,
+        "explanation": "中心差分的截断误差 O(h²) 小于单侧差分的 O(h)。"
+      },
+      {
+        "question": "为什么梯度检查通常只在调试时用，不在训练时每次都跑？",
+        "options": [
+          "A. 数值梯度需要多次前向计算，非常慢",
+          "B. 数值梯度不准确",
+          "C. 解析梯度不需要验证",
+          "D. 没有意义"
+        ],
+        "answer": 0,
+        "explanation": "对每个参数维度都需要两次前向计算，参数量大时成本太高。"
+      }
+    ],
+    "thinkingQuestion": "当梯度接近 0 或在某些点不可导时，数值梯度检查可能会误报。你会如何设计一个鲁棒的梯度检查策略？",
+    "aiPrompt": "评估学生对偏导数、数值微分、梯度检查和误差分析的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "math-gradient-descent-optimizer",
+    "stageId": 3,
+    "topicName": "数学基础",
+    "subtopicName": "梯度下降算法",
+    "levelIndex": 1,
+    "levelTitle": "梯度下降优化器",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "math",
+      "gradient-descent",
+      "optimization",
+      "convergence"
+    ],
+    "theoryContent": "### 编程挑战：梯度下降优化器\n\n梯度下降通过沿负梯度方向迭代更新参数来最小化损失函数。不同的学习率和动量策略影响收敛速度。\n\n实现：\n- `vanilla_gd(grad_f, init_x, lr, steps)`: 普通梯度下降\n- `momentum_gd(grad_f, init_x, lr, beta, steps)`: 带动量的梯度下降\n- `find_best_lr(grad_f, init_x, lrs, steps)`: 尝试多个学习率，返回收敛最好的",
+    "latexFormulas": [
+      "x_{t+1} = x_t - \\eta \\nabla f(x_t)",
+      "v_{t+1} = \\beta v_t + \\nabla f(x_t),\\quad x_{t+1} = x_t - \\eta v_{t+1}"
+    ],
+    "starterCode": "import numpy as np\n\ndef vanilla_gd(grad_f, init_x: float, lr: float, steps: int) -> list:\n    \"\"\"返回每一步的 x 值列表\"\"\"\n    pass\n\ndef momentum_gd(grad_f, init_x: float, lr: float, beta: float, steps: int) -> list:\n    \"\"\"带动量的梯度下降\"\"\"\n    pass\n\ndef find_best_lr(grad_f, init_x: float, lrs: list, steps: int) -> dict:\n    \"\"\"返回 {\"best_lr\": ..., \"final_value\": ...}\"\"\"\n    pass",
+    "solutionCode": "import numpy as np\n\ndef vanilla_gd(grad_f, init_x: float, lr: float, steps: int) -> list:\n    x = init_x\n    history = [x]\n    for _ in range(steps):\n        x = x - lr * grad_f(x)\n        history.append(x)\n    return history\n\ndef momentum_gd(grad_f, init_x: float, lr: float, beta: float, steps: int) -> list:\n    x = init_x\n    v = 0\n    history = [x]\n    for _ in range(steps):\n        v = beta * v + grad_f(x)\n        x = x - lr * v\n        history.append(x)\n    return history\n\ndef find_best_lr(grad_f, init_x: float, lrs: list, steps: int) -> dict:\n    best_lr = None\n    best_val = float('inf')\n    for lr in lrs:\n        hist = vanilla_gd(grad_f, init_x, lr, steps)\n        final = abs(hist[-1])\n        if final < best_val:\n            best_val = final\n            best_lr = lr\n    return {'best_lr': best_lr, 'final_value': round(best_val, 6)}",
+    "expectedOutput": "0.1",
+    "testCases": [
+      {
+        "name": "momentum converges faster",
+        "input": {
+          "grad": "lambda x: 2*x",
+          "initX": 5,
+          "lr": 0.1,
+          "beta": 0.9,
+          "steps": 50
+        },
+        "expected": true
+      },
+      {
+        "name": "find best lr",
+        "input": {
+          "grad": "lambda x: 2*x",
+          "initX": 5,
+          "lrs": [
+            0.01,
+            0.1,
+            0.5
+          ],
+          "steps": 20
+        },
+        "expected": {
+          "best_lr": 0.1,
+          "final_value": 0
+        }
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "学习率太大会导致什么问题？",
+        "options": [
+          "A. 发散，loss 爆炸",
+          "B. 收敛变慢",
+          "C. 不收敛但也不发散",
+          "D. 没有任何影响"
+        ],
+        "answer": 0,
+        "explanation": "学习率过大使参数步长太大，可能跨过最优点甚至发散。"
+      },
+      {
+        "question": "动量的作用是什么？",
+        "options": [
+          "A. 加速收敛，越过局部极小和震荡",
+          "B. 降低精度",
+          "C. 增加随机性",
+          "D. 减少计算量"
+        ],
+        "answer": 0,
+        "explanation": "动量累积历史梯度方向，在平坦区域加速，在震荡区域平滑。"
+      }
+    ],
+    "thinkingQuestion": "Adam 优化器结合了动量（一阶矩）和 RMSProp（二阶矩）。你会如何用代码实现 Adam？",
+    "aiPrompt": "评估学生对梯度下降、学习率、动量和收敛性的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "math-taylor-approximation",
+    "stageId": 3,
+    "topicName": "数学基础",
+    "subtopicName": "泰勒展开式",
+    "levelIndex": 1,
+    "levelTitle": "泰勒展开近似计算器",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "math",
+      "taylor",
+      "approximation",
+      "series"
+    ],
+    "theoryContent": "### 编程挑战：泰勒展开近似计算器\n\n泰勒展开用多项式逼近光滑函数。在机器学习中，二阶泰勒展开是牛顿法的基础。\n\n实现：\n- `taylor_expand(f, derivs, a, x, order)`: 计算 f 在 a 点的 order 阶泰勒展开在 x 处的值\n- `exp_approx(x, order)`: 计算 e^x 的泰勒展开近似\n- `sin_approx(x, order)`: 计算 sin(x) 的泰勒展开近似\n- `find_min_order(f, target_f, a, x, tolerance)`: 找到满足容忍度的最小阶数",
+    "latexFormulas": [
+      "f(x) \\approx \\sum_{n=0}^{k} \\frac{f^{(n)}(a)}{n!}(x-a)^n",
+      "e^x = \\sum_{n=0}^{\\infty} \\frac{x^n}{n!}",
+      "\\sin(x) = \\sum_{n=0}^{\\infty} \\frac{(-1)^n x^{2n+1}}{(2n+1)!}"
+    ],
+    "starterCode": "import math\n\ndef taylor_expand(f, derivs: list, a: float, x: float, order: int) -> float:\n    \"\"\"\n    derivs: [f, f', f'', ...] 在 a 点的值列表\n    计算 order 阶泰勒展开在 x 处的近似值\n    \"\"\"\n    pass\n\ndef exp_approx(x: float, order: int) -> float:\n    \"\"\"计算 e^x 的泰勒展开近似\"\"\"\n    pass\n\ndef sin_approx(x: float, order: int) -> float:\n    \"\"\"计算 sin(x) 的泰勒展开近似\"\"\"\n    pass\n\ndef find_min_order(f, target_f, a: float, x: float, tolerance: float) -> int:\n    \"\"\"返回达到容忍度的最小阶数\"\"\"\n    pass",
+    "solutionCode": "import math\n\ndef taylor_expand(f, derivs: list, a: float, x: float, order: int) -> float:\n    result = 0\n    for n in range(order + 1):\n        term = derivs[n] * (x - a)**n / math.factorial(n)\n        result += term\n    return result\n\ndef exp_approx(x: float, order: int) -> float:\n    result = 0\n    for n in range(order + 1):\n        result += x**n / math.factorial(n)\n    return result\n\ndef sin_approx(x: float, order: int) -> float:\n    result = 0\n    for n in range(order + 1):\n        sign = (-1)**n\n        result += sign * x**(2*n + 1) / math.factorial(2*n + 1)\n    return result\n\ndef find_min_order(f, target_f, a: float, x: float, tolerance: float) -> int:\n    for order in range(20):\n        approx = f(x, order)\n        if abs(approx - target_f(x)) < tolerance:\n            return order\n    return -1",
+    "expectedOutput": "2.70833",
+    "testCases": [
+      {
+        "name": "exp approx at x=1 order 5",
+        "input": {
+          "x": 1,
+          "order": 5
+        },
+        "expected": 2.71667
+      },
+      {
+        "name": "sin approx at x=0.5 order 3",
+        "input": {
+          "x": 0.5,
+          "order": 3
+        },
+        "expected": 0.47917
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "泰勒展开随着阶数增加，近似精度如何变化？",
+        "options": [
+          "A. 越高阶越精确（在收敛半径内）",
+          "B. 越高阶越不精确",
+          "C. 精度与阶数无关",
+          "D. 只影响收敛半径"
+        ],
+        "answer": 0,
+        "explanation": "在收敛半径内，阶数越高误差越小，最终趋向精确值。"
+      },
+      {
+        "question": "二阶泰勒展开对应什么优化方法？",
+        "options": [
+          "A. 牛顿法",
+          "B. 梯度下降",
+          "C. 随机梯度下降",
+          "D. 动量法"
+        ],
+        "answer": 0,
+        "explanation": "牛顿法利用二阶泰勒展开（海森矩阵）进行优化，比梯度下降收敛更快。"
+      }
+    ],
+    "thinkingQuestion": "exp_approx 在 x 为负数且绝对值很大时（如 x=-20），高阶项交替正负导致数值误差。你会如何优化计算？",
+    "aiPrompt": "评估学生对泰勒展开、阶乘计算、级数收敛和近似精度的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "math-cauchy-schwarz-l2",
+    "stageId": 3,
+    "topicName": "数学基础",
+    "subtopicName": "向量与空间",
+    "levelIndex": 2,
+    "levelTitle": "柯西-施瓦茨不等式验证",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "向量与空间"
+    ],
+    "theoryContent": "### 题目：柯西-施瓦茨不等式验证\n\n对于任意两个向量 $\\mathbf{a}, \\mathbf{b} \\in \\mathbb{R}^n$，柯西-施瓦茨不等式指出：\n\n$$|\\mathbf{a} \\cdot \\mathbf{b}| \\le \\|\\mathbf{a}\\| \\cdot \\|\\mathbf{b}\\|$$\n\n实现函数验证该不等式，并计算两个向量的夹角余弦值：\n\n$$\\cos\\theta = \\frac{\\mathbf{a} \\cdot \\mathbf{b}}{\\|\\mathbf{a}\\| \\cdot \\|\\mathbf{b}\\|}$$\n\n示例：a=[3,4], b=[1,2] → cosθ ≈ 0.868",
+    "latexFormulas": [
+      "|a*b| <= ||a|| * ||b||",
+      "cos(theta) = (a*b) / (||a|| * ||b||)"
+    ],
+    "starterCode": "import numpy as np\ndef verify_cauchy_schwarz(a, b):\n    \"\"\"返回 {\"inequality_holds\": bool, \"cos_theta\": float, \"dot\": float}\"\"\"\n    pass",
+    "solutionCode": "import numpy as np\ndef verify_cauchy_schwarz(a, b):\n    a, b = np.array(a), np.array(b)\n    dot = float(np.dot(a, b))\n    norm_a = float(np.linalg.norm(a))\n    norm_b = float(np.linalg.norm(b))\n    cos_theta = round(dot / (norm_a * norm_b), 4) if norm_a * norm_b > 0 else 1.0\n    return {\"inequality_holds\": abs(dot) <= norm_a * norm_b + 1e-10, \"cos_theta\": cos_theta, \"dot\": dot}",
+    "expectedOutput": "0.8682",
+    "testCases": [
+      {
+        "name": "2d vectors",
+        "input": {
+          "a": [
+            3,
+            4
+          ],
+          "b": [
+            1,
+            2
+          ]
+        },
+        "expected": {
+          "cos_theta": 0.8682,
+          "inequality_holds": true
+        }
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "柯西-施瓦茨不等式取等号的条件是什么？",
+        "options": [
+          "A. 两向量线性相关（平行）",
+          "B. 两向量正交",
+          "C. 两向量长度相等",
+          "D. 两向量方向相反"
+        ],
+        "answer": 0,
+        "explanation": "当且仅当 a 和 b 线性相关（平行）时取等号。"
+      }
+    ],
+    "thinkingQuestion": "当向量维度很高时，柯西-施瓦茨不等式是否仍然成立？它的证明用到了什么性质？",
+    "aiPrompt": "评估学生对向量内积、范数、不等式的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "math-matrix-determinant-l2",
+    "stageId": 3,
+    "topicName": "数学基础",
+    "subtopicName": "矩阵乘法与逆",
+    "levelIndex": 2,
+    "levelTitle": "矩阵行列式与逆矩阵",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "矩阵乘法与逆"
+    ],
+    "theoryContent": "### 题目：矩阵行列式与逆矩阵\n\n给定一个方阵，判断是否可逆并计算其逆矩阵（如果存在）。\n\n方阵可逆的条件是行列式不为 0：\n\n$$\\det(A) \\neq 0 \\iff A^{-1} \\text{ exists}$$\n\n并验证 $A \\cdot A^{-1} = I$。",
+    "latexFormulas": [
+      "det(A) != 0",
+      "A * A^{-1} = I",
+      "A^{-1} = adj(A) / det(A)"
+    ],
+    "starterCode": "import numpy as np\ndef matrix_analysis(A):\n    \"\"\"返回 {\"det\": float, \"invertible\": bool, \"inverse\": list, \"verification\": float}\"\"\"\n    pass",
+    "solutionCode": "import numpy as np\ndef matrix_analysis(A):\n    A = np.array(A)\n    det = round(np.linalg.det(A), 4)\n    try:\n        inv = np.linalg.inv(A)\n        verify = round(np.max(np.abs(A @ inv - np.eye(A.shape[0]))), 6)\n        return {\"det\": det, \"invertible\": abs(det) > 1e-10, \"inverse\": inv.tolist(), \"verification\": verify}\n    except np.linalg.LinAlgError:\n        return {\"det\": det, \"invertible\": False, \"inverse\": None, \"verification\": None}",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "2x2 invertible",
+        "input": {
+          "A": [
+            [
+              4,
+              7
+            ],
+            [
+              2,
+              6
+            ]
+          ]
+        },
+        "expected": {
+          "det": 10,
+          "invertible": true
+        }
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "行列式为 0 的几何意义是什么？",
+        "options": [
+          "A. 矩阵将空间压缩到更低维度",
+          "B. 矩阵没有逆",
+          "C. 矩阵不是方阵",
+          "D. 矩阵对称"
+        ],
+        "answer": 0,
+        "explanation": "行列式为 0 表示矩阵将向量空间压缩到更低维度（降秩），导致信息丢失无法恢复。"
+      }
+    ],
+    "thinkingQuestion": "det(AB) = det(A)det(B) 这个性质在矩阵分解中有什么应用？",
+    "aiPrompt": "评估学生对行列式、逆矩阵的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "math-svd-rank-l2",
+    "stageId": 3,
+    "topicName": "数学基础",
+    "subtopicName": "SVD奇异值分解",
+    "levelIndex": 2,
+    "levelTitle": "SVD 与矩阵秩",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "SVD奇异值分解"
+    ],
+    "theoryContent": "### 题目：SVD 与矩阵秩\n\n奇异值分解 $A = U\\Sigma V^T$ 中，非零奇异值的个数等于矩阵的秩。\n\n实现：1) SVD 分解 2) 计算矩阵的秩 3) 用前 k 个奇异值近似\n\n$$\n\\text{rank}(A) = |\\{\\sigma_i : \\sigma_i > \\epsilon\\}|\n$$",
+    "latexFormulas": [
+      "rank(A) = count(sigma_i > eps)",
+      "A_k = sum_{i=1}^k sigma_i * u_i * v_i^T"
+    ],
+    "starterCode": "import numpy as np\ndef svd_analysis(A):\n    \"\"\"返回 {\"singular_values\": list, \"rank\": int, \"condition_number\": float}\"\"\"\n    pass",
+    "solutionCode": "import numpy as np\ndef svd_analysis(A):\n    U, s, Vt = np.linalg.svd(A, full_matrices=False)\n    rank = int(np.sum(s > 1e-10))\n    cond = round(float(s[0] / s[-1]), 4) if s[-1] > 1e-10 else float(\"inf\")\n    return {\"singular_values\": [round(float(x),4) for x in s], \"rank\": rank, \"condition_number\": cond}",
+    "expectedOutput": "2",
+    "testCases": [
+      {
+        "name": "3x3 rank 2",
+        "input": {
+          "A": [
+            [
+              1,
+              2,
+              3
+            ],
+            [
+              4,
+              5,
+              6
+            ],
+            [
+              7,
+              8,
+              9
+            ]
+          ]
+        },
+        "expected": {
+          "rank": 2
+        }
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "SVD 中条件数 condition number 大说明什么？",
+        "options": [
+          "A. 矩阵病态，对微小扰动敏感",
+          "B. 矩阵质量好",
+          "C. 矩阵对称",
+          "D. 矩阵满秩"
+        ],
+        "answer": 0,
+        "explanation": "条件数 = 最大奇异值/最小奇异值，值越大说明矩阵越病态。"
+      }
+    ],
+    "thinkingQuestion": "图像压缩中保留前 k 个奇异值的比例如何决定？奇异值衰减速度与图像内容有什么关系？",
+    "aiPrompt": "评估学生对 SVD、矩阵秩的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "math-eigen-decomposition-l2",
+    "stageId": 3,
+    "topicName": "数学基础",
+    "subtopicName": "特征值与特征向量",
+    "levelIndex": 2,
+    "levelTitle": "特征分解与对角化",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "特征值与特征向量"
+    ],
+    "theoryContent": "### 题目：特征分解与对角化\n\n对可对角化矩阵进行特征分解：$A = PDP^{-1}$，其中 $D$ 为特征值对角矩阵。\n\n实现特征分解并验证 $AP = PD$。",
+    "latexFormulas": [
+      "A = PDP^{-1}",
+      "AP = PD",
+      "tr(A) = sum(lambda_i)",
+      "det(A) = prod(lambda_i)"
+    ],
+    "starterCode": "import numpy as np\ndef eigen_analysis(A):\n    \"\"\"返回 {\"eigenvalues\": list, \"trace_check\": bool, \"det_check\": bool}\"\"\"\n    pass",
+    "solutionCode": "import numpy as np\ndef eigen_analysis(A):\n    vals, vecs = np.linalg.eig(A)\n    trace_check = abs(sum(vals) - np.trace(A)) < 1e-10\n    det_check = abs(np.prod(vals) - np.linalg.det(A)) < 1e-10\n    return {\"eigenvalues\": [round(float(v.real),4) for v in vals], \"trace_check\": bool(trace_check), \"det_check\": bool(det_check)}",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "2x2 matrix",
+        "input": {
+          "A": [
+            [
+              2,
+              1
+            ],
+            [
+              1,
+              2
+            ]
+          ]
+        },
+        "expected": {
+          "eigenvalues": [
+            3,
+            1
+          ],
+          "trace_check": true,
+          "det_check": true
+        }
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "特征值的和等于矩阵的什么？",
+        "options": [
+          "A. 迹（对角线元素之和）",
+          "B. 行列式",
+          "C. 范数",
+          "D. 秩"
+        ],
+        "answer": 0,
+        "explanation": "特征值之和等于矩阵的迹（trace），即对角线元素之和。"
+      }
+    ],
+    "thinkingQuestion": "实对称矩阵的特征值和特征向量有什么特殊性质？为什么 PCA 需要用到这个性质？",
+    "aiPrompt": "评估学生对特征值分解、迹、行列式的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "math-bayes-theorem-l2",
+    "stageId": 3,
+    "topicName": "数学基础",
+    "subtopicName": "贝意斯公式",
+    "levelIndex": 2,
+    "levelTitle": "贝叶斯定理计算器",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "贝意斯公式"
+    ],
+    "theoryContent": "### 题目：贝叶斯定理计算器\n\n贝叶斯定理描述了后验概率与先验概率和似然的关系：\n\n$$P(A|B) = \\frac{P(B|A)P(A)}{P(B)}$$\n\n实现医疗诊断场景：某种疾病患病率 1%，检测准确率 99%，计算检测阳性时真正患病的概率。",
+    "latexFormulas": [
+      "P(A|B) = P(B|A)P(A)/P(B)",
+      "P(B) = P(B|A)P(A) + P(B|~A)P(~A)"
+    ],
+    "starterCode": "def bayes_theorem(prior, likelihood, false_positive):\n    \"\"\"\n    prior: P(A) 先验概率\n    likelihood: P(B|A) 真阳性率\n    false_positive: P(B|~A) 假阳性率\n    返回 P(A|B) 后验概率\n    \"\"\"\n    pass",
+    "solutionCode": "def bayes_theorem(prior, likelihood, false_positive):\n    evidence = likelihood * prior + false_positive * (1 - prior)\n    posterior = (likelihood * prior) / evidence if evidence > 0 else 0\n    return round(posterior, 4)",
+    "expectedOutput": "0.5",
+    "testCases": [
+      {
+        "name": "medical test",
+        "input": {
+          "prior": 0.01,
+          "likelihood": 0.99,
+          "false_positive": 0.01
+        },
+        "expected": 0.5
+      },
+      {
+        "name": "perfect test",
+        "input": {
+          "prior": 0.5,
+          "likelihood": 1,
+          "false_positive": 0
+        },
+        "expected": 1
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "为什么准确率 99% 的检测，阳性时真正患病概率只有 50%？",
+        "options": [
+          "A. 因为患病率太低（1%），假阳性数量超过了真阳性",
+          "B. 检测不够准确",
+          "C. 计算错误",
+          "D. 样本太少"
+        ],
+        "answer": 0,
+        "explanation": "患病率 1%：1000人中10人患病，990人健康。检测阳性=10*99%+990*1%≈19.8人，其中真阳性约9.9人，所以概率≈50%。"
+      }
+    ],
+    "thinkingQuestion": "假阳性率从 1% 降到 0.1%，后验概率会变成多少？这说明控制什么指标更重要？",
+    "aiPrompt": "评估学生对贝叶斯定理、先验/后验概率的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "math-central-limit-l2",
+    "stageId": 3,
+    "topicName": "数学基础",
+    "subtopicName": "高斯/伯努利分布",
+    "levelIndex": 2,
+    "levelTitle": "中心极限定理模拟",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "高斯/伯努利分布"
+    ],
+    "theoryContent": "### 题目：中心极限定理模拟\n\n中心极限定理：独立同分布的随机变量之和趋近于正态分布。\n\n从均匀分布 U(0,1) 中抽取 n 个样本，计算样本均值。重复 m 次，观察均值的分布是否趋近正态分布。\n\n$$\\bar{X}_n \\approx \\mathcal{N}(\\mu, \\frac{\\sigma^2}{n})$$",
+    "latexFormulas": [
+      "X_bar ~ N(mu, sigma^2/n)",
+      "mu = 0.5 (for U[0,1])",
+      "sigma = sqrt(1/12) (for U[0,1])"
+    ],
+    "starterCode": "import numpy as np\ndef clt_simulation(n, m):\n    \"\"\"抽取 m 组样本，每组 n 个 U(0,1) 随机数，返回每组均值的均值和方差\"\"\"\n    pass",
+    "solutionCode": "import numpy as np\ndef clt_simulation(n, m):\n    samples = np.random.uniform(0, 1, (m, n))\n    means = np.mean(samples, axis=1)\n    return {\"mean_of_means\": round(float(np.mean(means)), 4), \"var_of_means\": round(float(np.var(means)), 4), \"theoretical_var\": round(1/(12*n), 4)}",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "clt n=30 m=1000",
+        "input": {
+          "n": 30,
+          "m": 1000
+        },
+        "expected": true
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "n 越大，样本均值的方差如何变化？",
+        "options": [
+          "A. 方差与 n 成反比",
+          "B. 方差与 n 成正比",
+          "C. 方差不变",
+          "D. 方差趋近于 1"
+        ],
+        "answer": 0,
+        "explanation": "样本均值的方差 = sigma^2 / n，n 越大方差越小，估计越精确。"
+      }
+    ],
+    "thinkingQuestion": "中心极限定理要求样本独立同分布。如果样本之间存在相关性，均值的分布会怎样变化？",
+    "aiPrompt": "评估学生对中心极限定理、正态分布的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "math-mle-estimation-l2",
+    "stageId": 3,
+    "topicName": "数学基础",
+    "subtopicName": "最大似然估计(MLE)",
+    "levelIndex": 2,
+    "levelTitle": "MLE 参数估计",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "最大似然估计(MLE)"
+    ],
+    "theoryContent": "### 题目：MLE 参数估计\n\n最大似然估计通过最大化数据出现的概率来估计模型参数。对于伯努利分布，MLE 的 $p = \\bar{x}$。\n\n实现：\n1. 计算伯努利分布的 MLE 估计\n2. 计算对数似然值\n3. 比较不同 p 值下的似然",
+    "latexFormulas": [
+      "L(p|x) = prod p^{x_i} (1-p)^{1-x_i}",
+      "log L = sum x_i log p + (n - sum x_i) log(1-p)",
+      "p_MLE = (1/n) sum x_i"
+    ],
+    "starterCode": "import numpy as np\ndef bernoulli_mle(data):\n    \"\"\"返回 {\"p_hat\": float, \"log_likelihood\": float}\"\"\"\n    pass\ndef log_likelihood(data, p):\n    pass",
+    "solutionCode": "import numpy as np\ndef log_likelihood(data, p):\n    p = np.clip(p, 1e-15, 1-1e-15)\n    return round(float(np.sum(data * np.log(p) + (1-data) * np.log(1-p))), 4)\ndef bernoulli_mle(data):\n    p_hat = round(float(np.mean(data)), 4)\n    ll = log_likelihood(data, p_hat)\n    return {\"p_hat\": p_hat, \"log_likelihood\": ll}",
+    "expectedOutput": "0.6",
+    "testCases": [
+      {
+        "name": "coin flips",
+        "input": {
+          "data": [
+            1,
+            0,
+            1,
+            1,
+            0
+          ]
+        },
+        "expected": {
+          "p_hat": 0.6
+        }
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "为什么 MLE 对 p 的估计是样本均值？",
+        "options": [
+          "A. 求导对数似然函数令其为零得到",
+          "B. 直观猜测",
+          "C. 贝叶斯公式",
+          "D. 样本均值总是最优"
+        ],
+        "answer": 0,
+        "explanation": "对伯努利的对数似然求导并令其为零，得到 p_MLE = sum(x_i)/n。"
+      }
+    ],
+    "thinkingQuestion": "如果先验分布是 Beta(2,2)，MAP 估计和 MLE 估计有什么不同？随着数据量增大，两者差距如何变化？",
+    "aiPrompt": "评估学生对 MLE、对数似然、参数估计的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "math-partial-derivative-l2",
+    "stageId": 3,
+    "topicName": "数学基础",
+    "subtopicName": "偏导数与梯度",
+    "levelIndex": 2,
+    "levelTitle": "多元函数梯度计算",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "偏导数与梯度"
+    ],
+    "theoryContent": "### 题目：多元函数梯度计算\n\n计算多元函数的梯度和方向导数。\n\n给定函数 $f(x,y) = x^2 + 2y^2 + xy$，计算：\n1. 梯度 $\\nabla f = (\\frac{\\partial f}{\\partial x}, \\frac{\\partial f}{\\partial y})$\n2. 沿 $\\mathbf{v}$ 方向的方向导数\n3. 海森矩阵",
+    "latexFormulas": [
+      "grad f = (2x+y, 4y+x)",
+      "D_v f = grad f * v / ||v||",
+      "H = [[2,1],[1,4]]"
+    ],
+    "starterCode": "import numpy as np\ndef gradient_at(x, y):\n    \"\"\"返回 {\"grad\": [df/dx, df/dy], \"magnitude\": float}\"\"\"\n    pass\ndef directional_derivative(x, y, v):\n    pass",
+    "solutionCode": "import numpy as np\ndef gradient_at(x, y):\n    grad = np.array([2*x + y, 4*y + x])\n    mag = round(float(np.linalg.norm(grad)), 4)\n    return {\"grad\": [round(float(g),4) for g in grad], \"magnitude\": mag}\ndef directional_derivative(x, y, v):\n    v = np.array(v)\n    grad = np.array([2*x + y, 4*y + x])\n    norm = np.linalg.norm(v)\n    return round(float(np.dot(grad, v) / norm), 4) if norm > 0 else 0",
+    "expectedOutput": "2",
+    "testCases": [
+      {
+        "name": "gradient at origin",
+        "input": {
+          "x": 0,
+          "y": 0
+        },
+        "expected": {
+          "grad": [
+            0,
+            0
+          ],
+          "magnitude": 0
+        }
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "梯度方向是函数值变化最快的方向，那负梯度方向呢？",
+        "options": [
+          "A. 函数值下降最快的方向",
+          "B. 函数值不变的方向",
+          "C. 梯度为零的方向",
+          "D. 任意方向"
+        ],
+        "answer": 0,
+        "explanation": "负梯度是函数值下降最快的方向，这就是梯度下降法的原理。"
+      }
+    ],
+    "thinkingQuestion": "海森矩阵的特征值正负如何判断该点是局部极小值、极大值还是鞍点？",
+    "aiPrompt": "评估学生对偏导数、梯度、方向导数的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "math-convergence-analysis-l2",
+    "stageId": 3,
+    "topicName": "数学基础",
+    "subtopicName": "梯度下降算法",
+    "levelIndex": 2,
+    "levelTitle": "梯度下降收敛分析",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "梯度下降算法"
+    ],
+    "theoryContent": "### 题目：梯度下降收敛分析\n\n测试不同学习率对梯度下降收敛的影响。\n\n目标函数：$f(x) = x^4 - 3x^3 + 2$，梯度：$f'(x) = 4x^3 - 9x^2$。\n\n实现并分析不同学习率下的收敛行为。",
+    "latexFormulas": [
+      "x_{t+1} = x_t - eta * f(x_t)",
+      "converges if eta small enough",
+      "diverges if eta too large"
+    ],
+    "starterCode": "def f(x):\n    return x**4 - 3*x**3 + 2\ndef df(x):\n    return 4*x**3 - 9*x**2\ndef gradient_descent(x0, lr, steps):\n    \"\"\"返回每次迭代的 x 值列表和最终 f(x) 值\"\"\"\n    pass",
+    "solutionCode": "def f(x):\n    return x**4 - 3*x**3 + 2\ndef df(x):\n    return 4*x**3 - 9*x**2\ndef gradient_descent(x0, lr, steps):\n    x = x0\n    history = [x]\n    for _ in range(steps):\n        x = x - lr * df(x)\n        history.append(x)\n    return {\"x_history\": [round(h,4) for h in history], \"final_fx\": round(f(history[-1]), 6), \"converged\": abs(df(history[-1])) < 1e-4}",
+    "expectedOutput": "True",
+    "testCases": [
+      {
+        "name": "lr=0.01 converges",
+        "input": {
+          "x0": 3,
+          "lr": 0.01,
+          "steps": 100
+        },
+        "expected": true
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "学习率过大时梯度下降会出现什么现象？",
+        "options": [
+          "A. 发散震荡",
+          "B. 收敛加快",
+          "C. 收敛到其他极值点",
+          "D. 不影响"
+        ],
+        "answer": 0,
+        "explanation": "学习率过大会导致步长太大，越过极小点并来回震荡甚至发散。"
+      }
+    ],
+    "thinkingQuestion": "如果目标函数有多个局部极小值，梯度下降会收敛到哪个？初始点如何影响结果？",
+    "aiPrompt": "评估学生对梯度下降、学习率、收敛性的理解。按 0-10 分打分。",
+    "status": "published"
+  },
+  {
+    "slug": "math-taylor-approximation-l2",
+    "stageId": 3,
+    "topicName": "数学基础",
+    "subtopicName": "泰勒展开式",
+    "levelIndex": 2,
+    "levelTitle": "泰勒展开误差分析",
+    "difficulty": "foundation",
+    "accessLevel": "member",
+    "tags": [
+      "泰勒展开式"
+    ],
+    "theoryContent": "### 题目：泰勒展开误差分析\n\n泰勒展开用多项式近似函数。本题比较不同阶数展开的精度。\n\n函数：$f(x) = \\ln(1+x)$ 在 $a=0$ 处展开：\n\n$$\\ln(1+x) \\approx x - \\frac{x^2}{2} + \\frac{x^3}{3} - \\frac{x^4}{4} + \\cdots$$\n\n计算不同阶数下的近似误差。",
+    "latexFormulas": [
+      "ln(1+x) = sum (-1)^{n+1} x^n / n",
+      "error = |f(x) - T_n(x)|",
+      "converges for |x| < 1"
+    ],
+    "starterCode": "import math\ndef taylor_ln(x, order):\n    \"\"\"计算 ln(1+x) 的 n 阶泰勒展开在 x 处的值\"\"\"\n    pass\ndef taylor_error(x, order):\n    \"\"\"返回 {\"approx\": float, \"exact\": float, \"error\": float}\"\"\"\n    pass",
+    "solutionCode": "import math\ndef taylor_ln(x, order):\n    result = 0\n    for n in range(1, order+1):\n        result += (-1)**(n+1) * x**n / n\n    return round(result, 6)\ndef taylor_error(x, order):\n    approx = taylor_ln(x, order)\n    exact = round(math.log(1+x), 6)\n    return {\"approx\": approx, \"exact\": exact, \"error\": round(abs(approx - exact), 6)}",
+    "expectedOutput": "0.0",
+    "testCases": [
+      {
+        "name": "x=0.5 order 5",
+        "input": {
+          "x": 0.5,
+          "order": 5
+        },
+        "expected": true
+      },
+      {
+        "name": "x=0 order 3",
+        "input": {
+          "x": 0,
+          "order": 3
+        },
+        "expected": {
+          "approx": 0,
+          "exact": 0,
+          "error": 0
+        }
+      }
+    ],
+    "quizzes": [
+      {
+        "question": "为什么 x=1 时泰勒展开收敛很慢？",
+        "options": [
+          "A. 在收敛边界上，收敛半径=1",
+          "B. ln(1+x) 在 x=1 不可导",
+          "C. 展开式在 x=1 发散",
+          "D. 阶数不够"
+        ],
+        "answer": 0,
+        "explanation": "ln(1+x) 的收敛半径为 1，x=1 恰好在收敛边界上，收敛速度很慢（条件收敛）。"
+      }
+    ],
+    "thinkingQuestion": "为什么在机器学习中常用一阶或二阶泰勒展开（如牛顿法用二阶）？更高阶展开为什么不常用？",
+    "aiPrompt": "评估学生对泰勒展开、级数收敛、误差分析的理解。按 0-10 分打分。",
+    "status": "published"
+  }
+]
