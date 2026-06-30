@@ -23,8 +23,8 @@ export default function RegisterPage() {
       setError('登录用户名不能为空');
       return;
     }
-    if (!/^[a-zA-Z0-9]+$/.test(form.username)) {
-      setError('登录用户名只能是英文和数字的组合');
+    if (!/^[a-zA-Z][a-zA-Z0-9]*$/.test(form.username)) {
+      setError('登录用户名必须以字母开头，只能包含英文和数字');
       return;
     }
     if (!form.name) {
@@ -49,7 +49,7 @@ export default function RegisterPage() {
       });
       const data = await res.json();
       if (res.ok) {
-        router.push('/login?message=注册成功，请登录');
+        router.push('/auth/login?message=注册成功，请登录');
       } else {
         setError(data.error || '注册失败，请重试');
       }
@@ -171,7 +171,7 @@ export default function RegisterPage() {
             
             {/* 用户名 */}
             <div>
-              <label className="block text-xs font-semibold text-ink-light uppercase tracking-wider mb-1.5">登录用户名 (只能是英文和数字的组合)</label>
+              <label className="block text-xs font-semibold text-ink-light uppercase tracking-wider mb-1.5">登录用户名 (英文或数字，不能有中文或特殊符号)</label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <svg className="w-5 h-5 text-ink-lighter/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -35,8 +35,8 @@ public class UserServiceImpl implements UserService {
             throw new IllegalArgumentException("用户名不能为空");
         }
         // 用户名格式校验：只能是英文和数字组合
-        if (!req.getUsername().trim().matches("^[a-zA-Z0-9]+$")) {
-            throw new IllegalArgumentException("用户名只能是英文和数字的组合");
+        if (!req.getUsername().trim().matches("^[a-zA-Z][a-zA-Z0-9]*$")) {
+            throw new IllegalArgumentException("用户名必须以字母开头，只能包含英文和数字");
         }
         if (req.getNickname() == null || req.getNickname().trim().isEmpty()) {
             throw new IllegalArgumentException("用户昵称不能为空");

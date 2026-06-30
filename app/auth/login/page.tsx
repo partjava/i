@@ -14,6 +14,8 @@ function LoginStatusChecker() {
   useEffect(() => {
     if (searchParams.get('expired') === 'true') message.info('会话已过期，请重新登录');
     if (searchParams.get('error') === 'true') message.error('退出登录时发生错误');
+    const msg = searchParams.get('message');
+    if (msg) message.success(decodeURIComponent(msg));
     if (typeof window !== 'undefined') {
       localStorage.removeItem('user_data');
       sessionStorage.removeItem('user_data');
