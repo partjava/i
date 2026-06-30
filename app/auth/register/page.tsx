@@ -185,6 +185,22 @@ export default function RegisterPage() {
               </div>
             </div>
 
+            {/* 昵称 */}
+            <div>
+              <label className="block text-xs font-semibold text-ink-light uppercase tracking-wider mb-1.5">用户昵称</label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <svg className="w-5 h-5 text-ink-lighter/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                </div>
+                <input type="text" required value={form.name}
+                  onChange={e => setForm({ ...form, name: e.target.value })}
+                  placeholder="给自己取个好听的名字"
+                  className="w-full pl-10 pr-4 py-2.5 bg-paper-50 border border-paper-300 focus:border-brand-primary/80 rounded-xl focus:outline-none focus:ring-1 focus:ring-brand-primary/20 text-ink placeholder-ink-lighter transition-all text-sm" />
+              </div>
+            </div>
+
             {/* 邮箱 */}
             <div>
               <label className="block text-xs font-semibold text-ink-light uppercase tracking-wider mb-1.5">邮箱地址</label>
