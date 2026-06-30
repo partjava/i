@@ -1,10 +1,10 @@
 'use client'
 
-import LessonLayout, { type LessonMeta } from '@/app/components/ui/book/LessonLayout'
-import { THEMES } from '@/app/components/ui/book/theme'
+import LessonLayout, { type LessonMeta } from '@shared/components/ui/book/LessonLayout'
+import { THEMES } from '@shared/components/ui/book/theme'
 import {
   PageTitle, SectionTitle, BookParagraph, BookCode, BookList,
-} from '@/app/components/ui/book/BookContent'
+} from '@shared/components/ui/book/BookContent'
 
 const condaCode = `# 1. 安装Anaconda
 # 访问 https://www.anaconda.com/products/distribution 下载

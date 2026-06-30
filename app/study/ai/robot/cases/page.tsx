@@ -1,8 +1,8 @@
 'use client'
 
-import LessonLayout, { type LessonMeta } from '@/app/components/ui/book/LessonLayout'
-import { THEMES } from '@/app/components/ui/book/theme'
-import { PageTitle, SectionTitle, BookParagraph, BookCode, BookList } from '@/app/components/ui/book/BookContent'
+import LessonLayout, { type LessonMeta } from '@shared/components/ui/book/LessonLayout'
+import { THEMES } from '@shared/components/ui/book/theme'
+import { PageTitle, SectionTitle, BookParagraph, BookCode, BookList } from '@shared/components/ui/book/BookContent'
 
 const META: LessonMeta = { subject: '智能机器人', chapterTitle: '机器人实战', chapterNumber: 10, totalChapters: 12, subjectHref: '/study/ai/robot', prevChapter: { label: '人机交互', href: '/study/ai/robot/hci' }, nextChapter: { label: '机器人面试题', href: '/study/ai/robot/interview' }, theme: THEMES.ai }
 

@@ -103,6 +103,20 @@ public class DatabaseMigrationConfig {
             }
             log.info("challenges 表字段扩展处理完成");
 
+            // 7. 修复 users.vip 列类型：varchar → int
+            // 先清理非数字旧值（'free'→0），再改列类型
+            try {
+                jdbcTemplate.execute("UPDATE users SET vip = '0' WHERE vip IS NULL OR vip NOT REGEXP '^[0-9]+$'");
+            } catch (Exception e) {
+                log.debug("清理 users.vip 脏数据跳过: {}", e.getMessage());
+            }
+            try {
+                jdbcTemplate.execute("ALTER TABLE users MODIFY COLUMN vip INT DEFAULT 0 COMMENT '是否为VIP: 0=否, 1=是'");
+                log.info("users.vip 列类型修复为 INT 成功");
+            } catch (Exception e) {
+                log.debug("users.vip 列类型可能已为 INT: {}", e.getMessage());
+            }
+
             log.info("数据库 DDL 自动迁移成功！");
         } catch (Exception e) {
             log.error("数据库 DDL 迁移失败", e);

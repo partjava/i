@@ -1,8 +1,8 @@
 'use client'
 
-import LessonLayout, { type LessonMeta } from '@/app/components/ui/book/LessonLayout'
-import { THEMES } from '@/app/components/ui/book/theme'
-import { PageTitle, SectionTitle, BookParagraph, BookCode, BookList } from '@/app/components/ui/book/BookContent'
+import LessonLayout, { type LessonMeta } from '@shared/components/ui/book/LessonLayout'
+import { THEMES } from '@shared/components/ui/book/theme'
+import { PageTitle, SectionTitle, BookParagraph, BookCode, BookList } from '@shared/components/ui/book/BookContent'
 
 const clfCode = `from sklearn.model_selection import train_test_split\nfrom sklearn.ensemble import RandomForestClassifier\nfrom sklearn.metrics import classification_report\n\nX_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)\nclf = RandomForestClassifier(n_estimators=100)\nclf.fit(X_train, y_train)\ny_pred = clf.predict(X_test)\nprint(classification_report(y_test, y_pred))`
 

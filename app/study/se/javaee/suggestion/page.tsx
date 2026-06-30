@@ -1,7 +1,7 @@
 'use client'
 
-import LessonLayout, { type LessonMeta } from '@/app/components/ui/book/LessonLayout'
-import { THEMES } from '@/app/components/ui/book/theme'
+import LessonLayout, { type LessonMeta } from '@shared/components/ui/book/LessonLayout'
+import { THEMES } from '@shared/components/ui/book/theme'
 import {
   PageTitle,
   BookParagraph,
@@ -9,7 +9,7 @@ import {
   BookAlert,
   BookList,
   TagGrid,
-} from '@/app/components/ui/book/BookContent'
+} from '@shared/components/ui/book/BookContent'
 
 const ROADMAP_CODE = `Java基础 → Web开发 → 数据库 → 企业服务 → 框架 → 微服务 → 云原生 → DevOps → 性能优化 → 前沿技术`
 

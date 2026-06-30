@@ -1,7 +1,7 @@
 'use client'
 
-import BookCover, { type ChapterLink } from '@/app/components/ui/book/BookCover'
-import { THEMES } from '@/app/components/ui/book/theme'
+import BookCover, { type ChapterLink } from '@shared/components/ui/book/BookCover'
+import { THEMES } from '@shared/components/ui/book/theme'
 
 const CHAPTERS: ChapterLink[] = [
   { number: 1,  title: '概述',               description: '大数据定义、发展历程与应用场景',                    href: '/study/se/bigdata/intro' },

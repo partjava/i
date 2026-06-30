@@ -1,10 +1,10 @@
 'use client'
 
-import LessonLayout, { type LessonMeta } from '@/app/components/ui/book/LessonLayout'
-import { THEMES } from '@/app/components/ui/book/theme'
+import LessonLayout, { type LessonMeta } from '@shared/components/ui/book/LessonLayout'
+import { THEMES } from '@shared/components/ui/book/theme'
 import {
   PageTitle, SectionTitle, BookParagraph, BookCode, BookList,
-} from '@/app/components/ui/book/BookContent'
+} from '@shared/components/ui/book/BookContent'
 
 const deepcfCode = `class DeepCF(nn.Module):
     def __init__(self, num_users, num_items, num_factors=32):

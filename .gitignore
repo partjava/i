@@ -81,3 +81,9 @@ public/uploads/
 思想内涵说明.docx
 项目介绍文档.docx
 .claude/worktrees/
+
+# API Keys 和密钥
+partjava-backend/.ai-key
+
+# 备份文件
+*.bak

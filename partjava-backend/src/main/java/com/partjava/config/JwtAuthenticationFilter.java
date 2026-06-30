@@ -1,6 +1,9 @@
 package com.partjava.config;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.partjava.common.utils.JwtUtils;
+import com.partjava.entity.User;
+import com.partjava.repository.UserMapper;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -21,16 +24,18 @@ import java.util.List;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtUtils jwtUtils;
+    private final UserMapper userMapper;
 
     @Autowired
-    public JwtAuthenticationFilter(JwtUtils jwtUtils) {
+    public JwtAuthenticationFilter(JwtUtils jwtUtils, UserMapper userMapper) {
         this.jwtUtils = jwtUtils;
+        this.userMapper = userMapper;
     }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
-        
+
         final String authHeader = request.getHeader("Authorization");
         final String jwt;
         final String username;
@@ -50,7 +55,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             // 2. 只有当 Token 解析出了用户名，且当前安全上下文未授权时进行处理
             if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                 if (jwtUtils.validateToken(jwt, username)) {
-                    // 为角色加上 ROLE_ 前缀以匹配 Spring Security 的 hasRole 判定
                     String authority = role.startsWith("ROLE_") ? role : "ROLE_" + role;
                     List<SimpleGrantedAuthority> authorities = Collections.singletonList(new SimpleGrantedAuthority(authority));
 
@@ -60,13 +64,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                             authorities
                     );
                     authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                    
-                    // 3. 将授权信息注入 Spring Security 上下文
+
                     SecurityContextHolder.getContext().setAuthentication(authToken);
+
+                    // 从数据库查询 userId 并设置请求属性（供 @RequestAttribute 使用）
+                    User user = userMapper.selectOne(new LambdaQueryWrapper<User>().eq(User::getUsername, username));
+                    if (user != null) {
+                        request.setAttribute("userId", user.getId().intValue());
+                    }
                 }
             }
         } catch (Exception e) {
-            // Token 解析异常（过期、伪造等）直接放行，由后续 Security 拦截器拦截
             logger.warn("JWT token resolution failed: " + e.getMessage());
         }
 

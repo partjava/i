@@ -2,6 +2,7 @@ package com.partjava.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -43,9 +44,10 @@ public class SecurityConfig {
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             // 路由策略配置：公开鉴权路径放行，受保护路径按角色和认证拦截
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/auth/**").permitAll() // 注册登录验证码放行
-                .requestMatchers("/api/admin/**").hasRole("ADMIN") // 管理端接口限 ADMIN 访问
-                .requestMatchers("/api/challenges/**", "/api/notes/**", "/api/comments/**", "/api/user/**").authenticated() // 核心业务登录访问
+                .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/notes/**", "/api/comments/**", "/api/images/**", "/api/stats/**", "/api/search/**").permitAll()
+                .requestMatchers("/api/admin/**").hasAnyRole("ADMIN", "OWNER")
+                .requestMatchers("/api/challenges/**", "/api/notes/**", "/api/comments/**", "/api/user/**").authenticated()
                 .anyRequest().permitAll()
             )
             // 注册 JWT 过滤器在密码校验过滤器之前

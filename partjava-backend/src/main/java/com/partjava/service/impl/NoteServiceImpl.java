@@ -78,6 +78,17 @@ public class NoteServiceImpl implements NoteService {
     }
 
     @Override
+    public Note getNoteById(Long noteId, Long userId) {
+        Note note = getNoteById(noteId);
+        boolean isPublic = Boolean.TRUE.equals(note.getIsPublic());
+        boolean isOwner = userId != null && userId.equals(note.getAuthorId());
+        if (!isPublic && !isOwner) {
+            throw new org.springframework.security.access.AccessDeniedException("无权查看该笔记");
+        }
+        return note;
+    }
+
+    @Override
     @Transactional
     public Note createNote(Long userId, Note note) {
         note.setAuthorId(userId);

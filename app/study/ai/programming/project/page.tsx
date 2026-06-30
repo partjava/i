@@ -1,8 +1,8 @@
 'use client'
 
-import LessonLayout, { type LessonMeta } from '@/app/components/ui/book/LessonLayout'
-import { THEMES } from '@/app/components/ui/book/theme'
-import { PageTitle, SectionTitle, BookParagraph, BookCode, BookList } from '@/app/components/ui/book/BookContent'
+import LessonLayout, { type LessonMeta } from '@shared/components/ui/book/LessonLayout'
+import { THEMES } from '@shared/components/ui/book/theme'
+import { PageTitle, SectionTitle, BookParagraph, BookCode, BookList } from '@shared/components/ui/book/BookContent'
 
 const META: LessonMeta = { subject: '人工智能程序设计', chapterTitle: 'AI项目实战', chapterNumber: 7, totalChapters: 8, subjectHref: '/study/ai/programming', prevChapter: { label: '模型部署与优化', href: '/study/ai/programming/deployment' }, nextChapter: { label: '常见问题与面试题', href: '/study/ai/programming/interview' }, theme: THEMES.ai }
 

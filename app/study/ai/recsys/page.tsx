@@ -1,7 +1,7 @@
 'use client'
 
-import BookCover from '@/app/components/ui/book/BookCover'
-import { THEMES } from '@/app/components/ui/book/theme'
+import BookCover from '@shared/components/ui/book/BookCover'
+import { THEMES } from '@shared/components/ui/book/theme'
 
 const CHAPTERS = [
   { number: 1, title: '推荐系统基础', description: '推荐系统概念、分类和应用场景', href: '/study/ai/recsys/basic' },

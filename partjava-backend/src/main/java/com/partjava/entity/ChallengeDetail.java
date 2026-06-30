@@ -34,7 +34,10 @@ public class ChallengeDetail {
     // 映射老表中的 test_cases JSON 字段。
     // 在本系统中它可以代替 required_datasets 存储评测相关的测试用例定义。
     @TableField(value = "test_cases", typeHandler = JacksonTypeHandler.class)
-    private List<Object> testCases;          // 测试用例 JSON
+    private List<Object> testCases;          // 可见测试样例 (学生可看)
+
+    @TableField(value = "evaluation_cases", typeHandler = JacksonTypeHandler.class)
+    private List<Object> evaluationCases;    // 隐藏判题样例 (判题用)
 
     @TableField("thinking_question")
     private String thinkingQuestion;         // 主观题

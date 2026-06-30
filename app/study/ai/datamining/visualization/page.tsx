@@ -1,8 +1,8 @@
 'use client'
 
-import LessonLayout, { type LessonMeta } from '@/app/components/ui/book/LessonLayout'
-import { THEMES } from '@/app/components/ui/book/theme'
-import { PageTitle, SectionTitle, BookParagraph, BookCode, BookList } from '@/app/components/ui/book/BookContent'
+import LessonLayout, { type LessonMeta } from '@shared/components/ui/book/LessonLayout'
+import { THEMES } from '@shared/components/ui/book/theme'
+import { PageTitle, SectionTitle, BookParagraph, BookCode, BookList } from '@shared/components/ui/book/BookContent'
 
 const mplCode = `import matplotlib.pyplot as plt\nimport seaborn as sns\n\n# 分布图\nsns.histplot(data=df, x='value', hue='category')\nplt.show()\n\n# 相关矩阵\nsns.heatmap(df.corr(), annot=True, cmap='coolwarm')\nplt.show()\n\n# 箱线图\nsns.boxplot(data=df, x='category', y='value')`
 

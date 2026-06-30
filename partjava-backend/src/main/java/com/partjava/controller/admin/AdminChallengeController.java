@@ -2,6 +2,7 @@ package com.partjava.controller.admin;
 
 import com.partjava.common.api.ApiResponse;
 import com.partjava.entity.ChallengeDraft;
+import com.partjava.repository.ChallengeDraftMapper;
 import com.partjava.service.ChallengeService;
 import lombok.Data;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -11,13 +12,15 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/admin/challenge-drafts")
-@PreAuthorize("hasRole('ADMIN')") // 统一鉴权拦截：要求管理员角色
+@PreAuthorize("hasAnyRole('ADMIN', 'OWNER')")
 public class AdminChallengeController {
 
     private final ChallengeService challengeService;
+    private final ChallengeDraftMapper draftMapper;
 
-    public AdminChallengeController(ChallengeService challengeService) {
+    public AdminChallengeController(ChallengeService challengeService, ChallengeDraftMapper draftMapper) {
         this.challengeService = challengeService;
+        this.draftMapper = draftMapper;
     }
 
     private Integer getUserIdOrFallback(Integer userId) {
@@ -48,9 +51,6 @@ public class AdminChallengeController {
         if (req.getChallengeId() == null || req.getChallengeId().trim().isEmpty()) {
             throw new IllegalArgumentException("必须指定关卡 slug (challengeId)");
         }
-        if (req.getLevelIndex() == null) {
-            throw new IllegalArgumentException("必须指定当前章节关卡索引 (levelIndex)");
-        }
         challengeService.approveDraft(activeUserId, draftId, req.getChallengeId().trim(), req.getLevelIndex());
         return ApiResponse.success("审核通过，已成功发布该关卡到星系地图");
     }
@@ -77,8 +77,20 @@ public class AdminChallengeController {
         private Integer levelIndex; // 关卡在其小节下的序号
     }
 
+    /**
+     * 管理员物理删除草稿
+     */
+    @DeleteMapping("/{id}")
+    public ApiResponse<Void> deleteDraft(@PathVariable("id") Integer draftId) {
+        ChallengeDraft draft = draftMapper.selectById(draftId);
+        if (draft == null) throw new IllegalArgumentException("草稿不存在");
+        draftMapper.deleteById(draftId);
+        return ApiResponse.success("草稿已删除");
+    }
+
     @Data
     public static class RejectReq {
         private String reviewComment; // 驳回原因
     }
+
 }

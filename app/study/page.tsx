@@ -1,6 +1,6 @@
 'use client';
 import { useParams } from 'next/navigation';
-import CategoryDisplay from '../components/CategoryDisplay';
+import CategoryDisplay from '../_shared/components/CategoryDisplay';
 
 export default function StudyPage() {
   const params = useParams();

@@ -8,12 +8,15 @@ import com.partjava.dto.response.ChallengeDetailResp;
 import com.partjava.dto.response.ChallengeProgressResp;
 import com.partjava.dto.response.ThinkingEvaluateResp;
 import com.partjava.entity.Challenge;
+import com.partjava.entity.ChallengeDraft;
 import com.partjava.repository.ChallengeMapper;
 import com.partjava.service.ChallengeService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -62,11 +65,27 @@ public class ChallengeController {
     }
 
     /**
-     * Legacy frontend leaderboard endpoint (GET /api/challenges/leaderboard).
+     * 排行榜：按通关数 + 积分排名
      */
     @GetMapping("/challenges/leaderboard")
-    public ApiResponse<List<Map<String, Object>>> getLeaderboard() {
-        return ApiResponse.success(List.of());
+    public ApiResponse<List<Map<String, Object>>> getLeaderboard(
+            @RequestAttribute(value = "userId", required = false) Integer userId) {
+        // 统计每个用户的通关数
+        List<Map<String, Object>> raw = challengeMapper.getLeaderboard();
+        List<Map<String, Object>> result = new ArrayList<>();
+        int rank = 1;
+        for (Map<String, Object> row : raw) {
+            Map<String, Object> entry = new LinkedHashMap<>();
+            Integer uid = (Integer) row.get("user_id");
+            entry.put("rank", rank++);
+            entry.put("userId", uid);
+            entry.put("username", row.get("username"));
+            entry.put("completed", row.get("completed"));
+            entry.put("points", row.get("points"));
+            entry.put("isMe", uid != null && uid.equals(userId));
+            result.add(entry);
+        }
+        return ApiResponse.success(result);
     }
 
     /**
@@ -236,5 +255,44 @@ public class ChallengeController {
         res.put("score", resp.getScore());
         res.put("feedback", resp.getFeedback());
         return res;
+    }
+
+    // ─── 个人出题相关接口 ───
+
+    /**
+     * 获取当前用户出的所有题目（已发布 + 草稿）
+     */
+    @GetMapping("/challenges/my")
+    public ApiResponse<Map<String, Object>> getMyChallenges(
+            @RequestAttribute(value = "userId", required = false) Integer userId) {
+        Integer activeUserId = getUserIdOrFallback(userId);
+
+        // 已发布的题目
+        List<Challenge> published = challengeMapper.selectList(
+                new LambdaQueryWrapper<Challenge>()
+                        .eq(Challenge::getAuthorId, activeUserId)
+                        .eq(Challenge::getStatus, "published")
+                        .orderByDesc(Challenge::getCreatedAt)
+        );
+
+        // 草稿
+        List<ChallengeDraft> drafts = challengeService.getMyDrafts(activeUserId);
+
+        Map<String, Object> res = new HashMap<>();
+        res.put("published", published);
+        res.put("drafts", drafts);
+        return ApiResponse.success(res);
+    }
+
+    /**
+     * 用户提交新的出题草稿
+     */
+    @PostMapping("/challenges/drafts")
+    public ApiResponse<Void> createDraft(
+            @RequestAttribute(value = "userId", required = false) Integer userId,
+            @RequestBody ChallengeDraft draft) {
+        Integer activeUserId = getUserIdOrFallback(userId);
+        challengeService.createDraft(activeUserId, draft);
+        return ApiResponse.success("草稿已提交，等待管理员审核");
     }
 }

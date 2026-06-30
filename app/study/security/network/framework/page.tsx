@@ -1,7 +1,7 @@
 'use client'
 
-import LessonLayout, { type LessonMeta } from '@/app/components/ui/book/LessonLayout'
-import { THEMES } from '@/app/components/ui/book/theme'
+import LessonLayout, { type LessonMeta } from '@shared/components/ui/book/LessonLayout'
+import { THEMES } from '@shared/components/ui/book/theme'
 import {
   PageTitle,
   SectionTitle,
@@ -10,7 +10,7 @@ import {
   BookAlert,
   BookList,
   TagGrid,
-} from '@/app/components/ui/book/BookContent'
+} from '@shared/components/ui/book/BookContent'
 
 const svgCIA = `<svg width="320" height="200" viewBox="0 0 320 200">
   <circle cx="100" cy="120" r="70" fill="#e0f2fe" stroke="#38bdf8" stroke-width="3" />

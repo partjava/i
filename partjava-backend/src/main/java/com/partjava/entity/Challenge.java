@@ -43,6 +43,7 @@ public class Challenge {
     private String status;           // 状态: published, draft, archived
 
     @TableField(exist = false)
+    @Builder.Default
     private Integer points = 10;     // 奖励积分 (老物理表无此列，降级为逻辑属性)
     
     private String difficulty;       // 难度 (easy, medium, hard)
@@ -51,4 +52,10 @@ public class Challenge {
     
     @TableField("created_at")
     private LocalDateTime createdAt;
+
+    @TableField("author_id")
+    private Integer authorId;        // 出题人用户ID
+
+    @TableField("is_public")
+    private Boolean isPublic;        // 是否公开: true=所有人可见, false=仅自己可见
 }

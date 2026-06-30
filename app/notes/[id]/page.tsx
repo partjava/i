@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { useAuth } from '@/app/hooks/useAuth';
+import { useAuth } from '@shared/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
@@ -9,9 +9,9 @@ import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
 import html2canvas from 'html2canvas';
 import 'highlight.js/styles/github.css';
-import CommentSection from '@/app/components/CommentSection';
+import CommentSection from '@shared/components/CommentSection';
 import QRCode from 'qrcode';
-import { useUser } from '@/app/providers/UserProvider';
+import { useUser } from '@shared/providers/UserProvider';
 import { message } from 'antd';
 
 interface Note {
@@ -27,6 +27,7 @@ interface Note {
   updatedAt: string;
   author_name?: string;
   author_id?: number;
+  authorId?: number;
   liked?: boolean;
   bookmarked?: boolean;
   likeCount?: number;
@@ -62,12 +63,12 @@ export default function NoteDetailPage() {
     setCloning(true);
     try {
       const res = await fetch(`/api/notes/${noteId}/clone`, { method: 'POST' });
-      const data = await res.json();
-      if (data.success) {
-        message.success('✅ ' + data.message);
-        setTimeout(() => router.push(`/notes/${data.newNoteId}`), 1200);
+      const json = await res.json();
+      if (json.success && json.data) {
+        message.success('✅ 笔记已复用');
+        setTimeout(() => router.push(`/notes/${json.data.id}`), 1200);
       } else {
-        message.error(data.error || '复用失败');
+        message.error(json.message || '复用失败');
       }
     } catch {
       message.error('网络错误，请稍后再试');
@@ -195,12 +196,14 @@ export default function NoteDetailPage() {
         credentials: 'include',
       });
       if (response.ok) {
-        const data = await response.json();
-        setNote(data.note);
-        setLiked(data.note.liked || false);
-        setBookmarked(data.note.bookmarked || false);
-        setLikeCount(data.note.likeCount || 0);
-        setBookmarkCount(data.note.bookmarkCount || 0);
+        const json = await response.json();
+        const noteData = json.data;
+        if (!noteData) throw new Error('笔记不存在');
+        setNote({ ...noteData, _id: String(noteData.id) });
+        setLiked(noteData.liked || false);
+        setBookmarked(noteData.bookmarked || false);
+        setLikeCount(noteData.likeCount || 0);
+        setBookmarkCount(noteData.bookmarkCount || 0);
       } else if (response.status === 404) {
         router.push('/notes');
       }
@@ -222,7 +225,7 @@ export default function NoteDetailPage() {
   useEffect(() => {
     // 获取笔记后再检查权限，而不是立即重定向
     if (status === 'unauthenticated' && note && !note.isPublic) {
-      router.push('/login');
+      router.push('/auth/login');
     }
   }, [status, router, note]);
 
@@ -232,14 +235,12 @@ export default function NoteDetailPage() {
     
     try {
       const response = await fetch(`/api/notes/${noteId}/like`, {
-        method: liked ? 'DELETE' : 'POST',
+        method: 'POST',
         credentials: 'include',
       });
-      
       if (response.ok) {
-        const data = await response.json();
         setLiked(!liked);
-        setLikeCount(data.likeCount);
+        setLikeCount(prev => liked ? prev - 1 : prev + 1);
       }
     } catch (error) {
       console.error('点赞操作失败:', error);
@@ -252,14 +253,12 @@ export default function NoteDetailPage() {
     
     try {
       const response = await fetch(`/api/notes/${noteId}/bookmark`, {
-        method: bookmarked ? 'DELETE' : 'POST',
+        method: 'POST',
         credentials: 'include',
       });
-      
       if (response.ok) {
-        const data = await response.json();
         setBookmarked(!bookmarked);
-        setBookmarkCount(data.bookmarkCount);
+        setBookmarkCount(prev => bookmarked ? prev - 1 : prev + 1);
       }
     } catch (error) {
       console.error('收藏操作失败:', error);
@@ -281,11 +280,11 @@ export default function NoteDetailPage() {
   
   // 未登录用户只能查看公开笔记
   if (!session && (!note.isPublic)) {
-    router.push('/login');
+    router.push('/auth/login');
     return null;
   }
 
-  const isOwner = session?.user?.id === note.author_id?.toString();
+  const isOwner = session?.user?.id === String(note.authorId ?? '');
 
   return (
     <div className="flex min-h-screen">
@@ -426,8 +425,8 @@ export default function NoteDetailPage() {
 
           {/* 元信息 */}
           <div className="flex flex-wrap gap-4 text-sm text-gray-600 mb-4">
-            {note.author_name && (
-              <span>作者: {note.author_name}</span>
+            {note.authorId && (
+              <span>作者ID: {note.authorId}</span>
             )}
             <span>创建: {new Date(note.createdAt).toLocaleString()}</span>
             {note.updatedAt !== note.createdAt && (

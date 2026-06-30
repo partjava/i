@@ -1,7 +1,7 @@
 'use client'
 
-import LessonLayout, { type LessonMeta } from '@/app/components/ui/book/LessonLayout'
-import { THEMES } from '@/app/components/ui/book/theme'
+import LessonLayout, { type LessonMeta } from '@shared/components/ui/book/LessonLayout'
+import { THEMES } from '@shared/components/ui/book/theme'
 import {
   PageTitle,
   BookParagraph,
@@ -9,7 +9,7 @@ import {
   BookAlert,
   BookList,
   TagGrid,
-} from '@/app/components/ui/book/BookContent'
+} from '@shared/components/ui/book/BookContent'
 
 const META: LessonMeta = {
   subject: 'C++编程',

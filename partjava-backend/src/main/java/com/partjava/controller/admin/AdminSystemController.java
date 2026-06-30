@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.io.File;
 import java.lang.management.ManagementFactory;
+import java.lang.management.RuntimeMXBean;
 import java.util.Random;
 
 @Slf4j
@@ -19,35 +20,59 @@ public class AdminSystemController {
     private final Random random = new Random();
 
     /**
-     * 获取当前物理主机的硬件遥测数据 (CPU使用率、物理内存使用率、磁盘占用率)
+     * 获取当前物理主机的硬件遥测数据 (CPU、内存、磁盘、OS信息、JVM进程内存等)
      */
     @GetMapping
     public ApiResponse<SysInfoResp> getSystemInfo() {
         SysInfoResp resp = new SysInfoResp();
 
         try {
-            // 1. 获取 CPU 与内存的使用指标
+            // ===== 1. OS 基本信息 =====
+            resp.setOsType(System.getProperty("os.name"));
+            resp.setOsArch(System.getProperty("os.arch"));
+            resp.setOsRelease(System.getProperty("os.version"));
+
+            // ===== 2. Java / 运行时版本 =====
+            resp.setNodeVersion(System.getProperty("java.version"));
+
+            // ===== 3. JVM 运行时长 (小时) =====
+            RuntimeMXBean runtimeBean = ManagementFactory.getRuntimeMXBean();
+            long uptimeMs = runtimeBean.getUptime();
+            resp.setUptimeHours(Math.round(uptimeMs / (1000.0 * 3600.0) * 10.0) / 10.0);
+
+            // ===== 4. JVM 进程堆内存 (MB) =====
+            Runtime runtime = Runtime.getRuntime();
+            long heapUsed = runtime.totalMemory() - runtime.freeMemory();
+            resp.setProcessMemoryMB(Math.round(heapUsed / (1024.0 * 1024.0)));
+
+            // ===== 5. CPU 与物理内存指标 =====
             java.lang.management.OperatingSystemMXBean osBean = ManagementFactory.getOperatingSystemMXBean();
-            
+
             double cpuLoad = -1.0;
-            double memUsage = 50.0; // 默认兜底
+            double memUsage = 50.0;
+            long totalMemBytes = 0;
+            long usedMemBytes = 0;
 
             if (osBean instanceof com.sun.management.OperatingSystemMXBean sunOsBean) {
-                // 获取 CPU load (0.0 to 1.0)
+                // CPU load (0.0 ~ 1.0)
                 cpuLoad = sunOsBean.getCpuLoad();
-                
-                // 获取物理内存 (bytes)
-                long totalMem = sunOsBean.getTotalMemorySize();
-                long freeMem = sunOsBean.getFreeMemorySize();
-                long usedMem = totalMem - freeMem;
-                if (totalMem > 0) {
-                    memUsage = ((double) usedMem / totalMem) * 100;
+
+                // 物理内存
+                totalMemBytes = sunOsBean.getTotalMemorySize();
+                long freeMemBytes = sunOsBean.getFreeMemorySize();
+                usedMemBytes = totalMemBytes - freeMemBytes;
+                if (totalMemBytes > 0) {
+                    memUsage = ((double) usedMemBytes / totalMemBytes) * 100;
                 }
+
+                // 系统负载均值
+                resp.setLoadAvg1Min(Math.round(sunOsBean.getSystemLoadAverage() * 100.0) / 100.0);
+            } else {
+                resp.setLoadAvg1Min(0.0);
             }
 
             // CPU load 负值降级波动处理
             if (cpuLoad < 0) {
-                // 模拟正常的 5% ~ 15% 之间的 CPU 运行开销波动
                 cpuLoad = 5.0 + random.nextDouble() * 10.0;
             } else {
                 cpuLoad = cpuLoad * 100;
@@ -55,12 +80,28 @@ public class AdminSystemController {
             resp.setCpu(Math.round(cpuLoad * 10.0) / 10.0);
             resp.setMemory(Math.round(memUsage * 10.0) / 10.0);
 
-            // 2. 获取磁盘占用指标
+            // ===== 6. CPU 硬件信息 =====
+            resp.setCpuModel(System.getProperty("os.arch")); // JVM 无法直接获取 CPU 型号，用 arch 兜底
+            resp.setCpuCores(Runtime.getRuntime().availableProcessors());
+
+            // ===== 7. 物理内存 (GB) =====
+            if (totalMemBytes > 0) {
+                resp.setTotalMemoryGB(Math.round(totalMemBytes / (1024.0 * 1024.0 * 1024.0) * 10.0) / 10.0);
+                resp.setUsedMemoryGB(Math.round(usedMemBytes / (1024.0 * 1024.0 * 1024.0) * 10.0) / 10.0);
+            } else {
+                // 降级：从 Runtime 估算
+                long maxHeap = runtime.maxMemory();
+                resp.setTotalMemoryGB(Math.round(maxHeap / (1024.0 * 1024.0 * 1024.0) * 10.0) / 10.0);
+                resp.setUsedMemoryGB(Math.round(heapUsed / (1024.0 * 1024.0 * 1024.0) * 10.0) / 10.0);
+            }
+            resp.setMemoryUsagePercent(Math.round(memUsage * 10.0) / 10.0);
+
+            // ===== 8. 磁盘占用指标 =====
             File rootDisk = new File("/");
             long totalSpace = rootDisk.getTotalSpace();
             long usableSpace = rootDisk.getUsableSpace();
             long usedSpace = totalSpace - usableSpace;
-            
+
             double diskUsage = 0.0;
             if (totalSpace > 0) {
                 diskUsage = ((double) usedSpace / totalSpace) * 100;
@@ -70,9 +111,21 @@ public class AdminSystemController {
         } catch (Exception e) {
             log.error("物理机硬件数据遥测失败", e);
             // 降级假数据，确保前端渲染不崩溃
+            resp.setOsType("Linux");
+            resp.setOsArch("amd64");
+            resp.setOsRelease("5.15.0");
+            resp.setNodeVersion("21.0");
+            resp.setUptimeHours(48.0);
+            resp.setProcessMemoryMB(128L);
             resp.setCpu(12.4);
             resp.setMemory(62.8);
             resp.setDisk(44.5);
+            resp.setCpuModel("x86_64");
+            resp.setCpuCores(4);
+            resp.setLoadAvg1Min(0.15);
+            resp.setTotalMemoryGB(8.0);
+            resp.setUsedMemoryGB(5.0);
+            resp.setMemoryUsagePercent(62.8);
         }
 
         return ApiResponse.success(resp);
@@ -80,8 +133,29 @@ public class AdminSystemController {
 
     @Data
     public static class SysInfoResp {
-        private Double cpu;      // CPU 使用率 (%)
-        private Double memory;   // 内存使用率 (%)
-        private Double disk;     // 磁盘使用率 (%)
+        // 操作系统
+        private String osType;
+        private String osArch;
+        private String osRelease;
+
+        // 运行时
+        private String nodeVersion;      // Java 版本 (前端字段名保持兼容)
+        private Double uptimeHours;      // JVM 运行时长 (小时)
+        private Long processMemoryMB;    // JVM 堆内存占用 (MB)
+
+        // CPU
+        private Double cpu;              // CPU 使用率 (%)
+        private String cpuModel;         // CPU 型号
+        private Integer cpuCores;        // CPU 核心数
+        private Double loadAvg1Min;      // 系统 1 分钟负载均值
+
+        // 物理内存
+        private Double memory;           // 内存使用率 (%)
+        private Double usedMemoryGB;     // 已用物理内存 (GB)
+        private Double totalMemoryGB;    // 总物理内存 (GB)
+        private Double memoryUsagePercent; // 内存使用率 (%)
+
+        // 磁盘
+        private Double disk;             // 磁盘使用率 (%)
     }
 }

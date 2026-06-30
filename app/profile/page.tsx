@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { useAuth } from '@/app/hooks/useAuth';
+import { useAuth } from '@shared/hooks/useAuth';
 import { useRouter } from 'next/navigation';
-import { useUser } from '@/app/providers/UserProvider';
+import { useUser } from '@shared/providers/UserProvider';
 import { 
   Card, 
   Input, 
@@ -36,12 +36,30 @@ import {
   ClockCircleOutlined,
   BarChartOutlined
 } from '@ant-design/icons';
-import LearningHeatmap from '@/app/components/LearningHeatmap';
-import DataVisualization from '@/app/components/DataVisualization';
-import InkWashDecoration from '@/app/components/InkWashDecoration';
-import { UnifiedUserStats, UnifiedHeatmapData } from '@/app/lib/api/dataAdapter';
+import LearningHeatmap from '@shared/components/LearningHeatmap';
+import DataVisualization from '@shared/components/DataVisualization';
+import InkWashDecoration from '@shared/components/InkWashDecoration';
+import AchievementCard from '@shared/components/AchievementCard';
+import type { Achievement as AchievementType } from '@shared/types/achievement';
 
 const { Title, Text, Paragraph } = Typography;
+
+// ─── 统一数据结构（原 dataAdapter.ts 内联）──────────────────────────
+
+interface UnifiedUserStats {
+  notes: { total: number; public: number; private: number; firstNoteDate: string; lastActivityDate: string };
+  engagement: { likesReceived: number; bookmarksReceived: number; commentsReceived: number };
+  learning: { categoriesStudied: number; technologiesStudied: number; totalStudyTime: number; studyDays: number; studyDaysTotal: number };
+  achievements: { total: number; earned: number };
+  recentActivity: Array<{ id: string; type: string; title: string; content: string; date: string }>;
+  monthlyStats: Array<{ month: string; notes: number; studyTime: number }>;
+}
+
+interface UnifiedHeatmapData {
+  date: string;
+  count: number;
+  level: 0 | 1 | 2 | 3 | 4;
+}
 
 interface ProfileFormData {
   name: string;
@@ -94,8 +112,10 @@ export default function ProfilePage() {
   const [editMode, setEditMode] = useState(false);
   const [heatmapData, setHeatmapData] = useState<UnifiedHeatmapData[]>([]);
   const [heatmapLoading, setHeatmapLoading] = useState(true);
+  const [achievements, setAchievements] = useState<AchievementType[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [isGuest, setIsGuest] = useState(false);
+  const [showAllAch, setShowAllAch] = useState(false);
   const [showVip, setShowVip] = useState(false);
 
   // 添加刷新数据的函数
@@ -107,41 +127,11 @@ export default function ProfilePage() {
     
     setRefreshing(true);
     try {
-      // 先检查会话状态
-      const sessionResponse = await fetch('/api/auth/session', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        cache: 'no-store'
-      });
-      
-      if (!sessionResponse.ok) {
-        // 尝试刷新会话
-        const refreshSessionResponse = await fetch('/api/auth/session', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          credentials: 'include',
-          cache: 'no-store'
-        });
-        
-        if (!refreshSessionResponse.ok) {
-          message.error('会话已过期，请重新登录');
-          setTimeout(() => {
-            router.push('/login');
-          }, 1500);
-          return;
-        }
-      }
-      
       // 并行加载所有数据
       const results = await Promise.allSettled([
         loadUserProfile(),
         loadUserStats(),
-        loadHeatmapData()
+        loadHeatmapData(),
       ]);
       
       // 检查结果
@@ -161,33 +151,11 @@ export default function ProfilePage() {
     }
   };
 
-  // 检查会话状态
+  // 检查登录状态（基于 JWT token）
   const checkSession = async () => {
-    // 如果是访客模式，不需要检查会话
-    if (status === 'unauthenticated') {
-      return true;
-    }
-    
-    try {
-      const response = await fetch('/api/auth/session', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        cache: 'no-store'
-      });
-      
-      if (!response.ok) {
-        return false;
-      }
-      
-      const data = await response.json();
-      return data.authenticated;
-    } catch (error) {
-      console.error('会话检查失败:', error);
-      return false;
-    }
+    if (status === 'unauthenticated') return true;
+    const { getToken } = await import('@shared/lib/auth-client');
+    return !!getToken();
   };
 
   // 加载平台总体统计数据（未登录用户）
@@ -471,7 +439,7 @@ export default function ProfilePage() {
           refreshData();
         } else {
           // 会话无效，尝试重新登录
-          router.push('/login');
+          router.push('/auth/login');
         }
       });
     }
@@ -497,20 +465,16 @@ export default function ProfilePage() {
 
   const loadUserProfile = async () => {
     try {
-      const { fetchWithUnifiedResponse } = await import('@/app/lib/api/dataAdapter');
-      try {
-        const timestamp = new Date().getTime();
-        const profileData = await fetchWithUnifiedResponse<Record<string, any>>(
-          `/api/user/profile?t=${timestamp}`, 
-          {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            credentials: 'include',
-            cache: 'no-store'
-          }
-        );
+      const timestamp = new Date().getTime();
+      const res = await fetch(`/api/user/profile?t=${timestamp}`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        cache: 'no-store',
+      });
+      if (!res.ok) throw new Error(`API 错误: ${res.status}`);
+      const json = await res.json();
+      const profileData = json.data ?? json;
         
         const formData = {
           name: profileData.name || session?.user?.name || '',
@@ -533,12 +497,6 @@ export default function ProfilePage() {
         form.setFieldsValue(formData);
         return profileData;
       } catch (fetchError) {
-        if ((fetchError as any).message?.includes('401')) {
-          try {
-            await fetch('/api/auth/session', { method: 'POST', credentials: 'include', cache: 'no-store' });
-          } catch {}
-        }
-        
         const defaultFormData = {
           name: session?.user?.name || '',
           jobTitle: '',
@@ -557,36 +515,47 @@ export default function ProfilePage() {
         form.setFieldsValue(defaultFormData);
         return { name: session?.user?.name || '', email: session?.user?.email || '', image: session?.user?.image || '' };
       }
-    } catch (error) {
-      return { name: session?.user?.name || '', email: session?.user?.email || '', image: session?.user?.image || '' };
-    }
-  };
+    };
 
-  const loadUserStats = async () => {
-    try {
+    const loadUserStats = async () => {
       try {
-        const response = await fetch('/api/user/stats', {
+        const res = await fetch('/api/user/stats', {
           method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
-          cache: 'no-store'
+          cache: 'no-store',
         });
-        
-        if (!response.ok) {
-          throw new Error(`API错误: ${response.status}`);
+        if (!res.ok) throw new Error(`API错误: ${res.status}`);
+        const json = await res.json();
+        const statsData = json.data ?? json;
+        // 补充真实学习时间
+        try {
+          const sr = await fetch('/api/study/stats', { headers: { 'Content-Type': 'application/json' } });
+          const sj = await sr.json();
+          if (sj.success && sj.data) statsData.totalStudyTime = sj.data.totalStudyTime || statsData.totalStudyTime || 0;
+        } catch {}
+        if (!statsData.learning) statsData.learning = {};
+        statsData.learning.totalStudyTime = statsData.totalStudyTime || 0;
+        setStats(statsData);
+        // 从 stats 响应中提取成就列表（后端已返回 achievementList）
+        console.log('statsData keys:', Object.keys(statsData));
+        const rawList = statsData?.achievementList || statsData?.achievements?.list;
+        if (rawList && Array.isArray(rawList)) {
+          console.log('achievementList count:', rawList.length);
+          setAchievements(rawList.map((a: any) => ({
+            id: String(a.id),
+            name: a.name || '',
+            description: a.description || '',
+            icon: a.icon || '🏆',
+            category: a.category || 'learning',
+            unlocked: !!a.unlocked,
+            unlockedAt: a.unlockedAt ? new Date(a.unlockedAt) : undefined,
+            progress: a.progress || (a.unlocked ? (a.maxProgress || 1) : 0),
+            maxProgress: a.maxProgress || 1,
+          })));
         }
-        
-        const data = await response.json();
-        setStats(data);
-        return data;
-      } catch (fetchError) {
-        if ((fetchError as any).message?.includes('401')) {
-          try {
-            await fetch('/api/auth/session', { method: 'POST', credentials: 'include', cache: 'no-store' });
-          } catch {}
-        }
+        return statsData;
+      } catch {
         const emptyStats = {
           notes: { total: 0, public: 0, private: 0, firstNoteDate: '', lastActivityDate: '' },
           engagement: { likesReceived: 0, bookmarksReceived: 0, commentsReceived: 0 },
@@ -597,24 +566,12 @@ export default function ProfilePage() {
         };
         setStats(emptyStats);
         return emptyStats;
+      } finally {
+        setStatsLoading(false);
       }
-    } catch (error) {
-      const emptyStats = {
-        notes: { total: 0, public: 0, private: 0, firstNoteDate: '', lastActivityDate: '' },
-        engagement: { likesReceived: 0, bookmarksReceived: 0, commentsReceived: 0 },
-        learning: { categoriesStudied: 0, technologiesStudied: 0, totalStudyTime: 0, studyDays: 0, studyDaysTotal: 0 },
-        achievements: { total: 10, earned: 0 },
-        recentActivity: [],
-        monthlyStats: []
-      };
-      setStats(emptyStats);
-      return emptyStats;
-    } finally {
-      setStatsLoading(false);
-    }
-  };
+    };
 
-  const loadHeatmapData = async () => {
+    const loadHeatmapData = async () => {
     try {
       const response = await fetch('/api/user/learning-stats', {
         method: 'GET',
@@ -624,14 +581,15 @@ export default function ProfilePage() {
       });
       
       if (!response.ok) throw new Error(`API错误: ${response.status}`);
-      
-      const data = await response.json();
-      if (data && Array.isArray(data.heatmapData)) {
-        setHeatmapData(data.heatmapData);
-        return data;
+
+      const json = await response.json();
+      const hd = json.data?.heatmapData ?? json.heatmapData;
+      if (Array.isArray(hd)) {
+        setHeatmapData(hd);
+        return hd;
       } else {
         setHeatmapData([]);
-        return { heatmapData: [] };
+        return [];
       }
     } catch (error) {
       setHeatmapData([]);
@@ -640,6 +598,8 @@ export default function ProfilePage() {
       setHeatmapLoading(false);
     }
   };
+
+  // 从数据库加载真实成就数据
 
   const handleFormSubmit = async (values: ProfileFormData) => {
     setSaving(true);
@@ -919,7 +879,7 @@ export default function ProfilePage() {
             <Button 
               type="default"
               size="large"
-              onClick={() => router.push('/login')}
+              onClick={() => router.push('/auth/login')}
               className="bg-surface-raised text-content-secondary border-0 hover:bg-surface-page font-semibold px-6"
             >
               立即登录
@@ -1148,7 +1108,7 @@ export default function ProfilePage() {
                     <Button 
                       type="default"
                       size="large"
-                      onClick={() => router.push('/login')}
+                      onClick={() => router.push('/auth/login')}
                       className="bg-surface-raised text-brand-primary border-0 hover:bg-surface-page px-8 py-2 h-auto font-semibold"
                     >
                       登录查看真实数据
@@ -1383,7 +1343,6 @@ export default function ProfilePage() {
                           '100%': '#73d13d',
                         }}
                         size={140}
-                        strokeWidth={8}
                       />
                       <p className="mt-4 text-xl font-semibold text-content-primary">公开笔记</p>
                     </div>
@@ -1399,7 +1358,6 @@ export default function ProfilePage() {
                           '100%': '#40a9ff',
                         }}
                         size={140}
-                        strokeWidth={8}
                       />
                       <p className="mt-4 text-xl font-semibold text-content-primary">学习领域</p>
                     </div>
@@ -1421,7 +1379,7 @@ export default function ProfilePage() {
                   <Col xs={24} md={8}>
                     <div 
                       className={`text-center p-6 bg-gradient-to-br from-[#EDF0F5] to-[#e2e6ed] rounded-lg ${!isGuest ? 'cursor-pointer hover:shadow-md transition-all duration-200' : ''}`}
-                      onClick={() => !isGuest && router.push('/bookmarks')}
+                      onClick={() => !isGuest && router.push('/profile/bookmarks')}
                     >
                       <BookOutlined className="text-3xl text-yellow-500 mb-3" />
                       <div className="text-xl font-semibold text-content-primary mb-1">
@@ -1445,7 +1403,7 @@ export default function ProfilePage() {
 
             {/* 学习热力图 */}
             {!heatmapLoading && (
-              <Card 
+              <Card
                 title={
                   <div className="flex items-center text-xl">
                     <FireOutlined className="mr-3 text-orange-500" />
@@ -1455,17 +1413,16 @@ export default function ProfilePage() {
                 className="shadow-lg border-0"
               >
                 <div className="p-6 bg-gradient-to-r from-[#EDF0F5] to-[#e2e6ed] rounded-lg">
-                  <LearningHeatmap 
-                    data={heatmapData} 
+                  <LearningHeatmap
+                    data={heatmapData}
                     year={new Date().getFullYear()}
                   />
                 </div>
               </Card>
             )}
-
-            {/* 成就展示 - 确保显示 */}
+            {/* 成就展示 */}
             {!statsLoading && stats && (
-              <Card 
+              <Card
                 title={
                   <div className="flex items-center text-xl">
                     <TrophyOutlined className="mr-3 text-yellow-500" />
@@ -1480,16 +1437,30 @@ export default function ProfilePage() {
                       <TrophyOutlined style={{ fontSize: 40, color: 'white' }} />
                     </div>
                     <div className="text-2xl font-semibold text-content-primary mb-4">
-                      {stats?.achievements?.earned || 0} / {stats?.achievements?.total || 10}
+                      {[
+                        (stats?.learning?.studyDaysTotal || 0) >= 7,
+                        (stats?.notes?.total || 0) >= 10,
+                        (stats?.engagement?.likesReceived || 0) >= 50,
+                        (stats?.learning?.technologiesStudied || 0) >= 5,
+                        (stats?.learning?.totalStudyTime || 0) >= 6000,
+                        (stats?.engagement?.commentsReceived || 0) >= 20,
+                      ].filter(Boolean).length } / {stats?.achievements?.total || 10}
                     </div>
                     <Progress
-                      percent={((stats?.achievements?.earned || 0) / Math.max(1, stats?.achievements?.total || 10)) * 100}
+                      percent={Math.min(100, ([
+                        (stats?.learning?.studyDaysTotal || 0) >= 7,
+                        (stats?.notes?.total || 0) >= 10,
+                        (stats?.engagement?.likesReceived || 0) >= 50,
+                        (stats?.learning?.technologiesStudied || 0) >= 5,
+                        (stats?.learning?.totalStudyTime || 0) >= 6000,
+                        (stats?.engagement?.commentsReceived || 0) >= 20,
+                      ].filter(Boolean).length / Math.max(1, stats?.achievements?.total || 10)) * 100)}
                       strokeColor={{
                         '0%': '#ffd700',
                         '100%': '#ff8c00',
                       }}
                       trailColor="#f0f0f0"
-                      strokeWidth={10}
+                      size={10}
                       className="mb-4 max-w-md mx-auto"
                     />
                     <Text type="secondary" className="text-lg">已解锁成就</Text>
@@ -1501,152 +1472,30 @@ export default function ProfilePage() {
                 {/* 成就列表 */}
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold text-content-primary mb-4">可获得的成就</h3>
-                  
-                  <Row gutter={[16, 16]}>
-                    {/* 学习相关成就 */}
-                    <Col xs={24} md={12}>
-                      <div className="p-4 bg-gradient-to-br from-[#EDF0F5] to-[#e2e6ed] rounded-lg border border-line-strong">
-                        <div className="flex items-center mb-3">
-                          <div className="w-10 h-10 bg-content-muted rounded-full flex items-center justify-center mr-3">
-                            <BookOutlined style={{ color: 'white', fontSize: 16 }} />
-                          </div>
-                          <div>
-                            <h4 className="font-semibold text-blue-800">学习达人</h4>
-                            <p className="text-sm text-content-muted">连续学习 7 天</p>
-                          </div>
-                        </div>
-                        <div className="text-xs text-content-secondary">
-                          当前进度: {stats?.learning?.studyDaysTotal || 0}/7 天
-                        </div>
-                        <Progress 
-                          percent={Math.min((( stats?.learning?.studyDaysTotal || 0) / 7) * 100, 100)} 
-                          size="small" 
-                          strokeColor="#3b82f6"
-                          className="mt-2"
-                        />
-                      </div>
-                    </Col>
 
-                    <Col xs={24} md={12}>
-                      <div className="p-4 bg-gradient-to-br from-[#EDF0F5] to-[#e2e6ed] rounded-lg border border-line-strong">
-                        <div className="flex items-center mb-3">
-                          <div className="w-10 h-10 bg-content-secondary rounded-full flex items-center justify-center mr-3">
-                            <EditOutlined style={{ color: 'white', fontSize: 16 }} />
-                          </div>
-                          <div>
-                            <h4 className="font-semibold text-green-800">笔记高手</h4>
-                            <p className="text-sm text-green-600">创建 {Math.max(10, stats?.notes?.total || 0)} 篇笔记</p>
-                          </div>
+                  {achievements.length > 0 ? (
+                    <>
+                      <Row gutter={[16, 16]}>
+                        {(showAllAch ? achievements : achievements.slice(0, 6)).map((ach) => (
+                          <Col xs={24} md={12} key={ach.id}>
+                            <AchievementCard achievement={ach} />
+                          </Col>
+                        ))}
+                      </Row>
+                      {achievements.length > 6 && (
+                        <div className="text-center mt-4">
+                          <button
+                            onClick={() => setShowAllAch(!showAllAch)}
+                            className="px-6 py-2 text-sm font-medium text-content-secondary bg-surface-raised border border-line-strong rounded-lg hover:bg-surface-muted transition-colors"
+                          >
+                            {showAllAch ? '收起' : `展开全部 (${achievements.length}个)`}
+                          </button>
                         </div>
-                        <div className="text-xs text-content-secondary">
-                          当前进度: {stats?.notes?.total || 0}/{Math.max(10, stats?.notes?.total || 0)} 篇
-                        </div>
-                        <Progress 
-                          percent={100} 
-                          size="small" 
-                          strokeColor="#10b981"
-                          className="mt-2"
-                        />
-                      </div>
-                    </Col>
-
-                    <Col xs={24} md={12}>
-                      <div className="p-4 bg-gradient-to-br from-[#EDF0F5] to-[#e2e6ed] rounded-lg border border-line-strong">
-                        <div className="flex items-center mb-3">
-                          <div className="w-10 h-10 bg-surface-inverse rounded-full flex items-center justify-center mr-3">
-                            <HeartOutlined style={{ color: 'white', fontSize: 16 }} />
-                          </div>
-                          <div>
-                            <h4 className="font-semibold text-purple-800">受欢迎作者</h4>
-                            <p className="text-sm text-purple-600">获得 50 个点赞</p>
-                          </div>
-                        </div>
-                        <div className="text-xs text-content-secondary">
-                          当前进度: {stats?.engagement?.likesReceived || 0}/50 个
-                        </div>
-                        <Progress 
-                          percent={Math.min(((stats?.engagement?.likesReceived || 0) / 50) * 100, 100)} 
-                          size="small" 
-                          strokeColor="#8b5cf6"
-                          className="mt-2"
-                        />
-                      </div>
-                    </Col>
-
-                    <Col xs={24} md={12}>
-                      <div className="p-4 bg-gradient-to-br from-[#EDF0F5] to-[#e2e6ed] rounded-lg border border-line-strong">
-                        <div className="flex items-center mb-3">
-                          <div className="w-10 h-10 bg-content-muted rounded-full flex items-center justify-center mr-3">
-                            <FireOutlined style={{ color: 'white', fontSize: 16 }} />
-                          </div>
-                          <div>
-                            <h4 className="font-semibold text-orange-800">技术专家</h4>
-                            <p className="text-sm text-orange-600">学习 5 个技术栈</p>
-                          </div>
-                        </div>
-                        <div className="text-xs text-content-secondary">
-                          当前进度: {stats?.learning?.technologiesStudied || 0}/5 个
-                        </div>
-                        <Progress 
-                          percent={Math.min(((stats?.learning?.technologiesStudied || 0) / 5) * 100, 100)} 
-                          size="small" 
-                          strokeColor="#f97316"
-                          className="mt-2"
-                        />
-                      </div>
-                    </Col>
-
-                    <Col xs={24} md={12}>
-                      <div className="p-4 bg-gradient-to-br from-[#EDF0F5] to-[#e2e6ed] rounded-lg border border-line-strong">
-                        <div className="flex items-center mb-3">
-                          <div className="w-10 h-10 bg-content-secondary rounded-full flex items-center justify-center mr-3">
-                            <ClockCircleOutlined style={{ color: 'white', fontSize: 16 }} />
-                          </div>
-                          <div>
-                            <h4 className="font-semibold text-cyan-800">时间管理大师</h4>
-                            <p className="text-sm text-cyan-600">累计学习 100 小时</p>
-                          </div>
-                        </div>
-                        <div className="text-xs text-content-secondary">
-                          当前进度: {Math.floor((stats?.learning?.totalStudyTime || 0) / 60)}/100 小时
-                        </div>
-                        <Progress 
-                          percent={Math.min((Math.floor((stats?.learning?.totalStudyTime || 0) / 60) / 100) * 100, 100)} 
-                          size="small" 
-                          strokeColor="#06b6d4"
-                          className="mt-2"
-                        />
-                      </div>
-                    </Col>
-
-                    <Col xs={24} md={12}>
-                      <div className="p-4 bg-gradient-to-br from-[#EDF0F5] to-[#e2e6ed] rounded-lg border border-line-strong">
-                        <div className="flex items-center mb-3">
-                          <div className="w-10 h-10 bg-content-muted rounded-full flex items-center justify-center mr-3">
-                            <CommentOutlined style={{ color: 'white', fontSize: 16 }} />
-                          </div>
-                          <div>
-                            <h4 className="font-semibold text-pink-800">活跃讨论者</h4>
-                            <p className="text-sm text-pink-600">收到 20 条评论</p>
-                          </div>
-                        </div>
-                        <div className="text-xs text-content-secondary">
-                          当前进度: {stats?.engagement?.commentsReceived || 0}/20 条
-                        </div>
-                        <Progress 
-                          percent={Math.min(((stats?.engagement?.commentsReceived || 0) / 20) * 100, 100)} 
-                          size="small" 
-                          strokeColor="#ec4899"
-                          className="mt-2"
-                        />
-                      </div>
-                    </Col>
-                  </Row>
-
-                  {(stats?.achievements?.earned || 0) === 0 && (
-                    <div className="mt-6 p-4 bg-surface-page rounded-lg text-center">
-                      <p className="text-content-secondary mb-2">🎯 开始您的学习之旅，解锁第一个成就！</p>
-                      <p className="text-sm text-content-muted">每个成就都会让您的学习更有成就感</p>
+                      )}
+                    </>
+                  ) : (
+                    <div className="text-center py-8 text-content-muted">
+                      暂无成就数据
                     </div>
                   )}
                 </div>

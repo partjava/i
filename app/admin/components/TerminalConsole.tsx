@@ -10,6 +10,7 @@ interface TerminalConsoleProps {
 }
 
 export default function TerminalConsole({ users, onLogAdd, sysInfo }: TerminalConsoleProps) {
+  const info = sysInfo || {};
   const [cmdInput, setCmdInput] = useState('');
   const [cmdHistory, setCmdHistory] = useState<string[]>([
     '========================================',
@@ -53,13 +54,13 @@ export default function TerminalConsole({ users, onLogAdd, sysInfo }: TerminalCo
       case 'system status':
         response = [
           '--- HOST PHYSICAL SYSTEM STATUS ---',
-          `Operating System : ${sysInfo.osType} (${sysInfo.osArch})`,
-          `OS Kernel Release: ${sysInfo.osRelease}`,
-          `CPU Processor    : ${sysInfo.cpuModel}`,
-          `CPU Core Count   : ${sysInfo.cpuCores} Cores / LoadAvg 1m: ${sysInfo.loadAvg1Min}`,
-          `Physical Memory  : ${sysInfo.usedMemoryGB}GB / ${sysInfo.totalMemoryGB}GB (${sysInfo.memoryUsagePercent}%)`,
-          `Node.js version  : ${sysInfo.nodeVersion} (Uptime: ${sysInfo.uptimeHours}h)`,
-          `Process memory   : ${sysInfo.processMemoryMB} MB (Heap footprint)`
+          `Operating System : ${info.osType ?? '—'} (${info.osArch ?? '—'})`,
+          `OS Kernel Release: ${info.osRelease ?? '—'}`,
+          `CPU Processor    : ${info.cpuModel ?? '—'}`,
+          `CPU Core Count   : ${info.cpuCores ?? 0} Cores / LoadAvg 1m: ${info.loadAvg1Min ?? 0}`,
+          `Physical Memory  : ${info.usedMemoryGB ?? 0}GB / ${info.totalMemoryGB ?? 0}GB (${info.memoryUsagePercent ?? 0}%)`,
+          `Node.js version  : ${info.nodeVersion ?? '—'} (Uptime: ${info.uptimeHours ?? 0}h)`,
+          `Process memory   : ${info.processMemoryMB ?? 0} MB (Heap footprint)`
         ];
         break;
       case 'logs':

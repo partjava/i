@@ -1,12 +1,12 @@
 'use client';
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useAuth } from '@/app/hooks/useAuth';
+import { useAuth } from '@shared/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import MarkdownEditor from '@/app/components/MarkdownEditor';
+import MarkdownEditor from '@shared/components/MarkdownEditor';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import InkWashDecoration from '@/app/components/InkWashDecoration';
+import InkWashDecoration from '@shared/components/InkWashDecoration';
 
 interface Note {
   id?: string | number; // 后端返回的可能是数字id
@@ -89,29 +89,6 @@ export default function NotesPage() {
     isPublic: false,
   });
 
-  // 检查会话状态
-  const checkSession = async () => {
-    try {
-      const response = await fetch('/api/auth/session', {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        cache: 'no-store'
-      });
-      if (!response.ok) {
-        const refreshResponse = await fetch('/api/auth/session', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          cache: 'no-store'
-        });
-        if (!refreshResponse.ok) setViewMode('public');
-      }
-    } catch (error) {
-      console.error('会话检查失败:', error);
-    }
-  };
-
   // 滚动恢复：优先锚点，降级 Y 坐标
   const doScrollRestore = (noteId: string | null, y: number) => {
     const container = document.querySelector('main') as HTMLElement | null;
@@ -143,14 +120,15 @@ export default function NotesPage() {
       setLoading(true);
       const limit = 10;
       const url = mode === 'public' || status !== 'authenticated'
-        ? `/api/public-notes?page=${page}&limit=${limit}&_t=${Date.now()}`
+        ? `/api/notes?isPublic=true&page=${page}&limit=${limit}&_t=${Date.now()}`
         : `/api/notes?page=${page}&limit=${limit}&_t=${Date.now()}`;
       const response = await fetch(url, { credentials: 'include', cache: 'no-store' });
       if (response.ok) {
         const data = await response.json();
         let notesData: Note[] = [];
         let paginationData = { page, limit, total: 0, totalPages: 0, hasNext: false, hasPrev: false };
-        if (data?.data?.notes) { notesData = data.data.notes; paginationData = data.data.pagination || paginationData; }
+        if (data?.success && Array.isArray(data?.data)) { notesData = data.data; }
+        else if (data?.data?.notes) { notesData = data.data.notes; paginationData = data.data.pagination || paginationData; }
         else if (data?.notes) { notesData = data.notes; paginationData = data.pagination || paginationData; }
         else if (Array.isArray(data)) { notesData = data; }
         setNotes(notesData);
@@ -177,7 +155,6 @@ export default function NotesPage() {
       const savedMode = sessionStorage.getItem('notes_view_mode') as 'my' | 'public' | null;
       if (savedMode) sessionStorage.removeItem('notes_view_mode');
       targetMode = savedMode || 'my';
-      checkSession();
     }
 
     setViewMode(targetMode);
@@ -264,9 +241,9 @@ export default function NotesPage() {
       // 统一使用一个API端点
       let url = `/api/notes?page=${page}&limit=${limit}`;
 
-      // 如果是公开模式或未登录，使用公开API
+      // 如果是公开模式或未登录，添加公开筛选
       if (viewMode === 'public' || status !== 'authenticated') {
-        url = `/api/public-notes?page=${page}&limit=${limit}`;
+        url = `/api/notes?isPublic=true&page=${page}&limit=${limit}`;
       }
 
       // 始终添加时间戳以避免缓存问题
@@ -299,7 +276,10 @@ export default function NotesPage() {
           hasPrev: false
         };
 
-        if (data && data.data && Array.isArray(data.data.notes)) {
+        if (data && data.success && Array.isArray(data.data)) {
+          // 格式: { success: true, data: [...], message: "操作成功" }
+          notesData = data.data;
+        } else if (data && data.data && Array.isArray(data.data.notes)) {
           // 格式: { success: true, data: { notes: [], pagination: {} } }
           notesData = data.data.notes;
           paginationData = data.data.pagination || paginationData;
@@ -393,11 +373,15 @@ export default function NotesPage() {
       });
       if (response.ok) {
         const data = await response.json();
-        if (data.notes && Array.isArray(data.notes)) {
-          setSearchResults(data.notes);
-        } else {
-          setSearchResults([]);
+        let searchData: Note[] = [];
+        if (data?.success && Array.isArray(data?.data)) {
+          searchData = data.data;
+        } else if (data?.notes && Array.isArray(data.notes)) {
+          searchData = data.notes;
+        } else if (Array.isArray(data)) {
+          searchData = data;
         }
+        setSearchResults(searchData);
       } else {
         console.error('搜索请求失败:', response.status);
         // 尝试读取错误信息
@@ -455,29 +439,7 @@ export default function NotesPage() {
       return;
     }
     try {
-      const sessionResponse = await fetch('/api/auth/session', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        cache: 'no-store'
-      });
-
-      if (!sessionResponse.ok) {
-        alert('会话已过期，请重新登录');
-        router.push('/login');
-        return;
-      }
-
-      const sessionData = await sessionResponse.json();
-      if (!sessionData.authenticated) {
-        alert('请先登录再创建笔记');
-        router.push('/login');
-        return;
-      }
-
-      // 会话有效，继续创建笔记
+      // 已由 useAuth 和 FetchInterceptor 统一处理鉴权，直接创建笔记
       const response = await fetch('/api/notes', {
         method: 'POST',
         headers: {
@@ -530,7 +492,7 @@ export default function NotesPage() {
         });
 
         if (response.ok) {
-          fetchNotes(pagination.page); // 重新获取当前页笔记
+          fetchNotes(pagination.page, true); // 忽略缓存，重新获取
           // 显示成功消息
           alert('笔记已成功删除');
         } else {
@@ -569,7 +531,7 @@ export default function NotesPage() {
           'Content-Type': 'application/json',
         },
         credentials: 'include',
-        body: JSON.stringify({ noteIds: noteIdsToDelete }),
+        body: JSON.stringify({ ids: noteIdsToDelete }),
       });
 
       if (response.ok) {
@@ -579,10 +541,10 @@ export default function NotesPage() {
         setSelectedNotes({});
         // 关闭多选模式
         setIsMultiSelectMode(false);
-        // 重新获取笔记列表
-        fetchNotes(pagination.page);
+        // 重新获取笔记列表（忽略缓存）
+        fetchNotes(pagination.page, true);
 
-        alert(`成功删除 ${result.data.deletedCount} 篇笔记`);
+        alert(`成功删除 ${result.data?.deleted || result.data?.deletedCount || noteIdsToDelete.length} 篇笔记`);
       } else {
         const errorData = await response.json();
         console.error('批量删除失败:', errorData);
@@ -870,8 +832,8 @@ export default function NotesPage() {
                       编辑
                     </Link>
                     <button
-                      onClick={() => {
-                        // 避免触发卡片点击跳转
+                      onClick={(e) => {
+                        e.stopPropagation();
                         // 优先使用数字ID，因为API期望数字ID
                         const numericId = note.id || (note._id ? parseInt(note._id.toString(), 10) : null);
                         if (numericId) {
@@ -881,7 +843,6 @@ export default function NotesPage() {
                         }
                       }}
                       onMouseDown={(e) => e.stopPropagation()}
-                      onClickCapture={(e) => e.stopPropagation()}
                       className="text-red-600 hover:text-red-800 text-sm"
                     >
                       删除

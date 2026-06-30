@@ -51,9 +51,9 @@ function SubtopicSection({ child, isSelected, onSelectNode, onSelectLevel, chall
               <button key={lIdx} onClick={() => handleLevelClick(lv.levelIndex - 1)}
                 className={`w-full text-left px-2.5 py-1.5 rounded-lg text-[11px] flex justify-between items-center transition ${isSelected ? 'bg-indigo-600/15 text-indigo-300' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/30'}`}
               >
-                <div className="flex items-center gap-2 min-w-0 w-[85%]">
-                  <span className="text-[9px] text-cyan-500/60 font-mono shrink-0">官方</span>
-                  <span className="truncate">{lv.levelTitle}</span>
+                <div className="flex items-center gap-1.5 min-w-0 w-[85%]">
+                  <span className="text-[9px] text-cyan-500/60 font-mono shrink-0">{lv.authorId ? `partjava-${lv.levelIndex || '?'}` : '官方'}</span>
+                  <span className="truncate text-[11px]">{lv.levelTitle || lv.title || '未命名'}</span>
                 </div>
                 {lvPassed && <span className="text-emerald-400 text-[10px] shrink-0">✓</span>}
               </button>
@@ -185,9 +185,39 @@ export const KnowledgeTree: React.FC<KnowledgeTreeProps> = ({
                   );
                 })}
 
-                {/* 2. 社区/VIP 共创题 */}
+                {/* 2. 官方新增题目（subtopicName 不在预设 children 列表中的官方题） */}
                 {dbChallenges
-                  .filter(c => c.stageId === selectedStage.id && c.topicName === topic.name && !c.isOfficial)
+                  .filter(c => {
+                    if (c.stageId !== selectedStage.id || c.topicName !== topic.name) return false;
+                    if (c.authorId && c.authorId !== 1) return false; // 不是官方
+                    if (c.isPublic === false) return false;           // 私有
+                    // 排除已在 children 中显示的
+                    return !topic.children.includes(c.subtopicName);
+                  })
+                  .map((custom, cIdx) => {
+                    const isSelected = selectedNodeName === custom.subtopicName;
+                    const isPassed = custom.record?.isPassed;
+                    return (
+                      <button
+                        key={`extra-${cIdx}`}
+                        onClick={() => onSelectNode(custom.subtopicName)}
+                        className={`w-full text-left px-3 py-2 rounded-xl text-[11px] flex justify-between items-center transition ${isSelected ? 'bg-cyan-600/25 text-cyan-300 border border-cyan-500/30' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/50'}`}
+                      >
+                        <div className="flex flex-col min-w-0 items-start w-[85%]">
+                          <div className="flex items-center gap-1.5 min-w-0 w-full">
+                            <span className="text-[9px] text-cyan-500/60 font-mono shrink-0">{custom.authorId ? `partjava-${custom.levelIndex || '?'}` : '官方'}</span>
+                            <span className="truncate flex-1 shrink-0 font-medium text-[11px]">{custom.title || custom.subtopicName}</span>
+                            {isPassed && <span className="text-emerald-400 font-bold text-[10px] shrink-0" title="已通过">✓</span>}
+                          </div>
+                        </div>
+                        <ChevronRight className={`w-3.5 h-3.5 opacity-60 transition ${isSelected ? 'rotate-90' : ''} shrink-0`} />
+                      </button>
+                    );
+                  })}
+
+                {/* 3. 社区/VIP 共创题（公开的非官方题目） */}
+                {dbChallenges
+                  .filter(c => c.stageId === selectedStage.id && c.topicName === topic.name && c.isPublic !== false && c.authorId && c.authorId !== 1)
                   .map((custom, cIdx) => {
                     const isSelected = selectedNodeName === custom.subtopicName;
                     const isPassed = custom.record?.isPassed;
@@ -199,11 +229,12 @@ export const KnowledgeTree: React.FC<KnowledgeTreeProps> = ({
                       >
                         <div className="flex flex-col min-w-0 items-start w-[85%]">
                           <div className="flex items-center gap-1.5 min-w-0 w-full">
-                            <span className="truncate flex-1 shrink-0 font-medium">{custom.subtopicName}</span>
+                            <span className="text-[9px] text-purple-400/80 font-mono shrink-0">#{custom.levelIndex || '?'}</span>
+                            <span className="truncate flex-1 shrink-0 font-medium text-[11px]">{custom.title || custom.subtopicName}</span>
                             {isPassed && <span className="text-emerald-400 font-bold text-[10px] shrink-0" title="已通过">✓</span>}
                           </div>
-                          <span className="text-[9px] text-purple-400/80 font-medium shrink-0">
-                            👤 @{custom.authorName || '匿名极客'} 贡献
+                          <span className="text-[9px] text-purple-400/60 font-medium shrink-0">
+                            👤 @{custom.authorName || (custom.authorId ? 'UID-'+custom.authorId : '匿名极客')}
                           </span>
                         </div>
                         <ChevronRight className={`w-3.5 h-3.5 opacity-60 transition ${isSelected ? 'rotate-90' : ''} shrink-0`} />
@@ -251,22 +282,20 @@ export const KnowledgeTree: React.FC<KnowledgeTreeProps> = ({
 
             {/* 看板文字简介区（如果有后台数据库内容就用数据库的，否则使用动态生成的模版以防写死成 SVM） */}
             <div className="space-y-4 text-sm text-slate-300 leading-relaxed border-t border-slate-900/60 pt-4 font-normal">
-              {detail ? (
+              {detail?.theory ? (
                 <div className="max-h-[220px] overflow-y-auto pr-2 scrollbar-thin">
                   {renderTheoryMarkdown(detail.theory)}
                 </div>
               ) : (
-                <p>
-                  本知识节点是当前阶段的核心板块。本课将系统探讨关于 <strong>{selectedNodeName}</strong> 的工作原理、模型边界与核心公式推导，帮助您在实际工程与算法设计中建立扎实的闭环分析能力。
-                </p>
+                <p className="text-slate-600 text-xs italic">暂无理论内容</p>
               )}
               
               <div className="bg-slate-900/40 border border-indigo-950/60 rounded-xl p-4 space-y-2">
                 <h4 className="text-xs font-bold text-indigo-300 flex items-center gap-1">
-                  <Settings className="w-3.5 h-3.5 animate-spin" /> 本课核心考核指标与公式：
+                  <Settings className="w-3.5 h-3.5" /> 核心考核指标与公式
                 </h4>
-                
-                {detail && detail.latexFormulas && detail.latexFormulas.length > 0 ? (
+
+                {detail?.latexFormulas?.length > 0 ? (
                   <ul className="list-disc list-inside text-xs text-slate-400 space-y-1.5 pl-1.5">
                     {detail.latexFormulas.map((formula: string, fIdx: number) => (
                       <li key={fIdx} className="flex items-center gap-1.5 flex-wrap">
@@ -278,21 +307,10 @@ export const KnowledgeTree: React.FC<KnowledgeTreeProps> = ({
                         </span>
                       </li>
                     ))}
-                    <li>代码输出断言匹配: <code className="px-1 py-0.5 rounded bg-slate-950 text-cyan-400">{detail.expectedOutput}</code></li>
+                    {detail.expectedOutput && <li>预期输出: <code className="px-1 py-0.5 rounded bg-slate-950 text-cyan-400">{detail.expectedOutput}</code></li>}
                   </ul>
                 ) : (
-                  <ul className="list-disc list-inside text-xs text-slate-400 space-y-1.5 pl-1.5">
-                    <li className="flex items-center gap-1.5 flex-wrap">
-                      <span>核心超参运算关系:</span>
-                      <span className="text-indigo-400 font-mono inline-block">
-                        <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
-                          {`$f(x) = \\sigma(W^T x + b)$`}
-                        </ReactMarkdown>
-                      </span>
-                    </li>
-                    <li>在模拟数据集上完成对应的 Python 模型实例化与数据预测校验。</li>
-                    <li>主观题部分提交深度见解，由 AI 辅导助理在控制台打分并提供重构建议。</li>
-                  </ul>
+                  <p className="text-xs text-slate-600 italic">暂无公式</p>
                 )}
               </div>
             </div>

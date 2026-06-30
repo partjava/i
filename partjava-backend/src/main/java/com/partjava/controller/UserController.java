@@ -110,7 +110,7 @@ public class UserController {
         return ApiResponse.success(resp);
     }
 
-    // 2. 修改用户密码端点
+    // 3. 修改用户密码端点
     @PostMapping("/change-password")
     public ApiResponse<Map<String, Object>> changePassword(@RequestBody ChangePasswordReq req) {
         User user = getCurrentUser();

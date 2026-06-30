@@ -4,14 +4,16 @@ import {
 } from 'react-icons/si';
 import { VscVscode } from 'react-icons/vsc';
 import Link from 'next/link';
-import { useState, useMemo } from 'react';
-import { navigationItems } from './data/navigation';
-import HeroSection from './components/HeroSection';
-import StatsSection from './components/StatsSection';
-import FlipCard from './components/FlipCard';
-import BackToTop from './components/BackToTop';
-import QuickSearch from './components/QuickSearch';
-import InkWashDecoration from './components/InkWashDecoration';
+import { useState, useMemo, useEffect } from 'react';
+import Image from 'next/image';
+import { navigationItems } from './_shared/data/navigation';
+import { useAuth } from '@shared/hooks/useAuth';
+import HeroSection from './_shared/components/HeroSection';
+import StatsSection from './_shared/components/StatsSection';
+import FlipCard from './_shared/components/FlipCard';
+import BackToTop from './_shared/components/BackToTop';
+import QuickSearch from './_shared/components/QuickSearch';
+import InkWashDecoration from './_shared/components/InkWashDecoration';
 
 const groupedSoftware = [
   {
@@ -255,7 +257,27 @@ const brandColors: { [key: string]: string } = {
 };
 
 export default function Home() {
+  const { data: session, status } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
+  const [achievementProgress, setAchievementProgress] = useState<{ earned: number; total: number } | null>(null);
+
+  // 加载成就进度
+  useEffect(() => {
+    if (status === 'authenticated' && session?.user) {
+      fetch('/api/user/stats', { credentials: 'include' })
+        .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+        .then(json => {
+          const data = json.data ?? json;
+          if (data?.achievements) {
+            setAchievementProgress({
+              earned: Number(data.achievements.earned ?? 0),
+              total: Number(data.achievements.total || 10),
+            });
+          }
+        })
+        .catch(err => console.warn('获取成就数据失败:', err.message));
+    }
+  }, [status, session]);
 
   // 过滤软件列表
   const filteredSoftware = useMemo(() => {
@@ -293,11 +315,51 @@ export default function Home() {
       {/* 数据统计区域 */}
       <StatsSection />
 
+      {/* 成就进度条 - 仅在有数据时显示 */}
+      {achievementProgress && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-4 mb-4">
+          <div className="bg-surface-raised rounded-xl shadow-md border border-line-strong p-5">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <span className="text-2xl">🏆</span>
+                <span className="font-bold text-lg text-content-primary">已解锁成就</span>
+              </div>
+              <span className="text-base font-bold font-mono text-content-secondary bg-brand-soft px-3 py-1 rounded-full">
+                {achievementProgress.earned} / {achievementProgress.total}
+              </span>
+            </div>
+            <div className="w-full h-5 bg-gray-200 rounded-full overflow-hidden border border-gray-300">
+              <div
+                className="h-full rounded-full transition-all duration-1000 ease-out"
+                style={{
+                  width: `${Math.min(100, (achievementProgress.earned / Math.max(1, achievementProgress.total)) * 100)}%`,
+                  background: 'linear-gradient(90deg, #4f46e5, #6366f1, #818cf8)',
+                  boxShadow: '0 0 8px rgba(99,102,241,0.4)',
+                }}
+              />
+            </div>
+            <div className="flex justify-between items-center mt-2">
+              <span className="text-sm font-semibold text-indigo-600">
+                {Math.round((achievementProgress.earned / Math.max(1, achievementProgress.total)) * 100)}%
+              </span>
+              <span className="text-xs text-content-muted">
+                {achievementProgress.earned === 0
+                  ? '开始你的学习之旅，解锁第一个成就！'
+                  : '继续加油，解锁更多成就！'}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* 学习分类悬停菜单 */}
       <div className="relative">
         <div className="shadow-md py-4 px-3 md:px-6 border-b border-line-strong" style={{ background: 'linear-gradient(180deg, #EDF0F5 0%, #e8ecf2 100%)' }}>
           <div className="max-w-[1400px] mx-auto">
-            <h1 className="text-xl md:text-3xl font-bold text-content-primary mb-4 md:mb-6 tracking-wide">PartJava 学习平台</h1>
+            <h1 className="text-xl md:text-3xl font-bold text-content-primary mb-4 md:mb-6 tracking-wide flex items-center gap-2">
+              <Image src="/images/logo-calligraphy-transparent.png" alt="PartJava" width={921} height={601} className="h-7 md:h-10 w-auto inline-block" />
+              <span>学习平台</span>
+            </h1>
             
             {/* 学习分类导航 */}
             <div className="relative group">
@@ -413,7 +475,7 @@ export default function Home() {
 
         {/* 算法可视化入口 */}
         <div className="mt-12 mb-8">
-          <Link href="/code-editor">
+          <Link href="/code/editor">
             <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#0C1F3D] via-[#3d4f6b] to-[#0C1F3D] p-1 hover:shadow-2xl transition-all duration-300 transform hover:scale-[1.02]">
               <div className="bg-[#1a2d4a] rounded-xl p-8 text-center">
                 <div className="text-6xl mb-4">🎨</div>

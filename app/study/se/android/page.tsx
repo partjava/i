@@ -1,7 +1,7 @@
 'use client'
 
-import BookCover from '@/app/components/ui/book/BookCover'
-import { THEMES } from '@/app/components/ui/book/theme'
+import BookCover from '@shared/components/ui/book/BookCover'
+import { THEMES } from '@shared/components/ui/book/theme'
 
 const CHAPTERS = [
   { number: 1,  title: '概述',         description: 'Android平台简介、发展历程与Hello World',     href: '/study/se/android/intro' },

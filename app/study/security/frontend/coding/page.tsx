@@ -1,10 +1,10 @@
 'use client'
 
-import LessonLayout, { type LessonMeta } from '@/app/components/ui/book/LessonLayout'
-import { THEMES } from '@/app/components/ui/book/theme'
+import LessonLayout, { type LessonMeta } from '@shared/components/ui/book/LessonLayout'
+import { THEMES } from '@shared/components/ui/book/theme'
 import {
   PageTitle, SectionTitle, BookParagraph, BookCode, BookAlert, BookList,
-} from '@/app/components/ui/book/BookContent'
+} from '@shared/components/ui/book/BookContent'
 
 const META: LessonMeta = {
   subject: '网络安全',
@@ -214,7 +214,7 @@ api.interceptors.response.use(
   (error) => {
     if (error.response) {
       switch (error.response.status) {
-        case 401: window.location.href = '/login'; break;
+        case 401: window.location.href = '/auth/login'; break;
         case 403: console.error('权限不足'); break;
         case 500: console.error('服务器错误'); break;
       }

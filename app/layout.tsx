@@ -1,6 +1,6 @@
-import './globals.css'
+import './_shared/styles/globals.css'
 import type { Metadata, Viewport } from 'next'
-import RootLayoutClient from './components/RootLayoutClient'
+import RootLayoutClient from './_shared/components/RootLayoutClient'
 import 'antd/dist/reset.css'
 import 'katex/dist/katex.min.css'
 
@@ -41,7 +41,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="zh">
+    <html lang="zh" suppressHydrationWarning>
       <head>
         {/* PWA Meta Tags */}
         <meta name="application-name" content="学习笔记分享平台" />

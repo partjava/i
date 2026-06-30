@@ -1,16 +1,17 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { 
-  Globe, 
-  Compass, 
-  Award, 
-  BarChart2, 
-  FileText, 
-  Trophy, 
+import React, { useState, useEffect, useCallback } from 'react';
+import {
+  Globe,
+  Compass,
+  Award,
+  BarChart2,
+  FileText,
+  Trophy,
   ArrowLeft,
   Zap,
-  CheckCircle
+  CheckCircle,
+  Send
 } from 'lucide-react';
 import { SpaceDust } from './components/SpaceDust';
 import SpaceUniverse from './components/SpaceUniverse';
@@ -19,20 +20,41 @@ import { QuizWorkspace } from './components/QuizWorkspace';
 import { NotesDrawer } from './components/NotesDrawer';
 import { LeaderboardDrawer } from './components/LeaderboardDrawer';
 import { AchievementsDrawer } from './components/AchievementsDrawer';
+import { MyChallengesDrawer } from './components/MyChallengesDrawer';
 import { AnimatePresence } from 'framer-motion';
 import { STAGES, Stage } from './components/data';
-import InkWashDecoration from '@/app/components/InkWashDecoration';
+import InkWashDecoration from '@shared/components/InkWashDecoration';
 
 export default function UniversePage() {
   // 核心层级切换状态: 
   // 'universe' -> 宇宙探索星球图层
   // 'tree' -> 知识节点树图层
   // 'quiz' -> 编程练习和AI答疑层
-  const [currentLayer, setCurrentLayer] = useState<'universe' | 'tree' | 'quiz'>('universe');
+  // 从 URL 恢复上次的页面状态，避免刷新丢失
+  const getInitialLayer = () => {
+    if (typeof window !== 'undefined') {
+      const p = new URLSearchParams(window.location.search);
+      const l = p.get('layer');
+      if (l === 'tree' || l === 'quiz') return l;
+    }
+    return 'universe';
+  };
+  const [currentLayer, setCurrentLayerState] = useState<'universe' | 'tree' | 'quiz'>(getInitialLayer);
+
+  const setCurrentLayer = useCallback((layer: 'universe' | 'tree' | 'quiz') => {
+    setCurrentLayerState(layer);
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      if (layer === 'universe') url.searchParams.delete('layer');
+      else url.searchParams.set('layer', layer);
+      window.history.replaceState({}, '', url.toString());
+    }
+  }, []);
   const [showNotesDrawer, setShowNotesDrawer] = useState<boolean>(false);
   const [showLeaderboardDrawer, setShowLeaderboardDrawer] = useState<boolean>(false);
   const [showAchievementsDrawer, setShowAchievementsDrawer] = useState<boolean>(false);
-  
+  const [showMyChallenges, setShowMyChallenges] = useState<boolean>(false);
+
   // 选中的 Stage 与子节点知识点
   const [selectedStage, setSelectedStage] = useState<Stage>(STAGES[3]); // 默认第四阶段-机器学习
   const [selectedNodeName, setSelectedNodeName] = useState<string>("支持向量机 (SVM)");
@@ -111,10 +133,12 @@ export default function UniversePage() {
             <span className="flex items-center gap-1.5"><Zap className="w-3.5 h-3.5 text-amber-400" /> 探索进度: <strong className="text-white">{completedStagesCount}/11 阶段</strong></span>
             <span className="flex items-center gap-1.5"><CheckCircle className="w-3.5 h-3.5 text-[#BBFF5C]" /> 已做通关: <strong className="text-white">{passedChallengesCount} 题</strong></span>
             <span className="w-px h-4 bg-[#234272]/60" />
-            <div className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-[#BBFF5C] animate-pulse" />
-              <span className="text-[11px] text-[#BBFF5C]">沙箱运行中</span>
-            </div>
+            <button
+              onClick={() => setShowMyChallenges(true)}
+              className="flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-bold bg-gradient-to-r from-purple-500 to-fuchsia-500 text-white hover:from-purple-400 hover:to-fuchsia-400 shadow-lg shadow-purple-500/25 transition-all hover:scale-105"
+            >
+              <Send className="w-3.5 h-3.5" /> 我要出题
+            </button>
           </div>
         </header>
 
@@ -201,6 +225,7 @@ export default function UniversePage() {
             <FileText className="w-4.5 h-4.5 group-hover:scale-110 transition-transform" />
             <span className="text-[9px] font-medium tracking-wider">笔记</span>
           </button>
+
         </div>
 
         <div className="w-8 h-8 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center text-[10px] text-slate-400 font-mono">
@@ -217,6 +242,9 @@ export default function UniversePage() {
         )}
         {showAchievementsDrawer && (
           <AchievementsDrawer onClose={() => setShowAchievementsDrawer(false)} />
+        )}
+        {showMyChallenges && (
+          <MyChallengesDrawer onClose={() => setShowMyChallenges(false)} />
         )}
       </AnimatePresence>
     </div>
