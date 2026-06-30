@@ -1,7 +1,7 @@
 'use client'
 
-import BookCover from '@/app/components/ui/book/BookCover'
-import { THEMES } from '@/app/components/ui/book/theme'
+import BookCover from '@shared/components/ui/book/BookCover'
+import { THEMES } from '@shared/components/ui/book/theme'
 
 const CHAPTERS = [
   { number: 1, title: '概述', description: '.NET平台简介和发展历程', href: '/study/se/dotnet/intro' },

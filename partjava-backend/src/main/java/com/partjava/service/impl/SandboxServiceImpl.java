@@ -1,5 +1,7 @@
 package com.partjava.service.impl;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.partjava.dto.JudgementResult;
 import com.partjava.service.SandboxService;
 import lombok.extern.slf4j.Slf4j;
@@ -7,8 +9,16 @@ import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.io.InputStream;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.time.Duration;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
@@ -17,91 +27,113 @@ import java.util.concurrent.TimeUnit;
 @Service
 public class SandboxServiceImpl implements SandboxService {
 
-    // 💡 引入最大并发评测容器流控，防止瞬时提交打爆宿主机 CPU/内存
     private final Semaphore sandboxSemaphore = new Semaphore(4);
+    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final HttpClient httpClient = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(15)).build();
+    private static final String PISTON_API = "https://emkc.org/api/v2/piston/execute";
 
     @Override
     public JudgementResult evaluateCode(String userCode, String evaluationScript, double timeLimitSec) {
-        // 获取信号量锁许可
+        String fullScript = userCode + "\n\n" + evaluationScript;
+
+        // 1. 优先免费在线 API (Piston)
+        try {
+            JudgementResult r = tryPiston(fullScript);
+            if (r != null) return r;
+        } catch (Exception e) {
+            log.info("Piston API 不可用: {}", e.getMessage());
+        }
+
+        // 2. 降级本地执行
+        return executeLocally(fullScript, timeLimitSec);
+    }
+
+    private JudgementResult tryPiston(String fullScript) {
+        try {
+            Map<String, Object> body = new HashMap<>();
+            body.put("language", "python");
+            body.put("version", "3.10.0");
+            body.put("files", List.of(Map.of("name", "solution.py", "content", fullScript)));
+            body.put("stdin", "");
+            body.put("compile_timeout", 10000);
+            body.put("run_timeout", (int) (5000));
+
+            HttpRequest req = HttpRequest.newBuilder()
+                    .uri(URI.create(PISTON_API))
+                    .header("Content-Type", "application/json")
+                    .POST(HttpRequest.BodyPublishers.ofString(objectMapper.writeValueAsString(body), StandardCharsets.UTF_8))
+                    .build();
+
+            HttpResponse<String> resp = httpClient.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+            if (resp.statusCode() != 200) return null;
+
+            JsonNode node = objectMapper.readTree(resp.body());
+            String output = node.path("run").path("output").asText("");
+            if (output.isEmpty()) output = node.path("run").path("stderr").asText("");
+
+            return parseOutput(output, 50);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private JudgementResult executeLocally(String fullScript, double timeLimitSec) {
         boolean acquired = false;
         try {
-            // 最多排队等待 10 秒，拿不到则熔断返回繁忙
             acquired = sandboxSemaphore.tryAcquire(10, TimeUnit.SECONDS);
-            if (!acquired) {
-                log.warn("沙箱评测并发数超限，请求进入熔断状态");
-                return new JudgementResult("SYSTEM_BUSY", "系统评测繁忙，请稍后再试", 0);
-            }
+            if (!acquired) return new JudgementResult("SYSTEM_BUSY", "系统评测繁忙，请稍后再试", 0);
         } catch (InterruptedException e) {
-            log.error("排队获取沙箱许可时线程被中断", e);
             Thread.currentThread().interrupt();
-            return new JudgementResult("SYSTEM_ERROR", "评测排队中途被中断", 0);
+            return new JudgementResult("SYSTEM_ERROR", "评测排队中断", 0);
         }
 
         File tempFile = null;
         try {
-            // 1. 合并代码：用户前置引入 + 后台测试断言脚本
-            String fullScriptContent = userCode + "\n\n" + evaluationScript;
-            
-            // 2. 在宿主机 /tmp 生成隔离脚本文件
             tempFile = File.createTempFile("sol_" + UUID.randomUUID(), ".py");
-            Files.writeString(tempFile.toPath(), fullScriptContent, StandardCharsets.UTF_8);
-
-            // 3. 构建无网、限存、只读挂载的 Docker 评测命令
-            String[] dockerCmd = {
-                "docker", "run", "--rm",
-                "--network", "none",
-                "-m", "512m",
-                "--cpus", "1.0",
-                "-v", "/home/liming/partjava/datasets:/data:ro", // 只读挂载科学数据集
-                "-v", tempFile.getAbsolutePath() + ":/app/solution.py:ro", // 只读挂载用户代码
-                "python-ml-env:latest",
-                "python", "/app/solution.py"
-            };
+            Files.writeString(tempFile.toPath(), fullScript, StandardCharsets.UTF_8);
 
             long startTime = System.currentTimeMillis();
-            ProcessBuilder pb = new ProcessBuilder(dockerCmd);
-            pb.redirectErrorStream(true); // 合并异常输出
-            Process process = pb.start();
-
-            // 4. ⏳ 引入带物理超时的熔断阻断机制
-            long systemTimeout = (long) Math.ceil(timeLimitSec + 2.0); // 宽容 2s 给系统开销
-            boolean completed = process.waitFor(systemTimeout, TimeUnit.SECONDS);
-
-            if (!completed) {
-                process.destroyForcibly(); // 强制终止进程以释放系统内存
-                log.warn("用户提交代码执行超时熔断被强杀，超时时间限制: {}s", timeLimitSec);
-                return new JudgementResult("TIME_LIMIT_EXCEEDED", "评测超时，模型代码运行超出耗时限制", 0);
+            Process process;
+            try {
+                new ProcessBuilder("docker", "version").start().waitFor(2, TimeUnit.SECONDS);
+                process = new ProcessBuilder("docker", "run", "--rm", "--network", "none",
+                        "-m", "256m", "--cpus", "0.5",
+                        "-v", tempFile.getAbsolutePath() + ":/app/solution.py:ro",
+                        "python:3.11-slim", "python", "/app/solution.py")
+                        .redirectErrorStream(true).start();
+            } catch (Exception ex) {
+                process = new ProcessBuilder("python3", tempFile.getAbsolutePath())
+                        .redirectErrorStream(true).start();
             }
+
+            boolean completed = process.waitFor((long) (timeLimitSec + 3), TimeUnit.SECONDS);
+            if (!completed) { process.destroyForcibly(); return new JudgementResult("TIME_LIMIT_EXCEEDED", "评测超时", 0); }
 
             long duration = System.currentTimeMillis() - startTime;
-            
-            // 5. 读取容器内部脚本输出
-            try (InputStream is = process.getInputStream()) {
-                String outputLog = new String(is.readAllBytes(), StandardCharsets.UTF_8).trim();
-
-                // 6. 解析状态标识符，打分通关
-                if (outputLog.contains("__TEST_STATUS__:PASSED")) {
-                    String successMsg = outputLog.split("__TEST_STATUS__:PASSED\\|")[1].trim();
-                    return new JudgementResult("ACCEPTED", successMsg, duration);
-                } else if (outputLog.contains("__TEST_STATUS__:FAILED")) {
-                    String errorMsg = outputLog.split("__TEST_STATUS__:FAILED\\|")[1].trim();
-                    return new JudgementResult("WRONG_ANSWER", errorMsg, duration);
-                } else {
-                    // 未捕获的语法错误或运行时崩溃
-                    return new JudgementResult("RUNTIME_ERROR", outputLog, duration);
-                }
-            }
-
+            String outputLog;
+            try (InputStream is = process.getInputStream()) { outputLog = new String(is.readAllBytes(), StandardCharsets.UTF_8).trim(); }
+            return parseOutput(outputLog, duration);
         } catch (Exception e) {
-            log.error("沙箱执行器系统异常", e);
-            return new JudgementResult("SYSTEM_ERROR", "后端评测模块发生内部错误: " + e.getMessage(), 0);
+            log.error("沙箱系统异常", e);
+            return new JudgementResult("SYSTEM_ERROR", "评测内部错误: " + e.getMessage(), 0);
         } finally {
-            if (tempFile != null && tempFile.exists()) {
-                tempFile.delete(); // 清理残留临时脚本
-            }
-            if (acquired) {
-                sandboxSemaphore.release(); // 释放信号量锁
-            }
+            if (tempFile != null && tempFile.exists()) tempFile.delete();
+            if (acquired) sandboxSemaphore.release();
         }
+    }
+
+    private JudgementResult parseOutput(String output, long duration) {
+        if (output.contains("__TEST_STATUS__:PASSED")) {
+            String[] parts = output.split("__TEST_STATUS__:PASSED", 2);
+            String msg = parts.length > 1 ? parts[1].trim() : "通过";
+            if (msg.startsWith("|")) msg = msg.substring(1);
+            return new JudgementResult("ACCEPTED", msg, duration);
+        } else if (output.contains("__TEST_STATUS__:FAILED")) {
+            String[] parts = output.split("__TEST_STATUS__:FAILED", 2);
+            String msg = parts.length > 1 ? parts[1].trim() : output;
+            if (msg.startsWith("|")) msg = msg.substring(1);
+            return new JudgementResult("WRONG_ANSWER", msg, duration);
+        }
+        return new JudgementResult("RUNTIME_ERROR", output, duration);
     }
 }

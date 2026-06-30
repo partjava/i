@@ -1,7 +1,7 @@
 'use client'
 
-import LessonLayout, { type LessonMeta } from '@/app/components/ui/book/LessonLayout'
-import { THEMES } from '@/app/components/ui/book/theme'
+import LessonLayout, { type LessonMeta } from '@shared/components/ui/book/LessonLayout'
+import { THEMES } from '@shared/components/ui/book/theme'
 import {
   PageTitle,
   BookParagraph,
@@ -9,7 +9,7 @@ import {
   BookAlert,
   BookList,
   TagGrid,
-} from '@/app/components/ui/book/BookContent'
+} from '@shared/components/ui/book/BookContent'
 
 const META: LessonMeta = {
   subject: '软件工程',
@@ -60,7 +60,7 @@ const SPREADS = [
       <div className="space-y-4">
         <PageTitle>认证与授权</PageTitle>
         <BookParagraph>Jakarta EE支持多种认证方式，包括表单认证、HTTP基本认证、客户端证书认证等。表单认证是最常见的方式，通过自定义登录页面收集用户凭证，并与安全域中的身份信息进行比对。</BookParagraph>
-        <BookCode language="java" code={`@WebServlet("/login")
+        <BookCode language="java" code={`@WebServlet("/auth/login")
 public class LoginServlet extends HttpServlet {
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
@@ -279,7 +279,7 @@ public class CsrfFilter implements Filter {
         <PageTitle>综合案例：安全的用户管理系统</PageTitle>
         <BookParagraph>以下示例展示了如何结合Jakarta EE的认证、授权、注解和过滤器机制，构建一个安全的用户管理系统。包含用户注册、登录、权限控制和安全防护等功能。</BookParagraph>
         <h3 className="text-sm font-medium text-ink mt-4">密码加密存储</h3>
-        <BookCode language="java" code={`@WebServlet("/register")
+        <BookCode language="java" code={`@WebServlet("/auth/register")
 public class RegisterServlet extends HttpServlet {
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
             throws IOException, ServletException {

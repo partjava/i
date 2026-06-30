@@ -87,10 +87,12 @@ public class SearchServiceImpl implements SearchService {
         }
         List<Note> notes = noteMapper.selectList(noteQuery);
 
-        // 3. 检索算法宇宙挑战关卡 (模糊匹配挑战 title)
+        // 3. 检索算法宇宙挑战关卡 (模糊匹配标题/主题/子主题)
         List<Challenge> challenges = challengeMapper.selectList(
                 new LambdaQueryWrapper<Challenge>()
-                        .like(Challenge::getTitle, cleanQuery)
+                        .and(w -> w.like(Challenge::getTitle, cleanQuery)
+                                .or().like(Challenge::getTopicName, cleanQuery)
+                                .or().like(Challenge::getSubtopicName, cleanQuery))
                         .eq(Challenge::getStatus, "published")
         );
 

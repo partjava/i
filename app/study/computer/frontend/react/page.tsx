@@ -1,7 +1,7 @@
 'use client'
 
-import LessonLayout, { type LessonMeta } from '@/app/components/ui/book/LessonLayout'
-import { THEMES } from '@/app/components/ui/book/theme'
+import LessonLayout, { type LessonMeta } from '@shared/components/ui/book/LessonLayout'
+import { THEMES } from '@shared/components/ui/book/theme'
 import {
   PageTitle,
   SectionTitle,
@@ -9,7 +9,7 @@ import {
   BookCode,
   BookList,
   TagGrid,
-} from '@/app/components/ui/book/BookContent'
+} from '@shared/components/ui/book/BookContent'
 
 const META: LessonMeta = {
   subject: 'Web前端开发',
@@ -62,7 +62,7 @@ function Hello() {
         <BookParagraph>JSX是JS的语法扩展，可嵌入表达式、条件、列表渲染。</BookParagraph>
         <BookCode language="jsx" code={`// 条件渲染
 function Greet({ isLogin }) {
-  return isLogin ? <span>欢迎回来</span> : <a href="/login">请登录</a>;
+  return isLogin ? <span>欢迎回来</span> : <a href="/auth/login">请登录</a>;
 }`} />
         <BookCode language="jsx" code={`// 列表渲染
 function List({ items }) {

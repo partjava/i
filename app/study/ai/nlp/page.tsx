@@ -1,8 +1,8 @@
 'use client'
 
-import BookCover from '@/app/components/ui/book/BookCover'
-import { THEMES } from '@/app/components/ui/book/theme'
-import { SectionTitle, BookParagraph, BookList } from '@/app/components/ui/book/BookContent'
+import BookCover from '@shared/components/ui/book/BookCover'
+import { THEMES } from '@shared/components/ui/book/theme'
+import { SectionTitle, BookParagraph, BookList } from '@shared/components/ui/book/BookContent'
 
 const CHAPTERS = [
   { number: 1, title: 'NLP基础', description: '自然语言处理基本概念和原理', href: '/study/ai/nlp/basic' },

@@ -1,7 +1,7 @@
 'use client'
 
-import BookCover from '@/app/components/ui/book/BookCover'
-import { THEMES } from '@/app/components/ui/book/theme'
+import BookCover from '@shared/components/ui/book/BookCover'
+import { THEMES } from '@shared/components/ui/book/theme'
 
 const CHAPTERS = [
   { number: 1, title: '编程入门', description: 'Python基础语法和编程概念', href: '/study/computer/python/intro' },

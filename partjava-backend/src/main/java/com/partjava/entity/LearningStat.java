@@ -26,8 +26,13 @@ public class LearningStat {
     private String category;
     private String technology;
     private Integer studyTime;
+
+    @com.baomidou.mybatisplus.annotation.TableField(exist = false)
     private Integer notesCount;
+
+    @com.baomidou.mybatisplus.annotation.TableField(exist = false)
     private LocalDate lastStudyDate;
+
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

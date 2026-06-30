@@ -45,7 +45,7 @@ mybatis-plus:
       id-type: auto
   configuration:
     map-underscore-to-camel-case: true
-    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    # log-impl: org.apache.ibatis.logging.stdout.StdOutImpl  # 生产环境注释掉
 
 # Springdoc Swagger Configuration
 springdoc:
@@ -62,5 +62,5 @@ judge0:
 
 ai:
   api-key: "${AI_API_KEY:}"
-  api-url: "${AI_API_URL:https://api.openai.com/v1}"
+  api-url: "${AI_API_URL:https://api.deepseek.com/v1}"
 

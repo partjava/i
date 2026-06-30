@@ -1,8 +1,8 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { useAuth } from '@/app/hooks/useAuth';
+import { useAuth } from '@shared/hooks/useAuth';
 import { useRouter, useParams } from 'next/navigation';
-import MarkdownEditor from '@/app/components/MarkdownEditor';
+import MarkdownEditor from '@shared/components/MarkdownEditor';
 
 interface Note {
   _id: string;
@@ -35,7 +35,7 @@ export default function EditNotePage() {
   // 检查登录状态
   useEffect(() => {
     if (status === 'unauthenticated') {
-      router.push('/login');
+      router.push('/auth/login');
     }
   }, [status, router]);
 
@@ -53,7 +53,7 @@ export default function EditNotePage() {
       });
       if (response.ok) {
         const noteData = await response.json();
-        setNote(noteData.note); // 修复：API返回的是{note: ...}格式
+        setNote(noteData.data || noteData.note); // API返回的是{success: true, data: Note}格式
       } else {
         setError('笔记不存在或无权限访问');
       }

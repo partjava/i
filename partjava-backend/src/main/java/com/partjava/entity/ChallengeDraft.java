@@ -22,6 +22,7 @@ public class ChallengeDraft {
     private String topicName;           // 主题名称
     private String subtopicName;        // 小节名称
     private String levelTitle;          // 关卡标题
+    private Integer levelIndex;         // 关卡序号 (该小节第几题)
     private String theoryContent;       // Markdown 理论正文
     
     @TableField(typeHandler = JacksonTypeHandler.class)
@@ -43,11 +44,27 @@ public class ChallengeDraft {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
+    private String difficulty;           // 难度: foundation/easy/medium/hard
+    private String accessLevel;          // 访问权限: free/member/vip
+    private Boolean isPublic;            // 是否公开: true=所有人可见, false=仅自己可见
+
+    @TableField(value = "test_cases", typeHandler = JacksonTypeHandler.class)
+    private List<TestCaseItem> testCases;       // 可见测试样例 (学生可看)
+
+    @TableField(value = "evaluation_cases", typeHandler = JacksonTypeHandler.class)
+    private List<TestCaseItem> evaluationCases;  // 隐藏判题样例 (判题用)
+
     @Data
     public static class QuizDraftItem {
         private String question;
         private List<String> options;
         private Integer answer;         // 正确答案索引 (0-3)
         private String explanation;
+    }
+
+    @Data
+    public static class TestCaseItem {
+        private String input;
+        private String expected;
     }
 }

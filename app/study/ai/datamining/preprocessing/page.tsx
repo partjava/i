@@ -1,8 +1,8 @@
 'use client'
 
-import LessonLayout, { type LessonMeta } from '@/app/components/ui/book/LessonLayout'
-import { THEMES } from '@/app/components/ui/book/theme'
-import { PageTitle, SectionTitle, BookParagraph, BookCode, BookList } from '@/app/components/ui/book/BookContent'
+import LessonLayout, { type LessonMeta } from '@shared/components/ui/book/LessonLayout'
+import { THEMES } from '@shared/components/ui/book/theme'
+import { PageTitle, SectionTitle, BookParagraph, BookCode, BookList } from '@shared/components/ui/book/BookContent'
 
 const META: LessonMeta = { subject: '数据挖掘', chapterTitle: '数据预处理', chapterNumber: 2, totalChapters: 10, subjectHref: '/study/ai/datamining', prevChapter: { label: '数据挖掘基础', href: '/study/ai/datamining/basic' }, nextChapter: { label: '特征工程', href: '/study/ai/datamining/feature-engineering' }, theme: THEMES.ai }
 

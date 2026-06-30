@@ -1,7 +1,7 @@
 'use client'
 
-import BookCover from '@/app/components/ui/book/BookCover'
-import { THEMES } from '@/app/components/ui/book/theme'
+import BookCover from '@shared/components/ui/book/BookCover'
+import { THEMES } from '@shared/components/ui/book/theme'
 
 const CHAPTERS = [
   { number: 1, title: '概述', description: '云计算定义、发展历程与服务模式', href: '/study/se/cloud/intro' },

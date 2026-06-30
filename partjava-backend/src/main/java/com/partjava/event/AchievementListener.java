@@ -165,7 +165,7 @@ public class AchievementListener {
                         .eq(UserAchievement::getAchievementId, achievement.getId())
         );
 
-        if (userAchievement != null && Boolean.TRUE.equals(userAchievement.getUnlocked())) {
+        if (userAchievement != null && userAchievement.getUnlockedAt() != null) {
             return; // 已经解锁直接掠过
         }
 
@@ -173,18 +173,13 @@ public class AchievementListener {
             userAchievement = UserAchievement.builder()
                     .userId(userId)
                     .achievementId(achievement.getId())
-                    .unlocked(false)
-                    .progress(progressValue)
                     .createdAt(LocalDateTime.now())
                     .build();
             userAchievementMapper.insert(userAchievement);
-        } else {
-            userAchievement.setProgress(progressValue);
         }
 
         // 解锁判定
         if (progressValue >= achievement.getMaxProgress()) {
-            userAchievement.setUnlocked(true);
             userAchievement.setUnlockedAt(LocalDateTime.now());
             log.info("🎉🎉 恭喜学员 ID: {} 解锁成就: 【{}】 (描述：{})!", 
                     userId, achievement.getName(), achievement.getDescription());

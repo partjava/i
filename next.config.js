@@ -77,7 +77,7 @@ const nextConfig = {
         source: '/(.*)',
         headers: [{
           key: 'Content-Security-Policy',
-          value: "default-src 'self'; script-src 'self' 'unsafe-inline' https://unpkg.com https://cdn.jsdelivr.net 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: https:; font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net; connect-src 'self' https:; worker-src 'self' blob:; child-src 'self' blob:"
+          value: "default-src 'self'; script-src 'self' 'unsafe-inline' https://unpkg.com https://cdn.jsdelivr.net 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: https:; font-src 'self' data: https://fonts.gstatic.com https://cdn.jsdelivr.net; connect-src 'self' https:; worker-src 'self' blob:; child-src 'self' blob:"
         }]
       },
       // 安全响应头
@@ -96,7 +96,11 @@ const nextConfig = {
 
   // 资源优化配置
   images: {
-    domains: ['localhost', 'partjava.com', 'www.partjava.com'], // 根据实际使用的图片域名配置
+    remotePatterns: [
+      { protocol: 'http', hostname: 'localhost' },
+      { protocol: 'https', hostname: 'partjava.com' },
+      { protocol: 'https', hostname: 'www.partjava.com' },
+    ],
     formats: ['image/webp', 'image/avif'],  // 自动转换为现代图片格式
   },
   

@@ -1,8 +1,8 @@
 'use client'
 
-import LessonLayout, { type LessonMeta } from '@/app/components/ui/book/LessonLayout'
-import { THEMES } from '@/app/components/ui/book/theme'
-import { PageTitle, SectionTitle, BookParagraph, BookCode, BookList } from '@/app/components/ui/book/BookContent'
+import LessonLayout, { type LessonMeta } from '@shared/components/ui/book/LessonLayout'
+import { THEMES } from '@shared/components/ui/book/theme'
+import { PageTitle, SectionTitle, BookParagraph, BookCode, BookList } from '@shared/components/ui/book/BookContent'
 
 const isoCode = `from sklearn.ensemble import IsolationForest\nimport numpy as np\n\nclf = IsolationForest(contamination=0.1, random_state=42)\npreds = clf.fit_predict(X)\nanomalies = X[preds == -1]\nprint(f"异常点数: {len(anomalies)}")`
 

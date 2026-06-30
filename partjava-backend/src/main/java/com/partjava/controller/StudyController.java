@@ -7,6 +7,7 @@ import lombok.Data;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/study")
@@ -59,6 +60,17 @@ public class StudyController {
         Integer activeUserId = getUserIdOrFallback(userId);
         studyService.updatePageProgress(activeUserId, req.getPagePath(), req.isCompleted());
         return ApiResponse.success(null);
+    }
+
+    /**
+     * 获取当前学员的学习统计数据（供 Profile 页面用）
+     */
+    @GetMapping("/stats")
+    public ApiResponse<Map<String, Object>> getStudyStats(
+            @RequestAttribute(value = "userId", required = false) Integer userId) {
+        Integer activeUserId = getUserIdOrFallback(userId);
+        Map<String, Object> stats = studyService.getUserStudyStats(activeUserId);
+        return ApiResponse.success(stats);
     }
 
     /**

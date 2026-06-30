@@ -1,9 +1,9 @@
 'use client';
 
-import { useAuth } from '@/app/hooks/useAuth';
+import { useAuth } from '@shared/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
-import CodeEditor from '@/app/components/CodeEditor';
+import CodeEditor from '@shared/components/CodeEditor';
 import { Card, Typography, Steps, Alert } from 'antd';
 import { CodeOutlined, PlayCircleOutlined, SaveOutlined } from '@ant-design/icons';
 
@@ -15,7 +15,7 @@ export default function CodeEditorPage() {
 
   useEffect(() => {
     if (status === 'unauthenticated') {
-      router.push('/login');
+      router.push('/auth/login');
     }
   }, [status, router]);
 

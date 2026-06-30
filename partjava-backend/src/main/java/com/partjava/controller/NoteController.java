@@ -42,8 +42,10 @@ public class NoteController {
      * 查看笔记详情
      */
     @GetMapping("/{id}")
-    public ApiResponse<Note> getNoteDetail(@PathVariable("id") Long noteId) {
-        Note note = noteService.getNoteById(noteId);
+    public ApiResponse<Note> getNoteDetail(
+            @RequestAttribute(value = "userId", required = false) Integer userId,
+            @PathVariable("id") Long noteId) {
+        Note note = noteService.getNoteById(noteId, userId != null ? Long.valueOf(userId) : null);
         return ApiResponse.success(note);
     }
 

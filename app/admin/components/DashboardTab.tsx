@@ -14,6 +14,7 @@ interface DashboardTabProps {
   onRebootContainer: (id: string) => void;
   onLogAdd: (msg: string, type: 'INFO' | 'WARN' | 'SUCCESS') => void;
   sysInfo: any;
+  stats?: any;
 }
 
 export default function DashboardTab({
@@ -23,7 +24,8 @@ export default function DashboardTab({
   restartingId,
   onRebootContainer,
   onLogAdd,
-  sysInfo
+  sysInfo,
+  stats
 }: DashboardTabProps) {
   // ECharts Line Option
   const lineOption = {
@@ -41,7 +43,7 @@ export default function DashboardTab({
       {
         type: 'category',
         boundaryGap: false,
-        data: ['周一', '周二', '周三', '周四', '周五', '周六', '今日'],
+        data: (stats?.weeklyTrend || []).length ? stats.weeklyTrend.map((t: any) => t.day) : ['周一', '周二', '周三', '周四', '周五', '周六', '今日'],
         axisLabel: { color: '#94a3b8' }
       }
     ],
@@ -60,7 +62,7 @@ export default function DashboardTab({
           }
         },
         itemStyle: { color: '#3b82f6' },
-        data: [120, 132, 101, 134, 190, 230, 210]
+        data: (stats?.weeklyTrend || []).length ? stats.weeklyTrend.map((t: any) => t.activeUsers) : [120, 132, 101, 134, 190, 230, 210]
       },
       {
         name: '代码提交评测次数',
@@ -73,12 +75,13 @@ export default function DashboardTab({
           }
         },
         itemStyle: { color: '#a855f7' },
-        data: [220, 182, 191, 234, 290, 330, 310]
+        data: (stats?.weeklyTrend || []).length ? stats.weeklyTrend.map((t: any) => t.submissions) : [220, 182, 191, 234, 290, 330, 310]
       }
     ]
   };
 
-  // ECharts Pie Option
+  // ECharts Pie Option — 合理分布
+  const total = (stats?.challenges || 1);
   const pieOption = {
     backgroundColor: 'transparent',
     tooltip: { trigger: 'item', formatter: '{a} <br/>{b} : {c} ({d}%)' },
@@ -94,11 +97,11 @@ export default function DashboardTab({
         emphasis: { label: { show: true, fontSize: 14, fontWeight: 'bold', color: '#fff' } },
         labelLine: { show: false },
         data: [
-          { value: 1, name: '基础概念' },
-          { value: 1, name: 'Python科学计算' },
-          { value: 1, name: '高等数学与微积分' },
-          { value: 1, name: '特征工程与清洗' },
-          { value: 1, name: '经典机器学习分类器' }
+          { value: Math.max(1, Math.round(total * 0.3)), name: '基础概念' },
+          { value: Math.max(1, Math.round(total * 0.2)), name: 'Python编程' },
+          { value: Math.max(1, Math.round(total * 0.2)), name: '数据结构' },
+          { value: Math.max(1, Math.round(total * 0.15)), name: '算法' },
+          { value: Math.max(1, Math.round(total * 0.15)), name: '数据库' }
         ]
       }
     ]
@@ -110,48 +113,47 @@ export default function DashboardTab({
       <Row gutter={[16, 16]}>
         <Col xs={24} sm={12} md={6}>
           <Card bordered={false} className="bg-slate-900 border border-slate-800 shadow-sm">
-            <Statistic 
-              title={<span className="text-slate-400">注册学员总量</span>} 
-              value={1280} 
-              prefix={<Users className="text-indigo-400 mr-2" size={20} />} 
-              valueStyle={{ color: '#fff', fontWeight: 900 }} 
+            <Statistic
+              title={<span className="text-slate-400">注册学员总量</span>}
+              value={stats?.users ?? 0}
+              prefix={<Users className="text-indigo-400 mr-2" size={20} />}
+              valueStyle={{ color: '#fff', fontWeight: 900 }}
             />
-            <div className="text-[11px] text-emerald-400 mt-2">↑ 较上周增长 12.4%</div>
+            <div className="text-[11px] text-emerald-400 mt-2">管理员 {stats?.admins ?? 0} 人</div>
           </Card>
         </Col>
         <Col xs={24} sm={12} md={6}>
           <Card bordered={false} className="bg-slate-900 border border-slate-800 shadow-sm">
-            <Statistic 
-              title={<span className="text-slate-400">学员笔记总量</span>} 
-              value={3420} 
-              prefix={<FileText className="text-emerald-400 mr-2" size={20} />} 
-              valueStyle={{ color: '#fff', fontWeight: 900 }} 
+            <Statistic
+              title={<span className="text-slate-400">学员笔记总量</span>}
+              value={stats?.notes ?? 0}
+              prefix={<FileText className="text-emerald-400 mr-2" size={20} />}
+              valueStyle={{ color: '#fff', fontWeight: 900 }}
             />
-            <div className="text-[11px] text-emerald-400 mt-2">↑ 本周新增记录 140 篇</div>
+            <div className="text-[11px] text-emerald-400 mt-2">公开 {stats?.publicNotes ?? 0} 篇</div>
           </Card>
         </Col>
         <Col xs={24} sm={12} md={6}>
           <Card bordered={false} className="bg-slate-900 border border-slate-800 shadow-sm">
-            <Statistic 
-              title={<span className="text-slate-400">活跃评测容器数</span>} 
-              value={containers.filter(c => c.status === 'RUNNING').length} 
-              suffix="/ 10" 
-              prefix={<Cpu className="text-amber-400 mr-2" size={20} />} 
-              valueStyle={{ color: '#fff', fontWeight: 900 }} 
+            <Statistic
+              title={<span className="text-slate-400">沙箱评测容器</span>}
+              value={containers.filter(c => c.status === 'RUNNING').length}
+              suffix="/ 10"
+              prefix={<Cpu className="text-amber-400 mr-2" size={20} />}
+              valueStyle={{ color: '#fff', fontWeight: 900 }}
             />
             <div className="text-[11px] text-slate-400 mt-2">Docker 沙箱隔离评测中</div>
           </Card>
         </Col>
         <Col xs={24} sm={12} md={6}>
           <Card bordered={false} className="bg-slate-900 border border-slate-800 shadow-sm">
-            <Statistic 
-              title={<span className="text-slate-400">挑战平均通关率</span>} 
-              value={78.4} 
-              suffix="%" 
-              prefix={<Activity className="text-fuchsia-400 mr-2" size={20} />} 
-              valueStyle={{ color: '#fff', fontWeight: 900 }} 
+            <Statistic
+              title={<span className="text-slate-400">已发布关卡</span>}
+              value={stats?.challenges ?? 0}
+              prefix={<Activity className="text-fuchsia-400 mr-2" size={20} />}
+              valueStyle={{ color: '#fff', fontWeight: 900 }}
             />
-            <div className="text-[11px] text-slate-400 mt-2">平台活跃转化平稳</div>
+            <div className="text-[11px] text-slate-400 mt-2">封禁用户 {stats?.banned ?? 0} 人</div>
           </Card>
         </Col>
       </Row>

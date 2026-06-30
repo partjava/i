@@ -45,7 +45,9 @@ export const NotesDrawer: React.FC<NotesDrawerProps> = ({ onClose }) => {
     try {
       const res = await fetch('/api/notes?limit=30');
       const data = await res.json();
-      if (data.success && data.data && data.data.notes) {
+      if (data.success && Array.isArray(data.data)) {
+        setNotes(data.data);
+      } else if (data.success && data.data && data.data.notes) {
         setNotes(data.data.notes);
       }
     } catch (e) {

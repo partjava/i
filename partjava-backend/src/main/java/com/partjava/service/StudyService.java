@@ -2,6 +2,7 @@ package com.partjava.service;
 
 import com.partjava.entity.StudyProgress;
 import java.util.List;
+import java.util.Map;
 
 public interface StudyService {
     /**
@@ -24,4 +25,6 @@ public interface StudyService {
      * 拉取该学员已记录的所有页面学习进度列表
      */
     List<StudyProgress> getPageProgressList(Integer userId);
+
+    Map<String, Object> getUserStudyStats(Integer userId);
 }

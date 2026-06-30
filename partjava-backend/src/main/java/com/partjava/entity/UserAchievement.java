@@ -20,8 +20,6 @@ public class UserAchievement {
     private Integer id;
     private Integer userId;
     private String achievementId;
-    private Boolean unlocked;
-    private Integer progress;
     private LocalDateTime unlockedAt;
     private LocalDateTime createdAt;
 }

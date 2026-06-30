@@ -11,6 +11,16 @@ interface HealthModalProps {
 }
 
 export default function HealthModal({ isOpen, onClose, sysInfo }: HealthModalProps) {
+  // 防御性空值兜底：sysInfo 可能因 API 未返回或认证失败而为 null/undefined
+  const info = sysInfo || {};
+  const processMem = info.processMemoryMB ?? 0;
+  const cpuModel = info.cpuModel ?? '—';
+  const cpuCores = info.cpuCores ?? 0;
+  const loadAvg = info.loadAvg1Min ?? 0;
+  const usedMem = info.usedMemoryGB ?? 0;
+  const totalMem = info.totalMemoryGB ?? 0;
+  const memPct = info.memoryUsagePercent ?? 0;
+
   return (
     <Modal
       title={
@@ -32,25 +42,25 @@ export default function HealthModal({ isOpen, onClose, sysInfo }: HealthModalPro
         <div>
           <div className="flex justify-between mb-1">
             <span>Node.js Process Heap (前端服务内存占用)</span>
-            <span className="font-semibold text-slate-100">{sysInfo.processMemoryMB}MB / 512MB</span>
+            <span className="font-semibold text-slate-100">{processMem}MB / 512MB</span>
           </div>
-          <Progress percent={Math.min(100, Math.round((sysInfo.processMemoryMB / 512) * 100))} strokeColor={{ '0%': '#6366f1', '100%': '#a855f7' }} status="active" />
+          <Progress percent={Math.min(100, Math.round((processMem / 512) * 100))} strokeColor={{ '0%': '#6366f1', '100%': '#a855f7' }} status="active" />
         </div>
 
         <div>
           <div className="flex justify-between mb-1">
             <span>Host CPU Core Load (系统内核平均负载 - 1分钟)</span>
-            <span className="font-semibold text-slate-100">{sysInfo.cpuModel} ({sysInfo.cpuCores} 核)</span>
+            <span className="font-semibold text-slate-100">{cpuModel} ({cpuCores} 核)</span>
           </div>
-          <Progress percent={Math.min(100, Math.round(sysInfo.loadAvg1Min * 100))} strokeColor="#3b82f6" />
+          <Progress percent={Math.min(100, Math.round(loadAvg * 100))} strokeColor="#3b82f6" />
         </div>
 
         <div>
           <div className="flex justify-between mb-1">
             <span>Physical Memory Usage (服务器物理内存负载)</span>
-            <span className="font-semibold text-slate-100">{sysInfo.usedMemoryGB}GB / {sysInfo.totalMemoryGB}GB</span>
+            <span className="font-semibold text-slate-100">{usedMem}GB / {totalMem}GB</span>
           </div>
-          <Progress percent={sysInfo.memoryUsagePercent} strokeColor="#eab308" />
+          <Progress percent={memPct} strokeColor="#eab308" />
         </div>
 
         <Divider className="border-slate-800 my-2" />

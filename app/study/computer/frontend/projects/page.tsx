@@ -1,7 +1,7 @@
 'use client'
 
-import LessonLayout, { type LessonMeta } from '@/app/components/ui/book/LessonLayout'
-import { THEMES } from '@/app/components/ui/book/theme'
+import LessonLayout, { type LessonMeta } from '@shared/components/ui/book/LessonLayout'
+import { THEMES } from '@shared/components/ui/book/theme'
 import {
   PageTitle,
   SectionTitle,
@@ -9,7 +9,7 @@ import {
   BookCode,
   BookList,
   TagGrid,
-} from '@/app/components/ui/book/BookContent'
+} from '@shared/components/ui/book/BookContent'
 
 const META: LessonMeta = {
   subject: 'Web前端开发',
@@ -112,7 +112,7 @@ Mock.mock('/api/user', { name: '@cname', age: 20 });`} />
 <Route path="/admin" element={isAdmin ? <Admin /> : <NoAuth />} />
 // Vue Router权限守卫
 router.beforeEach((to, from, next) => {
-  if (to.meta.auth && !isLogin()) next('/login');
+  if (to.meta.auth && !isLogin()) next('/auth/login');
   else next();
 });`} />
         <TagGrid items={['Zustand', 'Redux', 'axios', 'Mock.js', '路由守卫']} />
