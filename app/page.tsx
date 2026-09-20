@@ -2,6 +2,15 @@
 import {
   SiPycharm, SiIntellijidea, SiEclipseide, SiClion, SiGoland, SiPhpstorm, SiWebstorm, SiDevdotto, SiXcode, SiAndroidstudio, SiNotepadplusplus, SiVim, SiGit, SiGithub, SiGitee, SiNodedotjs, SiPython, SiMysql, SiPostgresql, SiMongodb, SiRedis, SiSqlite, SiDbeaver, SiDocker, SiLinux, SiUbuntu, SiCentos, SiFedora, SiShell, SiMobx, SiVmware, SiVirtualbox, SiAnaconda, SiJupyter, SiTensorflow, SiPytorch, SiKeras, SiScikitlearn, SiGooglecolab, SiLeetcode, SiCodeforces, SiFigma, SiTypeorm, SiNotion, SiMarkdown, SiMdbook, SiJsfiddle, SiWireshark, SiBurpsuite, SiMamp, SiKagi, SiOpenssl, SiArduino, SiRaspberrypi, SiLogitech, SiOpenai, SiComposer, SiXampp, SiPhp, SiGo, SiCmake, SiCplusplus, SiJavascript, SiReact, SiVuedotjs, SiWebpack, SiBabel, SiTypescript, SiGradle, SiSpring, SiFlutter, SiDart, SiAltiumdesigner, SiProteus, SiMultisim, SiStmicroelectronics, SiGooglechrome, SiFirefoxbrowser, SiDedge, SiOpera, SiSafari, SiSourceforge, SiIcloud, SiWebex, SiGitlab, SiFiles, SiCoder, SiRocket, SiLightburn, SiStarz, SiQuest
 } from 'react-icons/si';
+import {
+  SiClaude, SiGooglegemini, SiPerplexity, SiHuggingface, SiMistralai, SiGithubcopilot,
+  SiX, SiMeta, SiOllama, SiAlibabacloud, SiBaidu, SiCoze, SiSparkar, SiBraintrust,
+  SiWindsurf, SiV0, SiNotebooklm, SiCanva, SiDeepl, SiLangchain, SiPoe, SiSuno,
+  SiRust, SiKotlin, SiSwift, SiDotnet, SiNextdotjs, SiTailwindcss, SiVite, SiAntdesign,
+  SiNginx, SiPandas, SiNumpy, SiElastic, SiCodewars, SiVirustotal, SiHackerone, SiOwasp,
+  SiDebian, SiArchlinux, SiQemu, SiKubernetes, SiPlatformio, SiKicad, SiEspressif,
+  SiLatex, SiZotero, SiMiro, SiApifox
+} from 'react-icons/si';
 import { VscVscode } from 'react-icons/vsc';
 import Link from 'next/link';
 import { useState, useMemo, useEffect } from 'react';
@@ -10,12 +19,53 @@ import { navigationItems } from './_shared/data/navigation';
 import { useAuth } from '@shared/hooks/useAuth';
 import HeroSection from './_shared/components/HeroSection';
 import StatsSection from './_shared/components/StatsSection';
-import FlipCard from './_shared/components/FlipCard';
+import ToolCard from './_shared/components/ToolCard';
+import ToolGroupPreview from './_shared/components/ToolGroupPreview';
 import BackToTop from './_shared/components/BackToTop';
 import QuickSearch from './_shared/components/QuickSearch';
 import InkWashDecoration from './_shared/components/InkWashDecoration';
 
 const groupedSoftware = [
+  {
+    group: 'AI 工具',
+    items: [
+      // 国外 AI（官方图标）
+      { name: 'ChatGPT', icon: SiOpenai, url: 'https://chatgpt.com/', desc: 'OpenAI对话助手' },
+      { name: 'Claude', icon: SiClaude, url: 'https://claude.ai/', desc: 'Anthropic对话助手' },
+      { name: 'Gemini', icon: SiGooglegemini, url: 'https://gemini.google.com/', desc: 'Google大模型' },
+      { name: 'Grok', icon: SiX, url: 'https://grok.com/', desc: 'xAI大模型' },
+      { name: 'GitHub Copilot', icon: SiGithubcopilot, url: 'https://github.com/features/copilot', desc: 'AI编程助手' },
+      { name: 'Windsurf', icon: SiWindsurf, url: 'https://windsurf.com/', desc: 'AI编程IDE' },
+      { name: 'v0', icon: SiV0, url: 'https://v0.dev/', desc: 'AI生成前端界面' },
+      { name: 'Perplexity', icon: SiPerplexity, url: 'https://www.perplexity.ai/', desc: 'AI搜索引擎' },
+      { name: 'Mistral', icon: SiMistralai, url: 'https://chat.mistral.ai/', desc: 'Le Chat对话助手' },
+      { name: 'Hugging Face', icon: SiHuggingface, url: 'https://huggingface.co/', desc: '开源模型社区' },
+      { name: 'Meta AI', icon: SiMeta, url: 'https://www.meta.ai/', desc: 'Llama系列大模型' },
+      { name: 'Ollama', icon: SiOllama, url: 'https://ollama.com/', desc: '本地运行开源大模型' },
+      { name: 'NotebookLM', icon: SiNotebooklm, url: 'https://notebooklm.google.com/', desc: 'Google AI学习笔记' },
+      { name: 'DeepL', icon: SiDeepl, url: 'https://www.deepl.com/', desc: 'AI翻译工具' },
+      { name: 'Poe', icon: SiPoe, url: 'https://poe.com/', desc: '多模型聚合对话' },
+      { name: 'Suno', icon: SiSuno, url: 'https://suno.com/', desc: 'AI音乐生成' },
+      { name: 'LangChain', icon: SiLangchain, url: 'https://www.langchain.com/', desc: 'LLM应用开发框架' },
+      { name: 'Canva', icon: SiCanva, url: 'https://www.canva.cn/', desc: 'AI设计平台' },
+      // 国产 AI（有官方图标）
+      { name: '通义千问', icon: SiAlibabacloud, url: 'https://tongyi.aliyun.com/', desc: '阿里大模型' },
+      { name: '文心一言', icon: SiBaidu, url: 'https://yiyan.baidu.com/', desc: '百度大模型' },
+      { name: '智谱清言', icon: SiBraintrust, url: 'https://chatglm.cn/', desc: 'ChatGLM大模型' },
+      { name: '秘塔AI搜索', icon: SiKagi, url: 'https://metaso.cn/', desc: 'AI搜索引擎' },
+      { name: '扣子', icon: SiCoze, url: 'https://www.coze.cn/', desc: '字节AI应用搭建平台' },
+      // 国产 AI（暂无官方图标）
+      { name: 'DeepSeek', icon: SiSparkar, url: 'https://chat.deepseek.com/', desc: '深度求索大模型' },
+      { name: 'Kimi', icon: SiSparkar, url: 'https://kimi.moonshot.cn/', desc: '月之暗面长文本助手' },
+      { name: '豆包', icon: SiSparkar, url: 'https://www.doubao.com/', desc: '字节跳动AI助手' },
+      { name: '讯飞星火', icon: SiSparkar, url: 'https://xinghuo.xfyun.cn/', desc: '科大讯飞大模型' },
+      { name: '腾讯元宝', icon: SiSparkar, url: 'https://yuanbao.tencent.com/', desc: '腾讯AI助手' },
+      { name: '海螺AI', icon: SiSparkar, url: 'https://hailuoai.com/', desc: 'MiniMax AI助手' },
+      { name: '即梦AI', icon: SiSparkar, url: 'https://jimeng.jianying.com/', desc: '字节AI绘画平台' },
+      { name: 'Cursor', icon: SiSparkar, url: 'https://cursor.com/', desc: 'AI优先代码编辑器' },
+      { name: 'Gamma', icon: SiSparkar, url: 'https://gamma.app/', desc: 'AI生成PPT/网页' },
+    ]
+  },
   {
     group: '编程开发',
     items: [
@@ -52,6 +102,15 @@ const groupedSoftware = [
       { name: 'Spring', icon: SiSpring, url: 'https://spring.io/', desc: 'Java企业开发框架' },
       { name: 'Flutter', icon: SiFlutter, url: 'https://flutter.dev/', desc: '跨平台UI框架' },
       { name: 'Dart', icon: SiDart, url: 'https://dart.dev/', desc: 'Flutter开发语言' },
+      { name: 'Rust', icon: SiRust, url: 'https://www.rust-lang.org/', desc: '安全系统级语言' },
+      { name: 'Kotlin', icon: SiKotlin, url: 'https://kotlinlang.org/', desc: 'Android/JVM语言' },
+      { name: 'Swift', icon: SiSwift, url: 'https://www.swift.org/', desc: '苹果生态语言' },
+      { name: '.NET', icon: SiDotnet, url: 'https://dotnet.microsoft.com/', desc: '微软开发平台' },
+      { name: 'Next.js', icon: SiNextdotjs, url: 'https://nextjs.org/', desc: 'React全栈框架' },
+      { name: 'Tailwind CSS', icon: SiTailwindcss, url: 'https://tailwindcss.com/', desc: '原子化CSS框架' },
+      { name: 'Vite', icon: SiVite, url: 'https://vitejs.dev/', desc: '新一代前端构建工具' },
+      { name: 'Ant Design', icon: SiAntdesign, url: 'https://ant.design/', desc: '企业级React组件库' },
+      { name: 'Nginx', icon: SiNginx, url: 'https://nginx.org/', desc: '高性能Web服务器' },
     ]
   },
   {
@@ -71,6 +130,9 @@ const groupedSoftware = [
       { name: 'Keras', icon: SiKeras, url: 'https://keras.io/', desc: '神经网络库' },
       { name: 'Scikit-learn', icon: SiScikitlearn, url: 'https://scikit-learn.org/', desc: '机器学习库' },
       { name: 'Colab', icon: SiGooglecolab, url: 'https://colab.research.google.com/', desc: '云端数据科学平台' },
+      { name: 'Pandas', icon: SiPandas, url: 'https://pandas.pydata.org/', desc: 'Python数据分析' },
+      { name: 'NumPy', icon: SiNumpy, url: 'https://numpy.org/', desc: 'Python科学计算' },
+      { name: 'Elasticsearch', icon: SiElastic, url: 'https://www.elastic.co/', desc: '搜索引擎数据库' },
     ]
   },
   {
@@ -87,6 +149,7 @@ const groupedSoftware = [
       { name: 'Topcoder', icon: SiLeetcode, url: 'https://www.topcoder.com/', desc: '国际算法竞赛平台' },
       { name: 'HackerRank', icon: SiLeetcode, url: 'https://www.hackerrank.com/', desc: '编程技能评估平台' },
       { name: 'HackerEarth', icon: SiLeetcode, url: 'https://www.hackerearth.com/', desc: '编程竞赛平台' },
+      { name: 'Codewars', icon: SiCodewars, url: 'https://www.codewars.com/', desc: '编程挑战修炼平台' },
     ]
   },
   {
@@ -103,6 +166,9 @@ const groupedSoftware = [
       { name: 'OWASP ZAP', icon: SiJsfiddle, url: 'https://owasp.org/www-project-zap/', desc: '开源安全测试工具' },
       { name: 'Metasploit', icon: SiJsfiddle, url: 'https://www.metasploit.com/', desc: '渗透测试框架' },
       { name: 'Shodan', icon: SiJsfiddle, url: 'https://www.shodan.io/', desc: '网络设备搜索引擎' },
+      { name: 'VirusTotal', icon: SiVirustotal, url: 'https://www.virustotal.com/', desc: '文件/网址病毒扫描' },
+      { name: 'HackerOne', icon: SiHackerone, url: 'https://www.hackerone.com/', desc: '漏洞赏金平台' },
+      { name: 'OWASP', icon: SiOwasp, url: 'https://owasp.org/', desc: 'Web安全开放社区' },
     ]
   },
   {
@@ -116,6 +182,11 @@ const groupedSoftware = [
       { name: 'MobaXterm', icon: SiMobx, url: 'https://mobaxterm.mobatek.net/', desc: '多功能终端' },
       { name: 'VMware', icon: SiVmware, url: 'https://www.vmware.com/', desc: '虚拟机软件' },
       { name: 'VirtualBox', icon: SiVirtualbox, url: 'https://www.virtualbox.org/', desc: '开源虚拟机' },
+      { name: 'Docker', icon: SiDocker, url: 'https://www.docker.com/', desc: '容器化平台' },
+      { name: 'Kubernetes', icon: SiKubernetes, url: 'https://kubernetes.io/', desc: '容器编排系统' },
+      { name: 'Debian', icon: SiDebian, url: 'https://www.debian.org/', desc: '稳定Linux发行版' },
+      { name: 'Arch Linux', icon: SiArchlinux, url: 'https://archlinux.org/', desc: '滚动更新Linux' },
+      { name: 'QEMU', icon: SiQemu, url: 'https://www.qemu.org/', desc: '开源模拟器' },
     ]
   },
   {
@@ -131,6 +202,9 @@ const groupedSoftware = [
       { name: 'Altium Designer', icon: SiAltiumdesigner, url: 'https://www.altium.com/altium-designer', desc: 'PCB设计工具' },
       { name: 'MATLAB', icon: SiPython, url: 'https://www.mathworks.com/products/matlab.html', desc: '数学建模与仿真' },
       { name: 'LabVIEW', icon: SiVirtualbox, url: 'https://www.ni.com/en-us/shop/labview.html', desc: '图形化编程环境' },
+      { name: 'PlatformIO', icon: SiPlatformio, url: 'https://platformio.org/', desc: '跨平台嵌入式开发' },
+      { name: 'KiCad', icon: SiKicad, url: 'https://www.kicad.org/', desc: '开源PCB设计' },
+      { name: 'ESP32', icon: SiEspressif, url: 'https://www.espressif.com/', desc: '乐鑫物联网芯片' },
     ]
   },
   {
@@ -143,18 +217,42 @@ const groupedSoftware = [
       { name: 'Draw.io', icon: SiMdbook, url: 'https://app.diagrams.net/', desc: '流程图/架构图' },
       { name: 'Markdown', icon: SiMarkdown, url: 'https://markdown.com.cn/', desc: '标记语言' },
       { name: 'Figma', icon: SiFigma, url: 'https://www.figma.com/', desc: 'UI设计工具' },
-      { name: 'ChatGPT', icon: SiOpenai, url: 'https://chat.openai.com/', desc: 'AI助手' },
       { name: 'GitBook', icon: SiGitlab, url: 'https://www.gitbook.com/', desc: '文档协作平台' },
       { name: 'Confluence', icon: SiGitlab, url: 'https://www.atlassian.com/software/confluence', desc: '团队协作平台' },
       { name: 'Slack', icon: SiRocket, url: 'https://slack.com/', desc: '团队沟通工具' },
       { name: 'Microsoft Teams', icon: SiWebex, url: 'https://www.microsoft.com/en-us/microsoft-teams', desc: '团队协作工具' },
       { name: 'Discord', icon: SiRocket, url: 'https://discord.com/', desc: '社区沟通工具' },
+      { name: 'LaTeX', icon: SiLatex, url: 'https://www.latex-project.org/', desc: '学术论文排版' },
+      { name: 'Zotero', icon: SiZotero, url: 'https://www.zotero.org/', desc: '文献管理工具' },
+      { name: 'Miro', icon: SiMiro, url: 'https://miro.com/', desc: '在线协作白板' },
+      { name: 'Apifox', icon: SiApifox, url: 'https://apifox.com/', desc: 'API调试/文档/测试一体化' },
     ]
   },
 ];
 
-const brandColors: { [key: string]: string } = {
-  'VS Code': '#007ACC',
+/* 分组竖杠配色：固定映射保证 8 组颜色全不重复，未登记的分组走哈希兜底 */
+const GROUP_BAR_COLORS: Record<string, string> = {
+  'AI 工具': '#6366f1',
+  '编程开发': '#0ea5e9',
+  '数据库与数据科学': '#10b981',
+  '算法与竞赛': '#f59e0b',
+  '网络与安全': '#ef4444',
+  '操作系统与虚拟化': '#8b5cf6',
+  '硬件与仿真': '#14b8a6',
+  '文档与效率': '#ec4899',
+};
+
+const FALLBACK_BAR_COLORS = ['#6366f1', '#0ea5e9', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6'];
+
+function groupBarColor(group: string): string {
+  const mapped = GROUP_BAR_COLORS[group];
+  if (mapped) return mapped;
+  let h = 0;
+  for (let i = 0; i < group.length; i++) h = (h * 31 + group.charCodeAt(i)) % 997;
+  return FALLBACK_BAR_COLORS[h % FALLBACK_BAR_COLORS.length];
+}
+
+const brandColors: { [key: string]: string } = {  'VS Code': '#007ACC',
   'PyCharm': '#21D789',
   'IntelliJ IDEA': '#000000',
   'Eclipse': '#2C2255',
@@ -254,12 +352,72 @@ const brandColors: { [key: string]: string } = {
   'Slack': '#4A154B',
   'Microsoft Teams': '#6264A7',
   'Discord': '#7289DA',
+  'DeepSeek': '#4D6BFE',
+  'Kimi': '#141414',
+  '豆包': '#3B82F6',
+  '通义千问': '#6236FF',
+  '文心一言': '#2932E1',
+  '智谱清言': '#3859FF',
+  '讯飞星火': '#FF3B30',
+  '腾讯元宝': '#0052D9',
+  'Claude': '#D97757',
+  'Gemini': '#4285F4',
+  'Grok': '#000000',
+  'GitHub Copilot': '#181717',
+  'Cursor': '#171717',
+  'Windsurf': '#27CE85',
+  'v0': '#171717',
+  'Perplexity': '#20808D',
+  'Mistral': '#FA500F',
+  'Hugging Face': '#FFD21E',
+  'Meta AI': '#0866FF',
+  'Ollama': '#656A70',
+  'NotebookLM': '#1A73E8',
+  '秘塔AI搜索': '#4E6EF2',
+  '扣子': '#2563EB',
+  '海螺AI': '#FF5A3C',
+  '即梦AI': '#6C5CE7',
+  'DeepL': '#0F2B46',
+  'Poe': '#5D3BC0',
+  'Suno': '#F8A256',
+  'Gamma': '#8B5CF6',
+  'LangChain': '#1C3C3C',
+  'Canva': '#00C4CC',
+  'Rust': '#DEA584',
+  'Kotlin': '#7F52FF',
+  'Swift': '#F05138',
+  '.NET': '#512BD4',
+  'Next.js': '#000000',
+  'Tailwind CSS': '#06B6D4',
+  'Vite': '#646CFF',
+  'Ant Design': '#1677FF',
+  'Nginx': '#009639',
+  'Pandas': '#150458',
+  'NumPy': '#013243',
+  'Elasticsearch': '#005571',
+  'Codewars': '#B1361E',
+  'VirusTotal': '#394EFF',
+  'HackerOne': '#494649',
+  'OWASP': '#54626F',
+  'Docker': '#2496ED',
+  'Kubernetes': '#326CE5',
+  'Debian': '#A81D33',
+  'Arch Linux': '#1793D1',
+  'QEMU': '#FF6600',
+  'PlatformIO': '#F5822A',
+  'KiCad': '#314CB0',
+  'ESP32': '#E7352C',
+  'LaTeX': '#008080',
+  'Zotero': '#CC2936',
+  'Miro': '#FFD02F',
+  'Apifox': '#E8433F',
 };
 
 export default function Home() {
   const { data: session, status } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [achievementProgress, setAchievementProgress] = useState<{ earned: number; total: number } | null>(null);
+  const [previewGroup, setPreviewGroup] = useState<string | null>(null);
 
   // 加载成就进度
   useEffect(() => {
@@ -432,33 +590,51 @@ export default function Home() {
         </div>
 
         <h1 className="text-xl md:text-3xl font-bold text-content-primary mb-4 md:mb-6">常用软件/工具官网直达（按知识点分组）</h1>
-        <div className="space-y-4 md:space-y-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 items-start">
           {filteredSoftware.length > 0 ? (
-            filteredSoftware.map(group => (
-              <div key={group.group}>
-                <h2 className="text-lg md:text-2xl font-bold mb-2 md:mb-3 text-content-primary border-l-4 border-brand-primary pl-2 md:pl-3 bg-brand-soft py-1 rounded-r">
-                  {group.group} ({group.items.length})
-                </h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-2 md:gap-4">
-                  {group.items.map(item => {
-                    const Icon = item.icon;
-                    const color = brandColors[item.name] || '#3B82F6';
-                    return (
-                      <FlipCard
-                        key={item.name}
-                        name={item.name}
-                        icon={Icon}
-                        url={item.url}
-                        desc={item.desc}
-                        color={color}
-                      />
-                    );
-                  })}
+            filteredSoftware.map(group => {
+              const isSearching = !!searchQuery;
+              const visibleItems = isSearching ? group.items : group.items.slice(0, 8);
+              const hiddenCount = group.items.length - visibleItems.length;
+              return (
+                <div key={group.group}>
+                  <h2
+                    className="text-lg md:text-xl font-bold mb-2 text-content-primary border-l-4 pl-2 md:pl-3 bg-brand-soft py-1 rounded-r"
+                    style={{ borderLeftColor: groupBarColor(group.group) }}
+                  >
+                    {group.group} ({group.items.length})
+                  </h2>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+                    {visibleItems.map(item => {
+                      const Icon = item.icon;
+                      const color = brandColors[item.name] || '#3B82F6';
+                      return (
+                        <ToolCard
+                          key={item.name}
+                          name={item.name}
+                          icon={Icon}
+                          url={item.url}
+                          desc={item.desc}
+                          color={color}
+                        />
+                      );
+                    })}
+                  </div>
+                  {hiddenCount > 0 && (
+                    <button
+                      onClick={() => setPreviewGroup(group.group)}
+                      className="mt-2 w-full h-9 rounded-lg border border-dashed border-line-strong text-content-muted hover:text-brand-primary hover:border-brand-primary transition-colors flex items-center justify-center gap-2"
+                      title="预览全部工具"
+                    >
+                      <span className="text-lg tracking-widest leading-none font-bold">···</span>
+                      <span className="text-xs">全部 {group.items.length} 个</span>
+                    </button>
+                  )}
                 </div>
-              </div>
-            ))
+              );
+            })
           ) : (
-            <div className="text-center py-16">
+            <div className="text-center py-16 lg:col-span-2">
               <div className="text-6xl mb-4">🔍</div>
               <h3 className="text-2xl font-bold text-content-primary mb-2">未找到匹配的工具</h3>
               <p className="text-content-muted">试试其他关键词吧</p>
@@ -513,6 +689,20 @@ export default function Home() {
       {/* 水墨山水底部装饰 */}
       <InkWashDecoration variant="landscape" height={260} className="bg-surface-page" />
       <InkWashDecoration variant="bamboo" height={120} className="bg-surface-page -mt-2" />
+
+      {/* 工具分组预览弹窗 */}
+      {previewGroup && (() => {
+        const g = groupedSoftware.find(gr => gr.group === previewGroup);
+        if (!g) return null;
+        return (
+          <ToolGroupPreview
+            group={g.group}
+            items={g.items}
+            brandColors={brandColors}
+            onClose={() => setPreviewGroup(null)}
+          />
+        );
+      })()}
 
       {/* 回到顶部按钮 */}
       <BackToTop />

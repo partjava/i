@@ -12,6 +12,7 @@ import PWAProvider from './PWAProvider';
 import DevTools from './DevTools';
 import AiChat from './AiChat';
 import FetchInterceptor from './FetchInterceptor';
+import { StudyContentPageProvider } from './StudyContentPageContext';
 
 interface RootLayoutClientProps {
   children: React.ReactNode;
@@ -74,29 +75,31 @@ export default function RootLayoutClient({ children }: RootLayoutClientProps) {
 
   return (
     <NextAuthSessionProvider>
-      <FetchInterceptor />
-      <UserProvider>
-        <PWAProvider />
-        <SimpleLearningTracker />
-        <DevTools />
-        <SidebarProvider>
-          <MobileGestureHandler>
-            <div className="flex flex-col h-screen bg-page-bg dark:bg-page-dark">
-              <Navbar />
-              <div className="flex flex-1 overflow-hidden">
-                <Sidebar />
-                <main className="flex-1 overflow-auto transition-all duration-300">
-                  <div className="min-h-full pb-16 lg:pb-0">
-                    {children}
-                  </div>
-                </main>
+      <StudyContentPageProvider>
+        <FetchInterceptor />
+        <UserProvider>
+          <PWAProvider />
+          <SimpleLearningTracker />
+          <DevTools />
+          <SidebarProvider>
+            <MobileGestureHandler>
+              <div className="flex flex-col h-screen bg-page-bg dark:bg-page-dark">
+                <Navbar />
+                <div className="flex flex-1 overflow-hidden">
+                  <Sidebar />
+                  <main className="flex-1 overflow-auto transition-all duration-300">
+                    <div className="min-h-full pb-16 lg:pb-0">
+                      {children}
+                    </div>
+                  </main>
+                </div>
+                <AiChat />
+                <BottomNavigation />
               </div>
-              <AiChat />
-              <BottomNavigation />
-            </div>
-          </MobileGestureHandler>
-        </SidebarProvider>
-      </UserProvider>
+            </MobileGestureHandler>
+          </SidebarProvider>
+        </UserProvider>
+      </StudyContentPageProvider>
     </NextAuthSessionProvider>
   );
 }

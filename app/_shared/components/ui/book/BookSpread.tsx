@@ -2,6 +2,10 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react'
 import type { SubjectTheme } from './theme'
+import AiChatPanel from '../../ai/AiChatPanel'
+import StudyScreenshot from '../../StudyScreenshot'
+import { StudyProgressBar } from '../../StudyProgressBar'
+import { useStudyContentPage } from '../../StudyContentPageContext'
 
 // ==================== 类型定义 ====================
 
@@ -246,6 +250,47 @@ export default function BookSpread(props: BookSpreadProps) {
   const isFirst = displayedSpread === 0
   const isLast = displayedSpread === totalSpreads - 1
 
+  // ===== 右侧栏相关 =====
+  const bookRootRef = useRef<HTMLDivElement>(null)
+  const { setIsContentPage } = useStudyContentPage()
+  const [pageHeadings, setPageHeadings] = useState<{ level: string; text: string }[]>([])
+  const [outlineOpen, setOutlineOpen] = useState(true)
+
+  useEffect(() => {
+    try {
+      setOutlineOpen(localStorage.getItem('study_outline_collapsed') !== '1')
+    } catch {}
+  }, [])
+
+  const toggleOutline = () => {
+    setOutlineOpen(prev => {
+      const next = !prev
+      try { localStorage.setItem('study_outline_collapsed', next ? '0' : '1') } catch {}
+      return next
+    })
+  }
+
+  // 标记当前是学习内容页（用于隐藏全局 AI 悬浮球）
+  useEffect(() => {
+    setIsContentPage(true)
+    return () => setIsContentPage(false)
+  }, [setIsContentPage])
+
+  // 提取当前两页挂载的 h2/h3 标题作为页内大纲
+  useEffect(() => {
+    const root = bookRootRef.current
+    if (!root) return
+    const els = Array.from(root.querySelectorAll('h2, h3'))
+    setPageHeadings(els.map(el => ({ level: el.tagName.toLowerCase(), text: el.textContent?.trim() || '' })))
+  }, [displayedSpread])
+
+  const scrollToHeading = (index: number) => {
+    const root = bookRootRef.current
+    if (!root) return
+    const els = root.querySelectorAll('h2, h3')
+    els[index]?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+
   return (
     <div
       className={`min-h-screen ${className}`}
@@ -258,7 +303,8 @@ export default function BookSpread(props: BookSpreadProps) {
         .bg-dot-active { background: var(--book-accent) !important; }
         .border-accent { border-color: var(--book-accent) !important; }
       `}</style>
-      <div className="max-w-6xl mx-auto px-3 py-5 sm:px-4 sm:py-6">
+      <div className="max-w-[1600px] mx-auto px-3 py-5 sm:px-4 sm:py-6 flex items-start gap-5">
+        <div className="flex-1 min-w-0 max-w-6xl">
         {/* ===== 顶部面包屑 ===== */}
         <div className="flex items-center gap-2 text-xs text-ink-lighter mb-4 sm:mb-5 px-1">
           {subjectHref ? (
@@ -276,7 +322,7 @@ export default function BookSpread(props: BookSpreadProps) {
         </div>
 
         {/* ===== 书本容器 ===== */}
-        <div className="bg-paper-200/40 rounded-lg shadow-book p-4 sm:p-6">
+        <div id="study-book-root" ref={bookRootRef} className="bg-paper-200/40 rounded-lg shadow-book p-4 sm:p-6">
           {/* 标签栏 */}
           <BookTabs
             tabs={spreads.map(s => ({ label: s.label }))}
@@ -458,6 +504,86 @@ export default function BookSpread(props: BookSpreadProps) {
             </div>
           )}
         </div>
+        </div>
+
+        {/* ===== 右侧栏：章节大纲 + AI 助手 + 工具 ===== */}
+        <aside className="hidden xl:flex flex-col gap-4 w-[300px] shrink-0 sticky top-4 h-[calc(100vh-6rem)] overflow-y-auto">
+          {/* 章节大纲（可折叠） */}
+          <div className="shrink-0 bg-white/90 rounded-xl border border-black/5 shadow-sm p-3">
+            <button
+              onClick={toggleOutline}
+              className="w-full flex items-center justify-between px-1 py-0.5 rounded hover:bg-black/5 transition-colors"
+            >
+              <span className="text-xs font-semibold" style={{ color: 'var(--book-accent)' }}>章节大纲</span>
+              <span className="flex items-center gap-2">
+                <span className="text-[10px] text-ink-fade">第{chapterNumber}/{totalChapters}章</span>
+                <svg
+                  className={`w-3.5 h-3.5 text-ink-lighter transition-transform duration-200 ${outlineOpen ? 'rotate-180' : ''}`}
+                  fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </span>
+            </button>
+            {outlineOpen && (
+              <>
+                {/* 标签级大纲（联动翻页） */}
+                <div className="space-y-0.5 max-h-36 overflow-y-auto mt-2">
+                  {spreads.map((s, i) => (
+                    <button
+                      key={i}
+                      onClick={() => goToSpread(i)}
+                      className={`w-full text-left text-xs px-2 py-1.5 rounded-md transition-colors truncate ${
+                        i === currentSpread ? 'text-white shadow-sm' : 'text-ink-light hover:bg-black/5'
+                      }`}
+                      style={i === currentSpread ? { background: 'var(--book-accent)' } : undefined}
+                    >
+                      {i + 1}. {s.label}
+                    </button>
+                  ))}
+                </div>
+                {/* 页内标题（当前两页的 h2/h3） */}
+                {pageHeadings.length > 0 && (
+                  <div className="mt-2 pt-2 border-t border-black/5 space-y-0.5 max-h-36 overflow-y-auto">
+                    {pageHeadings.map((h, i) => (
+                      <button
+                        key={i}
+                        onClick={() => scrollToHeading(i)}
+                        className={`block w-full text-left text-xs px-2 py-1 rounded-md hover:bg-black/5 transition-colors ${
+                          h.level === 'h2' ? 'text-ink font-medium' : 'pl-4 text-ink-lighter'
+                        }`}
+                      >
+                        {h.level === 'h3' ? '· ' : ''}{h.text}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {/* 上/下一章 */}
+                {(prevChapter || nextChapter) && (
+                  <div className="mt-2 pt-2 border-t border-black/5 flex items-center justify-between gap-2 text-[11px]">
+                    {prevChapter ? (
+                      <a href={prevChapter.href} className="text-ink-lighter hover-accent transition-colors truncate">← {prevChapter.label}</a>
+                    ) : <span />}
+                    {nextChapter ? (
+                      <a href={nextChapter.href} className="text-ink-lighter hover-accent transition-colors truncate ml-auto text-right">{nextChapter.label} →</a>
+                    ) : <span />}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+
+          {/* AI 助手嵌入面板（保底高度，保证消息区可用） */}
+          <div className="flex-1 min-h-[340px] bg-white/90 rounded-xl border border-black/5 shadow-sm overflow-hidden">
+            <AiChatPanel />
+          </div>
+
+          {/* 工具：截图 + 学习进度 */}
+          <div className="shrink-0 flex flex-col gap-2">
+            <StudyScreenshot inline />
+            <StudyProgressBar inline />
+          </div>
+        </aside>
       </div>
     </div>
   )
