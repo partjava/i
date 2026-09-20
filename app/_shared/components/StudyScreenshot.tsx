@@ -14,7 +14,7 @@ interface Annotation {
   imageSize?: { w: number; h: number };
 }
 
-export default function StudyScreenshot() {
+export default function StudyScreenshot({ inline = false }: { inline?: boolean }) {
   const [capturing, setCapturing] = useState(false);
   const [editorOpen, setEditorOpen] = useState(false);
   const [baseImage, setBaseImage] = useState<string | null>(null);
@@ -51,9 +51,10 @@ export default function StudyScreenshot() {
     setCapturing(true);
     try {
       const html2canvas = (await import('html2canvas')).default;
-      const mainEl = document.querySelector('main');
-      if (!mainEl) return;
-      const canvas = await html2canvas(mainEl as HTMLElement, {
+      // 优先截取书本内容区（不含右侧栏/导航），找不到时回退到整个 main
+      const targetEl = document.getElementById('study-book-root') || document.querySelector('main');
+      if (!targetEl) return;
+      const canvas = await html2canvas(targetEl as HTMLElement, {
         useCORS: true, allowTaint: true, scale: 2,
         backgroundColor: '#f5f7fa', logging: false,
       });
@@ -546,6 +547,26 @@ export default function StudyScreenshot() {
   };
 
   if (!editorOpen) {
+    if (inline) {
+      return (
+        <button
+          onClick={handleCapture}
+          disabled={capturing}
+          title="截取并编辑当前学习内容"
+          className="flex items-center gap-2 w-full px-3 py-2.5 rounded-xl bg-white/90 border border-black/5 shadow-sm text-sm text-gray-700 hover:bg-white hover:shadow transition-all disabled:opacity-60"
+        >
+          {capturing ? (
+            <span className="animate-spin text-base">⏳</span>
+          ) : (
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-indigo-500">
+              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+              <circle cx="12" cy="13" r="4"/>
+            </svg>
+          )}
+          <span>{capturing ? '截图中...' : '截图当前内容'}</span>
+        </button>
+      );
+    }
     return (
       <button
         onClick={handleCapture}
