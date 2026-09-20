@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 
 type Tool = 'none' | 'pen' | 'rect' | 'arrow' | 'text' | 'paste';
 
@@ -608,8 +609,9 @@ export default function StudyScreenshot({ inline = false }: { inline?: boolean }
 
   const colorPresets = ['#e74c3c', '#e67e22', '#f1c40f', '#2ecc71', '#3498db', '#9b59b6', '#ffffff', '#000000'];
 
-  return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,0.85)', display: 'flex', flexDirection: 'column' }}>
+  // Portal 到 body 顶层，避免被布局容器的层级/裁剪困住
+  return createPortal(
+    <div style={{ position: 'fixed', inset: 0, zIndex: 2000000, background: 'rgba(0,0,0,0.85)', display: 'flex', flexDirection: 'column' }}>
       <div style={{ display: 'flex', justifyContent: 'center', padding: '10px 0' }}>
         <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap', padding: '8px 14px', background: '#2c2c2c', borderRadius: 10, boxShadow: '0 4px 16px rgba(0,0,0,0.3)', userSelect: 'none' }}>
           <button onClick={closeEditor} style={{ ...btnBase, background: '#e74c3c', color: '#fff' }}>✕ 关闭</button>
@@ -753,6 +755,7 @@ export default function StudyScreenshot({ inline = false }: { inline?: boolean }
           activeTool === 'paste' ? '点击图片位置 → 按 Ctrl+V 粘贴剪贴板图片' :
           '选择上方工具开始编辑'}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
