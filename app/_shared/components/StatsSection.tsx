@@ -34,7 +34,7 @@ export default function StatsSection() {
           setStats({
             users: d.users ?? 0,
             notes: d.notes ?? 0,
-            studyHours: d.totalStudyTime ? Math.floor(d.totalStudyTime / 60) : 0,
+            studyHours: d.totalStudyTime ? Math.floor(d.totalStudyTime / 3600) : 0,
             challenges: d.challenges ?? 0,
           });
           setFailed(false);
