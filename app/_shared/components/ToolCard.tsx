@@ -69,18 +69,18 @@ export default function ToolCard({ name, icon: Icon, url, desc, color }: ToolCar
           <div
             className="flex items-center justify-center transition-transform duration-500"
             style={{
-              width: '34cqw',
-              height: '34cqw',
+              width: '38cqw',
+              height: '38cqw',
               borderRadius: '50%',
               background: `${color}1a`,
               transform: hovered ? 'scale(1.08)' : 'scale(1)',
             }}
           >
-            <Icon style={{ color, fontSize: '19cqw' }} />
+            <Icon style={{ color, fontSize: '22cqw' }} />
           </div>
           <span
             className="font-semibold text-gray-800 truncate w-full text-center px-2"
-            style={{ fontSize: 'clamp(11px, 8.5cqw, 20px)' }}
+            style={{ fontSize: 'clamp(12px, 9.5cqw, 22px)' }}
           >
             {name}
           </span>
@@ -106,16 +106,16 @@ export default function ToolCard({ name, icon: Icon, url, desc, color }: ToolCar
           <svg className="absolute bottom-0 left-0 w-full h-2/5 opacity-20" viewBox="0 0 200 100" preserveAspectRatio="none" aria-hidden="true">
             <path d="M0 100 L0 70 Q30 30 60 50 Q90 70 110 40 Q135 60 160 35 Q185 50 200 55 L200 100 Z" fill="white" />
           </svg>
-          <Icon className="relative" style={{ color: 'white', fontSize: '17cqw' }} />
+          <Icon className="relative" style={{ color: 'white', fontSize: '20cqw' }} />
           <span
             className="relative font-bold truncate w-full text-center px-2"
-            style={{ fontSize: 'clamp(11px, 8cqw, 19px)' }}
+            style={{ fontSize: 'clamp(12px, 9cqw, 21px)' }}
           >
             {name}
           </span>
           <span
             className="relative bg-white/15 rounded-full border border-white/20 whitespace-nowrap"
-            style={{ fontSize: 'clamp(10px, 6.5cqw, 15px)', padding: '0.3em 0.9em' }}
+            style={{ fontSize: 'clamp(10px, 7cqw, 16px)', padding: '0.3em 0.9em' }}
           >
             访问官网 →
           </span>

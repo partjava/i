@@ -12,7 +12,7 @@ export default function HeroSection() {
   }, []);
 
   return (
-    <div className="relative min-h-[560px] flex items-center justify-center overflow-hidden">
+    <div className="relative min-h-[520px] flex items-center justify-center overflow-hidden">
       {/* 冷色宣纸底色 */}
       <div className="absolute inset-0 bg-gradient-to-b from-surface-page via-surface-muted to-surface-muted" />
 
@@ -37,13 +37,39 @@ export default function HeroSection() {
       </div>
 
       {/* 内容区域 */}
-      <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-24 text-center">
+      <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-20 text-center">
         <div className={`transition-all duration-800 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'}`}>
-          {/* 印章装饰 */}
-          <div className="mb-6 flex justify-center">
-            <div className="w-16 h-16 border-2 border-red-700/60 rounded-sm flex items-center justify-center rotate-6">
-              <span className="text-red-700/70 text-2xl font-bold font-serif" style={{ fontFamily: 'serif' }}>学</span>
-            </div>
+          {/* 印章装饰 - 八个不同颜色边框的斜置方块，两组之间拉开距离 */}
+          <div className="mb-6 flex justify-center items-center gap-2.5 md:gap-4">
+            {[
+              { ch: '好', c: '#6366f1', r: -8 },
+              { ch: '好', c: '#0ea5e9', r: 6 },
+              { ch: '学', c: '#10b981', r: -5 },
+              { ch: '习', c: '#f59e0b', r: 8 },
+            ].map((it, i) => (
+              <span
+                key={'a' + i}
+                className="inline-flex items-center justify-center w-10 h-10 md:w-14 md:h-14 border-2 rounded-sm select-none font-bold text-lg md:text-2xl"
+                style={{ fontFamily: 'serif', borderColor: it.c, color: it.c, transform: `rotate(${it.r}deg)` }}
+              >
+                {it.ch}
+              </span>
+            ))}
+            <span className="w-6 md:w-12" aria-hidden="true" />
+            {[
+              { ch: '天', c: '#ef4444', r: -7 },
+              { ch: '天', c: '#8b5cf6', r: 5 },
+              { ch: '向', c: '#ec4899', r: -6 },
+              { ch: '上', c: '#14b8a6', r: 7 },
+            ].map((it, i) => (
+              <span
+                key={'b' + i}
+                className="inline-flex items-center justify-center w-10 h-10 md:w-14 md:h-14 border-2 rounded-sm select-none font-bold text-lg md:text-2xl"
+                style={{ fontFamily: 'serif', borderColor: it.c, color: it.c, transform: `rotate(${it.r}deg)` }}
+              >
+                {it.ch}
+              </span>
+            ))}
           </div>
 
           {/* 主标题 - 飞逸水墨毛笔字 (使用原生透明无损 PNG 实现完美水墨渲染) */}
@@ -58,8 +84,8 @@ export default function HeroSection() {
             )}
           </div>
 
-          {/* 动态打字效果 */}
-          <div className="text-2xl md:text-4xl font-semibold text-gray-600 mb-8 h-20">
+          {/* 动态打字效果（固定高度防抖动，垂直居中） */}
+          <div className="text-2xl md:text-4xl font-semibold text-gray-600 mb-6 h-12 md:h-14 flex items-center justify-center">
             {mounted && (
               <TypeAnimation
                 sequence={[
@@ -80,23 +106,23 @@ export default function HeroSection() {
           </div>
 
           {/* 描述文字 */}
-          <p className={`text-lg md:text-xl text-gray-500 mb-10 max-w-3xl mx-auto transition-opacity duration-800 delay-500 ${mounted ? 'opacity-100' : 'opacity-0'}`}>
+          <p className={`text-lg md:text-xl text-gray-500 mb-8 max-w-3xl mx-auto transition-opacity duration-800 delay-500 ${mounted ? 'opacity-100' : 'opacity-0'}`}>
             集成笔记管理、学习路径、编程挑战和AI助手的一站式学习平台
             <br />
             <span className="text-gray-700 font-semibold">让每一次学习都充满成就感</span>
           </p>
 
-          {/* CTA按钮 - 水墨风格 */}
+          {/* CTA按钮 */}
           <div className={`flex flex-col sm:flex-row gap-4 justify-center items-center transition-all duration-800 delay-800 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'}`}>
             <Link
               href="/study"
-              className="px-8 py-4 bg-surface-inverse text-content-inverse rounded-full font-semibold text-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 hover:bg-content-primary border border-content-secondary"
+              className="px-8 py-4 bg-gradient-to-r from-indigo-600 to-indigo-500 text-white rounded-full font-semibold text-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300"
             >
               开始学习之旅 🚀
             </Link>
             <Link
               href="/challenges"
-              className="px-8 py-4 bg-transparent text-gray-700 rounded-full font-semibold text-lg shadow-md hover:shadow-xl transform hover:scale-105 transition-all duration-300 border-2 border-gray-400 hover:border-gray-600"
+              className="px-8 py-4 bg-white/60 backdrop-blur-sm text-gray-700 rounded-full font-semibold text-lg shadow-md hover:shadow-xl transform hover:scale-105 transition-all duration-300 border-2 border-gray-300 hover:border-indigo-500 hover:text-indigo-600"
             >
               挑战自我 💪
             </Link>

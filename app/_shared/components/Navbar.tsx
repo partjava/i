@@ -12,7 +12,6 @@ import {
   LogoutOutlined,
   SettingOutlined,
   HomeOutlined,
-  BookOutlined,
   EditOutlined,
   BellOutlined,
   CodeOutlined,
@@ -146,14 +145,6 @@ export default function Navbar() {
               >
                 <HomeOutlined className="text-lg mb-1" />
                 <span className="text-xs">首页</span>
-              </Link>
-
-              <Link
-                href="/study"
-                className="flex flex-col items-center text-content-secondary hover:text-brand-primary transition-colors"
-              >
-                <BookOutlined className="text-lg mb-1" />
-                <span className="text-xs">学习</span>
               </Link>
 
               <Link
