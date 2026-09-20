@@ -53,15 +53,19 @@ export default function StudyScreenshot({ inline = false }: { inline?: boolean }
       const html2canvas = (await import('html2canvas')).default;
       // 优先截取书本内容区（不含右侧栏/导航），找不到时回退到整个 main
       const targetEl = document.getElementById('study-book-root') || document.querySelector('main');
-      if (!targetEl) return;
+      if (!targetEl) {
+        alert('截图失败：未找到内容区域');
+        return;
+      }
       const canvas = await html2canvas(targetEl as HTMLElement, {
         useCORS: true, allowTaint: true, scale: 2,
         backgroundColor: '#f5f7fa', logging: false,
       });
       setBaseImage(canvas.toDataURL('image/png'));
       setEditorOpen(true);
-    } catch (e) {
+    } catch (e: any) {
       console.error('截图失败:', e);
+      alert('截图失败：' + (e?.message || e));
     } finally {
       setCapturing(false);
     }
