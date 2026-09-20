@@ -225,6 +225,14 @@ function FloatingAiChat() {
             <div style={{ flex: 1 }} />
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
               <button
+                onClick={() => { if (window.confirm('确定清空当前对话？')) ai.clearConversation(); }}
+                disabled={ai.loading}
+                title="清空对话"
+                style={{ background: 'rgba(255,255,255,0.12)', border: 'none', color: '#fff', width: 26, height: 26, borderRadius: 6, cursor: 'pointer', fontSize: 12 }}
+              >
+                🧹
+              </button>
+              <button
                 onClick={ai.summarizeAndCreateNote}
                 disabled={ai.loading}
                 title="总结并保存为笔记"

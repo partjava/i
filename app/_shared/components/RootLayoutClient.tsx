@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Navbar from './Navbar';
-import Sidebar, { SidebarProvider } from './Sidebar';
+import Sidebar, { SidebarProvider, SidebarSpacer } from './Sidebar';
 import BottomNavigation from './BottomNavigation';
 import MobileGestureHandler from './MobileGestureHandler';
 import NextAuthSessionProvider from '../providers/SessionProvider';
@@ -83,15 +83,24 @@ export default function RootLayoutClient({ children }: RootLayoutClientProps) {
           <DevTools />
           <SidebarProvider>
             <MobileGestureHandler>
-              <div className="flex flex-col h-screen bg-page-bg dark:bg-page-dark">
+              <div className="relative flex flex-col h-screen bg-page-bg dark:bg-page-dark overflow-hidden">
+                {/* 环境光斑（蓝绿灰配色，透过玻璃形成渐变色调） */}
+                <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
+                  <div className="absolute -left-24 -top-10 w-[28rem] h-[28rem] rounded-full bg-sky-500/45 blur-3xl" />
+                  <div className="absolute left-8 top-1/3 w-96 h-96 rounded-full bg-emerald-400/40 blur-3xl" />
+                  <div className="absolute -left-16 bottom-0 w-[26rem] h-[26rem] rounded-full bg-slate-400/45 blur-3xl" />
+                  <div className="absolute right-0 top-0 w-72 h-72 rounded-full bg-cyan-300/30 blur-3xl" />
+                </div>
                 <Navbar />
-                <div className="flex flex-1 overflow-hidden">
+                <div className="relative flex flex-1 overflow-hidden">
+                  <SidebarSpacer position="left" />
                   <Sidebar />
-                  <main className="flex-1 overflow-auto transition-all duration-300">
+                  <main className="relative flex-1 overflow-auto transition-all duration-300">
                     <div className="min-h-full pb-16 lg:pb-0">
                       {children}
                     </div>
                   </main>
+                  <SidebarSpacer position="right" />
                 </div>
                 <AiChat />
                 <BottomNavigation />

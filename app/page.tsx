@@ -466,11 +466,7 @@ export default function Home() {
       {/* Hero区域 */}
       <HeroSection />
 
-      {/* 水墨山水过渡 */}
-      <InkWashDecoration variant="landscape" height={220} className="bg-surface-page" />
-      <InkWashDecoration variant="mist" height={60} className="bg-surface-page -mt-4" />
-
-      {/* 数据统计区域 */}
+      {/* 数据统计区域（接口失败时自动隐藏） */}
       <StatsSection />
 
       {/* 成就进度条 - 仅在有数据时显示 */}
@@ -589,20 +585,30 @@ export default function Home() {
           )}
         </div>
 
-        <h1 className="text-xl md:text-3xl font-bold text-content-primary mb-4 md:mb-6">常用软件/工具官网直达（按知识点分组）</h1>
+        <div className="mb-4 md:mb-6">
+          <h1 className="text-xl md:text-3xl font-bold text-content-primary">常用软件 / 工具官网直达</h1>
+          <p className="text-sm text-content-muted mt-1">按知识点分组 · 悬停卡片翻转查看详情 · 点击访问官网</p>
+        </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 items-start">
           {filteredSoftware.length > 0 ? (
             filteredSoftware.map(group => {
               const isSearching = !!searchQuery;
               const visibleItems = isSearching ? group.items : group.items.slice(0, 8);
               const hiddenCount = group.items.length - visibleItems.length;
+              const barColor = groupBarColor(group.group);
               return (
                 <div key={group.group}>
                   <h2
-                    className="text-lg md:text-xl font-bold mb-2 text-content-primary border-l-4 pl-2 md:pl-3 bg-brand-soft py-1 rounded-r"
-                    style={{ borderLeftColor: groupBarColor(group.group) }}
+                    className="flex items-center gap-2 md:gap-3 text-lg md:text-xl font-bold mb-2 md:mb-3 text-content-primary border-l-4 pl-2 md:pl-3 py-1 rounded-r"
+                    style={{ borderLeftColor: barColor }}
                   >
-                    {group.group} ({group.items.length})
+                    {group.group}
+                    <span
+                      className="text-xs md:text-sm font-semibold px-2 py-0.5 rounded-full"
+                      style={{ color: barColor, background: `${barColor}1a` }}
+                    >
+                      {group.items.length}
+                    </span>
                   </h2>
                   <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
                     {visibleItems.map(item => {
@@ -645,50 +651,42 @@ export default function Home() {
           如有更多常用软件建议，欢迎补充！
         </div>
 
-        {/* 水墨分隔 */}
-        <InkWashDecoration variant="divider" height={80} className="mt-8 mb-4" />
-        <InkWashDecoration variant="birds" height={50} className="-mt-2 mb-2" />
+        {/* 水墨分隔（缩减为一条细分割线） */}
+        <InkWashDecoration variant="divider" height={50} className="mt-8 mb-4" />
 
         {/* 算法可视化入口 */}
         <div className="mt-12 mb-8">
           <Link href="/code/editor">
-            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#0C1F3D] via-[#3d4f6b] to-[#0C1F3D] p-1 hover:shadow-2xl transition-all duration-300 transform hover:scale-[1.02]">
-              <div className="bg-[#1a2d4a] rounded-xl p-8 text-center">
-                <div className="text-6xl mb-4">🎨</div>
-                <h3 className="text-3xl font-bold text-white mb-3">
-                  编程实验室 - 代码编辑 + 3D 算法可视化
-                </h3>
-                <p className="text-gray-300 text-lg mb-6">
-                  在线编写代码，沉浸式体验算法的魅力
-                </p>
-                <div className="flex justify-center gap-4 flex-wrap">
-                  <span className="px-4 py-2 bg-brand-soft/30 text-line-strong rounded-full text-sm border border-brand-soft/30">
-                    💻 在线编辑
-                  </span>
-                  <span className="px-4 py-2 bg-brand-primary/30 text-[#c7d2fe] rounded-full text-sm border border-brand-primary/30">
-                    🫧 冒泡排序
-                  </span>
-                  <span className="px-4 py-2 bg-brand-hover/30 text-[#c7d2fe] rounded-full text-sm border border-brand-hover/30">
-                    ⚡ 快速排序
-                  </span>
-                  <span className="px-4 py-2 bg-content-secondary/30 text-[#c7d2fe] rounded-full text-sm border border-content-secondary/30">
-                    🔍 二分查找
-                  </span>
+            <div className="relative overflow-hidden rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-[1.01] border border-white/10"
+              style={{ background: 'linear-gradient(135deg, #0C1F3D 0%, #1a2d4a 55%, #0C1F3D 100%)' }}>
+              {/* 水墨山纹（与工具卡背面呼应） */}
+              <svg className="absolute bottom-0 left-0 w-full h-1/3 opacity-15" viewBox="0 0 200 100" preserveAspectRatio="none" aria-hidden="true">
+                <path d="M0 100 L0 70 Q30 30 60 50 Q90 70 110 40 Q135 60 160 35 Q185 50 200 55 L200 100 Z" fill="white" />
+              </svg>
+              {/* 柔光斑 */}
+              <div className="absolute -top-12 -right-12 w-44 h-44 rounded-full bg-indigo-500/20 blur-3xl pointer-events-none" />
+              <div className="absolute -bottom-16 -left-12 w-44 h-44 rounded-full bg-fuchsia-500/15 blur-3xl pointer-events-none" />
+              <div className="relative px-6 py-10 md:py-12 text-center">
+                <div className="text-4xl mb-3">🎨</div>
+                <h3 className="text-2xl md:text-3xl font-bold text-white mb-2">编程实验室</h3>
+                <p className="text-gray-300 mb-6">在线编写代码 · 沉浸式 3D 算法可视化体验</p>
+                <div className="flex justify-center gap-2 md:gap-3 flex-wrap mb-7">
+                  <span className="px-3 py-1 bg-white/10 text-[#c7d2fe] rounded-full text-xs border border-white/15">💻 在线编辑</span>
+                  <span className="px-3 py-1 bg-white/10 text-[#c7d2fe] rounded-full text-xs border border-white/15">🫧 冒泡排序</span>
+                  <span className="px-3 py-1 bg-white/10 text-[#c7d2fe] rounded-full text-xs border border-white/15">⚡ 快速排序</span>
+                  <span className="px-3 py-1 bg-white/10 text-[#c7d2fe] rounded-full text-xs border border-white/15">🔍 二分查找</span>
                 </div>
-                <div className="mt-6">
-                  <span className="inline-block px-6 py-3 bg-brand-primary text-white rounded-full font-semibold hover:shadow-lg transition-all hover:bg-brand-hover">
-                    立即体验 →
-                  </span>
-                </div>
+                <span className="inline-block px-7 py-2.5 bg-white text-[#0C1F3D] rounded-full font-semibold hover:bg-indigo-50 transition-colors">
+                  立即体验 →
+                </span>
               </div>
             </div>
           </Link>
         </div>
       </main>
 
-      {/* 水墨山水底部装饰 */}
-      <InkWashDecoration variant="landscape" height={260} className="bg-surface-page" />
-      <InkWashDecoration variant="bamboo" height={120} className="bg-surface-page -mt-2" />
+      {/* 底部水墨收尾（缩减高度） */}
+      <InkWashDecoration variant="landscape" height={120} className="bg-surface-page" />
 
       {/* 工具分组预览弹窗 */}
       {previewGroup && (() => {

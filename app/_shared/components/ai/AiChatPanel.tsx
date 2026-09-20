@@ -49,6 +49,14 @@ export default function AiChatPanel() {
         <span className="font-bold text-sm">AI助手</span>
         <div className="flex-1" />
         <button
+          onClick={() => { if (window.confirm('确定清空当前对话？')) ai.clearConversation(); }}
+          disabled={ai.loading}
+          title="清空对话"
+          className="bg-white/15 hover:bg-white/25 border-none text-white w-6 h-6 rounded-md cursor-pointer text-xs transition-colors disabled:opacity-60 flex items-center justify-center"
+        >
+          🧹
+        </button>
+        <button
           onClick={ai.summarizeAndCreateNote}
           disabled={ai.loading}
           title="总结并保存为笔记"

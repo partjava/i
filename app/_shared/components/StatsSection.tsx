@@ -18,6 +18,7 @@ export default function StatsSection() {
     challenges: 0
   });
   const [loading, setLoading] = useState(true);
+  const [failed, setFailed] = useState(false);
   const { ref, inView } = useInView({
     triggerOnce: true,
     threshold: 0.1
@@ -36,21 +37,13 @@ export default function StatsSection() {
             studyHours: d.totalStudyTime ? Math.floor(d.totalStudyTime / 60) : 0,
             challenges: d.challenges ?? 0,
           });
+          setFailed(false);
         } else {
-          setStats({
-            users: 1234,
-            notes: 5678,
-            studyHours: 12345,
-            challenges: 89
-          });
+          // 接口异常时隐藏板块，不展示假数据
+          setFailed(true);
         }
       } catch (error) {
-        setStats({
-          users: 1234,
-          notes: 5678,
-          studyHours: 12345,
-          challenges: 89
-        });
+        setFailed(true);
       } finally {
         setLoading(false);
       }
@@ -58,6 +51,9 @@ export default function StatsSection() {
 
     fetchStats();
   }, []);
+
+  // 加载中或接口失败时不渲染，避免展示兜底假数据
+  if (loading || failed) return null;
 
   const statsData = [
     {
@@ -98,7 +94,7 @@ export default function StatsSection() {
             平台数据一览
           </h2>
           <p className="text-lg text-gray-500">
-            与千万学习者一起成长
+            记录你的每一步成长
           </p>
         </div>
 

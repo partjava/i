@@ -47,6 +47,12 @@ export function useAiChat() {
     });
   }, []);
 
+  // 清空对话，回到欢迎语
+  const clearConversation = useCallback(() => {
+    setMessages(WELCOME_MESSAGE);
+    persist(WELCOME_MESSAGE);
+  }, []);
+
   const collectPageContent = (): string => {
     if (typeof document === 'undefined') return '';
     const pathname = window.location.pathname;
@@ -298,6 +304,7 @@ ${text}${contextHint}`;
     setInput,
     loading,
     sendMessage,
+    clearConversation,
     showPreview,
     previewNote,
     setPreviewNote,
