@@ -82,7 +82,7 @@ public class AiChatController {
     private String callLLM(String prompt) {
         try {
             Map<String, Object> bodyMap = new HashMap<>();
-            bodyMap.put("model", "deepseek-v4-flash");
+            bodyMap.put("model", "deepseek-flash");
             bodyMap.put("stream", false);
             bodyMap.put("messages", List.of(Map.of("role", "user", "content", prompt)));
 
