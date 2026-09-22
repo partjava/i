@@ -9,7 +9,10 @@ import {
   SiRust, SiKotlin, SiSwift, SiDotnet, SiNextdotjs, SiTailwindcss, SiVite, SiAntdesign,
   SiNginx, SiPandas, SiNumpy, SiElastic, SiCodewars, SiVirustotal, SiHackerone, SiOwasp,
   SiDebian, SiArchlinux, SiQemu, SiKubernetes, SiPlatformio, SiKicad, SiEspressif,
-  SiLatex, SiZotero, SiMiro, SiApifox
+  SiLatex, SiZotero, SiMiro, SiApifox, SiLintcode,
+  SiBilibili, SiFreecodecamp, SiMdnwebdocs, SiZhihu, SiCsdn, SiJuejin,
+  SiStackoverflow, SiGeeksforgeeks, SiCoursera, SiKhanacademy, SiUdemy,
+  SiPaddlepaddle, SiGoogle, SiKaggle, SiBookstack
 } from 'react-icons/si';
 import { VscVscode } from 'react-icons/vsc';
 import Link from 'next/link';
@@ -64,6 +67,9 @@ const groupedSoftware = [
       { name: '即梦AI', icon: SiSparkar, url: 'https://jimeng.jianying.com/', desc: '字节AI绘画平台' },
       { name: 'Cursor', icon: SiSparkar, url: 'https://cursor.com/', desc: 'AI优先代码编辑器' },
       { name: 'Gamma', icon: SiSparkar, url: 'https://gamma.app/', desc: 'AI生成PPT/网页' },
+      { name: '飞桨 AI Studio', icon: SiPaddlepaddle, url: 'https://aistudio.baidu.com/', desc: '百度飞桨深度学习社区' },
+      { name: 'Google AI', icon: SiGoogle, url: 'https://ai.google/', desc: 'Google AI 官方门户' },
+      { name: 'DeepLearning.AI', icon: SiSparkar, url: 'https://www.deeplearning.ai/', desc: '吴恩达深度学习课程' },
     ]
   },
   {
@@ -150,6 +156,15 @@ const groupedSoftware = [
       { name: 'HackerRank', icon: SiLeetcode, url: 'https://www.hackerrank.com/', desc: '编程技能评估平台' },
       { name: 'HackerEarth', icon: SiLeetcode, url: 'https://www.hackerearth.com/', desc: '编程竞赛平台' },
       { name: 'Codewars', icon: SiCodewars, url: 'https://www.codewars.com/', desc: '编程挑战修炼平台' },
+      { name: 'LintCode', icon: SiLintcode, url: 'https://www.lintcode.com/', desc: '企业级算法题库' },
+      { name: 'VJudge', icon: SiLeetcode, url: 'https://vjudge.net/', desc: 'OJ 聚合刷题' },
+      { name: '蓝桥云课', icon: SiLeetcode, url: 'https://www.lanqiao.cn/', desc: '蓝桥杯练习与课程' },
+      { name: 'PTA 拼题A', icon: SiLeetcode, url: 'https://pintia.cn/', desc: '高校编程测评平台' },
+      { name: 'HDU OJ', icon: SiLeetcode, url: 'http://acm.hdu.edu.cn/', desc: '经典算法 OJ' },
+      { name: 'Project Euler', icon: SiStarz, url: 'https://projecteuler.net/', desc: '数学编程挑战' },
+      { name: '信息学奥赛一本通', icon: SiLeetcode, url: 'http://ybt.ssoier.cn:8088/', desc: '信奥 OJ 题库' },
+      { name: '青岛大学 OJ', icon: SiLeetcode, url: 'https://qduoj.com/', desc: '开源在线评测' },
+      { name: '数据结构可视化', icon: SiStarz, url: 'https://www.cs.usfca.edu/~galles/visualization/Algorithms.html', desc: '数据结构动画演示' },
     ]
   },
   {
@@ -228,6 +243,32 @@ const groupedSoftware = [
       { name: 'Apifox', icon: SiApifox, url: 'https://apifox.com/', desc: 'API调试/文档/测试一体化' },
     ]
   },
+  {
+    group: '学习网站',
+    items: [
+      { name: 'B站', icon: SiBilibili, url: 'https://www.bilibili.com/', desc: '海量编程视频教程' },
+      { name: '菜鸟教程', icon: SiSparkar, url: 'https://www.runoob.com/', desc: '编程基础入门教程' },
+      { name: 'fast.ai', icon: SiPytorch, url: 'https://www.fast.ai/', desc: '实用深度学习课程' },
+      { name: 'Kaggle', icon: SiKaggle, url: 'https://www.kaggle.com/', desc: '数据科学竞赛社区' },
+      { name: 'MIT OpenCourseWare', icon: SiSparkar, url: 'https://ocw.mit.edu/', desc: 'MIT 公开课' },
+      { name: 'w3school', icon: SiSparkar, url: 'https://www.w3school.com.cn/', desc: 'Web 中文教程' },
+      { name: 'w3schools', icon: SiSparkar, url: 'https://www.w3schools.com/', desc: 'Web 英文教程' },
+      { name: '书栈网', icon: SiBookstack, url: 'https://www.bookstack.cn/', desc: '开源技术文档书店' },
+      { name: '学习强国', icon: SiSparkar, url: 'https://www.xuexi.cn/', desc: '综合学习平台' },
+      { name: '慕课网', icon: SiSparkar, url: 'https://www.imooc.com/', desc: 'IT 技能在线学习' },
+      { name: 'Python 教程', icon: SiSparkar, url: 'http://c.biancheng.net/python/', desc: 'Python 入门详细教程' },
+      { name: 'freeCodeCamp', icon: SiFreecodecamp, url: 'https://www.freecodecamp.org/chinese/', desc: '免费交互式编程课程' },
+      { name: 'MDN Web Docs', icon: SiMdnwebdocs, url: 'https://developer.mozilla.org/zh-CN/', desc: 'Web 技术权威文档' },
+      { name: '知乎', icon: SiZhihu, url: 'https://www.zhihu.com/', desc: '问答与知识分享社区' },
+      { name: 'CSDN', icon: SiCsdn, url: 'https://www.csdn.net/', desc: '中文技术博客社区' },
+      { name: '掘金', icon: SiJuejin, url: 'https://juejin.cn/', desc: '开发者技术文章社区' },
+      { name: 'Stack Overflow', icon: SiStackoverflow, url: 'https://stackoverflow.com/', desc: '英文编程问答' },
+      { name: 'GeeksforGeeks', icon: SiGeeksforgeeks, url: 'https://www.geeksforgeeks.org/', desc: '算法与数据结构学习' },
+      { name: '中国大学MOOC', icon: SiKhanacademy, url: 'https://www.icourse163.org/', desc: '高校公开课平台' },
+      { name: 'Coursera', icon: SiCoursera, url: 'https://www.coursera.org/', desc: '国际大学在线课程' },
+      { name: 'Udemy', icon: SiUdemy, url: 'https://www.udemy.com/', desc: '综合在线课程平台' },
+    ]
+  },
 ];
 
 /* 分组竖杠配色：固定映射保证 8 组颜色全不重复，未登记的分组走哈希兜底 */
@@ -253,7 +294,8 @@ const DEFAULT_FOLDER_SIZES: Record<string, { k: number; r: number }> = {
   '网络与安全': { k: 3, r: 2 },
   '操作系统与虚拟化': { k: 4, r: 2 },
   '硬件与仿真': { k: 4, r: 2 },
-  '文档与效率': { k: 8, r: 2 },
+  '文档与效率': { k: 3, r: 2 },
+  '学习网站': { k: 5, r: 2 },
 };
 
 function groupBarColor(group: string): string {
@@ -423,6 +465,39 @@ const brandColors: { [key: string]: string } = {  'VS Code': '#007ACC',
   'Zotero': '#CC2936',
   'Miro': '#FFD02F',
   'Apifox': '#E8433F',
+  'LintCode': '#007AC1',
+  '蓝桥云课': '#2B7DE9',
+  'VJudge': '#2E6FD8',
+  'PTA 拼题A': '#4A90D9',
+  'HDU OJ': '#2E86AB',
+  'Project Euler': '#7D3C98',
+  'B站': '#FB7299',
+  '菜鸟教程': '#16A34A',
+  'freeCodeCamp': '#0A0A23',
+  'MDN Web Docs': '#000000',
+  '知乎': '#0084FF',
+  'CSDN': '#FC5531',
+  '掘金': '#1E80FF',
+  'Stack Overflow': '#F58025',
+  'GeeksforGeeks': '#0F9D58',
+  '中国大学MOOC': '#14BF96',
+  'Coursera': '#0056D2',
+  'Udemy': '#A435F0',
+  '飞桨 AI Studio': '#2563EB',
+  'Google AI': '#4285F4',
+  'DeepLearning.AI': '#7C3AED',
+  '信息学奥赛一本通': '#1667C9',
+  '青岛大学 OJ': '#27AE60',
+  '数据结构可视化': '#8E44AD',
+  'fast.ai': '#EE4C2C',
+  'Kaggle': '#20BEFF',
+  'MIT OpenCourseWare': '#A31F34',
+  'w3school': '#0C969C',
+  'w3schools': '#054DA7',
+  '书栈网': '#3B82F6',
+  '学习强国': '#E60012',
+  '慕课网': '#F08519',
+  'Python 教程': '#3776AB',
 };
 
 export default function Home() {
@@ -474,7 +549,7 @@ export default function Home() {
       const nr = Math.min(Math.max(g.r + Math.round((y - g.y) / 156), 1), 8);
       setFolderConfigs(prev => {
         const next = { ...prev, [g.group]: { k: nk, r: nr } };
-        try { localStorage.setItem('folder_sizes_v3', JSON.stringify(next)); } catch {}
+        try { localStorage.setItem('folder_sizes_v2', JSON.stringify(next)); } catch {}
         return next;
       });
     };
