@@ -13,7 +13,7 @@ import {
 } from 'react-icons/si';
 import { VscVscode } from 'react-icons/vsc';
 import Link from 'next/link';
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { navigationItems } from './_shared/data/navigation';
 import { useAuth } from '@shared/hooks/useAuth';
@@ -244,6 +244,18 @@ const GROUP_BAR_COLORS: Record<string, string> = {
 
 const FALLBACK_BAR_COLORS = ['#6366f1', '#0ea5e9', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6'];
 
+/* 默认文件夹布局（按用户排布设定） */
+const DEFAULT_FOLDER_SIZES: Record<string, { k: number; r: number }> = {
+  'AI 工具': { k: 5, r: 3 },
+  '编程开发': { k: 1, r: 3 },
+  '数据库与数据科学': { k: 2, r: 3 },
+  '算法与竞赛': { k: 5, r: 2 },
+  '网络与安全': { k: 3, r: 2 },
+  '操作系统与虚拟化': { k: 4, r: 2 },
+  '硬件与仿真': { k: 4, r: 2 },
+  '文档与效率': { k: 8, r: 2 },
+};
+
 function groupBarColor(group: string): string {
   const mapped = GROUP_BAR_COLORS[group];
   if (mapped) return mapped;
@@ -417,7 +429,68 @@ export default function Home() {
   const { data: session, status } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [achievementProgress, setAchievementProgress] = useState<{ earned: number; total: number } | null>(null);
+  const [folderConfigs, setFolderConfigs] = useState<Record<string, { k: number; r: number }>>({});
   const [previewGroup, setPreviewGroup] = useState<string | null>(null);
+  const [resizing, setResizing] = useState<string | null>(null);
+  const resizeStart = useRef({ x: 0, y: 0, k: 4, r: 2, group: '' });
+  const toolsContainerRef = useRef<HTMLDivElement | null>(null);
+  const [containerW, setContainerW] = useState(0);
+
+  useEffect(() => {
+    const el = toolsContainerRef.current;
+    if (!el) return;
+    const measure = () => setContainerW(el.clientWidth);
+    measure();
+    // 持续监听容器尺寸变化（侧边栏收起/展开、窗口缩放都会触发）
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    window.addEventListener('resize', measure);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener('resize', measure);
+    };
+  }, []);
+
+  useEffect(() => {
+    try {
+      setFolderConfigs(JSON.parse(localStorage.getItem('folder_sizes_v2') || '{}'));
+    } catch {}
+  }, []);
+
+  const startResize = (group: string, clientX: number, clientY: number) => {
+    const start = folderConfigs[group] || DEFAULT_FOLDER_SIZES[group] || { k: 4, r: 2 };
+    resizeStart.current = { x: clientX, y: clientY, k: start.k, r: start.r, group };
+    setResizing(group);
+  };
+
+  useEffect(() => {
+    if (!resizing) return;
+    const onMove = (e: any) => {
+      const x = e.touches ? e.touches[0].clientX : (e as MouseEvent).clientX;
+      const y = e.touches ? e.touches[0].clientY : (e as MouseEvent).clientY;
+      if (e.touches) e.preventDefault();
+      const g = resizeStart.current;
+      const nk = Math.min(Math.max(g.k + Math.round((x - g.x) / 156), 1), 8);
+      const nr = Math.min(Math.max(g.r + Math.round((y - g.y) / 156), 1), 8);
+      setFolderConfigs(prev => {
+        const next = { ...prev, [g.group]: { k: nk, r: nr } };
+        try { localStorage.setItem('folder_sizes_v3', JSON.stringify(next)); } catch {}
+        return next;
+      });
+    };
+    const onUp = () => setResizing(null);
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('touchmove', onMove as any, { passive: false });
+    window.addEventListener('mouseup', onUp);
+    window.addEventListener('touchend', onUp);
+    return () => {
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('touchmove', onMove as any);
+      window.removeEventListener('mouseup', onUp);
+      window.removeEventListener('touchend', onUp);
+    };
+  }, [resizing]);
+
 
   // 加载成就进度
   useEffect(() => {
@@ -451,6 +524,40 @@ export default function Home() {
       )
     })).filter(group => group.items.length > 0);
   }, [searchQuery]);
+
+  // 天际线装箱：文件夹拖拽定行列，后面的文件夹自动填补空位
+  const layout = useMemo(() => {
+    const cw = containerW || 1200;
+    const CELL = 4;
+    const cells = Math.ceil(cw / CELL);
+    const S = 148; // 卡片尺寸（全局统一）
+    const skyline: number[] = new Array(cells).fill(0);
+    const placed: any[] = [];
+    let height = 0;
+    for (const group of filteredSoftware) {
+      const cfg = folderConfigs[group.group] || DEFAULT_FOLDER_SIZES[group.group] || { k: 4, r: 2 };
+      const k = Math.min(Math.max(Math.round(Number(cfg.k)) || 4, 1), 8);
+      const r = Math.min(Math.max(Math.round(Number(cfg.r)) || 2, 1), 8);
+      const w = k * S + (k - 1) * 8 + 24;
+      const shown = searchQuery ? group.items.length : Math.min(group.items.length, k * r);
+      const rows = Math.max(1, Math.ceil(shown / k));
+      const hasMore = group.items.length > shown;
+      const bodyH = 24 + rows * S + (rows - 1) * 8 + (hasMore ? 44 : 0);
+      const totalH = 56 + bodyH;
+      const wCells = Math.max(1, Math.ceil(w / CELL));
+      let bestX = 0, bestH = Infinity;
+      for (let x0 = 0; x0 <= cells - wCells; x0++) {
+        let h = 0;
+        for (let i = x0; i < x0 + wCells; i++) h = Math.max(h, skyline[i]);
+        if (h < bestH) { bestH = h; bestX = x0; }
+      }
+      for (let i = bestX; i < Math.min(bestX + wCells, cells); i++) skyline[i] = bestH + totalH;
+      height = Math.max(height, bestH + totalH);
+      placed.push({ group, cfg: { ...cfg, k, r, S }, x: bestX * CELL, y: bestH, w });
+    }
+    return { placed, height };
+  }, [folderConfigs, containerW, filteredSoftware, searchQuery]);
+
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
@@ -585,19 +692,28 @@ export default function Home() {
           )}
         </div>
 
-        <div className="mb-4 md:mb-6">
-          <h1 className="text-xl md:text-3xl font-bold text-content-primary">常用软件 / 工具官网直达</h1>
-          <p className="text-sm text-content-muted mt-1">按知识点分组 · 悬停卡片翻转查看详情 · 点击访问官网</p>
+        <div className="mb-4 md:mb-6 flex items-end justify-between gap-4">
+          <div>
+            <h1 className="text-xl md:text-3xl font-bold text-content-primary">常用软件 / 工具官网直达</h1>
+            <p className="text-sm text-content-muted mt-1">按知识点分组 · 悬停卡片翻转查看详情 · 点击访问官网</p>
+          </div>
+          <button
+            onClick={() => { setFolderConfigs({}); try { localStorage.removeItem('folder_sizes_v2'); } catch {} }}
+            className="flex-shrink-0 text-xs text-content-muted hover:text-brand-primary underline underline-offset-2 transition-colors"
+            title="恢复所有文件夹为默认大小"
+          >
+            重置布局
+          </button>
         </div>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 items-start">
+        <div ref={toolsContainerRef} className="relative" style={{ height: layout.placed.length ? layout.height : undefined }}>
           {filteredSoftware.length > 0 ? (
-            filteredSoftware.map(group => {
+            layout.placed.map(({ group, cfg, x, y, w }) => {
               const isSearching = !!searchQuery;
-              const visibleItems = isSearching ? group.items : group.items.slice(0, 8);
+              const visibleItems = isSearching ? group.items : group.items.slice(0, cfg.k * cfg.r);
               const hiddenCount = group.items.length - visibleItems.length;
               const barColor = groupBarColor(group.group);
               return (
-                <div key={group.group}>
+                <div key={group.group} className="absolute" style={{ left: x, top: y, width: w }}>
                   <h2
                     className="flex items-center gap-2 md:gap-3 text-lg md:text-xl font-bold mb-2 md:mb-3 text-content-primary border-l-4 pl-2 md:pl-3 py-1 rounded-r"
                     style={{ borderLeftColor: barColor }}
@@ -610,37 +726,59 @@ export default function Home() {
                       {group.items.length}
                     </span>
                   </h2>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
-                    {visibleItems.map(item => {
-                      const Icon = item.icon;
-                      const color = brandColors[item.name] || '#3B82F6';
-                      return (
-                        <ToolCard
-                          key={item.name}
-                          name={item.name}
-                          icon={Icon}
-                          url={item.url}
-                          desc={item.desc}
-                          color={color}
-                        />
-                      );
-                    })}
-                  </div>
-                  {hiddenCount > 0 && (
-                    <button
-                      onClick={() => setPreviewGroup(group.group)}
-                      className="mt-2 w-full h-9 rounded-lg border border-dashed border-line-strong text-content-muted hover:text-brand-primary hover:border-brand-primary transition-colors flex items-center justify-center gap-2"
-                      title="预览全部工具"
+                  {/* 文件夹容器：固定 148px 图标卡，右下角拖拽改变宽度和数量 */}
+                  <div
+                    className={`relative rounded-2xl border border-line-strong bg-white/50 p-3 ${
+                      resizing === group.group ? 'ring-2 ring-brand-primary/40 shadow-lg' : ''
+                    }`}
+                  >
+                    <div
+                      className="grid gap-2"
+                      style={{ gridTemplateColumns: `repeat(${cfg.k}, ${cfg.S}px)` }}
                     >
-                      <span className="text-lg tracking-widest leading-none font-bold">···</span>
-                      <span className="text-xs">全部 {group.items.length} 个</span>
-                    </button>
-                  )}
+                      {visibleItems.map((item: any) => {
+                        const Icon = item.icon;
+                        const color = brandColors[item.name] || '#3B82F6';
+                        return (
+                          <ToolCard
+                            key={item.name}
+                            name={item.name}
+                            icon={Icon}
+                            url={item.url}
+                            desc={item.desc}
+                            color={color}
+                          />
+                        );
+                      })}
+                    </div>
+                    {hiddenCount > 0 && (
+                      <button
+                        onClick={() => setPreviewGroup(group.group)}
+                        className="mt-2 w-full h-9 rounded-lg border border-dashed border-line-strong text-content-muted hover:text-brand-primary hover:border-brand-primary transition-colors flex items-center justify-center gap-2"
+                        title="预览全部工具"
+                      >
+                        <span className="text-lg tracking-widest leading-none font-bold">···</span>
+                        <span className="text-xs">全部 {group.items.length} 个</span>
+                      </button>
+                    )}
+                    {!isSearching && (
+                      <div
+                        onMouseDown={(e) => { e.preventDefault(); startResize(group.group, e.clientX, e.clientY); }}
+                        onTouchStart={(e) => { startResize(group.group, e.touches[0].clientX, e.touches[0].clientY); }}
+                        title="拖动调整文件夹大小"
+                        className="absolute bottom-1.5 right-1.5 z-10 w-4 h-4 cursor-nwse-resize text-gray-400 hover:text-brand-primary transition-colors"
+                      >
+                        <svg viewBox="0 0 16 16" className="w-full h-full" fill="none">
+                          <path d="M15 15H7M15 15V7M15 15L5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                        </svg>
+                      </div>
+                    )}
+                  </div>
                 </div>
               );
             })
           ) : (
-            <div className="text-center py-16 lg:col-span-2">
+            <div className="text-center py-16">
               <div className="text-6xl mb-4">🔍</div>
               <h3 className="text-2xl font-bold text-content-primary mb-2">未找到匹配的工具</h3>
               <p className="text-content-muted">试试其他关键词吧</p>
