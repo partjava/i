@@ -11,6 +11,15 @@ import SyntaxHighlighter from 'react-syntax-highlighter';
 const vscDarkPlus = require('react-syntax-highlighter/dist/styles/vs2015').default || require('react-syntax-highlighter/dist/styles/vs2015');
 import remarkGfm from 'remark-gfm';
 import { buildSpaceCapsuleRoom } from './SpaceCapsuleRoom3D';
+import {
+  SITTING_CAT_PROFILE,
+  UPRIGHT_CAT_PROFILE,
+  CatFaceTuning
+} from './cat/catProfiles';
+import {
+  buildRiggedCatFromGLB,
+  RiggedCatController
+} from './cat/catShaderAndRig';
 
 interface Message {
   id: string;
@@ -26,27 +35,35 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
   const animationIdRef = useRef<number>();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // 3D 引用：挂载点与两种形态缓存
+  // 3D 挂载点与装配好的双形态灵动黑猫控制器缓存
   const robotAnchorRef = useRef<THREE.Group>();
   const virtualPropsRef = useRef<THREE.Group>();
-  const modelsCacheRef = useRef<{
-    standing?: THREE.Group;
-    crouching?: THREE.Group;
-    custom?: THREE.Group;
+  const riggedCatsRef = useRef<{
+    standing?: RiggedCatController;
+    crouching?: RiggedCatController;
+    custom?: RiggedCatController;
   }>({});
-  const bounceTimeRef = useRef<number>(0);
+  const activeCatRef = useRef<RiggedCatController | undefined>();
+  const mouseNDCRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
 
   const [isLoading, setIsLoading] = useState(true);
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [posture, setPosture] = useState<CatPosture>('standing');
   const [showVirtualProps, setShowVirtualProps] = useState(true);
+  const [showTuningPanel, setShowTuningPanel] = useState(false);
+  const [rimStrength, setRimStrength] = useState(1.45);
+  const [whiteTipStrength, setWhiteTipStrength] = useState(1.0);
+  const [showFurTufts, setShowFurTufts] = useState(true);
+  const [faceTuning, setFaceTuning] = useState<CatFaceTuning>(
+    SITTING_CAT_PROFILE.face
+  );
   const [isDraggingOver, setIsDraggingOver] = useState(false);
   const [errorBanner, setErrorBanner] = useState<string | null>(null);
   const [showChat, setShowChat] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
-      text: '你好！我是袋子，欢迎来到 PartJava 温暖书房！你可以点击下方按钮切换我的「站立 / 爬起」形态，或者直接向我提问哦~ 🐾',
+      text: '你好！我是袋子（像素绒毛黑猫形态）🐾！移动鼠标我会看着你，点击我或下方按钮我会变成 ^ ^ 笑眼开心跳跃，快来和我聊天吧~',
       sender: 'ai',
       timestamp: new Date()
     }
@@ -59,7 +76,6 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // 提示横幅
   const notifyError = useCallback((msg: string) => {
     setErrorBanner(msg);
     setTimeout(() => {
@@ -67,48 +83,28 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
     }, 4500);
   }, []);
 
-  // 归一化并接地 GLB 模型到书房地毯中央
-  const prepareFittedModel = useCallback((modelScene: THREE.Object3D): THREE.Group => {
-    const wrapper = new THREE.Group();
-    wrapper.add(modelScene);
-
-    const bb = new THREE.Box3().setFromObject(modelScene);
-    const size = bb.getSize(new THREE.Vector3());
-    const center = bb.getCenter(new THREE.Vector3());
-
-    if (size.y > 0) {
-      const s = Math.min(2.2 / size.y, 2.3 / Math.max(size.x, size.z));
-      modelScene.scale.setScalar(s);
-      modelScene.position.set(-center.x * s, -bb.min.y * s, -center.z * s);
-    }
-
-    modelScene.traverse((o: any) => {
-      if (o.isMesh) {
-        o.castShadow = true;
-        o.receiveShadow = true;
-      }
-    });
-
-    return wrapper;
-  }, []);
-
-  // 切换书房中央展示的模型形态
+  // 激活指定形态的灵动黑猫模型
   const activatePostureModel = useCallback((targetPosture: CatPosture) => {
     const anchor = robotAnchorRef.current;
-    if (!anchor) return;
-
-    const targetModel = modelsCacheRef.current[targetPosture];
-    if (!targetModel) return;
+    const catCtrl = riggedCatsRef.current[targetPosture];
+    if (!anchor || !catCtrl) return;
 
     while (anchor.children.length > 0) {
       anchor.remove(anchor.children[0]);
     }
-    anchor.add(targetModel);
-    bounceTimeRef.current = 1.0; // 触发轻盈切换弹跳动画
+    anchor.add(catCtrl.root);
+    activeCatRef.current = catCtrl;
+    catCtrl.triggerHappyJump();
     setPosture(targetPosture);
+    setFaceTuning({ ...catCtrl.profile.face });
   }, []);
 
-  // 切换虚实结合科技配饰显示状态
+  // 撸猫互动：触发 ^ ^ 笑眼 + 跳跃 + 竖耳摇尾
+  const handlePetCat = () => {
+    activeCatRef.current?.triggerHappyJump();
+  };
+
+  // 切换环绕虚拟物品显示/隐藏
   const toggleVirtualProps = () => {
     const next = !showVirtualProps;
     setShowVirtualProps(next);
@@ -117,13 +113,36 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
     }
   };
 
+  // 实时微调当前猫咪的像素五官位置
+  const handleFaceTuningChange = (patch: Partial<CatFaceTuning>) => {
+    const next = { ...faceTuning, ...patch };
+    setFaceTuning(next);
+    activeCatRef.current?.updateFaceTuning(patch);
+  };
+
+  // 实时微调逆光银边与立体绒毛
+  const handleShaderChange = (opts: {
+    rim?: number;
+    whiteTip?: number;
+    tufts?: boolean;
+  }) => {
+    if (opts.rim !== undefined) setRimStrength(opts.rim);
+    if (opts.whiteTip !== undefined) setWhiteTipStrength(opts.whiteTip);
+    if (opts.tufts !== undefined) setShowFurTufts(opts.tufts);
+    activeCatRef.current?.updateRimAndFur({
+      rimStrength: opts.rim,
+      whiteTipStrength: opts.whiteTip,
+      showFurTufts: opts.tufts
+    });
+  };
+
   // AI回复函数
   const getAIResponse = async (userMessage: string): Promise<string> => {
     try {
       const response = await fetch('/api/ai/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: userMessage }),
+        body: JSON.stringify({ message: userMessage })
       });
 
       if (!response.ok) {
@@ -143,7 +162,7 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
     const msg = userMessage.toLowerCase();
 
     if (msg.includes('你好') || msg.includes('hi') || msg.includes('hello')) {
-      return '你好呀！我是袋子，很高兴在温暖书房见到你！有什么我可以帮助你的吗？🐾';
+      return '喵呜~ 你好呀！我是袋子，很高兴在温暖书房见到你！有什么我可以帮助你的吗？🐾';
     }
     if (msg.includes('学习') || msg.includes('怎么学')) {
       return '学习编程最重要的是多练习！建议你从基础开始，每天坚持写代码，遇到问题多思考。我可以帮你解答具体的技术问题哦！💪';
@@ -158,13 +177,13 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
       return '我们有在线代码编辑器！支持多种编程语言，可以实时运行和测试代码。去"代码"页面试试吧！💻';
     }
     if (msg.includes('谢谢') || msg.includes('感谢')) {
-      return '不客气！能帮到你我很开心！有其他问题随时问我哦~😄';
+      return '不客气喵！能帮到你我很开心！有其他问题随时问我哦~😄';
     }
     if (msg.includes('再见') || msg.includes('拜拜')) {
-      return '再见！记得常来书房找我玩哦！祝你学习愉快！👋';
+      return '再见！记得常来书房摸摸我哦！祝你学习愉快！👋';
     }
 
-    return '嗯嗯，我明白了！你还想了解什么呢？我可以帮你解答学习、笔记、挑战等方面的问题哦！🤔';
+    return '喵嗯，我明白了！你还想了解什么呢？我可以帮你解答学习、笔记、挑战等方面的问题哦！🤔';
   };
 
   // 发送消息
@@ -181,12 +200,8 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
     setMessages(prev => [...prev, userMessage]);
     setInputValue('');
     setIsTyping(true);
-
-    // 提问时触发猫咪姿态互动
-    const nextForm: CatPosture = posture === 'standing' ? 'crouching' : 'standing';
-    if (modelsCacheRef.current[nextForm]) {
-      activatePostureModel(nextForm);
-    }
+    activeCatRef.current?.setTalking(true);
+    activeCatRef.current?.triggerHappyJump();
 
     setTimeout(async () => {
       const aiResponse = await getAIResponse(userMessage.text);
@@ -200,6 +215,10 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
 
       setMessages(prev => [...prev, aiMessage]);
       setIsTyping(false);
+      // 说话嘴部跳动持续 1.8 秒后恢复乖巧状态
+      setTimeout(() => {
+        activeCatRef.current?.setTalking(false);
+      }, 1800);
     }, 800);
   };
 
@@ -207,6 +226,9 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
   const handleQuickReply = (text: string) => {
     setShowChat(true);
     setInputValue(text);
+    activeCatRef.current?.setTalking(true);
+    activeCatRef.current?.triggerHappyJump();
+
     setTimeout(async () => {
       const userMessage: Message = {
         id: Date.now().toString(),
@@ -229,10 +251,13 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
         }
       ]);
       setIsTyping(false);
+      setTimeout(() => {
+        activeCatRef.current?.setTalking(false);
+      }, 1800);
     }, 100);
   };
 
-  // 支持拖入自定义 GLB 文件预览
+  // 拖入任意 GLB 文件一键注入炭黑逆光绒毛 + 像素五官 + 骨骼级呼吸歪头律动
   const handleDropGLB = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setIsDraggingOver(false);
@@ -247,9 +272,16 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
     loader.load(
       url,
       gltf => {
-        const fitted = prepareFittedModel(gltf.scene);
-        modelsCacheRef.current.custom = fitted;
+        const lowerName = file.name.toLowerCase();
+        const preset = lowerName.includes('fluffy')
+          ? UPRIGHT_CAT_PROFILE
+          : lowerName.includes('plush')
+          ? SITTING_CAT_PROFILE
+          : undefined;
+        const rigged = buildRiggedCatFromGLB(gltf.scene, preset, 2.18);
+        riggedCatsRef.current.custom = rigged;
         activatePostureModel('custom');
+        setShowTuningPanel(true);
         URL.revokeObjectURL(url);
       },
       undefined,
@@ -313,18 +345,69 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
     orbit.maxAzimuthAngle = 0.26;
     orbit.update();
 
-    // 构建「PartJava · 温暖书房」与虚实结合动态配饰
+    // 构建「PartJava · 温暖书房」与环绕虚拟配饰
     const warmStudyRoom = buildSpaceCapsuleRoom(scene);
     robotAnchorRef.current = warmStudyRoom.robotAnchor;
     virtualPropsRef.current = warmStudyRoom.virtualPropsGroup;
     (window as any).robotAnchor = warmStudyRoom.robotAnchor;
 
-    // 加载两个形态的猫咪 GLB 模型：
-    // 1) /models/cat-standing.glb (black plush cat 3d model.glb - 站立形态)
-    // 2) /models/cat-crouching.glb (fluffy black cat 3d model.glb - 爬起形态)
+    // 专属摄影棚级双侧背光轮廓聚光灯（Rim SpotLights），打亮黑猫银白耳缘与绒毛轮廓
+    const rimSpotL = new THREE.SpotLight(0xeef6ff, 18, 8.5, Math.PI / 3, 0.65, 1.6);
+    rimSpotL.position.set(-1.6, 3.4, -3.2);
+    rimSpotL.target.position.set(0, 1.1, -1.55);
+    scene.add(rimSpotL, rimSpotL.target);
+
+    const rimSpotR = new THREE.SpotLight(0xfff2e2, 16, 8.5, Math.PI / 3, 0.65, 1.6);
+    rimSpotR.position.set(1.6, 3.4, -3.2);
+    rimSpotR.target.position.set(0, 1.1, -1.55);
+    scene.add(rimSpotR, rimSpotR.target);
+
+    // 监听鼠标移动（用于猫咪眼神与头部跟随）并支持点击猫咪触发 ^ ^ 笑眼跳跃
+    const raycaster = new THREE.Raycaster();
+    const pointerVec = new THREE.Vector2();
+    let pointerDownPos = { x: 0, y: 0 };
+
+    const onPointerMove = (e: PointerEvent) => {
+      const rect = container.getBoundingClientRect();
+      if (!rect.width || !rect.height) return;
+      const nx = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+      const ny = -(((e.clientY - rect.top) / rect.height) * 2 - 1);
+      mouseNDCRef.current = { x: nx, y: ny };
+    };
+
+    const onPointerDown = (e: PointerEvent) => {
+      pointerDownPos = { x: e.clientX, y: e.clientY };
+    };
+
+    const onPointerUp = (e: PointerEvent) => {
+      const moveDist = Math.hypot(
+        e.clientX - pointerDownPos.x,
+        e.clientY - pointerDownPos.y
+      );
+      if (moveDist > 6 || !warmStudyRoom.robotAnchor) return;
+
+      const rect = container.getBoundingClientRect();
+      pointerVec.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+      pointerVec.y = -(((e.clientY - rect.top) / rect.height) * 2 - 1);
+      raycaster.setFromCamera(pointerVec, camera);
+      const hits = raycaster.intersectObjects(
+        warmStudyRoom.robotAnchor.children,
+        true
+      );
+      if (hits.length > 0) {
+        activeCatRef.current?.triggerHappyJump();
+      }
+    };
+
+    container.addEventListener('pointermove', onPointerMove);
+    container.addEventListener('pointerdown', onPointerDown);
+    container.addEventListener('pointerup', onPointerUp);
+
+    // 加载并注入两个形态的猫咪 GLB 模型：
+    // 1) /models/cat-standing.glb (black plush cat 3d model.glb - 乖巧坐姿形态)
+    // 2) /models/cat-crouching.glb (fluffy black cat 3d model.glb - 站立张望形态)
     const loader = new GLTFLoader();
-    let standingLoaded = false;
-    let crouchingLoaded = false;
+    let standingReady = false;
 
     const updateProgress = (prog: number) => {
       setLoadingProgress(prev => Math.max(prev, Math.min(99, Math.round(prog))));
@@ -333,20 +416,24 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
     loader.load(
       '/models/cat-standing.glb',
       gltf => {
-        const fitted = prepareFittedModel(gltf.scene);
-        modelsCacheRef.current.standing = fitted;
-        standingLoaded = true;
+        const rigged = buildRiggedCatFromGLB(
+          gltf.scene,
+          SITTING_CAT_PROFILE,
+          2.18
+        );
+        riggedCatsRef.current.standing = rigged;
+        standingReady = true;
         activatePostureModel('standing');
         setLoadingProgress(100);
         setIsLoading(false);
       },
       xhr => {
         if (xhr.total > 0) {
-          updateProgress((xhr.loaded / xhr.total) * 85);
+          updateProgress((xhr.loaded / xhr.total) * 88);
         }
       },
       err => {
-        console.error('加载站立形态 GLB 失败:', err);
+        console.error('加载坐姿黑猫 GLB 失败:', err);
         setIsLoading(false);
       }
     );
@@ -354,10 +441,13 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
     loader.load(
       '/models/cat-crouching.glb',
       gltf => {
-        const fitted = prepareFittedModel(gltf.scene);
-        modelsCacheRef.current.crouching = fitted;
-        crouchingLoaded = true;
-        if (!standingLoaded) {
+        const rigged = buildRiggedCatFromGLB(
+          gltf.scene,
+          UPRIGHT_CAT_PROFILE,
+          2.18
+        );
+        riggedCatsRef.current.crouching = rigged;
+        if (!standingReady) {
           activatePostureModel('crouching');
           setLoadingProgress(100);
           setIsLoading(false);
@@ -365,17 +455,16 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
       },
       undefined,
       err => {
-        console.error('加载爬起形态 GLB 失败:', err);
+        console.error('加载站起黑猫 GLB 失败:', err);
       }
     );
 
-    // 暴露全局 URL 加载接口兼容原脚本
     (window as any).loadRobotFromURL = (url: string) => {
       loader.load(
         url,
         g => {
-          const fitted = prepareFittedModel(g.scene);
-          modelsCacheRef.current.custom = fitted;
+          const rigged = buildRiggedCatFromGLB(g.scene, undefined, 2.18);
+          riggedCatsRef.current.custom = rigged;
           activatePostureModel('custom');
         },
         undefined,
@@ -383,25 +472,18 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
       );
     };
 
-    // 动画循环：自然呼吸、微幅摆动与姿态切换弹跳
-    let time = 0;
+    // 渲染与动画主循环
+    const clock = new THREE.Clock();
     const animate = () => {
       animationIdRef.current = requestAnimationFrame(animate);
-      time += 0.016;
+      const dt = Math.min(clock.getDelta(), 0.05);
+      const elapsed = clock.getElapsedTime();
 
       orbit.update();
-      warmStudyRoom.update(time);
+      warmStudyRoom.update(elapsed);
 
-      if (warmStudyRoom.robotAnchor) {
-        // 姿态切换时的轻盈弹跳衰减
-        let jumpOffset = 0;
-        if (bounceTimeRef.current > 0) {
-          bounceTimeRef.current = Math.max(0, bounceTimeRef.current - 0.045);
-          jumpOffset = Math.sin(bounceTimeRef.current * Math.PI) * 0.22;
-        }
-
-        // 保持模型稳固站立在地毯中央
-        warmStudyRoom.robotAnchor.position.y = 0.016 + jumpOffset;
+      if (activeCatRef.current) {
+        activeCatRef.current.update(dt, elapsed, mouseNDCRef.current);
       }
 
       renderer.render(scene, camera);
@@ -426,6 +508,9 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
 
     return () => {
       window.removeEventListener('resize', handleResize);
+      container.removeEventListener('pointermove', onPointerMove);
+      container.removeEventListener('pointerdown', onPointerDown);
+      container.removeEventListener('pointerup', onPointerUp);
       resizeObserver.disconnect();
       if (animationIdRef.current) {
         cancelAnimationFrame(animationIdRef.current);
@@ -433,7 +518,7 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
       orbit.dispose();
       renderer.dispose();
     };
-  }, [activatePostureModel, prepareFittedModel]);
+  }, [activatePostureModel]);
 
   return (
     <div className="fixed inset-0 z-50 bg-black/65 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 animate-fadeIn">
@@ -448,7 +533,7 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
         }}
         onDrop={handleDropGLB}
       >
-        {/* 顶部标题栏与姿态切换控制栏 */}
+        {/* 顶部标题栏与姿态/微调控制栏 */}
         <div className="flex flex-wrap justify-between items-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 border-b border-[#d4a36a]/20 bg-[#221f1b]/95 text-[#f4eadc] z-10">
           <div className="flex items-center space-x-3">
             <span className="inline-block w-2.5 h-2.5 rounded-full bg-[#d4a36a] shadow-[0_0_8px_rgba(212,163,106,0.8)]" />
@@ -460,7 +545,7 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
             </span>
           </div>
 
-          <div className="flex items-center space-x-2">
+          <div className="flex flex-wrap items-center gap-2">
             {/* 双形态切换按钮组 */}
             <div className="flex items-center bg-[#141210] p-0.5 rounded-lg border border-[#d4a36a]/25">
               <button
@@ -471,7 +556,7 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
                     : 'text-[#e9dac3]/80 hover:text-white'
                 }`}
               >
-                🐱 站立形态
+                🐱 乖巧坐姿
               </button>
               <button
                 onClick={() => activatePostureModel('crouching')}
@@ -481,9 +566,30 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
                     : 'text-[#e9dac3]/80 hover:text-white'
                 }`}
               >
-                🐾 爬起形态
+                🐾 爬起站姿
               </button>
             </div>
+
+            {/* 撸猫开心笑眼互动按钮 */}
+            <button
+              onClick={handlePetCat}
+              className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs border border-[#d4a36a]/40 bg-[#d4a36a]/15 text-[#f7efe4] hover:bg-[#d4a36a]/30 transition-all"
+              title="点击触发 ^ ^ 眯眼笑跳跃互动"
+            >
+              ^ ^ 撸猫互动
+            </button>
+
+            {/* 毛色逆光 & 五官微调面板开关 */}
+            <button
+              onClick={() => setShowTuningPanel(!showTuningPanel)}
+              className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs border transition-all ${
+                showTuningPanel
+                  ? 'bg-[#d4a36a] text-[#1c1a17] border-[#d4a36a] font-semibold'
+                  : 'bg-[#141210] border-white/15 text-[#e9dac3]/80 hover:text-white'
+              }`}
+            >
+              🎨 毛色&五官微调
+            </button>
 
             {/* 虚拟配饰隐藏/显示切换按钮 */}
             <button
@@ -526,10 +632,143 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
             }}
           />
 
+          {/* 右上角「毛色逆光 & 像素五官微调」悬浮控制面板 */}
+          {showTuningPanel && !showChat && (
+            <div className="absolute top-3 right-3 z-20 w-72 bg-[#161412]/90 backdrop-blur-md border border-[#d4a36a]/35 rounded-xl p-3.5 text-xs text-[#f4eadc] shadow-2xl space-y-2.5">
+              <div className="flex items-center justify-between border-b border-white/10 pb-2">
+                <span className="font-semibold text-[#d4a36a]">
+                  🎨 毛色逆光 & 灵动五官微调
+                </span>
+                <button
+                  onClick={() => setShowTuningPanel(false)}
+                  className="text-[#e9dac3]/60 hover:text-white"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div>
+                <div className="flex justify-between mb-1">
+                  <span>Fresnel 逆光银边强度</span>
+                  <span className="font-mono text-[#d4a36a]">
+                    {rimStrength.toFixed(2)}
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min={0.2}
+                  max={2.6}
+                  step={0.05}
+                  value={rimStrength}
+                  onChange={e =>
+                    handleShaderChange({ rim: parseFloat(e.target.value) })
+                  }
+                  className="w-full accent-[#d4a36a]"
+                />
+              </div>
+
+              <div>
+                <div className="flex justify-between mb-1">
+                  <span>耳缘 & 尾尖银白毛浓度</span>
+                  <span className="font-mono text-[#d4a36a]">
+                    {whiteTipStrength.toFixed(2)}
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min={0}
+                  max={1.6}
+                  step={0.05}
+                  value={whiteTipStrength}
+                  onChange={e =>
+                    handleShaderChange({ whiteTip: parseFloat(e.target.value) })
+                  }
+                  className="w-full accent-[#d4a36a]"
+                />
+              </div>
+
+              <div>
+                <div className="flex justify-between mb-1">
+                  <span>像素眼高度 (Eye Y)</span>
+                  <span className="font-mono text-[#d4a36a]">
+                    {faceTuning.eyeY.toFixed(3)}
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min={0.48}
+                  max={0.82}
+                  step={0.004}
+                  value={faceTuning.eyeY}
+                  onChange={e =>
+                    handleFaceTuningChange({ eyeY: parseFloat(e.target.value) })
+                  }
+                  className="w-full accent-[#d4a36a]"
+                />
+              </div>
+
+              <div>
+                <div className="flex justify-between mb-1">
+                  <span>两眼间距 (Spacing)</span>
+                  <span className="font-mono text-[#d4a36a]">
+                    {faceTuning.eyeSpacing.toFixed(3)}
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min={0.1}
+                  max={0.34}
+                  step={0.004}
+                  value={faceTuning.eyeSpacing}
+                  onChange={e =>
+                    handleFaceTuningChange({
+                      eyeSpacing: parseFloat(e.target.value)
+                    })
+                  }
+                  className="w-full accent-[#d4a36a]"
+                />
+              </div>
+
+              <div>
+                <div className="flex justify-between mb-1">
+                  <span>品字嘴高度 (Mouth Y)</span>
+                  <span className="font-mono text-[#d4a36a]">
+                    {faceTuning.mouthY.toFixed(3)}
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min={0.42}
+                  max={0.72}
+                  step={0.004}
+                  value={faceTuning.mouthY}
+                  onChange={e =>
+                    handleFaceTuningChange({
+                      mouthY: parseFloat(e.target.value)
+                    })
+                  }
+                  className="w-full accent-[#d4a36a]"
+                />
+              </div>
+
+              <div className="flex items-center justify-between pt-1 border-t border-white/10">
+                <span>3D 表面立体绒毛簇</span>
+                <input
+                  type="checkbox"
+                  checked={showFurTufts}
+                  onChange={e =>
+                    handleShaderChange({ tufts: e.target.checked })
+                  }
+                  className="accent-[#d4a36a] w-4 h-4"
+                />
+              </div>
+            </div>
+          )}
+
           {/* GLB 拖拽上传覆盖层 */}
           {isDraggingOver && (
             <div className="absolute inset-5 z-20 border-2 border-dashed border-[#ddb982]/80 rounded-2xl grid place-items-center text-[#f7efe4] bg-[#141210]/70 backdrop-blur-md text-base sm:text-lg tracking-wider">
-              释放鼠标，将 GLB 模型放入书房中央展示区
+              释放鼠标，将 GLB 模型放入书房中央并自动注入炭黑绒毛与像素五官
             </div>
           )}
 
@@ -546,7 +785,7 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
               <div className="text-center text-[#f4eadc] max-w-sm px-4">
                 <div className="text-5xl mb-5 animate-bounce">🐱</div>
                 <div className="text-lg sm:text-xl font-serif font-semibold mb-4 tracking-wider text-[#f7efe4]">
-                  正在布置温暖书房与 3D 模型...
+                  正在唤醒像素绒毛黑猫与温暖书房...
                 </div>
                 <div className="w-64 bg-[#2c2723] rounded-full h-2.5 mb-3 overflow-hidden border border-[#d4a36a]/30 mx-auto">
                   <div
@@ -554,40 +793,46 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
                     style={{ width: `${loadingProgress}%` }}
                   />
                 </div>
-                <div className="text-sm font-mono text-[#d4a36a]">{loadingProgress}%</div>
+                <div className="text-sm font-mono text-[#d4a36a]">
+                  {loadingProgress}%
+                </div>
               </div>
             </div>
           )}
 
-          {/* 底部轻量悬浮交互栏（紧凑半透明设计，完全不遮挡地毯中央的 3D 猫咪模型） */}
+          {/* 底部轻量悬浮交互栏 */}
           {!isLoading && !showChat && (
             <div className="absolute bottom-3 sm:bottom-5 left-1/2 -translate-x-1/2 w-full max-w-xl px-3 sm:px-4 z-10">
               <div className="bg-[#1a1714]/82 backdrop-blur-md rounded-2xl px-4 py-3 sm:px-5 sm:py-3.5 shadow-2xl border border-[#d4a36a]/30 flex flex-col sm:flex-row items-center justify-between gap-3">
                 <div className="flex items-center space-x-3">
                   <button
                     onClick={() =>
-                      activatePostureModel(posture === 'standing' ? 'crouching' : 'standing')
+                      activatePostureModel(
+                        posture === 'standing' ? 'crouching' : 'standing'
+                      )
                     }
                     className="w-10 h-10 bg-gradient-to-br from-[#d4a36a] to-[#9c7142] rounded-full flex items-center justify-center shadow-md hover:scale-105 transition-transform flex-shrink-0"
-                    title="点击切换猫咪站立/爬起形态"
+                    title="点击切换猫咪乖巧坐姿 / 爬起站姿"
                   >
-                    <span className="text-xl">{posture === 'standing' ? '🐱' : '🐾'}</span>
+                    <span className="text-xl">
+                      {posture === 'standing' ? '🐱' : '🐾'}
+                    </span>
                   </button>
                   <div>
                     <div className="flex items-center space-x-2">
                       <h3 className="text-sm sm:text-base font-bold text-[#f7efe4]">
-                        袋子 · 3D 书房伴侣
+                        袋子 · 灵动像素绒毛黑猫
                       </h3>
                       <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] bg-[#d4a36a]/20 text-[#e9dac3] border border-[#d4a36a]/30">
                         {posture === 'standing'
-                          ? '站立形态'
+                          ? '乖巧坐姿'
                           : posture === 'crouching'
-                          ? '爬起形态'
-                          : '自定义模型'}
+                          ? '爬起站姿'
+                          : '自定义 GLB'}
                       </span>
                     </div>
                     <p className="text-xs text-[#e9dac3]/75 mt-0.5">
-                      拖拽画面可环视书房 · 点击头像切换姿态 · 支持直接拖入 .glb 预览
+                      移动鼠标眼神跟随 · 点击猫咪触发 ^ ^ 笑眼跳跃 · 支持拖入 .glb 自动植毛
                     </p>
                   </div>
                 </div>
@@ -600,7 +845,9 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
                     💬 开始对话
                   </button>
                   <button
-                    onClick={() => handleQuickReply('我想学习编程，有什么建议吗？')}
+                    onClick={() =>
+                      handleQuickReply('我想学习编程，有什么建议吗？')
+                    }
                     className="flex-1 sm:flex-initial bg-[#2c2723] hover:bg-[#3a332d] text-[#f4eadc] border border-[#d4a36a]/35 px-3.5 py-2 rounded-xl transition-all duration-200 text-xs sm:text-sm whitespace-nowrap"
                   >
                     📚 学习建议
@@ -620,10 +867,14 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
                       <span className="text-white text-xl">🐱</span>
                     </div>
                     <div>
-                      <h3 className="text-sm font-bold text-gray-800">袋子 AI助手 · 温暖书房</h3>
+                      <h3 className="text-sm font-bold text-gray-800">
+                        袋子 AI助手 · 温暖书房
+                      </h3>
                       <div className="flex items-center space-x-1">
                         <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                        <span className="text-xs text-gray-500">在线 · 智能对话中</span>
+                        <span className="text-xs text-gray-500">
+                          在线 · 智能对话中
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -641,7 +892,9 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
                   {messages.map(msg => (
                     <div
                       key={msg.id}
-                      className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'} animate-fadeIn`}
+                      className={`flex ${
+                        msg.sender === 'user' ? 'justify-end' : 'justify-start'
+                      } animate-fadeIn`}
                     >
                       {msg.sender === 'ai' && (
                         <div className="w-8 h-8 bg-gradient-to-br from-[#d4a36a] to-[#8d5b44] rounded-full flex items-center justify-center mr-2 flex-shrink-0 shadow-md">
@@ -656,14 +909,18 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
                         }`}
                       >
                         {msg.sender === 'user' ? (
-                          <p className="text-sm whitespace-pre-wrap break-words">{msg.text}</p>
+                          <p className="text-sm whitespace-pre-wrap break-words">
+                            {msg.text}
+                          </p>
                         ) : (
                           <div className="text-sm prose prose-sm max-w-none">
                             <ReactMarkdown
                               remarkPlugins={[remarkGfm]}
                               components={{
                                 code({ className, children, ...props }: any) {
-                                  const match = /language-(\w+)/.exec(className || '');
+                                  const match = /language-(\w+)/.exec(
+                                    className || ''
+                                  );
                                   const isInline = !match;
 
                                   return !isInline && match ? (
@@ -686,7 +943,10 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
                                       </SyntaxHighlighter>
                                     </div>
                                   ) : (
-                                    <code className="bg-gray-200 px-1.5 py-0.5 rounded text-xs font-mono text-red-600" {...props}>
+                                    <code
+                                      className="bg-gray-200 px-1.5 py-0.5 rounded text-xs font-mono text-red-600"
+                                      {...props}
+                                    >
                                       {children}
                                     </code>
                                   );
@@ -697,8 +957,17 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
                             </ReactMarkdown>
                           </div>
                         )}
-                        <span className={`text-xs opacity-70 mt-1 block ${msg.sender === 'user' ? 'text-white' : 'text-gray-500'}`}>
-                          {msg.timestamp.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}
+                        <span
+                          className={`text-xs opacity-70 mt-1 block ${
+                            msg.sender === 'user'
+                              ? 'text-white'
+                              : 'text-gray-500'
+                          }`}
+                        >
+                          {msg.timestamp.toLocaleTimeString('zh-CN', {
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
                         </span>
                       </div>
                     </div>
@@ -708,8 +977,14 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
                       <div className="bg-gray-100 px-4 py-2 rounded-2xl">
                         <div className="flex space-x-2">
                           <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+                          <div
+                            className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                            style={{ animationDelay: '0.2s' }}
+                          ></div>
+                          <div
+                            className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                            style={{ animationDelay: '0.4s' }}
+                          ></div>
                         </div>
                       </div>
                     </div>
