@@ -18,7 +18,6 @@ import {
   RobotOutlined,
   BarChartOutlined
 } from '@ant-design/icons';
-import GlobalSearch from './GlobalSearch';
 import { useSidebar } from './Sidebar';
 import SettingModal from './SettingModal';
 import AI3DRobot from './AI3DRobot';
@@ -200,13 +199,6 @@ export default function Navbar() {
               <span className="text-[11px] leading-tight">挑战</span>
             </Link>
 
-            <Link href="/tools/search" className={navItemClass('/tools/search')}>
-              <svg className="w-4 h-4 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-              <span className="text-[11px] leading-tight">全局</span>
-            </Link>
-
             <Link href="/tools/game" className={navItemClass('/tools/game')}>
               <svg className="w-4 h-4 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 6h.01M6 12h.01M6 18h.01M12 6h.01M12 12h.01M12 18h.01M18 6h.01M18 12h.01M18 18h.01" />
@@ -240,25 +232,6 @@ export default function Navbar() {
               <span className="text-[11px] leading-tight text-amber-600 dark:text-amber-300 font-bold">VIP</span>
             </button>
           </div>
-        </div>
-
-        {/* 🏝️ 中岛：高透液态玻璃搜索胶囊 */}
-        <div
-          className="hidden md:flex items-center flex-1 max-w-md h-14 px-3 rounded-full backdrop-blur-2xl backdrop-saturate-150 border border-white/75 dark:border-white/20 relative overflow-hidden"
-          style={liquidIslandStyle}
-        >
-          <div
-            className="absolute inset-x-4 top-0 h-5 pointer-events-none"
-            style={{
-              background:
-                'linear-gradient(180deg, rgba(255,255,255,0.32) 0%, rgba(255,255,255,0.04) 70%, transparent 100%)',
-            }}
-          />
-          <GlobalSearch
-            className="w-full liquid-glass-search"
-            placeholder="搜索课程、工具、笔记... (Ctrl+K)"
-            size="middle"
-          />
         </div>
 
         {/* 🏝️ 右岛：用户状态与通知液态玻璃胶囊 */}

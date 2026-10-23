@@ -54,12 +54,14 @@ interface GlobalSearchProps {
   className?: string;
   placeholder?: string;
   size?: 'small' | 'middle' | 'large';
+  placement?: 'bottomLeft' | 'bottomRight' | 'topLeft' | 'topRight';
 }
 
 export default function GlobalSearch({ 
   className = '', 
   placeholder = '搜索课程、工具、笔记...',
-  size = 'middle'
+  size = 'middle',
+  placement = 'bottomLeft'
 }: GlobalSearchProps) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
@@ -74,7 +76,7 @@ export default function GlobalSearch({
   const searchRef = useRef<any>(null);
   const debounceRef = useRef<NodeJS.Timeout>();
 
-  // 加载搜索历史
+  // 加载搜索历史与全局快捷键 (Ctrl+K / Cmd+K)
   useEffect(() => {
     const onFocusSearch = () => {
       if (searchRef.current) {
@@ -82,8 +84,18 @@ export default function GlobalSearch({
         setShowDropdown(true);
       }
     };
+    const onGlobalKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        onFocusSearch();
+      }
+    };
     window.addEventListener('global-search-focus', onFocusSearch);
-    return () => window.removeEventListener('global-search-focus', onFocusSearch);
+    window.addEventListener('keydown', onGlobalKeyDown);
+    return () => {
+      window.removeEventListener('global-search-focus', onFocusSearch);
+      window.removeEventListener('keydown', onGlobalKeyDown);
+    };
   }, []);
 
   useEffect(() => {
@@ -477,8 +489,8 @@ export default function GlobalSearch({
         trigger={['click']}
         open={showDropdown}
         onOpenChange={setShowDropdown}
-        placement="bottomLeft"
-        overlayClassName="z-[1050]"
+        placement={placement}
+        overlayClassName="!z-[2147483647]"
       >
         <div>
           <Search

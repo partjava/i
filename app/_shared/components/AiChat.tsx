@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 import { usePathname } from 'next/navigation';
 import { UserOutlined } from '@ant-design/icons';
 import StitchLogo from './StitchLogo';
+import GlobalSearch from './GlobalSearch';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
@@ -27,6 +28,8 @@ export default function AiChat() {
 }
 
 function FloatingAiChat() {
+  const pathname = usePathname();
+  const isStudyPage = pathname ? pathname.startsWith('/study') : false;
   const ai = useAiChat();
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
@@ -154,7 +157,31 @@ function FloatingAiChat() {
         }}
       >
       {!open && (
-        <div style={{ position: 'relative' }}>
+        <div className="flex items-center gap-2.5 sm:gap-3" style={{ position: 'relative' }}>
+          {/* 当不是学习页面时，显示全局搜索胶囊框（默认位置居于史迪仔左侧，进入学习页面自动隐藏） */}
+          {!isStudyPage && (
+            <div
+              className="hidden sm:flex items-center w-72 md:w-80 h-12 px-3 rounded-full backdrop-blur-2xl backdrop-saturate-150 border border-white/80 dark:border-white/20 shadow-[0_8px_24px_rgba(31,38,135,0.12)] relative overflow-hidden transition-all duration-300 hover:shadow-[0_12px_32px_rgba(31,38,135,0.2)]"
+              style={{
+                background: 'linear-gradient(135deg, rgba(255,255,255,0.85) 0%, rgba(255,255,255,0.65) 100%)',
+              }}
+            >
+              <div
+                className="absolute inset-x-3 top-0 h-4 pointer-events-none"
+                style={{
+                  background:
+                    'linear-gradient(180deg, rgba(255,255,255,0.45) 0%, rgba(255,255,255,0.05) 70%, transparent 100%)',
+                }}
+              />
+              <GlobalSearch
+                className="w-full liquid-glass-search"
+                placeholder="搜索课程、工具、笔记... (Ctrl+K)"
+                size="middle"
+                placement="topLeft"
+              />
+            </div>
+          )}
+
           {showHint && (
             <div style={{
               position: 'absolute', bottom: 64, right: 0, width: 180,
@@ -179,30 +206,32 @@ function FloatingAiChat() {
               >知道了</button>
             </div>
           )}
-        <button
-          onClick={() => { setOpen(true); setShowHint(false); localStorage.setItem('ai_hint_dismissed', '1'); }}
-          aria-label="打开AI助手"
-          onMouseDown={(e) => startDrag(e.clientX, e.clientY)}
-          onTouchStart={(e) => {
-            const t = e.touches[0];
-            startDrag(t.clientX, t.clientY);
-          }}
-          style={{
-            width: 56,
-            height: 56,
-            borderRadius: 28,
-            background: 'linear-gradient(90deg,#4f8cff,#33d2ff)',
-            color: '#fff',
-            border: 'none',
-            boxShadow: '0 6px 18px rgba(79,140,255,0.28)',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <StitchLogo size={28} />
-        </button>
+
+          <button
+            onClick={() => { setOpen(true); setShowHint(false); localStorage.setItem('ai_hint_dismissed', '1'); }}
+            aria-label="打开AI助手"
+            onMouseDown={(e) => startDrag(e.clientX, e.clientY)}
+            onTouchStart={(e) => {
+              const t = e.touches[0];
+              startDrag(t.clientX, t.clientY);
+            }}
+            style={{
+              width: 56,
+              height: 56,
+              borderRadius: 28,
+              background: 'linear-gradient(90deg,#4f8cff,#33d2ff)',
+              color: '#fff',
+              border: 'none',
+              boxShadow: '0 6px 18px rgba(79,140,255,0.28)',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+            }}
+          >
+            <StitchLogo size={28} />
+          </button>
         </div>
       )}
 
