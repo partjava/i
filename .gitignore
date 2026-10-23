@@ -70,9 +70,8 @@ partjava-backend/target/
 # Claude 项目配置
 .claude/
 
-# 用户上传的图片与大型 3D GLB 模型（仅同步服务器，不占 Git 仓库空间）
+# 用户上传的图片（仅同步服务器，不占 Git 仓库空间）
 public/uploads/
-public/models/*.glb
 
 # 比赛提交文档（本地保留，不上传GitHub）
 作品原创声明.md
