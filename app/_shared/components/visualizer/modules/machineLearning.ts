@@ -718,25 +718,41 @@ function renderGradientDescentRace(group: THREE.Group, step: VisualizationStep) 
 }
 
 // ============================================================================
-// 5. CART 分类决策树 (特征阈值 + Gini 系数 + 样本分流动画)
+// 5. CART 分类决策树 (4层15节点特征分裂 + Gini 系数 + 多样本路由分流)
 // ============================================================================
 function genDecisionTreeSteps(): VisualizationStep[] {
+  // 4-Layer 15-node CART Decision Tree
   const treeNodes = [
-    { id: 0, label: 'X₁ ≤ 0.45', sub: 'Gini=0.48', x: 0, y: 5.5, z: 0 },
-    { id: 1, label: 'X₂ ≤ 1.80', sub: 'Gini=0.32', x: -4.2, y: 3.1, z: 0.4, parent: 0 },
-    { id: 2, label: 'X₃ ≤ 0.72', sub: 'Gini=0.29', x: 4.2, y: 3.1, z: -0.4, parent: 0 },
-    { id: 3, label: '类别 A (96%)', sub: 'Gini=0.04', x: -6.4, y: 0.6, z: 0.8, parent: 1, isLeaf: true },
-    { id: 4, label: '类别 B (91%)', sub: 'Gini=0.08', x: -2.0, y: 0.6, z: 0.2, parent: 1, isLeaf: true },
-    { id: 5, label: '类别 B (89%)', sub: 'Gini=0.11', x: 2.0, y: 0.6, z: -0.2, parent: 2, isLeaf: true },
-    { id: 6, label: '类别 C (98%)', sub: 'Gini=0.02', x: 6.4, y: 0.6, z: -0.8, parent: 2, isLeaf: true },
+    // Layer 1 (Root)
+    { id: 0, label: 'X₁ ≤ 0.50', sub: 'Gini=0.66', x: 0, y: 6.4, z: 0 },
+    // Layer 2
+    { id: 1, label: 'X₂ ≤ 1.65', sub: 'Gini=0.44', x: -4.8, y: 4.1, z: 0.3, parent: 0 },
+    { id: 2, label: 'X₃ ≤ 0.80', sub: 'Gini=0.41', x: 4.8, y: 4.1, z: -0.3, parent: 0 },
+    // Layer 3
+    { id: 3, label: 'X₁ ≤ 0.22', sub: 'Gini=0.24', x: -7.4, y: 1.8, z: 0.6, parent: 1 },
+    { id: 4, label: 'X₄ ≤ 2.10', sub: 'Gini=0.28', x: -2.2, y: 1.8, z: 0.1, parent: 1 },
+    { id: 5, label: 'X₂ ≤ 0.95', sub: 'Gini=0.22', x: 2.2, y: 1.8, z: -0.1, parent: 2 },
+    { id: 6, label: 'X₄ ≤ 3.40', sub: 'Gini=0.19', x: 7.4, y: 1.8, z: -0.6, parent: 2 },
+    // Layer 4 (8 High-purity classification leaf buckets)
+    { id: 7, label: '类A (98%)', sub: 'Gini=0.02', x: -8.7, y: -0.6, z: 0.9, parent: 3, isLeaf: true },
+    { id: 8, label: '类B (92%)', sub: 'Gini=0.07', x: -6.1, y: -0.6, z: 0.4, parent: 3, isLeaf: true },
+    { id: 9, label: '类B (95%)', sub: 'Gini=0.05', x: -3.5, y: -0.6, z: 0.2, parent: 4, isLeaf: true },
+    { id: 10, label: '类A (91%)', sub: 'Gini=0.08', x: -0.9, y: -0.6, z: -0.1, parent: 4, isLeaf: true },
+    { id: 11, label: '类C (94%)', sub: 'Gini=0.06', x: 0.9, y: -0.6, z: 0.1, parent: 5, isLeaf: true },
+    { id: 12, label: '类B (90%)', sub: 'Gini=0.09', x: 3.5, y: -0.6, z: -0.2, parent: 5, isLeaf: true },
+    { id: 13, label: '类C (96%)', sub: 'Gini=0.04', x: 6.1, y: -0.6, z: -0.4, parent: 6, isLeaf: true },
+    { id: 14, label: '类C (99%)', sub: 'Gini=0.01', x: 8.7, y: -0.6, z: -0.9, parent: 6, isLeaf: true },
   ];
 
   const paths = [
-    { path: [0], desc: '注入测试样本 #1 (X₁=0.28, X₂=1.20)：在根节点检验 X₁ ≤ 0.45 成立，准备走左分支' },
-    { path: [0, 1], desc: '样本 #1 滑入左内部节点：检验特征 X₂=1.20 ≤ 1.80 成立，继续向左路由' },
-    { path: [0, 1, 3], desc: '样本 #1 落入高纯度叶节点 [类别 A · 置信度 96%]（Gini = 0.04）！' },
-    { path: [0, 2], desc: '注入测试样本 #2 (X₁=0.82, X₃=0.95)：根节点 X₁ > 0.45 路由至右子树节点 2' },
-    { path: [0, 2, 6], desc: '样本 #2 在节点 2 判定 X₃ > 0.72，精准分流至右侧叶节点 [类别 C · 置信度 98%]！' },
+    { path: [0], desc: '样本 #1 注入第 1 层根节点：检验特征 X₁=0.18 ≤ 0.50（Gini=0.66 → ΔGini=0.23），向左子树分流' },
+    { path: [0, 1], desc: '样本 #1 到达第 2 层节点 1：检验特征 X₂=1.10 ≤ 1.65（Gini=0.44），继续沿左管道下潜' },
+    { path: [0, 1, 3], desc: '样本 #1 到达第 3 层节点 3：精细切分 X₁=0.18 ≤ 0.22（Gini=0.24），锁定最左叶子桶' },
+    { path: [0, 1, 3, 7], desc: '样本 #1 落入第 4 层叶节点 #7：判定为【类别 A · 置信度 98%】（叶纯度 Gini=0.02）！' },
+    { path: [0, 1, 4], desc: '样本 #2 (X₁=0.38, X₂=2.05, X₄=1.50) 经根→左→右路由至第 3 层节点 4（检验 X₄ ≤ 2.10）' },
+    { path: [0, 1, 4, 9], desc: '样本 #2 落入第 4 层叶节点 #9：判定为【类别 B · 置信度 95%】（叶纯度 Gini=0.05）！' },
+    { path: [0, 2, 6], desc: '样本 #3 (X₁=0.85, X₃=1.20, X₄=4.10) 经根→右→右路由至第 3 层节点 6（检验 X₄ ≤ 3.40）' },
+    { path: [0, 2, 6, 14], desc: '样本 #3 落入第 4 层叶节点 #14：判定为【类别 C · 置信度 99%】（叶纯度 Gini=0.01）！' },
   ];
 
   return paths.map((p, idx) => ({
@@ -745,9 +761,9 @@ function genDecisionTreeSteps(): VisualizationStep[] {
     activePath: p.path,
     description: p.desc,
     metrics: {
-      分裂准则: 'CART Gini 最小化',
-      当前路由深度: p.path.length,
-      测试批次: `Sample #${idx < 3 ? 1 : 2}`,
+      树结构深度: '4 层 / 15 节点 (8 叶)',
+      当前路由深: `Layer ${p.path.length} / 4`,
+      测试样本: `Sample #${idx < 4 ? 1 : idx < 6 ? 2 : 3}`,
     },
   }));
 }

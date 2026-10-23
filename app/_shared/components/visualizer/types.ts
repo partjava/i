@@ -30,7 +30,10 @@ export interface AlgorithmMeta {
   cameraPreset: CameraPreset;
   legends: LegendItem[];
   complexity: string;
+  mathFormula: string;
   principle: string;
+  deepLayers: string[];
+  implementation: string;
   scenario: string;
 }
 

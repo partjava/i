@@ -302,31 +302,93 @@ export default function CodeEditorPage() {
                 speed={speed}
               />
 
-              {/* 算法原理与复杂度卡片 */}
+              {/* 算法深度理论、四层推演机制与数学建模矩阵 */}
               <div
-                className="mt-4 p-4 rounded-xl border"
+                className="mt-5 p-4 sm:p-5 rounded-2xl border space-y-4"
                 style={{
-                  background: 'rgba(15, 23, 42, 0.65)',
-                  borderColor: 'rgba(255, 255, 255, 0.08)',
+                  background: 'rgba(12, 19, 36, 0.85)',
+                  borderColor: 'rgba(99, 102, 241, 0.22)',
                 }}
               >
-                <h3 className="text-sm font-bold text-indigo-300 mb-2.5 flex items-center gap-1.5">
-                  <span>📐</span>
-                  <span>核心复杂度与算法原理</span>
-                </h3>
-                <div className="text-xs sm:text-sm text-slate-300 space-y-1.5 leading-relaxed">
-                  <p>
-                    <strong className="text-sky-300">复杂度与数学特征：</strong>{' '}
+                <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-white/10">
+                  <h3 className="text-sm sm:text-base font-bold text-indigo-200 flex items-center gap-2">
+                    <span>📐</span>
+                    <span>深度数学原理与四层结构剖析</span>
+                  </h3>
+                  <span className="text-xs font-mono px-2.5 py-0.5 rounded-full bg-sky-500/15 text-sky-300 border border-sky-400/30">
                     {currentAlgorithm.complexity}
-                  </p>
-                  <p>
-                    <strong className="text-indigo-300">三维推演原理：</strong>{' '}
-                    {currentAlgorithm.principle}
-                  </p>
-                  <p>
-                    <strong className="text-emerald-300">典型工程场景：</strong>{' '}
-                    {currentAlgorithm.scenario}
-                  </p>
+                  </span>
+                </div>
+
+                {/* 核心数学方程与核心机制横幅 */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="p-3.5 rounded-xl bg-slate-950/70 border border-indigo-500/25">
+                    <div className="text-xs font-bold text-sky-400 mb-1 flex items-center gap-1.5">
+                      <span>🧮</span>
+                      <span>核心数学方程 / 状态不变式</span>
+                    </div>
+                    <p className="text-xs sm:text-sm font-mono text-slate-100 leading-relaxed">
+                      {currentAlgorithm.mathFormula}
+                    </p>
+                  </div>
+
+                  <div className="p-3.5 rounded-xl bg-slate-950/70 border border-indigo-500/25">
+                    <div className="text-xs font-bold text-indigo-400 mb-1 flex items-center gap-1.5">
+                      <span>🌌</span>
+                      <span>三维几何与空间映射原理</span>
+                    </div>
+                    <p className="text-xs sm:text-sm text-slate-200 leading-relaxed">
+                      {currentAlgorithm.principle}
+                    </p>
+                  </div>
+                </div>
+
+                {/* 四层深度理论递进拆解 */}
+                {currentAlgorithm.deepLayers && currentAlgorithm.deepLayers.length > 0 && (
+                  <div className="space-y-2">
+                    <div className="text-xs font-bold text-amber-300 flex items-center gap-1.5">
+                      <span>🔬</span>
+                      <span>由浅入深 · 四层核心机制拆解</span>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                      {currentAlgorithm.deepLayers.map((layerText, idx) => (
+                        <div
+                          key={idx}
+                          className="p-3 rounded-xl bg-white/[0.03] border border-white/10 hover:border-indigo-400/40 transition-all flex items-start gap-2.5"
+                        >
+                          <span className="w-5 h-5 rounded-md bg-indigo-500/25 border border-indigo-400/40 text-indigo-200 font-mono text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">
+                            L{idx + 1}
+                          </span>
+                          <p className="text-xs sm:text-[13px] text-slate-300 leading-relaxed">
+                            {layerText}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* 工业级底层实现与工程应用场景 */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
+                  <div className="p-3 rounded-xl bg-emerald-950/20 border border-emerald-500/25">
+                    <div className="text-xs font-bold text-emerald-300 mb-1 flex items-center gap-1.5">
+                      <span>⚙️</span>
+                      <span>工业级底层优化与实现细节</span>
+                    </div>
+                    <p className="text-xs sm:text-[13px] text-slate-300 leading-relaxed">
+                      {currentAlgorithm.implementation}
+                    </p>
+                  </div>
+
+                  <div className="p-3 rounded-xl bg-purple-950/20 border border-purple-500/25">
+                    <div className="text-xs font-bold text-purple-300 mb-1 flex items-center gap-1.5">
+                      <span>🚀</span>
+                      <span>典型工业与科研应用场景</span>
+                    </div>
+                    <p className="text-xs sm:text-[13px] text-slate-300 leading-relaxed">
+                      {currentAlgorithm.scenario}
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
