@@ -42,15 +42,15 @@ export default function Flappy({
 
   const W = 400;
   const H = 580;
-  const GRAVITY = 0.38;
-  const JUMP_FORCE = -7.2;
+  const GRAVITY = 0.16;
+  const JUMP_FORCE = -4.5;
 
   // 初始化
   const initGame = useCallback(() => {
     birdRef.current = { y: 250, vy: 0, angle: 0 };
     pipesRef.current = [
-      { x: 450, topH: 150, gap: 140, passed: false },
-      { x: 670, topH: 220, gap: 140, passed: false },
+      { x: 450, topH: 150, gap: 165, passed: false },
+      { x: 670, topH: 220, gap: 165, passed: false },
     ];
     feathersRef.current = [];
     cloudsRef.current = [
@@ -148,7 +148,7 @@ export default function Flappy({
       for (let i = pipesRef.current.length - 1; i >= 0; i--) {
         const p = pipesRef.current[i];
         if (started && !gameOver) {
-          p.x -= 2.6;
+          p.x -= 1.8;
 
           // 得分判定
           if (!p.passed && p.x + pipeW < 90) {
@@ -259,9 +259,10 @@ export default function Flappy({
       // 6. 小鸟物理模拟与绘制
       const bird = birdRef.current;
       if (started && !gameOver) {
-        bird.vy += GRAVITY;
+        bird.vy = Math.min(4.2, bird.vy + GRAVITY);
         bird.y += bird.vy;
-        bird.angle = Math.min(Math.PI / 4, Math.max(-Math.PI / 5, bird.angle + 0.035));
+        const targetAngle = Math.max(-0.35, Math.min(0.45, bird.vy * 0.08));
+        bird.angle += (targetAngle - bird.angle) * 0.1;
 
         // 触地检测
         if (bird.y + 14 >= groundY) {

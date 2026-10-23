@@ -8,6 +8,7 @@ public class SnakeState implements GameState {
     private final int width = 20, height = 20;
     private final List<int[]> snake; // body segments [x,y]
     private int foodX, foodY;
+    private int tickCount = 0;
     private int dx = 1, dy = 0;
     private int nextDx = 1, nextDy = 0;
     private int score;
@@ -47,6 +48,8 @@ public class SnakeState implements GameState {
     /** 游戏 tick — 移动一步 */
     public boolean tick() {
         if (gameOver) return false;
+        // 正常人反应速度：每 2 个 tick (200ms) 走一格，不再快到离谱
+        if (++tickCount % 2 != 0) return true;
         dx = nextDx; dy = nextDy;
         int headX = snake.get(0)[0] + dx;
         int headY = snake.get(0)[1] + dy;

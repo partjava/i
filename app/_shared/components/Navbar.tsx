@@ -156,8 +156,19 @@ export default function Navbar() {
 
           {/* Logo */}
           <Link href="/" className="relative flex items-center space-x-2 pr-1">
-            <div className="w-8 h-8 rounded-xl flex items-center justify-center overflow-hidden bg-white/35 border border-white/70 shadow-sm">
-              <StitchLogo size={30} />
+            <div
+              className="w-9 h-9 rounded-full flex items-center justify-center overflow-hidden transition-all duration-200 hover:scale-105 relative"
+              style={{
+                background:
+                  'radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.75) 0%, rgba(255, 255, 255, 0.22) 55%, rgba(186, 230, 253, 0.28) 100%)',
+                backdropFilter: 'blur(12px)',
+                WebkitBackdropFilter: 'blur(12px)',
+                border: '1.5px solid rgba(255, 255, 255, 0.85)',
+                boxShadow:
+                  '0 4px 14px rgba(15, 23, 42, 0.08), inset 0 1.5px 3px rgba(255, 255, 255, 0.9)',
+              }}
+            >
+              <StitchLogo size={24} />
             </div>
             <Image
               src="/images/logo-calligraphy-transparent.png"
@@ -255,20 +266,29 @@ export default function Navbar() {
             />
           </div>
 
-          {/* 🐨 史迪仔 AI 助手：移动到全局搜索框右侧，进入学习页面自动消失 */}
+          {/* 🐱 AI 学习助手：透明圆泡泡背景 + 像素黑猫，进入学习页面自动消失 */}
           {!pathname?.startsWith('/study') && (
             <Tooltip title="AI 学习助手">
               <button
                 onClick={() => {
                   window.dispatchEvent(new CustomEvent('toggle-ai-chat'));
                 }}
-                className="w-12 h-12 rounded-full flex-shrink-0 flex items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95 shadow-[0_4px_16px_rgba(79,140,255,0.35)] hover:shadow-[0_6px_22px_rgba(79,140,255,0.5)] border border-white/60 dark:border-white/20 cursor-pointer"
+                className="w-12 h-12 rounded-full flex-shrink-0 flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 cursor-pointer relative overflow-hidden group"
                 style={{
-                  background: 'linear-gradient(90deg, #4f8cff, #33d2ff)',
+                  background:
+                    'radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.72) 0%, rgba(255, 255, 255, 0.22) 55%, rgba(186, 230, 253, 0.32) 100%)',
+                  backdropFilter: 'blur(16px) saturate(180%)',
+                  WebkitBackdropFilter: 'blur(16px) saturate(180%)',
+                  border: '1.5px solid rgba(255, 255, 255, 0.85)',
+                  boxShadow:
+                    '0 8px 24px rgba(15, 23, 42, 0.1), inset 0 2px 4px rgba(255, 255, 255, 0.95), inset 0 -2px 6px rgba(56, 189, 248, 0.25)',
                 }}
                 aria-label="打开AI助手"
               >
-                <StitchLogo size={26} />
+                <span
+                  className="absolute top-1.5 left-2.5 w-3.5 h-1.5 rounded-full bg-white/80 blur-[0.6px] rotate-[-25deg] pointer-events-none"
+                />
+                <StitchLogo size={30} />
               </button>
             </Tooltip>
           )}

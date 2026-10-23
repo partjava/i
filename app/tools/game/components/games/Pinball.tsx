@@ -161,7 +161,7 @@ export default function Pinball({
           // 反弹并加速
           const nx = dx / dist;
           const ny = dy / dist;
-          const speed = Math.max(9, Math.sqrt(ball.vx * ball.vx + ball.vy * ball.vy) * 1.15);
+          const speed = Math.min(11.0, Math.max(8.0, Math.sqrt(ball.vx * ball.vx + ball.vy * ball.vy)));
           ball.vx = nx * speed;
           ball.vy = ny * speed;
           b.pulse = 1.0;
@@ -223,51 +223,108 @@ export default function Pinball({
       ctx.restore();
 
       // 弹板碰撞击球
-      if (launched && ball.y > 450 && ball.y < 510) {
-        // 左弹板区域
-        if (ball.x > 100 && ball.x < 175) {
+      if (launched && ball.y > 445 && ball.y < 505) {
+        // 左弹板区域 (Pivot: 110, 480)
+        if (ball.x >= 95 && ball.x <= 175) {
           if (leftF.isUp) {
-            ball.vy = -11;
-            ball.vx = 4.5;
+            ball.vy = -11.5;
+            ball.vx = 2.5 + Math.random() * 2.5;
             soundSynth.playPop();
           } else {
-            ball.vy = -Math.abs(ball.vy) * 0.5;
+            ball.vy = -Math.abs(ball.vy) * 0.35;
+            ball.vx = Math.max(1.2, ball.vx);
           }
         }
-        // 右弹板区域
-        if (ball.x > 205 && ball.x < 280) {
+        // 右弹板区域 (Pivot: 270, 480)
+        if (ball.x >= 205 && ball.x <= 285) {
           if (rightF.isUp) {
-            ball.vy = -11;
-            ball.vx = -4.5;
+            ball.vy = -11.5;
+            ball.vx = -2.5 - Math.random() * 2.5;
             soundSynth.playPop();
           } else {
-            ball.vy = -Math.abs(ball.vy) * 0.5;
+            ball.vy = -Math.abs(ball.vy) * 0.35;
+            ball.vx = Math.min(-1.2, ball.vx);
           }
         }
       }
 
-      // 4. 小球物理运动
+      // 4. 小球物理运动与全轨道导轨碰撞
       if (launched) {
         ball.vy += GRAVITY;
+        // 限制最大飞行速度，杜绝穿墙穿轨
+        const vLen = Math.sqrt(ball.vx * ball.vx + ball.vy * ball.vy);
+        if (vLen > 13.5) {
+          ball.vx = (ball.vx / vLen) * 13.5;
+          ball.vy = (ball.vy / vLen) * 13.5;
+        }
+
         ball.x += ball.vx;
         ball.y += ball.vy;
 
-        // 左右墙壁反弹
+        // 左右主外墙反弹
         if (ball.x - ball.r < 15) {
           ball.x = 15 + ball.r;
-          ball.vx = -ball.vx * 0.8;
+          ball.vx = Math.abs(ball.vx) * 0.8;
           soundSynth.playClack();
-        } else if (ball.x + ball.r > 385) {
-          ball.x = 385 - ball.r;
-          ball.vx = -ball.vx * 0.8;
+        } else if (ball.x + ball.r > 388) {
+          ball.x = 388 - ball.r;
+          ball.vx = -Math.abs(ball.vx) * 0.8;
           soundSynth.playClack();
         }
 
-        // 顶部反弹
-        if (ball.y - ball.r < 20) {
-          ball.y = 20 + ball.r;
-          ball.vy = -ball.vy * 0.8;
+        // 顶部弧线导轨 (圆心 200, 140, 半径 160)
+        if (ball.y < 140) {
+          const cdx = ball.x - 200;
+          const cdy = ball.y - 140;
+          const cdist = Math.sqrt(cdx * cdx + cdy * cdy);
+          if (cdist > 160 - ball.r) {
+            const nx = -cdx / cdist;
+            const ny = -cdy / cdist;
+            const dot = ball.vx * nx + ball.vy * ny;
+            if (dot < 0) {
+              ball.vx = (ball.vx - 1.7 * dot * nx) * 0.85;
+              ball.vy = (ball.vy - 1.7 * dot * ny) * 0.85;
+              soundSynth.playClack();
+            }
+          }
+        } else if (ball.y - ball.r < 18) {
+          ball.y = 18 + ball.r;
+          ball.vy = Math.abs(ball.vy) * 0.75;
           soundSynth.playClack();
+        }
+
+        // 发射槽右隔板 (x: 355, y: 140 ~ 520)
+        if (ball.y > 140 && ball.y < 520) {
+          if (ball.x > 355 - ball.r && ball.x < 355 + ball.r) {
+            if (ball.vx > 0) {
+              ball.x = 355 - ball.r;
+              ball.vx = -Math.abs(ball.vx) * 0.75;
+            } else {
+              ball.x = 355 + ball.r;
+              ball.vx = Math.abs(ball.vx) * 0.75;
+            }
+            soundSynth.playClack();
+          }
+        }
+
+        // 左侧漏斗形滑行导轨 (30, 380) -> (110, 480)
+        if (ball.x >= 28 && ball.x <= 112) {
+          const railY = 380 + 1.25 * (ball.x - 30);
+          if (ball.y + ball.r >= railY && ball.y < railY + 22) {
+            ball.y = railY - ball.r;
+            ball.vy = Math.max(2.2, ball.vy * 0.65);
+            ball.vx = Math.max(2.0, ball.vx * 0.65 + 1.2);
+          }
+        }
+
+        // 右侧漏斗形滑行导轨 (355, 380) -> (270, 480)
+        if (ball.x >= 268 && ball.x <= 356) {
+          const railY = 480 - 1.176 * (ball.x - 270);
+          if (ball.y + ball.r >= railY && ball.y < railY + 22) {
+            ball.y = railY - ball.r;
+            ball.vy = Math.max(2.2, ball.vy * 0.65);
+            ball.vx = Math.min(-2.0, ball.vx * 0.65 - 1.2);
+          }
         }
 
         // 掉入底槽

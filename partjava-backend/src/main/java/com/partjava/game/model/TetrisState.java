@@ -10,6 +10,7 @@ public class TetrisState implements GameState {
     private Tetromino current, next;
     private int score;
     private int level = 1;
+    private int tickCount = 0;
     private int lines;
     private boolean gameOver;
     private long lastMoveAt;
@@ -69,6 +70,9 @@ public class TetrisState implements GameState {
 
     public boolean tick() {
         if (gameOver) return false;
+        // 经典俄罗斯方块下落速度：初始 800ms 下落一格，随 level 适度加速
+        int dropThreshold = Math.max(3, 8 - (level - 1));
+        if (++tickCount % dropThreshold != 0) return true;
         if (!moveDown()) {
             lockPiece();
             clearLines();

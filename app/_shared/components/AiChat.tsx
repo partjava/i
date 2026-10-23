@@ -100,8 +100,9 @@ function FloatingAiChat() {
             pendingDragRef.current = false;
             draggingRef.current = true;
             document.body.style.userSelect = 'none';
-            const curPos = posRef.current;
-            dragStartRef.current = { mx, my, ox: curPos?.x || 0, oy: curPos?.y || 0 };
+            const rect = containerRef.current?.getBoundingClientRect();
+            const curPos = posRef.current || (rect ? { x: rect.left, y: rect.top } : { x: window.innerWidth / 2 - 180, y: 76 });
+            dragStartRef.current = { mx, my, ox: curPos.x, oy: curPos.y };
           }
         }
         return;
@@ -159,10 +160,11 @@ function FloatingAiChat() {
         style={{
           position: 'fixed',
           zIndex: 2147483647,
-          left: pos ? pos.x : undefined,
-          top: pos ? pos.y : undefined,
-          right: pos ? undefined : 20,
-          bottom: pos ? undefined : 24,
+          left: pos ? pos.x : (open ? '50%' : undefined),
+          top: pos ? pos.y : (open ? 76 : undefined),
+          right: pos ? undefined : (open ? undefined : 20),
+          bottom: pos ? undefined : (open ? undefined : 24),
+          transform: pos ? undefined : (open ? 'translateX(-50%)' : undefined),
         }}
       >
       {!open && (
@@ -204,17 +206,18 @@ function FloatingAiChat() {
               width: 56,
               height: 56,
               borderRadius: 28,
-              background: 'linear-gradient(90deg,#4f8cff,#33d2ff)',
-              color: '#fff',
-              border: 'none',
-              boxShadow: '0 6px 18px rgba(79,140,255,0.28)',
+              background: 'radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.72) 0%, rgba(255, 255, 255, 0.22) 55%, rgba(186, 230, 253, 0.32) 100%)',
+              backdropFilter: 'blur(16px) saturate(180%)',
+              WebkitBackdropFilter: 'blur(16px) saturate(180%)',
+              border: '1.5px solid rgba(255, 255, 255, 0.85)',
+              boxShadow: '0 8px 24px rgba(15, 23, 42, 0.12), inset 0 2px 4px rgba(255, 255, 255, 0.95), inset 0 -2px 6px rgba(56, 189, 248, 0.25)',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
             }}
           >
-            <StitchLogo size={28} />
+            <StitchLogo size={36} />
           </button>
         </div>
       )}
@@ -231,8 +234,17 @@ function FloatingAiChat() {
             }}
             style={{ display: 'flex', alignItems: 'center', padding: '10px 12px', background: 'linear-gradient(90deg,#4f8cff,#33d2ff)', color: '#fff', cursor: 'grab' }}
           >
-            <div style={{ width: 28, height: 28 }}>
-              <StitchLogo size={28} />
+            <div style={{
+              width: 32,
+              height: 32,
+              borderRadius: 16,
+              background: 'radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.65) 0%, rgba(255, 255, 255, 0.2) 100%)',
+              border: '1px solid rgba(255, 255, 255, 0.85)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              <StitchLogo size={24} />
             </div>
             <div style={{ marginLeft: 8, fontWeight: 700 }}>AI助手</div>
             <div style={{ flex: 1 }} />

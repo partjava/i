@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { compressAvatar, readProfileResponse, saveProfileAvatar, getAchievementSummary } from './profile-client';
+import styles from './page.module.css';
 import { useAuth } from '@shared/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@shared/providers/UserProvider';
@@ -116,15 +118,19 @@ export default function ProfilePage() {
   const [refreshing, setRefreshing] = useState(false);
   const [isGuest, setIsGuest] = useState(false);
   const [showAllAch, setShowAllAch] = useState(false);
-  const [showVip, setShowVip] = useState(false);
+
+  const refreshInFlight = useRef(false);
+  const editingRef = useRef(false);
+  editingRef.current = editMode || saving || uploading;
 
   // 添加刷新数据的函数
-  const refreshData = async () => {
+  const refreshData = async (notify = false) => {
     // 只有已登录用户才刷新数据
-    if (status !== 'authenticated') {
+    if (status !== 'authenticated' || editingRef.current || refreshInFlight.current) {
       return;
     }
     
+    refreshInFlight.current = true;
     setRefreshing(true);
     try {
       // 并行加载所有数据
@@ -140,13 +146,14 @@ export default function ProfilePage() {
       if (hasErrors) {
         console.warn('部分数据加载失败:', results);
         message.warning('部分数据加载失败，请稍后再试');
-      } else {
+      } else if (notify) {
         message.success('数据已刷新');
       }
     } catch (error) {
       console.error('刷新数据失败:', error);
       message.error('刷新数据失败');
     } finally {
+      refreshInFlight.current = false;
       setRefreshing(false);
     }
   };
@@ -277,7 +284,7 @@ export default function ProfilePage() {
         studyStreak++;
         
         // 工作日学习强度更高
-        let maxCount = isWeekend ? 8 : 15;
+        const maxCount = isWeekend ? 8 : 15;
         
         // 模拟学习强度波动
         const intensity = Math.random();
@@ -472,9 +479,7 @@ export default function ProfilePage() {
         credentials: 'include',
         cache: 'no-store',
       });
-      if (!res.ok) throw new Error(`API 错误: ${res.status}`);
-      const json = await res.json();
-      const profileData = json.data ?? json;
+      const profileData = await readProfileResponse<ProfileFormData & { avatar?: string }>(res);
         
         const formData = {
           name: profileData.name || session?.user?.name || '',
@@ -484,36 +489,22 @@ export default function ProfilePage() {
           location: profileData.location || '',
           github: profileData.github || '',
           website: profileData.website || '',
-          image: profileData.image || session?.user?.image || '',
+          image: profileData.image ?? profileData.avatar ?? session?.user?.image ?? '',
           skills: profileData.skills || [],
-          username: profileData.username || (session?.user as any)?.username || '',
+          username: profileData.username || session?.user?.username || '',
           vip: profileData.vip || false,
           vipLevel: profileData.vipLevel || 0,
           vipExpireTime: profileData.vipExpireTime || null,
           socialLinks: profileData.socialLinks || {}
         };
         
-        setProfileForm(formData);
-        form.setFieldsValue(formData);
+        if (!editingRef.current) {
+          setProfileForm(formData);
+          form.setFieldsValue(formData);
+        }
         return profileData;
       } catch (fetchError) {
-        const defaultFormData = {
-          name: session?.user?.name || '',
-          jobTitle: '',
-          company: '',
-          bio: '',
-          location: '',
-          github: '',
-          website: '',
-          image: session?.user?.image || '',
-          skills: [],
-          username: (session?.user as any)?.username || '',
-          socialLinks: {}
-        };
-        
-        setProfileForm(defaultFormData);
-        form.setFieldsValue(defaultFormData);
-        return { name: session?.user?.name || '', email: session?.user?.email || '', image: session?.user?.image || '' };
+        throw fetchError;
       }
     };
 
@@ -525,24 +516,26 @@ export default function ProfilePage() {
           credentials: 'include',
           cache: 'no-store',
         });
-        if (!res.ok) throw new Error(`API错误: ${res.status}`);
-        const json = await res.json();
-        const statsData = json.data ?? json;
+        const statsData = await readProfileResponse<UserStats & {
+          totalStudyTime?: number;
+          achievementList?: Array<Omit<AchievementType, 'unlockedAt'> & { unlockedAt?: string }>;
+          achievements: UserStats['achievements'] & {
+            list?: Array<Omit<AchievementType, 'unlockedAt'> & { unlockedAt?: string }>;
+          };
+        }>(res);
         // 补充真实学习时间
         try {
           const sr = await fetch('/api/study/stats', { headers: { 'Content-Type': 'application/json' } });
           const sj = await sr.json();
-          if (sj.success && sj.data) statsData.totalStudyTime = sj.data.totalStudyTime || statsData.totalStudyTime || 0;
+          if (sj.success && sj.data) statsData.totalStudyTime = sj.data.totalStudyTime ?? statsData.learning?.totalStudyTime ?? statsData.totalStudyTime ?? 0;
         } catch {}
-        if (!statsData.learning) statsData.learning = {};
-        statsData.learning.totalStudyTime = statsData.totalStudyTime || 0;
+        if (!statsData.learning) statsData.learning = { categoriesStudied: 0, technologiesStudied: 0, totalStudyTime: 0, studyDays: 0, studyDaysTotal: 0 };
+        statsData.learning.totalStudyTime = statsData.totalStudyTime ?? statsData.learning.totalStudyTime ?? 0;
         setStats(statsData);
         // 从 stats 响应中提取成就列表（后端已返回 achievementList）
-        console.log('statsData keys:', Object.keys(statsData));
         const rawList = statsData?.achievementList || statsData?.achievements?.list;
         if (rawList && Array.isArray(rawList)) {
-          console.log('achievementList count:', rawList.length);
-          setAchievements(rawList.map((a: any) => ({
+          setAchievements(rawList.map(a => ({
             id: String(a.id),
             name: a.name || '',
             description: a.description || '',
@@ -550,22 +543,13 @@ export default function ProfilePage() {
             category: a.category || 'learning',
             unlocked: !!a.unlocked,
             unlockedAt: a.unlockedAt ? new Date(a.unlockedAt) : undefined,
-            progress: a.progress || (a.unlocked ? (a.maxProgress || 1) : 0),
+            progress: a.progress ?? (a.unlocked ? (a.maxProgress ?? 1) : 0),
             maxProgress: a.maxProgress || 1,
           })));
+        } else {
+          setAchievements([]);
         }
         return statsData;
-      } catch {
-        const emptyStats = {
-          notes: { total: 0, public: 0, private: 0, firstNoteDate: '', lastActivityDate: '' },
-          engagement: { likesReceived: 0, bookmarksReceived: 0, commentsReceived: 0 },
-          learning: { categoriesStudied: 0, technologiesStudied: 0, totalStudyTime: 0, studyDays: 0, studyDaysTotal: 0 },
-          achievements: { total: 10, earned: 0 },
-          recentActivity: [],
-          monthlyStats: []
-        };
-        setStats(emptyStats);
-        return emptyStats;
       } finally {
         setStatsLoading(false);
       }
@@ -580,10 +564,8 @@ export default function ProfilePage() {
         cache: 'no-store'
       });
       
-      if (!response.ok) throw new Error(`API错误: ${response.status}`);
-
-      const json = await response.json();
-      const hd = json.data?.heatmapData ?? json.heatmapData;
+      const data = await readProfileResponse<{ heatmapData?: UnifiedHeatmapData[] }>(response);
+      const hd = data.heatmapData;
       if (Array.isArray(hd)) {
         setHeatmapData(hd);
         return hd;
@@ -591,9 +573,6 @@ export default function ProfilePage() {
         setHeatmapData([]);
         return [];
       }
-    } catch (error) {
-      setHeatmapData([]);
-      return { heatmapData: [] };
     } finally {
       setHeatmapLoading(false);
     }
@@ -602,6 +581,7 @@ export default function ProfilePage() {
   // 从数据库加载真实成就数据
 
   const handleFormSubmit = async (values: ProfileFormData) => {
+    if (uploading || saving) return;
     setSaving(true);
     try {
       // 处理技能标签 - 确保是数组格式
@@ -621,13 +601,8 @@ export default function ProfilePage() {
         cache: 'no-store'
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || '更新失败');
-      }
+      const updatedProfile = await readProfileResponse<{ user?: Partial<ProfileFormData> }>(response);
 
-      const updatedProfile = await response.json();
-      
       // 立即更新本地状态
       setProfileForm(submitData);
       form.setFieldsValue(submitData);
@@ -642,8 +617,7 @@ export default function ProfilePage() {
       // 刷新全局用户状态
       await refreshUser();
       
-      // 强制重新加载用户资料
-      await loadUserProfile();
+      // 当前表单已经保存；避免刷新覆盖随后输入的内容。
 
       message.success('个人资料更新成功');
       setEditMode(false);
@@ -655,114 +629,30 @@ export default function ProfilePage() {
   };
 
   const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    // 检查文件类型
+    const input = event.currentTarget;
+    const file = input.files?.[0];
+    input.value = ''; // 允许失败后重新选择同一张图片
+    if (!file || uploading || saving) return;
     if (!file.type.startsWith('image/')) {
       message.error('请上传图片文件');
       return;
     }
-
-    // 检查文件大小 (5MB)
     if (file.size > 5 * 1024 * 1024) {
       message.error('图片大小不能超过5MB');
       return;
     }
-
     setUploading(true);
     try {
-      const reader = new FileReader();
-      reader.onloadend = async () => {
-        try {
-          const base64 = reader.result as string;
-          
-          // 压缩图片
-          const img = new Image();
-          img.onload = async () => {
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-            
-            // 限制最大尺寸为400x400
-            let width = img.width;
-            let height = img.height;
-            const maxSize = 400;
-            
-            if (width > height) {
-              if (width > maxSize) {
-                height = (height * maxSize) / width;
-                width = maxSize;
-              }
-            } else {
-              if (height > maxSize) {
-                width = (width * maxSize) / height;
-                height = maxSize;
-              }
-            }
-            
-            canvas.width = width;
-            canvas.height = height;
-            ctx?.drawImage(img, 0, 0, width, height);
-            
-            // 转换为base64，质量0.7
-            const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
-            
-            
-            const response = await fetch('/api/user/avatar', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({ image: compressedBase64 }),
-              credentials: 'include',
-              cache: 'no-store'
-            });
-
-            if (!response.ok) {
-              const errorData = await response.json();
-              throw new Error(errorData.error || '上传失败');
-            }
-
-            const data = await response.json();
-            
-            // 立即更新本地状态
-            const updatedFormData = {
-              ...profileForm,
-              image: data.image
-            };
-            
-            setProfileForm(updatedFormData);
-            form.setFieldsValue(updatedFormData);
-            
-            // 更新全局用户状态
-            updateUser({ image: data.image });
-            
-            // 更新本地缓存的用户状态
-            update({ image: data.image });
-            
-            // 重新加载用户资料
-            await loadUserProfile();
-
-            message.success('头像上传成功');
-            setUploading(false);
-          };
-          
-          img.onerror = () => {
-            message.error('图片加载失败');
-            setUploading(false);
-          };
-          
-          img.src = base64;
-        } catch (error) {
-          console.error('头像上传失败:', error);
-          message.error(error instanceof Error ? error.message : '头像上传失败，请重试');
-          setUploading(false);
-        }
-      };
-      reader.readAsDataURL(file);
+      const image = await saveProfileAvatar(await compressAvatar(file));
+      // 头像独立保存，保留表单中未提交的文字和技能。
+      setProfileForm(previous => ({ ...previous, image }));
+      form.setFieldValue('image', image);
+      updateUser({ image });
+      update({ image });
+      message.success('头像上传成功');
     } catch (error) {
-      console.error('文件读取失败:', error);
-      message.error('文件读取失败，请重试');
+      message.error(error instanceof Error ? error.message : '头像上传失败，请重试');
+    } finally {
       setUploading(false);
     }
   };
@@ -774,29 +664,13 @@ export default function ProfilePage() {
       // 使用 JWT 认证方式退出：清除 localStorage 中的 token
       signOut({ redirect: false });
       
-      // 清除所有localStorage
-      if (typeof localStorage !== 'undefined') {
-        localStorage.clear();
-      }
-      
-      // 清除所有sessionStorage
-      if (typeof sessionStorage !== 'undefined') {
-        sessionStorage.clear();
-      }
-      
-      // 清除所有cookie
-      document.cookie.split(";").forEach(function(c) {
-        const cookieName = c.split('=')[0].trim();
-        document.cookie = cookieName + "=;expires=" + new Date().toUTCString() + ";path=/";
-      });
-      
       // 4. 强制刷新页面，完全重新加载
       message.success('已成功退出登录', 1);
       
       // 添加延迟确保消息显示
       setTimeout(() => {
         // 使用window.location而不是router，确保完全刷新
-        window.location.href = '/login?logout=' + new Date().getTime();
+        window.location.href = '/auth/login?logout=' + new Date().getTime();
       }, 1000);
     } catch (error) {
       console.error('退出失败', error);
@@ -804,7 +678,7 @@ export default function ProfilePage() {
       
       // 出错时仍然尝试强制刷新
       setTimeout(() => {
-        window.location.href = '/login?error=logout&time=' + new Date().getTime();
+        window.location.href = '/auth/login?error=logout&time=' + new Date().getTime();
       }, 1000);
     }
   };
@@ -833,6 +707,8 @@ export default function ProfilePage() {
     }
   };
 
+  const achievementSummary = getAchievementSummary(achievements, stats?.achievements);
+
   if (status === 'loading') {
     return (
       <div className="flex justify-center items-center h-screen">
@@ -851,10 +727,10 @@ export default function ProfilePage() {
 
 
   return (
-    <div className="min-h-screen bg-surface-page dark:bg-surface-inverse">
+    <div className={`${styles.page} min-h-screen bg-surface-page dark:bg-surface-inverse`}>
       {/* 水墨画顶部装饰 */}
-      <InkWashDecoration variant="landscape" height={180} className="bg-surface-page" />
-      <InkWashDecoration variant="birds" height={50} className="bg-surface-page -mt-4" />
+      <InkWashDecoration variant="landscape" height={64} className="bg-surface-page" />
+      <InkWashDecoration variant="birds" height={28} className="bg-surface-page -mt-4" />
 
       {/* 未登录提示横幅 */}
       {isGuest && (
@@ -888,10 +764,10 @@ export default function ProfilePage() {
         </div>
       )}
       
-      <div className="max-w-4xl mx-auto px-4 py-8">
+      <div className={styles.shell}>
         {/* 主要个人信息卡片 - 作为页面头部 */}
         <Card 
-          className="mb-8 shadow-xl border-0 overflow-hidden"
+          className={`${styles.hero} mb-6 border-0 overflow-hidden`}
           style={{
             background: 'linear-gradient(135deg, #0C1F3D 0%, #3d4f6b 100%)',
             color: 'white'
@@ -907,9 +783,9 @@ export default function ProfilePage() {
               </svg>
             </div>
             
-            <div className="relative z-10 text-center py-8">
+            <div className={`${styles.identity} relative z-10`}>
               {/* 头像区域 */}
-              <div className="mb-6">
+              <div className={styles.avatar}>
                 <div className="relative inline-block">
                   <div className="w-32 h-32 mx-auto mb-4 rounded-full border-4 border-white shadow-2xl overflow-hidden bg-white">
                     <Avatar
@@ -934,6 +810,7 @@ export default function ProfilePage() {
                         size="large"
                         icon={<EditOutlined />}
                         loading={uploading}
+                        disabled={saving}
                         className="shadow-lg bg-surface-raised text-content-secondary border-0 hover:bg-surface-page"
                         onClick={() => fileInputRef.current?.click()}
                       />
@@ -943,7 +820,7 @@ export default function ProfilePage() {
               </div>
               
               {/* 用户信息 */}
-              <div className="mb-6">
+              <div className={styles.details}>
                 <div className="flex items-center justify-center gap-3 mb-1">
                   <Title level={1} className="mb-0" style={{ color: 'white', margin: 0, fontSize: '2.5rem' }}>
                     {profileForm.name || session?.user?.name || '未设置用户名'}
@@ -1068,14 +945,18 @@ export default function ProfilePage() {
                 )}
 
                 {/* 操作按钮 */}
-                <Space size="large">
+                <Space size="middle" wrap>
                   {!isGuest ? (
                     <>
                       <Button 
                         type="default"
                         size="large"
                         icon={<EditOutlined />}
-                        onClick={() => setEditMode(!editMode)}
+                        disabled={saving || uploading || refreshing}
+                        onClick={() => {
+                          if (editMode) form.setFieldsValue(profileForm);
+                          setEditMode(!editMode);
+                        }}
                         style={{ backgroundColor: 'rgba(255, 255, 255, 0.15)', color: '#ffffff', borderColor: 'rgba(255, 255, 255, 0.25)' }}
                         className="hover:bg-white/25 hover:text-white hover:border-white/40 px-6 py-2 h-auto"
                       >
@@ -1087,8 +968,9 @@ export default function ProfilePage() {
                         icon={<svg viewBox="0 0 24 24" className="w-5 h-5 inline-block" fill="none" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                         </svg>}
-                        onClick={refreshData}
+                        onClick={() => refreshData(true)}
                         loading={refreshing}
+                        disabled={editMode || saving || uploading}
                         style={{ backgroundColor: 'rgba(99, 102, 241, 0.25)', color: '#ffffff', borderColor: 'rgba(99, 102, 241, 0.35)' }}
                         className="hover:bg-indigo-600/30 hover:text-white hover:border-indigo-400/40 px-6 py-2 h-auto"
                       >
@@ -1247,13 +1129,15 @@ export default function ProfilePage() {
                     type="primary" 
                     htmlType="submit" 
                     loading={saving}
+                    disabled={uploading}
                     size="large"
                     className="bg-gradient-to-r from-[#0C1F3D] to-[#6b7d99] border-0 rounded-lg px-8 py-2 h-auto"
                   >
                     保存更改
                   </Button>
                   <Button 
-                    onClick={() => setEditMode(false)}
+                    disabled={saving || uploading}
+                    onClick={() => { form.setFieldsValue(profileForm); setEditMode(false); }}
                     size="large"
                     className="rounded-lg px-8 py-2 h-auto"
                   >
@@ -1265,10 +1149,10 @@ export default function ProfilePage() {
           </Card>
         ) : (
           /* 显示模式 */
-          <div className="space-y-8">
+          <div className={styles.panels}>
             {/* 统计数据网格 - 可点击 */}
             {!statsLoading && stats && (
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className={`${styles.metrics} grid grid-cols-2 md:grid-cols-4 gap-4`}>
                 <Card 
                   className={`text-center shadow-lg border-0 bg-gradient-to-br from-[#EDF0F5] to-[#e2e6ed] ${!isGuest ? 'cursor-pointer hover:shadow-xl transition-all duration-300 hover:scale-105' : ''}`}
                   onClick={() => !isGuest && router.push('/notes')}
@@ -1329,7 +1213,7 @@ export default function ProfilePage() {
                     <span>学习进度</span>
                   </div>
                 }
-                className="shadow-lg border-0"
+                className={styles.learning}
               >
                 <Row gutter={[48, 32]}>
                   <Col xs={24} md={12}>
@@ -1410,7 +1294,7 @@ export default function ProfilePage() {
                     <span>学习热力图</span>
                   </div>
                 }
-                className="shadow-lg border-0"
+                className={styles.heatmap}
               >
                 <div className="p-6 bg-gradient-to-r from-[#EDF0F5] to-[#e2e6ed] rounded-lg">
                   <LearningHeatmap
@@ -1429,7 +1313,7 @@ export default function ProfilePage() {
                     <span>成就系统</span>
                   </div>
                 }
-                className="shadow-lg border-0"
+                className={styles.achievements}
               >
                 <div className="mb-8">
                   <div className="text-center py-6">
@@ -1437,33 +1321,21 @@ export default function ProfilePage() {
                       <TrophyOutlined style={{ fontSize: 40, color: 'white' }} />
                     </div>
                     <div className="text-2xl font-semibold text-content-primary mb-4">
-                      {[
-                        (stats?.learning?.studyDaysTotal || 0) >= 7,
-                        (stats?.notes?.total || 0) >= 10,
-                        (stats?.engagement?.likesReceived || 0) >= 50,
-                        (stats?.learning?.technologiesStudied || 0) >= 5,
-                        (stats?.learning?.totalStudyTime || 0) >= 6000,
-                        (stats?.engagement?.commentsReceived || 0) >= 20,
-                      ].filter(Boolean).length } / {stats?.achievements?.total || 10}
+                      {achievementSummary.earned} / {achievementSummary.total}
                     </div>
                     <Progress
-                      percent={Math.min(100, ([
-                        (stats?.learning?.studyDaysTotal || 0) >= 7,
-                        (stats?.notes?.total || 0) >= 10,
-                        (stats?.engagement?.likesReceived || 0) >= 50,
-                        (stats?.learning?.technologiesStudied || 0) >= 5,
-                        (stats?.learning?.totalStudyTime || 0) >= 6000,
-                        (stats?.engagement?.commentsReceived || 0) >= 20,
-                      ].filter(Boolean).length / Math.max(1, stats?.achievements?.total || 10)) * 100)}
+                      percent={achievementSummary.percent}
                       strokeColor={{
                         '0%': '#ffd700',
                         '100%': '#ff8c00',
                       }}
                       trailColor="#f0f0f0"
-                      size={10}
-                      className="mb-4 max-w-md mx-auto"
+                      strokeWidth={10}
+                      showInfo={false}
+                      style={{ width: '100%', display: 'block' }}
+                      className="mb-3"
                     />
-                    <Text type="secondary" className="text-lg">已解锁成就</Text>
+                    <Text type="secondary">已解锁成就 · {achievementSummary.percent}%</Text>
                   </div>
                 </div>
 
@@ -1477,7 +1349,7 @@ export default function ProfilePage() {
                     <>
                       <Row gutter={[16, 16]}>
                         {(showAllAch ? achievements : achievements.slice(0, 6)).map((ach) => (
-                          <Col xs={24} md={12} key={ach.id}>
+                          <Col xs={24} md={12} xl={8} key={ach.id}>
                             <AchievementCard achievement={ach} />
                           </Col>
                         ))}
@@ -1514,7 +1386,7 @@ export default function ProfilePage() {
                 className="shadow-lg border-0"
               >
                 <Timeline>
-                  {stats?.recentActivity?.map((activity: any, index: number) => (
+                  {stats?.recentActivity?.map((activity, index: number) => (
                     <Timeline.Item 
                       key={index}
                       dot={
@@ -1555,8 +1427,8 @@ export default function ProfilePage() {
       </div>
 
       {/* 水墨画底部装饰 */}
-      <InkWashDecoration variant="bamboo" height={100} className="bg-surface-page mt-8" />
-      <InkWashDecoration variant="landscape" height={200} className="bg-surface-page" />
+      <InkWashDecoration variant="bamboo" height={48} className="bg-surface-page mt-8" />
+      <InkWashDecoration variant="landscape" height={80} className="bg-surface-page" />
     </div>
   );
 } 
