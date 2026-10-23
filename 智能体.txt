@@ -1,0 +1,228 @@
+================================================================================
+  PartJava 温暖书房 · 3D 灵动像素绒毛黑猫 × DeepSeek-V4 四大智能体完整设计蓝图
+  文件位置: /home/liming/partjava/i/智能体.txt
+  更新时间: 2026-10-23
+================================================================================
+
+一、 当前已完成底座（Git 提交: 9e22e7b）
+--------------------------------------------------------------------------------
+1. 3D 温暖书房与环绕虚拟配饰:
+   - 文件: app/_shared/components/SpaceCapsuleRoom3D.ts
+   - 100% 保留原版「PartJava · 温暖书房」所有真实家具与灯光坐标；
+   - 地毯外围半圆弧环绕 9 个可一键隐藏/显示的虚拟科技配饰（编号 2, 3, 4, 8, 9, 10, 11, 12, 13）。
+
+2. 双形态 3D 黑猫模型与自定义着色器/骨骼/像素五官绑定:
+   - 模型文件（已上传 Git 仓库与服务器）:
+     * public/models/cat-standing.glb  （乖巧坐姿形态）
+     * public/models/cat-crouching.glb （爬起站姿形态）
+   - 配置文件: app/_shared/components/cat/catProfiles.ts
+   - 核心引擎: app/_shared/components/cat/catShaderAndRig.ts
+     * GLSL 炭黑丝绒毛发 + 耳尖/尾尖银白渐变 + Fresnel 逆光轮廓边缘着色器；
+     * 2,200+ 根 InstancedMesh 立体表面绒毛簇；
+     * 锁死脚底防滑的顶点呼吸起伏、歪头倾听、鼠标视线跟随与摇尾骨骼动画；
+     * 3D 发光像素五官面具（CatPixelFaceRig）：竖条圆角白光像素眼、^ ^ 开心弯月笑眼跳跃、"品"字形三格发光像素嘴（核心锚点：this.mouthTopBlock）。
+
+3. 现有待升级入口:
+   - 文件: app/_shared/components/AI3DRobot.tsx
+   - 痛点：目前点击「开始对话」会弹出遮挡整个 3D 书房的全屏白框，且未接入 DeepSeek-V4 流式智能体、未打通自动写笔记与全站 310+ 页面路由导航。
+
+
+================================================================================
+二、 DeepSeek-V4 双模型与官方搜索工具接口规范（2026-10-17 最新版）
+--------------------------------------------------------------------------------
+1. 模型矩阵（使用同一个 DeepSeek API Key 鉴权）:
+   - 主力高速模型: `deepseek-flash`
+     * 指向: DeepSeek-V4.1-Flash-1017
+     * 特性: 支持思考模式与非思考模式，具备视觉理解能力（Vision），上下文窗口高达 1M。
+     * 用途: 负责日常极速流式对话、全站 310+ 页面导航匹配、当前页面长文伴读解析、自动总结生成结构化 Markdown 笔记。
+   - 深度推理与搜索模型: `deepseek-v4-pro`
+     * 指向: DeepSeek-V4-Pro-0813
+     * 特性: 推理与工具调用能力更强（不支持 Vision），原生支持内置 `web_search` 工具。
+     * 用途: 负责「智能体四」的联网深度搜索、专业技术文档查证、疑难架构与算法深度解答。
+
+2. DeepSeek 官方自研搜索引擎与网页抓取 API（2026年10月17日开放）:
+   - 鉴权方式: `Authorization: Bearer <DEEPSEEK_API_KEY>`
+   - 独立工具端点:
+     (1) 网页搜索接口: `POST https://api.deepseek.com/v1/tools/search`
+         用途: 根据关键词执行全网搜索，返回高相关度网页标题、URL、摘要列表。
+     (2) 网页抓取接口: `POST https://api.deepseek.com/v1/tools/fetch`
+         用途: 传入搜索得到的权威 URL，抓取并解析网页正文内容供大模型阅读总结。
+   - 模型内置搜索工具:
+     在调用 `deepseek-v4-pro` 的 `/v1/chat/completions` 接口时，可通过 `tools: [{"type": "web_search"}]` 让模型自动触发服务端联网搜索与抓取。
+   - 计费说明: Search / Fetch 独立接口为 5元/千次（仅成功返回结果计费），服务端自动调用在 2026-11-01 前免费。前端提供显式 `[🌐 联网深搜 (Pro)]` 开关，按需开启，精准可控。
+
+
+================================================================================
+三、 Python FastAPI 四大专职智能体（Multi-Agent）详细架构设计
+--------------------------------------------------------------------------------
+在项目根目录新建微服务文件夹 `/home/liming/partjava/i/partjava-ai/`（运行端口 8000），由 1 个总控路由（Supervisor Router）调度以下 4 个专职智能体：
+
+--------------------------------------------------------------------------------
+【智能体一：站内领航与页面伴读智能体 (Site Navigator & Page-Reader Agent)】
+--------------------------------------------------------------------------------
+- 驱动模型: `deepseek-flash`（利用 1M 超大上下文窗口）
+- 输入上下文:
+  1. 全站 310+ 课程与功能路由索引表（自动解析自 `app/_shared/data/navigation.ts`）：
+     * 计算机（13门学科：C++、Python、Java、SQL、数据结构与算法、操作系统、Linux、计算机网络、Web前端、Go、PHP、物联网、计算机组成原理）
+     * 人工智能（9门学科：机器学习、深度学习、强化学习、NLP、计算机视觉、推荐系统、智能机器人、AI程序设计、数据挖掘）
+     * 网络安全（9门学科：网络基础、安全防护、渗透测试、密码学、前端安全、逆向工程、安全开发、安全运维、区块链安全）
+     * 软件工程（10门学科：架构与设计模式、开发规范与测试、Java EE、安卓、.NET、云计算、大数据、智能搜索引擎、软件建模、动画与游戏）
+     * 核心功能区：`/challenges`（星际编程闯关）、`/code/editor`（在线代码沙箱）、`/notes`（随堂笔记）、`/tools/game`（解压小游戏）、31 个 3D 算法可视化器。
+  2. 用户当前正在浏览的页面上下文（复用 `app/_shared/components/ai/useAiChat.ts` 中的 `collectPageContent()`）：
+     * 自动提取当前网页的 `window.location.pathname`、`main h1/h2` 标题、当前激活的小节 Tab 以及页面正文前 6000 字。
+- 核心功能:
+  1. 伴读答疑：用户打开 3D 黑猫问“这页讲的重点是什么？”或“帮我解释这页的第2段代码”，智能体直接结合当前页面正文精准作答。
+  2. 站内指路：用户问“你们网站有讲红黑树 / Spring Cloud / SQL注入 的页面吗？”，智能体自动返回对应解答，并输出结构化站内路由卡片 `site_links: [{ title, href, category }]`，在黑猫气泡底部渲染成可点击的跳转胶囊按钮！
+
+--------------------------------------------------------------------------------
+【智能体二：知识提炼与自动写笔记智能体 (Note Summarizer & Writer Agent)】
+--------------------------------------------------------------------------------
+- 驱动模型: `deepseek-flash`（JSON 结构化输出）
+- 触发方式:
+  1. 点击底部输入坞的 `[📝 总结写笔记]` 快捷按钮；
+  2. 在聊天框输入自然语言指令（如：“袋子，帮我把刚才聊的内容写成笔记”、“把当前页面的核心考点总结成一篇笔记”）。
+- 核心功能与数据流:
+  1. 智能体综合「当前多轮对话记录」+「当前学习页面正文」+「刚才联网搜到的资料」，提炼生成严格匹配后端 `partjava-backend` 数据库实体 `Note.java` 的 JSON 对象：
+     ```json
+     {
+       "title": "精准简短标题（30字以内）",
+       "content": "## 核心概念\n...\n## 关键代码示例\n```java\n...\n```\n## 常见面试坑点\n...",
+       "category": "后端",
+       "technology": "Java",
+       "subcategory": "多线程与并发",
+       "tags": ["Java", "并发编程", "虚拟线程"],
+       "isPublic": false
+     }
+     ```
+  2. 前端黑猫收到 `note_draft` 事件后，触发 `^ ^` 开心跳跃，并在嘴巴放射出的气泡里展示「📝 笔记生成完毕卡片」，提供两个按钮：
+     * `[⚡ 一键存入我的笔记]`：直接调用 `POST /api/notes`（由 `NoteController.java` 写入 MySQL `notes` 表），成功后显示 `[👀 查看已保存笔记 (/notes/{id})]`。
+     * `[✏️ 预览与编辑后保存]`：直接唤起项目中已有的可拖拽弹窗组件 `app/_shared/components/ai/NotePreviewModal.tsx`，允许修改分类/标签/内容后再保存。
+
+--------------------------------------------------------------------------------
+【智能体三：编程解题与 3D 灵动伴侣智能体 (Code Tutor & 3D Companion Agent)】
+--------------------------------------------------------------------------------
+- 驱动模型: `deepseek-flash`
+- 核心职责:
+  1. 赋予 3D 黑猫“袋子”鲜活傲娇又专业的助教人设，负责日常算法讲解、代码 Debug、面试八股文抽查与学习计划制定。
+  2. 实时输出「3D 情绪与姿态指令协议（Emotion & Posture Protocol）」：
+     * 在每次流式回复的首包推送动作信令，直接控制 `catShaderAndRig.ts` 中的 `RiggedCatController`：
+       - `mood: "happy"`   -> 触发 `triggerHappyJump()`，像素眼变成 `^ ^` 弯月笑眼、竖耳原地轻跳、尾巴欢快摇摆；
+       - `mood: "curious"` -> 头部歪斜倾听角度加大，双耳高频微动；
+       - `posture: "standing" | "crouching"` -> 根据语境自动在「乖巧坐姿」与「爬起站姿」之间切换；
+       - 流式 Token 传输期间 -> 实时保持 `setTalking(true)`，让黑猫的“品”字形三格发光像素嘴随语调高频开合闪烁；流式结束瞬间自动 `setTalking(false)` 闭嘴。
+
+--------------------------------------------------------------------------------
+【智能体四：全网深搜与权威引证智能体 (DeepSeek-V4-Pro Web Research Agent)】
+--------------------------------------------------------------------------------
+- 驱动模型: `deepseek-v4-pro`（`DeepSeek-V4-Pro-0813`）
+- 专属工具:
+  1. `POST https://api.deepseek.com/v1/tools/search`（DeepSeek 官方网页搜索）
+  2. `POST https://api.deepseek.com/v1/tools/fetch`（DeepSeek 官方网页正文抓取）
+  3. `deepseek-v4-pro` 模型内置 `web_search` 工具调用
+- 触发方式:
+  1. 用户点亮底部输入坞的 `[🌐 联网深搜 (Pro)]` 按钮；
+  2. 用户提问中明确要求“帮我上网搜一下”、“给几个权威网站链接”、“查一下最新官方文档”。
+- 执行流水线（AI 自主 Search -> Fetch -> 综合回答 + 权威外链卡片）:
+  Step 1 [自主生成专业搜索词]:
+    根据用户问题，提炼 1~2 个高精准度技术搜索词（例如针对官方文档、GitHub、MDN、Oracle、Spring、ArXiv 等专业站点）。
+  Step 2 [调用 /v1/tools/search 搜索]:
+    获取相关性最高的 Top 5 专业网页结果，并通过 SSE 向前端推送 `search_status` 事件（黑猫气泡实时显示：“🔍 已检索到 Oracle Docs、GitHub 等权威来源，正在深入阅读网页内容...”）。
+  Step 3 [调用 /v1/tools/fetch 抓取正文]:
+    挑选最权威的 2~3 个网页 URL 并发调用 `/v1/tools/fetch` 抓取干净正文（或在 `deepseek-v4-pro` 中通过内置 `web_search` 工具自动完成 Search+Fetch）。
+  Step 4 [Pro 模型总结与权威外链引证]:
+    `deepseek-v4-pro` 结合抓取到的权威内容进行深度解答，并在回答结尾通过 SSE 推送结构化外链数组 `citations`:
+    ```json
+    [
+      {
+        "index": 1,
+        "title": "JEP 444: Virtual Threads - OpenJDK Official Documentation",
+        "url": "https://openjdk.org/jeps/444",
+        "domain": "openjdk.org",
+        "snippet": "Virtual threads are lightweight threads that dramatically reduce the effort of writing, maintaining, and observing high-throughput concurrent applications."
+      }
+    ]
+    ```
+    前端在黑猫嘴巴放射的气泡底部渲染出带编号角标、域名徽章和外链箭头的「🌐 权威参考网站卡片」，用户点击即可在新标签页打开该专业网站！
+
+
+================================================================================
+四、 前端 3D 交互改造：从黑猫“品”字嘴放射出的全息对话窗口
+--------------------------------------------------------------------------------
+彻底移除原来遮挡整个 3D 书房的全屏白色聊天弹窗，改为「3D 空间内原生放射气泡 + 底部直聊坞」：
+
+1. 3D 猫嘴实时屏幕坐标投影算法（修改 `app/_shared/components/cat/catShaderAndRig.ts`）:
+   - 在 `CatPixelFaceRig` 类中增加方法 `getMouthWorldPosition(target: THREE.Vector3)`，直接调用 `this.mouthTopBlock.getWorldPosition(target)`。
+   - 在 `RiggedCatController` 中暴露 `getMouthScreenCoord(camera: THREE.Camera, width: number, height: number)`:
+     ```ts
+     const worldPos = new THREE.Vector3();
+     faceRig.getMouthWorldPosition(worldPos);
+     worldPos.project(camera); // 投影至 [-1, 1] 标准设备坐标 (NDC)
+     return {
+       x: (worldPos.x * 0.5 + 0.5) * width,
+       y: (-worldPos.y * 0.5 + 0.5) * height,
+       visible: worldPos.z < 1.0
+     };
+     ```
+   - 在 `AI3DRobot.tsx` 的 `requestAnimationFrame` 循环中，直接通过 DOM Ref 实时更新 SVG 放射线的起点坐标 `(x1, y1)`（不触发 React 整树重渲染，保证 60FPS 满帧丝滑）！
+   - 效果：无论黑猫是在呼吸起伏、歪头、跟随鼠标转头，还是点击触发 `^ ^` 跳跃，放射线的起点永远死死咬住黑猫的“品”字形像素嘴！
+
+2. 向右 / 向左放射的全息毛玻璃气泡窗口（修改 `app/_shared/components/AI3DRobot.tsx`）:
+   - 支持点击按钮切换气泡位置：`[气泡居右 ▶]`（默认，从猫嘴向右上角放射）或 `[◀ 气泡居左]`（从猫嘴向左上角放射），或根据摄像机旋转角度自动避让。
+   - 视觉风格：采用与「温暖书房」绝配的深炭黑暖金半透明毛玻璃（`bg-[#181512]/88 backdrop-blur-xl border border-[#d4a36a]/45`），引线采用 `#e5c07b` 暖金发光折线 + 嘴边脉冲光点。
+   - 气泡内部结构：
+     * 顶部栏：当前工作的智能体徽章（如 `🧭 站内领航` / `🌐 Pro 联网深搜` / `📝 笔记生成`）+ `[◀/▶ 左右切换]` + `[📜 展开完整历史对话]`。
+     * 正文区：支持 Markdown 语法高亮、代码一键复制、流式打字机动画。
+     * 底部扩展槽（按需动态出现）：
+       - 📌 **站内课程直达胶囊**（智能体一输出，点击直接跳转本站对应路由）；
+       - 🌐 **外部权威网站链接卡片**（智能体四输出，带网站域名与标题，点击新窗口打开）；
+       - 📝 **一键存为笔记 / 打开预览器卡片**（智能体二输出，对接 `/api/notes` 与 `NotePreviewModal`）。
+
+3. 底部常驻「直聊输入坞（Chat Dock）」:
+   - 位于屏幕底部中央，取代原有的静态介绍卡片：
+     * 第一行（智能体快捷召唤胶囊）：
+       `[📝 总结本页写笔记]`、`[🧭 推荐本站课程]`、`[💡 解释本页难点]`、`[🐾 摸摸袋子]`
+     * 第二行（主输入栏）：
+       左侧：`[🐱/🐾 坐姿/站姿切换]` + `[🌐 Pro 联网搜索开关]`
+       中间：直接输入问题的文本框（支持 Enter 直接发送，无需再点“开始对话”二次弹窗）
+       右侧：`[发送]` 按钮
+
+
+================================================================================
+五、 Python FastAPI (`partjava-ai`) 目录结构与接口规划
+--------------------------------------------------------------------------------
+目录位置: `/home/liming/partjava/i/partjava-ai/`
+
+```text
+partjava-ai/
+├── .env                    # 存放 DEEPSEEK_API_KEY=sk-xxx (已被 .gitignore 忽略，绝不泄露)
+├── .env.example            # 环境变量模板
+├── requirements.txt        # fastapi, uvicorn, httpx, openai, pydantic, python-dotenv
+├── main.py                 # FastAPI 启动入口 (端口 8000) 与路由挂载
+└── agents/
+    ├── __init__.py
+    ├── router.py           # 总控智能体路由：识别意图并调度四大智能体，输出 SSE 事件流
+    ├── agent1_navigator.py # 智能体一：加载全站 310+ 路由地图 + 解析当前页面内容
+    ├── agent2_notewriter.py# 智能体二：对话/页面提炼总结，生成结构化 Markdown 笔记 JSON
+    ├── agent3_companion.py # 智能体三：编程解题导师 + 3D 黑猫情绪/动作/姿态控制标签
+    └── agent4_websearch.py # 智能体四：deepseek-v4-pro + /v1/tools/search & /fetch 联网引证
+```
+
+与现有 Next.js / Spring Boot 的联通方式:
+- 在 `next.config.js` 的 `rewrites()` 中增加一条高优先级规则：
+  `/api/ai/agent/:path*` -> `http://localhost:8000/api/ai/agent/:path*`（转发给 Python FastAPI）。
+- 同时保留并修复 `partjava-backend`（Spring Boot 8080）中的 `AiChatController.java`，填入环境变量 `AI_API_KEY`，让网站原有的 `/api/ai/chat` 也能正常使用 `deepseek-flash`。
+- 在服务器 PM2 (`ecosystem.config.js`) 和同步脚本 (`/home/liming/partjava/partjavadata/sync.sh`) 中加入 `partjava-ai` 进程的自动部署与守护。
+
+
+================================================================================
+六、 下次开工一键执行步骤（4 步完成）
+--------------------------------------------------------------------------------
+下次您准备好额度并把 DeepSeek API Key 发给我时，直接对我说：
+“读取 `/home/liming/partjava/i/智能体.txt`，按里面的蓝图开始写代码！”
+
+我们将按以下 4 步快速落地：
+1. 【Step 1】创建 `/home/liming/partjava/i/partjava-ai/` Python FastAPI 服务，实现四大智能体（含 `deepseek-flash`、`deepseek-v4-pro` 及 `/v1/tools/search`、`/v1/tools/fetch`）；
+2. 【Step 2】升级 `catShaderAndRig.ts`，增加黑猫“品”字嘴 3D -> 2D 实时屏幕坐标投影接口；
+3. 【Step 3】重构 `AI3DRobot.tsx`，上线「从嘴巴向右/左放射的全息气泡 + SVG 动态引线 + 底部直聊输入坞 + 一键预览/保存笔记 + 站内跳转与权威外链卡片」；
+4. 【Step 4】本地构建验证、提交 Git 仓库，并通过 `sync.sh` 同步部署到阿里云服务器（121.40.134.229）PM2 启动生效！
+================================================================================
