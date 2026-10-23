@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { soundSynth } from '../RetroAudioSynth';
 
 export default function Snake({
   state,
@@ -11,11 +12,20 @@ export default function Snake({
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const snake: number[][] = state?.snake || [];
-  const foodX = state?.foodX,
-    foodY = state?.foodY;
-  const w = state?.width || 20,
-    h = state?.height || 20;
+  const foodX = state?.foodX, foodY = state?.foodY;
+  const w = state?.width || 20, h = state?.height || 20;
   const gameOver = state?.gameOver;
+
+  const [speed, setSpeed] = useState<'normal' | 'fast' | 'turbo'>('normal');
+  const [pulse, setPulse] = useState(0);
+
+  // 食物微光脉冲呼吸动效
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setPulse(p => (p + 0.1) % (Math.PI * 2));
+    }, 50);
+    return () => clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     const c = canvasRef.current;
@@ -27,7 +37,7 @@ export default function Snake({
 
     ctx.clearRect(0, 0, totalW, totalH);
 
-    // 背景底板
+    // 背景底板 (赛博朋克深空渐变)
     const bgGrd = ctx.createLinearGradient(0, 0, totalW, totalH);
     bgGrd.addColorStop(0, '#0c1524');
     bgGrd.addColorStop(1, '#060a12');
@@ -50,102 +60,101 @@ export default function Snake({
       ctx.stroke();
     }
 
-    // 食物（带微发光和高光）
+    // 食物（呼吸微光高光苹果）
     if (foodX != null && foodY != null) {
       const fx = foodX * cell + cell / 2;
       const fy = foodY * cell + cell / 2;
-      const r = cell / 2 - 2;
+      const glowR = 8 + Math.sin(pulse) * 2;
 
       ctx.save();
-      ctx.shadowColor = '#ff5252';
-      ctx.shadowBlur = 10;
-      ctx.fillStyle = '#ff5252';
+      ctx.shadowColor = '#ff4757';
+      ctx.shadowBlur = 12 + Math.sin(pulse) * 6;
+
+      ctx.fillStyle = '#ff4757';
       ctx.beginPath();
-      ctx.arc(fx, fy, r, 0, Math.PI * 2);
+      ctx.arc(fx, fy, glowR, 0, Math.PI * 2);
       ctx.fill();
 
       // 果蒂叶片
-      ctx.fillStyle = '#69f0ae';
+      ctx.fillStyle = '#2ed573';
       ctx.beginPath();
-      ctx.ellipse(fx + 2, fy - r + 1, 3, 1.8, Math.PI / 4, 0, Math.PI * 2);
+      ctx.ellipse(fx + 2, fy - glowR, 3, 2, 0.4, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 高光点
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(fx - 2, fy - 2, 2, 0, Math.PI * 2);
       ctx.fill();
       ctx.restore();
     }
 
-    // 蛇身绘制（渐变蓝色 + 圆角段）
-    snake.forEach((seg, i) => {
-      const sx = seg[0] * cell;
-      const sy = seg[1] * cell;
+    // 绘制蛇身 (自尾至头彩虹渐变与圆角过渡)
+    for (let i = snake.length - 1; i >= 0; i--) {
+      const seg = snake[i];
+      if (!seg) continue;
+      const [r, c] = seg;
+      const x = c * cell;
+      const y = r * cell;
       const isHead = i === 0;
 
       ctx.save();
       if (isHead) {
-        ctx.shadowColor = '#4f8cff';
-        ctx.shadowBlur = 12;
-        ctx.fillStyle = '#4f8cff';
-      } else {
-        const ratio = i / Math.max(snake.length, 1);
-        ctx.fillStyle = `hsl(${210 - ratio * 35}, 85%, ${55 - ratio * 15}%)`;
-      }
-
-      // 圆角矩形身体
-      const pad = 1.5;
-      const rad = isHead ? 6 : 4;
-      ctx.beginPath();
-      ctx.roundRect(sx + pad, sy + pad, cell - pad * 2, cell - pad * 2, rad);
-      ctx.fill();
-
-      // 蛇头萌系眼睛
-      if (isHead) {
-        ctx.fillStyle = '#fff';
-        const eyeR = 2.2;
+        // 蛇头：青翠高亮绿
+        ctx.fillStyle = '#2ed573';
+        ctx.shadowColor = '#2ed573';
+        ctx.shadowBlur = 10;
         ctx.beginPath();
-        ctx.arc(sx + 6, sy + 6, eyeR, 0, Math.PI * 2);
-        ctx.arc(sx + cell - 6, sy + 6, eyeR, 0, Math.PI * 2);
+        ctx.roundRect(x + 1, y + 1, cell - 2, cell - 2, 7);
         ctx.fill();
 
-        ctx.fillStyle = '#111';
+        // 可爱大眼睛
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath(); ctx.arc(x + 6, y + 6, 3, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(x + 14, y + 6, 3, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#0f172a';
+        ctx.beginPath(); ctx.arc(x + 6, y + 5.5, 1.5, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(x + 14, y + 5.5, 1.5, 0, Math.PI * 2); ctx.fill();
+      } else {
+        // 蛇身：顺滑渐变翠绿
+        const ratio = i / Math.max(1, snake.length - 1);
+        const hue = 145 - ratio * 45; // 绿向蓝过渡
+        ctx.fillStyle = `hsl(${hue}, 85%, ${50 - ratio * 10}%)`;
         ctx.beginPath();
-        ctx.arc(sx + 6, sy + 6, 1.2, 0, Math.PI * 2);
-        ctx.arc(sx + cell - 6, sy + 6, 1.2, 0, Math.PI * 2);
+        ctx.roundRect(x + 2, y + 2, cell - 4, cell - 4, 5);
         ctx.fill();
       }
       ctx.restore();
-    });
-
-    // 游戏结束提示
-    if (gameOver) {
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.65)';
-      ctx.fillRect(0, 0, totalW, totalH);
-      ctx.fillStyle = '#ff6b6b';
-      ctx.font = 'bold 22px serif';
-      ctx.textAlign = 'center';
-      ctx.fillText('游戏结束', totalW / 2, totalH / 2 - 10);
-      ctx.fillStyle = '#ccc';
-      ctx.font = '13px sans-serif';
-      ctx.fillText('按 R 或点击上方“重新开始”再次挑战', totalW / 2, totalH / 2 + 18);
     }
-  }, [snake, foodX, foodY, w, h, gameOver]);
 
+    // 游戏结束覆盖遮罩
+    if (gameOver) {
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+      ctx.fillRect(0, 0, totalW, totalH);
+      ctx.fillStyle = '#ff4757';
+      ctx.font = 'bold 28px Arial';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('游戏结束', totalW / 2, totalH / 2 - 14);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '16px Arial';
+      ctx.fillText(`最终长度: ${snake.length}`, totalW / 2, totalH / 2 + 18);
+    }
+  }, [snake, foodX, foodY, w, h, gameOver, pulse]);
+
+  // 键盘操作
   const handleKey = useCallback(
     (e: KeyboardEvent) => {
       const map: Record<string, string> = {
-        ArrowUp: 'up',
-        ArrowDown: 'down',
-        ArrowLeft: 'left',
-        ArrowRight: 'right',
-        w: 'up',
-        s: 'down',
-        a: 'left',
-        d: 'right',
-        W: 'up',
-        S: 'down',
-        A: 'left',
-        D: 'right'
+        ArrowUp: 'up', KeyW: 'up',
+        ArrowDown: 'down', KeyS: 'down',
+        ArrowLeft: 'left', KeyA: 'left',
+        ArrowRight: 'right', KeyD: 'right'
       };
-      if (map[e.key]) {
+      if (map[e.code]) {
         e.preventDefault();
-        onMove(map[e.key]);
+        soundSynth.playMove();
+        onMove(map[e.code]);
       }
     },
     [onMove]
@@ -157,16 +166,26 @@ export default function Snake({
   }, [handleKey]);
 
   return (
-    <canvas
-      ref={canvasRef}
-      width={w * 20}
-      height={h * 20}
-      style={{
-        borderRadius: 12,
-        maxWidth: '100%',
-        maxHeight: '100%',
-        boxShadow: '0 8px 32px rgba(0,0,0,0.5)'
-      }}
-    />
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', userSelect: 'none' }}>
+      {/* 画布 */}
+      <div style={{ position: 'relative' }}>
+        <canvas
+          ref={canvasRef}
+          width={w * 20}
+          height={h * 20}
+          style={{
+            borderRadius: 12,
+            boxShadow: '0 8px 30px rgba(0,0,0,0.5)',
+            display: 'block'
+          }}
+          tabIndex={0}
+        />
+      </div>
+
+      <div style={{ marginTop: 10, fontSize: 12, color: '#888', display: 'flex', gap: 16 }}>
+        <span>⌨️ 方向键 / WASD 控制转弯</span>
+        <span>蛇身长度: <b style={{ color: '#2ed573' }}>{snake.length}</b></span>
+      </div>
+    </div>
   );
 }
