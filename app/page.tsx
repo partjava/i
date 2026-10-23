@@ -27,6 +27,7 @@ import ToolGroupPreview from './_shared/components/ToolGroupPreview';
 import BackToTop from './_shared/components/BackToTop';
 import QuickSearch from './_shared/components/QuickSearch';
 import InkWashDecoration from './_shared/components/InkWashDecoration';
+import { useSidebar } from './_shared/components/Sidebar';
 
 const groupedSoftware = [
   {
@@ -285,8 +286,8 @@ const GROUP_BAR_COLORS: Record<string, string> = {
 
 const FALLBACK_BAR_COLORS = ['#6366f1', '#0ea5e9', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6'];
 
-/* 默认文件夹布局（按用户排布设定） */
-const DEFAULT_FOLDER_SIZES: Record<string, { k: number; r: number }> = {
+/* 默认文件夹布局（左侧目录展开时：每行 8 列） */
+const DEFAULT_FOLDER_SIZES_EXPANDED: Record<string, { k: number; r: number }> = {
   'AI 工具': { k: 5, r: 3 },
   '编程开发': { k: 1, r: 3 },
   '数据库与数据科学': { k: 2, r: 3 },
@@ -294,6 +295,19 @@ const DEFAULT_FOLDER_SIZES: Record<string, { k: number; r: number }> = {
   '网络与安全': { k: 3, r: 2 },
   '操作系统与虚拟化': { k: 4, r: 2 },
   '硬件与仿真': { k: 4, r: 2 },
+  '文档与效率': { k: 3, r: 2 },
+  '学习网站': { k: 5, r: 2 },
+};
+
+/* 默认文件夹布局（左侧目录收缩时：每行 10 列，三行对齐） */
+const DEFAULT_FOLDER_SIZES_COLLAPSED: Record<string, { k: number; r: number }> = {
+  'AI 工具': { k: 5, r: 3 },
+  '编程开发': { k: 3, r: 3 },
+  '数据库与数据科学': { k: 2, r: 3 },
+  '算法与竞赛': { k: 5, r: 2 },
+  '网络与安全': { k: 2, r: 2 },
+  '操作系统与虚拟化': { k: 3, r: 2 },
+  '硬件与仿真': { k: 2, r: 2 },
   '文档与效率': { k: 3, r: 2 },
   '学习网站': { k: 5, r: 2 },
 };
@@ -502,14 +516,19 @@ const brandColors: { [key: string]: string } = {  'VS Code': '#007ACC',
 
 export default function Home() {
   const { data: session, status } = useAuth();
+  const { collapsed } = useSidebar();
   const [searchQuery, setSearchQuery] = useState('');
   const [achievementProgress, setAchievementProgress] = useState<{ earned: number; total: number } | null>(null);
-  const [folderConfigs, setFolderConfigs] = useState<Record<string, { k: number; r: number }>>({});
+  const [folderConfigsExpanded, setFolderConfigsExpanded] = useState<Record<string, { k: number; r: number }>>({});
+  const [folderConfigsCollapsed, setFolderConfigsCollapsed] = useState<Record<string, { k: number; r: number }>>({});
   const [previewGroup, setPreviewGroup] = useState<string | null>(null);
   const [resizing, setResizing] = useState<string | null>(null);
   const resizeStart = useRef({ x: 0, y: 0, k: 4, r: 2, group: '' });
   const toolsContainerRef = useRef<HTMLDivElement | null>(null);
   const [containerW, setContainerW] = useState(0);
+
+  const activeDefaultSizes = collapsed ? DEFAULT_FOLDER_SIZES_COLLAPSED : DEFAULT_FOLDER_SIZES_EXPANDED;
+  const activeFolderConfigs = collapsed ? folderConfigsCollapsed : folderConfigsExpanded;
 
   useEffect(() => {
     const el = toolsContainerRef.current;
@@ -528,12 +547,13 @@ export default function Home() {
 
   useEffect(() => {
     try {
-      setFolderConfigs(JSON.parse(localStorage.getItem('folder_sizes_v2') || '{}'));
+      setFolderConfigsExpanded(JSON.parse(localStorage.getItem('folder_sizes_expanded_v2') || '{}'));
+      setFolderConfigsCollapsed(JSON.parse(localStorage.getItem('folder_sizes_collapsed_v2') || '{}'));
     } catch {}
   }, []);
 
   const startResize = (group: string, clientX: number, clientY: number) => {
-    const start = folderConfigs[group] || DEFAULT_FOLDER_SIZES[group] || { k: 4, r: 2 };
+    const start = activeFolderConfigs[group] || activeDefaultSizes[group] || { k: 4, r: 2 };
     resizeStart.current = { x: clientX, y: clientY, k: start.k, r: start.r, group };
     setResizing(group);
   };
@@ -547,11 +567,19 @@ export default function Home() {
       const g = resizeStart.current;
       const nk = Math.min(Math.max(g.k + Math.round((x - g.x) / 146), 1), 8);
       const nr = Math.min(Math.max(g.r + Math.round((y - g.y) / 146), 1), 8);
-      setFolderConfigs(prev => {
-        const next = { ...prev, [g.group]: { k: nk, r: nr } };
-        try { localStorage.setItem('folder_sizes_v2', JSON.stringify(next)); } catch {}
-        return next;
-      });
+      if (collapsed) {
+        setFolderConfigsCollapsed(prev => {
+          const next = { ...prev, [g.group]: { k: nk, r: nr } };
+          try { localStorage.setItem('folder_sizes_collapsed_v2', JSON.stringify(next)); } catch {}
+          return next;
+        });
+      } else {
+        setFolderConfigsExpanded(prev => {
+          const next = { ...prev, [g.group]: { k: nk, r: nr } };
+          try { localStorage.setItem('folder_sizes_expanded_v2', JSON.stringify(next)); } catch {}
+          return next;
+        });
+      }
     };
     const onUp = () => setResizing(null);
     window.addEventListener('mousemove', onMove);
@@ -564,7 +592,7 @@ export default function Home() {
       window.removeEventListener('mouseup', onUp);
       window.removeEventListener('touchend', onUp);
     };
-  }, [resizing]);
+  }, [resizing, collapsed]);
 
 
   // 加载成就进度
@@ -600,21 +628,24 @@ export default function Home() {
     })).filter(group => group.items.length > 0);
   }, [searchQuery]);
 
-  // 天际线装箱：文件夹拖拽定行列，后面的文件夹自动填补空位（带灰金文件夹舒适间距）
+  // 天际线装箱：文件夹拖拽定行列，后面的文件夹自动填补空位（带灰金文件夹舒适间距，支持展开8列/收缩10列双默认布局）
   const layout = useMemo(() => {
-    const cw = containerW || 1280;
+    const cw = containerW || (collapsed ? 1580 : 1340);
     const CELL = 4;
     const cells = Math.ceil(cw / CELL);
-    const S = 136; // 桌面图标尺寸（全局统一）
     const ITEM_GAP = 10; // 文件夹内部图标间距
     const FOLDER_PAD = 32; // 文件夹左右内边距总和 (16px * 2)
     const GAP_X = 16; // 文件夹之间横向间距
     const GAP_Y = 18; // 文件夹之间纵向间距
+    // 自适应桌面图标尺寸：大屏保持 136px，若容器宽度略窄则微缩以确保展开8列/收缩10列一行能放下3个文件夹不折行
+    const targetCols = collapsed ? 10 : 8;
+    const maxFitS = Math.floor((cw - 3 * FOLDER_PAD - (targetCols - 3) * ITEM_GAP - 2 * GAP_X - 8) / targetCols);
+    const S = cw >= 960 ? Math.min(136, Math.max(96, maxFitS)) : 136;
     const skyline: number[] = new Array(cells).fill(0);
     const placed: any[] = [];
     let height = 0;
     for (const group of filteredSoftware) {
-      const cfg = folderConfigs[group.group] || DEFAULT_FOLDER_SIZES[group.group] || { k: 4, r: 2 };
+      const cfg = activeFolderConfigs[group.group] || activeDefaultSizes[group.group] || { k: 4, r: 2 };
       const k = Math.min(Math.max(Math.round(Number(cfg.k)) || 4, 1), 8);
       const r = Math.min(Math.max(Math.round(Number(cfg.r)) || 2, 1), 8);
       const w = Math.min(cw, k * S + (k - 1) * ITEM_GAP + FOLDER_PAD);
@@ -630,7 +661,7 @@ export default function Home() {
       const maxStart = Math.max(0, cells - wOnlyCells);
       for (let x0 = 0; x0 <= maxStart; x0++) {
         let h = 0;
-        for (let i = x0; i < Math.min(cells, x0 + wWithGapCells); i++) {
+        for (let i = x0; i < Math.min(cells, x0 + wOnlyCells); i++) {
           h = Math.max(h, skyline[i]);
         }
         if (h < bestH) { bestH = h; bestX = x0; }
@@ -642,7 +673,7 @@ export default function Home() {
       placed.push({ group, cfg: { ...cfg, k, r, S, ITEM_GAP }, x: bestX * CELL, y: bestH, w, folderH });
     }
     return { placed, height };
-  }, [folderConfigs, containerW, filteredSoftware, searchQuery]);
+  }, [activeFolderConfigs, activeDefaultSizes, collapsed, containerW, filteredSoftware, searchQuery]);
 
 
   const handleSearch = (query: string) => {
@@ -798,7 +829,15 @@ export default function Home() {
               </p>
             </div>
             <button
-              onClick={() => { setFolderConfigs({}); try { localStorage.removeItem('folder_sizes_v2'); } catch {} }}
+              onClick={() => {
+                setFolderConfigsExpanded({});
+                setFolderConfigsCollapsed({});
+                try {
+                  localStorage.removeItem('folder_sizes_v2');
+                  localStorage.removeItem('folder_sizes_expanded_v2');
+                  localStorage.removeItem('folder_sizes_collapsed_v2');
+                } catch {}
+              }}
               className="flex-shrink-0 text-xs px-3.5 py-1.5 rounded-full transition-all hover:scale-105"
               style={{
                 color: '#D4AD72',
