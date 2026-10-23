@@ -8,6 +8,7 @@ import SyntaxHighlighter from 'react-syntax-highlighter';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const vscDarkPlus = require('react-syntax-highlighter/dist/styles/vs2015').default || require('react-syntax-highlighter/dist/styles/vs2015');
 import remarkGfm from 'remark-gfm';
+import { buildSpaceCapsuleRoom } from './SpaceCapsuleRoom3D';
 
 interface Message {
   id: string;
@@ -173,17 +174,17 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
 
     // 初始化Three.js场景
     const scene = new THREE.Scene();
-    // 渐变背景色
-    scene.background = new THREE.Color(0x87CEEB);
-    scene.fog = new THREE.Fog(0x87CEEB, 5, 15);
+    scene.background = new THREE.Color(0x080f1e);
+    scene.fog = new THREE.FogExp2(0x080f1e, 0.032);
     
     const camera = new THREE.PerspectiveCamera(
-      75,
+      62,
       width / height,
       0.1,
       1000
     );
-    camera.position.set(0, 2, 8); // 调整相机位置以适应更大的机器人
+    camera.position.set(0, 1.85, 7.6);
+    camera.lookAt(0, 1.15, 0);
 
     const renderer = new THREE.WebGLRenderer({ 
       canvas: canvasRef.current,
@@ -191,17 +192,17 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
       alpha: false,
       powerPreference: 'high-performance'
     });
-    renderer.setSize(width, height);
+    renderer.setSize(width, height, false);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.outputColorSpace = THREE.SRGBColorSpace;
 
-    // 改进的光照系统
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+    // 改进的光照系统（适配全息太空舱与袋子卡通质感）
+    const ambientLight = new THREE.AmbientLight(0xdbeafe, 0.85);
     scene.add(ambientLight);
 
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 1.15);
     directionalLight.position.set(5, 10, 7);
     directionalLight.castShadow = true;
     directionalLight.shadow.mapSize.width = 2048;
@@ -210,10 +211,14 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
     directionalLight.shadow.camera.far = 50;
     scene.add(directionalLight);
 
-    // 添加补光
-    const fillLight = new THREE.DirectionalLight(0x88ccff, 0.3);
-    fillLight.position.set(-5, 5, -5);
+    // 赛博青与紫霓虹补光
+    const fillLight = new THREE.PointLight(0x38bdf8, 1.4, 18);
+    fillLight.position.set(3.5, 2.5, 2.5);
     scene.add(fillLight);
+
+    const purpleRimLight = new THREE.PointLight(0xa855f7, 1.1, 18);
+    purpleRimLight.position.set(-3.5, 2.5, 2.0);
+    scene.add(purpleRimLight);
 
     // 创建袋子风格的机器人模型
     const robotGroup = new THREE.Group();
@@ -569,75 +574,27 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
     tail.rotation.x = Math.PI / 2;
     robotGroup.add(tail);
 
-    // 动漫风格的地面 - 更鲜艳的颜色
-    const groundGeometry = new THREE.PlaneGeometry(20, 20);
-    const groundMaterial = new THREE.MeshToonMaterial({ 
-      color: 0x66bb6a,
-      gradientMap: createToonGradient()
-    });
-    const ground = new THREE.Mesh(groundGeometry, groundMaterial);
-    ground.rotation.x = -Math.PI / 2;
-    ground.position.y = -1;
-    ground.receiveShadow = true;
-    scene.add(ground);
-
-    // 彩色网格
-    const gridHelper = new THREE.GridHelper(20, 40, 0x4caf50, 0x81c784);
-    gridHelper.position.y = -0.98;
-    gridHelper.material.opacity = 0.5;
-    gridHelper.material.transparent = true;
-    scene.add(gridHelper);
-
-    // 添加漂浮的星星装饰
-    const starGeometry = new THREE.SphereGeometry(0.05, 8, 8);
-    const starMaterial = new THREE.MeshBasicMaterial({ 
-      color: 0xffeb3b,
-      transparent: true,
-      opacity: 0.8
-    });
-    
-    for (let i = 0; i < 15; i++) {
-      const star = new THREE.Mesh(starGeometry, starMaterial);
-      star.position.set(
-        (Math.random() - 0.5) * 10,
-        Math.random() * 3 + 1,
-        (Math.random() - 0.5) * 10
-      );
-      scene.add(star);
-    }
-
-    // 添加漂浮的心形装饰
-    const heartShape2 = new THREE.Shape();
-    heartShape2.moveTo(0, 0);
-    heartShape2.bezierCurveTo(0, -0.03, -0.05, -0.03, -0.05, 0);
-    heartShape2.bezierCurveTo(-0.05, 0.02, -0.05, 0.04, 0, 0.08);
-    heartShape2.bezierCurveTo(0.05, 0.04, 0.05, 0.02, 0.05, 0);
-    heartShape2.bezierCurveTo(0.05, -0.03, 0, -0.03, 0, 0);
-    
-    const floatingHeartGeometry = new THREE.ShapeGeometry(heartShape2);
-    const floatingHeartMaterial = new THREE.MeshBasicMaterial({ 
-      color: 0xff69b4,
-      transparent: true,
-      opacity: 0.6,
-      side: THREE.DoubleSide
-    });
-    
-    for (let i = 0; i < 8; i++) {
-      const heart = new THREE.Mesh(floatingHeartGeometry, floatingHeartMaterial);
-      heart.position.set(
-        (Math.random() - 0.5) * 8,
-        Math.random() * 3 + 0.5,
-        (Math.random() - 0.5) * 8
-      );
-      heart.rotation.y = Math.random() * Math.PI;
-      scene.add(heart);
-    }
+    // 构建 3D 全息太空舱实验室背景（含赛博开发桌、双联曲面代码屏、水冷主机、AI机柜与深空舷窗）
+    const spaceRoom = buildSpaceCapsuleRoom(scene);
 
     scene.add(robotGroup);
     
-    // 放大机器人并调整位置
-    robotGroup.scale.set(2.5, 2.5, 2.5); // 放大 2.5 倍
-    robotGroup.position.y = 0.5; // 稍微抬高一点
+    // 放大机器人并站立在中央全息底座上
+    robotGroup.scale.set(2.2, 2.2, 2.2);
+    robotGroup.position.y = 0.42;
+
+    // 鼠标微视差交互（平滑环视太空舱、右侧开发桌与双联电脑屏）
+    let targetCamX = 0;
+    let targetCamY = 1.85;
+    const handleMouseMove = (e: MouseEvent) => {
+      const rect = container.getBoundingClientRect();
+      if (!rect.width || !rect.height) return;
+      const nx = ((e.clientX - rect.left) / rect.width - 0.5) * 2;
+      const ny = ((e.clientY - rect.top) / rect.height - 0.5) * 2;
+      targetCamX = nx * 1.15;
+      targetCamY = 1.85 - ny * 0.45;
+    };
+    container.addEventListener('mousemove', handleMouseMove);
 
     // 存储引用
     sceneRef.current = scene;
@@ -661,10 +618,16 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
     const animate = () => {
       animationIdRef.current = requestAnimationFrame(animate);
       time += 0.01;
+      spaceRoom.update(time);
+
+      // 相机微视差平滑跟随
+      camera.position.x += (targetCamX - camera.position.x) * 0.05;
+      camera.position.y += (targetCamY - camera.position.y) * 0.05;
+      camera.lookAt(0, 1.15, 0);
       
       if (robotGroup) {
         robotGroup.rotation.y += 0.006;
-        robotGroup.position.y = Math.sin(time * 0.8) * 0.06;
+        robotGroup.position.y = 0.42 + Math.sin(time * 0.8) * 0.06;
         
         // 头部动画
         const headMesh = robotGroup.children.find(child => 
@@ -787,10 +750,11 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
       if (!canvasRef.current || !camera || !renderer || !container) return;
       
       const { width, height } = getContainerSize();
+      if (!width || !height) return;
       
       camera.aspect = width / height;
       camera.updateProjectionMatrix();
-      renderer.setSize(width, height);
+      renderer.setSize(width, height, false);
     };
 
     window.addEventListener('resize', handleResize);
@@ -804,6 +768,7 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
     // 清理函数
     return () => {
       window.removeEventListener('resize', handleResize);
+      container.removeEventListener('mousemove', handleMouseMove);
       resizeObserver.disconnect();
       if (animationIdRef.current) {
         cancelAnimationFrame(animationIdRef.current);
@@ -835,11 +800,11 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
           </Button>
         </div>
         
-        <div className="flex-1 relative bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 overflow-hidden">
+        <div className="flex-1 relative bg-[#080f1e] overflow-hidden">
           <canvas 
             ref={canvasRef} 
-            className={`w-full h-full block transition-all duration-500 ${showChat ? 'opacity-20 blur-sm scale-90' : 'opacity-100'}`}
-            style={{ background: 'linear-gradient(to bottom, #87CEEB 0%, #98FB98 100%)' }}
+            className={`w-full h-full block transition-all duration-500 ${showChat ? 'opacity-25 blur-sm scale-95' : 'opacity-100'}`}
+            style={{ background: '#080f1e' }}
           />
           
           {isLoading && (
