@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PartJava — 沉浸式 3D 数字书房与技术架构空间</title>
+  <script src="./vendor/tailwind.min.js"></script>
+  <script src="./vendor/three.min.js"></script>
+  <script src="./vendor/gsap.min.js"></script>
+  <link rel="stylesheet" href="./css/sanctuary.css" />
+</head>
+<body class="selection:bg-[#D4AD72]/30 selection:text-[#F2E9DC]">
+
+  <!-- WebGL 实时 3D 渲染容器 -->
+  <div id="webgl-container"></div>
+  <div class="cinematic-framing"></div>
+
+  <!-- 预加载帷幕：确保所有 PBR 贴图与着色器预热完毕后再启动 7 秒电影级开屏 -->
+  <div id="loader-curtain" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#111418] transition-opacity duration-1000">
+    <div class="flex items-center gap-2.5 mb-4">
+      <span class="w-1.5 h-1.5 rounded-full bg-[#D4AD72] animate-ping"></span>
+      <span class="text-[11px] font-mono-code uppercase tracking-[0.32em] text-[#D4AD72]/90">PartJava</span>
+    </div>
+    <div class="w-48 h-[1px] bg-white/10 overflow-hidden">
+      <div id="loader-bar" class="h-full bg-[#D4AD72] w-0 transition-all duration-500"></div>
+    </div>
+  </div>
+
+  <!-- 渐进式悬停微提示：仅当鼠标悬停在可交互 3D 器物上时才显现 -->
+  <div id="hover-tooltip" class="fixed z-30 pointer-events-none opacity-0 scale-95 transition-all duration-200 -translate-x-1/2 -translate-y-full pb-3">
+    <div class="glass-pill rounded-full px-3.5 py-1.5 flex items-center gap-2 shadow-2xl border border-[#D4AD72]/35">
+      <span id="tooltip-dot" class="w-1.5 h-1.5 rounded-full bg-[#D4AD72]"></span>
+      <span id="tooltip-title" class="text-xs font-medium text-[#F2E9DC] whitespace-nowrap">Studio Display</span>
+      <span id="tooltip-sub" class="text-[10px] font-mono-code text-[#D4AD72] whitespace-nowrap">点击查看项目</span>
+    </div>
+  </div>
+
+  <!-- 顶部极简导航栏：保留品牌名称、四个核心栏目与精简控制入口 -->
+  <header class="fixed top-0 inset-x-0 z-30 px-6 sm:px-12 py-6 flex items-center justify-between pointer-events-none">
+    <!-- 品牌标识 -->
+    <button id="brand-home-btn" class="pointer-events-auto flex items-center gap-3 group text-left">
+      <span class="w-2 h-2 rounded-full bg-[#D4AD72] group-hover:scale-125 transition-transform"></span>
+      <span class="text-sm font-mono-code tracking-[0.2em] text-[#F2E9DC] font-medium">PartJava</span>
+    </button>
+
+    <!-- 导航链接与精简控制 -->
+    <div class="flex items-center gap-6 sm:gap-9 pointer-events-auto">
+      <nav class="hidden md:flex items-center gap-8 text-xs font-mono-code tracking-wider uppercase">
+        <button data-route="home" class="nav-link active text-[#F2E9DC]">Home</button>
+        <button data-route="projects" class="nav-link text-[#F2E9DC]/65 hover:text-[#F2E9DC]">Code Lab</button>
+        <button data-route="knowledge" class="nav-link text-[#F2E9DC]/65 hover:text-[#F2E9DC]">Knowledge</button>
+        <button data-route="about" class="nav-link text-[#F2E9DC]/65 hover:text-[#F2E9DC]">About</button>
+      </nav>
+
+      <div class="flex items-center gap-2.5">
+        <!-- 开屏阶段显示的“跳过动画”按钮，开屏结束后自动隐藏 -->
+        <button id="btn-skip-intro" class="glass-pill rounded-full px-3.5 py-1.5 text-[11px] font-mono-code text-[#D4AD72] hover:text-[#F2E9DC] hover:border-[#D4AD72]/50 transition">
+          Skip Intro →
+        </button>
+
+        <!-- 极简音效开关按钮 -->
+        <button id="btn-ambient-audio" title="夜雨环境白噪音" class="glass-pill w-8 h-8 rounded-full flex items-center justify-center text-xs text-[#F2E9DC]/75 hover:text-[#D4AD72] hover:border-[#D4AD72]/40 transition">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- 主视觉区：置于画面左侧留白区域，与右侧 3D 显示器和工作台形成黄金三分之二构图 -->
+  <main id="hero-section" class="fixed inset-y-0 left-0 z-20 flex flex-col justify-center px-6 sm:px-12 lg:px-16 max-w-[min(40vw,590px)] pointer-events-none opacity-0 translate-y-4 transition-all duration-1000">
+    <div class="pointer-events-auto space-y-6">
+      <div class="inline-flex items-center gap-2.5 px-3 py-1 rounded-full bg-white/[0.04] border border-[#D4AD72]/25">
+        <span class="w-1.5 h-1.5 rounded-full bg-[#67D9D2]"></span>
+        <span class="text-[10px] font-mono-code uppercase tracking-[0.24em] text-[#D4AD72]">The Developer's Sanctuary</span>
+      </div>
+
+      <h1 class="text-3xl sm:text-4xl xl:text-[46px] font-serif-editorial font-semibold tracking-[-0.035em] text-[#F2E9DC] leading-[1.34] hero-heading">
+        在静谧光影之间，<br />构建有深度的系统。
+      </h1>
+
+      <p class="text-sm sm:text-[15px] text-[#F2E9DC]/70 leading-relaxed font-light max-w-md">
+        从 C++ 线性表到树与图算法，在沉浸式书房中探索数据结构。点击书本或显示器，开始学习。
+      </p>
+
+      <div class="pt-2 flex flex-wrap items-center gap-3.5">
+        <button id="btn-hero-explore" class="btn-primary-gold px-6 py-3 rounded-full text-xs sm:text-sm font-medium tracking-wide flex items-center gap-2">
+          <span>开始探索</span>
+          <span>→</span>
+        </button>
+        <button id="btn-hero-projects" class="btn-secondary-ghost px-6 py-3 rounded-full text-xs sm:text-sm font-medium tracking-wide">
+          查看项目
+        </button>
+      </div>
+    </div>
+  </main>
+
+  <!-- 底部极简交互提示、向下滚动引导与可展开的工作台设置抽屉 -->
+  <footer id="bottom-bar" class="fixed bottom-0 inset-x-0 z-30 px-6 sm:px-12 py-5 flex items-center justify-between pointer-events-none opacity-0 transition-opacity duration-700">
+    <!-- 左侧：一条极简交互提示 -->
+    <div class="pointer-events-auto flex items-center gap-3 glass-pill rounded-full px-4 py-1.5">
+      <span class="w-1.5 h-1.5 rounded-full bg-[#67D9D2]"></span>
+      <span id="bottom-hint-text" class="text-[11px] font-mono-code text-[#F2E9DC]/70">
+        悬停并点击显示器、手稿或台灯进行交互 · 移动鼠标感受空间景深
+      </span>
+    </div>
+
+    <!-- 中部：向下滚动浏览平台引导按钮 & 聚焦“技术手稿 (Knowledge)”模式时显现的翻页控制条 -->
+    <div class="flex items-center gap-3">
+      <button id="btn-scroll-down" class="pointer-events-auto glass-pill rounded-full px-4 py-1.5 text-[11px] font-mono-code text-[#D4AD72] hover:text-[#F2E9DC] border border-[#D4AD72]/35 hover:border-[#D4AD72]/70 transition flex items-center gap-2 shadow-lg">
+        <span>向下滚动浏览平台</span>
+        <span class="animate-bounce inline-block">↓</span>
+      </button>
+
+      <div id="book-controls-bar" class="pointer-events-auto hidden items-center gap-2 glass-pill rounded-full px-3 py-1 border border-[#D4AD72]/35">
+        <button id="btn-book-prev" class="px-2.5 py-1 rounded-full text-xs text-[#F2E9DC]/80 hover:text-[#F2E9DC] transition">← 上一页</button>
+        <span id="book-spread-indicator" class="text-[11px] font-mono-code text-[#D4AD72] px-2">P. 01-02 / 10</span>
+        <button id="btn-book-next" class="px-2.5 py-1 rounded-full text-xs text-[#F2E9DC]/80 hover:text-[#F2E9DC] transition">下一页 →</button>
+        <div class="w-px h-3.5 bg-white/10 mx-1"></div>
+        <button id="btn-open-manuscript-drawer" class="px-2.5 py-1 rounded-full text-xs text-[#67D9D2] hover:underline">阅读全文</button>
+        <button id="btn-book-back" class="px-2.5 py-1 rounded-full text-xs text-[#F2E9DC]/60 hover:text-[#F2E9DC]">返回全景</button>
+      </div>
+    </div>
+
+    <!-- 右侧：可展开的「工作台控制」微件（收纳番茄钟、灯光色温、翻页与重播） -->
+    <div class="pointer-events-auto relative">
+      <button id="btn-studio-settings" class="glass-pill rounded-full px-4 py-1.5 text-[11px] font-mono-code text-[#F2E9DC]/80 hover:text-[#D4AD72] hover:border-[#D4AD72]/40 transition flex items-center gap-2">
+        <span>Studio Controls</span>
+        <span id="pomo-mini-badge" class="text-[#D4AD72]">25:00</span>
+      </button>
+
+      <!-- 弹出式控制面板 -->
+      <div id="studio-settings-popover" class="hidden absolute bottom-11 right-0 w-72 glass-panel rounded-2xl p-4 space-y-4 border border-white/10">
+        <div class="flex items-center justify-between border-b border-white/10 pb-2.5">
+          <span class="text-[11px] font-mono-code uppercase tracking-wider text-[#D4AD72]">Workspace Controls</span>
+          <button id="btn-replay-intro" class="text-[11px] font-mono-code text-[#67D9D2] hover:underline">↺ 重播开屏</button>
+        </div>
+
+        <!-- 番茄专注时钟 -->
+        <div class="flex items-center justify-between">
+          <div>
+            <div class="text-xs font-medium text-[#F2E9DC]">Pomodoro 专注计时</div>
+            <div id="pomo-time-display" class="text-sm font-mono-code text-[#D4AD72]">25:00</div>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <button id="btn-pomo-toggle" class="px-3 py-1 rounded-full bg-[#D4AD72]/20 border border-[#D4AD72]/40 text-xs text-[#F2E9DC] hover:bg-[#D4AD72]/30 transition">开始</button>
+            <button id="btn-pomo-reset" class="px-2.5 py-1 rounded-full bg-white/5 text-xs text-[#F2E9DC]/60 hover:text-[#F2E9DC]">重置</button>
+          </div>
+        </div>
+
+        <!-- 台灯色温与开关 -->
+        <div class="flex items-center justify-between">
+          <span class="text-xs text-[#F2E9DC]/80">建筑台灯照明</span>
+          <button id="btn-lamp-cycle" class="px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs font-mono-code text-[#D4AD72]">2850K 暖光</button>
+        </div>
+
+        <!-- 手稿快速翻页 -->
+        <div class="flex items-center justify-between">
+          <span class="text-xs text-[#F2E9DC]/80">技术手稿翻页</span>
+          <div class="flex items-center gap-1.5">
+            <button id="btn-pop-prev" class="px-2.5 py-1 rounded-full bg-white/5 text-xs text-[#F2E9DC]">←</button>
+            <button id="btn-pop-next" class="px-2.5 py-1 rounded-full bg-white/5 text-xs text-[#F2E9DC]">→</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- 第一人称工作台控制：保留实体键盘和书页交互 -->
+  <div id="workspace-hud" aria-label="第一人称工作台控制">
+    <div class="workspace-meta">FIRST PERSON · IMMERSIVE WORKSPACE</div>
+    <div class="workspace-controls">
+      <button id="workspace-key-demo" title="触发真实键帽下压和屏幕反馈">⌨ &nbsp;敲击键盘</button>
+      <button id="workspace-page-demo" title="触发书页翻动">▤ &nbsp;翻阅书页</button>
+      <button id="workspace-exit" class="workspace-exit">↖ &nbsp;返回首页</button>
+    </div>
+  </div>
+  <div class="fp-crosshair" aria-hidden="true"></div>
+
+  <!-- 模块一：DATA STRUCTURES CODE LAB · 与实体书本及 3D 显示器同源的五章互动学习台 -->
+  <div id="projects-modal" class="fixed inset-0 z-40 pointer-events-none opacity-0 transition-opacity duration-500 flex items-start justify-end p-4 sm:p-6 pt-20 sm:pt-24">
+    <div id="projects-dialog" class="glass-panel w-full max-w-[760px] max-h-[calc(100vh-110px)] rounded-[28px] border border-[#67D9D2]/25 flex flex-col overflow-hidden transform scale-95 transition-transform duration-500" role="dialog" aria-modal="true" aria-label="C++ 数据结构代码实验室">
+      <div class="px-5 sm:px-7 py-4 border-b border-white/10 flex items-center justify-between gap-3 bg-[#0d1014]/90">
+        <div class="flex items-center gap-3 min-w-0">
+          <div class="flex items-center gap-1.5 shrink-0"><span class="w-2.5 h-2.5 rounded-full bg-rose-400/80"></span><span class="w-2.5 h-2.5 rounded-full bg-amber-400/80"></span><span class="w-2.5 h-2.5 rounded-full bg-emerald-400/80"></span></div>
+          <div class="min-w-0"><div class="text-[11px] font-mono-code text-[#67D9D2] tracking-wider truncate">CPP_STUDIO / DATA STRUCTURES</div><div class="text-[10px] text-[#F2E9DC]/45 mt-1">5 Chapters · 10 Pages · Interactive C++ Atlas</div></div>
+        </div>
+        <div class="flex items-center gap-2 shrink-0">
+          <button id="btn-projects-to-book" class="px-3 py-2 rounded-full bg-white/5 hover:bg-white/10 text-[11px] text-[#D4AD72] transition">翻阅书本 →</button>
+          <button id="btn-close-projects" class="px-3 py-2 rounded-full bg-white/10 hover:bg-white/15 text-[11px] text-[#F2E9DC] transition">返回书房 (ESC)</button>
+        </div>
+      </div>
+      <div class="ds-shell">
+        <section class="ds-body custom-scroll" aria-label="学习内容与可复制 C++ 代码">
+          <div class="ds-kicker" id="ds-current-chapter">C++ DATA STRUCTURES · 5 CHAPTERS</div>
+          <div class="flex items-start justify-between gap-4 mt-2">
+            <div>
+              <h2 class="ds-title" id="ds-chapter-heading">Chapter I · 线性结构与受限端口</h2>
+              <p class="ds-summary mt-2" id="ds-chapter-summary">从连续内存与指针拓扑出发，理解线性容器和受限队列的访问模式。</p>
+            </div>
+          </div>
+          <div class="ds-tabs" id="ds-chapter-navigation" aria-label="五章课程选择">
+            <button type="button" class="ds-chapter-btn active" data-ds-chapter="0"><span class="ds-chapter-number">01</span><span><span class="ds-chapter-title">1. 线性结构</span><span class="ds-chapter-pages">PAGES 01 — 02</span></span></button>
+            <button type="button" class="ds-chapter-btn" data-ds-chapter="1"><span class="ds-chapter-number">02</span><span><span class="ds-chapter-title">2. 串与数组</span><span class="ds-chapter-pages">PAGES 03 — 04</span></span></button>
+            <button type="button" class="ds-chapter-btn" data-ds-chapter="2"><span class="ds-chapter-number">03</span><span><span class="ds-chapter-title">3. 树与堆</span><span class="ds-chapter-pages">PAGES 05 — 06</span></span></button>
+            <button type="button" class="ds-chapter-btn" data-ds-chapter="3"><span class="ds-chapter-number">04</span><span><span class="ds-chapter-title">4. 查找与哈希</span><span class="ds-chapter-pages">PAGES 07 — 08</span></span></button>
+            <button type="button" class="ds-chapter-btn" data-ds-chapter="4"><span class="ds-chapter-number">05</span><span><span class="ds-chapter-title">5. 排序与图</span><span class="ds-chapter-pages">PAGES 09 — 10</span></span></button>
+          </div>
+          <section class="ds-preview">
+            <div class="ds-preview-top">
+              <div class="ds-preview-label">显示器代码预览</div>
+              <div class="ds-side-switch">
+                <button id="ds-left-page" type="button" class="ds-folio active" data-ds-side="0">左页代码</button>
+                <button id="ds-right-page" type="button" class="ds-folio" data-ds-side="1">右页代码</button>
+              </div>
+            </div>
+            <blockquote class="ds-quote" id="ds-preview-quote">连续内存赋予缓存局部性，链式节点以指针操作换取更灵活的增删。</blockquote>
+            <div id="ds-knowledge-points" class="ds-notes"></div>
+            <div class="ds-editor">
+              <div class="ds-editor-header"><span id="ds-code-label" class="ds-editor-file">linear_list.cpp · C++20</span><button id="ds-copy-code" type="button" class="ds-copy">复制代码</button></div>
+              <pre class="ds-editor-code"><code id="ds-code-content"></code></pre>
+            </div>
+          </section>
+          <div id="ds-page-cards" class="ds-page-stack"></div>
+          <div class="ds-bottom"><span id="ds-progress">01 / 10 · 同步书页及全息投影</span><button id="ds-next-lesson" type="button" class="ds-next">下一知识点 →</button></div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <!-- 模块二：Knowledge 高清手稿阅读抽屉 -->
+  <aside id="manuscript-drawer" class="fixed inset-y-0 right-0 z-40 w-full max-w-lg glass-panel border-l border-[#D4AD72]/25 transform translate-x-full transition-transform duration-500 flex flex-col">
+    <div class="px-6 py-5 border-b border-white/10 flex items-center justify-between">
+      <div>
+        <div class="text-[10px] font-mono-code uppercase tracking-widest text-[#D4AD72]">Technical Manuscript</div>
+        <h3 id="drawer-title" class="text-sm font-semibold text-[#F2E9DC] mt-0.5">Chapter I · C++ 数据结构与算法</h3>
+      </div>
+      <button id="btn-close-drawer" class="px-3 py-1 rounded-full bg-white/10 hover:bg-white/15 text-xs text-[#F2E9DC]">关闭 ✕</button>
+    </div>
+    <div id="drawer-body" class="p-6 overflow-y-auto custom-scroll space-y-5 flex-1"></div>
+    <div class="px-6 py-4 border-t border-white/10 flex items-center justify-between bg-black/30">
+      <button id="btn-drawer-prev" class="px-3.5 py-1.5 rounded-full bg-white/5 hover:bg-white/10 text-xs text-[#F2E9DC]">← 上一跨页</button>
+      <span id="drawer-page-label" class="text-xs font-mono-code text-[#D4AD72]">Pages 01 - 02</span>
+      <button id="btn-drawer-next" class="px-3.5 py-1.5 rounded-full bg-[#D4AD72]/20 hover:bg-[#D4AD72]/30 border border-[#D4AD72]/40 text-xs text-[#F2E9DC]">下一跨页 →</button>
+    </div>
+  </aside>
+
+  <!-- 模块三：About 开发者理念与数字书房架构规格弹窗 -->
+  <div id="about-modal" class="fixed inset-0 z-40 pointer-events-none opacity-0 transition-opacity duration-500 flex items-center justify-center p-4 sm:p-8">
+    <div id="about-dialog" class="glass-panel w-full max-w-2xl rounded-3xl border border-[#D4AD72]/30 p-6 sm:p-8 transform scale-95 transition-transform duration-500 space-y-6">
+      <div class="flex items-center justify-between border-b border-white/10 pb-4">
+        <div>
+          <div class="text-[10px] font-mono-code uppercase tracking-[0.25em] text-[#D4AD72]">About PartJava Sanctuary</div>
+          <h2 class="text-xl font-serif-editorial font-semibold text-[#F2E9DC] mt-1">关于作者与这座数字书房</h2>
+        </div>
+        <button id="btn-close-about" class="px-3.5 py-1.5 rounded-full bg-white/10 hover:bg-white/15 text-xs text-[#F2E9DC]">返回 (ESC)</button>
+      </div>
+      <p class="text-xs sm:text-sm text-[#F2E9DC]/75 leading-relaxed">
+        PartJava 数字书房是一座实时渲染于浏览器中的 3D 个人技术空间。这里没有喧嚣的弹窗与廉价特效，只有温润的深胡桃木书桌、2850K 的暖色台灯、正在编译的系统代码，以及随时可以翻阅的算法手稿。
+      </p>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5 text-xs font-mono-code">
+        <div class="p-3.5 rounded-2xl bg-white/[0.03] border border-white/10">
+          <div class="text-[#F2E9DC]/50 mb-1">CAMERA & LENS</div>
+          <div class="text-[#D4AD72]">34° FOV · 2/3 Angle</div>
+        </div>
+        <div class="p-3.5 rounded-2xl bg-white/[0.03] border border-white/10">
+          <div class="text-[#F2E9DC]/50 mb-1">LIGHTING RIG</div>
+          <div class="text-[#67D9D2]">3-Point + Contact AO</div>
+        </div>
+        <div class="p-3.5 rounded-2xl bg-white/[0.03] border border-white/10">
+          <div class="text-[#F2E9DC]/50 mb-1">CORE STACK</div>
+          <div class="text-[#F2E9DC]">C++20 / STL / WebGL</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 按职责拆分的 8 个核心脚本模块 -->
+  <script src="./js/01-audio.js"></script>
+  <script src="./js/02-manuscript-data.js"></script>
+  <script src="./js/03-scene-room.js"></script>
+  <script src="./js/04-display-ide.js"></script>
+  <script src="./js/05-book-hologram.js"></script>
+  <script src="./js/06-desk-props.js"></script>
+  <script src="./js/07-controllers-director.js"></script>
+  <script src="./js/08-interactions-main.js"></script>
+</body>
+</html>

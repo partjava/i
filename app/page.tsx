@@ -20,7 +20,7 @@ import { useState, useMemo, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { navigationItems } from './_shared/data/navigation';
 import { useAuth } from '@shared/hooks/useAuth';
-import HeroSection from './_shared/components/HeroSection';
+import SanctuaryHero from './_shared/components/sanctuary/SanctuaryHero';
 import StatsSection from './_shared/components/StatsSection';
 import ToolCard from './_shared/components/ToolCard';
 import ToolGroupPreview from './_shared/components/ToolGroupPreview';
@@ -645,8 +645,8 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-surface-page">
-      {/* Hero区域 */}
-      <HeroSection />
+      {/* 3D 数字书房首屏 */}
+      <SanctuaryHero />
 
       {/* 数据统计区域（接口失败时自动隐藏） */}
       <StatsSection />

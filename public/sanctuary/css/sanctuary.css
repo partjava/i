@@ -1,0 +1,230 @@
+    :root {
+      --walnut: #35271F;
+      --ivory: #F2E9DC;
+      --gold: #D4AD72;
+      --slate-bg: #111418;
+      --tech-cyan: #67D9D2;
+    }
+
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: var(--slate-bg);
+      color: var(--ivory);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    #webgl-container {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      outline: none;
+    }
+
+    /* 电影级光学暗角与左侧文字阅读保护渐变 */
+    .cinematic-framing {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 2;
+      background:
+        radial-gradient(circle at 62% 48%, rgba(17, 20, 24, 0) 42%, rgba(9, 11, 14, 0.48) 100%),
+        linear-gradient(90deg, rgba(12, 15, 19, 0.67) 0%, rgba(12, 15, 19, 0.30) 36%, rgba(12, 15, 19, 0) 65%),
+        linear-gradient(180deg, rgba(10, 12, 16, 0.6) 0%, rgba(10, 12, 16, 0) 16%, rgba(10, 12, 16, 0) 82%, rgba(10, 12, 16, 0.62) 100%);
+    }
+
+    .glass-panel {
+      background: rgba(18, 21, 26, 0.72);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid rgba(242, 233, 220, 0.09);
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
+    }
+
+    .glass-pill {
+      background: rgba(20, 24, 30, 0.62);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(242, 233, 220, 0.1);
+    }
+
+    .font-serif-editorial {
+      font-family: 'Noto Serif SC', Georgia, serif;
+    }
+    .font-mono-code {
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .btn-primary-gold {
+      background: linear-gradient(135deg, #DFB980 0%, #C29656 100%);
+      color: #121417;
+      box-shadow: 0 12px 32px -6px rgba(212, 173, 114, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .btn-primary-gold:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 16px 40px -6px rgba(212, 173, 114, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    }
+
+    .btn-secondary-ghost {
+      background: rgba(242, 233, 220, 0.05);
+      border: 1px solid rgba(242, 233, 220, 0.16);
+      color: #F2E9DC;
+      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .btn-secondary-ghost:hover {
+      background: rgba(242, 233, 220, 0.1);
+      border-color: rgba(212, 173, 114, 0.5);
+      transform: translateY(-2px);
+    }
+
+    .nav-link {
+      position: relative;
+      transition: color 0.3s ease;
+    }
+    .nav-link::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      bottom: -4px;
+      width: 100%;
+      height: 1.5px;
+      background: var(--gold);
+      transform: scaleX(0);
+      transform-origin: right;
+      transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .nav-link:hover::after,
+    .nav-link.active::after {
+      transform: scaleX(1);
+      transform-origin: left;
+    }
+
+    .custom-scroll::-webkit-scrollbar {
+      width: 5px;
+      height: 5px;
+    }
+    .custom-scroll::-webkit-scrollbar-track {
+      background: rgba(17, 20, 24, 0.4);
+    }
+    .custom-scroll::-webkit-scrollbar-thumb {
+      background: rgba(212, 173, 114, 0.3);
+      border-radius: 9999px;
+    }
+    /* 第二轮精修：宽屏字体节奏、窄屏布局和触控可读性 */
+    .hero-heading { text-wrap: balance; text-shadow: 0 3px 26px rgba(0,0,0,.27); }
+    #hero-section p { text-wrap: pretty; }
+    @media (min-width: 1100px) and (max-width: 1500px) {
+      #hero-section { max-width: 470px; }
+      .hero-heading { font-size: clamp(32px, 3vw, 43px); }
+    }
+    @media (max-width: 767px) {
+      #hero-section { top: auto; bottom: 72px; height: auto; max-width: 100%; padding: 24px; justify-content: flex-end; background: linear-gradient(0deg,rgba(12,15,19,.84),transparent); }
+      .hero-heading { font-size: clamp(27px, 7vw, 39px); }
+      #bottom-bar { display: none; }
+      .cinematic-framing { background: linear-gradient(0deg,rgba(8,11,15,.65),transparent 70%); }
+    }
+
+    /* 第一人称工作台：保留相机与交互，移除电子手模型 */
+    #workspace-hud { position:fixed; z-index:33; left:50%; bottom:27px;
+      transform:translate(-50%,16px); opacity:0; pointer-events:none;
+      transition:opacity .45s ease,transform .55s cubic-bezier(.16,1,.3,1);
+      display:flex; flex-direction:column; align-items:center; gap:12px; width:max-content; max-width:calc(100vw - 24px); }
+    #workspace-hud.is-open { opacity:1; pointer-events:auto; transform:translate(-50%,0); }
+    .workspace-meta { display:flex; align-items:center; gap:9px; font:10px 'JetBrains Mono',monospace;
+      letter-spacing:.18em; color:#b7cbd0; text-shadow:0 2px 12px #000; white-space:nowrap; }
+    .workspace-meta::before { content:''; width:5px; height:5px; border-radius:50%; background:#79e7dc;
+      box-shadow:0 0 12px #79e7dc; animation:workspacePulse 2.8s ease-in-out infinite; }
+    @keyframes workspacePulse { 50% { opacity:.45;box-shadow:0 0 3px #79e7dc; } }
+    .workspace-controls { display:flex; align-items:center; justify-content:center; gap:5px;
+      border:1px solid rgba(157,217,209,.18); border-radius:999px; padding:6px;
+      background:rgba(12,19,25,.82); backdrop-filter:blur(20px);
+      box-shadow:0 15px 48px #0008, inset 0 1px 0 rgba(255,255,255,.06); }
+    .workspace-controls button { padding:10px 17px; border-radius:999px; color:#d2e2de;
+      font-size:12px; white-space:nowrap; transition:background .2s,color .2s; }
+    .workspace-controls button:hover { color:#fff; background:rgba(103,217,210,.13); }
+    .workspace-controls .workspace-exit { color:#d7bb8d; border-left:1px solid #ffffff22; border-radius:0 999px 999px 0; }
+    .fp-crosshair { position:fixed;z-index:8;top:50%;left:50%; transform:translate(-50%,-50%);
+      width:12px;height:12px;pointer-events:none;opacity:0;transition:opacity .4s; }
+    .fp-crosshair::before,.fp-crosshair::after {content:'';position:absolute;background:#b2f1e4aa;}
+    .fp-crosshair::before {left:5px;top:0;width:1px;height:12px;}
+    .fp-crosshair::after {top:5px;left:0;height:1px;width:12px;}
+    body.fp-active #bottom-bar {opacity:0!important;pointer-events:none;}
+    body.fp-active #hero-section {opacity:0!important;pointer-events:none;}
+    body.fp-active .cinematic-framing {opacity:.43;}
+    @media(max-width:767px) {
+      #workspace-hud {bottom:16px;}
+      .workspace-controls {gap:0;max-width:calc(100vw - 18px);}
+      .workspace-controls button {font-size:11px;padding:10px 12px;}
+      .workspace-meta {font-size:9px;letter-spacing:.1em;}
+    }
+
+    /* C++ 数据结构学习控制台：保留原书房深色玻璃与暖金/青绿视觉体系 */
+    #projects-dialog { max-width: 760px; max-height: calc(100vh - 110px); width: min(760px, calc(100vw - 24px)); }
+    .ds-shell { display:block; min-height:0; flex:1; overflow:hidden; }
+    .ds-body { min-width:0; min-height:0; overflow-y:auto; padding:24px 22px 26px; }
+    .ds-kicker {font:11px 'JetBrains Mono',monospace;letter-spacing:.16em;color:#d3b06e;text-transform:uppercase;}
+    .ds-title {font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;font-size:clamp(20px,2vw,24px);font-weight:700;line-height:1.45;color:#f4eadc;letter-spacing:-.02em;}
+    .ds-summary{font-size:12px;color:#a9b4bf;line-height:1.8;max-width:92%;}
+    .ds-tabs{display:flex;flex-wrap:wrap;gap:10px;margin:18px 0 14px;}
+    .ds-chapter-btn {display:inline-flex;align-items:center;gap:6px;padding:12px 16px;border:1px solid rgba(255,255,255,.11);border-radius:999px;color:#c8d0d7;background:rgba(255,255,255,.022);font-size:12px;line-height:1;transition:all .2s ease;}
+    .ds-chapter-btn:hover {background:rgba(103,217,210,.07);color:#ecf2f4;border-color:rgba(103,217,210,.22);}
+    .ds-chapter-btn.active {background:linear-gradient(135deg,rgba(212,173,114,.18),rgba(212,173,114,.05));border-color:rgba(212,173,114,.42);color:#fff4dd;box-shadow:inset 0 1px 0 rgba(255,255,255,.08);}
+    .ds-chapter-number,.ds-chapter-pages{display:none;}
+    .ds-chapter-title{display:block;font-size:12px;font-weight:600;line-height:1.2;white-space:nowrap;}
+    .ds-preview{border:1px solid rgba(212,173,114,.18);background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,.018));border-radius:24px;padding:18px 18px 16px;box-shadow:inset 0 1px 0 rgba(255,255,255,.04);}
+    .ds-preview-top{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:12px;}
+    .ds-preview-label{font-size:12px;font-weight:600;color:#c7d1d8;}
+    .ds-side-switch{display:flex;align-items:center;gap:8px;}
+    .ds-folio{border:1px solid rgba(255,255,255,.08);border-radius:999px;text-align:center;padding:10px 16px;background:rgba(12,18,25,.55);color:#b6c2cb;min-width:0;transition:all .22s ease;font-size:12px;}
+    .ds-folio:hover{border-color:rgba(103,217,210,.36);color:#eff7f8;}
+    .ds-folio.active{border-color:rgba(103,217,210,.52);background:rgba(34,118,122,.16);color:#8ff2f2;box-shadow:inset 0 1px rgba(103,217,210,.09);}
+    .ds-quote{margin:0 0 14px;padding-left:14px;border-left:3px solid rgba(212,173,114,.85);font-size:14px;line-height:1.8;color:#f3eee2;font-style:italic;}
+    .ds-editor{border:1px solid rgba(103,217,210,.20);background:#090e15;border-radius:18px;overflow:hidden;box-shadow:0 14px 36px rgba(0,0,0,.19);margin-top:16px;}
+    .ds-editor-header{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:13px 17px;border-bottom:1px solid rgba(255,255,255,.075);background:#111922;}
+    .ds-editor-file{font:11px 'JetBrains Mono',monospace;color:#8edbd8;}
+    .ds-copy {font:11px 'JetBrains Mono',monospace;color:#d4ad72;border:1px solid rgba(212,173,114,.27);border-radius:8px;padding:5px 12px;transition:background .2s;}
+    .ds-copy:hover{background:rgba(212,173,114,.12)}
+    .ds-editor-code {margin:0;padding:18px 20px 20px;overflow:auto;line-height:1.82;font:13px/1.82 'JetBrains Mono',Consolas,monospace;color:#e0f1f2;white-space:pre;tab-size:2;user-select:text!important;}
+    .ds-editor-code * {user-select:text!important;}
+    .ds-notes{display:grid;grid-template-columns:1fr;gap:10px;margin-top:12px;}
+    .ds-note{padding:12px 14px;border-radius:12px;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.06);font-size:12px;line-height:1.72;color:#d0d7dd;}
+    .ds-note::before{content:'◆';color:#63dad2;margin-right:8px;font-size:9px;}
+    .ds-page-stack{display:flex;flex-direction:column;gap:18px;margin-top:18px;}
+    .ds-page-card{padding:18px 18px 16px;border-radius:24px;background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.02));border:1px solid rgba(212,173,114,.18);}
+    .ds-page-meta{display:flex;align-items:center;justify-content:space-between;gap:10px;font:11px 'JetBrains Mono',monospace;color:#d4ad72;letter-spacing:.08em;text-transform:uppercase;}
+    .ds-page-sub{margin-top:10px;font-size:13px;color:#67d9d2;font-weight:600;}
+    .ds-page-title{margin-top:10px;font-family:'Noto Serif SC',serif;font-size:18px;line-height:1.55;color:#f6ecde;font-weight:600;}
+    .ds-page-list{margin:14px 0 0;padding:0;list-style:none;display:grid;gap:8px;}
+    .ds-page-list li{font-size:12px;line-height:1.78;color:#d0d7dd;}
+    .ds-bottom{display:flex;justify-content:space-between;align-items:center;gap:9px;margin-top:18px;font:11px 'JetBrains Mono',monospace;color:#8596a1;}
+    .ds-next{background:rgba(212,173,114,.12);border:1px solid rgba(212,173,114,.32);padding:9px 13px;border-radius:9px;color:#e4c391;}
+    .ds-next:hover{background:rgba(212,173,114,.22);}
+    @media(max-width:900px){
+      #projects-modal{padding:72px 12px 14px!important;justify-content:center!important;align-items:flex-start!important;}
+      #projects-dialog{width:min(100%,720px)!important;max-height:calc(100vh - 88px)!important;}
+      .ds-body{padding:18px 14px 20px;}
+      .ds-tabs{gap:8px;overflow-x:auto;flex-wrap:nowrap;padding-bottom:4px;}
+      .ds-chapter-btn{flex:0 0 auto;padding:10px 14px;}
+      .ds-preview-top{flex-direction:column;align-items:flex-start;}
+      .ds-side-switch{width:100%;justify-content:flex-start;}
+      .ds-bottom{flex-direction:column;align-items:flex-start;}
+    }
