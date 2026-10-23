@@ -22,6 +22,7 @@ import { useSidebar } from './Sidebar';
 import SettingModal from './SettingModal';
 import AI3DRobot from './AI3DRobot';
 import StitchLogo from './StitchLogo';
+import GlobalSearch from './GlobalSearch';
 import VipModal from './VipModal';
 
 export default function Navbar() {
@@ -232,6 +233,45 @@ export default function Navbar() {
               <span className="text-[11px] leading-tight text-amber-600 dark:text-amber-300 font-bold">VIP</span>
             </button>
           </div>
+        </div>
+
+        {/* 🏝️ 中岛：高透液态玻璃搜索胶囊 + 史迪仔 AI 助手 */}
+        <div className="hidden md:flex items-center gap-2.5 flex-1 max-w-lg">
+          <div
+            className="flex-1 h-14 px-3 rounded-full backdrop-blur-2xl backdrop-saturate-150 border border-white/75 dark:border-white/20 relative overflow-hidden flex items-center"
+            style={liquidIslandStyle}
+          >
+            <div
+              className="absolute inset-x-4 top-0 h-5 pointer-events-none"
+              style={{
+                background:
+                  'linear-gradient(180deg, rgba(255,255,255,0.32) 0%, rgba(255,255,255,0.04) 70%, transparent 100%)',
+              }}
+            />
+            <GlobalSearch
+              className="w-full liquid-glass-search"
+              placeholder="搜索课程、工具、笔记... (Ctrl+K)"
+              size="middle"
+            />
+          </div>
+
+          {/* 🐨 史迪仔 AI 助手：移动到全局搜索框右侧，进入学习页面自动消失 */}
+          {!pathname?.startsWith('/study') && (
+            <Tooltip title="AI 学习助手">
+              <button
+                onClick={() => {
+                  window.dispatchEvent(new CustomEvent('toggle-ai-chat'));
+                }}
+                className="w-12 h-12 rounded-full flex-shrink-0 flex items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95 shadow-[0_4px_16px_rgba(79,140,255,0.35)] hover:shadow-[0_6px_22px_rgba(79,140,255,0.5)] border border-white/60 dark:border-white/20 cursor-pointer"
+                style={{
+                  background: 'linear-gradient(90deg, #4f8cff, #33d2ff)',
+                }}
+                aria-label="打开AI助手"
+              >
+                <StitchLogo size={26} />
+              </button>
+            </Tooltip>
+          )}
         </div>
 
         {/* 🏝️ 右岛：用户状态与通知液态玻璃胶囊 */}

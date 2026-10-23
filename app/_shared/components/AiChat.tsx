@@ -5,7 +5,6 @@ import { createPortal } from 'react-dom';
 import { usePathname } from 'next/navigation';
 import { UserOutlined } from '@ant-design/icons';
 import StitchLogo from './StitchLogo';
-import GlobalSearch from './GlobalSearch';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
@@ -36,6 +35,16 @@ function FloatingAiChat() {
   const posRef = useRef(pos);
   const draggingRef = useRef(false);
   const pendingDragRef = useRef(false);
+
+  // 监听来自顶部导航栏史迪仔按钮的唤起事件
+  useEffect(() => {
+    const handleToggle = () => {
+      setOpen((prev) => !prev);
+      setShowHint(false);
+    };
+    window.addEventListener('toggle-ai-chat', handleToggle);
+    return () => window.removeEventListener('toggle-ai-chat', handleToggle);
+  }, []);
   const dragStartPosRef = useRef({ x: 0, y: 0 });
   const dragStartRef = useRef<{ mx: number; my: number; ox: number; oy: number }>({ mx: 0, my: 0, ox: 0, oy: 0 });
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -157,31 +166,7 @@ function FloatingAiChat() {
         }}
       >
       {!open && (
-        <div className="flex items-center gap-2.5 sm:gap-3" style={{ position: 'relative' }}>
-          {/* 当不是学习页面时，显示全局搜索胶囊框（默认位置居于史迪仔左侧，进入学习页面自动隐藏） */}
-          {!isStudyPage && (
-            <div
-              className="hidden sm:flex items-center w-72 md:w-80 h-12 px-3 rounded-full backdrop-blur-2xl backdrop-saturate-150 border border-white/80 dark:border-white/20 shadow-[0_8px_24px_rgba(31,38,135,0.12)] relative overflow-hidden transition-all duration-300 hover:shadow-[0_12px_32px_rgba(31,38,135,0.2)]"
-              style={{
-                background: 'linear-gradient(135deg, rgba(255,255,255,0.85) 0%, rgba(255,255,255,0.65) 100%)',
-              }}
-            >
-              <div
-                className="absolute inset-x-3 top-0 h-4 pointer-events-none"
-                style={{
-                  background:
-                    'linear-gradient(180deg, rgba(255,255,255,0.45) 0%, rgba(255,255,255,0.05) 70%, transparent 100%)',
-                }}
-              />
-              <GlobalSearch
-                className="w-full liquid-glass-search"
-                placeholder="搜索课程、工具、笔记... (Ctrl+K)"
-                size="middle"
-                placement="topLeft"
-              />
-            </div>
-          )}
-
+        <div className="md:hidden" style={{ position: 'relative' }}>
           {showHint && (
             <div style={{
               position: 'absolute', bottom: 64, right: 0, width: 180,
@@ -227,7 +212,6 @@ function FloatingAiChat() {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              flexShrink: 0,
             }}
           >
             <StitchLogo size={28} />
