@@ -545,8 +545,8 @@ export default function Home() {
       const y = e.touches ? e.touches[0].clientY : (e as MouseEvent).clientY;
       if (e.touches) e.preventDefault();
       const g = resizeStart.current;
-      const nk = Math.min(Math.max(g.k + Math.round((x - g.x) / 156), 1), 8);
-      const nr = Math.min(Math.max(g.r + Math.round((y - g.y) / 156), 1), 8);
+      const nk = Math.min(Math.max(g.k + Math.round((x - g.x) / 146), 1), 8);
+      const nr = Math.min(Math.max(g.r + Math.round((y - g.y) / 146), 1), 8);
       setFolderConfigs(prev => {
         const next = { ...prev, [g.group]: { k: nk, r: nr } };
         try { localStorage.setItem('folder_sizes_v2', JSON.stringify(next)); } catch {}
@@ -600,12 +600,16 @@ export default function Home() {
     })).filter(group => group.items.length > 0);
   }, [searchQuery]);
 
-  // 天际线装箱：文件夹拖拽定行列，后面的文件夹自动填补空位
+  // 天际线装箱：文件夹拖拽定行列，后面的文件夹自动填补空位（带灰金文件夹舒适间距）
   const layout = useMemo(() => {
-    const cw = containerW || 1200;
+    const cw = containerW || 1280;
     const CELL = 4;
     const cells = Math.ceil(cw / CELL);
-    const S = 148; // 卡片尺寸（全局统一）
+    const S = 136; // 桌面图标尺寸（全局统一）
+    const ITEM_GAP = 10; // 文件夹内部图标间距
+    const FOLDER_PAD = 32; // 文件夹左右内边距总和 (16px * 2)
+    const GAP_X = 16; // 文件夹之间横向间距
+    const GAP_Y = 18; // 文件夹之间纵向间距
     const skyline: number[] = new Array(cells).fill(0);
     const placed: any[] = [];
     let height = 0;
@@ -613,22 +617,29 @@ export default function Home() {
       const cfg = folderConfigs[group.group] || DEFAULT_FOLDER_SIZES[group.group] || { k: 4, r: 2 };
       const k = Math.min(Math.max(Math.round(Number(cfg.k)) || 4, 1), 8);
       const r = Math.min(Math.max(Math.round(Number(cfg.r)) || 2, 1), 8);
-      const w = k * S + (k - 1) * 8 + 24;
+      const w = Math.min(cw, k * S + (k - 1) * ITEM_GAP + FOLDER_PAD);
       const shown = searchQuery ? group.items.length : Math.min(group.items.length, k * r);
       const rows = Math.max(1, Math.ceil(shown / k));
       const hasMore = group.items.length > shown;
-      const bodyH = 24 + rows * S + (rows - 1) * 8 + (hasMore ? 44 : 0);
-      const totalH = 56 + bodyH;
-      const wCells = Math.max(1, Math.ceil(w / CELL));
+      // 文件夹内部包含标题栏(50px) + 上下内边距(32px) + 图标网格 + 展开全部按钮(48px)
+      const folderH = 32 + 50 + rows * S + (rows - 1) * ITEM_GAP + (hasMore ? 48 : 0);
+      const totalH = folderH + GAP_Y;
+      const wWithGapCells = Math.max(1, Math.ceil((w + GAP_X) / CELL));
+      const wOnlyCells = Math.max(1, Math.ceil(w / CELL));
       let bestX = 0, bestH = Infinity;
-      for (let x0 = 0; x0 <= cells - wCells; x0++) {
+      const maxStart = Math.max(0, cells - wOnlyCells);
+      for (let x0 = 0; x0 <= maxStart; x0++) {
         let h = 0;
-        for (let i = x0; i < x0 + wCells; i++) h = Math.max(h, skyline[i]);
+        for (let i = x0; i < Math.min(cells, x0 + wWithGapCells); i++) {
+          h = Math.max(h, skyline[i]);
+        }
         if (h < bestH) { bestH = h; bestX = x0; }
       }
-      for (let i = bestX; i < Math.min(bestX + wCells, cells); i++) skyline[i] = bestH + totalH;
-      height = Math.max(height, bestH + totalH);
-      placed.push({ group, cfg: { ...cfg, k, r, S }, x: bestX * CELL, y: bestH, w });
+      for (let i = bestX; i < Math.min(cells, bestX + wWithGapCells); i++) {
+        skyline[i] = bestH + totalH;
+      }
+      height = Math.max(height, bestH + folderH);
+      placed.push({ group, cfg: { ...cfg, k, r, S, ITEM_GAP }, x: bestX * CELL, y: bestH, w, folderH });
     }
     return { placed, height };
   }, [folderConfigs, containerW, filteredSoftware, searchQuery]);
@@ -767,98 +778,148 @@ export default function Home() {
           )}
         </div>
 
-        <div className="mb-4 md:mb-6 flex items-end justify-between gap-4">
-          <div>
-            <h1 className="text-xl md:text-3xl font-bold text-content-primary">常用软件 / 工具官网直达</h1>
-            <p className="text-sm text-content-muted mt-1">按知识点分组 · 悬停卡片翻转查看详情 · 点击访问官网</p>
-          </div>
-          <button
-            onClick={() => { setFolderConfigs({}); try { localStorage.removeItem('folder_sizes_v2'); } catch {} }}
-            className="flex-shrink-0 text-xs text-content-muted hover:text-brand-primary underline underline-offset-2 transition-colors"
-            title="恢复所有文件夹为默认大小"
-          >
-            重置布局
-          </button>
-        </div>
-        <div ref={toolsContainerRef} className="relative" style={{ height: layout.placed.length ? layout.height : undefined }}>
-          {filteredSoftware.length > 0 ? (
-            layout.placed.map(({ group, cfg, x, y, w }) => {
-              const isSearching = !!searchQuery;
-              const visibleItems = isSearching ? group.items : group.items.slice(0, cfg.k * cfg.r);
-              const hiddenCount = group.items.length - visibleItems.length;
-              const barColor = groupBarColor(group.group);
-              return (
-                <div key={group.group} className="absolute" style={{ left: x, top: y, width: w }}>
-                  <h2
-                    className="flex items-center gap-2 md:gap-3 text-lg md:text-xl font-bold mb-2 md:mb-3 text-content-primary border-l-4 pl-2 md:pl-3 py-1 rounded-r"
-                    style={{ borderLeftColor: barColor }}
-                  >
-                    {group.group}
-                    <span
-                      className="text-xs md:text-sm font-semibold px-2 py-0.5 rounded-full"
-                      style={{ color: barColor, background: `${barColor}1a` }}
-                    >
-                      {group.items.length}
-                    </span>
-                  </h2>
-                  {/* 文件夹容器：固定 148px 图标卡，右下角拖拽改变宽度和数量 */}
-                  <div
-                    className={`relative rounded-2xl border border-line-strong bg-white/50 p-3 ${
-                      resizing === group.group ? 'ring-2 ring-brand-primary/40 shadow-lg' : ''
-                    }`}
-                  >
-                    <div
-                      className="grid gap-2"
-                      style={{ gridTemplateColumns: `repeat(${cfg.k}, ${cfg.S}px)` }}
-                    >
-                      {visibleItems.map((item: any) => {
-                        const Icon = item.icon;
-                        const color = brandColors[item.name] || '#3B82F6';
-                        return (
-                          <ToolCard
-                            key={item.name}
-                            name={item.name}
-                            icon={Icon}
-                            url={item.url}
-                            desc={item.desc}
-                            color={color}
-                          />
-                        );
-                      })}
-                    </div>
-                    {hiddenCount > 0 && (
-                      <button
-                        onClick={() => setPreviewGroup(group.group)}
-                        className="mt-2 w-full h-9 rounded-lg border border-dashed border-line-strong text-content-muted hover:text-brand-primary hover:border-brand-primary transition-colors flex items-center justify-center gap-2"
-                        title="预览全部工具"
-                      >
-                        <span className="text-lg tracking-widest leading-none font-bold">···</span>
-                        <span className="text-xs">全部 {group.items.length} 个</span>
-                      </button>
-                    )}
-                    {!isSearching && (
-                      <div
-                        onMouseDown={(e) => { e.preventDefault(); startResize(group.group, e.clientX, e.clientY); }}
-                        onTouchStart={(e) => { startResize(group.group, e.touches[0].clientX, e.touches[0].clientY); }}
-                        title="拖动调整文件夹大小"
-                        className="absolute bottom-1.5 right-1.5 z-10 w-4 h-4 cursor-nwse-resize text-gray-400 hover:text-brand-primary transition-colors"
-                      >
-                        <svg viewBox="0 0 16 16" className="w-full h-full" fill="none">
-                          <path d="M15 15H7M15 15V7M15 15L5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                        </svg>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              );
-            })
-          ) : (
-            <div className="text-center py-16">
-              <div className="text-6xl mb-4">🔍</div>
-              <h3 className="text-2xl font-bold text-content-primary mb-2">未找到匹配的工具</h3>
-              <p className="text-content-muted">试试其他关键词吧</p>
+        {/* 灰金桌面文件夹舞台 */}
+        <div
+          className="rounded-3xl p-4 md:p-6 border shadow-2xl"
+          style={{
+            background: 'linear-gradient(145deg, #161920 0%, #1d222b 55%, #15181f 100%)',
+            borderColor: 'rgba(212, 173, 114, 0.28)',
+          }}
+        >
+          <div className="mb-5 md:mb-6 flex items-end justify-between gap-4 border-b pb-4" style={{ borderColor: 'rgba(242, 233, 220, 0.1)' }}>
+            <div>
+              <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full text-[11px] font-mono uppercase tracking-widest mb-1.5" style={{ background: 'rgba(212, 173, 114, 0.12)', color: '#D4AD72', border: '1px solid rgba(212, 173, 114, 0.3)' }}>
+                <span className="w-1.5 h-1.5 rounded-full bg-[#67D9D2]" />
+                <span>Developer Arsenal · 桌面工具矩阵</span>
+              </div>
+              <h1 className="text-xl md:text-3xl font-bold" style={{ color: '#F2E9DC' }}>常用软件 / 工具官网直达</h1>
+              <p className="text-xs md:text-sm mt-1" style={{ color: 'rgba(242, 233, 220, 0.6)' }}>
+                按知识点分组 · 悬停图标翻转放大预览窗口 · 拖拽文件夹右下角自由调整行列
+              </p>
             </div>
-          )}
+            <button
+              onClick={() => { setFolderConfigs({}); try { localStorage.removeItem('folder_sizes_v2'); } catch {} }}
+              className="flex-shrink-0 text-xs px-3.5 py-1.5 rounded-full transition-all hover:scale-105"
+              style={{
+                color: '#D4AD72',
+                background: 'rgba(212, 173, 114, 0.12)',
+                border: '1px solid rgba(212, 173, 114, 0.35)',
+              }}
+              title="恢复所有文件夹为默认大小"
+            >
+              ↺ 重置文件夹布局
+            </button>
+          </div>
+
+          <div ref={toolsContainerRef} className="relative" style={{ height: layout.placed.length ? layout.height : undefined }}>
+            {filteredSoftware.length > 0 ? (
+              layout.placed.map(({ group, cfg, x, y, w }) => {
+                const isSearching = !!searchQuery;
+                const visibleItems = isSearching ? group.items : group.items.slice(0, cfg.k * cfg.r);
+                const hiddenCount = group.items.length - visibleItems.length;
+                const barColor = groupBarColor(group.group);
+                return (
+                  <div
+                    key={group.group}
+                    className="absolute hover:z-20"
+                    style={{ left: x, top: y, width: w }}
+                  >
+                    {/* 灰金桌面文件夹容器：标题内置防裁切，右下角拖拽改变宽度和数量 */}
+                    <div
+                      className={`relative rounded-[24px] p-4 transition-colors duration-200 ${
+                        resizing === group.group ? 'ring-2 ring-[#D4AD72] shadow-2xl' : ''
+                      }`}
+                      style={{
+                        background: 'linear-gradient(165deg, rgba(34, 39, 49, 0.92) 0%, rgba(22, 26, 33, 0.96) 100%)',
+                        border: '1px solid rgba(212, 173, 114, 0.25)',
+                        boxShadow: '0 14px 34px rgba(0, 0, 0, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.06)',
+                      }}
+                    >
+                      {/* 文件夹内部标题栏 */}
+                      <div
+                        className="flex items-center justify-between mb-3.5 pl-2.5 border-l-[3px] h-9"
+                        style={{ borderLeftColor: barColor }}
+                      >
+                        <h2 className="flex items-center gap-2 text-base md:text-lg font-bold truncate" style={{ color: '#F2E9DC' }}>
+                          <span className="truncate">{group.group}</span>
+                          <span
+                            className="text-xs font-semibold px-2.5 py-0.5 rounded-full flex-shrink-0"
+                            style={{
+                              color: '#D4AD72',
+                              background: 'rgba(212, 173, 114, 0.15)',
+                              border: '1px solid rgba(212, 173, 114, 0.35)',
+                            }}
+                          >
+                            {group.items.length}
+                          </span>
+                        </h2>
+                      </div>
+
+                      {/* 桌面图标网格 */}
+                      <div
+                        className="grid"
+                        style={{
+                          gridTemplateColumns: `repeat(${cfg.k}, ${cfg.S}px)`,
+                          gap: `${cfg.ITEM_GAP}px`,
+                        }}
+                      >
+                        {visibleItems.map((item: any) => {
+                          const Icon = item.icon;
+                          const color = brandColors[item.name] || '#3B82F6';
+                          return (
+                            <ToolCard
+                              key={item.name}
+                              name={item.name}
+                              icon={Icon}
+                              url={item.url}
+                              desc={item.desc}
+                              color={color}
+                            />
+                          );
+                        })}
+                      </div>
+
+                      {hiddenCount > 0 && (
+                        <button
+                          onClick={() => setPreviewGroup(group.group)}
+                          className="mt-3 w-full h-9 rounded-xl text-xs font-medium transition-all flex items-center justify-center gap-2 hover:brightness-110"
+                          style={{
+                            border: '1px dashed rgba(212, 173, 114, 0.36)',
+                            background: 'rgba(212, 173, 114, 0.06)',
+                            color: '#D4AD72',
+                          }}
+                          title="预览全部工具"
+                        >
+                          <span className="text-base tracking-widest leading-none font-bold">···</span>
+                          <span>全部 {group.items.length} 个</span>
+                        </button>
+                      )}
+
+                      {!isSearching && (
+                        <div
+                          onMouseDown={(e) => { e.preventDefault(); startResize(group.group, e.clientX, e.clientY); }}
+                          onTouchStart={(e) => { startResize(group.group, e.touches[0].clientX, e.touches[0].clientY); }}
+                          title="拖动调整文件夹大小"
+                          className="absolute bottom-2 right-2 z-20 w-4 h-4 cursor-nwse-resize transition-opacity opacity-60 hover:opacity-100"
+                          style={{ color: '#D4AD72' }}
+                        >
+                          <svg viewBox="0 0 16 16" className="w-full h-full" fill="none">
+                            <path d="M15 15H7M15 15V7M15 15L5 5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+                          </svg>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })
+            ) : (
+              <div className="text-center py-16">
+                <div className="text-6xl mb-4">🔍</div>
+                <h3 className="text-2xl font-bold mb-2" style={{ color: '#F2E9DC' }}>未找到匹配的工具</h3>
+                <p style={{ color: 'rgba(242, 233, 220, 0.6)' }}>试试其他关键词吧</p>
+              </div>
+            )}
+          </div>
         </div>
         <div className="mt-6 md:mt-8 text-center text-content-muted text-xs md:text-sm">
           如有更多常用软件建议，欢迎补充！
