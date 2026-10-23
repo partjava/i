@@ -30,13 +30,13 @@ export default function AlgorithmVisualizer({
     scene.fog = new THREE.Fog(0x090e1a, 16, 56);
     
     const camera = new THREE.PerspectiveCamera(
-      52,
+      55,
       canvasRef.current.clientWidth / canvasRef.current.clientHeight,
       0.1,
       1000
     );
-    camera.position.set(0, 6.2, 17.5);
-    camera.lookAt(0, 2.5, 0);
+    camera.position.set(0, 6.8, 22);
+    camera.lookAt(0, 3.5, 0);
 
     const renderer = new THREE.WebGLRenderer({ 
       canvas: canvasRef.current,
@@ -78,9 +78,9 @@ export default function AlgorithmVisualizer({
       animId = requestAnimationFrame(animate);
       time += 0.004;
       
-      camera.position.x = Math.sin(time * 0.35) * 1.6;
-      camera.position.y = 6.2 + Math.sin(time * 0.5) * 0.55;
-      camera.lookAt(0, 2.5, 0);
+      camera.position.x = Math.sin(time * 0.35) * 1.5;
+      camera.position.y = 6.8 + Math.sin(time * 0.5) * 0.45;
+      camera.lookAt(0, 3.5, 0);
 
       pointLight1.position.x = Math.sin(time) * 10;
       pointLight1.position.z = Math.cos(time) * 10;
@@ -174,53 +174,52 @@ export default function AlgorithmVisualizer({
         borderColor: 'rgba(99, 102, 241, 0.25)',
       }}
     >
-      {/* 3D 画布视口 + 顶部悬浮 HUD 图例栏 */}
-      <div className="relative w-full h-[430px]">
-        <canvas ref={canvasRef} className="w-full h-full block" />
-
-        {/* 顶部悬浮玻璃状态图例 */}
-        <div className="absolute top-3.5 inset-x-4 flex flex-wrap items-center justify-between gap-2 pointer-events-none">
-          <div
-            className="flex flex-wrap items-center gap-3 px-3.5 py-1.5 rounded-full text-xs backdrop-blur-xl border"
-            style={{
-              background: 'rgba(15, 23, 42, 0.65)',
-              borderColor: 'rgba(255, 255, 255, 0.14)',
-              color: '#cbd5e1',
-            }}
-          >
-            <span className="inline-flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-[#38bdf8] shadow-[0_0_8px_#38bdf8]" />
-              <span>待处理</span>
-            </span>
-            <span className="inline-flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-[#fbbf24] shadow-[0_0_8px_#fbbf24]" />
-              <span>比较中</span>
-            </span>
-            <span className="inline-flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-[#a855f7] shadow-[0_0_8px_#a855f7]" />
-              <span>归并/区间</span>
-            </span>
-            <span className="inline-flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-[#f43f5e] shadow-[0_0_8px_#f43f5e]" />
-              <span>基准值</span>
-            </span>
-            <span className="inline-flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-[#10b981] shadow-[0_0_8px_#10b981]" />
-              <span>已就位</span>
-            </span>
-          </div>
-
-          <div
-            className="px-3.5 py-1.5 rounded-full text-xs font-mono font-semibold backdrop-blur-xl border"
-            style={{
-              background: 'rgba(15, 23, 42, 0.72)',
-              borderColor: 'rgba(99, 102, 241, 0.35)',
-              color: '#a5b4fc',
-            }}
-          >
-            STEP {String(currentStep + 1).padStart(2, '0')} / {String(Math.max(1, steps.length)).padStart(2, '0')}
-          </div>
+      {/* 顶部独立状态图例栏（不遮挡 3D 画布内容） */}
+      <div
+        className="px-4 py-2.5 border-b flex flex-wrap items-center justify-between gap-2"
+        style={{
+          background: 'rgba(15, 23, 42, 0.78)',
+          borderColor: 'rgba(99, 102, 241, 0.2)',
+        }}
+      >
+        <div className="flex flex-wrap items-center gap-3.5 text-xs text-slate-300">
+          <span className="inline-flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-[#38bdf8] shadow-[0_0_8px_#38bdf8]" />
+            <span>待处理</span>
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-[#fbbf24] shadow-[0_0_8px_#fbbf24]" />
+            <span>比较中</span>
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-[#a855f7] shadow-[0_0_8px_#a855f7]" />
+            <span>归并/区间</span>
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-[#f43f5e] shadow-[0_0_8px_#f43f5e]" />
+            <span>基准值</span>
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-[#10b981] shadow-[0_0_8px_#10b981]" />
+            <span>已就位</span>
+          </span>
         </div>
+
+        <div
+          className="px-3 py-1 rounded-full text-xs font-mono font-semibold border"
+          style={{
+            background: 'rgba(30, 41, 59, 0.8)',
+            borderColor: 'rgba(99, 102, 241, 0.35)',
+            color: '#a5b4fc',
+          }}
+        >
+          STEP {String(currentStep + 1).padStart(2, '0')} / {String(Math.max(1, steps.length)).padStart(2, '0')}
+        </div>
+      </div>
+
+      {/* 3D 画布视口 */}
+      <div className="relative w-full h-[420px]">
+        <canvas ref={canvasRef} className="w-full h-full block" />
       </div>
 
       {/* 科技感毛玻璃播控台（替换原棕色底栏） */}
@@ -1285,14 +1284,14 @@ function renderStep(scene: THREE.Scene, step: any, originalData: number[]) {
 
   const array = step.array;
   const maxValue = Math.max(...array); // 使用当前数组而不是原始数据
-  const spacing = 1.8;
-  const startX = -(array.length * spacing) / 2;
+  const spacing = 1.55;
+  const startX = -((array.length - 1) * spacing) / 2;
 
   array.forEach((value: number, index: number) => {
-    const height = (value / maxValue) * 9.5 + 0.8;
+    const height = (value / maxValue) * 6.4 + 0.6;
     
-    // 科技感棱柱/能量柱主体
-    const geometry = new THREE.CylinderGeometry(0.46, 0.52, height, 36);
+    // 科技感棱柱/能量柱主体（整体缩小，留足顶部空间）
+    const geometry = new THREE.CylinderGeometry(0.38, 0.44, height, 36);
     
     // 根据状态设置颜色和发光
     let color = 0x38bdf8; // 冰晶青蓝 - 待处理
@@ -1349,7 +1348,7 @@ function renderStep(scene: THREE.Scene, step: any, originalData: number[]) {
     scene.add(cylinder);
 
     // 每个能量柱顶部标配高亮冠环
-    const capRingGeom = new THREE.TorusGeometry(0.47 * scale, 0.045, 16, 48);
+    const capRingGeom = new THREE.TorusGeometry(0.39 * scale, 0.04, 16, 48);
     const capRingMat = new THREE.MeshBasicMaterial({
       color: 0xffffff,
       transparent: true,
@@ -1366,25 +1365,25 @@ function renderStep(scene: THREE.Scene, step: any, originalData: number[]) {
       step.pivot === index ||
       (step.found && step.mid === index)
     ) {
-      const ringGeometry = new THREE.TorusGeometry(0.74, 0.08, 16, 64);
+      const ringGeometry = new THREE.TorusGeometry(0.62, 0.07, 16, 64);
       const ringMaterial = new THREE.MeshBasicMaterial({ 
         color,
         transparent: true,
         opacity: 0.85
       });
       const ring = new THREE.Mesh(ringGeometry, ringMaterial);
-      ring.position.set(cylinder.position.x, height + 0.35, 0);
+      ring.position.set(cylinder.position.x, height + 0.28, 0);
       ring.rotation.x = Math.PI / 2;
       scene.add(ring);
       
-      const ring2Geometry = new THREE.TorusGeometry(0.98, 0.045, 16, 64);
+      const ring2Geometry = new THREE.TorusGeometry(0.82, 0.04, 16, 64);
       const ring2Material = new THREE.MeshBasicMaterial({ 
         color,
         transparent: true,
         opacity: 0.45
       });
       const ring2 = new THREE.Mesh(ring2Geometry, ring2Material);
-      ring2.position.set(cylinder.position.x, height + 0.35, 0);
+      ring2.position.set(cylinder.position.x, height + 0.28, 0);
       ring2.rotation.x = Math.PI / 2;
       scene.add(ring2);
     }
@@ -1438,12 +1437,12 @@ function renderStep(scene: THREE.Scene, step: any, originalData: number[]) {
       depthTest: false
     });
     const sprite = new THREE.Sprite(spriteMaterial);
-    sprite.position.set(cylinder.position.x, height + 1.45, 0);
-    sprite.scale.set(1.55, 1.55, 1);
+    sprite.position.set(cylinder.position.x, height + 1.15, 0);
+    sprite.scale.set(1.28, 1.28, 1);
     scene.add(sprite);
 
     // 能量底座
-    const baseGeometry = new THREE.CylinderGeometry(0.68, 0.82, 0.14, 32);
+    const baseGeometry = new THREE.CylinderGeometry(0.56, 0.68, 0.12, 32);
     const baseMaterial = new THREE.MeshStandardMaterial({ 
       color: 0x0f172a,
       emissive: color,
