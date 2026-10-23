@@ -33,8 +33,9 @@ export const SpaceDust: React.FC = () => {
     if (!ctx) return;
 
     let animationId: number;
-    let width = (canvas.width = window.innerWidth);
-    let height = (canvas.height = window.innerHeight);
+    const parent = canvas.parentElement;
+    let width = (canvas.width = parent?.clientWidth || window.innerWidth);
+    let height = (canvas.height = parent?.clientHeight || window.innerHeight);
 
     // 1. 随机生成 150 颗微弱星尘 (背景层，慢速随机漂移)
     const stars: Star[] = Array.from({ length: 150 }, () => ({
@@ -61,9 +62,20 @@ export const SpaceDust: React.FC = () => {
 
     const handleResize = () => {
       if (!canvas) return;
-      width = canvas.width = window.innerWidth;
-      height = canvas.height = window.innerHeight;
+      const nextW = canvas.parentElement?.clientWidth || window.innerWidth;
+      const nextH = canvas.parentElement?.clientHeight || window.innerHeight;
+      if (!nextW || !nextH) return;
+      if (width > 0 && height > 0 && (width !== nextW || height !== nextH)) {
+        const sx = nextW / width;
+        const sy = nextH / height;
+        stars.forEach(s => { s.x *= sx; s.y *= sy; });
+        snowflakes.forEach(f => { f.x *= sx; f.y *= sy; });
+      }
+      width = canvas.width = nextW;
+      height = canvas.height = nextH;
     };
+    const ro = parent ? new ResizeObserver(handleResize) : null;
+    if (parent && ro) ro.observe(parent);
     window.addEventListener('resize', handleResize);
 
     const animate = () => {
@@ -144,10 +156,11 @@ export const SpaceDust: React.FC = () => {
     animate();
 
     return () => {
+      if (ro) ro.disconnect();
       cancelAnimationFrame(animationId);
       window.removeEventListener('resize', handleResize);
     };
   }, []);
 
-  return <canvas ref={canvasRef} className="absolute inset-0 -z-10 pointer-events-none" />;
+  return <canvas ref={canvasRef} className="absolute inset-0 w-full h-full -z-10 pointer-events-none" />;
 };

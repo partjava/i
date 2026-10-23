@@ -28,6 +28,8 @@ const STAGE_ANIMAL_IMAGES: Record<number, string> = {
 interface DragNode extends Stage {
   x: number;
   y: number;
+  rx: number;
+  ry: number;
 }
 
 export default function SpaceUniverse({ onSelectStage }: Props) {
@@ -41,33 +43,58 @@ export default function SpaceUniverse({ onSelectStage }: Props) {
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [hasDragged, setHasDragged] = useState(false);
 
-  // 1. 初始化位置：随机散落并确保不超出边界
+  // 1. 初始化位置并监听容器尺寸变化（侧边栏折叠/展开、窗口缩放时按比例自适应，避免右侧黑边或挤压裁切）
   useEffect(() => {
-    if (!containerRef.current) return;
-    const width = containerRef.current.clientWidth || window.innerWidth;
-    const height = containerRef.current.clientHeight || window.innerHeight;
+    const el = containerRef.current;
+    if (!el) return;
+    const width = el.clientWidth || window.innerWidth;
+    const height = el.clientHeight || window.innerHeight;
 
-    const initialNodes = STAGES.map((stage, idx) => {
+    const initialNodes: DragNode[] = STAGES.map((stage, idx) => {
       // 采用 4x3 网格分区散落，保证均匀且不堆叠
       const cols = 4;
       const rows = 3;
       const col = idx % cols;
       const row = Math.floor(idx / cols);
 
-      const cellWidth = width / cols;
-      const cellHeight = height / rows;
+      const rx = Math.max(0.08, Math.min(0.92, (col + 0.5 + (Math.random() - 0.5) * 0.34) / cols));
+      const ry = Math.max(0.13, Math.min(0.85, (row + 0.5 + (Math.random() - 0.5) * 0.34) / rows));
 
-      const x = cellWidth * col + cellWidth / 2 + (Math.random() - 0.5) * (cellWidth * 0.4);
-      const y = cellHeight * row + cellHeight / 2 + (Math.random() - 0.5) * (cellHeight * 0.4);
+      const x = Math.max(85, Math.min(width - 85, rx * width));
+      const y = Math.max(85, Math.min(height - 95, ry * height));
 
       return {
         ...stage,
-        x: Math.max(80, Math.min(width - 80, x)),
-        y: Math.max(80, Math.min(height - 80, y))
+        x,
+        y,
+        rx: width > 0 ? x / width : rx,
+        ry: height > 0 ? y / height : ry,
       };
     });
 
     setNodes(initialNodes);
+
+    const syncSize = () => {
+      if (!containerRef.current) return;
+      const nw = containerRef.current.clientWidth;
+      const nh = containerRef.current.clientHeight;
+      if (!nw || !nh) return;
+      setNodes(prev =>
+        prev.map(n => ({
+          ...n,
+          x: Math.max(85, Math.min(nw - 85, n.rx * nw)),
+          y: Math.max(85, Math.min(nh - 95, n.ry * nh)),
+        }))
+      );
+    };
+
+    const ro = new ResizeObserver(syncSize);
+    ro.observe(el);
+    window.addEventListener("resize", syncSize);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", syncSize);
+    };
   }, []);
 
   // 2. 🌌 鼠标位置视差影响
@@ -103,13 +130,19 @@ export default function SpaceUniverse({ onSelectStage }: Props) {
     setNodes(prev => prev.map(n => {
       if (n.id === activeDragId) {
         const container = containerRef.current;
-        const limitX = container ? container.clientWidth - 80 : window.innerWidth - 80;
-        const limitY = container ? container.clientHeight - 80 : window.innerHeight - 80;
+        const cw = container ? container.clientWidth : window.innerWidth;
+        const ch = container ? container.clientHeight : window.innerHeight;
+        const limitX = cw - 85;
+        const limitY = ch - 95;
+        const nx = Math.max(85, Math.min(limitX, e.clientX - dragOffset.x));
+        const ny = Math.max(85, Math.min(limitY, e.clientY - dragOffset.y));
 
         return {
           ...n,
-          x: Math.max(80, Math.min(limitX, e.clientX - dragOffset.x)),
-          y: Math.max(80, Math.min(limitY, e.clientY - dragOffset.y))
+          x: nx,
+          y: ny,
+          rx: cw > 0 ? nx / cw : n.rx,
+          ry: ch > 0 ? ny / ch : n.ry,
         };
       }
       return n;
@@ -142,13 +175,19 @@ export default function SpaceUniverse({ onSelectStage }: Props) {
     setNodes(prev => prev.map(n => {
       if (n.id === activeDragId) {
         const container = containerRef.current;
-        const limitX = container ? container.clientWidth - 80 : window.innerWidth - 80;
-        const limitY = container ? container.clientHeight - 80 : window.innerHeight - 80;
+        const cw = container ? container.clientWidth : window.innerWidth;
+        const ch = container ? container.clientHeight : window.innerHeight;
+        const limitX = cw - 85;
+        const limitY = ch - 95;
+        const nx = Math.max(85, Math.min(limitX, touch.clientX - dragOffset.x));
+        const ny = Math.max(85, Math.min(limitY, touch.clientY - dragOffset.y));
 
         return {
           ...n,
-          x: Math.max(80, Math.min(limitX, touch.clientX - dragOffset.x)),
-          y: Math.max(80, Math.min(limitY, touch.clientY - dragOffset.y))
+          x: nx,
+          y: ny,
+          rx: cw > 0 ? nx / cw : n.rx,
+          ry: ch > 0 ? ny / ch : n.ry,
         };
       }
       return n;

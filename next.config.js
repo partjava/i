@@ -7,6 +7,16 @@ const nextConfig = {
   async rewrites() {
     return [
       {
+        source: '/',
+        has: [
+          {
+            type: 'host',
+            value: '(?:www\\.)?pyigpt\\.com',
+          },
+        ],
+        destination: '/challenges',
+      },
+      {
         source: '/api/:path*',
         destination: 'http://localhost:8080/api/:path*',
       },
@@ -35,7 +45,7 @@ const nextConfig = {
   },
   
   // 允许的开发环境来源
-  allowedDevOrigins: ['www.partjava.com', 'partjava.com', 'localhost'],
+  allowedDevOrigins: ['www.partjava.com', 'partjava.com', 'www.pyigpt.com', 'pyigpt.com', 'localhost'],
 
   // 关键的HTTP头配置
   async headers() {
@@ -100,6 +110,8 @@ const nextConfig = {
       { protocol: 'http', hostname: 'localhost' },
       { protocol: 'https', hostname: 'partjava.com' },
       { protocol: 'https', hostname: 'www.partjava.com' },
+      { protocol: 'https', hostname: 'pyigpt.com' },
+      { protocol: 'https', hostname: 'www.pyigpt.com' },
     ],
     formats: ['image/webp', 'image/avif'],  // 自动转换为现代图片格式
   },

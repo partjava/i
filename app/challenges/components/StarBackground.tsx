@@ -24,22 +24,17 @@ export default function StarBackground() {
         if (!ctx) return;
 
         let animationFrameId: number;
+        const parent = canvas.parentElement;
 
-        const resize = () => {
-            canvas.width = canvas.parentElement?.clientWidth || window.innerWidth;
-            canvas.height = canvas.parentElement?.clientHeight || window.innerHeight;
-        };
+        canvas.width = parent?.clientWidth || window.innerWidth;
+        canvas.height = parent?.clientHeight || window.innerHeight;
 
-        resize();
-        window.addEventListener("resize", resize);
-
-        // 🧠 稠密的 AI 词汇墙粒子（增加到 85 个词汇，实现满屏背景效果）
         // 🧠 稠密的 AI 词汇墙粒子（增加到 85 个词汇，实现满屏背景效果）
         const terms = Array.from({ length: 85 }, () => {
             const word = AI_TERMS[Math.floor(Math.random() * AI_TERMS.length)];
             return {
-                x: Math.random() * window.innerWidth,
-                y: Math.random() * window.innerHeight,
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
                 text: word,
                 // 💡 字体变大，且大小在合理范围内随机分布（16px - 36px 之间，产生远近层级景深感）
                 fontSize: Math.floor(Math.random() * 21) + 16, 
@@ -53,8 +48,8 @@ export default function StarBackground() {
 
         // 🌨️ 随机生成 60 颗羽化细雪粒子
         const snowflakes = Array.from({ length: 60 }, () => ({
-            x: Math.random() * window.innerWidth,
-            y: Math.random() * window.innerHeight,
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height,
             r: Math.random() * 2.2 + 0.8, // 雪花大小: 0.8px 到 3.0px
             speedY: Math.random() * 0.4 + 0.15, // 缓缓飘落
             speedX: Math.random() * 0.1 - 0.05, // 轻微侧风
@@ -63,6 +58,32 @@ export default function StarBackground() {
             swingRange: Math.random() * 1.0 + 0.3, // 摆动幅度
             swingAngle: Math.random() * Math.PI * 2
         }));
+
+        const resize = () => {
+            const prevW = canvas.width;
+            const prevH = canvas.height;
+            const nextW = canvas.parentElement?.clientWidth || window.innerWidth;
+            const nextH = canvas.parentElement?.clientHeight || window.innerHeight;
+            if (!nextW || !nextH) return;
+            if (prevW > 0 && prevH > 0 && (prevW !== nextW || prevH !== nextH)) {
+                const sx = nextW / prevW;
+                const sy = nextH / prevH;
+                terms.forEach(t => {
+                    t.x *= sx;
+                    t.y *= sy;
+                });
+                snowflakes.forEach(f => {
+                    f.x *= sx;
+                    f.y *= sy;
+                });
+            }
+            canvas.width = nextW;
+            canvas.height = nextH;
+        };
+
+        const ro = parent ? new ResizeObserver(resize) : null;
+        if (parent && ro) ro.observe(parent);
+        window.addEventListener("resize", resize);
 
         const draw = () => {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -130,10 +151,11 @@ export default function StarBackground() {
         draw();
 
         return () => {
+            if (ro) ro.disconnect();
             window.removeEventListener("resize", resize);
             cancelAnimationFrame(animationFrameId);
         };
     }, []);
 
-    return <canvas id="stars" className="absolute inset-0 pointer-events-none z-0 bg-black" />;
+    return <canvas id="stars" className="absolute inset-0 w-full h-full pointer-events-none z-0 bg-black" />;
 }
