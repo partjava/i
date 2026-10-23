@@ -8,7 +8,8 @@ export interface WarmStudyRoomController {
 }
 
 /**
- * 构建「PartJava · 温暖书房」3D 写实场景 + 虚实结合动态科技配饰
+ * 构建「PartJava · 温暖书房」原版 3D 场景（零位置改动）
+ * + 环绕中央 3D 模型的 9 件可隐藏虚拟科技配饰 (编号 2, 3, 4, 8, 9, 10, 11, 12, 13)
  */
 export function buildSpaceCapsuleRoom(scene: THREE.Scene): WarmStudyRoomController {
   scene.background = new THREE.Color('#2c2723');
@@ -22,7 +23,7 @@ export function buildSpaceCapsuleRoom(scene: THREE.Scene): WarmStudyRoomControll
   };
 
   // ==========================================
-  // 2. 高精度程序化 PBR 纹理生成器 (拒绝塑料感)
+  // 2. 高精度程序化 PBR 纹理生成器 (原版保持不变)
   // ==========================================
   function createWoodPlankTextures() {
     const c = document.createElement('canvas');
@@ -56,7 +57,6 @@ export function buildSpaceCapsuleRoom(scene: THREE.Scene): WarmStudyRoomControll
         ctx.fillStyle = base;
         ctx.fillRect(x, y, colW, rowH);
 
-        // 细腻木纹纤维与早晚材明暗变化
         for (let i = 0; i < 65; i++) {
           const gy = y + rand() * rowH;
           const gh = 1 + rand() * 3.5;
@@ -66,7 +66,6 @@ export function buildSpaceCapsuleRoom(scene: THREE.Scene): WarmStudyRoomControll
           bctx.fillRect(x, gy, colW, gh);
         }
 
-        // 板间微倒角接缝
         ctx.fillStyle = '#2a1b12';
         ctx.fillRect(x, y, colW, 2.5);
         ctx.fillRect(x, y, 2.5, rowH);
@@ -142,11 +141,9 @@ export function buildSpaceCapsuleRoom(scene: THREE.Scene): WarmStudyRoomControll
     c.height = 1024;
     const ctx = c.getContext('2d')!;
 
-    // 温暖的羊毛亚麻编织底色
     ctx.fillStyle = '#cfc2ad';
     ctx.fillRect(0, 0, 1024, 1024);
 
-    // 细密经纬编织纹理
     for (let y = 0; y < 1024; y += 4) {
       ctx.fillStyle = y % 8 === 0 ? 'rgba(105, 90, 72, 0.08)' : 'rgba(250, 244, 232, 0.08)';
       ctx.fillRect(0, y, 1024, 2);
@@ -156,7 +153,6 @@ export function buildSpaceCapsuleRoom(scene: THREE.Scene): WarmStudyRoomControll
       ctx.fillRect(x, 0, 2, 1024);
     }
 
-    // 极简织物内嵌暗纹边框
     ctx.strokeStyle = 'rgba(128, 108, 86, 0.32)';
     ctx.lineWidth = 18;
     ctx.strokeRect(54, 54, 916, 916);
@@ -172,7 +168,7 @@ export function buildSpaceCapsuleRoom(scene: THREE.Scene): WarmStudyRoomControll
   }
 
   // ==========================================
-  // 3. 材质库定义
+  // 3. 材质库定义 (原版保持不变)
   // ==========================================
   const floorTex = createWoodPlankTextures();
   const walnutTex = createFineWoodTexture('#6b4832', '#2d1a0e', '#9c7152', 1, 1);
@@ -246,7 +242,6 @@ export function buildSpaceCapsuleRoom(scene: THREE.Scene): WarmStudyRoomControll
   const matLeafDark = M('#3b5e3e', 0.65, 0.02);
   const matLeafMid = M('#4f7750', 0.62, 0.02);
 
-  // 基础几何构建辅助函数
   function box(w: number, h: number, d: number, x: number, y: number, z: number, material: THREE.Material, parent: THREE.Object3D = scene, cast = true, receive = true) {
     const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), material);
     m.position.set(x, y, z);
@@ -275,7 +270,7 @@ export function buildSpaceCapsuleRoom(scene: THREE.Scene): WarmStudyRoomControll
   }
 
   // ==========================================
-  // 4. 建筑空间外壳 (带真实窗洞、踢脚线、护墙板与顶角线)
+  // 4. 建筑空间外壳 (原版位置完全不变)
   // ==========================================
   box(18.4, 0.24, 14.0, 0, -0.12, -0.5, matFloor, scene, false, true);
 
@@ -306,7 +301,7 @@ export function buildSpaceCapsuleRoom(scene: THREE.Scene): WarmStudyRoomControll
   box(3.46, 0.07, 0.08, 6.2, 1.4, -6.32, matWalnut, slatGroup);
 
   // ==========================================
-  // 5. 建筑深凹木窗与窗外静谧远山林景 (z = -6.5)
+  // 5. 建筑深凹木窗与窗外静谧远山林景 (原版位置完全不变)
   // ==========================================
   function createScenicViewTexture() {
     const c = document.createElement('canvas');
@@ -417,7 +412,7 @@ export function buildSpaceCapsuleRoom(scene: THREE.Scene): WarmStudyRoomControll
   rbox(0.34, 0.048, 0.24, 0.01, -2.16, sillY + 0.08, -6.26, M('#9e886c', 0.85));
 
   // ==========================================
-  // 6. 多层次自然与室内灯光系统
+  // 6. 多层次自然与室内灯光系统 (原版完全不变)
   // ==========================================
   const hemiLight = new THREE.HemisphereLight(0xeef4ff, 0x70513b, 1.55);
   scene.add(hemiLight);
@@ -468,7 +463,7 @@ export function buildSpaceCapsuleRoom(scene: THREE.Scene): WarmStudyRoomControll
   scene.add(monitorGlow);
 
   // ==========================================
-  // 7. 左侧温暖书房区：落地实木书柜、书籍、绿植、暖光灯与阅读长椅
+  // 7. 左侧温暖书房区 (原版位置完全不变)
   // ==========================================
   const bookcase = new THREE.Group();
   const bcX = -7.05, bcZ = -5.98, bcW = 2.28, bcH = 4.68, bcD = 0.72;
@@ -662,7 +657,7 @@ export function buildSpaceCapsuleRoom(scene: THREE.Scene): WarmStudyRoomControll
   cyl(0.06, 0.08, 0.15, wallShelfX + 0.54, wallShelfY + 0.11, -6.18, matCeramicCream);
 
   // ==========================================
-  // 8. 右侧写实程序员工作台：胡桃木书桌、双显示器+支架、机械键盘、鼠标、工作灯、咖啡杯
+  // 8. 右侧写实程序员工作台 (原版位置与物品完全不变)
   // ==========================================
   const deskGroup = new THREE.Group();
   scene.add(deskGroup);
@@ -726,9 +721,9 @@ export function buildSpaceCapsuleRoom(scene: THREE.Scene): WarmStudyRoomControll
       '    • RoomScene.ts',
       '    • LightingRig.ts',
       '  ▼ assets/models',
-      '    • cat-standing.glb',
-      '    • cat-crouching.glb',
-      '  • package.json'
+      '    • assistant.glb',
+      '  • package.json',
+      '  • tsconfig.json'
     ];
     files.forEach((f, i) => {
       g.fillStyle = i === 2 ? '#e8dcc8' : '#6c7b88';
@@ -751,7 +746,7 @@ export function buildSpaceCapsuleRoom(scene: THREE.Scene): WarmStudyRoomControll
       ['    this.alignToCenterRug(model.scene);', '', '', ''],
       ['    this.anchor.add(model.scene);', '', '', ''],
       ['  }', '', '', ''],
-      ['  // Dual-form 3D plush cat companion active in study', '', '', '']
+      ['  // Ready for interactive 3D AI companion in center stage', '', '', '']
     ];
 
     codeLines.forEach((parts, i) => {
@@ -774,7 +769,7 @@ export function buildSpaceCapsuleRoom(scene: THREE.Scene): WarmStudyRoomControll
     g.fillRect(230, 620, 1050, 100);
     g.fillStyle = '#7ec699';
     g.font = '17px Consolas, monospace';
-    g.fillText('✓ [PartJava AI] Dual GLB Cat Forms Ready · Center anchor (0.0, 0.016, -1.55)', 256, 668);
+    g.fillText('✓ [PartJava Vite] Built in 412ms · Center anchor ready at (0.0, 0.03, -1.55)', 256, 668);
 
     const tex = new THREE.CanvasTexture(c);
     tex.colorSpace = THREE.SRGBColorSpace;
@@ -813,8 +808,8 @@ export function buildSpaceCapsuleRoom(scene: THREE.Scene): WarmStudyRoomControll
       '> Scene: Warm Study Room v2',
       '> Lighting: Natural + Warm Lamps',
       '> ShadowMap: 2048px PCFSoft',
-      '> Active Model: 3D Black Cat GLB',
-      '> Forms: Standing / Crouching',
+      '> Center Stage: Reserved Clean',
+      '> GLB Loader: Drag & Drop Active',
       '',
       'Architecture Notes:',
       '• Left: Solid Walnut Bookcase',
@@ -995,7 +990,7 @@ export function buildSpaceCapsuleRoom(scene: THREE.Scene): WarmStudyRoomControll
   }
 
   // ==========================================
-  // 9. 中央预留 AI 机器人展示空间 (纯自然家居地毯与柔和光影)
+  // 9. 中央预留 AI 机器人展示空间 (原版地毯完全不变)
   // ==========================================
   const centerZ = -1.55;
   const rugGroup = new THREE.Group();
@@ -1022,150 +1017,450 @@ export function buildSpaceCapsuleRoom(scene: THREE.Scene): WarmStudyRoomControll
   scene.add(robotAnchor);
 
   // ==========================================
-  // 10. 虚实结合动态科技配饰 (Virtual & Cyber Props)
+  // 10. 环绕中央 3D 模型的 9 件精致虚拟配饰 (编号 2, 3, 4, 8, 9, 10, 11, 12, 13)
+  // 可通过 virtualPropsGroup.visible 一键隐藏/开启，绝不改动原场景任何物体
   // ==========================================
   const virtualPropsGroup = new THREE.Group();
   scene.add(virtualPropsGroup);
 
-  // 配饰 A: 桌面右侧胡桃木+侧透铝合金水冷迷你工作站主机（带3个动态旋转发光风扇）
-  const pcGroup = new THREE.Group();
-  pcGroup.position.set(deskX + 2.02, deskTopY, deskZ - 0.12);
-  pcGroup.rotation.y = -0.28;
-  virtualPropsGroup.add(pcGroup);
+  const matCyberDark = new THREE.MeshStandardMaterial({
+    color: '#161b26',
+    roughness: 0.28,
+    metalness: 0.78
+  });
+  const matCyberTrim = new THREE.MeshStandardMaterial({
+    color: '#253042',
+    roughness: 0.22,
+    metalness: 0.88
+  });
+  const matNeonCyan = new THREE.MeshBasicMaterial({ color: 0x38bdf8 });
+  const matNeonPurple = new THREE.MeshBasicMaterial({ color: 0xa855f7 });
+  const matNeonPink = new THREE.MeshBasicMaterial({ color: 0xf43f5e });
+  const matNeonGreen = new THREE.MeshBasicMaterial({ color: 0x34d399 });
 
-  rbox(0.32, 0.56, 0.52, 0.016, 0, 0.28, 0, matMatteBlack, pcGroup);
-  // 胡桃木前饰板格栅（呼应书房风格）
-  rbox(0.28, 0.50, 0.02, 0.006, 0, 0.28, 0.255, matWalnut, pcGroup);
-  // 侧透钢化玻璃面板
-  const glassPanel = new THREE.Mesh(
-    new THREE.PlaneGeometry(0.46, 0.48),
+  // ------------------------------------------
+  // 物品 ②：全息发光底座 (正中央猫咪脚下, y = 0.02, z = centerZ)
+  // ------------------------------------------
+  const pedestalGroup = new THREE.Group();
+  pedestalGroup.position.set(0, 0.02, centerZ);
+  virtualPropsGroup.add(pedestalGroup);
+
+  // 超薄金属暗环衬底
+  const basePlate = new THREE.Mesh(
+    new THREE.RingGeometry(0.72, 1.08, 64),
     new THREE.MeshStandardMaterial({
-      color: '#9ec5e8',
+      color: '#111827',
+      roughness: 0.3,
+      metalness: 0.85,
       transparent: true,
-      opacity: 0.22,
-      roughness: 0.1,
+      opacity: 0.75,
+      side: THREE.DoubleSide
+    })
+  );
+  basePlate.rotation.x = -Math.PI / 2;
+  pedestalGroup.add(basePlate);
+
+  // 外圈青色发光全息环
+  const holoRingOuter = new THREE.Mesh(
+    new THREE.TorusGeometry(1.02, 0.018, 16, 96),
+    matNeonCyan
+  );
+  holoRingOuter.rotation.x = Math.PI / 2;
+  holoRingOuter.position.y = 0.012;
+  pedestalGroup.add(holoRingOuter);
+
+  // 内圈紫色发光全息环
+  const holoRingInner = new THREE.Mesh(
+    new THREE.TorusGeometry(0.82, 0.015, 16, 96),
+    matNeonPurple
+  );
+  holoRingInner.rotation.x = Math.PI / 2;
+  holoRingInner.position.y = 0.015;
+  pedestalGroup.add(holoRingInner);
+
+  // ------------------------------------------
+  // 物品 ③：AI 算力机柜书架 (环绕在猫咪左身旁，微向中心旋转 24°)
+  // ------------------------------------------
+  const rackGroup = new THREE.Group();
+  rackGroup.position.set(-1.95, 0, centerZ - 0.15);
+  rackGroup.rotation.y = 0.42;
+  virtualPropsGroup.add(rackGroup);
+
+  // 圆角金属机柜主体与发光边框
+  rbox(0.86, 1.72, 0.38, 0.025, 0, 0.86, 0, matCyberDark, rackGroup);
+  rbox(0.90, 0.04, 0.42, 0.01, 0, 0.02, 0, matCyberTrim, rackGroup);
+  rbox(0.90, 0.04, 0.42, 0.01, 0, 1.71, 0, matCyberTrim, rackGroup);
+  // 左右竖向霓虹边条
+  box(0.014, 1.64, 0.014, -0.42, 0.86, 0.19, matNeonPurple, rackGroup, false, false);
+  box(0.014, 1.64, 0.014, 0.42, 0.86, 0.19, matNeonCyan, rackGroup, false, false);
+
+  // 上层书架隔板 + 6 本圆角立体彩色编程书
+  box(0.78, 0.025, 0.34, 0, 1.05, 0.02, matCyberTrim, rackGroup);
+  const cyberBookColors = ['#ef4444', '#38bdf8', '#f59e0b', '#10b981', '#a855f7', '#fb923c'];
+  for (let i = 0; i < 6; i++) {
+    const bx = -0.28 + i * 0.11;
+    const bh = 0.32 + (i % 3) * 0.04;
+    const bookMesh = rbox(
+      0.072,
+      bh,
+      0.24,
+      0.008,
+      bx,
+      1.065 + bh / 2,
+      0.03,
+      new THREE.MeshStandardMaterial({
+        color: cyberBookColors[i],
+        roughness: 0.35,
+        metalness: 0.25,
+        emissive: cyberBookColors[i],
+        emissiveIntensity: 0.18
+      }),
+      rackGroup
+    );
+    // 书页白边细节
+    box(0.056, bh - 0.02, 0.22, bx, 1.065 + bh / 2, 0.04, matPaper, rackGroup, false, false);
+  }
+
+  // 下层 4 组 AI 算力服务器刀片 + 呼吸 LED 灯条
+  const serverLeds: THREE.Mesh[] = [];
+  for (let s = 0; s < 4; s++) {
+    const sy = 0.24 + s * 0.20;
+    rbox(0.74, 0.13, 0.32, 0.012, 0, sy, 0.04, matCyberTrim, rackGroup);
+    const ledBar = new THREE.Mesh(
+      new THREE.BoxGeometry(0.62, 0.022, 0.012),
+      s % 2 === 0 ? matNeonGreen : matNeonCyan
+    );
+    ledBar.position.set(0, sy, 0.205);
+    rackGroup.add(ledBar);
+    serverLeds.push(ledBar);
+  }
+
+  // ------------------------------------------
+  // 物品 ④：左后方悬浮全息监控屏 (漂浮在猫咪左肩侧后方)
+  // ------------------------------------------
+  function createHoloTelemetryTexture() {
+    const c = document.createElement('canvas');
+    c.width = 640;
+    c.height = 400;
+    const ctx = c.getContext('2d')!;
+
+    ctx.fillStyle = 'rgba(12, 22, 38, 0.82)';
+    ctx.fillRect(0, 0, 640, 400);
+
+    ctx.strokeStyle = '#38bdf8';
+    ctx.lineWidth = 5;
+    ctx.strokeRect(8, 8, 624, 384);
+
+    ctx.fillStyle = '#38bdf8';
+    ctx.font = 'bold 22px Consolas, monospace';
+    ctx.fillText('PARTJAVA AI ENGINE · TELEMETRY', 28, 44);
+
+    // 实时波形折线图
+    ctx.strokeStyle = '#38bdf8';
+    ctx.lineWidth = 4.5;
+    ctx.beginPath();
+    const pts = [210, 145, 165, 195, 250, 220, 150, 185, 225, 140];
+    pts.forEach((py, idx) => {
+      const px = 34 + idx * 42;
+      if (idx === 0) ctx.moveTo(px, py);
+      else ctx.lineTo(px, py);
+    });
+    ctx.stroke();
+
+    // 右侧彩色算力柱状图
+    const barCols = ['#a855f7', '#38bdf8', '#34d399', '#f59e0b'];
+    const barHeights = [90, 135, 175, 150];
+    barCols.forEach((col, idx) => {
+      ctx.fillStyle = col;
+      const bh = barHeights[idx];
+      ctx.fillRect(450 + idx * 38, 280 - bh, 26, bh);
+    });
+
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '18px Consolas, monospace';
+    ctx.fillText('GPU CLUSTER · 99.8% ONLINE', 28, 352);
+
+    const tex = new THREE.CanvasTexture(c);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    return tex;
+  }
+
+  const holoFloatingGroup = new THREE.Group();
+  holoFloatingGroup.position.set(-1.18, 1.38, centerZ - 0.55);
+  holoFloatingGroup.rotation.y = 0.28;
+  virtualPropsGroup.add(holoFloatingGroup);
+
+  const holoFrame = rbox(
+    0.86,
+    0.54,
+    0.02,
+    0.01,
+    0,
+    0,
+    -0.012,
+    new THREE.MeshStandardMaterial({
+      color: '#1e293b',
+      transparent: true,
+      opacity: 0.55,
+      roughness: 0.2,
+      metalness: 0.8
+    }),
+    holoFloatingGroup,
+    false,
+    false
+  );
+  const holoScreen = new THREE.Mesh(
+    new THREE.PlaneGeometry(0.82, 0.50),
+    new THREE.MeshBasicMaterial({
+      map: createHoloTelemetryTexture(),
+      transparent: true,
+      opacity: 0.9,
+      side: THREE.DoubleSide
+    })
+  );
+  holoFloatingGroup.add(holoScreen);
+
+  // ------------------------------------------
+  // 物品 ⑧：赛博开发办公桌 (环绕在猫咪右身旁，微向中心旋转 -24°)
+  // 桌面之上搭载 ⑨ 左联代码屏、⑩ 右联监控屏、⑪ 水冷主机、⑫ 发光键鼠桌垫、⑬ 黄色咖啡杯
+  // ------------------------------------------
+  const cyberDeskGroup = new THREE.Group();
+  cyberDeskGroup.position.set(1.92, 0, centerZ - 0.12);
+  cyberDeskGroup.rotation.y = -0.42;
+  virtualPropsGroup.add(cyberDeskGroup);
+
+  const cDeskTopY = 0.78;
+  const cDeskW = 1.62;
+  const cDeskD = 0.74;
+
+  // 圆角碳纤暗夜桌面
+  rbox(cDeskW, 0.045, cDeskD, 0.015, 0, cDeskTopY - 0.022, 0, matCyberDark, cyberDeskGroup);
+
+  // 桌面四周青色发光霓虹灯带包边
+  box(cDeskW + 0.012, 0.014, 0.014, 0, cDeskTopY - 0.008, cDeskD / 2, matNeonCyan, cyberDeskGroup, false, false);
+  box(cDeskW + 0.012, 0.014, 0.014, 0, cDeskTopY - 0.008, -cDeskD / 2, matNeonCyan, cyberDeskGroup, false, false);
+  box(0.014, 0.014, cDeskD + 0.012, -cDeskW / 2, cDeskTopY - 0.008, 0, matNeonCyan, cyberDeskGroup, false, false);
+  box(0.014, 0.014, cDeskD + 0.012, cDeskW / 2, cDeskTopY - 0.008, 0, matNeonCyan, cyberDeskGroup, false, false);
+
+  // 4 根金属圆角桌腿与横撑（严密落地 y = 0）
+  const cLegH = cDeskTopY - 0.045;
+  for (const lx of [-cDeskW / 2 + 0.09, cDeskW / 2 - 0.09]) {
+    for (const lz of [-cDeskD / 2 + 0.08, cDeskD / 2 - 0.08]) {
+      rbox(0.055, cLegH, 0.055, 0.01, lx, cLegH / 2, lz, matCyberTrim, cyberDeskGroup);
+    }
+    box(0.04, 0.04, cDeskD - 0.16, lx, 0.14, 0, matCyberTrim, cyberDeskGroup);
+  }
+
+  // ------------------------------------------
+  // 物品 ⑨：左联代码显示器 (显示彩色语法高亮代码行)
+  // ------------------------------------------
+  function createCyberCodeScreenTexture() {
+    const c = document.createElement('canvas');
+    c.width = 640;
+    c.height = 400;
+    const ctx = c.getContext('2d')!;
+
+    ctx.fillStyle = '#0f172a';
+    ctx.fillRect(0, 0, 640, 400);
+
+    // 顶部窗口栏与三色圆点
+    ctx.fillStyle = '#1e293b';
+    ctx.fillRect(0, 0, 640, 34);
+    ['#f43f5e', '#f59e0b', '#10b981'].forEach((col, i) => {
+      ctx.fillStyle = col;
+      ctx.beginPath();
+      ctx.arc(22 + i * 20, 17, 6, 0, Math.PI * 2);
+      ctx.fill();
+    });
+
+    // 彩色代码条块（高对比度还原截图风格）
+    const barPalette = ['#38bdf8', '#a855f7', '#f43f5e', '#34d399', '#f59e0b', '#e2e8f0'];
+    for (let row = 0; row < 12; row++) {
+      const y = 52 + row * 27;
+      let x = 24 + (row % 3) * 24;
+      const segments = 2 + (row % 3);
+      for (let s = 0; s < segments; s++) {
+        const w = 55 + ((row * 37 + s * 53) % 110);
+        ctx.fillStyle = barPalette[(row + s) % barPalette.length];
+        ctx.beginPath();
+        ctx.roundRect(x, y, w, 13, 4);
+        ctx.fill();
+        x += w + 14;
+      }
+    }
+
+    const tex = new THREE.CanvasTexture(c);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    return tex;
+  }
+
+  const leftMonGroup = new THREE.Group();
+  leftMonGroup.position.set(-0.34, cDeskTopY, -0.14);
+  leftMonGroup.rotation.y = 0.14;
+  cyberDeskGroup.add(leftMonGroup);
+
+  rbox(0.18, 0.016, 0.12, 0.005, 0, 0.008, 0, matCyberTrim, leftMonGroup);
+  rbox(0.035, 0.22, 0.025, 0.005, 0, 0.11, -0.02, matCyberTrim, leftMonGroup);
+  rbox(0.56, 0.36, 0.026, 0.01, 0, 0.30, 0, matCyberDark, leftMonGroup);
+  const leftMonScreen = new THREE.Mesh(
+    new THREE.PlaneGeometry(0.52, 0.32),
+    new THREE.MeshBasicMaterial({ map: createCyberCodeScreenTexture() })
+  );
+  leftMonScreen.position.set(0, 0.30, 0.015);
+  leftMonGroup.add(leftMonScreen);
+
+  // ------------------------------------------
+  // 物品 ⑩：右联算力监控显示器 (显示波形折线与彩色柱状图)
+  // ------------------------------------------
+  const rightMonGroup = new THREE.Group();
+  rightMonGroup.position.set(0.24, cDeskTopY, -0.14);
+  rightMonGroup.rotation.y = -0.12;
+  cyberDeskGroup.add(rightMonGroup);
+
+  rbox(0.18, 0.016, 0.12, 0.005, 0, 0.008, 0, matCyberTrim, rightMonGroup);
+  rbox(0.035, 0.22, 0.025, 0.005, 0, 0.11, -0.02, matCyberTrim, rightMonGroup);
+  rbox(0.56, 0.36, 0.026, 0.01, 0, 0.30, 0, matCyberDark, rightMonGroup);
+  const rightMonScreen = new THREE.Mesh(
+    new THREE.PlaneGeometry(0.52, 0.32),
+    new THREE.MeshBasicMaterial({ map: createHoloTelemetryTexture() })
+  );
+  rightMonScreen.position.set(0, 0.30, 0.015);
+  rightMonGroup.add(rightMonScreen);
+
+  // ------------------------------------------
+  // 物品 ⑪：水冷电脑主机箱 (桌面右侧，带 3 个青/粉发光风扇环)
+  // ------------------------------------------
+  const pcTowerGroup = new THREE.Group();
+  pcTowerGroup.position.set(0.64, cDeskTopY, -0.02);
+  pcTowerGroup.rotation.y = -0.18;
+  cyberDeskGroup.add(pcTowerGroup);
+
+  // 海景房蓝青金属机箱外壳
+  rbox(
+    0.24,
+    0.50,
+    0.36,
+    0.016,
+    0,
+    0.25,
+    0,
+    new THREE.MeshStandardMaterial({
+      color: '#0e7490',
+      roughness: 0.25,
+      metalness: 0.65
+    }),
+    pcTowerGroup
+  );
+  // 机箱正面深色钢化玻璃面板
+  const frontGlass = new THREE.Mesh(
+    new THREE.PlaneGeometry(0.21, 0.46),
+    new THREE.MeshStandardMaterial({
+      color: '#083344',
+      roughness: 0.15,
       metalness: 0.8
     })
   );
-  glassPanel.position.set(-0.162, 0.28, 0);
-  glassPanel.rotation.y = -Math.PI / 2;
-  pcGroup.add(glassPanel);
+  frontGlass.position.set(0, 0.25, 0.182);
+  pcTowerGroup.add(frontGlass);
 
+  // 3 个发光旋转水冷风扇环（青 - 粉 - 青）
   const pcFans: THREE.Mesh[] = [];
-  const fanColors = [0x38bdf8, 0xf59e0b, 0xa855f7];
-  for (let i = 0; i < 3; i++) {
+  const fanMats = [matNeonCyan, matNeonPink, matNeonCyan];
+  for (let f = 0; f < 3; f++) {
     const fanRing = new THREE.Mesh(
-      new THREE.TorusGeometry(0.062, 0.01, 10, 24),
-      new THREE.MeshBasicMaterial({ color: fanColors[i] })
+      new THREE.TorusGeometry(0.056, 0.012, 14, 32),
+      fanMats[f]
     );
-    fanRing.position.set(-0.15, 0.43 - i * 0.15, -0.04);
-    fanRing.rotation.y = Math.PI / 2;
-    pcGroup.add(fanRing);
+    fanRing.position.set(0, 0.39 - f * 0.14, 0.186);
+    pcTowerGroup.add(fanRing);
     pcFans.push(fanRing);
   }
 
-  // 配饰 B: 书桌上方悬浮半透明全息状态小看板 (Floating Hologram Widget)
-  const holoCanvas = document.createElement('canvas');
-  holoCanvas.width = 512;
-  holoCanvas.height = 256;
-  const hctx = holoCanvas.getContext('2d')!;
-  hctx.fillStyle = 'rgba(16, 24, 36, 0.72)';
-  hctx.fillRect(0, 0, 512, 256);
-  hctx.strokeStyle = 'rgba(212, 163, 106, 0.85)';
-  hctx.lineWidth = 4;
-  hctx.strokeRect(8, 8, 496, 240);
-  hctx.fillStyle = '#f5d096';
-  hctx.font = 'bold 24px Consolas, monospace';
-  hctx.fillText('PARTJAVA · AI COMPANION', 28, 48);
-  hctx.fillStyle = '#7ec699';
-  hctx.font = '19px Consolas, monospace';
-  hctx.fillText('● STATUS: ONLINE (DUAL-GLB)', 28, 92);
-  hctx.strokeStyle = '#56b6c2';
-  hctx.lineWidth = 3.5;
-  hctx.beginPath();
-  for (let x = 28; x <= 480; x += 14) {
-    const y = 175 + Math.sin(x * 0.04) * 32;
-    if (x === 28) hctx.moveTo(x, y);
-    else hctx.lineTo(x, y);
-  }
-  hctx.stroke();
-  const holoTex = new THREE.CanvasTexture(holoCanvas);
-  holoTex.colorSpace = THREE.SRGBColorSpace;
+  // ------------------------------------------
+  // 物品 ⑫：粉青发光机械键盘 + 鼠标 + 桌垫
+  // ------------------------------------------
+  // 深海蓝灰桌垫
+  rbox(
+    0.82,
+    0.008,
+    0.26,
+    0.004,
+    -0.05,
+    cDeskTopY + 0.004,
+    0.16,
+    new THREE.MeshStandardMaterial({ color: '#1e3a5f', roughness: 0.8 }),
+    cyberDeskGroup
+  );
+  // 粉色发光机械键盘
+  const cyberKb = rbox(
+    0.44,
+    0.024,
+    0.14,
+    0.006,
+    -0.14,
+    cDeskTopY + 0.016,
+    0.15,
+    new THREE.MeshStandardMaterial({
+      color: '#ec4899',
+      emissive: '#db2777',
+      emissiveIntensity: 0.45,
+      roughness: 0.35
+    }),
+    cyberDeskGroup
+  );
+  cyberKb.rotation.x = 0.06;
 
-  const holoPanel = new THREE.Mesh(
-    new THREE.PlaneGeometry(0.92, 0.46),
-    new THREE.MeshBasicMaterial({
-      map: holoTex,
-      transparent: true,
-      opacity: 0.84,
-      side: THREE.DoubleSide
+  // 青色发光无线鼠标
+  const cyberMouse = new THREE.Mesh(
+    new THREE.SphereGeometry(0.038, 16, 12),
+    new THREE.MeshStandardMaterial({
+      color: '#06b6d4',
+      emissive: '#0891b2',
+      emissiveIntensity: 0.4,
+      roughness: 0.3
     })
   );
-  holoPanel.position.set(deskX - 1.12, riserY + 1.24, deskZ - 0.32);
-  holoPanel.rotation.y = 0.26;
-  virtualPropsGroup.add(holoPanel);
+  cyberMouse.scale.set(0.85, 0.5, 1.35);
+  cyberMouse.position.set(0.22, cDeskTopY + 0.018, 0.16);
+  cyberDeskGroup.add(cyberMouse);
 
-  // 配饰 C: 地毯中央柔和暖金+青蓝双层微光全息环与阳光浮尘粒子
-  const stageRingOuter = new THREE.Mesh(
-    new THREE.RingGeometry(0.95, 0.985, 64),
-    new THREE.MeshBasicMaterial({
-      color: 0xd4a36a,
-      transparent: true,
-      opacity: 0.42,
-      side: THREE.DoubleSide
-    })
-  );
-  stageRingOuter.rotation.x = -Math.PI / 2;
-  stageRingOuter.position.set(0, 0.022, centerZ);
-  virtualPropsGroup.add(stageRingOuter);
+  // ------------------------------------------
+  // 物品 ⑬：黄色咖啡杯 (桌面左下角，带把手与深色咖啡液面)
+  // ------------------------------------------
+  const yellowMugGroup = new THREE.Group();
+  yellowMugGroup.position.set(-0.62, cDeskTopY, 0.14);
+  cyberDeskGroup.add(yellowMugGroup);
 
-  const stageRingInner = new THREE.Mesh(
-    new THREE.RingGeometry(0.76, 0.785, 64),
-    new THREE.MeshBasicMaterial({
-      color: 0x56b6c2,
-      transparent: true,
-      opacity: 0.35,
-      side: THREE.DoubleSide
-    })
-  );
-  stageRingInner.rotation.x = -Math.PI / 2;
-  stageRingInner.position.set(0, 0.023, centerZ);
-  virtualPropsGroup.add(stageRingInner);
-
-  // 阳光丁达尔暖金微粒
-  const dustCount = 45;
-  const dustPositions = new Float32Array(dustCount * 3);
-  for (let i = 0; i < dustCount; i++) {
-    dustPositions[i * 3] = (rand() - 0.5) * 9.5;
-    dustPositions[i * 3 + 1] = 0.4 + rand() * 4.2;
-    dustPositions[i * 3 + 2] = -5.0 + rand() * 5.5;
-  }
-  const dustGeo = new THREE.BufferGeometry();
-  dustGeo.setAttribute('position', new THREE.BufferAttribute(dustPositions, 3));
-  const dustMat = new THREE.PointsMaterial({
-    color: 0xffe4b5,
-    size: 0.045,
-    transparent: true,
-    opacity: 0.55
+  const matYellowMug = new THREE.MeshStandardMaterial({
+    color: '#eab308',
+    roughness: 0.28,
+    metalness: 0.08
   });
-  const dustParticles = new THREE.Points(dustGeo, dustMat);
-  virtualPropsGroup.add(dustParticles);
+  cyl(0.048, 0.042, 0.11, 0, 0.055, 0, matYellowMug, yellowMugGroup);
+  cyl(0.043, 0.043, 0.005, 0, 0.108, 0, M('#3b2314', 0.25), yellowMugGroup);
+  const yellowHandle = new THREE.Mesh(
+    new THREE.TorusGeometry(0.026, 0.007, 10, 20, Math.PI),
+    matYellowMug
+  );
+  yellowHandle.position.set(0.046, 0.055, 0);
+  yellowHandle.rotation.z = -Math.PI / 2;
+  yellowMugGroup.add(yellowHandle);
 
   return {
     robotAnchor,
     virtualPropsGroup,
     update(time: number) {
-      // 水冷风扇旋转
+      // ② 脚下全息圆环底座平滑反向旋转
+      holoRingOuter.rotation.z = time * 0.45;
+      holoRingInner.rotation.z = -time * 0.65;
+
+      // ④ 左后方悬浮全息屏柔和上下呼吸浮动
+      holoFloatingGroup.position.y = 1.38 + Math.sin(time * 1.8) * 0.04;
+
+      // ⑪ 水冷主机风扇旋转动画
       pcFans.forEach((fan, idx) => {
-        fan.rotation.z = time * (3.5 + idx * 0.6);
+        fan.rotation.z = time * (3.2 + idx * 0.5);
       });
-      // 悬浮全息面板轻微呼吸上下浮动
-      holoPanel.position.y = riserY + 1.24 + Math.sin(time * 1.8) * 0.035;
-      // 中央全息环慢速旋转与呼吸
-      stageRingOuter.rotation.z = time * 0.25;
-      stageRingInner.rotation.z = -time * 0.38;
-      // 阳光微粒缓慢漂浮
-      dustParticles.position.y = Math.sin(time * 0.5) * 0.08;
     }
   };
 }

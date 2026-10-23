@@ -400,9 +400,8 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
           jumpOffset = Math.sin(bounceTimeRef.current * Math.PI) * 0.22;
         }
 
-        // 正面朝向镜头，仅做极其自然的微幅呼吸与左右轻轻摇头，绝不转到背面
-        warmStudyRoom.robotAnchor.position.y = 0.016 + Math.sin(time * 2.1) * 0.018 + jumpOffset;
-        warmStudyRoom.robotAnchor.rotation.y = Math.sin(time * 0.75) * 0.12;
+        // 保持模型稳固站立在地毯中央
+        warmStudyRoom.robotAnchor.position.y = 0.016 + jumpOffset;
       }
 
       renderer.render(scene, camera);
@@ -486,17 +485,17 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
               </button>
             </div>
 
-            {/* 虚实配饰切换按钮 */}
+            {/* 虚拟配饰隐藏/显示切换按钮 */}
             <button
               onClick={toggleVirtualProps}
-              className={`hidden sm:inline-flex items-center px-2.5 py-1 rounded-lg text-xs border transition-all ${
+              className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs border transition-all ${
                 showVirtualProps
                   ? 'bg-[#56b6c2]/20 border-[#56b6c2]/50 text-[#a8e4ec]'
-                  : 'bg-[#141210] border-white/10 text-[#e9dac3]/60'
+                  : 'bg-[#141210] border-white/15 text-[#e9dac3]/70'
               }`}
-              title="切换全息看板、水冷主机与能量光环配饰"
+              title="一键隐藏或显示环绕模型的虚拟配饰 (2,3,4,8,9,10,11,12,13)"
             >
-              ✨ 虚实配饰
+              {showVirtualProps ? '✨ 隐藏虚拟物品' : '✨ 显示虚拟物品'}
             </button>
 
             <Button
