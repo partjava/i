@@ -1,14 +1,17 @@
 'use client';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Button, Input } from 'antd';
-import { SendOutlined, CloseOutlined } from '@ant-design/icons';
+import { useRouter } from 'next/navigation';
+import { Button } from 'antd';
+import { SendOutlined } from '@ant-design/icons';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import ReactMarkdown from 'react-markdown';
 import SyntaxHighlighter from 'react-syntax-highlighter';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-const vscDarkPlus = require('react-syntax-highlighter/dist/styles/vs2015').default || require('react-syntax-highlighter/dist/styles/vs2015');
+const vscDarkPlus =
+  require('react-syntax-highlighter/dist/styles/vs2015').default ||
+  require('react-syntax-highlighter/dist/styles/vs2015');
 import remarkGfm from 'remark-gfm';
 import { buildSpaceCapsuleRoom } from './SpaceCapsuleRoom3D';
 import {
@@ -20,20 +23,87 @@ import {
   buildRiggedCatFromGLB,
   RiggedCatController
 } from './cat/catShaderAndRig';
+import NotePreviewModal from './ai/NotePreviewModal';
+
+interface SiteLinkItem {
+  category: string;
+  subject: string;
+  name: string;
+  href: string;
+}
+
+interface CitationItem {
+  index: number;
+  title: string;
+  url: string;
+  domain: string;
+  snippet: string;
+}
+
+interface NoteDraftItem {
+  title: string;
+  content: string;
+  category: string;
+  technology: string;
+  subcategory: string;
+  tags: string[];
+  isPublic: boolean;
+}
 
 interface Message {
   id: string;
   text: string;
   sender: 'user' | 'ai';
   timestamp: Date;
+  siteLinks?: SiteLinkItem[];
+  citations?: CitationItem[];
+  noteDraft?: NoteDraftItem;
+  activeAgents?: string[];
+  modelUsed?: string;
 }
 
 type CatPosture = 'standing' | 'crouching' | 'custom';
+type BubbleSide = 'right' | 'left';
+
+// 采集当前背后打开页面的正文上下文（供智能体一伴读与智能体二写笔记使用）
+function collectCurrentPageContext(): { pathname: string; contextText: string } {
+  if (typeof document === 'undefined' || typeof window === 'undefined') {
+    return { pathname: '', contextText: '' };
+  }
+  const pathname = window.location.pathname;
+  const h = document.querySelector('main h1, main h2, h1');
+  const title = h?.textContent?.trim() || document.title || '';
+  const mainEl = document.querySelector('main');
+  const rawText = mainEl?.textContent || '';
+  const cleaned = rawText.replace(/\s{3,}/g, '\n').trim();
+  const body =
+    cleaned.length > 6000
+      ? cleaned.slice(0, 6000) + '\n...(内容过长已截断)'
+      : cleaned;
+  if (!title && !body) {
+    return { pathname, contextText: '' };
+  }
+  return {
+    pathname,
+    contextText: `[当前学习页面]\n标题: ${title}\n路径: ${pathname}\n\n页面内容:\n${body}`
+  };
+}
 
 export default function AI3DRobot({ onClose }: { onClose: () => void }) {
+  const router = useRouter();
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const viewportRef = useRef<HTMLDivElement>(null);
+  const bubbleBoxRef = useRef<HTMLDivElement>(null);
   const animationIdRef = useRef<number>();
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // SVG 嘴巴放射线 DOM 引用（60FPS 零延迟实时更新坐标）
+  const mouthDotRef = useRef<SVGCircleElement>(null);
+  const mouthPulseRef = useRef<SVGCircleElement>(null);
+  const calloutPathRef = useRef<SVGPathElement>(null);
+  const calloutGlowPathRef = useRef<SVGPathElement>(null);
+  const bubbleAnchorDotRef = useRef<SVGCircleElement>(null);
+  const bubbleSideRef = useRef<BubbleSide>('right');
 
   // 3D 挂载点与装配好的双形态灵动黑猫控制器缓存
   const robotAnchorRef = useRef<THREE.Group>();
@@ -59,22 +129,52 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
   );
   const [isDraggingOver, setIsDraggingOver] = useState(false);
   const [errorBanner, setErrorBanner] = useState<string | null>(null);
-  const [showChat, setShowChat] = useState(false);
+
+  // 3D 嘴巴放射气泡与四大智能体状态
+  const [bubbleSide, setBubbleSide] = useState<BubbleSide>('right');
+  const [showBubble, setShowBubble] = useState(true);
+  const [showHistoryMode, setShowHistoryMode] = useState(false);
+  const [enableWebSearch, setEnableWebSearch] = useState(false);
+  const [searchStatusText, setSearchStatusText] = useState<string | null>(null);
+  const [activeAgentsList, setActiveAgentsList] = useState<string[]>([
+    '🧭 智能体一·站内领航',
+    '📝 智能体二·自动写笔记',
+    '🐾 智能体三·3D灵动伴侣',
+    '🌐 智能体四·Pro联网深搜'
+  ]);
+  const [currentModelName, setCurrentModelName] = useState('deepseek-flash');
+
+  // 笔记预览弹窗状态（复用 NotePreviewModal）
+  const [previewNote, setPreviewNote] = useState<any>(null);
+  const [showNotePreview, setShowNotePreview] = useState(false);
+  const [savingNote, setSavingNote] = useState(false);
+  const [savedNoteTip, setSavedNoteTip] = useState<string | null>(null);
+
   const [messages, setMessages] = useState<Message[]>([
     {
-      id: '1',
-      text: '你好！我是袋子（像素绒毛黑猫形态）🐾！移动鼠标我会看着你，点击我或下方按钮我会变成 ^ ^ 笑眼开心跳跃，快来和我聊天吧~',
+      id: 'welcome-1',
+      text: '喵呜~ 我是温暖书房的 **袋子（3D 像素绒毛黑猫）** 🐾！\n\n看到从我**“品”字形小嘴**放射出来的全息对话窗了吗？我现在由 **DeepSeek-V4 四大专职智能体** 驱动：\n- 🧭 **站内领航伴读**：解答当前页难点，一键直达全站 310+ 课程页面；\n- 📝 **自动总结写笔记**：将对话或当前页面提炼成 Markdown 笔记存入数据库；\n- 🌐 **Pro 联网深搜**：点亮下方「🌐 Pro深搜」即可检索并抓取外部权威技术官网链接！',
       sender: 'ai',
-      timestamp: new Date()
+      timestamp: new Date(),
+      activeAgents: [
+        '🧭 站内领航',
+        '📝 自动写笔记',
+        '🐾 3D伴侣',
+        '🌐 Pro联网深搜'
+      ],
+      modelUsed: 'deepseek-flash'
     }
   ]);
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
 
-  // 自动滚动到最新消息
+  useEffect(() => {
+    bubbleSideRef.current = bubbleSide;
+  }, [bubbleSide]);
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  }, [messages, showHistoryMode]);
 
   const notifyError = useCallback((msg: string) => {
     setErrorBanner(msg);
@@ -136,125 +236,237 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
     });
   };
 
-  // AI回复函数
-  const getAIResponse = async (userMessage: string): Promise<string> => {
+  // 一键将智能体二生成的笔记草稿保存到后端 /api/notes
+  const handleDirectSaveNote = async (noteData: any) => {
+    if (!noteData || savingNote) return;
+    setSavingNote(true);
+    setSavedNoteTip(null);
     try {
-      const response = await fetch('/api/ai/chat', {
+      const payload = {
+        title: noteData.title || `袋子提炼笔记 - ${new Date().toLocaleString()}`,
+        content: noteData.content || '',
+        category: noteData.category || '后端',
+        technology: noteData.technology || 'Java',
+        subcategory: noteData.subcategory || '',
+        tags: Array.isArray(noteData.tags)
+          ? noteData.tags
+          : String(noteData.tags || '')
+              .split(/[,，\s]+/)
+              .filter(Boolean),
+        isPublic: !!noteData.isPublic
+      };
+      const res = await fetch('/api/notes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: userMessage })
+        body: JSON.stringify(payload)
       });
-
-      if (!response.ok) {
-        throw new Error('AI服务响应失败');
+      if (!res.ok) {
+        throw new Error('保存笔记请求失败');
       }
-
-      const data = await response.json();
-      return data.reply || data.answer || '抱歉，我现在有点累了，稍后再聊吧~';
-    } catch (error) {
-      console.error('AI对话失败:', error);
-      return getPresetResponse(userMessage);
+      activeCatRef.current?.triggerHappyJump();
+      setSavedNoteTip('✅ 笔记已成功存入「我的笔记」！');
+      setShowNotePreview(false);
+    } catch (err: any) {
+      notifyError(`保存笔记失败：${err?.message || '请检查登录状态'}`);
+    } finally {
+      setSavingNote(false);
     }
   };
 
-  // 预设回复
-  const getPresetResponse = (userMessage: string): string => {
-    const msg = userMessage.toLowerCase();
+  // 核心：调用四大智能体 SSE 流式接口 (/api/ai/agent/stream)，实时驱动猫嘴跳动与气泡渲染
+  const dispatchAgentMessage = async (
+    rawText: string,
+    opts?: { explicitAgent?: string; forceSearch?: boolean }
+  ) => {
+    const text = rawText.trim();
+    if (!text || isTyping) return;
 
-    if (msg.includes('你好') || msg.includes('hi') || msg.includes('hello')) {
-      return '喵呜~ 你好呀！我是袋子，很高兴在温暖书房见到你！有什么我可以帮助你的吗？🐾';
-    }
-    if (msg.includes('学习') || msg.includes('怎么学')) {
-      return '学习编程最重要的是多练习！建议你从基础开始，每天坚持写代码，遇到问题多思考。我可以帮你解答具体的技术问题哦！💪';
-    }
-    if (msg.includes('笔记')) {
-      return '做笔记是个好习惯！你可以在"笔记"页面创建新笔记，记录学习心得。支持Markdown格式，还能设置公开/私密哦！📝';
-    }
-    if (msg.includes('挑战') || msg.includes('练习')) {
-      return '想提升编程能力？去"挑战"页面试试吧！那里有各种难度的编程题目，还有排行榜系统，快来挑战自己吧！🏆';
-    }
-    if (msg.includes('代码') || msg.includes('编辑器')) {
-      return '我们有在线代码编辑器！支持多种编程语言，可以实时运行和测试代码。去"代码"页面试试吧！💻';
-    }
-    if (msg.includes('谢谢') || msg.includes('感谢')) {
-      return '不客气喵！能帮到你我很开心！有其他问题随时问我哦~😄';
-    }
-    if (msg.includes('再见') || msg.includes('拜拜')) {
-      return '再见！记得常来书房摸摸我哦！祝你学习愉快！👋';
-    }
+    const useSearch = opts?.forceSearch ?? enableWebSearch;
+    setShowBubble(true);
+    setSavedNoteTip(null);
 
-    return '喵嗯，我明白了！你还想了解什么呢？我可以帮你解答学习、笔记、挑战等方面的问题哦！🤔';
-  };
-
-  // 发送消息
-  const handleSendMessage = async () => {
-    if (!inputValue.trim() || isTyping) return;
-
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      text: inputValue.trim(),
+    const userMsg: Message = {
+      id: `u-${Date.now()}`,
+      text,
       sender: 'user',
       timestamp: new Date()
     };
+    const aiMsgId = `ai-${Date.now() + 1}`;
+    const placeholderAiMsg: Message = {
+      id: aiMsgId,
+      text: '',
+      sender: 'ai',
+      timestamp: new Date(),
+      siteLinks: [],
+      citations: [],
+      activeAgents: []
+    };
 
-    setMessages(prev => [...prev, userMessage]);
+    const historySnapshot = messages.slice(-6).map(m => ({
+      role: m.sender === 'user' ? 'user' : 'assistant',
+      content: m.text
+    }));
+
+    setMessages(prev => [...prev, userMsg, placeholderAiMsg]);
     setInputValue('');
     setIsTyping(true);
+    setSearchStatusText('🐾 袋子正竖起耳朵调度智能体思考中...');
+
+    // 启动 3D 黑猫歪头/说话状态
+    activeCatRef.current?.setMood('curious');
     activeCatRef.current?.setTalking(true);
-    activeCatRef.current?.triggerHappyJump();
 
-    setTimeout(async () => {
-      const aiResponse = await getAIResponse(userMessage.text);
+    const { pathname, contextText } = collectCurrentPageContext();
 
-      const aiMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        text: aiResponse,
-        sender: 'ai',
-        timestamp: new Date()
-      };
+    try {
+      const response = await fetch('/api/ai/agent/stream', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: text,
+          history: historySnapshot,
+          pageContext: contextText,
+          currentPathname: pathname,
+          enableWebSearch: useSearch,
+          explicitAgent: opts?.explicitAgent
+        })
+      });
 
-      setMessages(prev => [...prev, aiMessage]);
-      setIsTyping(false);
-      // 说话嘴部跳动持续 1.8 秒后恢复乖巧状态
-      setTimeout(() => {
-        activeCatRef.current?.setTalking(false);
-      }, 1800);
-    }, 800);
-  };
+      if (!response.ok || !response.body) {
+        throw new Error('智能体流式服务响应异常');
+      }
 
-  // 快捷回复
-  const handleQuickReply = (text: string) => {
-    setShowChat(true);
-    setInputValue(text);
-    activeCatRef.current?.setTalking(true);
-    activeCatRef.current?.triggerHappyJump();
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder('utf-8');
+      let buffer = '';
 
-    setTimeout(async () => {
-      const userMessage: Message = {
-        id: Date.now().toString(),
-        text,
-        sender: 'user',
-        timestamp: new Date()
-      };
-      setMessages(prev => [...prev, userMessage]);
-      setInputValue('');
-      setIsTyping(true);
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
 
-      const aiResponse = await getAIResponse(text);
-      setMessages(prev => [
-        ...prev,
-        {
-          id: (Date.now() + 1).toString(),
-          text: aiResponse,
-          sender: 'ai',
-          timestamp: new Date()
+        const blocks = buffer.split('\n\n');
+        buffer = blocks.pop() || '';
+
+        for (const block of blocks) {
+          const lines = block.split('\n');
+          let eventName = 'message';
+          let dataRaw = '';
+          for (const ln of lines) {
+            if (ln.startsWith('event:')) {
+              eventName = ln.slice(6).trim();
+            } else if (ln.startsWith('data:')) {
+              dataRaw += ln.slice(5).trim();
+            }
+          }
+          if (!dataRaw) continue;
+
+          try {
+            const payload = JSON.parse(dataRaw);
+
+            if (eventName === 'agent_meta') {
+              const reaction = payload.reaction || {};
+              if (reaction.posture === 'crouching' || reaction.posture === 'standing') {
+                activatePostureModel(reaction.posture);
+              }
+              if (reaction.mood) {
+                activeCatRef.current?.setMood(reaction.mood);
+              }
+              if (Array.isArray(payload.activeAgents)) {
+                setActiveAgentsList(payload.activeAgents);
+              }
+              if (payload.model) {
+                setCurrentModelName(payload.model);
+              }
+              setMessages(prev =>
+                prev.map(m =>
+                  m.id === aiMsgId
+                    ? {
+                        ...m,
+                        activeAgents: payload.activeAgents,
+                        modelUsed: payload.model
+                      }
+                    : m
+                )
+              );
+            } else if (eventName === 'search_status') {
+              setSearchStatusText(payload.text || null);
+            } else if (eventName === 'site_links') {
+              setMessages(prev =>
+                prev.map(m =>
+                  m.id === aiMsgId ? { ...m, siteLinks: payload.links || [] } : m
+                )
+              );
+            } else if (eventName === 'citations') {
+              setSearchStatusText(null);
+              setMessages(prev =>
+                prev.map(m =>
+                  m.id === aiMsgId
+                    ? { ...m, citations: payload.citations || [] }
+                    : m
+                )
+              );
+            } else if (eventName === 'note_draft') {
+              setSearchStatusText(null);
+              activeCatRef.current?.triggerHappyJump();
+              setMessages(prev =>
+                prev.map(m =>
+                  m.id === aiMsgId ? { ...m, noteDraft: payload.note } : m
+                )
+              );
+            } else if (eventName === 'token') {
+              setSearchStatusText(null);
+              const tokenText = payload.text || '';
+              if (tokenText) {
+                activeCatRef.current?.setTalking(true);
+                setMessages(prev =>
+                  prev.map(m =>
+                    m.id === aiMsgId ? { ...m, text: m.text + tokenText } : m
+                  )
+                );
+              }
+            } else if (eventName === 'done') {
+              setSearchStatusText(null);
+              activeCatRef.current?.setTalking(false);
+            }
+          } catch {
+            // ignore malformed chunk
+          }
         }
-      ]);
+      }
+    } catch (err) {
+      console.error('四大智能体调用异常，回退至 /api/ai/chat:', err);
+      try {
+        const fallbackRes = await fetch('/api/ai/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: text, pageContext: contextText })
+        });
+        const data = await fallbackRes.json();
+        const reply =
+          data?.reply || data?.answer || '喵~ 我刚刚走神啦，请再和我说一次吧！';
+        setMessages(prev =>
+          prev.map(m => (m.id === aiMsgId ? { ...m, text: reply } : m))
+        );
+      } catch {
+        setMessages(prev =>
+          prev.map(m =>
+            m.id === aiMsgId
+              ? {
+                  ...m,
+                  text: '喵呜~ 网络好像打了个盹，你可以试试点击下方快捷按钮或稍后重试🐾'
+                }
+              : m
+          )
+        );
+      }
+    } finally {
       setIsTyping(false);
+      setSearchStatusText(null);
       setTimeout(() => {
         activeCatRef.current?.setTalking(false);
-      }, 1800);
-    }, 100);
+      }, 450);
+    }
   };
 
   // 拖入任意 GLB 文件一键注入炭黑逆光绒毛 + 像素五官 + 骨骼级呼吸歪头律动
@@ -352,12 +564,26 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
     (window as any).robotAnchor = warmStudyRoom.robotAnchor;
 
     // 专属摄影棚级双侧背光轮廓聚光灯（Rim SpotLights），打亮黑猫银白耳缘与绒毛轮廓
-    const rimSpotL = new THREE.SpotLight(0xeef6ff, 18, 8.5, Math.PI / 3, 0.65, 1.6);
+    const rimSpotL = new THREE.SpotLight(
+      0xeef6ff,
+      18,
+      8.5,
+      Math.PI / 3,
+      0.65,
+      1.6
+    );
     rimSpotL.position.set(-1.6, 3.4, -3.2);
     rimSpotL.target.position.set(0, 1.1, -1.55);
     scene.add(rimSpotL, rimSpotL.target);
 
-    const rimSpotR = new THREE.SpotLight(0xfff2e2, 16, 8.5, Math.PI / 3, 0.65, 1.6);
+    const rimSpotR = new THREE.SpotLight(
+      0xfff2e2,
+      16,
+      8.5,
+      Math.PI / 3,
+      0.65,
+      1.6
+    );
     rimSpotR.position.set(1.6, 3.4, -3.2);
     rimSpotR.target.position.set(0, 1.1, -1.55);
     scene.add(rimSpotR, rimSpotR.target);
@@ -396,6 +622,7 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
       );
       if (hits.length > 0) {
         activeCatRef.current?.triggerHappyJump();
+        setShowBubble(true);
       }
     };
 
@@ -404,8 +631,8 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
     container.addEventListener('pointerup', onPointerUp);
 
     // 加载并注入两个形态的猫咪 GLB 模型：
-    // 1) /models/cat-standing.glb (black plush cat 3d model.glb - 乖巧坐姿形态)
-    // 2) /models/cat-crouching.glb (fluffy black cat 3d model.glb - 站立张望形态)
+    // 1) /models/cat-standing.glb (乖巧坐姿形态)
+    // 2) /models/cat-crouching.glb (站立张望形态)
     const loader = new GLTFLoader();
     let standingReady = false;
 
@@ -472,7 +699,7 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
       );
     };
 
-    // 渲染与动画主循环
+    // 渲染与动画主循环（含 60FPS 黑猫“品”字嘴 -> 全息对话气泡动态放射线计算）
     const clock = new THREE.Clock();
     const animate = () => {
       animationIdRef.current = requestAnimationFrame(animate);
@@ -487,6 +714,57 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
       }
 
       renderer.render(scene, camera);
+
+      // 实时计算黑猫“品”字嘴在屏幕上的 2D 像素坐标并更新 SVG 全息放射引线
+      if (
+        activeCatRef.current &&
+        viewportRef.current &&
+        bubbleBoxRef.current &&
+        calloutPathRef.current &&
+        calloutGlowPathRef.current &&
+        mouthDotRef.current &&
+        mouthPulseRef.current &&
+        bubbleAnchorDotRef.current
+      ) {
+        const vRect = viewportRef.current.getBoundingClientRect();
+        const bRect = bubbleBoxRef.current.getBoundingClientRect();
+        if (vRect.width > 0 && vRect.height > 0 && bRect.width > 0) {
+          const mouthCoord = activeCatRef.current.getMouthScreenCoord(
+            camera,
+            vRect.width,
+            vRect.height
+          );
+          const mx = mouthCoord.x;
+          const my = mouthCoord.y;
+
+          const side = bubbleSideRef.current;
+          // 气泡连接点：若气泡在右侧，连在气泡左边缘偏上；若气泡在左侧，连在气泡右边缘偏上
+          const targetX =
+            side === 'right'
+              ? bRect.left - vRect.left
+              : bRect.right - vRect.left;
+          const targetY =
+            bRect.top - vRect.top + Math.min(82, bRect.height * 0.28);
+
+          // 科幻折线拐点（从嘴巴斜向上放射出一段，再水平折入气泡边缘）
+          const dir = side === 'right' ? 1 : -1;
+          const elbowX = mx + dir * Math.min(75, Math.abs(targetX - mx) * 0.42);
+          const elbowY = targetY;
+
+          const dPath = `M ${mx.toFixed(1)} ${my.toFixed(1)} L ${elbowX.toFixed(
+            1
+          )} ${elbowY.toFixed(1)} L ${targetX.toFixed(1)} ${targetY.toFixed(1)}`;
+
+          calloutPathRef.current.setAttribute('d', dPath);
+          calloutGlowPathRef.current.setAttribute('d', dPath);
+          mouthDotRef.current.setAttribute('cx', mx.toFixed(1));
+          mouthDotRef.current.setAttribute('cy', my.toFixed(1));
+          mouthPulseRef.current.setAttribute('cx', mx.toFixed(1));
+          mouthPulseRef.current.setAttribute('cy', my.toFixed(1));
+          bubbleAnchorDotRef.current.setAttribute('cx', targetX.toFixed(1));
+          bubbleAnchorDotRef.current.setAttribute('cy', targetY.toFixed(1));
+        }
+      }
     };
     animate();
 
@@ -520,6 +798,13 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
     };
   }, [activatePostureModel]);
 
+  // 取出最新一条 AI 回复用于嘴巴放射气泡展示
+  const latestAiMessage =
+    [...messages].reverse().find(m => m.sender === 'ai') || messages[0];
+  const latestUserMessage = [...messages]
+    .reverse()
+    .find(m => m.sender === 'user');
+
   return (
     <div className="fixed inset-0 z-50 bg-black/65 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 animate-fadeIn">
       <div
@@ -534,18 +819,18 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
         onDrop={handleDropGLB}
       >
         {/* 顶部标题栏与姿态/微调控制栏 */}
-        <div className="flex flex-wrap justify-between items-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 border-b border-[#d4a36a]/20 bg-[#221f1b]/95 text-[#f4eadc] z-10">
+        <div className="flex flex-wrap justify-between items-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 border-b border-[#d4a36a]/20 bg-[#221f1b]/95 text-[#f4eadc] z-20">
           <div className="flex items-center space-x-3">
             <span className="inline-block w-2.5 h-2.5 rounded-full bg-[#d4a36a] shadow-[0_0_8px_rgba(212,163,106,0.8)]" />
             <span className="font-serif font-semibold tracking-[0.18em] text-sm sm:text-base text-[#f7efe4]">
               PartJava · 温暖书房
             </span>
-            <span className="hidden md:inline-block text-[11px] font-serif tracking-[0.15em] text-[#e9dac3]/75">
-              A PLACE TO LEARN · A PLACE TO CREATE
+            <span className="hidden lg:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] bg-[#d4a36a]/15 border border-[#d4a36a]/30 text-[#e9dac3]">
+              🤖 DeepSeek-V4 四大智能体已挂载 ({currentModelName})
             </span>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
             {/* 双形态切换按钮组 */}
             <div className="flex items-center bg-[#141210] p-0.5 rounded-lg border border-[#d4a36a]/25">
               <button
@@ -570,13 +855,25 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
               </button>
             </div>
 
+            {/* 嘴巴放射气泡左/右方向切换 */}
+            <button
+              onClick={() => {
+                setShowBubble(true);
+                setBubbleSide(prev => (prev === 'right' ? 'left' : 'right'));
+              }}
+              className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs border border-[#d4a36a]/40 bg-[#141210] text-[#f7efe4] hover:bg-[#d4a36a]/20 transition-all"
+              title="切换嘴巴放射聊天框的方向（向左或向右）"
+            >
+              {bubbleSide === 'right' ? '◀ 气泡移至左侧' : '气泡移至右侧 ▶'}
+            </button>
+
             {/* 撸猫开心笑眼互动按钮 */}
             <button
               onClick={handlePetCat}
               className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs border border-[#d4a36a]/40 bg-[#d4a36a]/15 text-[#f7efe4] hover:bg-[#d4a36a]/30 transition-all"
               title="点击触发 ^ ^ 眯眼笑跳跃互动"
             >
-              ^ ^ 撸猫互动
+              ^ ^ 撸猫
             </button>
 
             {/* 毛色逆光 & 五官微调面板开关 */}
@@ -588,7 +885,7 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
                   : 'bg-[#141210] border-white/15 text-[#e9dac3]/80 hover:text-white'
               }`}
             >
-              🎨 毛色&五官微调
+              🎨 五官微调
             </button>
 
             {/* 虚拟配饰隐藏/显示切换按钮 */}
@@ -601,7 +898,7 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
               }`}
               title="一键隐藏或显示环绕模型的虚拟配饰 (2,3,4,8,9,10,11,12,13)"
             >
-              {showVirtualProps ? '✨ 隐藏虚拟物品' : '✨ 显示虚拟物品'}
+              {showVirtualProps ? '✨ 隐藏配饰' : '✨ 显示配饰'}
             </button>
 
             <Button
@@ -615,26 +912,450 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
         </div>
 
         {/* 3D 书房主视口 */}
-        <div className="flex-1 relative bg-[#1c1a17] overflow-hidden">
-          <canvas
-            ref={canvasRef}
-            className={`w-full h-full block transition-all duration-500 ${
-              showChat ? 'opacity-35 blur-[2px] scale-[0.98]' : 'opacity-100'
-            }`}
-          />
+        <div
+          ref={viewportRef}
+          className="flex-1 relative bg-[#1c1a17] overflow-hidden"
+        >
+          <canvas ref={canvasRef} className="w-full h-full block" />
 
           {/* 电影感柔光暗角，不遮挡中心视觉 */}
           <div
             className="pointer-events-none absolute inset-0"
             style={{
               background:
-                'linear-gradient(to bottom, rgba(14, 13, 12, 0.36) 0%, rgba(14, 13, 12, 0.06) 18%, transparent 32%, transparent 78%, rgba(12, 11, 10, 0.45) 100%), radial-gradient(ellipse at 50% 52%, transparent 48%, rgba(10, 9, 8, 0.34) 100%)'
+                'linear-gradient(to bottom, rgba(14, 13, 12, 0.32) 0%, rgba(14, 13, 12, 0.04) 18%, transparent 32%, transparent 78%, rgba(12, 11, 10, 0.48) 100%), radial-gradient(ellipse at 50% 52%, transparent 50%, rgba(10, 9, 8, 0.32) 100%)'
             }}
           />
 
+          {/* ==========================================================
+              核心亮点：从黑猫“品”字嘴巴实时放射出的 SVG 全息引线 + 悬浮对话窗
+             ========================================================== */}
+          {!isLoading && showBubble && (
+            <>
+              {/* 全屏透明 SVG 层：起点实时锁定黑猫 3D 品字嘴坐标，终点连接气泡框边缘 */}
+              <svg className="pointer-events-none absolute inset-0 w-full h-full z-10 overflow-visible hidden sm:block">
+                <defs>
+                  <linearGradient
+                    id="catMouthBeamGrad"
+                    x1="0%"
+                    y1="0%"
+                    x2="100%"
+                    y2="0%"
+                  >
+                    <stop offset="0%" stopColor="#ffffff" stopOpacity="0.95" />
+                    <stop offset="35%" stopColor="#f3d19c" stopOpacity="0.9" />
+                    <stop offset="100%" stopColor="#d4a36a" stopOpacity="0.75" />
+                  </linearGradient>
+                  <filter
+                    id="catBeamGlow"
+                    x="-20%"
+                    y="-20%"
+                    width="140%"
+                    height="140%"
+                  >
+                    <feGaussianBlur stdDeviation="3.5" result="blur" />
+                    <feMerge>
+                      <feMergeNode in="blur" />
+                      <feMergeNode in="SourceGraphic" />
+                    </feMerge>
+                  </filter>
+                </defs>
+
+                {/* 外发光扩散轨 */}
+                <path
+                  ref={calloutGlowPathRef}
+                  d="M 0 0 L 0 0"
+                  fill="none"
+                  stroke="#d4a36a"
+                  strokeWidth="5"
+                  strokeOpacity="0.28"
+                  filter="url(#catBeamGlow)"
+                />
+                {/* 主放射全息折线 */}
+                <path
+                  ref={calloutPathRef}
+                  d="M 0 0 L 0 0"
+                  fill="none"
+                  stroke="url(#catMouthBeamGrad)"
+                  strokeWidth="2.2"
+                  strokeDasharray="6 3"
+                  filter="url(#catBeamGlow)"
+                />
+                {/* 黑猫“品”字嘴锚点脉冲光环 */}
+                <circle
+                  ref={mouthPulseRef}
+                  cx="0"
+                  cy="0"
+                  r="9"
+                  fill="none"
+                  stroke="#f5d5a3"
+                  strokeWidth="1.5"
+                  strokeOpacity="0.65"
+                  className="animate-ping"
+                />
+                <circle
+                  ref={mouthDotRef}
+                  cx="0"
+                  cy="0"
+                  r="4.2"
+                  fill="#ffffff"
+                  stroke="#d4a36a"
+                  strokeWidth="2"
+                  filter="url(#catBeamGlow)"
+                />
+                {/* 气泡侧边接入锚点 */}
+                <circle
+                  ref={bubbleAnchorDotRef}
+                  cx="0"
+                  cy="0"
+                  r="4.5"
+                  fill="#d4a36a"
+                  stroke="#fff8ee"
+                  strokeWidth="1.5"
+                />
+              </svg>
+
+              {/* 从嘴巴放射出的半透明暖金深色毛玻璃聊天窗口（支持居右或居左） */}
+              <div
+                ref={bubbleBoxRef}
+                className={`absolute top-3 sm:top-5 ${
+                  bubbleSide === 'right'
+                    ? 'right-3 sm:right-5'
+                    : 'left-3 sm:left-5'
+                } z-10 w-[calc(100%-1.5rem)] sm:w-[410px] md:w-[450px] max-h-[calc(100%-155px)] flex flex-col bg-[#161310]/88 backdrop-blur-xl rounded-2xl border border-[#d4a36a]/45 shadow-[0_16px_48px_rgba(0,0,0,0.65),0_0_24px_rgba(212,163,106,0.18)] transition-all duration-300`}
+              >
+                {/* 气泡顶部栏：显示当前工作的四大智能体徽章与控制按钮 */}
+                <div className="flex items-center justify-between px-3.5 py-2.5 border-b border-[#d4a36a]/25 bg-gradient-to-r from-[#26201a]/95 to-[#1c1814]/95 rounded-t-2xl flex-shrink-0">
+                  <div className="flex items-center space-x-2 min-w-0">
+                    <span className="relative flex h-2.5 w-2.5 flex-shrink-0">
+                      <span
+                        className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
+                          isTyping ? 'bg-amber-400' : 'bg-emerald-400'
+                        }`}
+                      />
+                      <span
+                        className={`relative inline-flex rounded-full h-2.5 w-2.5 ${
+                          isTyping ? 'bg-amber-400' : 'bg-emerald-400'
+                        }`}
+                      />
+                    </span>
+                    <span className="text-xs sm:text-sm font-bold text-[#f7efe4] truncate">
+                      🐾 袋子 · 四大智能体全息窗
+                    </span>
+                    <span className="px-1.5 py-0.5 text-[10px] rounded bg-[#d4a36a]/20 text-[#f3d19c] border border-[#d4a36a]/35 font-mono">
+                      {enableWebSearch ? 'deepseek-v4-pro' : currentModelName}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center space-x-1.5 flex-shrink-0">
+                    <button
+                      onClick={() => setShowHistoryMode(!showHistoryMode)}
+                      className={`px-2 py-0.5 rounded text-[11px] border transition-all ${
+                        showHistoryMode
+                          ? 'bg-[#d4a36a] text-[#1c1a17] border-[#d4a36a] font-semibold'
+                          : 'bg-white/5 text-[#e9dac3] border-white/15 hover:bg-white/10'
+                      }`}
+                      title="切换查看单条最新气泡 / 全部历史对话记录"
+                    >
+                      {showHistoryMode
+                        ? '💬 最新气泡'
+                        : `📜 历史(${messages.length})`}
+                    </button>
+                    <button
+                      onClick={() =>
+                        setBubbleSide(prev =>
+                          prev === 'right' ? 'left' : 'right'
+                        )
+                      }
+                      className="px-1.5 py-0.5 rounded text-[11px] bg-white/5 hover:bg-white/15 text-[#e9dac3] border border-white/10"
+                      title="左右切换放射方向"
+                    >
+                      {bubbleSide === 'right' ? '◀左' : '右▶'}
+                    </button>
+                    <button
+                      onClick={() => setShowBubble(false)}
+                      className="px-1.5 py-0.5 rounded text-[11px] bg-white/5 hover:bg-red-500/30 text-[#e9dac3]/70 hover:text-white"
+                      title="最小化气泡"
+                    >
+                      ─
+                    </button>
+                  </div>
+                </div>
+
+                {/* 激活的四大智能体状态标签条 */}
+                <div className="px-3.5 py-1.5 bg-[#12100e]/80 border-b border-white/10 flex flex-wrap items-center gap-1.5 flex-shrink-0">
+                  {activeAgentsList.map((ag, idx) => (
+                    <span
+                      key={idx}
+                      className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] bg-[#d4a36a]/15 text-[#eed7b5] border border-[#d4a36a]/30"
+                    >
+                      {ag}
+                    </span>
+                  ))}
+                </div>
+
+                {/* 气泡内容区：支持「单条最新放射模式」与「完整历史模式」 */}
+                <div className="flex-1 overflow-y-auto p-3.5 space-y-3 text-xs sm:text-sm text-[#f5ece0] custom-scrollbar">
+                  {!showHistoryMode ? (
+                    <>
+                      {/* 用户刚才问的问题小胶囊 */}
+                      {latestUserMessage && (
+                        <div className="flex justify-end">
+                          <div className="max-w-[88%] px-3 py-1.5 rounded-xl bg-[#d4a36a]/20 border border-[#d4a36a]/40 text-[#fcefd9] text-xs">
+                            <span className="opacity-70 mr-1">你:</span>
+                            {latestUserMessage.text}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* 实时搜索/写笔记状态提示 */}
+                      {searchStatusText && (
+                        <div className="flex items-center space-x-2 px-3 py-2 rounded-xl bg-amber-500/15 border border-amber-400/35 text-amber-200 text-xs animate-pulse">
+                          <span>⚡</span>
+                          <span>{searchStatusText}</span>
+                        </div>
+                      )}
+
+                      {/* 黑猫嘴巴说出的流式 Markdown 内容 */}
+                      {latestAiMessage && (
+                        <div className="space-y-3">
+                          <div className="prose prose-invert prose-sm max-w-none text-[#f4eadc] leading-relaxed">
+                            <ReactMarkdown
+                              remarkPlugins={[remarkGfm]}
+                              components={{
+                                a({ href, children, ...props }: any) {
+                                  const isInternal =
+                                    href && href.startsWith('/');
+                                  return (
+                                    <a
+                                      href={href}
+                                      onClick={e => {
+                                        if (isInternal) {
+                                          e.preventDefault();
+                                          onClose();
+                                          router.push(href);
+                                        }
+                                      }}
+                                      target={isInternal ? undefined : '_blank'}
+                                      rel={
+                                        isInternal
+                                          ? undefined
+                                          : 'noopener noreferrer'
+                                      }
+                                      className="text-[#f3c687] underline hover:text-[#ffe0b2] font-medium"
+                                      {...props}
+                                    >
+                                      {children}
+                                    </a>
+                                  );
+                                },
+                                code({
+                                  className,
+                                  children,
+                                  ...props
+                                }: any) {
+                                  const match = /language-(\w+)/.exec(
+                                    className || ''
+                                  );
+                                  return match ? (
+                                    <div className="my-2 rounded-lg overflow-hidden border border-white/10">
+                                      <SyntaxHighlighter
+                                        style={vscDarkPlus}
+                                        language={match[1]}
+                                        PreTag="div"
+                                        customStyle={{
+                                          margin: 0,
+                                          background: '#0e0d0b',
+                                          padding: '0.75rem',
+                                          fontSize: '12px'
+                                        }}
+                                        {...props}
+                                      >
+                                        {String(children).replace(/\n$/, '')}
+                                      </SyntaxHighlighter>
+                                    </div>
+                                  ) : (
+                                    <code
+                                      className="bg-white/10 px-1.5 py-0.5 rounded text-xs font-mono text-[#f5c88c]"
+                                      {...props}
+                                    >
+                                      {children}
+                                    </code>
+                                  );
+                                }
+                              }}
+                            >
+                              {latestAiMessage.text ||
+                                (isTyping ? '喵呜~ 正在思考中...' : '')}
+                            </ReactMarkdown>
+                          </div>
+
+                          {/* 【智能体一输出】：站内 310+ 页面一键直达胶囊 */}
+                          {latestAiMessage.siteLinks &&
+                            latestAiMessage.siteLinks.length > 0 && (
+                              <div className="pt-2 border-t border-white/10">
+                                <div className="text-[11px] text-[#d4a36a] font-semibold mb-1.5 flex items-center gap-1">
+                                  <span>🧭 智能体一 · 站内课程页面直达：</span>
+                                </div>
+                                <div className="flex flex-wrap gap-1.5">
+                                  {latestAiMessage.siteLinks.map((lnk, i) => (
+                                    <button
+                                      key={i}
+                                      onClick={() => {
+                                        onClose();
+                                        router.push(lnk.href);
+                                      }}
+                                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs bg-[#d4a36a]/20 hover:bg-[#d4a36a] text-[#f7efe4] hover:text-[#1c1a17] border border-[#d4a36a]/45 transition-all font-medium"
+                                    >
+                                      <span>📖 {lnk.name}</span>
+                                      <span className="opacity-75">→</span>
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                          {/* 【智能体四输出】：DeepSeek-V4-Pro 联网搜索权威网站外链卡片 */}
+                          {latestAiMessage.citations &&
+                            latestAiMessage.citations.length > 0 && (
+                              <div className="pt-2 border-t border-white/10">
+                                <div className="text-[11px] text-[#63c7ff] font-semibold mb-1.5 flex items-center gap-1">
+                                  <span>
+                                    🌐 智能体四 (deepseek-v4-pro) · 权威外部网站引用：
+                                  </span>
+                                </div>
+                                <div className="space-y-1.5">
+                                  {latestAiMessage.citations.map(cite => (
+                                    <a
+                                      key={cite.index}
+                                      href={cite.url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="block p-2 rounded-xl bg-[#1f2933]/75 hover:bg-[#273645] border border-[#56b6c2]/40 transition-all group"
+                                    >
+                                      <div className="flex items-center justify-between gap-2">
+                                        <span className="text-xs font-semibold text-[#a8e4ec] group-hover:underline truncate">
+                                          [{cite.index}] {cite.title}
+                                        </span>
+                                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-black/40 text-[#7fd4e0] font-mono flex-shrink-0">
+                                          {cite.domain} ↗
+                                        </span>
+                                      </div>
+                                      {cite.snippet && (
+                                        <p className="text-[11px] text-gray-300/80 line-clamp-2 mt-1">
+                                          {cite.snippet}
+                                        </p>
+                                      )}
+                                    </a>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                          {/* 【智能体二输出】：结构化 Markdown 笔记一键保存与预览卡片 */}
+                          {latestAiMessage.noteDraft && (
+                            <div className="p-3 rounded-xl bg-gradient-to-br from-[#2b2319] to-[#1e1913] border border-[#d4a36a]/60 space-y-2">
+                              <div className="flex items-center justify-between">
+                                <span className="text-xs font-bold text-[#f5d5a3]">
+                                  📝 智能体二 · 已生成结构化笔记草稿
+                                </span>
+                                <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#d4a36a]/25 text-[#f7efe4]">
+                                  {latestAiMessage.noteDraft.category} ·{' '}
+                                  {latestAiMessage.noteDraft.technology}
+                                </span>
+                              </div>
+                              <div className="text-xs font-semibold text-white truncate">
+                                《{latestAiMessage.noteDraft.title}》
+                              </div>
+                              <div className="flex flex-wrap gap-2 pt-1">
+                                <button
+                                  onClick={() =>
+                                    handleDirectSaveNote(
+                                      latestAiMessage.noteDraft
+                                    )
+                                  }
+                                  disabled={savingNote}
+                                  className="flex-1 px-3 py-1.5 rounded-lg bg-gradient-to-r from-[#d4a36a] to-[#b58448] hover:from-[#e2b278] hover:to-[#c69355] text-[#1c1a17] font-bold text-xs shadow transition-all disabled:opacity-50"
+                                >
+                                  {savingNote
+                                    ? '保存中...'
+                                    : '⚡ 一键存入我的笔记'}
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    setPreviewNote(latestAiMessage.noteDraft);
+                                    setShowNotePreview(true);
+                                  }}
+                                  className="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-[#f7efe4] border border-white/20 text-xs transition-all"
+                                >
+                                  ✏️ 预览与编辑
+                                </button>
+                              </div>
+                              {savedNoteTip && (
+                                <div className="flex items-center justify-between text-xs text-emerald-300 pt-1">
+                                  <span>{savedNoteTip}</span>
+                                  <button
+                                    onClick={() => {
+                                      onClose();
+                                      router.push('/notes');
+                                    }}
+                                    className="underline hover:text-white"
+                                  >
+                                    前往笔记中心查看 →
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    /* 完整历史对话流模式 */
+                    <div className="space-y-3">
+                      {messages.map(msg => (
+                        <div
+                          key={msg.id}
+                          className={`flex ${
+                            msg.sender === 'user'
+                              ? 'justify-end'
+                              : 'justify-start'
+                          }`}
+                        >
+                          <div
+                            className={`max-w-[88%] px-3 py-2 rounded-xl text-xs ${
+                              msg.sender === 'user'
+                                ? 'bg-[#d4a36a] text-[#1c1a17] font-medium'
+                                : 'bg-white/10 text-[#f4eadc] border border-white/10'
+                            }`}
+                          >
+                            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                              {msg.text}
+                            </ReactMarkdown>
+                          </div>
+                        </div>
+                      ))}
+                      <div ref={messagesEndRef} />
+                    </div>
+                  )}
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* 当气泡最小化时，提供一键唤起悬浮小标 */}
+          {!isLoading && !showBubble && (
+            <button
+              onClick={() => setShowBubble(true)}
+              className="absolute top-4 right-4 z-10 px-3.5 py-2 rounded-full bg-[#1a1714]/90 border border-[#d4a36a]/50 text-[#f7efe4] text-xs shadow-xl hover:bg-[#d4a36a] hover:text-[#1c1a17] transition-all font-semibold"
+            >
+              💬 展开袋子嘴巴全息气泡
+            </button>
+          )}
+
           {/* 右上角「毛色逆光 & 像素五官微调」悬浮控制面板 */}
-          {showTuningPanel && !showChat && (
-            <div className="absolute top-3 right-3 z-20 w-72 bg-[#161412]/90 backdrop-blur-md border border-[#d4a36a]/35 rounded-xl p-3.5 text-xs text-[#f4eadc] shadow-2xl space-y-2.5">
+          {showTuningPanel && (
+            <div className="absolute top-3 left-3 z-20 w-72 bg-[#161412]/92 backdrop-blur-md border border-[#d4a36a]/35 rounded-xl p-3.5 text-xs text-[#f4eadc] shadow-2xl space-y-2.5">
               <div className="flex items-center justify-between border-b border-white/10 pb-2">
                 <span className="font-semibold text-[#d4a36a]">
                   🎨 毛色逆光 & 灵动五官微调
@@ -774,7 +1495,7 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
 
           {/* 错误提示条 */}
           {errorBanner && (
-            <div className="absolute top-5 left-1/2 -translate-x-1/2 z-20 bg-[#301816]/90 border border-[#d68273]/40 backdrop-blur-md text-[#fcebe8] px-5 py-2.5 rounded-xl text-xs tracking-wide shadow-xl">
+            <div className="absolute top-5 left-1/2 -translate-x-1/2 z-30 bg-[#301816]/90 border border-[#d68273]/40 backdrop-blur-md text-[#fcebe8] px-5 py-2.5 rounded-xl text-xs tracking-wide shadow-xl">
               {errorBanner}
             </div>
           )}
@@ -785,7 +1506,7 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
               <div className="text-center text-[#f4eadc] max-w-sm px-4">
                 <div className="text-5xl mb-5 animate-bounce">🐱</div>
                 <div className="text-lg sm:text-xl font-serif font-semibold mb-4 tracking-wider text-[#f7efe4]">
-                  正在唤醒像素绒毛黑猫与温暖书房...
+                  正在唤醒像素绒毛黑猫与四大智能体...
                 </div>
                 <div className="w-64 bg-[#2c2723] rounded-full h-2.5 mb-3 overflow-hidden border border-[#d4a36a]/30 mx-auto">
                   <div
@@ -800,257 +1521,140 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
             </div>
           )}
 
-          {/* 底部轻量悬浮交互栏 */}
-          {!isLoading && !showChat && (
-            <div className="absolute bottom-3 sm:bottom-5 left-1/2 -translate-x-1/2 w-full max-w-xl px-3 sm:px-4 z-10">
-              <div className="bg-[#1a1714]/82 backdrop-blur-md rounded-2xl px-4 py-3 sm:px-5 sm:py-3.5 shadow-2xl border border-[#d4a36a]/30 flex flex-col sm:flex-row items-center justify-between gap-3">
-                <div className="flex items-center space-x-3">
+          {/* ==========================================================
+              底部常驻直聊输入坞（Chat Dock）：无需弹窗，直接与四大智能体对话
+             ========================================================== */}
+          {!isLoading && (
+            <div className="absolute bottom-2.5 sm:bottom-4 left-1/2 -translate-x-1/2 w-full max-w-3xl px-3 sm:px-4 z-20">
+              <div className="bg-[#181512]/90 backdrop-blur-xl rounded-2xl p-2.5 sm:p-3.5 shadow-[0_12px_40px_rgba(0,0,0,0.65)] border border-[#d4a36a]/35 space-y-2">
+                {/* 第一排：四大专职智能体一键召唤胶囊 */}
+                <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 no-scrollbar">
+                  <button
+                    onClick={() =>
+                      dispatchAgentMessage(
+                        '请结合当前页面内容和我们的对话，帮我总结并生成一篇结构化学习笔记！',
+                        { explicitAgent: 'agent2_note' }
+                      )
+                    }
+                    disabled={isTyping}
+                    className="px-2.5 py-1 rounded-full text-xs bg-[#d4a36a]/20 hover:bg-[#d4a36a] text-[#f5d5a3] hover:text-[#1c1a17] border border-[#d4a36a]/40 transition-all whitespace-nowrap font-medium flex-shrink-0"
+                  >
+                    📝 智能体二：总结写笔记
+                  </button>
+                  <button
+                    onClick={() =>
+                      dispatchAgentMessage(
+                        '请介绍一下当前页面核心内容，并推荐网站里相关的课程与练习页面！',
+                        { explicitAgent: 'agent1_navigator' }
+                      )
+                    }
+                    disabled={isTyping}
+                    className="px-2.5 py-1 rounded-full text-xs bg-white/8 hover:bg-[#d4a36a]/30 text-[#e9dac3] border border-white/15 transition-all whitespace-nowrap flex-shrink-0"
+                  >
+                    🧭 智能体一：本页伴读 & 站内领航
+                  </button>
+                  <button
+                    onClick={() => {
+                      setEnableWebSearch(true);
+                      dispatchAgentMessage(
+                        '请帮我联网检索 Java 与 AI 大模型开发的最权威官方文档网站链接！',
+                        { explicitAgent: 'agent4_search', forceSearch: true }
+                      );
+                    }}
+                    disabled={isTyping}
+                    className="px-2.5 py-1 rounded-full text-xs bg-[#56b6c2]/20 hover:bg-[#56b6c2]/40 text-[#a8e4ec] border border-[#56b6c2]/45 transition-all whitespace-nowrap flex-shrink-0"
+                  >
+                    🌐 智能体四：Pro 联网搜权威外链
+                  </button>
+                  <button
+                    onClick={() =>
+                      dispatchAgentMessage(
+                        '袋子，给我制定一份高效学好数据结构、算法与后端架构的实战路线吧！'
+                      )
+                    }
+                    disabled={isTyping}
+                    className="px-2.5 py-1 rounded-full text-xs bg-white/8 hover:bg-white/15 text-[#e9dac3] border border-white/15 transition-all whitespace-nowrap flex-shrink-0"
+                  >
+                    🐾 智能体三：学习路线规划
+                  </button>
+                </div>
+
+                {/* 第二排：姿态切换 + Pro 联网深搜开关 + 直接输入框 + 发送按钮 */}
+                <div className="flex items-center gap-2">
                   <button
                     onClick={() =>
                       activatePostureModel(
                         posture === 'standing' ? 'crouching' : 'standing'
                       )
                     }
-                    className="w-10 h-10 bg-gradient-to-br from-[#d4a36a] to-[#9c7142] rounded-full flex items-center justify-center shadow-md hover:scale-105 transition-transform flex-shrink-0"
-                    title="点击切换猫咪乖巧坐姿 / 爬起站姿"
+                    className="w-9 h-9 bg-gradient-to-br from-[#d4a36a] to-[#9c7142] rounded-xl flex items-center justify-center shadow-md hover:scale-105 transition-transform flex-shrink-0"
+                    title="点击切换黑猫乖巧坐姿 / 爬起站姿"
                   >
-                    <span className="text-xl">
+                    <span className="text-base">
                       {posture === 'standing' ? '🐱' : '🐾'}
                     </span>
                   </button>
-                  <div>
-                    <div className="flex items-center space-x-2">
-                      <h3 className="text-sm sm:text-base font-bold text-[#f7efe4]">
-                        袋子 · 灵动像素绒毛黑猫
-                      </h3>
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] bg-[#d4a36a]/20 text-[#e9dac3] border border-[#d4a36a]/30">
-                        {posture === 'standing'
-                          ? '乖巧坐姿'
-                          : posture === 'crouching'
-                          ? '爬起站姿'
-                          : '自定义 GLB'}
-                      </span>
-                    </div>
-                    <p className="text-xs text-[#e9dac3]/75 mt-0.5">
-                      移动鼠标眼神跟随 · 点击猫咪触发 ^ ^ 笑眼跳跃 · 支持拖入 .glb 自动植毛
-                    </p>
-                  </div>
-                </div>
 
-                <div className="flex items-center space-x-2 w-full sm:w-auto justify-end">
+                  {/* DeepSeek-V4-Pro 联网深搜独立开关 */}
                   <button
-                    onClick={() => setShowChat(true)}
-                    className="flex-1 sm:flex-initial bg-gradient-to-r from-[#d4a36a] to-[#b8894e] hover:from-[#dfb076] hover:to-[#c69658] text-[#1c1a17] px-4 py-2 rounded-xl transition-all duration-200 font-semibold text-xs sm:text-sm shadow-md whitespace-nowrap"
+                    onClick={() => setEnableWebSearch(!enableWebSearch)}
+                    className={`px-2.5 py-2 rounded-xl text-xs font-semibold border transition-all flex items-center gap-1 flex-shrink-0 ${
+                      enableWebSearch
+                        ? 'bg-[#1d3b47] border-[#56b6c2] text-[#a8e4ec] shadow-[0_0_12px_rgba(86,182,194,0.35)]'
+                        : 'bg-[#24201c] border-white/15 text-[#e9dac3]/70 hover:text-white'
+                    }`}
+                    title="开启后将调用 deepseek-v4-pro 及 /v1/tools/search 与 /v1/tools/fetch 检索权威外部网站"
                   >
-                    💬 开始对话
+                    <span>🌐</span>
+                    <span className="hidden sm:inline">
+                      {enableWebSearch ? 'Pro深搜: 开' : 'Pro深搜: 关'}
+                    </span>
                   </button>
-                  <button
-                    onClick={() =>
-                      handleQuickReply('我想学习编程，有什么建议吗？')
+
+                  <input
+                    type="text"
+                    value={inputValue}
+                    onChange={e => setInputValue(e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        dispatchAgentMessage(inputValue);
+                      }
+                    }}
+                    placeholder={
+                      enableWebSearch
+                        ? '🌐 [Pro联网深搜模式] 输入问题，袋子将先搜索抓取权威网站再回答...'
+                        : '直接输入问题与袋子对话（问课程页面、总结写笔记、查资料），回车发送...'
                     }
-                    className="flex-1 sm:flex-initial bg-[#2c2723] hover:bg-[#3a332d] text-[#f4eadc] border border-[#d4a36a]/35 px-3.5 py-2 rounded-xl transition-all duration-200 text-xs sm:text-sm whitespace-nowrap"
+                    disabled={isTyping}
+                    className="flex-1 min-w-0 bg-[#100e0c]/90 text-[#f7efe4] placeholder-[#e9dac3]/45 text-xs sm:text-sm px-3.5 py-2.5 rounded-xl border border-[#d4a36a]/30 focus:outline-none focus:border-[#d4a36a] transition-colors"
+                  />
+
+                  <button
+                    onClick={() => dispatchAgentMessage(inputValue)}
+                    disabled={!inputValue.trim() || isTyping}
+                    className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#d4a36a] to-[#b8894e] hover:from-[#e2b478] hover:to-[#c8985a] text-[#1c1a17] font-bold text-xs sm:text-sm shadow-md transition-all disabled:opacity-45 flex items-center gap-1.5 flex-shrink-0"
                   >
-                    📚 学习建议
+                    <SendOutlined />
+                    <span>{isTyping ? '思考中' : '发送'}</span>
                   </button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* 聊天抽屉窗口 */}
-          {!isLoading && showChat && (
-            <div className="absolute inset-3 sm:inset-6 flex items-center justify-center z-20">
-              <div className="bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl border border-gray-200 flex flex-col w-full h-full max-w-4xl">
-                <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-gradient-to-r from-amber-50 to-orange-50 rounded-t-2xl flex-shrink-0">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-gradient-to-br from-[#d4a36a] to-[#8d5b44] rounded-full flex items-center justify-center shadow-md">
-                      <span className="text-white text-xl">🐱</span>
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-bold text-gray-800">
-                        袋子 AI助手 · 温暖书房
-                      </h3>
-                      <div className="flex items-center space-x-1">
-                        <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                        <span className="text-xs text-gray-500">
-                          在线 · 智能对话中
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  <Button
-                    size="small"
-                    onClick={() => setShowChat(false)}
-                    className="text-gray-600 hover:text-gray-900 hover:bg-amber-100/60"
-                  >
-                    <CloseOutlined /> 返回 3D 书房
-                  </Button>
-                </div>
-
-                {/* 消息列表 */}
-                <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 bg-gray-50/90">
-                  {messages.map(msg => (
-                    <div
-                      key={msg.id}
-                      className={`flex ${
-                        msg.sender === 'user' ? 'justify-end' : 'justify-start'
-                      } animate-fadeIn`}
-                    >
-                      {msg.sender === 'ai' && (
-                        <div className="w-8 h-8 bg-gradient-to-br from-[#d4a36a] to-[#8d5b44] rounded-full flex items-center justify-center mr-2 flex-shrink-0 shadow-md">
-                          <span className="text-white text-sm">🐱</span>
-                        </div>
-                      )}
-                      <div
-                        className={`max-w-[85%] px-4 py-3 rounded-2xl shadow-sm ${
-                          msg.sender === 'user'
-                            ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white'
-                            : 'bg-white text-gray-800 border border-gray-200'
-                        }`}
-                      >
-                        {msg.sender === 'user' ? (
-                          <p className="text-sm whitespace-pre-wrap break-words">
-                            {msg.text}
-                          </p>
-                        ) : (
-                          <div className="text-sm prose prose-sm max-w-none">
-                            <ReactMarkdown
-                              remarkPlugins={[remarkGfm]}
-                              components={{
-                                code({ className, children, ...props }: any) {
-                                  const match = /language-(\w+)/.exec(
-                                    className || ''
-                                  );
-                                  const isInline = !match;
-
-                                  return !isInline && match ? (
-                                    <div className="my-2 rounded-lg overflow-hidden">
-                                      <SyntaxHighlighter
-                                        style={vscDarkPlus}
-                                        language={match[1]}
-                                        PreTag="div"
-                                        customStyle={{
-                                          margin: 0,
-                                          borderRadius: '0.5rem',
-                                          background: '#1e1e1e',
-                                          padding: '1rem',
-                                          fontSize: '13px',
-                                          lineHeight: '1.6'
-                                        }}
-                                        {...props}
-                                      >
-                                        {String(children).replace(/\n$/, '')}
-                                      </SyntaxHighlighter>
-                                    </div>
-                                  ) : (
-                                    <code
-                                      className="bg-gray-200 px-1.5 py-0.5 rounded text-xs font-mono text-red-600"
-                                      {...props}
-                                    >
-                                      {children}
-                                    </code>
-                                  );
-                                }
-                              }}
-                            >
-                              {msg.text}
-                            </ReactMarkdown>
-                          </div>
-                        )}
-                        <span
-                          className={`text-xs opacity-70 mt-1 block ${
-                            msg.sender === 'user'
-                              ? 'text-white'
-                              : 'text-gray-500'
-                          }`}
-                        >
-                          {msg.timestamp.toLocaleTimeString('zh-CN', {
-                            hour: '2-digit',
-                            minute: '2-digit'
-                          })}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                  {isTyping && (
-                    <div className="flex justify-start">
-                      <div className="bg-gray-100 px-4 py-2 rounded-2xl">
-                        <div className="flex space-x-2">
-                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                          <div
-                            className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-                            style={{ animationDelay: '0.2s' }}
-                          ></div>
-                          <div
-                            className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-                            style={{ animationDelay: '0.4s' }}
-                          ></div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                  <div ref={messagesEndRef} />
-                </div>
-
-                {/* 快捷回复 */}
-                <div className="px-4 sm:px-6 py-3 border-t border-gray-200 bg-white flex-shrink-0">
-                  <div className="flex gap-2 overflow-x-auto pb-1">
-                    <button
-                      onClick={() => handleQuickReply('如何学习编程？')}
-                      className="px-4 py-2 text-xs bg-blue-50 text-blue-600 rounded-full hover:bg-blue-100 whitespace-nowrap transition-all hover:shadow-md flex-shrink-0"
-                    >
-                      💡 如何学习编程？
-                    </button>
-                    <button
-                      onClick={() => handleQuickReply('推荐学习资源')}
-                      className="px-4 py-2 text-xs bg-purple-50 text-purple-600 rounded-full hover:bg-purple-100 whitespace-nowrap transition-all hover:shadow-md flex-shrink-0"
-                    >
-                      📚 推荐学习资源
-                    </button>
-                    <button
-                      onClick={() => handleQuickReply('代码编辑器怎么用？')}
-                      className="px-4 py-2 text-xs bg-green-50 text-green-600 rounded-full hover:bg-green-100 whitespace-nowrap transition-all hover:shadow-md flex-shrink-0"
-                    >
-                      💻 代码编辑器
-                    </button>
-                    <button
-                      onClick={() => handleQuickReply('如何做笔记？')}
-                      className="px-4 py-2 text-xs bg-orange-50 text-orange-600 rounded-full hover:bg-orange-100 whitespace-nowrap transition-all hover:shadow-md flex-shrink-0"
-                    >
-                      📝 如何做笔记
-                    </button>
-                  </div>
-                </div>
-
-                {/* 输入框 */}
-                <div className="px-4 sm:px-6 py-4 border-t border-gray-200 bg-white rounded-b-2xl flex-shrink-0">
-                  <div className="flex items-center space-x-3">
-                    <Input
-                      value={inputValue}
-                      onChange={e => setInputValue(e.target.value)}
-                      onPressEnter={handleSendMessage}
-                      placeholder="输入消息，按回车发送..."
-                      disabled={isTyping}
-                      className="flex-1 rounded-full"
-                      size="large"
-                    />
-                    <Button
-                      type="primary"
-                      icon={<SendOutlined />}
-                      onClick={handleSendMessage}
-                      disabled={!inputValue.trim() || isTyping}
-                      size="large"
-                      className="bg-gradient-to-r from-[#d4a36a] to-[#8d5b44] border-0 rounded-full px-6 hover:shadow-lg"
-                    >
-                      发送
-                    </Button>
-                  </div>
                 </div>
               </div>
             </div>
           )}
         </div>
       </div>
+
+      {/* 笔记预览与微调弹窗（复用项目原有的 NotePreviewModal 组件） */}
+      {showNotePreview && previewNote && (
+        <NotePreviewModal
+          note={previewNote}
+          onChange={setPreviewNote}
+          onClose={() => setShowNotePreview(false)}
+          onSave={() => handleDirectSaveNote(previewNote)}
+          loading={savingNote}
+        />
+      )}
     </div>
   );
 }

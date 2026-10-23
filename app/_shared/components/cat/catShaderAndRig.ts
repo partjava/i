@@ -26,6 +26,12 @@ export interface RiggedCatController {
   furInstancedMesh: THREE.InstancedMesh;
   triggerHappyJump: () => void;
   setTalking: (talking: boolean) => void;
+  setMood: (mood: 'happy' | 'curious' | 'normal') => void;
+  getMouthScreenCoord: (
+    camera: THREE.Camera,
+    width: number,
+    height: number
+  ) => { x: number; y: number; visible: boolean };
   updateFaceTuning: (tuning: Partial<CatFaceTuning>) => void;
   updateRimAndFur: (opts: { rimStrength?: number; whiteTipStrength?: number; showFurTufts?: boolean }) => void;
   update: (
@@ -624,6 +630,11 @@ class CatPixelFaceRig {
       this.mouthRightBlock.position.x = this.baseMouthPos.x + ms * 0.85;
     }
   }
+
+  public getMouthWorldPosition(target: THREE.Vector3): THREE.Vector3 {
+    this.mouthTopBlock.getWorldPosition(target);
+    return target;
+  }
 }
 
 /**
@@ -675,6 +686,7 @@ export function buildRiggedCatFromGLB(
 
   // 动画状态变量
   let happyTimer = 0;
+  let curiousTimer = 0;
   let jumpProgress = 0;
   let isTalking = false;
   let curYaw = 0;
@@ -682,6 +694,7 @@ export function buildRiggedCatFromGLB(
   let curRoll = 0;
   const headQuat = new THREE.Quaternion();
   const euler = new THREE.Euler(0, 0, 0, 'YXZ');
+  const tmpMouthWorld = new THREE.Vector3();
 
   return {
     root,
@@ -697,6 +710,23 @@ export function buildRiggedCatFromGLB(
       if (talking) {
         happyTimer = Math.max(happyTimer, 1.2);
       }
+    },
+    setMood(mood: 'happy' | 'curious' | 'normal') {
+      if (mood === 'happy') {
+        happyTimer = 2.6;
+        jumpProgress = 1.0;
+      } else if (mood === 'curious') {
+        curiousTimer = 3.2;
+      }
+    },
+    getMouthScreenCoord(camera: THREE.Camera, width: number, height: number) {
+      faceRig.getMouthWorldPosition(tmpMouthWorld);
+      tmpMouthWorld.project(camera);
+      return {
+        x: (tmpMouthWorld.x * 0.5 + 0.5) * width,
+        y: (-tmpMouthWorld.y * 0.5 + 0.5) * height,
+        visible: tmpMouthWorld.z < 1.0
+      };
     },
     updateFaceTuning(tuning: Partial<CatFaceTuning>) {
       faceRig.applyTuning(tuning);
@@ -719,16 +749,21 @@ export function buildRiggedCatFromGLB(
       if (happyTimer > 0) {
         happyTimer = Math.max(0, happyTimer - dt);
       }
+      if (curiousTimer > 0) {
+        curiousTimer = Math.max(0, curiousTimer - dt);
+      }
       if (jumpProgress > 0) {
         jumpProgress = Math.max(0, jumpProgress - dt * 2.2);
       }
 
       // 鼠标视线跟随 + 好奇歪头插值
+      const curiousTiltOffset = curiousTimer > 0 ? Math.sin(elapsed * 3.2) * 0.16 + 0.14 : 0;
       const targetYaw = THREE.MathUtils.clamp(mouseNDC.x * 0.32, -0.35, 0.35);
       const targetPitch = THREE.MathUtils.clamp(-mouseNDC.y * 0.2, -0.22, 0.22);
       const targetRoll =
         THREE.MathUtils.clamp(-mouseNDC.x * 0.14, -0.18, 0.18) +
-        Math.sin(elapsed * 1.1) * 0.04;
+        Math.sin(elapsed * 1.1) * 0.04 +
+        curiousTiltOffset;
 
       curYaw += (targetYaw - curYaw) * 0.08;
       curPitch += (targetPitch - curPitch) * 0.08;
