@@ -922,6 +922,43 @@ body {
   }
 }
 
+/* iOS 27 灵动岛液态玻璃搜索框透明化适配 */
+.liquid-glass-search .ant-input-group-wrapper,
+.liquid-glass-search .ant-input-wrapper,
+.liquid-glass-search .ant-input-affix-wrapper,
+.liquid-glass-search .ant-input {
+  background: transparent !important;
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+.liquid-glass-search .ant-input {
+  color: var(--content-primary) !important;
+  font-weight: 500;
+}
+.liquid-glass-search .ant-input::placeholder {
+  color: rgba(61, 79, 107, 0.72) !important;
+}
+body.dark .liquid-glass-search .ant-input::placeholder {
+  color: rgba(229, 231, 235, 0.65) !important;
+}
+.liquid-glass-search .ant-input-group-addon {
+  background: transparent !important;
+  border: none !important;
+}
+.liquid-glass-search .ant-input-search-button {
+  border-radius: 9999px !important;
+  width: 34px !important;
+  height: 34px !important;
+  padding: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.85) 0%, rgba(59, 130, 246, 0.85) 100%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.65) !important;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.5) !important;
+}
+
 /* 搜索动画 */
 @keyframes search-pulse {
   0%, 100% {

@@ -10,6 +10,7 @@ import InkWashDecoration from '../../_shared/components/InkWashDecoration';
 
 export default function CodeEditorPage() {
   const [selectedAlgorithm, setSelectedAlgorithm] = useState('bubble');
+  const [activeCategory, setActiveCategory] = useState('全部');
   const [inputData, setInputData] = useState('5,3,8,4,2,7,1,6');
   const [data, setData] = useState([5, 3, 8, 4, 2, 7, 1, 6]);
   const [speed, setSpeed] = useState(1000);
@@ -43,6 +44,10 @@ export default function CodeEditorPage() {
   ];
 
   const currentAlgorithm = algorithms.find(a => a.id === selectedAlgorithm);
+  const categories = ['全部', '排序算法', '查找算法', '数学可视化', '机器学习'];
+  const filteredAlgorithms = activeCategory === '全部'
+    ? algorithms
+    : algorithms.filter(a => a.category === activeCategory);
 
   const handleDataChange = (value: string) => {
     setInputData(value);
@@ -99,83 +104,144 @@ export default function CodeEditorPage() {
         </span>
       ),
       children: (
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 lg:gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-6">
           {/* 左侧控制面板 */}
-          <div className="lg:col-span-1 space-y-4">
-            {/* 算法选择 */}
-            <Card className="shadow-lg">
-              <h3 className="text-lg font-bold mb-3">选择算法</h3>
-              <div className="space-y-2 max-h-[500px] overflow-y-auto">
-                {algorithms.map(algo => (
+          <div className="lg:col-span-4 xl:col-span-3 space-y-4">
+            {/* 算法选择面板（暗曜蓝玻璃科技卡片） */}
+            <div
+              className="rounded-2xl p-4 border shadow-xl"
+              style={{
+                background: 'linear-gradient(165deg, #0d1526 0%, #111c33 100%)',
+                borderColor: 'rgba(99, 102, 241, 0.25)',
+              }}
+            >
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-base font-bold text-slate-100 flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-sky-400 shadow-[0_0_8px_#38bdf8]" />
+                  <span>算法矩阵</span>
+                </h3>
+                <span className="text-xs font-mono text-indigo-300 bg-indigo-500/15 border border-indigo-400/30 px-2 py-0.5 rounded-full">
+                  {filteredAlgorithms.length} 项
+                </span>
+              </div>
+
+              {/* 分类筛选胶囊 */}
+              <div className="flex flex-wrap gap-1.5 mb-3 pb-3 border-b border-white/10">
+                {categories.map(cat => (
                   <button
-                    key={algo.id}
-                    onClick={() => setSelectedAlgorithm(algo.id)}
-                    className={`w-full text-left px-3 py-2 rounded-lg transition-all text-sm ${
-                      selectedAlgorithm === algo.id
-                        ? 'bg-gradient-to-r from-brand-primary to-brand-hover text-content-inverse shadow-lg scale-105'
-                        : 'bg-surface-page text-content-secondary hover:bg-surface-muted'
+                    key={cat}
+                    onClick={() => setActiveCategory(cat)}
+                    className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all ${
+                      activeCategory === cat
+                        ? 'bg-gradient-to-r from-indigo-500 to-sky-500 text-white shadow-md'
+                        : 'bg-white/5 text-slate-400 hover:text-slate-200 hover:bg-white/10'
                     }`}
                   >
-                    <div className="flex items-center gap-2">
-                      <span className="text-xl">{algo.icon}</span>
-                      <div className="flex-1">
-                        <div className="font-semibold">{algo.name}</div>
-                        <div className="text-xs opacity-75 flex items-center gap-2">
-                          <span>{algo.category}</span>
-                          <span className={`px-2 py-0.5 rounded-full text-xs ${
-                            algo.difficulty === '简单' ? 'bg-green-500/20 text-green-300' :
-                            algo.difficulty === '中等' ? 'bg-yellow-500/20 text-yellow-300' :
-                            'bg-red-500/20 text-red-300'
-                          }`}>
-                            {algo.difficulty}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
+                    {cat === '排序算法' ? '排序' : cat === '查找算法' ? '查找' : cat === '数学可视化' ? '数学' : cat}
                   </button>
                 ))}
               </div>
-            </Card>
+
+              {/* 算法列表（去除横向滚动条） */}
+              <div className="space-y-1.5 max-h-[380px] overflow-y-auto overflow-x-hidden pr-1 custom-scrollbar">
+                {filteredAlgorithms.map(algo => {
+                  const active = selectedAlgorithm === algo.id;
+                  return (
+                    <button
+                      key={algo.id}
+                      onClick={() => setSelectedAlgorithm(algo.id)}
+                      className={`w-full text-left px-3 py-2.5 rounded-xl transition-all text-sm border ${
+                        active
+                          ? 'bg-gradient-to-r from-indigo-600/80 to-sky-600/70 text-white border-indigo-400/60 shadow-lg'
+                          : 'bg-white/[0.03] text-slate-300 border-white/5 hover:bg-white/[0.08] hover:border-white/15'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <span className="text-lg w-7 h-7 rounded-lg bg-white/10 flex items-center justify-center shrink-0">
+                          {algo.icon}
+                        </span>
+                        <div className="flex-1 min-w-0">
+                          <div className="font-semibold truncate text-xs sm:text-sm">{algo.name}</div>
+                          <div className="text-[11px] mt-0.5 flex items-center gap-2">
+                            <span className={active ? 'text-indigo-100/90' : 'text-slate-400'}>{algo.category}</span>
+                            <span
+                              className={`px-1.5 py-0.2 rounded text-[10px] font-medium border ${
+                                algo.difficulty === '简单'
+                                  ? 'bg-emerald-500/20 text-emerald-300 border-emerald-400/30'
+                                  : algo.difficulty === '中等'
+                                  ? 'bg-amber-500/20 text-amber-300 border-amber-400/30'
+                                  : 'bg-rose-500/20 text-rose-300 border-rose-400/30'
+                              }`}
+                            >
+                              {algo.difficulty}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
 
             {/* 数据输入 - 只在需要时显示 */}
-            {currentAlgorithm?.needsData && (
-              <Card className="shadow-lg">
-                <h3 className="text-lg font-bold mb-3">输入数据</h3>
+            {currentAlgorithm?.needsData ? (
+              <div
+                className="rounded-2xl p-4 border shadow-xl"
+                style={{
+                  background: 'linear-gradient(165deg, #0d1526 0%, #111c33 100%)',
+                  borderColor: 'rgba(99, 102, 241, 0.25)',
+                }}
+              >
+                <div className="flex items-center justify-between mb-2.5">
+                  <h3 className="text-sm font-bold text-slate-100">输入序列数据</h3>
+                  <span className="text-[11px] font-mono text-slate-400">{data.length} 个元素</span>
+                </div>
                 <textarea
                   value={inputData}
                   onChange={(e) => handleDataChange(e.target.value)}
-                  className="w-full px-3 py-2 bg-surface-page border border-line-strong rounded-lg focus:border-content-muted focus:outline-none text-sm"
-                  rows={3}
+                  className="w-full px-3 py-2 bg-slate-950/80 border border-indigo-500/30 rounded-xl text-slate-100 font-mono text-xs focus:border-sky-400 focus:outline-none"
+                  rows={2}
                   placeholder="输入数字，用逗号分隔"
                 />
                 <button
                   onClick={generateRandomData}
-                  className="w-full mt-3 px-4 py-2 bg-gradient-to-r from-green-600 to-teal-600 text-white rounded-lg hover:shadow-lg transition-all text-sm"
+                  className="w-full mt-2.5 px-4 py-2 rounded-xl text-xs font-bold text-white transition-all hover:brightness-110 shadow-md"
+                  style={{
+                    background: 'linear-gradient(135deg, #0ea5e9 0%, #6366f1 100%)',
+                  }}
                 >
-                  🎲 生成随机数据
+                  🎲 随机生成测试数组
                 </button>
-                <div className="mt-2 text-xs text-gray-500">
-                  当前: [{data.join(', ')}]
-                </div>
-              </Card>
-            )}
-
-            {/* 算法提示 - 不需要数据时显示 */}
-            {!currentAlgorithm?.needsData && (
-              <Card className="shadow-lg bg-gradient-to-br from-blue-50 to-purple-50">
-                <div className="text-center">
-                  <div className="text-4xl mb-3">✨</div>
-                  <h3 className="text-lg font-bold mb-2 text-gray-800">自动生成数据</h3>
-                  <p className="text-sm text-gray-600">
-                    此算法会自动生成可视化数据，无需手动输入
-                  </p>
-                </div>
-              </Card>
+              </div>
+            ) : (
+              <div
+                className="rounded-2xl p-4 border shadow-xl text-center"
+                style={{
+                  background: 'linear-gradient(165deg, #0d1526 0%, #111c33 100%)',
+                  borderColor: 'rgba(99, 102, 241, 0.25)',
+                }}
+              >
+                <div className="text-2xl mb-1.5">✨</div>
+                <h3 className="text-sm font-bold text-slate-100 mb-1">数学/模型自动采样</h3>
+                <p className="text-xs text-slate-400">
+                  该可视化由三维数学方程或训练集自动生成空间点云
+                </p>
+              </div>
             )}
 
             {/* 速度控制 */}
-            <Card className="shadow-lg">
-              <h3 className="text-lg font-bold mb-3">播放速度</h3>
+            <div
+              className="rounded-2xl p-4 border shadow-xl"
+              style={{
+                background: 'linear-gradient(165deg, #0d1526 0%, #111c33 100%)',
+                borderColor: 'rgba(99, 102, 241, 0.25)',
+              }}
+            >
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-sm font-bold text-slate-100">单步演示间隔</h3>
+                <span className="text-xs font-mono text-sky-400 font-semibold">{speed} ms / 步</span>
+              </div>
               <input
                 type="range"
                 min="100"
@@ -183,40 +249,69 @@ export default function CodeEditorPage() {
                 step="100"
                 value={speed}
                 onChange={(e) => setSpeed(parseInt(e.target.value))}
-                className="w-full"
+                className="w-full accent-indigo-500 cursor-pointer"
               />
-              <div className="text-center text-gray-600 mt-2 text-sm">
-                {speed}ms / 步
+              <div className="flex justify-between text-[11px] text-slate-400 mt-1">
+                <span>极速 (100ms)</span>
+                <span>慢放 (2000ms)</span>
               </div>
-            </Card>
+            </div>
           </div>
 
-          {/* 右侧可视化区域 */}
-          <div className="lg:col-span-3">
-            <Card className="shadow-lg">
-              <div className="bg-gradient-to-r from-blue-600 to-purple-600 -m-6 mb-0 p-4 rounded-t-lg">
-                <h2 className="text-xl font-bold text-white">
-                  {algorithms.find(a => a.id === selectedAlgorithm)?.icon}{' '}
-                  {algorithms.find(a => a.id === selectedAlgorithm)?.name}
-                </h2>
-              </div>
-              
-              <div className="mt-6">
-                <AlgorithmVisualizer
-                  algorithm={selectedAlgorithm}
-                  data={data}
-                  speed={speed}
-                />
+          {/* 右侧可视化主舞台 */}
+          <div className="lg:col-span-8 xl:col-span-9 space-y-4">
+            <div
+              className="rounded-2xl p-4 sm:p-5 border shadow-2xl"
+              style={{
+                background: 'linear-gradient(165deg, #0b1120 0%, #0f172a 100%)',
+                borderColor: 'rgba(99, 102, 241, 0.28)',
+              }}
+            >
+              {/* 顶部算法标题栏 */}
+              <div className="flex flex-wrap items-center justify-between gap-3 pb-4 mb-4 border-b border-white/10">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500/30 to-sky-500/20 border border-indigo-400/40 flex items-center justify-center text-xl shadow-inner">
+                    {currentAlgorithm?.icon}
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h2 className="text-lg sm:text-xl font-bold text-white">
+                        {currentAlgorithm?.name}
+                      </h2>
+                      <span className="text-xs px-2.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-400/30 font-medium">
+                        {currentAlgorithm?.category}
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-400 mt-0.5">
+                      3D 实时空间算法推演 · 支持进度条拖拽回放与单步拆解
+                    </p>
+                  </div>
+                </div>
               </div>
 
-              {/* 算法说明 */}
-              <div className="mt-6 p-4 bg-surface-page rounded-lg">
-                <h3 className="text-base font-bold mb-2">算法说明</h3>
-                <div className="text-sm text-content-secondary space-y-1">
+              <AlgorithmVisualizer
+                algorithm={selectedAlgorithm}
+                data={data}
+                speed={speed}
+              />
+
+              {/* 算法原理与复杂度卡片 */}
+              <div
+                className="mt-4 p-4 rounded-xl border"
+                style={{
+                  background: 'rgba(15, 23, 42, 0.65)',
+                  borderColor: 'rgba(255, 255, 255, 0.08)',
+                }}
+              >
+                <h3 className="text-sm font-bold text-indigo-300 mb-2 flex items-center gap-1.5">
+                  <span>📐</span>
+                  <span>核心复杂度与算法原理</span>
+                </h3>
+                <div className="text-xs sm:text-sm text-slate-300 space-y-1 leading-relaxed">
                   {getAlgorithmDescription(selectedAlgorithm)}
                 </div>
               </div>
-            </Card>
+            </div>
           </div>
         </div>
       )

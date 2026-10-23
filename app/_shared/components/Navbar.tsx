@@ -4,7 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useAuth } from '@shared/hooks/useAuth';
 import { useUser } from '../providers/UserProvider';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { Button, Dropdown, Avatar, Badge, Tooltip } from 'antd';
 import {
   MenuOutlined,
@@ -29,11 +29,32 @@ export default function Navbar() {
   const { data: session, status, signOut } = useAuth();
   const { user } = useUser();
   const router = useRouter();
+  const pathname = usePathname();
   const { setIsOpen } = useSidebar();
   const [settingOpen, setSettingOpen] = useState(false);
   const [showRobot, setShowRobot] = useState(false);
   const [robotPreloaded, setRobotPreloaded] = useState(false);
   const [showVip, setShowVip] = useState(false);
+
+  const isActive = (href: string) => {
+    if (href === '/') return pathname === '/';
+    return pathname?.startsWith(href);
+  };
+
+  const navItemClass = (href: string) =>
+    `relative flex flex-col items-center justify-center px-2.5 py-1 rounded-2xl transition-all duration-200 ${
+      isActive(href)
+        ? 'text-brand-primary font-semibold bg-white/45 dark:bg-white/15 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_4px_12px_rgba(15,23,42,0.06)] border border-white/75 dark:border-white/20'
+        : 'text-content-primary/85 hover:text-brand-primary hover:bg-white/30 dark:hover:bg-white/10 border border-transparent'
+    }`;
+
+  // iOS 27 高透晶体液态玻璃胶囊公共样式（与左侧玻璃目录同系超低底色不透明度 + 顶部高光折射）
+  const liquidIslandStyle: React.CSSProperties = {
+    background:
+      'linear-gradient(165deg, rgba(255, 255, 255, 0.16) 0%, rgba(238, 244, 252, 0.08) 50%, rgba(255, 255, 255, 0.12) 100%)',
+    boxShadow:
+      '0 10px 28px rgba(15, 23, 42, 0.08), inset 0 1.5px 0 rgba(255, 255, 255, 0.88), inset 0 -1px 0 rgba(255, 255, 255, 0.35)',
+  };
 
   // JWT 认证无需轮询 session 检查，401 由 FetchInterceptor 处理
   useEffect(() => {
@@ -104,208 +125,223 @@ export default function Navbar() {
   ];
 
   return (
-    <nav className="bg-surface-raised shadow-sm border-b border-line-subtle sticky top-0 z-40">
-      <div className="px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          {/* 左侧：Logo + 移动端菜单按钮 */}
-          <div className="flex items-center space-x-4 flex-1">
-            {/* 移动端汉堡菜单 */}
-            <button
-              onClick={() => {
-                setIsOpen(true);
-                // 添加触摸反馈
-                if (navigator.vibrate) {
-                  navigator.vibrate(10);
-                }
-              }}
-              className="lg:hidden p-2 rounded-md text-content-muted hover:text-content-primary hover:bg-control-fill-hover active:scale-95 transition-transform"
-            >
-              <MenuOutlined className="w-6 h-6" />
-            </button>
+    <nav className="sticky top-0 z-40 px-2.5 sm:px-4 lg:px-6 pt-2 pb-1.5 bg-transparent select-none">
+      <div className="flex items-center justify-between gap-2.5 lg:gap-4">
+        {/* 🏝️ 左岛：Logo + 桌面端导航矩阵（iOS 27 高透液态玻璃胶囊） */}
+        <div
+          className="relative flex items-center h-14 px-3 sm:px-4 rounded-full backdrop-blur-2xl backdrop-saturate-150 border border-white/75 dark:border-white/20 overflow-hidden"
+          style={liquidIslandStyle}
+        >
+          {/* 顶部镜面折射高光带 */}
+          <div
+            className="absolute inset-x-4 top-0 h-5 pointer-events-none"
+            style={{
+              background:
+                'linear-gradient(180deg, rgba(255,255,255,0.32) 0%, rgba(255,255,255,0.04) 70%, transparent 100%)',
+            }}
+          />
 
-            {/* Logo */}
-            <Link href="/" className="flex items-center space-x-2">
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center overflow-hidden bg-surface-muted">
-                <StitchLogo size={32} />
-              </div>
-              <Image
-                src="/images/logo-calligraphy-transparent.png"
-                alt="PartJava"
-                width={921}
-                height={601}
-                className="h-7 w-auto hidden sm:block"
-              />
+          {/* 移动端汉堡菜单 */}
+          <button
+            onClick={() => {
+              setIsOpen(true);
+              if (navigator.vibrate) {
+                navigator.vibrate(10);
+              }
+            }}
+            className="lg:hidden mr-2 p-2 rounded-full text-content-primary hover:bg-white/30 active:scale-95 transition-transform"
+          >
+            <MenuOutlined className="w-5 h-5" />
+          </button>
+
+          {/* Logo */}
+          <Link href="/" className="relative flex items-center space-x-2 pr-1">
+            <div className="w-8 h-8 rounded-xl flex items-center justify-center overflow-hidden bg-white/35 border border-white/70 shadow-sm">
+              <StitchLogo size={30} />
+            </div>
+            <Image
+              src="/images/logo-calligraphy-transparent.png"
+              alt="PartJava"
+              width={921}
+              height={601}
+              className="h-6 sm:h-7 w-auto hidden sm:block drop-shadow-sm"
+            />
+          </Link>
+
+          {/* 分隔竖线 */}
+          <span className="hidden md:block w-px h-6 mx-3 bg-white/50 dark:bg-white/15" />
+
+          {/* 桌面端导航链接 */}
+          <div className="hidden md:flex items-center space-x-1 lg:space-x-1.5">
+            <Link href="/" className={navItemClass('/')}>
+              <HomeOutlined className="text-base mb-0.5" />
+              <span className="text-[11px] leading-tight">首页</span>
             </Link>
 
-            {/* 桌面端导航链接 */}
-            <div className="hidden md:flex items-center space-x-6 ml-8">
-              <Link
-                href="/"
-                className="flex flex-col items-center text-content-secondary hover:text-brand-primary transition-colors"
-              >
-                <HomeOutlined className="text-lg mb-1" />
-                <span className="text-xs">首页</span>
-              </Link>
+            <Link href="/notes" className={navItemClass('/notes')}>
+              <EditOutlined className="text-base mb-0.5" />
+              <span className="text-[11px] leading-tight">笔记</span>
+            </Link>
 
-              <Link
-                href="/notes"
-                className="flex flex-col items-center text-content-secondary hover:text-brand-primary transition-colors"
-              >
-                <EditOutlined className="text-lg mb-1" />
-                <span className="text-xs">笔记</span>
-              </Link>
-              <Link
-                href="/profile"
-                className="flex flex-col items-center text-content-secondary hover:text-brand-primary transition-colors"
-              >
-                <UserOutlined className="text-lg mb-1" />
-                <span className="text-xs">{session ? '资料' : '数据'}</span>
-              </Link>
-              <Link
-                href="/code/editor"
-                className="flex flex-col items-center text-content-secondary hover:text-brand-primary transition-colors"
-              >
-                <CodeOutlined className="text-lg mb-1" />
-                <span className="text-xs">代码</span>
-              </Link>
-              <Link
-                href="/challenges"
-                className="flex flex-col items-center text-content-secondary hover:text-brand-primary transition-colors"
-              >
-                <svg className="w-5 h-5 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            <Link href="/profile" className={navItemClass('/profile')}>
+              <UserOutlined className="text-base mb-0.5" />
+              <span className="text-[11px] leading-tight">{session ? '资料' : '数据'}</span>
+            </Link>
+
+            <Link href="/code/editor" className={navItemClass('/code')}>
+              <CodeOutlined className="text-base mb-0.5" />
+              <span className="text-[11px] leading-tight">代码</span>
+            </Link>
+
+            <Link href="/challenges" className={navItemClass('/challenges')}>
+              <svg className="w-4 h-4 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span className="text-[11px] leading-tight">挑战</span>
+            </Link>
+
+            <Link href="/tools/search" className={navItemClass('/tools/search')}>
+              <svg className="w-4 h-4 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <span className="text-[11px] leading-tight">全局</span>
+            </Link>
+
+            <Link href="/tools/game" className={navItemClass('/tools/game')}>
+              <svg className="w-4 h-4 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 6h.01M6 12h.01M6 18h.01M12 6h.01M12 12h.01M12 18h.01M18 6h.01M18 12h.01M18 18h.01" />
+              </svg>
+              <span className="text-[11px] leading-tight">游戏</span>
+            </Link>
+
+            <button
+              onClick={() => setShowRobot(true)}
+              className="relative flex flex-col items-center justify-center px-2.5 py-1 rounded-2xl transition-all duration-200 text-content-primary/85 hover:text-brand-primary hover:bg-white/30 dark:hover:bg-white/10"
+              title={robotPreloaded ? '机器人已就绪' : '正在加载机器人...'}
+            >
+              <svg className="w-4 h-4 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+              </svg>
+              <span className="text-[11px] leading-tight">机器人</span>
+            </button>
+
+            {/* 👑 VIP 会员入口 */}
+            <button
+              onClick={() => setShowVip(true)}
+              className="relative flex flex-col items-center justify-center px-2.5 py-1 rounded-2xl transition-all duration-200 hover:scale-105 bg-amber-400/15 hover:bg-amber-400/25 border border-amber-400/45 group"
+              title="开通/续费 VIP 会员"
+            >
+              <div className="relative">
+                <svg className="w-4 h-4 mb-0.5 text-amber-500 group-hover:text-amber-400 drop-shadow-[0_0_6px_rgba(250,204,21,0.6)]" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm2 3h10v1a1 1 0 01-1 1H8a1 1 0 01-1-1v-1z" />
                 </svg>
-                <span className="text-xs">挑战</span>
-              </Link>
-              <Link
-                href="/tools/search"
-                className="flex flex-col items-center text-content-secondary hover:text-brand-primary transition-colors"
-              >
-                <svg className="w-5 h-5 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-                <span className="text-xs">全局</span>
-              </Link>
-              <Link
-                href="/tools/game"
-                className="flex flex-col items-center text-content-secondary hover:text-brand-primary transition-colors"
-              >
-                <svg className="w-5 h-5 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 6h.01M6 12h.01M6 18h.01M12 6h.01M12 12h.01M12 18h.01M18 6h.01M18 12h.01M18 18h.01" />
-                </svg>
-                <span className="text-xs">游戏</span>
-              </Link>
-              <button
-                onClick={() => setShowRobot(true)}
-                className={`flex flex-col items-center transition-all duration-200 transform hover:scale-105 text-content-secondary hover:text-brand-primary`}
-                title={robotPreloaded ? "机器人已就绪" : "正在加载机器人..."}
-              >
-                <svg className="w-5 h-5 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                </svg>
-                <span className="text-xs">机器人</span>
-              </button>
-              {/* 👑 VIP 会员入口 */}
-              <button
-                onClick={() => setShowVip(true)}
-                className="flex flex-col items-center transition-all duration-200 transform hover:scale-110 relative group"
-                title="开通/续费 VIP 会员"
-              >
-                <div className="relative">
-                  <svg className="w-5 h-5 mb-1 text-yellow-400 group-hover:text-yellow-300 drop-shadow-[0_0_6px_rgba(250,204,21,0.8)]" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm2 3h10v1a1 1 0 01-1 1H8a1 1 0 01-1-1v-1z"/>
+                <span className="absolute -top-0.5 -right-1 w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+              </div>
+              <span className="text-[11px] leading-tight text-amber-600 dark:text-amber-300 font-bold">VIP</span>
+            </button>
+          </div>
+        </div>
+
+        {/* 🏝️ 中岛：高透液态玻璃搜索胶囊 */}
+        <div
+          className="hidden md:flex items-center flex-1 max-w-md h-14 px-3 rounded-full backdrop-blur-2xl backdrop-saturate-150 border border-white/75 dark:border-white/20 relative overflow-hidden"
+          style={liquidIslandStyle}
+        >
+          <div
+            className="absolute inset-x-4 top-0 h-5 pointer-events-none"
+            style={{
+              background:
+                'linear-gradient(180deg, rgba(255,255,255,0.32) 0%, rgba(255,255,255,0.04) 70%, transparent 100%)',
+            }}
+          />
+          <GlobalSearch
+            className="w-full liquid-glass-search"
+            placeholder="搜索课程、工具、笔记... (Ctrl+K)"
+            size="middle"
+          />
+        </div>
+
+        {/* 🏝️ 右岛：用户状态与通知液态玻璃胶囊 */}
+        <div
+          className="relative flex items-center h-14 px-3 sm:px-3.5 rounded-full backdrop-blur-2xl backdrop-saturate-150 border border-white/75 dark:border-white/20 space-x-2 overflow-hidden"
+          style={liquidIslandStyle}
+        >
+          <div
+            className="absolute inset-x-3 top-0 h-5 pointer-events-none"
+            style={{
+              background:
+                'linear-gradient(180deg, rgba(255,255,255,0.32) 0%, rgba(255,255,255,0.04) 70%, transparent 100%)',
+            }}
+          />
+          {/* 移动端搜索按钮 */}
+          <div className="sm:hidden">
+            <Tooltip title="全局搜索">
+              <Button
+                type="text"
+                icon={
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                   </svg>
-                  <span className="absolute -top-1 -right-1 w-1.5 h-1.5 rounded-full bg-yellow-400 animate-pulse" />
+                }
+                onClick={() => router.push('/tools/search')}
+                className="text-content-primary hover:text-brand-primary"
+              />
+            </Tooltip>
+          </div>
+
+          {status === 'loading' ? (
+            <div className="flex items-center space-x-2 px-2">
+              <div className="w-6 h-6 bg-white/50 rounded-full animate-pulse"></div>
+              <div className="w-16 h-4 bg-white/50 rounded animate-pulse hidden md:block"></div>
+            </div>
+          ) : session && session.user ? (
+            <>
+              {/* 通知铃铛 */}
+              <Tooltip title="通知">
+                <Badge count={0} size="small">
+                  <Button
+                    type="text"
+                    icon={<BellOutlined />}
+                    className="!rounded-full text-content-primary hover:text-brand-primary hover:!bg-white/35"
+                  />
+                </Badge>
+              </Tooltip>
+
+              {/* 用户头像和菜单 */}
+              <Dropdown
+                menu={{ items: userMenuItems }}
+                placement="bottomRight"
+                trigger={['click']}
+              >
+                <div className="flex items-center space-x-2 cursor-pointer py-1 pl-1 pr-2.5 rounded-full bg-white/30 hover:bg-white/50 dark:bg-white/10 dark:hover:bg-white/20 border border-white/65 dark:border-white/20 transition-all">
+                  <Avatar
+                    size="small"
+                    src={user?.image || session?.user?.image || undefined}
+                    icon={!(user?.image || (session?.user?.image)) ? <UserOutlined /> : undefined}
+                    className="bg-brand-primary shadow-sm"
+                  />
+                  <span className="text-xs sm:text-sm font-semibold text-content-primary hidden md:block">
+                    {user?.name || session?.user?.name || session?.user?.email?.split('@')[0]}
+                  </span>
                 </div>
-                <span className="text-xs text-yellow-400 group-hover:text-yellow-300 font-semibold">VIP</span>
+              </Dropdown>
+            </>
+          ) : (
+            <div className="flex items-center space-x-1.5">
+              <button
+                onClick={() => router.push('/auth/login')}
+                className="px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-semibold text-content-primary hover:text-brand-primary hover:bg-white/35 transition-all"
+              >
+                登录
+              </button>
+              <button
+                onClick={() => router.push('/auth/register')}
+                className="px-4 py-1.5 rounded-full text-xs sm:text-sm font-semibold text-white bg-gradient-to-r from-indigo-500 to-blue-500 hover:from-indigo-600 hover:to-blue-600 shadow-sm transition-all"
+              >
+                注册
               </button>
             </div>
-          </div>
-
-          {/* 中间：桌面端搜索框 */}
-          <div className="hidden md:flex flex-1 max-w-md mx-4">
-            <GlobalSearch
-              className="w-full"
-              placeholder="搜索... (Ctrl+K)"
-              size="middle"
-            />
-          </div>
-
-          {/* 右侧：用户操作区域 */}
-          <div className="flex items-center space-x-3">
-            {/* 移动端搜索按钮 - 跳转到搜索页面 */}
-            <div className="sm:hidden">
-              <Tooltip title="全局搜索">
-                <Button
-                  type="text"
-                  icon={
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
-                  }
-                  onClick={() => router.push('/tools/search')}
-                  className="text-content-secondary hover:text-brand-primary"
-                />
-              </Tooltip>
-            </div>
-
-            {status === 'loading' ? (
-              // 加载状态 - 显示占位符
-              <div className="flex items-center space-x-2">
-                <div className="w-6 h-6 bg-line-strong rounded-full animate-pulse"></div>
-                <div className="w-16 h-4 bg-line-strong rounded animate-pulse hidden md:block"></div>
-              </div>
-            ) : session && session.user ? (
-              <>
-                {/* 通知铃铛 */}
-                <Tooltip title="通知">
-                  <Badge count={0} size="small">
-                    <Button
-                      type="text"
-                      icon={<BellOutlined />}
-                      className="text-content-secondary hover:text-brand-primary"
-                    />
-                  </Badge>
-                </Tooltip>
-
-                {/* 用户头像和菜单 */}
-                <Dropdown
-                  menu={{ items: userMenuItems }}
-                  placement="bottomRight"
-                  trigger={['click']}
-                >
-                  <div className="flex items-center space-x-2 cursor-pointer p-1 rounded-lg hover:bg-control-fill-hover">
-                    <Avatar
-                      size="small"
-                      src={user?.image || session?.user?.image || undefined}
-                      icon={!(user?.image || (session?.user?.image)) ? <UserOutlined /> : undefined}
-                      className="bg-brand-primary"
-                    />
-                    <span className="text-sm font-medium text-content-secondary hidden md:block">
-                      {user?.name || session?.user?.name || session?.user?.email?.split('@')[0]}
-                    </span>
-                  </div>
-                </Dropdown>
-              </>
-            ) : (
-              <div className="flex items-center space-x-2">
-                <Button
-                  type="text"
-                  onClick={() => router.push('/auth/login')}
-                  className="text-content-secondary hover:text-brand-primary"
-                >
-                  登录
-                </Button>
-                <Button
-                  type="primary"
-                  onClick={() => router.push('/auth/register')}
-                  size="small"
-                >
-                  注册
-                </Button>
-              </div>
-            )}
-          </div>
+          )}
         </div>
       </div>
 

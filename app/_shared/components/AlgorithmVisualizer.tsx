@@ -25,63 +25,63 @@ export default function AlgorithmVisualizer({
     if (!canvasRef.current) return;
 
     const scene = new THREE.Scene();
-    // 深色渐变背景（暖色调适配）
-    scene.background = new THREE.Color(0x1a1a2e);
-    scene.fog = new THREE.Fog(0x1a1a2e, 10, 50);
+    // 深邃黑曜石蓝科技感背景
+    scene.background = new THREE.Color(0x090e1a);
+    scene.fog = new THREE.Fog(0x090e1a, 16, 56);
     
     const camera = new THREE.PerspectiveCamera(
-      60,
+      52,
       canvasRef.current.clientWidth / canvasRef.current.clientHeight,
       0.1,
       1000
     );
-    camera.position.set(0, 6, 18); // 降低 y 坐标，从 8 改为 6
-    camera.lookAt(0, 2, 0); // 看向稍微高一点的位置
+    camera.position.set(0, 6.2, 17.5);
+    camera.lookAt(0, 2.5, 0);
 
     const renderer = new THREE.WebGLRenderer({ 
       canvas: canvasRef.current,
       antialias: true,
       alpha: true
     });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     renderer.setSize(canvasRef.current.clientWidth, canvasRef.current.clientHeight);
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
-    // 更丰富的光源
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+    // 立体棚拍级灯光
+    const ambientLight = new THREE.AmbientLight(0xdbeafe, 0.65);
     scene.add(ambientLight);
     
-    const mainLight = new THREE.DirectionalLight(0xffffff, 0.8);
-    mainLight.position.set(10, 15, 10);
+    const mainLight = new THREE.DirectionalLight(0xffffff, 1.15);
+    mainLight.position.set(10, 18, 12);
     mainLight.castShadow = true;
     mainLight.shadow.mapSize.width = 2048;
     mainLight.shadow.mapSize.height = 2048;
     scene.add(mainLight);
 
-    // 添加彩色点光源
-    const pointLight1 = new THREE.PointLight(0x00ffff, 0.5, 50);
-    pointLight1.position.set(-10, 5, 5);
+    // 双色环境点光源（冰青 + 紫靛）
+    const pointLight1 = new THREE.PointLight(0x38bdf8, 0.85, 55);
+    pointLight1.position.set(-10, 6, 6);
     scene.add(pointLight1);
 
-    const pointLight2 = new THREE.PointLight(0xff00ff, 0.5, 50);
-    pointLight2.position.set(10, 5, -5);
+    const pointLight2 = new THREE.PointLight(0x818cf8, 0.85, 55);
+    pointLight2.position.set(10, 6, -6);
     scene.add(pointLight2);
 
     sceneRef.current = scene;
     rendererRef.current = renderer;
 
-    // 添加相机动画
+    // 添加相机平滑呼吸运镜
+    let animId: number;
     let time = 0;
     const animate = () => {
-      requestAnimationFrame(animate);
-      time += 0.005;
+      animId = requestAnimationFrame(animate);
+      time += 0.004;
       
-      // 相机轻微摆动 - 调整高度范围
-      camera.position.x = Math.sin(time * 0.3) * 2;
-      camera.position.y = 6 + Math.sin(time * 0.5) * 0.8; // 从 8 改为 6，摆动幅度从 1 改为 0.8
-      camera.lookAt(0, 2, 0); // 看向稍微高一点的位置
+      camera.position.x = Math.sin(time * 0.35) * 1.6;
+      camera.position.y = 6.2 + Math.sin(time * 0.5) * 0.55;
+      camera.lookAt(0, 2.5, 0);
 
-      // 光源动画
       pointLight1.position.x = Math.sin(time) * 10;
       pointLight1.position.z = Math.cos(time) * 10;
       pointLight2.position.x = Math.cos(time) * 10;
@@ -91,16 +91,23 @@ export default function AlgorithmVisualizer({
     };
     animate();
 
-    // 响应式调整
+    // 响应式调整（兼容侧边栏折叠/展开与窗口缩放）
     const handleResize = () => {
       if (!canvasRef.current) return;
-      camera.aspect = canvasRef.current.clientWidth / canvasRef.current.clientHeight;
+      const w = canvasRef.current.clientWidth;
+      const h = canvasRef.current.clientHeight;
+      if (!w || !h) return;
+      camera.aspect = w / h;
       camera.updateProjectionMatrix();
-      renderer.setSize(canvasRef.current.clientWidth, canvasRef.current.clientHeight);
+      renderer.setSize(w, h, false);
     };
+    const ro = new ResizeObserver(handleResize);
+    ro.observe(canvasRef.current);
     window.addEventListener('resize', handleResize);
 
     return () => {
+      cancelAnimationFrame(animId);
+      ro.disconnect();
       window.removeEventListener('resize', handleResize);
       renderer.dispose();
     };
@@ -157,71 +164,189 @@ export default function AlgorithmVisualizer({
     }
   };
 
-  return (
-    <div className="w-full h-full bg-amber-950/80 rounded-xl overflow-hidden">
-      {/* 3D 画布 */}
-      <canvas 
-        ref={canvasRef} 
-        className="w-full h-[400px]"
-      />
+  const progressPercent = steps.length > 1 ? Math.round((currentStep / (steps.length - 1)) * 100) : 0;
 
-      {/* 控制面板 */}
-      <div className="p-4 bg-amber-950/60 border-t border-amber-900/50">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
+  return (
+    <div
+      className="w-full h-full rounded-2xl overflow-hidden border shadow-2xl"
+      style={{
+        background: 'linear-gradient(180deg, #090e1a 0%, #0d1526 100%)',
+        borderColor: 'rgba(99, 102, 241, 0.25)',
+      }}
+    >
+      {/* 3D 画布视口 + 顶部悬浮 HUD 图例栏 */}
+      <div className="relative w-full h-[430px]">
+        <canvas ref={canvasRef} className="w-full h-full block" />
+
+        {/* 顶部悬浮玻璃状态图例 */}
+        <div className="absolute top-3.5 inset-x-4 flex flex-wrap items-center justify-between gap-2 pointer-events-none">
+          <div
+            className="flex flex-wrap items-center gap-3 px-3.5 py-1.5 rounded-full text-xs backdrop-blur-xl border"
+            style={{
+              background: 'rgba(15, 23, 42, 0.65)',
+              borderColor: 'rgba(255, 255, 255, 0.14)',
+              color: '#cbd5e1',
+            }}
+          >
+            <span className="inline-flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-[#38bdf8] shadow-[0_0_8px_#38bdf8]" />
+              <span>待处理</span>
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-[#fbbf24] shadow-[0_0_8px_#fbbf24]" />
+              <span>比较中</span>
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-[#a855f7] shadow-[0_0_8px_#a855f7]" />
+              <span>归并/区间</span>
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-[#f43f5e] shadow-[0_0_8px_#f43f5e]" />
+              <span>基准值</span>
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-[#10b981] shadow-[0_0_8px_#10b981]" />
+              <span>已就位</span>
+            </span>
+          </div>
+
+          <div
+            className="px-3.5 py-1.5 rounded-full text-xs font-mono font-semibold backdrop-blur-xl border"
+            style={{
+              background: 'rgba(15, 23, 42, 0.72)',
+              borderColor: 'rgba(99, 102, 241, 0.35)',
+              color: '#a5b4fc',
+            }}
+          >
+            STEP {String(currentStep + 1).padStart(2, '0')} / {String(Math.max(1, steps.length)).padStart(2, '0')}
+          </div>
+        </div>
+      </div>
+
+      {/* 科技感毛玻璃播控台（替换原棕色底栏） */}
+      <div
+        className="p-4 sm:p-5 border-t"
+        style={{
+          background: 'linear-gradient(180deg, rgba(15, 23, 42, 0.92) 0%, rgba(10, 15, 29, 0.98) 100%)',
+          borderColor: 'rgba(99, 102, 241, 0.2)',
+        }}
+      >
+        {/* 可拖拽步骤进度条 */}
+        {steps.length > 1 && (
+          <div className="mb-4 flex items-center gap-3">
+            <span className="text-[11px] font-mono text-slate-400 w-10">01</span>
+            <div className="relative flex-1 flex items-center">
+              <div className="w-full h-1.5 rounded-full bg-slate-800 overflow-hidden pointer-events-none">
+                <div
+                  className="h-full rounded-full transition-all duration-150"
+                  style={{
+                    width: `${progressPercent}%`,
+                    background: 'linear-gradient(90deg, #38bdf8 0%, #6366f1 55%, #a855f7 100%)',
+                  }}
+                />
+              </div>
+              <input
+                type="range"
+                min={0}
+                max={Math.max(0, steps.length - 1)}
+                value={currentStep}
+                onChange={(e) => {
+                  setIsPlaying(false);
+                  setCurrentStep(Number(e.target.value));
+                }}
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                title="拖动快速跳转到任意步骤"
+              />
+            </div>
+            <span className="text-[11px] font-mono text-slate-400 w-10 text-right">{progressPercent}%</span>
+          </div>
+        )}
+
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+          <div className="flex items-center gap-2.5">
             <button
               onClick={handlePrev}
               disabled={currentStep === 0}
-              className="px-3 py-2 bg-amber-700 text-white rounded-lg hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-200 bg-white/5 hover:bg-white/10 border border-white/10 disabled:opacity-35 disabled:cursor-not-allowed transition-all"
             >
-              ⏮ 上一步
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+              <span>上一步</span>
             </button>
             
             {!isPlaying ? (
               <button
                 onClick={handlePlay}
-                className="px-4 py-2 bg-emerald-700 text-white rounded-lg hover:bg-emerald-600 transition-colors"
+                className="inline-flex items-center gap-1.5 px-5 py-2 rounded-xl text-xs font-bold text-white shadow-lg transition-all hover:scale-105"
+                style={{
+                  background: 'linear-gradient(135deg, #4f46e5 0%, #0ea5e9 100%)',
+                  boxShadow: '0 6px 20px rgba(79, 70, 229, 0.4)',
+                }}
               >
-                ▶ 播放
+                <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M8 5v14l11-7z" />
+                </svg>
+                <span>播放演示</span>
               </button>
             ) : (
               <button
                 onClick={handlePause}
-                className="px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-400 transition-colors"
+                className="inline-flex items-center gap-1.5 px-5 py-2 rounded-xl text-xs font-bold text-slate-950 bg-amber-400 hover:bg-amber-300 shadow-lg shadow-amber-500/30 transition-all"
               >
-                ⏸ 暂停
+                <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
+                </svg>
+                <span>暂停</span>
               </button>
             )}
             
             <button
               onClick={handleNext}
               disabled={currentStep >= steps.length - 1}
-              className="px-3 py-2 bg-amber-700 text-white rounded-lg hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-200 bg-white/5 hover:bg-white/10 border border-white/10 disabled:opacity-35 disabled:cursor-not-allowed transition-all"
             >
-              下一步 ⏭
+              <span>下一步</span>
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
             </button>
             
             <button
               onClick={handleReset}
-              className="px-3 py-2 bg-orange-800 text-white rounded-lg hover:bg-orange-700 transition-colors"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:text-white bg-white/5 hover:bg-rose-500/20 border border-white/10 hover:border-rose-500/40 transition-all"
             >
-              🔄 重置
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              <span>重置</span>
             </button>
           </div>
 
-          <div className="text-white">
-            步骤: {currentStep + 1} / {steps.length}
+          <div className="text-xs font-mono text-slate-400">
+            当前进度：<span className="text-indigo-300 font-semibold">{currentStep + 1}</span> / {steps.length}
           </div>
         </div>
 
-        {/* 步骤说明 */}
+        {/* 步骤实时解说面板 */}
         {steps[currentStep] && (
-          <div className="bg-amber-950/70 border border-amber-900/40 p-3 rounded-lg">
-            <div className="text-amber-300 text-sm font-semibold mb-1">
-              {steps[currentStep].title}
+          <div
+            className="p-3.5 rounded-xl border flex items-start gap-3"
+            style={{
+              background: 'rgba(30, 41, 59, 0.55)',
+              borderColor: 'rgba(99, 102, 241, 0.25)',
+            }}
+          >
+            <div className="w-7 h-7 rounded-lg bg-indigo-500/20 border border-indigo-400/30 flex items-center justify-center text-indigo-300 text-xs font-mono font-bold shrink-0 mt-0.5">
+              {currentStep + 1}
             </div>
-            <div className="text-amber-200/80 text-sm">
-              {steps[currentStep].description}
+            <div className="min-w-0 flex-1">
+              <div className="text-indigo-200 text-sm font-bold mb-0.5">
+                {steps[currentStep].title}
+              </div>
+              <div className="text-slate-300/90 text-xs sm:text-sm leading-relaxed">
+                {steps[currentStep].description}
+              </div>
             </div>
           </div>
         )}
@@ -1164,55 +1289,55 @@ function renderStep(scene: THREE.Scene, step: any, originalData: number[]) {
   const startX = -(array.length * spacing) / 2;
 
   array.forEach((value: number, index: number) => {
-    const height = (value / maxValue) * 10 + 0.5;
+    const height = (value / maxValue) * 9.5 + 0.8;
     
-    // 创建更炫酷的圆柱体
-    const geometry = new THREE.CylinderGeometry(0.5, 0.5, height, 32);
+    // 科技感棱柱/能量柱主体
+    const geometry = new THREE.CylinderGeometry(0.46, 0.52, height, 36);
     
     // 根据状态设置颜色和发光
-    let color = 0x3b82f6;
-    let emissiveIntensity = 0.3;
+    let color = 0x38bdf8; // 冰晶青蓝 - 待处理
+    let emissiveIntensity = 0.42;
     let scale = 1;
     
     if (step.comparing && step.comparing.includes(index)) {
-      color = 0xfbbf24; // 金色 - 正在比较
-      emissiveIntensity = 1.0;
-      scale = 1.15;
+      color = 0xfbbf24; // 琥珀金 - 正在比较
+      emissiveIntensity = 1.05;
+      scale = 1.14;
     } else if (step.sorted && step.sorted.includes(index)) {
-      color = 0x10b981; // 绿色 - 已排序
-      emissiveIntensity = 0.6;
+      color = 0x10b981; // 翡翠绿 - 已排序
+      emissiveIntensity = 0.68;
     } else if (step.pivot === index) {
-      color = 0xef4444; // 红色 - 基准值
-      emissiveIntensity = 1.2;
-      scale = 1.2;
+      color = 0xf43f5e; // 霓虹玫红 - 基准值
+      emissiveIntensity = 1.15;
+      scale = 1.18;
     } else if (step.merging && index >= step.merging[0] && index <= step.merging[1]) {
-      color = 0xa855f7; // 紫色 - 正在合并
-      emissiveIntensity = 0.7;
+      color = 0xa855f7; // 极光紫 - 正在合并
+      emissiveIntensity = 0.78;
     } else if (step.mid === index) {
-      color = 0xf59e0b; // 橙色 - 中间值
-      emissiveIntensity = 0.8;
+      color = 0xf59e0b; // 橙金 - 中间值
+      emissiveIntensity = 0.88;
       scale = 1.1;
     } else if (step.found && step.mid === index) {
       color = 0x22c55e; // 亮绿 - 找到目标
-      emissiveIntensity = 1.5;
-      scale = 1.3;
+      emissiveIntensity = 1.45;
+      scale = 1.25;
     } else if (step.left !== undefined && step.right !== undefined) {
       if (index < step.left || index > step.right) {
-        color = 0x64748b; // 灰色 - 搜索范围外
-        emissiveIntensity = 0.1;
-        scale = 0.85;
+        color = 0x475569; // 暗灰蓝 - 搜索范围外
+        emissiveIntensity = 0.12;
+        scale = 0.86;
       }
     }
     
-    // 使用更炫酷的材质 - 金属光泽
+    // 高级金属玻璃光泽材质
     const material = new THREE.MeshStandardMaterial({ 
       color,
       emissive: color,
       emissiveIntensity,
-      metalness: 0.6,
-      roughness: 0.2,
+      metalness: 0.72,
+      roughness: 0.16,
       transparent: true,
-      opacity: 0.95
+      opacity: 0.94
     });
     
     const cylinder = new THREE.Mesh(geometry, material);
@@ -1221,129 +1346,150 @@ function renderStep(scene: THREE.Scene, step: any, originalData: number[]) {
     cylinder.scale.set(scale, 1, scale);
     cylinder.castShadow = true;
     cylinder.receiveShadow = true;
-    
-    // 添加脉动动画
-    if (step.comparing && step.comparing.includes(index)) {
-      const pulse = Math.sin(Date.now() * 0.005) * 0.1 + 1;
-      cylinder.scale.set(scale * pulse, 1, scale * pulse);
-      cylinder.rotation.y = Math.sin(Date.now() * 0.003) * 0.2;
-    }
-    
     scene.add(cylinder);
 
-    // 添加更炫的发光环效果
-    if (step.comparing && step.comparing.includes(index) || 
-        step.pivot === index || 
-        (step.found && step.mid === index)) {
-      // 主光环
-      const ringGeometry = new THREE.TorusGeometry(0.7, 0.12, 16, 100);
+    // 每个能量柱顶部标配高亮冠环
+    const capRingGeom = new THREE.TorusGeometry(0.47 * scale, 0.045, 16, 48);
+    const capRingMat = new THREE.MeshBasicMaterial({
+      color: 0xffffff,
+      transparent: true,
+      opacity: 0.85,
+    });
+    const capRing = new THREE.Mesh(capRingGeom, capRingMat);
+    capRing.position.set(cylinder.position.x, height + 0.02, 0);
+    capRing.rotation.x = Math.PI / 2;
+    scene.add(capRing);
+
+    // 激活状态双层脉冲能量环
+    if (
+      (step.comparing && step.comparing.includes(index)) ||
+      step.pivot === index ||
+      (step.found && step.mid === index)
+    ) {
+      const ringGeometry = new THREE.TorusGeometry(0.74, 0.08, 16, 64);
       const ringMaterial = new THREE.MeshBasicMaterial({ 
         color,
         transparent: true,
-        opacity: 0.7
+        opacity: 0.85
       });
       const ring = new THREE.Mesh(ringGeometry, ringMaterial);
-      ring.position.set(cylinder.position.x, height + 0.5, 0);
+      ring.position.set(cylinder.position.x, height + 0.35, 0);
       ring.rotation.x = Math.PI / 2;
       scene.add(ring);
       
-      // 外层光环
-      const ring2Geometry = new THREE.TorusGeometry(0.9, 0.08, 16, 100);
+      const ring2Geometry = new THREE.TorusGeometry(0.98, 0.045, 16, 64);
       const ring2Material = new THREE.MeshBasicMaterial({ 
         color,
         transparent: true,
-        opacity: 0.4
+        opacity: 0.45
       });
       const ring2 = new THREE.Mesh(ring2Geometry, ring2Material);
-      ring2.position.set(cylinder.position.x, height + 0.5, 0);
+      ring2.position.set(cylinder.position.x, height + 0.35, 0);
       ring2.rotation.x = Math.PI / 2;
       scene.add(ring2);
     }
 
-    // 添加数字标签（更大更清晰，带阴影）
+    // 高清 HUD 玻璃圆角数字徽章（替换原先模糊黑边圆圈）
     const canvas = document.createElement('canvas');
     const context = canvas.getContext('2d')!;
-    canvas.width = 128;
-    canvas.height = 128;
-    
-    // 添加发光背景圆形
-    const gradient = context.createRadialGradient(64, 64, 20, 64, 64, 50);
-    gradient.addColorStop(0, `rgba(${(color >> 16) & 255}, ${(color >> 8) & 255}, ${color & 255}, 0.9)`);
-    gradient.addColorStop(1, 'rgba(0, 0, 0, 0.7)');
-    context.fillStyle = gradient;
+    canvas.width = 256;
+    canvas.height = 256;
+    const r = (color >> 16) & 255;
+    const g = (color >> 8) & 255;
+    const b = color & 255;
+
+    // 外发光与半透明毛玻璃圆角方框
+    context.save();
+    context.shadowColor = `rgba(${r}, ${g}, ${b}, 0.75)`;
+    context.shadowBlur = 22;
+    const bgGrad = context.createLinearGradient(48, 48, 208, 208);
+    bgGrad.addColorStop(0, `rgba(15, 23, 42, 0.88)`);
+    bgGrad.addColorStop(1, `rgba(${r}, ${g}, ${b}, 0.38)`);
+    context.fillStyle = bgGrad;
     context.beginPath();
-    context.arc(64, 64, 50, 0, Math.PI * 2);
+    context.roundRect(48, 56, 160, 144, 38);
     context.fill();
-    
-    // 绘制数字（带阴影）
-    context.shadowColor = 'rgba(0, 0, 0, 0.8)';
-    context.shadowBlur = 10;
-    context.shadowOffsetX = 2;
-    context.shadowOffsetY = 2;
-    context.fillStyle = 'white';
-    context.font = 'bold 52px Arial';
+
+    context.lineWidth = 6;
+    context.strokeStyle = `rgba(${r}, ${g}, ${b}, 0.95)`;
+    context.stroke();
+    context.restore();
+
+    // 顶部玻璃高光细线
+    context.strokeStyle = 'rgba(255, 255, 255, 0.55)';
+    context.lineWidth = 2.5;
+    context.beginPath();
+    context.moveTo(76, 62);
+    context.lineTo(180, 62);
+    context.stroke();
+
+    // 清晰高对比度数字
+    context.fillStyle = '#ffffff';
+    context.font = 'bold 84px -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif';
     context.textAlign = 'center';
     context.textBaseline = 'middle';
-    context.fillText(value.toString(), 64, 64);
+    context.fillText(value.toString(), 128, 130);
     
     const texture = new THREE.CanvasTexture(canvas);
+    texture.minFilter = THREE.LinearFilter;
     const spriteMaterial = new THREE.SpriteMaterial({ 
       map: texture,
-      transparent: true
+      transparent: true,
+      depthTest: false
     });
     const sprite = new THREE.Sprite(spriteMaterial);
-    sprite.position.set(cylinder.position.x, height + 1.8, 0);
-    sprite.scale.set(1.8, 1.8, 1);
+    sprite.position.set(cylinder.position.x, height + 1.45, 0);
+    sprite.scale.set(1.55, 1.55, 1);
     scene.add(sprite);
 
-    // 添加更炫的底座光晕
-    const baseGeometry = new THREE.CylinderGeometry(0.75, 0.85, 0.15, 32);
+    // 能量底座
+    const baseGeometry = new THREE.CylinderGeometry(0.68, 0.82, 0.14, 32);
     const baseMaterial = new THREE.MeshStandardMaterial({ 
-      color: 0x1e293b,
+      color: 0x0f172a,
       emissive: color,
-      emissiveIntensity: 0.4,
+      emissiveIntensity: 0.45,
       metalness: 0.9,
-      roughness: 0.1,
+      roughness: 0.15,
       transparent: true,
-      opacity: 0.8
+      opacity: 0.9
     });
     const base = new THREE.Mesh(baseGeometry, baseMaterial);
-    base.position.set(cylinder.position.x, 0.08, 0);
+    base.position.set(cylinder.position.x, 0.07, 0);
     base.receiveShadow = true;
     scene.add(base);
     
-    // 添加底部光圈
-    const glowGeometry = new THREE.RingGeometry(0.6, 1.0, 32);
+    // 底部霓虹光圈
+    const glowGeometry = new THREE.RingGeometry(0.62, 0.95, 36);
     const glowMaterial = new THREE.MeshBasicMaterial({ 
       color,
       transparent: true,
-      opacity: 0.2,
+      opacity: 0.32,
       side: THREE.DoubleSide
     });
     const glow = new THREE.Mesh(glowGeometry, glowMaterial);
     glow.rotation.x = -Math.PI / 2;
-    glow.position.set(cylinder.position.x, 0.01, 0);
+    glow.position.set(cylinder.position.x, 0.015, 0);
     scene.add(glow);
   });
 
-  // 添加更炫酷的网格地面
-  const gridSize = array.length * spacing + 6;
-  const gridHelper = new THREE.GridHelper(gridSize, array.length + 4, 0x00ffff, 0x1e293b);
+  // 科技感暗色坐标网格地面
+  const gridSize = array.length * spacing + 7;
+  const gridHelper = new THREE.GridHelper(gridSize, array.length + 6, 0x38bdf8, 0x1e293b);
   gridHelper.position.y = 0;
-  gridHelper.material.opacity = 0.4;
+  gridHelper.material.opacity = 0.28;
   gridHelper.material.transparent = true;
   scene.add(gridHelper);
 
-  // 添加发光地面反射平面
+  // 镜面暗蓝反射底座平面
   const planeGeometry = new THREE.PlaneGeometry(gridSize, gridSize);
   const planeMaterial = new THREE.MeshStandardMaterial({ 
-    color: 0x0a0e27,
-    metalness: 1.0,
-    roughness: 0.05,
+    color: 0x080d1a,
+    metalness: 0.92,
+    roughness: 0.12,
     transparent: true,
-    opacity: 0.6,
-    emissive: 0x1e3a8a,
-    emissiveIntensity: 0.2
+    opacity: 0.72,
+    emissive: 0x0f172a,
+    emissiveIntensity: 0.25
   });
   const plane = new THREE.Mesh(planeGeometry, planeMaterial);
   plane.rotation.x = -Math.PI / 2;
@@ -1351,12 +1497,12 @@ function renderStep(scene: THREE.Scene, step: any, originalData: number[]) {
   plane.receiveShadow = true;
   scene.add(plane);
   
-  // 添加边框光效
+  // 地面外框荧光细线
   const borderGeometry = new THREE.EdgesGeometry(planeGeometry);
   const borderMaterial = new THREE.LineBasicMaterial({ 
-    color: 0x00ffff,
+    color: 0x38bdf8,
     transparent: true,
-    opacity: 0.6
+    opacity: 0.38
   });
   const border = new THREE.LineSegments(borderGeometry, borderMaterial);
   border.rotation.x = -Math.PI / 2;
