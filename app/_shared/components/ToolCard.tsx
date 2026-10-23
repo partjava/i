@@ -18,11 +18,9 @@ export default function ToolCard({ name, icon: Icon, url, desc, color }: ToolCar
     }
   };
 
-  // 针对纯黑或极深品牌色做提亮兜底，确保 App 图标在灰金暗底上饱满通透
-  const isVeryDark = /^#(000000|181717|0A0A23|0F2B46|1C3C3C|02303A|03234B|1B1464)$/i.test(color);
-  const badgeBg = isVeryDark
-    ? 'linear-gradient(145deg, #334155 0%, #1e293b 100%)'
-    : `linear-gradient(145deg, ${color} 0%, ${color}cc 100%)`;
+  // 纯黑/极深色图标在深灰金背景上自动提亮为暖银白，其余保持图标原本色彩，底座完全透明
+  const isVeryDark = /^#(000000|181717|0A0A23|0F2B46|1C3C3C|02303A|03234B|1B1464|2C2C2C|2C2255|372923)$/i.test(color);
+  const iconColor = isVeryDark ? '#F2E9DC' : color;
 
   return (
     <div
@@ -48,7 +46,7 @@ export default function ToolCard({ name, icon: Icon, url, desc, color }: ToolCar
             : 'rotateY(0deg) scale(1) translateY(0px)',
         }}
       >
-        {/* 正面：苹果桌面风圆角图标 + 名字（干净居中，不显示多余小字） */}
+        {/* 正面：透明玻璃质感底座 + 原色通透图标 + 名字 */}
         <a
           href={url}
           target="_blank"
@@ -64,24 +62,33 @@ export default function ToolCard({ name, icon: Icon, url, desc, color }: ToolCar
             WebkitBackfaceVisibility: 'hidden',
             borderRadius: '22px',
             background:
-              'linear-gradient(155deg, rgba(255, 255, 255, 0.065) 0%, rgba(255, 255, 255, 0.02) 100%)',
-            border: '1px solid rgba(242, 233, 220, 0.1)',
+              'radial-gradient(circle at 50% 32%, rgba(212, 173, 114, 0.07) 0%, transparent 68%), linear-gradient(155deg, rgba(255, 255, 255, 0.045) 0%, rgba(255, 255, 255, 0.015) 100%)',
+            border: '1px solid rgba(242, 233, 220, 0.09)',
             boxShadow:
-              '0 8px 20px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.06)',
-            gap: '11px',
+              '0 8px 20px rgba(0, 0, 0, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+            gap: '10px',
             zIndex: isFlipped ? 0 : 1,
           }}
         >
-          {/* 苹果超椭圆圆角图标底座 */}
+          {/* 透明磨砂玻璃图标框（去掉彩色实心块） */}
           <div
-            className="w-14 h-14 flex items-center justify-center flex-shrink-0"
+            className="w-13 h-13 flex items-center justify-center flex-shrink-0"
             style={{
+              width: '52px',
+              height: '52px',
               borderRadius: '16px',
-              background: badgeBg,
-              boxShadow: `0 8px 18px -4px ${isVeryDark ? 'rgba(0,0,0,0.55)' : color + '66'}, inset 0 1px 1px rgba(255,255,255,0.35)`,
+              background: 'rgba(255, 255, 255, 0.04)',
+              border: '1px solid rgba(242, 233, 220, 0.08)',
+              boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.06)',
             }}
           >
-            <Icon style={{ color: '#ffffff', fontSize: 28 }} />
+            <Icon
+              style={{
+                color: iconColor,
+                fontSize: 28,
+                filter: `drop-shadow(0 2px 8px ${iconColor}40)`,
+              }}
+            />
           </div>
 
           {/* 软件名称 */}
@@ -111,7 +118,7 @@ export default function ToolCard({ name, icon: Icon, url, desc, color }: ToolCar
             zIndex: isFlipped ? 1 : 0,
           }}
         >
-          {/* 小窗口顶部标题栏（三颗微缩窗口灯 + 图标微标） */}
+          {/* 小窗口顶部标题栏 */}
           <div
             className="flex items-center justify-between px-2.5 py-1.5 border-b"
             style={{
@@ -135,7 +142,7 @@ export default function ToolCard({ name, icon: Icon, url, desc, color }: ToolCar
           {/* 小窗口中部：软件名 + 完整详细内容 */}
           <div className="flex-1 flex flex-col items-center justify-center px-2.5 py-1 text-center">
             <div className="flex items-center justify-center gap-1.5 mb-1 w-full">
-              <Icon className="flex-shrink-0" style={{ color: '#D4AD72', fontSize: 15 }} />
+              <Icon className="flex-shrink-0" style={{ color: iconColor, fontSize: 15 }} />
               <span
                 className="font-bold text-[13px] truncate"
                 style={{ color: '#D4AD72' }}
