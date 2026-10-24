@@ -1,0 +1,6 @@
+
+@media (max-width: 1023px) {
+ .layout { height: 100dvh; }
+ .main { min-width: 0; max-width: 100%; }
+ .content { min-width: 0; padding-bottom: calc(96px + env(safe-area-inset-bottom)); }
+}

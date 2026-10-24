@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, createContext, useContext } from 'react';
 import Link from 'next/link';
+import { useAuth } from '@shared/hooks/useAuth';
 import { usePathname } from 'next/navigation';
 import { navigationItems, NavigationItems, NavigationItem } from '../data/navigation';
 
@@ -28,6 +29,33 @@ export function SidebarProvider({ children }: { children: React.ReactNode }) {
   const [isOpen, setIsOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const [side, setSideState] = useState<'left' | 'right'>('left');
+  const { status } = useAuth();
+  const pathname = usePathname();
+  const autoCollapseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // 访客首页先展示目录，3 秒后自动收起；手动操作后不再打扰。
+  useEffect(() => {
+    if (status !== 'unauthenticated' || pathname !== '/' || window.innerWidth < 1024) return;
+    autoCollapseTimer.current = setTimeout(() => {
+      setCollapsed(true);
+      autoCollapseTimer.current = null;
+    }, 3000);
+    const cancelIfUsingSidebar = (event: Event) => {
+      if (event.target instanceof Element && event.target.closest('[data-sidebar-panel]') && autoCollapseTimer.current) {
+        clearTimeout(autoCollapseTimer.current);
+        autoCollapseTimer.current = null;
+      }
+    };
+    document.addEventListener('pointerdown', cancelIfUsingSidebar);
+    document.addEventListener('focusin', cancelIfUsingSidebar);
+    return () => {
+      if (autoCollapseTimer.current) clearTimeout(autoCollapseTimer.current);
+      autoCollapseTimer.current = null;
+      document.removeEventListener('pointerdown', cancelIfUsingSidebar);
+      document.removeEventListener('focusin', cancelIfUsingSidebar);
+    };
+  }, [status, pathname]);
+
 
   // 监听屏幕大小变化
   useEffect(() => {
@@ -52,6 +80,8 @@ export function SidebarProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const toggleCollapsed = () => {
+    if (autoCollapseTimer.current) clearTimeout(autoCollapseTimer.current);
+    autoCollapseTimer.current = null;
     setCollapsed(prev => {
       const next = !prev;
       localStorage.setItem('sidebar_collapsed', next ? '1' : '0');
@@ -291,6 +321,7 @@ export default function Sidebar() {
 
       {/* 侧边栏（可拖拽悬浮玻璃面板，松手贴墙） */}
       <div
+        data-sidebar-panel
         className={`
         fixed top-0 left-0 h-full w-72 z-50 transform transition-all duration-300 ease-in-out overflow-hidden
         backdrop-blur-2xl backdrop-saturate-150

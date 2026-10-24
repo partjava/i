@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { soundSynth } from '../RetroAudioSynth';
+import { bounceOffBrick } from '../arcade-physics';
 
 interface Ball {
   x: number;
@@ -54,6 +55,11 @@ export default function Breakout({
   const [won, setWon] = useState(false);
   const [launched, setLaunched] = useState(false);
 
+  const runtime = useRef({ score: 0, lives: 3, ballsLeft: 0, launched: false, gameOver: false, won: false });
+  runtime.current = { ...runtime.current, score, lives, launched, gameOver, won };
+  const keys = useRef({ left: false, right: false });
+  useEffect(() => { onMove('__local_state', { score, gameOver: gameOver || won, won }); }, [score, gameOver, won, onMove]);
+
   // 实体状态 Ref
   const paddleRef = useRef({ x: 190, y: 550, w: 100, h: 14, targetX: 190 });
   const ballsRef = useRef<Ball[]>([]);
@@ -99,6 +105,7 @@ export default function Breakout({
     particlesRef.current = [];
     powerUpsRef.current = [];
     trailRef.current = [];
+    runtime.current = { score: 0, lives: 3, ballsLeft: 0, launched: false, gameOver: false, won: false };
     setLaunched(false);
     setGameOver(false);
     setWon(false);
@@ -117,9 +124,29 @@ export default function Breakout({
   // 发射小球
   const launch = () => {
     if (launched || gameOver || won) return;
+    runtime.current.launched = true;
     setLaunched(true);
     soundSynth.playPop();
   };
+
+  useEffect(() => {
+    const release = () => { keys.current = { left: false, right: false }; };
+    const down = (event: KeyboardEvent) => {
+      if (event.target instanceof HTMLElement && (event.target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(event.target.tagName))) return;
+      if (['ArrowLeft', 'KeyA', 'ArrowRight', 'KeyD', 'Space'].includes(event.code)) event.preventDefault();
+      if (['ArrowLeft', 'KeyA'].includes(event.code)) keys.current.left = true;
+      if (['ArrowRight', 'KeyD'].includes(event.code)) keys.current.right = true;
+      if (event.code === 'Space' && !event.repeat) launch();
+    };
+    const up = (event: KeyboardEvent) => {
+      if (['ArrowLeft', 'KeyA'].includes(event.code)) keys.current.left = false;
+      if (['ArrowRight', 'KeyD'].includes(event.code)) keys.current.right = false;
+    };
+    window.addEventListener('keydown', down);
+    window.addEventListener('keyup', up);
+    window.addEventListener('blur', release);
+    return () => { window.removeEventListener('keydown', down); window.removeEventListener('keyup', up); window.removeEventListener('blur', release); };
+  }, [launched, gameOver, won]);
 
   // 生成爆炸光屑粒子
   const spawnParticles = (x: number, y: number, color: string, count = 10) => {
@@ -145,11 +172,14 @@ export default function Breakout({
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    let lastTime = performance.now();
 
-    const loop = (now: number) => {
-      animFrameRef.current = requestAnimationFrame(loop);
+    const step = () => {
+      const { launched, gameOver, score, lives, ballsLeft, won } = runtime.current;
 
+      // 按住左右键持续移动，鼠标/触控仍可直接定位。
+      if (keys.current.left) paddleRef.current.targetX -= 8;
+      if (keys.current.right) paddleRef.current.targetX += 8;
+      paddleRef.current.targetX = Math.max(0, Math.min(W - paddleRef.current.w, paddleRef.current.targetX));
       // 平滑移动球拍
       const paddle = paddleRef.current;
       paddle.x += (paddle.targetX - paddle.x) * 0.25;
@@ -207,7 +237,7 @@ export default function Breakout({
                 { x: b.x, y: b.y, vx: b.vx * 0.9 - 2, vy: b.vy * 0.9, radius: b.radius }
               );
             });
-            ballsRef.current.push(...newBalls.slice(0, 6)); // 最多 8 颗球同屏
+            ballsRef.current.push(...newBalls.slice(0, Math.max(0, 8 - ballsRef.current.length))); // 最多 8 颗球同屏
           } else if (pup.type === 'wide') {
             paddle.w = Math.min(160, paddle.w + 30);
           }
@@ -261,10 +291,12 @@ export default function Breakout({
         ctx.restore();
       }
 
-      if (aliveBricks === 0 && !won) {
+      if (aliveBricks === 0 && !won && !gameOver) {
+        runtime.current.won = true;
+        runtime.current.launched = false;
         setWon(true);
         soundSynth.playWin();
-        onMove('win', { score });
+
       }
 
       // 绘制球拍
@@ -289,7 +321,7 @@ export default function Breakout({
           // 未发射时吸附在球拍上方
           ball.x = paddle.x + paddle.w / 2;
           ball.y = paddle.y - ball.radius - 2;
-        } else {
+        } else if (!gameOver && !won && !runtime.current.won) {
           ball.x += ball.vx;
           ball.y += ball.vy;
 
@@ -335,18 +367,13 @@ export default function Breakout({
           for (const brick of bricksRef.current) {
             if (brick.durability <= 0) continue;
 
-            if (
-              ball.x + ball.radius >= brick.x &&
-              ball.x - ball.radius <= brick.x + brick.w &&
-              ball.y + ball.radius >= brick.y &&
-              ball.y - ball.radius <= brick.y + brick.h
-            ) {
+            if (bounceOffBrick(ball, brick)) {
               brick.durability--;
-              ball.vy = -ball.vy; // 碰撞反弹
 
               soundSynth.playShatter();
               spawnParticles(brick.x + brick.w / 2, brick.y + brick.h / 2, brick.color, 12);
-              setScore(s => s + 20);
+              runtime.current.score += 20;
+              setScore(runtime.current.score);
 
               // 概率掉落道具胶囊 (20% 概率)
               if (Math.random() < 0.22) {
@@ -382,10 +409,14 @@ export default function Breakout({
       }
 
       // 如果所有球都掉落
-      if (launched && balls.length === 0) {
+      if (launched && balls.length === 0 && !gameOver && !won) {
+        runtime.current.launched = false;
+        setLaunched(false);
         const nextLives = lives - 1;
+        runtime.current.lives = nextLives;
         setLives(nextLives);
         if (nextLives <= 0) {
+          runtime.current.gameOver = true;
           setGameOver(true);
           soundSynth.playGameOver();
         } else {
@@ -397,18 +428,30 @@ export default function Breakout({
       }
     };
 
+    let previousTime = performance.now();
+    let accumulated = 0;
+    const loop = (now: number) => {
+      animFrameRef.current = requestAnimationFrame(loop);
+      if (document.hidden) { previousTime = now; accumulated = 0; return; }
+      accumulated += Math.min(66.67, now - previousTime);
+      previousTime = now;
+      while (accumulated >= 1000 / 60) {
+        step();
+        accumulated -= 1000 / 60;
+      }
+    };
     animFrameRef.current = requestAnimationFrame(loop);
     return () => {
       if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
     };
-  }, [launched, lives, won, score, onMove]);
+  }, []);
 
   // 鼠标与触控移动球拍
   const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
+    const x = (e.clientX - rect.left) * W / rect.width;
     const p = paddleRef.current;
     p.targetX = Math.max(0, Math.min(W - p.w, x - p.w / 2));
   };
@@ -417,15 +460,15 @@ export default function Breakout({
     const canvas = canvasRef.current;
     if (!canvas) return;
     const rect = canvas.getBoundingClientRect();
-    const x = e.touches[0].clientX - rect.left;
+    const x = (e.touches[0].clientX - rect.left) * W / rect.width;
     const p = paddleRef.current;
     p.targetX = Math.max(0, Math.min(W - p.w, x - p.w / 2));
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', userSelect: 'none' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: W, maxWidth: '100%', userSelect: 'none' }}>
       {/* 顶部状态条 */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: W, marginBottom: 8, padding: '8px 16px', background: '#1c2230', borderRadius: 8, fontSize: 14 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', maxWidth: W, marginBottom: 8, padding: '8px 16px', background: '#1c2230', borderRadius: 8, fontSize: 14 }}>
         <div style={{ color: '#ff4757', fontWeight: 'bold' }}>
           {'❤️ '.repeat(Math.max(0, lives))}
         </div>
@@ -448,7 +491,7 @@ export default function Breakout({
       </div>
 
       {/* 画布 */}
-      <div style={{ position: 'relative', width: W, height: H }}>
+      <div style={{ position: 'relative', width: '100%', maxWidth: W, aspectRatio: `${W} / ${H}` }}>
         <canvas
           ref={canvasRef}
           width={W}
@@ -458,7 +501,7 @@ export default function Breakout({
           onTouchMove={handleTouchMove}
           onTouchStart={launch}
           style={{
-            display: 'block',
+            display: 'block', width: '100%', height: 'auto', touchAction: 'none',
             cursor: 'none',
             borderRadius: 12,
             boxShadow: '0 8px 30px rgba(0,0,0,0.5)',

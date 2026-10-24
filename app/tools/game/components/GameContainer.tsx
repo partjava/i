@@ -47,9 +47,10 @@ export default function GameContainer({
   useEffect(() => {
     try {
       const saved = localStorage.getItem(`partjava_best_score_${gameType}`);
-      if (saved) setBestScore(Number(saved) || 0);
+      setBestScore(Number(saved) || 0);
+      setIsNewRecord(false);
     } catch {}
-  }, [gameType]);
+  }, [gameType, state?.gameId]);
 
   useEffect(() => {
     if (score > bestScore) {
@@ -78,7 +79,7 @@ export default function GameContainer({
   // 包装 move 操作触发按键音
   const handleWrappedMove = useCallback(
     (action: string, payload?: any) => {
-      soundSynth.playMove();
+      if (action !== '__local_state') soundSynth.playMove();
       onMove(action, payload);
     },
     [onMove]
@@ -87,13 +88,16 @@ export default function GameContainer({
   // 键盘快捷键监听 (ESC 关闭, R 重新开始)
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLElement && (e.target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName))) return;
       if (e.key === 'Escape') onClose();
-      if ((e.key === 'r' || e.key === 'R') && !['typingrace', 'wordsearch'].includes(gameType)) {
+      if (!e.repeat && (e.key === 'r' || e.key === 'R') && !['typingrace', 'wordsearch'].includes(gameType)) {
         onRestart();
       }
     };
+    const oldOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
     window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
+    return () => { document.body.style.overflow = oldOverflow; window.removeEventListener('keydown', onKey); };
   }, [onClose, onRestart, gameType]);
 
   // 判断当前游戏需要的控制按键类型
@@ -286,12 +290,15 @@ export default function GameContainer({
 
           .game-canvas-wrapper {
             display: flex; justify-content: center; align-items: center;
-            min-height: 380px; max-height: 65vh;
+            min-height: 0; flex-shrink: 0; padding: 14px;
             background: #0d0f17; border-radius: 12px;
-            margin-top: 10px; overflow: hidden; position: relative;
+            margin-top: 10px; overflow: visible; position: relative;
             border: 1px solid rgba(255,255,255,0.06);
           }
-          .game-loading {
+          .game-canvas-wrapper > div { max-width: 100%; min-width: 0; }
+          .game-canvas-wrapper canvas { max-width: 100%; }
+          .game-modal { overscroll-behavior: contain; }
+          .game-loading { min-height: 240px;
             display: flex; flex-direction: column; align-items: center; gap: 14px;
             color: #8e94a0; font-size: 14px;
           }

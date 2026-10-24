@@ -1375,7 +1375,7 @@ export default function ProfilePage() {
             )}
 
             {/* 最近活动 */}
-            {stats?.recentActivity && stats?.recentActivity.length > 0 && (
+            {(
               <Card 
                 title={
                   <div className="flex items-center text-xl">
@@ -1385,10 +1385,13 @@ export default function ProfilePage() {
                 }
                 className="shadow-lg border-0"
               >
+                {(!stats?.recentActivity || stats.recentActivity.length === 0) && (
+                  <div className="py-8 text-center text-content-muted">暂无活动记录，创建笔记或完成学习后会显示在这里。</div>
+                )}
                 <Timeline>
                   {stats?.recentActivity?.map((activity, index: number) => (
                     <Timeline.Item 
-                      key={index}
+                      key={activity.id || index}
                       dot={
                         <div className="w-10 h-10 bg-gradient-to-br from-[#3d4f6b] to-[#0C1F3D] rounded-full flex items-center justify-center">
                           <BookOutlined style={{ fontSize: 16, color: 'white' }} />

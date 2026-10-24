@@ -1,7 +1,7 @@
 'use client';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { Button } from 'antd';
+import { createPortal } from 'react-dom';
 import { SendOutlined } from '@ant-design/icons';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
@@ -24,6 +24,7 @@ import {
   RiggedCatController
 } from './cat/catShaderAndRig';
 import NotePreviewModal from './ai/NotePreviewModal';
+import styles from './AI3DRobot.module.css';
 
 interface SiteLinkItem {
   category: string;
@@ -121,6 +122,12 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
   const [posture, setPosture] = useState<CatPosture>('standing');
   const [showVirtualProps, setShowVirtualProps] = useState(true);
   const [showTuningPanel, setShowTuningPanel] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent('study-room-visibility', { detail: true }));
+    return () => { window.dispatchEvent(new CustomEvent('study-room-visibility', { detail: false })); };
+  }, []);
+
   const [rimStrength, setRimStrength] = useState(1.45);
   const [whiteTipStrength, setWhiteTipStrength] = useState(1.0);
   const [showFurTufts, setShowFurTufts] = useState(true);
@@ -136,12 +143,6 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
   const [showHistoryMode, setShowHistoryMode] = useState(false);
   const [enableWebSearch, setEnableWebSearch] = useState(false);
   const [searchStatusText, setSearchStatusText] = useState<string | null>(null);
-  const [activeAgentsList, setActiveAgentsList] = useState<string[]>([
-    '🧭 智能体一·站内领航',
-    '📝 智能体二·自动写笔记',
-    '🐾 智能体三·3D灵动伴侣',
-    '🌐 智能体四·Pro联网深搜'
-  ]);
   const [currentModelName, setCurrentModelName] = useState('deepseek-flash');
 
   // 笔记预览弹窗状态（复用 NotePreviewModal）
@@ -153,16 +154,10 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 'welcome-1',
-      text: '喵呜~ 我是温暖书房的 **袋子（3D 像素绒毛黑猫）** 🐾！\n\n看到从我**“品”字形小嘴**放射出来的全息对话窗了吗？我现在由 **DeepSeek-V4 四大专职智能体** 驱动：\n- 🧭 **站内领航伴读**：解答当前页难点，一键直达全站 310+ 课程页面；\n- 📝 **自动总结写笔记**：将对话或当前页面提炼成 Markdown 笔记存入数据库；\n- 🌐 **Pro 联网深搜**：点亮下方「🌐 Pro深搜」即可检索并抓取外部权威技术官网链接！',
+      text: '我是袋子，陪你一起学习。\n\n可以帮你解释知识点、找站内课程，或把对话整理成笔记。',
       sender: 'ai',
       timestamp: new Date(),
-      activeAgents: [
-        '🧭 站内领航',
-        '📝 自动写笔记',
-        '🐾 3D伴侣',
-        '🌐 Pro联网深搜'
-      ],
-      modelUsed: 'deepseek-flash'
+
     }
   ]);
   const [inputValue, setInputValue] = useState('');
@@ -260,11 +255,12 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
-      if (!res.ok) {
-        throw new Error('保存笔记请求失败');
+      const result = await res.json().catch(() => null);
+      if (!res.ok || result?.success === false) {
+        throw new Error(result?.message || '保存笔记请求失败');
       }
       activeCatRef.current?.triggerHappyJump();
-      setSavedNoteTip('✅ 笔记已成功存入「我的笔记」！');
+      setSavedNoteTip('已保存到我的笔记。');
       setShowNotePreview(false);
     } catch (err: any) {
       notifyError(`保存笔记失败：${err?.message || '请检查登录状态'}`);
@@ -310,7 +306,7 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
     setMessages(prev => [...prev, userMsg, placeholderAiMsg]);
     setInputValue('');
     setIsTyping(true);
-    setSearchStatusText('🐾 袋子正竖起耳朵调度智能体思考中...');
+    setSearchStatusText('正在整理回答…');
 
     // 启动 3D 黑猫歪头/说话状态
     activeCatRef.current?.setMood('curious');
@@ -333,7 +329,7 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
       });
 
       if (!response.ok || !response.body) {
-        throw new Error('智能体流式服务响应异常');
+        throw new Error('回答服务暂时不可用，请稍后重试');
       }
 
       const reader = response.body.getReader();
@@ -372,9 +368,6 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
               if (reaction.mood) {
                 activeCatRef.current?.setMood(reaction.mood);
               }
-              if (Array.isArray(payload.activeAgents)) {
-                setActiveAgentsList(payload.activeAgents);
-              }
               if (payload.model) {
                 setCurrentModelName(payload.model);
               }
@@ -390,7 +383,9 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
                 )
               );
             } else if (eventName === 'search_status') {
-              setSearchStatusText(payload.text || null);
+              setSearchStatusText(payload.text
+                ? String(payload.text).replace(/DeepSeek[-\w.]*/gi, '搜索服务').replace(/\bPro\b\s*/gi, '').replace(/四大智能体|专职智能体|智能体[一二三四]?/g, '助手')
+                : null);
             } else if (eventName === 'site_links') {
               setMessages(prev =>
                 prev.map(m =>
@@ -409,6 +404,10 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
             } else if (eventName === 'note_draft') {
               setSearchStatusText(null);
               activeCatRef.current?.triggerHappyJump();
+              if (payload.note) {
+                setPreviewNote(payload.note);
+                setShowNotePreview(true);
+              }
               setMessages(prev =>
                 prev.map(m =>
                   m.id === aiMsgId ? { ...m, noteDraft: payload.note } : m
@@ -435,7 +434,7 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
         }
       }
     } catch (err) {
-      console.error('四大智能体调用异常，回退至 /api/ai/chat:', err);
+      console.error('流式回答不可用，尝试普通对话接口:', err);
       try {
         const fallbackRes = await fetch('/api/ai/chat', {
           method: 'POST',
@@ -805,10 +804,10 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
     .reverse()
     .find(m => m.sender === 'user');
 
-  return (
-    <div className="fixed inset-0 z-50 bg-black/65 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 animate-fadeIn">
+  return createPortal(
+    <div role="dialog" aria-modal="true" aria-label="温暖书房" style={{ zIndex: 2000 }} className="fixed inset-0 z-[2000] bg-black/65 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 animate-fadeIn">
       <div
-        className="bg-[#1c1a17] rounded-2xl shadow-2xl animate-slideUp w-full h-full max-w-6xl max-h-[95vh] flex flex-col overflow-hidden border border-[#d4a36a]/25"
+        className={`${styles.dialog} bg-[#1c1a17] rounded-2xl shadow-2xl animate-slideUp w-full h-full max-w-6xl max-h-[95vh] flex flex-col overflow-hidden border border-[#d4a36a]/25`}
         onDragOver={e => {
           e.preventDefault();
           setIsDraggingOver(true);
@@ -818,19 +817,21 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
         }}
         onDrop={handleDropGLB}
       >
-        {/* 顶部标题栏与姿态/微调控制栏 */}
-        <div className="flex flex-wrap justify-between items-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 border-b border-[#d4a36a]/20 bg-[#221f1b]/95 text-[#f4eadc] z-20">
-          <div className="flex items-center space-x-3">
-            <span className="inline-block w-2.5 h-2.5 rounded-full bg-[#d4a36a] shadow-[0_0_8px_rgba(212,163,106,0.8)]" />
-            <span className="font-serif font-semibold tracking-[0.18em] text-sm sm:text-base text-[#f7efe4]">
-              PartJava · 温暖书房
-            </span>
-            <span className="hidden lg:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] bg-[#d4a36a]/15 border border-[#d4a36a]/30 text-[#e9dac3]">
-              🤖 DeepSeek-V4 四大智能体已挂载 ({currentModelName})
-            </span>
+        <div className={styles.header}>
+          <div className={styles.brand}>
+            <span aria-hidden="true" className={styles.brandDot} />
+            <span>PartJava · 温暖书房</span>
           </div>
-
-          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+          <div className={styles.headerActions}>
+            <button type="button" aria-expanded={showSettings} aria-controls="study-room-settings"
+              onClick={() => { setShowSettings(value => !value); setShowTuningPanel(false); }}>
+              外观设置
+            </button>
+            <button type="button" onClick={onClose}>关闭</button>
+          </div>
+          {showSettings && (
+            <div id="study-room-settings" className={styles.settings} role="region" aria-label="书房设置">
+              <div className={styles.settingsTitle}>书房与猫咪</div>
             {/* 双形态切换按钮组 */}
             <div className="flex items-center bg-[#141210] p-0.5 rounded-lg border border-[#d4a36a]/25">
               <button
@@ -862,9 +863,9 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
                 setBubbleSide(prev => (prev === 'right' ? 'left' : 'right'));
               }}
               className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs border border-[#d4a36a]/40 bg-[#141210] text-[#f7efe4] hover:bg-[#d4a36a]/20 transition-all"
-              title="切换嘴巴放射聊天框的方向（向左或向右）"
+              title="调整聊天窗位置"
             >
-              {bubbleSide === 'right' ? '◀ 气泡移至左侧' : '气泡移至右侧 ▶'}
+              {bubbleSide === 'right' ? '聊天窗移到左侧' : '聊天窗移到右侧'}
             </button>
 
             {/* 撸猫开心笑眼互动按钮 */}
@@ -873,19 +874,19 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
               className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs border border-[#d4a36a]/40 bg-[#d4a36a]/15 text-[#f7efe4] hover:bg-[#d4a36a]/30 transition-all"
               title="点击触发 ^ ^ 眯眼笑跳跃互动"
             >
-              ^ ^ 撸猫
+              摸摸猫
             </button>
 
             {/* 毛色逆光 & 五官微调面板开关 */}
             <button
-              onClick={() => setShowTuningPanel(!showTuningPanel)}
+              onClick={() => { setShowTuningPanel(!showTuningPanel); setShowSettings(false); }}
               className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs border transition-all ${
                 showTuningPanel
                   ? 'bg-[#d4a36a] text-[#1c1a17] border-[#d4a36a] font-semibold'
                   : 'bg-[#141210] border-white/15 text-[#e9dac3]/80 hover:text-white'
               }`}
             >
-              🎨 五官微调
+              五官与毛色微调
             </button>
 
             {/* 虚拟配饰隐藏/显示切换按钮 */}
@@ -896,19 +897,15 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
                   ? 'bg-[#56b6c2]/20 border-[#56b6c2]/50 text-[#a8e4ec]'
                   : 'bg-[#141210] border-white/15 text-[#e9dac3]/70'
               }`}
-              title="一键隐藏或显示环绕模型的虚拟配饰 (2,3,4,8,9,10,11,12,13)"
+              title="显示或隐藏猫身边的配饰"
             >
               {showVirtualProps ? '✨ 隐藏配饰' : '✨ 显示配饰'}
             </button>
 
-            <Button
-              onClick={onClose}
-              size="small"
-              className="bg-[#302422] hover:bg-[#462d2a] border-[#d68273]/40 text-[#fcebe8]"
-            >
-              关闭
-            </Button>
-          </div>
+
+              <div className={styles.modelInfo}>当前服务：{currentModelName}</div>
+            </div>
+          )}
         </div>
 
         {/* 3D 书房主视口 */}
@@ -933,7 +930,7 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
           {!isLoading && showBubble && (
             <>
               {/* 全屏透明 SVG 层：起点实时锁定黑猫 3D 品字嘴坐标，终点连接气泡框边缘 */}
-              <svg className="pointer-events-none absolute inset-0 w-full h-full z-10 overflow-visible hidden sm:block">
+              <svg aria-hidden="true" className={`${styles.connector} pointer-events-none absolute inset-0 w-full h-full z-10 overflow-visible hidden sm:block`} style={{ opacity: isTyping ? 0.35 : 0 }}>
                 <defs>
                   <linearGradient
                     id="catMouthBeamGrad"
@@ -967,9 +964,9 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
                   d="M 0 0 L 0 0"
                   fill="none"
                   stroke="#d4a36a"
-                  strokeWidth="5"
-                  strokeOpacity="0.28"
-                  filter="url(#catBeamGlow)"
+                  strokeWidth="1.8"
+                  strokeOpacity="0.10"
+
                 />
                 {/* 主放射全息折线 */}
                 <path
@@ -977,38 +974,38 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
                   d="M 0 0 L 0 0"
                   fill="none"
                   stroke="url(#catMouthBeamGrad)"
-                  strokeWidth="2.2"
-                  strokeDasharray="6 3"
-                  filter="url(#catBeamGlow)"
+                  strokeWidth="1"
+                  strokeDasharray="3 4"
+
                 />
                 {/* 黑猫“品”字嘴锚点脉冲光环 */}
                 <circle
                   ref={mouthPulseRef}
                   cx="0"
                   cy="0"
-                  r="9"
+                  r="3"
                   fill="none"
                   stroke="#f5d5a3"
                   strokeWidth="1.5"
                   strokeOpacity="0.65"
-                  className="animate-ping"
+
                 />
                 <circle
                   ref={mouthDotRef}
                   cx="0"
                   cy="0"
-                  r="4.2"
+                  r="2"
                   fill="#ffffff"
                   stroke="#d4a36a"
                   strokeWidth="2"
-                  filter="url(#catBeamGlow)"
+
                 />
                 {/* 气泡侧边接入锚点 */}
                 <circle
                   ref={bubbleAnchorDotRef}
                   cx="0"
                   cy="0"
-                  r="4.5"
+                  r="2"
                   fill="#d4a36a"
                   stroke="#fff8ee"
                   strokeWidth="1.5"
@@ -1018,18 +1015,18 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
               {/* 从嘴巴放射出的半透明暖金深色毛玻璃聊天窗口（支持居右或居左） */}
               <div
                 ref={bubbleBoxRef}
-                className={`absolute top-3 sm:top-5 ${
+                className={`${styles.bubble} absolute top-3 sm:top-5 ${
                   bubbleSide === 'right'
                     ? 'right-3 sm:right-5'
                     : 'left-3 sm:left-5'
                 } z-10 w-[calc(100%-1.5rem)] sm:w-[410px] md:w-[450px] max-h-[calc(100%-155px)] flex flex-col bg-[#161310]/88 backdrop-blur-xl rounded-2xl border border-[#d4a36a]/45 shadow-[0_16px_48px_rgba(0,0,0,0.65),0_0_24px_rgba(212,163,106,0.18)] transition-all duration-300`}
               >
                 {/* 气泡顶部栏：显示当前工作的四大智能体徽章与控制按钮 */}
-                <div className="flex items-center justify-between px-3.5 py-2.5 border-b border-[#d4a36a]/25 bg-gradient-to-r from-[#26201a]/95 to-[#1c1814]/95 rounded-t-2xl flex-shrink-0">
+                <div className={styles.bubbleHeader}>
                   <div className="flex items-center space-x-2 min-w-0">
                     <span className="relative flex h-2.5 w-2.5 flex-shrink-0">
                       <span
-                        className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
+                        className={`${isTyping ? 'animate-ping' : 'hidden'} absolute inline-flex h-full w-full rounded-full opacity-40 ${
                           isTyping ? 'bg-amber-400' : 'bg-emerald-400'
                         }`}
                       />
@@ -1040,10 +1037,7 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
                       />
                     </span>
                     <span className="text-xs sm:text-sm font-bold text-[#f7efe4] truncate">
-                      🐾 袋子 · 四大智能体全息窗
-                    </span>
-                    <span className="px-1.5 py-0.5 text-[10px] rounded bg-[#d4a36a]/20 text-[#f3d19c] border border-[#d4a36a]/35 font-mono">
-                      {enableWebSearch ? 'deepseek-v4-pro' : currentModelName}
+                      袋子 · 学习助手
                     </span>
                   </div>
 
@@ -1055,11 +1049,11 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
                           ? 'bg-[#d4a36a] text-[#1c1a17] border-[#d4a36a] font-semibold'
                           : 'bg-white/5 text-[#e9dac3] border-white/15 hover:bg-white/10'
                       }`}
-                      title="切换查看单条最新气泡 / 全部历史对话记录"
+                      title="查看最新回复或完整对话"
                     >
                       {showHistoryMode
-                        ? '💬 最新气泡'
-                        : `📜 历史(${messages.length})`}
+                        ? '最新回复'
+                        : `历史（${messages.length}）`}
                     </button>
                     <button
                       onClick={() =>
@@ -1068,30 +1062,18 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
                         )
                       }
                       className="px-1.5 py-0.5 rounded text-[11px] bg-white/5 hover:bg-white/15 text-[#e9dac3] border border-white/10"
-                      title="左右切换放射方向"
+                      title="调整聊天窗位置"
                     >
                       {bubbleSide === 'right' ? '◀左' : '右▶'}
                     </button>
                     <button
                       onClick={() => setShowBubble(false)}
                       className="px-1.5 py-0.5 rounded text-[11px] bg-white/5 hover:bg-red-500/30 text-[#e9dac3]/70 hover:text-white"
-                      title="最小化气泡"
+                      title="收起对话"
                     >
                       ─
                     </button>
                   </div>
-                </div>
-
-                {/* 激活的四大智能体状态标签条 */}
-                <div className="px-3.5 py-1.5 bg-[#12100e]/80 border-b border-white/10 flex flex-wrap items-center gap-1.5 flex-shrink-0">
-                  {activeAgentsList.map((ag, idx) => (
-                    <span
-                      key={idx}
-                      className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] bg-[#d4a36a]/15 text-[#eed7b5] border border-[#d4a36a]/30"
-                    >
-                      {ag}
-                    </span>
-                  ))}
                 </div>
 
                 {/* 气泡内容区：支持「单条最新放射模式」与「完整历史模式」 */}
@@ -1195,7 +1177,7 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
                             latestAiMessage.siteLinks.length > 0 && (
                               <div className="pt-2 border-t border-white/10">
                                 <div className="text-[11px] text-[#d4a36a] font-semibold mb-1.5 flex items-center gap-1">
-                                  <span>🧭 智能体一 · 站内课程页面直达：</span>
+                                  <span>相关课程</span>
                                 </div>
                                 <div className="flex flex-wrap gap-1.5">
                                   {latestAiMessage.siteLinks.map((lnk, i) => (
@@ -1221,7 +1203,7 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
                               <div className="pt-2 border-t border-white/10">
                                 <div className="text-[11px] text-[#63c7ff] font-semibold mb-1.5 flex items-center gap-1">
                                   <span>
-                                    🌐 智能体四 (deepseek-v4-pro) · 权威外部网站引用：
+                                    参考资料
                                   </span>
                                 </div>
                                 <div className="space-y-1.5">
@@ -1257,7 +1239,7 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
                             <div className="p-3 rounded-xl bg-gradient-to-br from-[#2b2319] to-[#1e1913] border border-[#d4a36a]/60 space-y-2">
                               <div className="flex items-center justify-between">
                                 <span className="text-xs font-bold text-[#f5d5a3]">
-                                  📝 智能体二 · 已生成结构化笔记草稿
+                                  笔记草稿
                                 </span>
                                 <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#d4a36a]/25 text-[#f7efe4]">
                                   {latestAiMessage.noteDraft.category} ·{' '}
@@ -1267,29 +1249,13 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
                               <div className="text-xs font-semibold text-white truncate">
                                 《{latestAiMessage.noteDraft.title}》
                               </div>
-                              <div className="flex flex-wrap gap-2 pt-1">
+                              <div className="flex flex-wrap items-center gap-2 pt-1">
                                 <button
-                                  onClick={() =>
-                                    handleDirectSaveNote(
-                                      latestAiMessage.noteDraft
-                                    )
-                                  }
+                                  onClick={() => { setPreviewNote(latestAiMessage.noteDraft); setShowNotePreview(true); }}
                                   disabled={savingNote}
-                                  className="flex-1 px-3 py-1.5 rounded-lg bg-gradient-to-r from-[#d4a36a] to-[#b58448] hover:from-[#e2b278] hover:to-[#c69355] text-[#1c1a17] font-bold text-xs shadow transition-all disabled:opacity-50"
-                                >
-                                  {savingNote
-                                    ? '保存中...'
-                                    : '⚡ 一键存入我的笔记'}
-                                </button>
-                                <button
-                                  onClick={() => {
-                                    setPreviewNote(latestAiMessage.noteDraft);
-                                    setShowNotePreview(true);
-                                  }}
-                                  className="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-[#f7efe4] border border-white/20 text-xs transition-all"
-                                >
-                                  ✏️ 预览与编辑
-                                </button>
+                                  className={styles.previewButton}
+                                >预览并保存</button>
+                                <span className="text-xs text-[#c8bba9]">确认内容后，再保存到我的笔记。</span>
                               </div>
                               {savedNoteTip && (
                                 <div className="flex items-center justify-between text-xs text-emerald-300 pt-1">
@@ -1349,7 +1315,7 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
               onClick={() => setShowBubble(true)}
               className="absolute top-4 right-4 z-10 px-3.5 py-2 rounded-full bg-[#1a1714]/90 border border-[#d4a36a]/50 text-[#f7efe4] text-xs shadow-xl hover:bg-[#d4a36a] hover:text-[#1c1a17] transition-all font-semibold"
             >
-              💬 展开袋子嘴巴全息气泡
+              打开对话
             </button>
           )}
 
@@ -1358,7 +1324,7 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
             <div className="absolute top-3 left-3 z-20 w-72 bg-[#161412]/92 backdrop-blur-md border border-[#d4a36a]/35 rounded-xl p-3.5 text-xs text-[#f4eadc] shadow-2xl space-y-2.5">
               <div className="flex items-center justify-between border-b border-white/10 pb-2">
                 <span className="font-semibold text-[#d4a36a]">
-                  🎨 毛色逆光 & 灵动五官微调
+                  五官与毛色微调
                 </span>
                 <button
                   onClick={() => setShowTuningPanel(false)}
@@ -1506,7 +1472,7 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
               <div className="text-center text-[#f4eadc] max-w-sm px-4">
                 <div className="text-5xl mb-5 animate-bounce">🐱</div>
                 <div className="text-lg sm:text-xl font-serif font-semibold mb-4 tracking-wider text-[#f7efe4]">
-                  正在唤醒像素绒毛黑猫与四大智能体...
+                  正在布置书房…
                 </div>
                 <div className="w-64 bg-[#2c2723] rounded-full h-2.5 mb-3 overflow-hidden border border-[#d4a36a]/30 mx-auto">
                   <div
@@ -1525,76 +1491,17 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
               底部常驻直聊输入坞（Chat Dock）：无需弹窗，直接与四大智能体对话
              ========================================================== */}
           {!isLoading && (
-            <div className="absolute bottom-2.5 sm:bottom-4 left-1/2 -translate-x-1/2 w-full max-w-3xl px-3 sm:px-4 z-20">
-              <div className="bg-[#181512]/90 backdrop-blur-xl rounded-2xl p-2.5 sm:p-3.5 shadow-[0_12px_40px_rgba(0,0,0,0.65)] border border-[#d4a36a]/35 space-y-2">
-                {/* 第一排：四大专职智能体一键召唤胶囊 */}
-                <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 no-scrollbar">
-                  <button
-                    onClick={() =>
-                      dispatchAgentMessage(
-                        '请结合当前页面内容和我们的对话，帮我总结并生成一篇结构化学习笔记！',
-                        { explicitAgent: 'agent2_note' }
-                      )
-                    }
-                    disabled={isTyping}
-                    className="px-2.5 py-1 rounded-full text-xs bg-[#d4a36a]/20 hover:bg-[#d4a36a] text-[#f5d5a3] hover:text-[#1c1a17] border border-[#d4a36a]/40 transition-all whitespace-nowrap font-medium flex-shrink-0"
-                  >
-                    📝 智能体二：总结写笔记
-                  </button>
-                  <button
-                    onClick={() =>
-                      dispatchAgentMessage(
-                        '请介绍一下当前页面核心内容，并推荐网站里相关的课程与练习页面！',
-                        { explicitAgent: 'agent1_navigator' }
-                      )
-                    }
-                    disabled={isTyping}
-                    className="px-2.5 py-1 rounded-full text-xs bg-white/8 hover:bg-[#d4a36a]/30 text-[#e9dac3] border border-white/15 transition-all whitespace-nowrap flex-shrink-0"
-                  >
-                    🧭 智能体一：本页伴读 & 站内领航
-                  </button>
-                  <button
-                    onClick={() => {
-                      setEnableWebSearch(true);
-                      dispatchAgentMessage(
-                        '请帮我联网检索 Java 与 AI 大模型开发的最权威官方文档网站链接！',
-                        { explicitAgent: 'agent4_search', forceSearch: true }
-                      );
-                    }}
-                    disabled={isTyping}
-                    className="px-2.5 py-1 rounded-full text-xs bg-[#56b6c2]/20 hover:bg-[#56b6c2]/40 text-[#a8e4ec] border border-[#56b6c2]/45 transition-all whitespace-nowrap flex-shrink-0"
-                  >
-                    🌐 智能体四：Pro 联网搜权威外链
-                  </button>
-                  <button
-                    onClick={() =>
-                      dispatchAgentMessage(
-                        '袋子，给我制定一份高效学好数据结构、算法与后端架构的实战路线吧！'
-                      )
-                    }
-                    disabled={isTyping}
-                    className="px-2.5 py-1 rounded-full text-xs bg-white/8 hover:bg-white/15 text-[#e9dac3] border border-white/15 transition-all whitespace-nowrap flex-shrink-0"
-                  >
-                    🐾 智能体三：学习路线规划
-                  </button>
+            <div className={`${styles.dock} absolute bottom-2.5 sm:bottom-4 left-1/2 -translate-x-1/2 w-full max-w-3xl px-3 sm:px-4 z-20`}>
+              <div className={styles.composer}>
+                <div className={styles.shortcuts} aria-label="学习快捷操作">
+                  <button disabled={isTyping} onClick={() => dispatchAgentMessage('请解释当前页面的核心知识点，并举一个容易理解的例子。', { explicitAgent: 'agent1_navigator' })}>解释当前页</button>
+                  <button disabled={isTyping} onClick={() => dispatchAgentMessage('请根据当前页面内容，帮我找相关的站内课程与练习。', { explicitAgent: 'agent1_navigator' })}>找课程</button>
+                  <button disabled={isTyping} onClick={() => dispatchAgentMessage('请结合当前页面和我们的对话，整理一份学习笔记草稿，供我预览后保存。', { explicitAgent: 'agent2_note' })}>整理笔记</button>
+                  <button disabled={isTyping} onClick={() => dispatchAgentMessage('请结合我的问题，帮我制定一份循序渐进的学习路线。')}>学习路线</button>
                 </div>
 
                 {/* 第二排：姿态切换 + Pro 联网深搜开关 + 直接输入框 + 发送按钮 */}
                 <div className="flex items-center gap-2">
-                  <button
-                    onClick={() =>
-                      activatePostureModel(
-                        posture === 'standing' ? 'crouching' : 'standing'
-                      )
-                    }
-                    className="w-9 h-9 bg-gradient-to-br from-[#d4a36a] to-[#9c7142] rounded-xl flex items-center justify-center shadow-md hover:scale-105 transition-transform flex-shrink-0"
-                    title="点击切换黑猫乖巧坐姿 / 爬起站姿"
-                  >
-                    <span className="text-base">
-                      {posture === 'standing' ? '🐱' : '🐾'}
-                    </span>
-                  </button>
-
                   {/* DeepSeek-V4-Pro 联网深搜独立开关 */}
                   <button
                     onClick={() => setEnableWebSearch(!enableWebSearch)}
@@ -1603,11 +1510,13 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
                         ? 'bg-[#1d3b47] border-[#56b6c2] text-[#a8e4ec] shadow-[0_0_12px_rgba(86,182,194,0.35)]'
                         : 'bg-[#24201c] border-white/15 text-[#e9dac3]/70 hover:text-white'
                     }`}
-                    title="开启后将调用 deepseek-v4-pro 及 /v1/tools/search 与 /v1/tools/fetch 检索权威外部网站"
+                    title="开启后可联网查找相关资料"
+                    aria-label={enableWebSearch ? '联网搜索：开' : '联网搜索：关'}
+                    aria-pressed={enableWebSearch}
                   >
                     <span>🌐</span>
                     <span className="hidden sm:inline">
-                      {enableWebSearch ? 'Pro深搜: 开' : 'Pro深搜: 关'}
+                      {enableWebSearch ? '联网搜索：开' : '联网搜索：关'}
                     </span>
                   </button>
 
@@ -1623,8 +1532,8 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
                     }}
                     placeholder={
                       enableWebSearch
-                        ? '🌐 [Pro联网深搜模式] 输入问题，袋子将先搜索抓取权威网站再回答...'
-                        : '直接输入问题与袋子对话（问课程页面、总结写笔记、查资料），回车发送...'
+                        ? '输入问题，联网查找相关资料…'
+                        : '问知识点、找课程，或整理学习笔记…'
                     }
                     disabled={isTyping}
                     className="flex-1 min-w-0 bg-[#100e0c]/90 text-[#f7efe4] placeholder-[#e9dac3]/45 text-xs sm:text-sm px-3.5 py-2.5 rounded-xl border border-[#d4a36a]/30 focus:outline-none focus:border-[#d4a36a] transition-colors"
@@ -1655,6 +1564,7 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
           loading={savingNote}
         />
       )}
-    </div>
+    </div>,
+    document.body
   );
 }

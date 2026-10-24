@@ -48,9 +48,11 @@ public class GameServiceImpl implements GameService {
         if (state == null) {
             throw new IllegalArgumentException("游戏不存在或已结束: " + gameId);
         }
-        GameState newState = engine.makeMove(gameId, state, action, payload);
-        store.save(gameId, newState);
-        return newState;
+        synchronized (state) {
+            GameState newState = engine.makeMove(gameId, state, action, payload);
+            store.save(gameId, newState);
+            return newState;
+        }
     }
 
     @Override
@@ -75,8 +77,10 @@ public class GameServiceImpl implements GameService {
         if (state == null || state.isGameOver()) {
             return null;
         }
-        GameState newState = engine.tick(gameId, state);
-        store.save(gameId, newState);
-        return newState;
+        synchronized (state) {
+            GameState newState = engine.tick(gameId, state);
+            store.save(gameId, newState);
+            return newState;
+        }
     }
 }

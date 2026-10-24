@@ -1,0 +1,4 @@
+
+@media (max-width: 767px) {
+ .inner[data-flipped='true'] { transform: rotateY(180deg) !important; }
+}

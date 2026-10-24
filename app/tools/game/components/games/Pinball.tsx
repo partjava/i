@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { soundSynth } from '../RetroAudioSynth';
+import { bounceOffFlipper } from '../arcade-physics';
 
 interface Bumper {
   x: number;
@@ -26,6 +27,10 @@ export default function Pinball({
   const [gameOver, setGameOver] = useState(false);
   const [launched, setLaunched] = useState(false);
 
+  const runtime = useRef({ score: 0, lives: 0, ballsLeft: 3, launched: false, gameOver: false, won: false });
+  runtime.current = { ...runtime.current, score, ballsLeft, launched, gameOver };
+  useEffect(() => { onMove('__local_state', { score, gameOver, won: false }); }, [score, gameOver, onMove]);
+
   // 物理实体 Ref
   const ballRef = useRef({ x: 380, y: 480, vx: 0, vy: 0, r: 7 });
   const leftFlipperRef = useRef({ angle: 0.35, targetAngle: 0.35, isUp: false });
@@ -46,10 +51,15 @@ export default function Pinball({
   // 重置单颗小球
   const resetBall = useCallback(() => {
     ballRef.current = { x: 375, y: 480, vx: 0, vy: 0, r: 7 };
+    runtime.current.launched = false;
     setLaunched(false);
   }, []);
 
   const initGame = useCallback(() => {
+    runtime.current = { score: 0, lives: 0, ballsLeft: 3, launched: false, gameOver: false, won: false };
+    leftFlipperRef.current = { angle: 0.35, targetAngle: 0.35, isUp: false };
+    rightFlipperRef.current = { angle: -0.35, targetAngle: -0.35, isUp: false };
+    bumpersRef.current.forEach(b => { b.pulse = 0; });
     setScore(0);
     setBallsLeft(3);
     setGameOver(false);
@@ -63,6 +73,7 @@ export default function Pinball({
   // 触发弹簧发射
   const launchPlunger = () => {
     if (launched || gameOver) return;
+    runtime.current.launched = true;
     setLaunched(true);
     ballRef.current.vy = -14.5;
     ballRef.current.vx = -1.2;
@@ -85,6 +96,9 @@ export default function Pinball({
   // 键盘操作绑定
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLElement && (e.target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName))) return;
+      if (['ArrowLeft', 'ArrowRight', 'KeyZ', 'Slash', 'Space', 'ArrowDown'].includes(e.code)) e.preventDefault();
+      if (e.repeat) return;
       if (e.code === 'ArrowLeft' || e.code === 'KeyZ') setLeftFlipper(true);
       if (e.code === 'ArrowRight' || e.code === 'Slash') setRightFlipper(true);
       if (e.code === 'Space' || e.code === 'ArrowDown') launchPlunger();
@@ -95,9 +109,13 @@ export default function Pinball({
       if (e.code === 'ArrowRight' || e.code === 'Slash') setRightFlipper(false);
     };
 
+    const release = () => { setLeftFlipper(false); setRightFlipper(false); };
+    window.addEventListener('blur', release);
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('keyup', handleKeyUp);
     return () => {
+      release();
+      window.removeEventListener('blur', release);
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
@@ -110,8 +128,8 @@ export default function Pinball({
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const loop = () => {
-      animFrameRef.current = requestAnimationFrame(loop);
+    const step = () => {
+      const { launched, gameOver, score, lives, ballsLeft, won } = runtime.current;
 
       ctx.clearRect(0, 0, W, H);
 
@@ -157,16 +175,19 @@ export default function Pinball({
         const dy = ball.y - b.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
 
-        if (dist < b.r + ball.r && launched) {
+        if (dist < b.r + ball.r && launched && !gameOver) {
           // 反弹并加速
-          const nx = dx / dist;
-          const ny = dy / dist;
+          const nx = dist > 0.001 ? dx / dist : 0;
+          const ny = dist > 0.001 ? dy / dist : -1;
+          ball.x = b.x + nx * (b.r + ball.r + 0.1);
+          ball.y = b.y + ny * (b.r + ball.r + 0.1);
           const speed = Math.min(11.0, Math.max(8.0, Math.sqrt(ball.vx * ball.vx + ball.vy * ball.vy)));
           ball.vx = nx * speed;
           ball.vy = ny * speed;
           b.pulse = 1.0;
 
-          setScore(s => s + b.points);
+          runtime.current.score += b.points;
+          setScore(runtime.current.score);
           soundSynth.playChime(Math.floor(b.points / 40));
         }
 
@@ -222,34 +243,16 @@ export default function Pinball({
       ctx.fill();
       ctx.restore();
 
-      // 弹板碰撞击球
-      if (launched && ball.y > 445 && ball.y < 505) {
-        // 左弹板区域 (Pivot: 110, 480)
-        if (ball.x >= 95 && ball.x <= 175) {
-          if (leftF.isUp) {
-            ball.vy = -11.5;
-            ball.vx = 2.5 + Math.random() * 2.5;
-            soundSynth.playPop();
-          } else {
-            ball.vy = -Math.abs(ball.vy) * 0.35;
-            ball.vx = Math.max(1.2, ball.vx);
-          }
-        }
-        // 右弹板区域 (Pivot: 270, 480)
-        if (ball.x >= 205 && ball.x <= 285) {
-          if (rightF.isUp) {
-            ball.vy = -11.5;
-            ball.vx = -2.5 - Math.random() * 2.5;
-            soundSynth.playPop();
-          } else {
-            ball.vy = -Math.abs(ball.vy) * 0.35;
-            ball.vx = Math.min(-1.2, ball.vx);
-          }
+      // 碰撞范围与实际绘制的旋转弹板一致。
+      if (launched && !gameOver) {
+        if (bounceOffFlipper(ball, 110, 480, 110 + Math.cos(leftF.angle) * fLen, 480 + Math.sin(leftF.angle) * fLen, leftF.isUp, 1)
+          || bounceOffFlipper(ball, 270, 480, 270 - Math.cos(rightF.angle) * fLen, 480 - Math.sin(rightF.angle) * fLen, rightF.isUp, -1)) {
+          soundSynth.playPop();
         }
       }
 
       // 4. 小球物理运动与全轨道导轨碰撞
-      if (launched) {
+      if (launched && !gameOver) {
         ball.vy += GRAVITY;
         // 限制最大飞行速度，杜绝穿墙穿轨
         const vLen = Math.sqrt(ball.vx * ball.vx + ball.vy * ball.vy);
@@ -280,6 +283,8 @@ export default function Pinball({
           if (cdist > 160 - ball.r) {
             const nx = -cdx / cdist;
             const ny = -cdy / cdist;
+            ball.x = 200 - nx * (160 - ball.r);
+            ball.y = 140 - ny * (160 - ball.r);
             const dot = ball.vx * nx + ball.vy * ny;
             if (dot < 0) {
               ball.vx = (ball.vx - 1.7 * dot * nx) * 0.85;
@@ -329,12 +334,16 @@ export default function Pinball({
 
         // 掉入底槽
         if (ball.y > H + 20) {
+          runtime.current.launched = false;
+          setLaunched(false);
           const nextBalls = ballsLeft - 1;
+          runtime.current.ballsLeft = nextBalls;
           setBallsLeft(nextBalls);
           if (nextBalls <= 0) {
+            runtime.current.gameOver = true;
             setGameOver(true);
             soundSynth.playGameOver();
-            onMove('loss', { score });
+
           } else {
             resetBall();
             soundSynth.playGameOver();
@@ -357,16 +366,28 @@ export default function Pinball({
       ctx.restore();
     };
 
+    let previousTime = performance.now();
+    let accumulated = 0;
+    const loop = (now: number) => {
+      animFrameRef.current = requestAnimationFrame(loop);
+      if (document.hidden) { previousTime = now; accumulated = 0; return; }
+      accumulated += Math.min(66.67, now - previousTime);
+      previousTime = now;
+      while (accumulated >= 1000 / 60) {
+        step();
+        accumulated -= 1000 / 60;
+      }
+    };
     animFrameRef.current = requestAnimationFrame(loop);
     return () => {
       if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
     };
-  }, [launched, ballsLeft, score, onMove, resetBall]);
+  }, [resetBall]);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', userSelect: 'none' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: W, maxWidth: '100%', userSelect: 'none' }}>
       {/* 顶部计分板 */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: W, marginBottom: 8, padding: '6px 14px', background: '#1c2230', borderRadius: 8, fontSize: 14 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', maxWidth: W, marginBottom: 8, padding: '6px 14px', background: '#1c2230', borderRadius: 8, fontSize: 14 }}>
         <div style={{ color: '#ff4757' }}>
           {'⚪ '.repeat(Math.max(0, ballsLeft))}
         </div>
@@ -389,13 +410,13 @@ export default function Pinball({
       </div>
 
       {/* 画布 */}
-      <div style={{ position: 'relative', width: W, height: H }}>
+      <div style={{ position: 'relative', width: '100%', maxWidth: W, aspectRatio: `${W} / ${H}` }}>
         <canvas
           ref={canvasRef}
           width={W}
           height={H}
           style={{
-            display: 'block',
+            display: 'block', width: '100%', height: 'auto', touchAction: 'none',
             borderRadius: 12,
             boxShadow: '0 8px 30px rgba(0,0,0,0.4)',
           }}
@@ -462,14 +483,14 @@ export default function Pinball({
       </div>
 
       {/* 底部触控左右挡板大按钮 (移动端极爽) */}
-      <div style={{ display: 'flex', gap: 12, marginTop: 10, width: W }}>
+      <div style={{ display: 'flex', gap: 12, marginTop: 10, width: '100%' }}>
         <button
-          onMouseDown={() => setLeftFlipper(true)}
-          onMouseUp={() => setLeftFlipper(false)}
-          onTouchStart={() => setLeftFlipper(true)}
-          onTouchEnd={() => setLeftFlipper(false)}
+          onPointerDown={event => { event.preventDefault(); event.currentTarget.setPointerCapture(event.pointerId); setLeftFlipper(true); }}
+          onPointerUp={() => setLeftFlipper(false)}
+          onPointerCancel={() => setLeftFlipper(false)}
+          onLostPointerCapture={() => setLeftFlipper(false)}
           style={{
-            flex: 1,
+            flex: 1, touchAction: 'none',
             height: 50,
             borderRadius: 8,
             fontSize: 15,
@@ -483,12 +504,12 @@ export default function Pinball({
           ⬅️ 左挡板 (Z / ←)
         </button>
         <button
-          onMouseDown={() => setRightFlipper(true)}
-          onMouseUp={() => setRightFlipper(false)}
-          onTouchStart={() => setRightFlipper(true)}
-          onTouchEnd={() => setRightFlipper(false)}
+          onPointerDown={event => { event.preventDefault(); event.currentTarget.setPointerCapture(event.pointerId); setRightFlipper(true); }}
+          onPointerUp={() => setRightFlipper(false)}
+          onPointerCancel={() => setRightFlipper(false)}
+          onLostPointerCapture={() => setRightFlipper(false)}
           style={{
-            flex: 1,
+            flex: 1, touchAction: 'none',
             height: 50,
             borderRadius: 8,
             fontSize: 15,

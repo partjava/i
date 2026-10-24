@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback, useEffect, useMemo } from 'react';
+import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import InkWashDecoration from '@shared/components/InkWashDecoration';
 import GameContainer from './components/GameContainer';
 import { useGameApi, GameStateData } from './components/useGameApi';
@@ -95,7 +95,9 @@ export default function GamePage() {
   const [recentGames, setRecentGames] = useState<string[]>([]);
   const [highScoresMap, setHighScoresMap] = useState<Record<string, number>>({});
 
-  const api = useGameApi(selectedGame || '');
+  const { createGame, makeMove, startStream, stopStream, stopGame, loading, error } = useGameApi(selectedGame || '');
+  const sessionVersion = useRef(0);
+  const moveQueue = useRef<Promise<void>>(Promise.resolve());
 
   // 读取常玩游戏与最高分
   useEffect(() => {
@@ -113,6 +115,9 @@ export default function GamePage() {
   }, []);
 
   const openGame = useCallback(async (gameType: string) => {
+    const version = ++sessionVersion.current;
+    stopStream();
+    if (gameId && selectedGame) void stopGame(gameId);
     setSelectedGame(gameType);
     setGameState(null);
     setGameId(null);
@@ -124,15 +129,21 @@ export default function GamePage() {
       localStorage.setItem('partjava_recent_games', JSON.stringify(nextRecent));
     } catch {}
 
-    const state = await api.createGame();
+    const state = await createGame(undefined, gameType);
+    if (version !== sessionVersion.current) {
+      if (state) void stopGame(state.gameId, gameType);
+      return;
+    }
     if (state) {
       setGameState(state);
       setGameId(state.gameId);
     }
-  }, [recentGames, api]);
+  }, [recentGames, createGame, stopStream, stopGame, gameId, selectedGame]);
 
   const closeGame = useCallback(() => {
-    if (gameId && selectedGame) api.stopGame(gameId);
+    ++sessionVersion.current;
+    stopStream();
+    if (gameId && selectedGame) void stopGame(gameId);
     setSelectedGame(null);
     setGameState(null);
     setGameId(null);
@@ -146,31 +157,53 @@ export default function GamePage() {
       });
       setHighScoresMap(scores);
     } catch {}
-  }, [gameId, selectedGame, api]);
+  }, [gameId, selectedGame, stopGame, stopStream]);
 
-  const handleMove = useCallback(async (action: string, payload?: any) => {
+  const handleMove = useCallback((action: string, payload?: any) => {
     if (!gameId || !selectedGame) return;
-    const newState = await api.makeMove(gameId, action, payload);
-    if (newState) setGameState(newState);
-  }, [gameId, selectedGame, api]);
+    if (action === '__local_state' && ['breakout', 'pinball'].includes(selectedGame)) {
+      setGameState(previous => previous && previous.gameId === gameId ? {
+        ...previous, score: payload.score, gameOver: payload.gameOver,
+        winner: payload.won ? 'player' : null,
+      } : previous);
+      return;
+    }
+    const version = sessionVersion.current;
+    moveQueue.current = moveQueue.current.then(async () => {
+      if (version !== sessionVersion.current) return;
+      const next = await makeMove(gameId, action, payload);
+      if (next && version === sessionVersion.current) {
+        // 实时状态以 SSE 为准，避免较早的输入响应让画面倒退。
+        if (!['snake', 'tetris', 'flappy'].includes(selectedGame) || next.gameOver) setGameState(next);
+      }
+    });
+  }, [gameId, selectedGame, makeMove]);
 
   const handleRestart = useCallback(async () => {
     if (!selectedGame) return;
-    if (gameId) api.stopGame(gameId);
-    const state = await api.createGame();
+    const version = ++sessionVersion.current;
+    stopStream();
+    if (gameId) void stopGame(gameId);
+    const state = await createGame(undefined, selectedGame);
+    if (version !== sessionVersion.current) {
+      if (state) void stopGame(state.gameId, selectedGame);
+      return;
+    }
     if (state) {
       setGameState(state);
       setGameId(state.gameId);
     }
-  }, [selectedGame, gameId, api]);
+  }, [selectedGame, gameId, stopGame, stopStream, createGame]);
 
-  // SSE for realtime games
-  const realtimeGames = ['snake', 'tetris', 'breakout', 'flappy', 'pinball'];
+  // 本地物理游戏只运行一套引擎；蛇和方块使用后端状态流。
   useEffect(() => {
-    if (!selectedGame || !gameId || !realtimeGames.includes(selectedGame)) return;
-    api.startStream(gameId, (data) => setGameState(data));
-    return () => api.stopStream();
-  }, [selectedGame, gameId]);
+    if (!selectedGame || !gameId || !['snake', 'tetris', 'flappy'].includes(selectedGame)) return;
+    const version = sessionVersion.current;
+    startStream(gameId, data => {
+      if (version === sessionVersion.current) setGameState(data);
+    });
+    return stopStream;
+  }, [selectedGame, gameId, startStream, stopStream]);
 
   // 过滤后的游戏列表
   const filteredGames = useMemo(() => {
@@ -334,6 +367,7 @@ export default function GamePage() {
         )}
       </div>
 
+      {error && <div role="alert" className="fixed bottom-6 left-1/2 z-[1100] -translate-x-1/2 rounded-xl bg-red-950 px-5 py-3 text-red-100">{error}</div>}
       {/* 游戏弹窗通用容器 */}
       {selectedGame && Renderer && (
         <GameContainer
@@ -342,9 +376,9 @@ export default function GamePage() {
           onMove={handleMove}
           onRestart={handleRestart}
           onClose={closeGame}
-          loading={api.loading}
+          loading={loading}
         >
-          {(data, move) => <Renderer state={data} onMove={move} />}
+          {(data, move) => <Renderer key={gameId || selectedGame} state={data} onMove={move} />}
         </GameContainer>
       )}
 

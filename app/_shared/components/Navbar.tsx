@@ -273,8 +273,9 @@ export default function Navbar() {
                 onClick={() => {
                   window.dispatchEvent(new CustomEvent('toggle-ai-chat'));
                 }}
-                className="w-12 h-12 rounded-full flex-shrink-0 flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 cursor-pointer relative overflow-hidden group"
+                className="w-16 h-12 rounded-[50%] flex-shrink-0 flex items-center justify-center transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer relative overflow-hidden group"
                 style={{
+                  width: 64, height: 48, minWidth: 64, borderRadius: '50%',
                   background:
                     'radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.72) 0%, rgba(255, 255, 255, 0.22) 55%, rgba(186, 230, 253, 0.32) 100%)',
                   backdropFilter: 'blur(16px) saturate(180%)',
@@ -288,7 +289,7 @@ export default function Navbar() {
                 <span
                   className="absolute top-1.5 left-2.5 w-3.5 h-1.5 rounded-full bg-white/80 blur-[0.6px] rotate-[-25deg] pointer-events-none"
                 />
-                <StitchLogo size={30} />
+                <StitchLogo size={42} className="scale-110" />
               </button>
             </Tooltip>
           )}

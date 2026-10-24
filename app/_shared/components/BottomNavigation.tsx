@@ -83,16 +83,6 @@ export default function BottomNavigation() {
       href: '/code/editor',
     },
     {
-      key: 'ai',
-      icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-        </svg>
-      ),
-      label: 'AI 助手',
-      href: '/ai-chat',
-    },
-    {
       key: 'challenges',
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -225,10 +215,11 @@ export default function BottomNavigation() {
         closable={false}
         className="mobile-drawer"
         styles={{
-          body: { padding: '16px' }
+          header: { background: 'var(--surface-raised)', color: 'var(--content-primary)', borderColor: 'var(--line-subtle)' },
+          body: { padding: '16px', background: 'var(--surface-raised)', color: 'var(--content-primary)' }
         }}
       >
-        <div className="grid grid-cols-4 gap-4 pb-4">
+        <div className="grid grid-cols-3 gap-3 pb-4">
           {moreNavItems.map((item) => {
             const active = isActive(item.href);
 
@@ -295,6 +286,8 @@ export default function BottomNavigation() {
         .pb-safe {
           padding-bottom: env(safe-area-inset-bottom);
         }
+
+        .mobile-drawer .ant-drawer-content { background: var(--surface-raised); color: var(--content-primary); }
 
         .mobile-drawer .ant-drawer-body {
           padding-bottom: calc(16px + env(safe-area-inset-bottom));

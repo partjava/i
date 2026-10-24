@@ -10,7 +10,7 @@ public class SnakeState implements GameState {
     private int foodX, foodY;
     private int tickCount = 0;
     private int dx = 1, dy = 0;
-    private int nextDx = 1, nextDy = 0;
+    private final Deque<int[]> turns = new ArrayDeque<>();
     private int score;
     private boolean gameOver, won;
     private long lastMoveAt;
@@ -30,7 +30,7 @@ public class SnakeState implements GameState {
     @Override public String getGameType() { return "snake"; }
     @Override public boolean isGameOver() { return gameOver; }
     @Override public int getScore() { return score; }
-    @Override public String getWinner() { return null; }
+    @Override public String getWinner() { return won ? "player" : null; }
     @Override public long getLastMoveAt() { return lastMoveAt; }
     @JsonProperty("width") public int getWidth() { return width; }
     @JsonProperty("height") public int getHeight() { return height; }
@@ -40,21 +40,32 @@ public class SnakeState implements GameState {
     @JsonProperty("dx") public int getDx() { return dx; }
     @JsonProperty("dy") public int getDy() { return dy; }
 
-    public void setDirection(int ndx, int ndy) {
-        if (ndx == -dx && ndy == -dy) return; // 不能反向
-        nextDx = ndx; nextDy = ndy;
+    public synchronized void setDirection(int ndx, int ndy) {
+        if (gameOver || Math.abs(ndx) + Math.abs(ndy) != 1 || turns.size() >= 2) return;
+        int[] previous = turns.peekLast();
+        int px = previous == null ? dx : previous[0];
+        int py = previous == null ? dy : previous[1];
+        if ((ndx == -px && ndy == -py) || (ndx == px && ndy == py)) return;
+        turns.addLast(new int[]{ndx, ndy});
+        lastMoveAt = System.currentTimeMillis();
     }
 
     /** 游戏 tick — 移动一步 */
-    public boolean tick() {
+    public synchronized boolean tick() {
         if (gameOver) return false;
         // 正常人反应速度：每 2 个 tick (200ms) 走一格，不再快到离谱
         if (++tickCount % 2 != 0) return true;
-        dx = nextDx; dy = nextDy;
+        int[] turn = turns.pollFirst();
+        if (turn != null) { dx = turn[0]; dy = turn[1]; }
         int headX = snake.get(0)[0] + dx;
         int headY = snake.get(0)[1] + dy;
         if (headX < 0 || headX >= width || headY < 0 || headY >= height) { gameOver = true; return false; }
-        for (int[] seg : snake) if (seg[0] == headX && seg[1] == headY) { gameOver = true; return false; }
+        boolean eating = headX == foodX && headY == foodY;
+        int occupied = snake.size() - (eating ? 0 : 1);
+        for (int i = 0; i < occupied; i++) {
+            int[] seg = snake.get(i);
+            if (seg[0] == headX && seg[1] == headY) { gameOver = true; return false; }
+        }
         snake.add(0, new int[]{headX, headY});
         if (headX == foodX && headY == foodY) {
             score += 10;

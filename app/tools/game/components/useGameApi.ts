@@ -18,11 +18,11 @@ export function useGameApi(gameType: string) {
   const eventSourceRef = useRef<EventSource | null>(null);
 
   /** 创建新游戏 */
-  const createGame = useCallback(async (config?: Record<string, any>): Promise<GameStateData | null> => {
+  const createGame = useCallback(async (config?: Record<string, any>, type = gameType): Promise<GameStateData | null> => {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/game/${gameType}/new`, {
+      const res = await fetch(`/api/game/${type}/new`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: config ? JSON.stringify(config) : '{}',
@@ -89,9 +89,10 @@ export function useGameApi(gameType: string) {
       try {
         const data = JSON.parse(event.data);
         onState(data);
+        if (data.gameOver) es.close();
       } catch { /* ignore parse errors */ }
     };
-    es.onerror = () => { es.close(); };
+    // EventSource 自动重连；只有结束/关闭游戏才主动断开。
     eventSourceRef.current = es;
   }, [gameType]);
 
@@ -103,12 +104,11 @@ export function useGameApi(gameType: string) {
   }, []);
 
   /** 停止游戏 */
-  const stopGame = useCallback(async (gameId: string) => {
-    stopStream();
+  const stopGame = useCallback(async (gameId: string, type = gameType) => {
     try {
-      await fetch(`/api/game/${gameType}/${gameId}/stop`, { method: 'POST' });
+      await fetch(`/api/game/${type}/${gameId}/stop`, { method: 'POST' });
     } catch { /* ignore */ }
-  }, [gameType, stopStream]);
+  }, [gameType]);
 
   return { createGame, makeMove, getState, sendInput, startStream, stopStream, stopGame, loading, error };
 }

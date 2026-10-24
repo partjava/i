@@ -1,0 +1,31 @@
+
+.dialog { border-color: rgba(225,214,196,.14) !important; }
+.header { position: relative; z-index: 30; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 20px; background: #24201c; border-bottom: 1px solid #ffffff10; color: #efe7dc; }
+.brand { display: flex; align-items: center; gap: 10px; font-size: 15px; font-weight: 600; letter-spacing: .04em; }
+.brandDot { width: 7px; height: 7px; border-radius: 50%; background: #cba877; flex-shrink: 0; }
+.headerActions { display: flex; gap: 8px; flex-shrink: 0; }
+.headerActions button { border: 1px solid #ffffff18; border-radius: 8px; padding: 6px 11px; background: transparent; color: #d9cfc1; font-size: 12px; }
+.headerActions button:hover { background: #ffffff08; }
+.settings { position: absolute; top: calc(100% + 10px); right: 16px; z-index: 40; display: flex; flex-direction: column; align-items: stretch; gap: 10px; width: min(310px,calc(100vw - 40px)); padding: 16px; border-radius: 14px; border: 1px solid #ffffff18; background: #25211df5; box-shadow: 0 12px 30px #0004; }
+.settings > button { justify-content: center; padding: 9px 12px; }
+.settingsTitle { font-size: 13px; font-weight: 600; color: #efe7dc; }
+.modelInfo { border-top: 1px solid #ffffff12; padding-top: 10px; color: #a99e90; font-size: 11px; overflow-wrap: anywhere; }
+.bubble { background: #241f1bf5 !important; border-color: #ffffff1f !important; box-shadow: 0 12px 32px #0004 !important; }
+.bubbleHeader { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 12px 14px; border-bottom: 1px solid #ffffff10; background: #2a241f; border-radius: 16px 16px 0 0; flex-shrink: 0; }
+.bubble :global(.prose) { color: #e7ded2; font-size: 14px; line-height: 1.8; overflow-wrap: anywhere; }
+.bubble :global(.prose strong) { font-weight: 600; }
+.connector { transition: opacity .35s; }
+.composer { padding: 12px; background: #241f1bf5; border: 1px solid #ffffff1f; border-radius: 16px; box-shadow: 0 8px 24px #0004; }
+.shortcuts { display: flex; flex-wrap: wrap; gap: 7px; padding-bottom: 10px; }
+.shortcuts > button { padding: 6px 10px; color: #d7cbb9; font-size: 12px; font-weight: 400; border: 1px solid #ffffff14; border-radius: 8px; background: #ffffff04; }
+.shortcuts > button:hover { background: #ffffff0b; }
+.shortcuts > button:disabled { opacity: .5; cursor: wait; }
+.previewButton { padding: 8px 14px; border-radius: 8px; background: #c6a374; color: #211c17; font-size: 12px; font-weight: 600; }
+@media(max-width: 639px) {
+ .header { padding: 12px; gap: 8px; }
+ .brand { font-size: 12px; gap: 6px; letter-spacing: 0; }
+ .headerActions { gap: 5px; }
+ .headerActions button { padding: 6px 8px; }
+ .shortcuts { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 6px; }
+ .composer { padding: 10px; }
+}

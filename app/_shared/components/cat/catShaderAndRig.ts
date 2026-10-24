@@ -769,9 +769,12 @@ export function buildRiggedCatFromGLB(
       curPitch += (targetPitch - curPitch) * 0.08;
       curRoll += (targetRoll - curRoll) * 0.08;
 
-      uniforms.uHeadYaw.value = curYaw;
-      uniforms.uHeadPitch.value = curPitch;
-      uniforms.uHeadRoll.value = curRoll;
+      // GLSL mat3 按列构造，旧 rotX/Y/Z 的符号与 Three.js 四元数相反。
+      // 所有设备都与 Three.js 的 YXZ 面部四元数保持同向。
+      const shaderDirection = -1;
+      uniforms.uHeadYaw.value = curYaw * shaderDirection;
+      uniforms.uHeadPitch.value = curPitch * shaderDirection;
+      uniforms.uHeadRoll.value = curRoll * shaderDirection;
 
       // 耳朵不定时灵动抽动
       const earWaveL = Math.pow(Math.max(0, Math.sin(elapsed * 1.7 + 0.5)), 14.0);

@@ -1,4 +1,5 @@
 'use client';
+import mobileStyles from './mobile-notes.module.css';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '@shared/hooks/useAuth';
 import { useRouter } from 'next/navigation';
@@ -575,12 +576,12 @@ export default function NotesPage() {
     .filter(n => selectedCategory === 'all' || n.category === selectedCategory);
 
   return (
-    <div className="min-h-screen bg-surface-page">
+    <div className={`${mobileStyles.page} min-h-screen bg-surface-page`}>
       {/* 水墨画顶部装饰 */}
-      <InkWashDecoration variant="landscape" height={160} className="bg-surface-page" />
-      <InkWashDecoration variant="mist" height={40} className="bg-surface-page -mt-4" />
+      <InkWashDecoration variant="landscape" height={160} className={`${mobileStyles.topDecoration} bg-surface-page`} />
+      <InkWashDecoration variant="mist" height={40} className={`${mobileStyles.mistDecoration} bg-surface-page -mt-4`} />
 
-    <div className="flex p-8 gap-6">
+    <div className={`${mobileStyles.layout} flex p-8 gap-6`}>
       {/* 左侧分类侧边栏 */}
       <aside className="hidden md:block w-56 flex-shrink-0">
         <div className="rounded-lg border border-line-subtle bg-surface-raised p-4 shadow-frost sticky top-8">
@@ -624,12 +625,12 @@ export default function NotesPage() {
       {/* 右侧主内容区 */}
       <div className="flex-1 min-w-0">
 
-      <div className="flex justify-between items-center mb-6">
+      <div className={`${mobileStyles.toolbar} flex justify-between items-center mb-6`}>
         <h1 className="text-3xl font-bold">
           {viewMode === 'my' ? '我的笔记' : '公开笔记'}
         </h1>
-        <div className="flex items-center space-x-4">
-          <div className="flex rounded-lg border border-line-subtle bg-surface-muted p-1" style={{ marginTop: '50px' }}>
+        <div className={`${mobileStyles.actions} flex items-center space-x-4`}>
+          <div className={`${mobileStyles.modeSwitch} flex rounded-lg border border-line-subtle bg-surface-muted p-1`} style={{ marginTop: '50px' }}>
             {/* 只有登录用户才能看到"我的笔记"按钮 */}
             {status === 'authenticated' && session?.user && (
               <button
@@ -667,7 +668,7 @@ export default function NotesPage() {
             </button>
           </div>
           {viewMode === 'my' && status === 'authenticated' && session?.user && (
-            <div className="flex space-x-2" style={{ marginTop: '50px' }}>
+            <div className={`${mobileStyles.buttons} flex space-x-2`} style={{ marginTop: '50px' }}>
               <button
                 onClick={() => {
                   if (status === 'authenticated' && session?.user) {
@@ -762,7 +763,7 @@ export default function NotesPage() {
             <div
               key={note.id || note._id}
               id={`note-${note.id || note._id}`}
-              className={`bg-surface-raised rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow ${
+              className={`${mobileStyles.note} bg-surface-raised rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow ${
               isMultiSelectMode && viewMode === 'my' ? 'border-2 ' + (selectedNotes[note.id || note._id || ''] ? 'border-content-muted' : 'border-transparent') : ''
               } ${!isMultiSelectMode ? 'cursor-pointer' : ''}`}
               onClick={() => {
@@ -802,7 +803,7 @@ export default function NotesPage() {
                       {note.title}
                     </Link>
                   </h3>
-                  <div className="flex items-center space-x-4 text-sm text-content-muted mb-2">
+                  <div className={`${mobileStyles.metadata} flex items-center space-x-4 text-sm text-content-muted mb-2`}>
                     {note.category && (
                       <span className="bg-surface-page text-content-primary px-2 py-1 rounded">
                         {note.category}
@@ -851,7 +852,7 @@ export default function NotesPage() {
                 )}
               </div>
 
-              <div className="prose max-w-none mb-4">
+              <div className={`${mobileStyles.prose} prose max-w-none mb-4`}>
                 <ReactMarkdown remarkPlugins={[remarkGfm]}>
                   {note.content.length > 200 ? note.content.substring(0, 200) + '...' : note.content}
                 </ReactMarkdown>

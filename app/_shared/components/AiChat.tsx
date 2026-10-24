@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 import { usePathname } from 'next/navigation';
 import { UserOutlined } from '@ant-design/icons';
 import StitchLogo from './StitchLogo';
+import mobileStyles from './AiChat.mobile.module.css';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
@@ -31,6 +32,13 @@ function FloatingAiChat() {
   const isStudyPage = pathname ? pathname.startsWith('/study') : false;
   const ai = useAiChat();
   const [open, setOpen] = useState(false);
+  const [studyRoomOpen, setStudyRoomOpen] = useState(false);
+  useEffect(() => {
+    const onVisibility = (event: Event) => setStudyRoomOpen(Boolean((event as CustomEvent<boolean>).detail));
+    window.addEventListener('study-room-visibility', onVisibility);
+    return () => window.removeEventListener('study-room-visibility', onVisibility);
+  }, []);
+
   const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
   const posRef = useRef(pos);
   const draggingRef = useRef(false);
@@ -75,10 +83,27 @@ function FloatingAiChat() {
       const w = open ? 360 : 56;
       const h = open ? 480 : 56;
       const left = Math.max(8, winW - 20 - w);
-      const top = Math.max(8, winH - 24 - h);
+      const top = Math.max(8, winH - (winW < 768 ? 104 : 24) - h);
       setPos({ x: left, y: top });
     }
   }, [open, pos]);
+
+  // 手机悬浮球避开底部导航，展开面板后重新约束位置。
+  useEffect(() => {
+    const fitMobile = () => {
+      if (window.innerWidth >= 768) return;
+      const width = Math.min(open ? 360 : 56, window.innerWidth - 24);
+      const height = open ? Math.min(480, window.innerHeight - 180) : 56;
+      setPos(previous => ({
+        x: Math.max(12, Math.min(previous?.x ?? window.innerWidth - width - 16, window.innerWidth - width - 12)),
+        y: Math.max(76, Math.min(previous?.y ?? window.innerHeight - height - 104, window.innerHeight - height - 104)),
+      }));
+    };
+    fitMobile();
+    window.addEventListener('resize', fitMobile);
+    return () => window.removeEventListener('resize', fitMobile);
+  }, [open]);
+
 
   useEffect(() => {
     const onMove = (e: any) => {
@@ -119,8 +144,10 @@ function FloatingAiChat() {
         my = (e as MouseEvent).clientY;
       }
       const { mx: startMx, my: startMy, ox, oy } = dragStartRef.current;
-      const nx = Math.max(8, Math.min(window.innerWidth - 40, ox + (mx - startMx)));
-      const ny = Math.max(8, Math.min(window.innerHeight - 40, oy + (my - startMy)));
+      const mobile = window.innerWidth < 768;
+      const rect = containerRef.current?.getBoundingClientRect();
+      const nx = Math.max(8, Math.min(window.innerWidth - (mobile ? (rect?.width || 56) + 8 : 40), ox + (mx - startMx)));
+      const ny = Math.max(8, Math.min(window.innerHeight - (mobile ? (rect?.height || 56) + 96 : 40), oy + (my - startMy)));
       setPos({ x: nx, y: ny });
     };
 
@@ -153,6 +180,8 @@ function FloatingAiChat() {
       ai.sendMessage();
     }
   };
+
+  if (studyRoomOpen) return null;
 
   const panel = (
       <div
@@ -224,6 +253,7 @@ function FloatingAiChat() {
 
       {open && (
         <div
+          className={mobileStyles.panel}
           style={{ width: 360, height: 480, borderRadius: 12, overflow: 'hidden', boxShadow: '0 10px 40px rgba(0,0,0,0.25)', background: '#fff' }}
         >
           <div

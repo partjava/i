@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Navbar from './Navbar';
+import mobileStyles from './MobileLayout.module.css';
 import Sidebar, { SidebarProvider, SidebarSpacer } from './Sidebar';
 import BottomNavigation from './BottomNavigation';
 import MobileGestureHandler from './MobileGestureHandler';
@@ -83,7 +84,7 @@ export default function RootLayoutClient({ children }: RootLayoutClientProps) {
           <DevTools />
           <SidebarProvider>
             <MobileGestureHandler>
-              <div className="relative flex flex-col h-screen bg-page-bg dark:bg-page-dark overflow-hidden">
+              <div className={`${mobileStyles.layout} relative flex flex-col h-screen bg-page-bg dark:bg-page-dark overflow-hidden`}>
                 {/* 环境光斑（蓝绿灰配色，透过玻璃形成渐变色调） */}
                 <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
                   <div className="absolute -left-24 -top-10 w-[28rem] h-[28rem] rounded-full bg-sky-500/45 blur-3xl" />
@@ -95,8 +96,8 @@ export default function RootLayoutClient({ children }: RootLayoutClientProps) {
                 <div className="relative flex flex-1 overflow-hidden">
                   <SidebarSpacer position="left" />
                   <Sidebar />
-                  <main className="relative flex-1 overflow-auto transition-all duration-300">
-                    <div className="min-h-full pb-16 lg:pb-0">
+                  <main className={`${mobileStyles.main} relative flex-1 overflow-auto transition-all duration-300`}>
+                    <div className={`${mobileStyles.content} min-h-full pb-16 lg:pb-0`}>
                       {children}
                     </div>
                   </main>

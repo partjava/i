@@ -28,6 +28,7 @@ import BackToTop from './_shared/components/BackToTop';
 import QuickSearch from './_shared/components/QuickSearch';
 import InkWashDecoration from './_shared/components/InkWashDecoration';
 import { useSidebar } from './_shared/components/Sidebar';
+import mobileStyles from './mobile-home.module.css';
 
 const groupedSoftware = [
   {
@@ -526,6 +527,13 @@ export default function Home() {
   const resizeStart = useRef({ x: 0, y: 0, k: 4, r: 2, group: '' });
   const toolsContainerRef = useRef<HTMLDivElement | null>(null);
   const [containerW, setContainerW] = useState(0);
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const media = window.matchMedia('(max-width: 767px)');
+    const update = () => setIsMobile(media.matches);
+    update(); media.addEventListener('change', update);
+    return () => media.removeEventListener('change', update);
+  }, []);
 
   const activeDefaultSizes = collapsed ? DEFAULT_FOLDER_SIZES_COLLAPSED : DEFAULT_FOLDER_SIZES_EXPANDED;
   const activeFolderConfigs = collapsed ? folderConfigsCollapsed : folderConfigsExpanded;
@@ -553,6 +561,7 @@ export default function Home() {
   }, []);
 
   const startResize = (group: string, clientX: number, clientY: number) => {
+    if (isMobile) return;
     const start = activeFolderConfigs[group] || activeDefaultSizes[group] || { k: 4, r: 2 };
     resizeStart.current = { x: clientX, y: clientY, k: start.k, r: start.r, group };
     setResizing(group);
@@ -630,6 +639,17 @@ export default function Home() {
 
   // 天际线装箱：文件夹拖拽定行列，后面的文件夹自动填补空位（带灰金文件夹舒适间距，支持展开8列/收缩10列双默认布局）
   const layout = useMemo(() => {
+    if (isMobile) {
+      const width = containerW || 320;
+      const itemSize = Math.max(1, (width - 32 - 10) / 2);
+      return {
+        height: 0,
+        placed: filteredSoftware.map(group => ({
+          group, cfg: { k: 2, r: 3, S: itemSize, ITEM_GAP: 10 },
+          x: 0, y: 0, w: width, folderH: 0,
+        })),
+      };
+    }
     const cw = containerW || (collapsed ? 1580 : 1340);
     const CELL = 4;
     const cells = Math.ceil(cw / CELL);
@@ -673,7 +693,7 @@ export default function Home() {
       placed.push({ group, cfg: { ...cfg, k, r, S, ITEM_GAP }, x: bestX * CELL, y: bestH, w, folderH });
     }
     return { placed, height };
-  }, [activeFolderConfigs, activeDefaultSizes, collapsed, containerW, filteredSoftware, searchQuery]);
+  }, [activeFolderConfigs, activeDefaultSizes, collapsed, containerW, filteredSoftware, searchQuery, isMobile]);
 
 
   const handleSearch = (query: string) => {
@@ -686,7 +706,7 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-surface-page">
+    <div className={`${mobileStyles.page} min-h-screen bg-surface-page`}>
       {/* 3D 数字书房首屏 */}
       <SanctuaryHero />
 
@@ -732,7 +752,7 @@ export default function Home() {
 
       {/* 学习分类悬停菜单 */}
       <div className="relative">
-        <div className="shadow-md py-4 px-3 md:px-6 border-b border-line-strong" style={{ background: 'linear-gradient(180deg, #EDF0F5 0%, #e8ecf2 100%)' }}>
+        <div className={`${mobileStyles.learningHeader} shadow-md py-4 px-3 md:px-6 border-b border-line-strong`} style={{ background: 'linear-gradient(180deg, #EDF0F5 0%, #e8ecf2 100%)' }}>
           <div className="max-w-[1400px] mx-auto">
             <h1 className="text-xl md:text-3xl font-bold text-content-primary mb-4 md:mb-6 tracking-wide flex items-center gap-2">
               <Image src="/images/logo-calligraphy-transparent.png" alt="PartJava" width={921} height={601} className="h-7 md:h-10 w-auto inline-block" />
@@ -749,7 +769,7 @@ export default function Home() {
               </button>
               
               {/* 悬停显示的学习分类菜单 */}
-              <div className="absolute left-0 top-full mt-2 shadow-xl rounded-lg p-6 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 w-full max-w-[1400px] border border-line-strong" style={{ background: 'linear-gradient(135deg, #f5f7fa 0%, #f0f3f8 50%, #f5f7fa 100%)' }}>
+              <div className={`${mobileStyles.learningMenu} absolute left-0 top-full mt-2 shadow-xl rounded-lg p-6 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 w-full max-w-[1400px] border border-line-strong`} style={{ background: 'linear-gradient(135deg, #f5f7fa 0%, #f0f3f8 50%, #f5f7fa 100%)' }}>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                   {Object.entries(navigationItems).map(([category, items]) => (
                     <div key={category} className="col-span-1">
@@ -850,7 +870,7 @@ export default function Home() {
             </button>
           </div>
 
-          <div ref={toolsContainerRef} className="relative" style={{ height: layout.placed.length ? layout.height : undefined }}>
+          <div ref={toolsContainerRef} className={`${mobileStyles.tools} relative`} style={{ height: layout.placed.length ? layout.height : undefined }}>
             {filteredSoftware.length > 0 ? (
               layout.placed.map(({ group, cfg, x, y, w }) => {
                 const isSearching = !!searchQuery;
@@ -860,7 +880,7 @@ export default function Home() {
                 return (
                   <div
                     key={group.group}
-                    className="absolute hover:z-20"
+                    className={`${mobileStyles.folder} absolute hover:z-20`}
                     style={{ left: x, top: y, width: w }}
                   >
                     {/* 灰金桌面文件夹容器：标题内置防裁切，右下角拖拽改变宽度和数量 */}
@@ -896,7 +916,7 @@ export default function Home() {
 
                       {/* 桌面图标网格 */}
                       <div
-                        className="grid"
+                        className={`${mobileStyles.toolGrid} grid`}
                         style={{
                           gridTemplateColumns: `repeat(${cfg.k}, ${cfg.S}px)`,
                           gap: `${cfg.ITEM_GAP}px`,
@@ -934,7 +954,7 @@ export default function Home() {
                         </button>
                       )}
 
-                      {!isSearching && (
+                      {!isSearching && !isMobile && (
                         <div
                           onMouseDown={(e) => { e.preventDefault(); startResize(group.group, e.clientX, e.clientY); }}
                           onTouchStart={(e) => { startResize(group.group, e.touches[0].clientX, e.touches[0].clientY); }}

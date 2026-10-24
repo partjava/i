@@ -1,0 +1,27 @@
+
+@media (max-width: 767px) {
+ .page { min-width: 0; width: 100%; overflow-x: clip; }
+ .topDecoration { height: 56px !important; }
+ .mistDecoration { height: 20px !important; }
+ .layout { padding: 20px 14px; gap: 0; min-width: 0; }
+ .toolbar { flex-direction: column; align-items: stretch; gap: 14px; }
+ .toolbar h1 { font-size: 26px; line-height: 1.35; margin: 0; }
+ .actions { flex-wrap: wrap; gap: 10px; min-width: 0; }
+ .actions > * { margin-left: 0 !important; }
+ .modeSwitch, .buttons { margin-top: 0 !important; flex-wrap: wrap; gap: 6px; }
+ .note { padding: 18px 14px; min-width: 0; max-width: 100%; }
+ .note > div, .note > div > div { min-width: 0; }
+ .note h3 a { color: var(--content-primary); }
+ .note h3 { font-size: 18px; overflow-wrap: anywhere; }
+ .metadata { flex-wrap: wrap; gap: 6px 10px; }
+ .metadata > * { margin-left: 0 !important; max-width: 100%; overflow-wrap: anywhere; }
+ .prose { min-width: 0; max-width: 100%; overflow-wrap: anywhere; word-break: normal; font-size: 15px; }
+ :global(body.dark) .prose a { color: #93c5fd; }
+ .prose h1 { font-size: 23px; }
+ .prose h2 { font-size: 20px; }
+ .prose h3 { font-size: 18px; }
+ .prose pre { max-width: 100%; overflow-x: auto; white-space: pre; }
+ .prose pre code { overflow-wrap: normal; word-break: normal; }
+ .prose table { display: block; max-width: 100%; overflow-x: auto; }
+ .prose img { max-width: 100%; height: auto; }
+}

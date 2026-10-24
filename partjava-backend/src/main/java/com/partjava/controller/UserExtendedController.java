@@ -203,7 +203,27 @@ public class UserExtendedController {
         result.put("achievementList", achievementList);
         result.put("dailyStats", dailyStats);
         result.put("categoryStats", categoryStats);
-        result.put("recentActivity", new ArrayList<>());
+        List<Map<String, Object>> recentActivity = new ArrayList<>();
+        try {
+            recentActivity.addAll(jdbcTemplate.queryForList(
+                "SELECT CONCAT('note-', id) AS id, 'note' AS type, title, " +
+                "CONCAT('创建了新笔记：', title) AS content, created_at AS date " +
+                "FROM notes WHERE author_id = ? ORDER BY created_at DESC LIMIT 10", uid));
+        } catch (Exception e) {
+            System.out.println("Recent notes unavailable: " + e.getClass().getSimpleName());
+        }
+        try {
+            recentActivity.addAll(jdbcTemplate.queryForList(
+                "SELECT CONCAT('study-', id) AS id, 'study' AS type, " +
+                "COALESCE(NULLIF(technology, ''), NULLIF(category, ''), '学习记录') AS title, " +
+                "CONCAT('完成了学习：', COALESCE(NULLIF(technology, ''), NULLIF(category, ''), '学习记录')) AS content, " +
+                "created_at AS date FROM study_sessions WHERE user_id = ? " +
+                "AND study_time > 0 ORDER BY created_at DESC LIMIT 10", uid));
+        } catch (Exception e) {
+            System.out.println("Recent study sessions unavailable: " + e.getClass().getSimpleName());
+        }
+        recentActivity.sort((a, b) -> String.valueOf(b.get("date")).compareTo(String.valueOf(a.get("date"))));
+        result.put("recentActivity", recentActivity.stream().limit(10).collect(Collectors.toList()));
         result.put("monthlyStats", new ArrayList<>());
         return ApiResponse.success(result);
     }

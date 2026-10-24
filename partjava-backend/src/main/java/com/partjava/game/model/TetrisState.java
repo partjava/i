@@ -53,11 +53,29 @@ public class TetrisState implements GameState {
     public boolean moveDown() { return movePiece(0, 1); }
     public void rotate() {
         int[][] rotated = rotateMatrix(current.shape);
-        if (canPlace(rotated, current.x, current.y))
-            current.shape = rotated;
+        if (gameOver) return;
+        for (int offset : new int[]{0, -1, 1, -2, 2}) {
+            if (canPlace(rotated, current.x + offset, current.y)) {
+                current.x += offset;
+                current.shape = rotated;
+                return;
+            }
+        }
     }
     public void hardDrop() {
+        if (gameOver) return;
         while (movePiece(0, 1)) {}
+        settlePiece();
+    }
+
+    private void settlePiece() {
+        lockPiece();
+        clearLines();
+        current = next;
+        next = new Tetromino(SHAPES[rng.nextInt(SHAPES.length)], 3, 0);
+        tickCount = 0;
+        if (!canPlace(current.shape, current.x, current.y)) gameOver = true;
+        lastMoveAt = System.currentTimeMillis();
     }
 
     private boolean movePiece(int dx, int dy) {
@@ -74,11 +92,8 @@ public class TetrisState implements GameState {
         int dropThreshold = Math.max(3, 8 - (level - 1));
         if (++tickCount % dropThreshold != 0) return true;
         if (!moveDown()) {
-            lockPiece();
-            clearLines();
-            current = next;
-            next = new Tetromino(SHAPES[rng.nextInt(SHAPES.length)], 3, 0);
-            if (!canPlace(current.shape, current.x, current.y)) { gameOver = true; return false; }
+            settlePiece();
+            if (gameOver) return false;
         }
         lastMoveAt = System.currentTimeMillis();
         return true;
@@ -88,7 +103,7 @@ public class TetrisState implements GameState {
         for (int r = 0; r < current.shape.length; r++)
             for (int c = 0; c < current.shape[0].length; c++)
                 if (current.shape[r][c] != 0)
-                    board[current.y + r][current.x + c] = 1;
+                    board[current.y + r][current.x + c] = current.type + 1;
     }
 
     private void clearLines() {
@@ -130,7 +145,10 @@ public class TetrisState implements GameState {
 
     public static class Tetromino {
         public int[][] shape;
-        public int x, y;
-        Tetromino(int[][] shape, int x, int y) { this.shape = shape; this.x = x; this.y = y; }
+        public int x, y, type;
+        Tetromino(int[][] shape, int x, int y) {
+            this.shape = shape; this.x = x; this.y = y;
+            for (int i = 0; i < SHAPES.length; i++) if (shape == SHAPES[i]) { this.type = i; break; }
+        }
     }
 }

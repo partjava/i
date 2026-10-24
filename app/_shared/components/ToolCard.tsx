@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import styles from './ToolCard.module.css';
 
 interface ToolCardProps {
   name: string;
@@ -37,7 +38,8 @@ export default function ToolCard({ name, icon: Icon, url, desc, color }: ToolCar
       onClick={handleInteraction}
     >
       <div
-        className="relative w-full h-full"
+        className={`${styles.inner} relative w-full h-full`}
+        data-flipped={isFlipped}
         style={{
           transformStyle: 'preserve-3d',
           transition: 'transform 0.48s cubic-bezier(0.22, 1, 0.36, 1)',

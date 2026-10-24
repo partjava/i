@@ -1,0 +1,10 @@
+
+@media (max-width: 767px) {
+ .mobileStats { padding-block: 32px; }
+ .mobileStats > div > div:first-child { margin-bottom: 24px; }
+ .mobileStats :global(.grid) { gap: 12px; }
+ .statCard { padding: 18px 14px; }
+ :global(body.dark) .statCard { background: linear-gradient(135deg,#1e293b,#182334) !important; }
+ :global(body.dark) .mobileStats :global(.text-gray-800) { color: #f1f5f9 !important; }
+ :global(body.dark) .mobileStats :global(.text-gray-500) { color: #cbd5e1 !important; }
+}

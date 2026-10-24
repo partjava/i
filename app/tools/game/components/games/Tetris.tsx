@@ -4,13 +4,13 @@ import React, { useEffect, useRef, useCallback } from 'react';
 import { soundSynth } from '../RetroAudioSynth';
 
 const SHAPE_COLORS = [
-  '#00f0f0', // I 蓝绿
-  '#0000f0', // J 深蓝
-  '#f0a000', // L 橙色
-  '#f0f000', // O 黄色
-  '#00f000', // S 绿色
-  '#a000f0', // T 紫色
-  '#f00000'  // Z 红色
+  '#00f0f0', // I
+  '#f0f000', // O
+  '#a000f0', // T
+  '#f0a000', // L
+  '#2563eb', // J
+  '#00f000', // S
+  '#f00000', // Z
 ];
 
 export default function Tetris({
@@ -44,7 +44,7 @@ export default function Tetris({
           if (shape[r][c]) {
             const boardR = nextY + r;
             const boardC = current.x + c;
-            if (boardR >= rows || (board[boardR] && board[boardR][boardC])) {
+            if (boardC < 0 || boardC >= cols || boardR >= rows || (board[boardR] && board[boardR][boardC])) {
               collides = true;
               break;
             }
@@ -56,7 +56,7 @@ export default function Tetris({
       ghostY = nextY;
     }
     return ghostY;
-  }, [current, board, rows]);
+  }, [current, board, rows, cols]);
 
   useEffect(() => {
     const c = canvasRef.current;
@@ -92,7 +92,7 @@ export default function Tetris({
       for (let col = 0; col < cols; col++) {
         const val = board[r]?.[col];
         if (val) {
-          const color = SHAPE_COLORS[Math.abs(val) % SHAPE_COLORS.length] || '#4fc3f7';
+          const color = SHAPE_COLORS[(Math.abs(val) - 1) % SHAPE_COLORS.length] || '#4fc3f7';
           const x = col * cell;
           const y = r * cell;
 
@@ -168,12 +168,14 @@ export default function Tetris({
 
   const handleKey = useCallback(
     (e: KeyboardEvent) => {
+      if (gameOver || (e.target instanceof HTMLElement && (e.target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)))) return;
+      if (e.repeat && ['Space', 'ArrowUp', 'KeyW'].includes(e.code)) { e.preventDefault(); return; }
       const map: Record<string, string> = {
         ArrowLeft: 'left',
         ArrowRight: 'right',
         ArrowDown: 'down',
         ArrowUp: 'rotate',
-        ' ': 'drop',
+        Space: 'drop',
         KeyA: 'left',
         KeyD: 'right',
         KeyS: 'down',
@@ -186,7 +188,7 @@ export default function Tetris({
         onMove(map[e.code]);
       }
     },
-    [onMove]
+    [onMove, gameOver]
   );
 
   useEffect(() => {
@@ -204,9 +206,17 @@ export default function Tetris({
           borderRadius: 10,
           boxShadow: '0 8px 30px rgba(0,0,0,0.6)',
           border: '1px solid rgba(255, 255, 255, 0.1)',
-          display: 'block'
+          display: 'block', maxWidth: '100%', height: 'auto'
         }}
       />
+      <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 6, marginTop: 12 }}>
+        {[['left', '←'], ['rotate', '旋转'], ['right', '→'], ['down', '↓'], ['drop', '瞬降']].map(([action, label]) => (
+          <button key={action} disabled={gameOver} onPointerDown={event => { event.preventDefault(); onMove(action); }}
+            style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #475569', background: '#1e293b', color: '#fff', touchAction: 'none' }}>
+            {label}
+          </button>
+        ))}
+      </div>
       <div style={{ marginTop: 8, fontSize: 12, color: '#888' }}>
         <span>⌨️ ↑ 旋转 | ← → 移动 | ↓ 加速 | 空格 瞬降</span>
       </div>

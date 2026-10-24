@@ -15,8 +15,8 @@ export default function Snake({
   const foodX = state?.foodX, foodY = state?.foodY;
   const w = state?.width || 20, h = state?.height || 20;
   const gameOver = state?.gameOver;
+  const directionX = state?.dx ?? 1, directionY = state?.dy ?? 0;
 
-  const [speed, setSpeed] = useState<'normal' | 'fast' | 'turbo'>('normal');
   const [pulse, setPulse] = useState(0);
 
   // 食物微光脉冲呼吸动效
@@ -93,9 +93,9 @@ export default function Snake({
     for (let i = snake.length - 1; i >= 0; i--) {
       const seg = snake[i];
       if (!seg) continue;
-      const [r, c] = seg;
-      const x = c * cell;
-      const y = r * cell;
+      const [column, row] = seg;
+      const x = column * cell;
+      const y = row * cell;
       const isHead = i === 0;
 
       ctx.save();
@@ -108,13 +108,15 @@ export default function Snake({
         ctx.roundRect(x + 1, y + 1, cell - 2, cell - 2, 7);
         ctx.fill();
 
-        // 可爱大眼睛
-        ctx.fillStyle = '#ffffff';
-        ctx.beginPath(); ctx.arc(x + 6, y + 6, 3, 0, Math.PI * 2); ctx.fill();
-        ctx.beginPath(); ctx.arc(x + 14, y + 6, 3, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = '#0f172a';
-        ctx.beginPath(); ctx.arc(x + 6, y + 5.5, 1.5, 0, Math.PI * 2); ctx.fill();
-        ctx.beginPath(); ctx.arc(x + 14, y + 5.5, 1.5, 0, Math.PI * 2); ctx.fill();
+        // 眼睛朝向与实际运动方向一致。
+        for (const side of [-1, 1]) {
+          const eyeX = x + 10 + directionX * 4 - directionY * side * 4;
+          const eyeY = y + 10 + directionY * 4 + directionX * side * 4;
+          ctx.fillStyle = '#ffffff';
+          ctx.beginPath(); ctx.arc(eyeX, eyeY, 3, 0, Math.PI * 2); ctx.fill();
+          ctx.fillStyle = '#0f172a';
+          ctx.beginPath(); ctx.arc(eyeX + directionX, eyeY + directionY, 1.5, 0, Math.PI * 2); ctx.fill();
+        }
       } else {
         // 蛇身：顺滑渐变翠绿
         const ratio = i / Math.max(1, snake.length - 1);
@@ -140,11 +142,12 @@ export default function Snake({
       ctx.font = '16px Arial';
       ctx.fillText(`最终长度: ${snake.length}`, totalW / 2, totalH / 2 + 18);
     }
-  }, [snake, foodX, foodY, w, h, gameOver, pulse]);
+  }, [snake, foodX, foodY, w, h, gameOver, pulse, directionX, directionY]);
 
   // 键盘操作
   const handleKey = useCallback(
     (e: KeyboardEvent) => {
+      if (gameOver || e.repeat || (e.target instanceof HTMLElement && (e.target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)))) return;
       const map: Record<string, string> = {
         ArrowUp: 'up', KeyW: 'up',
         ArrowDown: 'down', KeyS: 'down',
@@ -157,7 +160,7 @@ export default function Snake({
         onMove(map[e.code]);
       }
     },
-    [onMove]
+    [onMove, gameOver]
   );
 
   useEffect(() => {
@@ -168,7 +171,7 @@ export default function Snake({
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', userSelect: 'none' }}>
       {/* 画布 */}
-      <div style={{ position: 'relative' }}>
+      <div style={{ position: 'relative', maxWidth: '100%' }}>
         <canvas
           ref={canvasRef}
           width={w * 20}
@@ -176,12 +179,21 @@ export default function Snake({
           style={{
             borderRadius: 12,
             boxShadow: '0 8px 30px rgba(0,0,0,0.5)',
-            display: 'block'
+            display: 'block', maxWidth: '100%', height: 'auto', touchAction: 'none'
           }}
           tabIndex={0}
         />
       </div>
 
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 44px)', gap: 6, marginTop: 12 }}>
+        {['', 'up', '', 'left', 'down', 'right'].map((direction, index) => direction ? (
+          <button key={index} disabled={gameOver} aria-label={direction}
+            onPointerDown={event => { event.preventDefault(); onMove(direction); }}
+            style={{ height: 38, borderRadius: 8, border: '1px solid #475569', background: '#1e293b', color: '#fff', touchAction: 'none' }}>
+            {{ up: '↑', down: '↓', left: '←', right: '→' }[direction]}
+          </button>
+        ) : <span key={index} />)}
+      </div>
       <div style={{ marginTop: 10, fontSize: 12, color: '#888', display: 'flex', gap: 16 }}>
         <span>⌨️ 方向键 / WASD 控制转弯</span>
         <span>蛇身长度: <b style={{ color: '#2ed573' }}>{snake.length}</b></span>
