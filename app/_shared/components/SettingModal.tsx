@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, Switch, Select, Space, Divider, Tag, Button, Alert, Form, Input, message, Tabs, Slider, Radio } from 'antd';
+import { Modal, Switch, Select, Space, Divider, Tag, Button, Alert, Form, Input, message, Tabs, Radio, ConfigProvider, theme as antdTheme } from 'antd';
+import styles from './SettingModal.module.css';
 import { useAuth } from '@shared/hooks/useAuth';
 import { 
   BellOutlined, 
@@ -8,19 +9,11 @@ import {
   SettingOutlined,
   ExportOutlined,
   DeleteOutlined,
-  FontSizeOutlined,
-  CodeOutlined
 } from '@ant-design/icons';
 
 const LANG_OPTIONS = [
   { label: '中文', value: 'zh' },
   { label: 'English', value: 'en' },
-];
-
-const FONT_SIZE_OPTIONS = [
-  { label: '小', value: 'small' },
-  { label: '中', value: 'medium' },
-  { label: '大', value: 'large' },
 ];
 
 const CODE_THEME_OPTIONS = [
@@ -38,6 +31,11 @@ interface SettingModalProps {
 export default function SettingModal({ open, onClose }: SettingModalProps) {
   const { data: session } = useAuth();
   const [theme, setTheme] = useState('light');
+  const [modal, contextHolder] = Modal.useModal();
+  const isDark = theme === 'dark';
+  const dialogClassName = `${styles.dialog} ${isDark ? styles.dark : ''}`;
+  const popupClassName = `${styles.popup} ${isDark ? styles.dark : ''}`;
+  const modalRootClassName = `${styles.root} ${isDark ? styles.dark : ''}`;
   const [language, setLanguage] = useState('zh');
   const [emailVerified, setEmailVerified] = useState<boolean | null>(null);
   const [email, setEmail] = useState('');
@@ -106,7 +104,7 @@ export default function SettingModal({ open, onClose }: SettingModalProps) {
     }
   };
 
-  const handleChangePassword = async (values: any) => {
+  const handleChangePassword = async (values: { oldPassword: string; newPassword: string; confirmPassword: string }) => {
     setPwdLoading(true);
     const res = await fetch('/api/user/change-password', {
       method: 'POST',
@@ -143,14 +141,17 @@ export default function SettingModal({ open, onClose }: SettingModalProps) {
         message.destroy();
         message.error('数据导出失败');
       }
-    } catch (error) {
+    } catch {
       message.destroy();
       message.error('数据导出失败');
     }
   };
 
   const handleClearCache = () => {
-    Modal.confirm({
+    modal.confirm({
+      rootClassName: modalRootClassName,
+      className: dialogClassName,
+      centered: true,
       title: '确认清除缓存？',
       content: '这将清除所有本地缓存数据，但不会删除您的笔记和学习记录。',
       okText: '确认',
@@ -171,7 +172,10 @@ export default function SettingModal({ open, onClose }: SettingModalProps) {
     // 如果是 iOS，会显示引导提示
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
     if (isIOS) {
-      Modal.info({
+      modal.info({
+        rootClassName: modalRootClassName,
+        className: dialogClassName,
+        centered: true,
         title: 'iOS 安装指引',
         content: (
           <div>
@@ -262,116 +266,117 @@ export default function SettingModal({ open, onClose }: SettingModalProps) {
   };
 
   return (
-    <>
+    <ConfigProvider theme={{
+      algorithm: isDark ? antdTheme.darkAlgorithm : antdTheme.defaultAlgorithm,
+      token: {
+        colorPrimary: isDark ? '#dedede' : '#404040',
+        colorPrimaryHover: isDark ? '#f5f5f5' : '#262626',
+        colorPrimaryActive: isDark ? '#bfbfbf' : '#171717',
+        colorTextLightSolid: isDark ? '#171717' : '#ffffff',
+        colorText: isDark ? '#f2f2f2' : '#242424',
+        colorTextSecondary: isDark ? '#b8b8b8' : '#606060',
+        colorTextPlaceholder: isDark ? '#a3a3a3' : '#777777',
+        colorIcon: isDark ? '#b8b8b8' : '#606060',
+        colorIconHover: isDark ? '#f5f5f5' : '#242424',
+        colorBgContainer: isDark ? '#282828' : '#ffffff',
+        colorBgElevated: isDark ? '#222222' : '#ffffff',
+        colorBorder: isDark ? '#484848' : '#d4d4d4',
+        colorInfo: isDark ? '#b8b8b8' : '#606060',
+        colorError: isDark ? '#f29b9b' : '#b42318',
+        borderRadius: 9,
+      },
+    }}>
+      {contextHolder}
       <Modal
-        title={<span className="text-white font-bold text-lg font-serif">系统设置 Spec Settings</span>}
+        title={<span className={styles.title}>系统设置 Spec Settings</span>}
         open={open}
         onCancel={onClose}
         footer={null}
         width={700}
-        styles={{
-          content: {
-            backgroundColor: '#0C1F3D',
-            border: '1px solid #234272',
-            borderRadius: '24px',
-            color: '#EDF0F5',
-            boxShadow: '0 8px 32px 0 rgba(12, 31, 61, 0.4)',
-          },
-          header: {
-            backgroundColor: '#0C1F3D',
-            color: '#EDF0F5',
-            borderBottom: '1px solid #1E3E6E',
-            paddingBottom: '16px',
-            marginBottom: '16px',
-          },
-          body: {
-            backgroundColor: '#0C1F3D',
-            color: '#EDF0F5',
-          }
-        }}
-        closeIcon={<span className="text-[#b8bfcc] hover:text-white transition-colors text-base">✕</span>}
+        className={dialogClassName}
+        rootClassName={modalRootClassName}
+        centered
+        closeIcon={<span className="text-[var(--settings-secondary)] hover:text-[var(--settings-text)] transition-colors text-base">✕</span>}
       >
         <Tabs
           defaultActiveKey="general"
-          tabBarStyle={{ color: '#b8bfcc', borderBottom: '1px solid #1E3E6E' }}
+          className={styles.tabs}
           items={[
             {
               key: 'general',
               label: (
-                <span className="flex items-center gap-1.5 text-[#EDF0F5] font-semibold">
+                <span className="flex items-center gap-1.5 text-inherit font-semibold">
                   <SettingOutlined />
                   <span>通用</span>
                 </span>
               ),
               children: (
                 <Space direction="vertical" size="large" style={{ width: '100%', paddingTop: '12px' }}>
-                  <div className="flex items-center justify-between border-b border-[#1E3E6E]/30 pb-4">
+                  <div className={`${styles.row} border-b border-[var(--settings-line)] pb-4`}>
                     <div>
-                      <div className="font-semibold text-white">深色模式 Theme</div>
-                      <div className="text-xs text-[#b8bfcc] mt-0.5">切换界面高对比度纸墨主题</div>
+                      <div className="font-semibold text-[var(--settings-text)]">深色模式 Theme</div>
+                      <div className="text-xs text-[var(--settings-secondary)] mt-0.5">切换界面高对比度纸墨主题</div>
                     </div>
                     <Switch
                       checked={theme === 'dark'}
                       onChange={handleThemeChange}
                       checkedChildren="深色"
                       unCheckedChildren="浅色"
-                      style={{ backgroundColor: theme === 'dark' ? '#6366f1' : '#b8bfcc' }}
                     />
                   </div>
 
-                  <div className="flex items-center justify-between border-b border-[#1E3E6E]/30 pb-4">
+                  <div className={`${styles.row} border-b border-[var(--settings-line)] pb-4`}>
                     <div>
-                      <div className="font-semibold text-white">语言 Language</div>
-                      <div className="text-xs text-[#b8bfcc] mt-0.5">选择平台展示语系</div>
+                      <div className="font-semibold text-[var(--settings-text)]">语言 Language</div>
+                      <div className="text-xs text-[var(--settings-secondary)] mt-0.5">选择平台展示语系</div>
                     </div>
                     <Select
                       value={language}
                       onChange={handleLanguageChange}
                       options={LANG_OPTIONS}
                       style={{ width: 120 }}
-                      dropdownStyle={{ backgroundColor: '#0C1F3D', border: '1px solid #234272' }}
+                      popupClassName={popupClassName}
                     />
                   </div>
 
-                  <div className="flex items-center justify-between border-b border-[#1E3E6E]/30 pb-4">
+                  <div className={`${styles.row} border-b border-[var(--settings-line)] pb-4`}>
                     <div>
-                      <div className="font-semibold text-white">字号大小 Text Size</div>
-                      <div className="text-xs text-[#b8bfcc] mt-0.5">调整全站文字比例</div>
+                      <div className="font-semibold text-[var(--settings-text)]">字号大小 Text Size</div>
+                      <div className="text-xs text-[var(--settings-secondary)] mt-0.5">调整全站文字比例</div>
                     </div>
                     <Radio.Group
                       value={fontSize}
                       onChange={(e) => handleFontSizeChange(e.target.value)}
                       buttonStyle="solid"
                     >
-                      <Radio.Button value="small" style={{ backgroundColor: fontSize === 'small' ? '#6366f1' : 'transparent', color: '#fff', borderColor: '#234272' }}>小</Radio.Button>
-                      <Radio.Button value="medium" style={{ backgroundColor: fontSize === 'medium' ? '#6366f1' : 'transparent', color: '#fff', borderColor: '#234272' }}>中</Radio.Button>
-                      <Radio.Button value="large" style={{ backgroundColor: fontSize === 'large' ? '#6366f1' : 'transparent', color: '#fff', borderColor: '#234272' }}>大</Radio.Button>
+                      <Radio.Button value="small">小</Radio.Button>
+                      <Radio.Button value="medium">中</Radio.Button>
+                      <Radio.Button value="large">大</Radio.Button>
                     </Radio.Group>
                   </div>
 
-                  <div className="flex items-center justify-between border-b border-[#1E3E6E]/30 pb-4">
+                  <div className={`${styles.row} border-b border-[var(--settings-line)] pb-4`}>
                     <div>
-                      <div className="font-semibold text-white">自动保存 Auto Save</div>
-                      <div className="text-xs text-[#b8bfcc] mt-0.5">随堂笔记编辑时自动持久化草稿</div>
+                      <div className="font-semibold text-[var(--settings-text)]">自动保存 Auto Save</div>
+                      <div className="text-xs text-[var(--settings-secondary)] mt-0.5">随堂笔记编辑时自动持久化草稿</div>
                     </div>
                     <Switch
                       checked={autoSave}
                       onChange={handleAutoSaveChange}
-                      style={{ backgroundColor: autoSave ? '#6366f1' : '#b8bfcc' }}
                     />
                   </div>
 
-                  <div className="flex items-center justify-between">
+                  <div className={styles.row}>
                     <div>
-                      <div className="font-semibold text-white">代码编辑器主题 IDE Theme</div>
-                      <div className="text-xs text-[#b8bfcc] mt-0.5">设定在线沙箱终端的配色方案</div>
+                      <div className="font-semibold text-[var(--settings-text)]">代码编辑器主题 IDE Theme</div>
+                      <div className="text-xs text-[var(--settings-secondary)] mt-0.5">设定在线沙箱终端的配色方案</div>
                     </div>
                     <Select
                       value={codeTheme}
                       onChange={handleCodeThemeChange}
                       options={CODE_THEME_OPTIONS}
                       style={{ width: 160 }}
-                      dropdownStyle={{ backgroundColor: '#0C1F3D', border: '1px solid #234272' }}
+                      popupClassName={popupClassName}
                     />
                   </div>
                 </Space>
@@ -380,43 +385,40 @@ export default function SettingModal({ open, onClose }: SettingModalProps) {
             {
               key: 'notification',
               label: (
-                <span className="flex items-center gap-1.5 text-[#EDF0F5] font-semibold">
+                <span className="flex items-center gap-1.5 text-inherit font-semibold">
                   <BellOutlined />
                   <span>通知</span>
                 </span>
               ),
               children: (
                 <Space direction="vertical" size="large" style={{ width: '100%', paddingTop: '12px' }}>
-                  <div className="flex items-center justify-between border-b border-[#1E3E6E]/30 pb-4">
+                  <div className={`${styles.row} border-b border-[var(--settings-line)] pb-4`}>
                     <div>
-                      <div className="font-semibold text-white">每日提醒 Daily Reminder</div>
-                      <div className="text-xs text-[#b8bfcc] mt-0.5">每日学习与行星闯关打卡提醒</div>
+                      <div className="font-semibold text-[var(--settings-text)]">每日提醒 Daily Reminder</div>
+                      <div className="text-xs text-[var(--settings-secondary)] mt-0.5">每日学习与行星闯关打卡提醒</div>
                     </div>
                     <Switch
                       checked={studyReminder}
                       onChange={handleStudyReminderChange}
-                      style={{ backgroundColor: studyReminder ? '#6366f1' : '#b8bfcc' }}
                     />
                   </div>
 
-                  <div className="flex items-center justify-between border-b border-[#1E3E6E]/30 pb-4">
+                  <div className={`${styles.row} border-b border-[var(--settings-line)] pb-4`}>
                     <div>
-                      <div className="font-semibold text-white">邮件通知 Email Alert</div>
-                      <div className="text-xs text-[#b8bfcc] mt-0.5">接收关卡开放与重要系统通知</div>
+                      <div className="font-semibold text-[var(--settings-text)]">邮件通知 Email Alert</div>
+                      <div className="text-xs text-[var(--settings-secondary)] mt-0.5">接收关卡开放与重要系统通知</div>
                     </div>
                     <Switch
                       checked={emailNotification}
                       onChange={handleEmailNotificationChange}
-                      style={{ backgroundColor: emailNotification ? '#6366f1' : '#b8bfcc' }}
                     />
                   </div>
 
                   <Alert
-                    message={<span className="text-white font-semibold">学习打卡规则</span>}
-                    description={<span className="text-[#b8bfcc] text-xs">开启学习提醒后，系统将在检测到浏览器上线时推送消息，帮助您每天维持热力打卡。</span>}
+                    message={<span className="text-[var(--settings-text)] font-semibold">学习打卡规则</span>}
+                    description={<span className="text-[var(--settings-secondary)] text-xs">开启学习提醒后，系统将在检测到浏览器上线时推送消息，帮助您每天维持热力打卡。</span>}
                     type="info"
                     showIcon
-                    style={{ backgroundColor: '#132A4F', border: '1px solid #1E3E6E' }}
                   />
                 </Space>
               ),
@@ -424,37 +426,36 @@ export default function SettingModal({ open, onClose }: SettingModalProps) {
             {
               key: 'privacy',
               label: (
-                <span className="flex items-center gap-1.5 text-[#EDF0F5] font-semibold">
+                <span className="flex items-center gap-1.5 text-inherit font-semibold">
                   <LockOutlined />
                   <span>隐私</span>
                 </span>
               ),
               children: (
                 <Space direction="vertical" size="large" style={{ width: '100%', paddingTop: '12px' }}>
-                  <div className="flex items-center justify-between border-b border-[#1E3E6E]/30 pb-4">
+                  <div className={`${styles.row} border-b border-[var(--settings-line)] pb-4`}>
                     <div>
-                      <div className="font-semibold text-white">公开个人资料 Public Profile</div>
-                      <div className="text-xs text-[#b8bfcc] mt-0.5">允许外部同伴浏览您的成就与笔记</div>
+                      <div className="font-semibold text-[var(--settings-text)]">公开个人资料 Public Profile</div>
+                      <div className="text-xs text-[var(--settings-secondary)] mt-0.5">允许外部同伴浏览您的成就与笔记</div>
                     </div>
                     <Switch
                       checked={publicProfile}
                       onChange={handlePublicProfileChange}
-                      style={{ backgroundColor: publicProfile ? '#6366f1' : '#b8bfcc' }}
                     />
                   </div>
 
-                  <Divider style={{ borderColor: '#1E3E6E', color: '#fff' }}><span className="text-[#b8bfcc] text-xs font-semibold">账号安全</span></Divider>
+                  <Divider><span className="text-[var(--settings-secondary)] text-xs font-semibold">账号安全</span></Divider>
                   
-                  <div className="bg-[#08172F]/50 p-4 rounded-xl border border-[#234272] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="bg-[var(--settings-control)] p-4 rounded-xl border border-[var(--settings-line)] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div>
-                      <span className="font-semibold text-[#b8bfcc]">认证邮箱：</span>
-                      <span className="text-white font-mono">{email}</span>
+                      <span className="font-semibold text-[var(--settings-secondary)]">认证邮箱：</span>
+                      <span className="text-[var(--settings-text)] font-mono">{email}</span>
                       <Tag color={emailVerified ? 'green' : 'orange'} className="ml-2 border-0">
                         {emailVerified ? '已验证' : '未验证'}
                       </Tag>
                     </div>
                     {!emailVerified && (
-                      <Button size="small" type="link" onClick={handleSendVerify} style={{ color: '#BBFF5C' }} className="hover:text-[#ccff7a] p-0">
+                      <Button size="small" type="link" onClick={handleSendVerify} className="p-0">
                         发送验证邮件
                       </Button>
                     )}
@@ -463,9 +464,8 @@ export default function SettingModal({ open, onClose }: SettingModalProps) {
                   <div>
                     <Button 
                       type="primary" 
-                      onClick={() => setChangePwdOpen(true)} 
-                      style={{ backgroundColor: '#6366f1', borderColor: '#6366f1' }}
-                      className="hover:bg-[#818cf8] font-bold"
+                      onClick={() => setChangePwdOpen(true)}
+                      className="font-bold"
                       block
                     >
                       修改账户登录密码
@@ -473,11 +473,10 @@ export default function SettingModal({ open, onClose }: SettingModalProps) {
                   </div>
 
                   <Alert
-                    message={<span className="text-emerald-400 font-semibold">隐私合规保护</span>}
-                    description={<span className="text-[#b8bfcc] text-xs">我们采用加盐散列对您的账户密码进行非对称防护，所有数据只在数据库内加密存放。</span>}
+                    message={<span className="text-[var(--settings-text)] font-semibold">隐私合规保护</span>}
+                    description={<span className="text-[var(--settings-secondary)] text-xs">我们采用加盐散列对您的账户密码进行非对称防护，所有数据只在数据库内加密存放。</span>}
                     type="success"
                     showIcon
-                    style={{ backgroundColor: '#0f272c', border: '1px solid #143e2b' }}
                   />
                 </Space>
               ),
@@ -485,38 +484,37 @@ export default function SettingModal({ open, onClose }: SettingModalProps) {
             {
               key: 'data',
               label: (
-                <span className="flex items-center gap-1.5 text-[#EDF0F5] font-semibold">
+                <span className="flex items-center gap-1.5 text-inherit font-semibold">
                   <DatabaseOutlined />
                   <span>数据</span>
                 </span>
               ),
               children: (
                 <Space direction="vertical" size="large" style={{ width: '100%', paddingTop: '12px' }}>
-                  <div className="border-b border-[#1E3E6E]/30 pb-4">
-                    <div className="font-semibold text-white mb-1">安装渐进式应用 PWA</div>
-                    <div className="text-xs text-[#b8bfcc] mb-3">
+                  <div className="border-b border-[var(--settings-line)] pb-4">
+                    <div className="font-semibold text-[var(--settings-text)] mb-1">安装渐进式应用 PWA</div>
+                    <div className="text-xs text-[var(--settings-secondary)] mb-3">
                       将 PartJava 水墨终端添加到主屏幕，获取与原生 APP 一致的离线沙箱探索体验。
                     </div>
                     <Button 
                       icon={<SettingOutlined />}
+                      type="primary"
                       onClick={handleInstallPWA}
-                      style={{ backgroundColor: '#6366f1', borderColor: '#6366f1', color: '#fff' }}
-                      className="hover:bg-[#818cf8] font-bold"
+                      className="font-bold"
                       block
                     >
                       安装到主屏幕 / 桌面
                     </Button>
                   </div>
 
-                  <div className="border-b border-[#1E3E6E]/30 pb-4">
-                    <div className="font-semibold text-white mb-1">一键导出数据 Export JSON</div>
-                    <div className="text-xs text-[#b8bfcc] mb-3">
+                  <div className="border-b border-[var(--settings-line)] pb-4">
+                    <div className="font-semibold text-[var(--settings-text)] mb-1">一键导出数据 Export JSON</div>
+                    <div className="text-xs text-[var(--settings-secondary)] mb-3">
                       将您的所有笔记文档、打卡习惯记录、通关成果打包为规范的可携带 JSON 文件。
                     </div>
                     <Button 
                       icon={<ExportOutlined />} 
                       onClick={handleExportData}
-                      style={{ backgroundColor: 'rgba(255,255,255,0.1)', color: '#fff', borderColor: 'rgba(255,255,255,0.2)' }}
                       className="hover:bg-white/20 font-semibold"
                       block
                     >
@@ -525,15 +523,14 @@ export default function SettingModal({ open, onClose }: SettingModalProps) {
                   </div>
 
                   <div>
-                    <div className="font-semibold text-white mb-1">清除本地缓存 Reset Cache</div>
-                    <div className="text-xs text-[#b8bfcc] mb-3">
+                    <div className="font-semibold text-[var(--settings-text)] mb-1">清除本地缓存 Reset Cache</div>
+                    <div className="text-xs text-[var(--settings-secondary)] mb-3">
                       清空浏览器 localStorage 等缓存介质，数据本身将不会受损。
                     </div>
                     <Button 
                       icon={<DeleteOutlined />} 
                       onClick={handleClearCache}
                       danger
-                      style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)', borderColor: 'rgba(239, 68, 68, 0.25)' }}
                       className="hover:bg-red-600/20 font-semibold"
                       block
                     >
@@ -542,11 +539,10 @@ export default function SettingModal({ open, onClose }: SettingModalProps) {
                   </div>
 
                   <Alert
-                    message={<span className="text-amber-400 font-semibold">数据备份建议</span>}
-                    description={<span className="text-[#b8bfcc] text-xs">导出的 JSON 记录为标准加密传输包，建议您妥善保管该文件，切勿泄露给第三方。</span>}
+                    message={<span className="text-[var(--settings-text)] font-semibold">数据备份建议</span>}
+                    description={<span className="text-[var(--settings-secondary)] text-xs">导出的 JSON 记录为标准加密传输包，建议您妥善保管该文件，切勿泄露给第三方。</span>}
                     type="warning"
                     showIcon
-                    style={{ backgroundColor: '#2b2316', border: '1px solid #4a3e21' }}
                   />
                 </Space>
               ),
@@ -556,43 +552,30 @@ export default function SettingModal({ open, onClose }: SettingModalProps) {
       </Modal>
 
       <Modal
-        title={<span className="text-white font-bold text-lg font-serif">修改账户密码</span>}
+        title={<span className={styles.title}>修改账户密码</span>}
         open={changePwdOpen}
         onCancel={() => setChangePwdOpen(false)}
         footer={null}
-        styles={{
-          content: {
-            backgroundColor: '#0C1F3D',
-            border: '1px solid #234272',
-            borderRadius: '24px',
-            color: '#EDF0F5',
-            boxShadow: '0 8px 32px 0 rgba(12, 31, 61, 0.4)',
-          },
-          header: {
-            backgroundColor: '#0C1F3D',
-            color: '#EDF0F5',
-            borderBottom: '1px solid #1E3E6E',
-            paddingBottom: '16px',
-          }
-        }}
-        closeIcon={<span className="text-[#b8bfcc] hover:text-white transition-colors text-base">✕</span>}
+        className={dialogClassName}
+        rootClassName={modalRootClassName}
+        centered
+        closeIcon={<span className="text-[var(--settings-secondary)] hover:text-[var(--settings-text)] transition-colors text-base">✕</span>}
       >
         <Form layout="vertical" onFinish={handleChangePassword} style={{ paddingTop: '16px' }}>
           <Form.Item 
             name="oldPassword" 
-            label={<span className="text-[#b8bfcc] font-semibold text-xs uppercase tracking-wider">当前密码</span>} 
+            label={<span className="text-[var(--settings-secondary)] font-semibold text-xs uppercase tracking-wider">当前密码</span>}
             rules={[{ required: true, message: '请输入当前密码' }]}
           > 
             <Input.Password 
               autoComplete="current-password" 
-              size="large" 
-              style={{ backgroundColor: '#08172F/50', color: '#fff', borderColor: '#234272' }}
-              className="bg-[#08172F]/50 hover:border-[#6366f1] focus:border-[#6366f1] text-white"
+              size="large"
+              className="bg-[var(--settings-control)] text-[var(--settings-text)]"
             />
           </Form.Item>
           <Form.Item 
             name="newPassword" 
-            label={<span className="text-[#b8bfcc] font-semibold text-xs uppercase tracking-wider">新密码</span>} 
+            label={<span className="text-[var(--settings-secondary)] font-semibold text-xs uppercase tracking-wider">新密码</span>}
             rules={[
               { required: true, message: '请输入新密码' },
               { min: 6, message: '密码至少6个字符' }
@@ -600,14 +583,13 @@ export default function SettingModal({ open, onClose }: SettingModalProps) {
           > 
             <Input.Password 
               autoComplete="new-password" 
-              size="large" 
-              style={{ backgroundColor: '#08172F/50', color: '#fff', borderColor: '#234272' }}
-              className="bg-[#08172F]/50 hover:border-[#6366f1] focus:border-[#6366f1] text-white"
+              size="large"
+              className="bg-[var(--settings-control)] text-[var(--settings-text)]"
             />
           </Form.Item>
           <Form.Item 
             name="confirmPassword" 
-            label={<span className="text-[#b8bfcc] font-semibold text-xs uppercase tracking-wider">确认新密码</span>} 
+            label={<span className="text-[var(--settings-secondary)] font-semibold text-xs uppercase tracking-wider">确认新密码</span>}
             dependencies={["newPassword"]} 
             rules={[
               { required: true, message: '请再次输入新密码' },
@@ -623,9 +605,8 @@ export default function SettingModal({ open, onClose }: SettingModalProps) {
           >
             <Input.Password 
               autoComplete="new-password" 
-              size="large" 
-              style={{ backgroundColor: '#08172F/50', color: '#fff', borderColor: '#234272' }}
-              className="bg-[#08172F]/50 hover:border-[#6366f1] focus:border-[#6366f1] text-white"
+              size="large"
+              className="bg-[var(--settings-control)] text-[var(--settings-text)]"
             />
           </Form.Item>
           <Form.Item style={{ marginTop: '24px', marginBottom: 0 }}>
@@ -633,9 +614,8 @@ export default function SettingModal({ open, onClose }: SettingModalProps) {
               type="primary" 
               htmlType="submit" 
               loading={pwdLoading} 
-              size="large" 
-              style={{ backgroundColor: '#6366f1', borderColor: '#6366f1' }}
-              className="hover:bg-[#818cf8] font-bold"
+              size="large"
+              className="font-bold"
               block
             >
               确认提交并更新密码
@@ -643,6 +623,6 @@ export default function SettingModal({ open, onClose }: SettingModalProps) {
           </Form.Item>
         </Form>
       </Modal>
-    </>
+    </ConfigProvider>
   );
 }

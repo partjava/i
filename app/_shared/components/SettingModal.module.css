@@ -1,0 +1,118 @@
+/* Modal and dropdown portals each receive these local tokens. */
+.root, .dialog, .popup {
+  --settings-surface: #ffffff;
+  --settings-control: #f7f7f7;
+  --settings-text: #242424;
+  --settings-secondary: #606060;
+  --settings-line: #dddddd;
+  --settings-selected: #ededed;
+  --settings-hover: #f3f3f3;
+  --settings-focus: #666666;
+  --settings-ring: rgba(64,64,64,.14);
+  color-scheme: light;
+}
+.dark {
+  --settings-surface: #1c1c1c;
+  --settings-control: #282828;
+  --settings-text: #f2f2f2;
+  --settings-secondary: #b8b8b8;
+  --settings-line: #414141;
+  --settings-selected: #3b3b3b;
+  --settings-hover: #303030;
+  --settings-focus: #b8b8b8;
+  --settings-ring: rgba(222,222,222,.15);
+  color-scheme: dark;
+}
+
+/* More specific than the existing body.dark Ant Design overrides. */
+.root .dialog :global(.ant-modal-content) {
+  background: var(--settings-surface) !important;
+  color: var(--settings-text) !important;
+  border: 1px solid var(--settings-line);
+  border-radius: 20px;
+  box-shadow: 0 24px 80px rgba(0,0,0,.28);
+  padding: 24px;
+}
+.root .dialog :global(.ant-modal-header) {
+  background: transparent !important;
+  color: var(--settings-text) !important;
+  border-bottom: 1px solid var(--settings-line) !important;
+  padding: 0 32px 18px 0;
+  margin-bottom: 18px;
+}
+.root .dialog :global(.ant-modal-body) {
+  background: transparent;
+  color: var(--settings-text);
+  max-height: calc(100dvh - 210px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: var(--settings-line) transparent;
+  padding-right: 4px;
+}
+.title { color: var(--settings-text); font-size: 20px; font-weight: 650; line-height: 1.4; }
+.root .dialog :global(.ant-modal-close) { color: var(--settings-secondary); }
+.root .dialog :global(.ant-modal-close:hover) { color: var(--settings-text); background: var(--settings-hover); }
+.root .dialog :global(.ant-modal-confirm-title),
+.root .dialog :global(.ant-modal-confirm-content) { color: var(--settings-text); }
+.row { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+.row > div:first-child { min-width: 0; }
+.row > :global(.ant-select), .row > :global(.ant-radio-group), .row > :global(.ant-switch) { flex-shrink: 0; }
+
+.root .dialog :global(.ant-tabs-nav::before) { border-bottom-color: var(--settings-line); }
+.root .dialog :global(.ant-tabs-tab) { color: var(--settings-secondary); }
+.root .dialog :global(.ant-tabs-tab-active .ant-tabs-tab-btn) { color: var(--settings-text); }
+.root .dialog :global(.ant-tabs-tab:hover) { color: var(--settings-text); }
+.root .dialog :global(.ant-tabs-ink-bar) { background: var(--settings-focus); }
+.root .dialog :global(.ant-tabs-tab + .ant-tabs-tab) { margin-left: 26px; }
+
+.root .dialog :global(.ant-select-selector),
+.root .dialog :global(.ant-input),
+.root .dialog :global(.ant-input-affix-wrapper) {
+  background: var(--settings-control) !important;
+  color: var(--settings-text) !important;
+  border-color: var(--settings-line) !important;
+}
+.root .dialog :global(.ant-input-affix-wrapper .ant-input) { background: transparent !important; }
+.root .dialog :global(.ant-input::placeholder) { color: var(--settings-secondary); }
+.root .dialog :global(.ant-select-arrow),
+.root .dialog :global(.ant-input-password-icon),
+.root .dialog :global(.ant-select-clear) { color: var(--settings-secondary); }
+.root .dialog :global(.ant-select-selection-item) { color: var(--settings-text); }
+.root .dialog :global(.ant-select-focused .ant-select-selector),
+.root .dialog :global(.ant-input:focus),
+.root .dialog :global(.ant-input-affix-wrapper-focused) {
+  border-color: var(--settings-focus) !important;
+  box-shadow: 0 0 0 2px var(--settings-ring) !important;
+}
+.root .dialog :global(.ant-input-affix-wrapper-status-error) { border-color: #dc7474 !important; }
+.root .dialog :global(.ant-form-item-label > label) { color: var(--settings-text) !important; }
+.root .dialog :global(.ant-radio-button-wrapper:not(.ant-radio-button-wrapper-checked)) {
+  background: var(--settings-control);
+  color: var(--settings-text);
+  border-color: var(--settings-line);
+}
+.root .dialog :global(.ant-switch:not(.ant-switch-checked)) { background: #646464; }
+.root .dialog :global(.ant-switch:not(.ant-switch-checked):hover) { background: #737373; }
+.root .dialog :global(.ant-radio-button-wrapper::before) { background: var(--settings-line); }
+.root .dialog :global(.ant-alert) { background: var(--settings-control); border-color: var(--settings-line); }
+.root .dialog :global(.ant-alert-description),
+.root .dialog :global(.ant-divider-inner-text) { color: var(--settings-secondary); }
+.root .dialog :global(.ant-divider) { border-color: var(--settings-line) !important; }
+.root .dialog :global(.ant-tag) { background: var(--settings-control) !important; border-color: var(--settings-line) !important; color: var(--settings-text) !important; }
+
+.popup { background: var(--settings-surface); border: 1px solid var(--settings-line); }
+.popup :global(.ant-select-item) { color: var(--settings-text); }
+.popup :global(.ant-select-item-option-active) { background: var(--settings-hover); }
+.popup :global(.ant-select-item-option-selected) { background: var(--settings-selected); color: var(--settings-text); }
+
+@media (max-width: 480px) {
+  .root .dialog :global(.ant-modal-content) { padding: 18px; border-radius: 16px; }
+  .root .dialog :global(.ant-modal-body) { max-height: calc(100dvh - 170px); }
+  .root .dialog :global(.ant-tabs-tab + .ant-tabs-tab) { margin-left: 16px; }
+  /* Keep the switch's visual track compact; its transparent hit area stays 44px tall. */
+  .root .dialog :global(.ant-switch) { min-height: 22px; height: 22px; }
+  .root .dialog :global(.ant-switch::after) { content: ''; position: absolute; inset: -11px 0; }
+  .row { flex-wrap: wrap; gap: 12px; }
+  .row > div:first-child { flex: 1; min-width: 150px; }
+}

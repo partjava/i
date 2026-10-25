@@ -1,6 +1,8 @@
 package com.partjava.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.FieldStrategy;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
@@ -57,8 +59,17 @@ public class User {
     @TableField("github")
     private String github;
 
-    @TableField("avatar")
+    // Uploaded avatars are data URLs; the legacy avatar column is VARCHAR(500).
+    @TableField("image")
     private String avatar;
+
+    @JsonIgnore
+    @TableField(value = "avatar", insertStrategy = FieldStrategy.NEVER, updateStrategy = FieldStrategy.NEVER)
+    private String legacyAvatar;
+
+    public String getAvatar() {
+        return avatar != null ? avatar : legacyAvatar;
+    }
 
     @TableField("vip")
     private Integer vip; // 0=普通用户, 1=VIP会员

@@ -43,7 +43,7 @@ export default function StatsSection() {
           // 接口异常时隐藏板块，不展示假数据
           setFailed(true);
         }
-      } catch (error) {
+      } catch {
         setFailed(true);
       } finally {
         setLoading(false);
@@ -108,9 +108,6 @@ export default function StatsSection() {
             >
               <div 
                 className={`${styles.statCard} rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-line-strong`}
-                style={{
-                  background: 'linear-gradient(135deg, #f5f7fa 0%, #f0f3f8 30%, #f5f7fa 60%, #eef1f6 100%)',
-                }}
               >
                 {/* 宣纸纹理 */}
                 <div 

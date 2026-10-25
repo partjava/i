@@ -1,10 +1,20 @@
+/* The same theme applies on desktop and mobile; retain the original light gradient. */
+.statCard {
+  background: linear-gradient(135deg, #f5f7fa 0%, #f0f3f8 30%, #f5f7fa 60%, #eef1f6 100%);
+}
+:global(body.dark) .mobileStats {
+  background: linear-gradient(180deg, #202020, #161616);
+}
+:global(body.dark) .statCard {
+  background: linear-gradient(135deg, #252525, #1b1b1b);
+  border-color: #414141;
+}
+:global(body.dark) .mobileStats :global(.text-gray-800) { color: #f1f1f1; }
+:global(body.dark) .mobileStats :global(.text-gray-500) { color: #b8b8b8; }
 
 @media (max-width: 767px) {
  .mobileStats { padding-block: 32px; }
  .mobileStats > div > div:first-child { margin-bottom: 24px; }
  .mobileStats :global(.grid) { gap: 12px; }
  .statCard { padding: 18px 14px; }
- :global(body.dark) .statCard { background: linear-gradient(135deg,#1e293b,#182334) !important; }
- :global(body.dark) .mobileStats :global(.text-gray-800) { color: #f1f5f9 !important; }
- :global(body.dark) .mobileStats :global(.text-gray-500) { color: #cbd5e1 !important; }
 }
