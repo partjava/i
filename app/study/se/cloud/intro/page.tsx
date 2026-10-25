@@ -5,6 +5,7 @@ import { THEMES } from '@shared/components/ui/book/theme'
 import {
   PageTitle,
   BookParagraph,
+  BookCode,
   BookList,
 } from '@shared/components/ui/book/BookContent'
 
@@ -70,6 +71,56 @@ const SPREADS = [
         <BookParagraph>练习时先用纸面估算：固定资源月费加存储、请求和网络费用，再加入预留空间。比较单实例和多故障域方案时，同时写出月成本与可接受停机时间，不虚构统一云价格。</BookParagraph>
       </div>
     ),
+  },
+  { label: "把服务抽象放回系统分层",
+    left: (<div className="space-y-4">
+      <PageTitle>把服务抽象放回系统分层</PageTitle>
+      <BookParagraph>{"例一：学习网站需要安装操作系统、运行接口和保存进度。把系统画成物理设施、虚拟化、操作系统、运行时、应用与数据六层，逐层标出谁能修改。选择IaaS时，客户可以调整系统参数，也必须处理系统安全；选择托管运行时后，客户通常不能任意替换宿主内核，却仍要修补自己的依赖。"}</BookParagraph>
+      <BookParagraph>{"抽象改变的是控制范围和工作分配，并非责任凭空消失。例如平台自动替换故障机器，仍无法知道你的业务代码把用户进度写错了。采购时把“平台支持什么”转为可检查条目，再确认升级窗口、数据导出接口与终止服务后的迁移途径。"}</BookParagraph>
+    </div>),
+    right: (<div className="space-y-4">
+      <PageTitle>为什么资源池能按需交付</PageTitle>
+      <BookParagraph>{"资源池把多个客户需求汇集，调度系统按配额与策略分配容量。隔离机制减少相互干扰，计量系统记录资源使用，控制接口允许用户申请和释放。由此才能把等待人工采购的过程缩短为自助操作，但容量并非无限，热门地域、特定规格或账号配额都可能成为边界。"}</BookParagraph>
+      <BookParagraph>{"例二：两个班级分别在白天和晚上访问网站，共享资源池能平滑峰值；若都在考试前五分钟访问，峰值仍会叠加。不能用“用户数平均下来很小”规划资源。先估算并发和处理时间，再实测扩容启动时间，并为同时到来的请求保留缓冲。"}</BookParagraph>
+<div className="overflow-x-auto"><table className="min-w-[480px] w-full text-sm border-collapse"><thead><tr><th className="border border-paper-300/80 p-2 text-left">层次</th><th className="border border-paper-300/80 p-2 text-left">客户关注</th><th className="border border-paper-300/80 p-2 text-left">典型取舍</th></tr></thead><tbody><tr><td className="border border-paper-300/80 p-2">IaaS</td><td className="border border-paper-300/80 p-2">系统、运行时、应用与数据</td><td className="border border-paper-300/80 p-2">控制更多，维护更多</td></tr><tr><td className="border border-paper-300/80 p-2">PaaS</td><td className="border border-paper-300/80 p-2">应用、配置与数据</td><td className="border border-paper-300/80 p-2">减少底层工作，平台约束增加</td></tr><tr><td className="border border-paper-300/80 p-2">SaaS</td><td className="border border-paper-300/80 p-2">身份、配置与使用数据</td><td className="border border-paper-300/80 p-2">交付更快，可定制范围较小</td></tr></tbody></table></div>
+    </div>),
+  },
+  { label: "用并发数估算容量",
+    left: (<div className="space-y-4">
+      <PageTitle>用并发数估算容量</PageTitle>
+      <BookParagraph>{"在稳定状态下，可用平均并发量约等于每秒到达请求数乘平均在系统停留时间理解负载。假设每秒四十请求、平均处理零点二秒，则平均约八个请求同时在系统内；若外部数据库使处理时间升到一秒，并发会上升到约四十，而入口流量没有变化。"}</BookParagraph>
+      <BookParagraph>{"这是容量讨论的近似关系，不能直接把八个并发换成八个CPU核。请求可能等待网络或磁盘，突发与长尾也会偏离平均值。下面Python 3只计算教学输入，输出8.0和40.0；它帮助识别延迟如何放大资源占用，生产规格仍需压测确定。"}</BookParagraph>
+<BookCode language="python" code={"for seconds in (0.2, 1.0):\n    print(40 * seconds)"} />
+    </div>),
+    right: (<div className="space-y-4">
+      <PageTitle>可用性数字如何落到用户</PageTitle>
+      <BookParagraph>{"例三：按三十天即四万三千二百分钟粗算，目标可用性百分之九十九点九允许约四十三点二分钟不可用；百分之九十九点九九约四点三二分钟。这个差距会明显改变冗余、值班与演练投入，并不是把宣传页的小数点多写一位。"}</BookParagraph>
+      <BookParagraph>{"先定义哪些请求计入分母、什么算失败、维护窗口是否计入，以及统计窗口。首页能打开而进度无法保存时，学习体验仍然失败。服务商单项资源承诺与整个网站的端到端目标不同，应用、网络与数据库依赖都需要纳入故障分析。"}</BookParagraph>
+    </div>),
+  },
+  { label: "串联依赖为何放大风险",
+    left: (<div className="space-y-4">
+      <PageTitle>串联依赖为何放大风险</PageTitle>
+      <BookParagraph>{"简化假设应用与数据库故障相互独立，可用性分别为百分之九十九点九，两者都工作才能完成请求，乘积约为百分之九十九点八。真实故障常存在共同原因，例如网络或身份配置失误，所以不能把独立假设下的数字当保证。"}</BookParagraph>
+      <BookParagraph>{"提高其中一个组件规格不会消除另一组件的故障。分析请求链时列出每个必需依赖，再判断能否降级：文章内容可暂时使用缓存，进度写入则不能无提示丢弃。降级必须向用户说明状态，并为后续重试保持稳定业务编号。"}</BookParagraph>
+    </div>),
+    right: (<div className="space-y-4">
+      <PageTitle>用退出成本检验选型</PageTitle>
+      <BookParagraph>{"例四：平台甲每月费用较低，却只支持专有函数接口；平台乙费用较高，支持标准容器和常见数据库导出。若未来迁移需要重写鉴权与事件接口，甲的账单节省可能被维护时间抵消。成本比较应同时列出运行、学习、排障、迁移与停机成本。"}</BookParagraph>
+      <BookParagraph>{"避免把可移植性理解为不使用任何托管能力。可以把核心业务与平台适配代码分层，定期导出可恢复数据，用一套本地契约测试验证关键行为。对业务价值较低且易替换的边缘功能，接受平台特性可能是合理取舍。"}</BookParagraph>
+    </div>),
+  },
+  { label: "从描述推导故障路径",
+    left: (<div className="space-y-4">
+      <PageTitle>从描述推导故障路径</PageTitle>
+      <BookParagraph>{"桌面推演：考试前网站变慢，监控显示应用CPU很低、数据库连接已满。先确认错误与延迟开始时间，再查看连接持有时间及近期发布；盲目增加应用副本反而可能创建更多连接，使数据库更快达到上限。此时应限制并发并检查慢查询，而非只扩机器。"}</BookParagraph>
+      <BookParagraph>{"恢复之后再判断长期方案：缩短事务、设置有界连接池、优化索引或升级数据库容量。把现象、证据、临时止损与长期修复分开记录，能避免每次类似故障都从猜测开始，也能检验“弹性”是否真的作用于瓶颈。"}</BookParagraph>
+    </div>),
+    right: (<div className="space-y-4">
+      <PageTitle>把云能力写成决策记录</PageTitle>
+      <BookParagraph>{"为上述案例写一份具体决策：目前单地域运行，应用使用托管平台，数据库采用定期备份与恢复演练；理由是维护人数有限、允许短暂停机，暂不承担跨地域复制复杂度。列出触发升级的证据，例如连续峰值超过压测安全容量或恢复演练超过目标。"}</BookParagraph>
+      <BookParagraph>{"这种记录应包含日期、假设、候选方案与复查时间。需求变化时重新评估，而不是把第一次选择变成永久标准。完成本章后，应能从用户影响推导服务边界、容量与恢复策略，而不仅能背出三个服务模式缩写。"}</BookParagraph>
+    </div>),
   },
   {
     label: "练习：拆解学习网站",

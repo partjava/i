@@ -9,9 +9,9 @@ const CHAPTERS: ChapterLink[] = [
   { number: 3,  title: '数据采集与预处理',     description: 'Flume、Logstash、ETL 流程与数据清洗',                href: '/study/se/bigdata/ingest' },
   { number: 4,  title: '分布式存储与计算',     description: 'HDFS、Hive、HBase、MapReduce 与 Spark',             href: '/study/se/bigdata/distributed' },
   { number: 5,  title: '数据分析与挖掘',       description: 'Spark SQL、机器学习、流式分析',                     href: '/study/se/bigdata/analysis' },
-  { number: 6,  title: '可视化与BI',           description: 'Tableau、Apache Superset、Python 可视化',            href: '/study/se/bigdata/bi' },
+  { number: 6,  title: '可视化与BI',           description: '指标口径、图表选择、去重与看板质量',            href: '/study/se/bigdata/bi' },
   { number: 7,  title: '大数据安全与运维',     description: '权限管理、数据加密、集群监控与运维',                href: '/study/se/bigdata/security' },
-  { number: 8,  title: '实战案例与项目',       description: '日志分析平台、开发流程与面试题',                     href: '/study/se/bigdata/projects' },
+  { number: 8,  title: '实战案例与项目',       description: '课程日报、清洗去重、补算与发布验收',                     href: '/study/se/bigdata/projects' },
 ]
 
 export default function BigDataPage() {

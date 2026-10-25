@@ -4,12 +4,12 @@ import BookCover from '@shared/components/ui/book/BookCover'
 import { THEMES } from '@shared/components/ui/book/theme'
 
 const CHAPTERS = [
-  { number: 1, title: '搜索引擎基础',     description: '搜索引擎的定义、组成与工作流程',         href: '/study/se/search/basic' },
-  { number: 2, title: '爬虫与数据采集',   description: '网络爬虫技术原理与实现',               href: '/study/se/search/crawler' },
-  { number: 3, title: '索引构建',         description: '倒排索引原理与构建方法',               href: '/study/se/search/index' },
-  { number: 4, title: '查询处理',         description: '查询解析、优化与执行',                 href: '/study/se/search/query' },
-  { number: 5, title: 'Elasticsearch示例', description: '企业级搜索解决方案实践',              href: '/study/se/search/elasticsearch' },
-  { number: 6, title: '高级搜索特性',     description: '模糊匹配、同义词处理与地理位置搜索',     href: '/study/se/search/advanced' },
+  { number: 1, title: '搜索引擎基础',     description: '扫描与倒排、短语位置、字段评分与同步机制',         href: '/study/se/search/basic' },
+  { number: 2, title: '爬虫与数据采集',   description: '采集流水线、正文提取、条件请求与增量更新',               href: '/study/se/search/crawler' },
+  { number: 3, title: '索引构建',         description: '字段映射、分析链、批量写入与索引迁移',               href: '/study/se/search/index' },
+  { number: 4, title: '查询处理',         description: '布尔条件推演、权限过滤、分页与性能诊断',                 href: '/study/se/search/query' },
+  { number: 5, title: 'Elasticsearch示例', description: '映射、写入、查询与更新的完整本地实验',              href: '/study/se/search/elasticsearch' },
+  { number: 6, title: '高级搜索特性',     description: '检索评估、同义词、模糊匹配与混合排序',     href: '/study/se/search/advanced' },
 ]
 
 export default function SearchHomePage() {

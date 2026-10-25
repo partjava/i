@@ -5,6 +5,7 @@ import { THEMES } from '@shared/components/ui/book/theme'
 import {
   PageTitle,
   BookParagraph,
+  BookCode,
   BookList,
 } from '@shared/components/ui/book/BookContent'
 
@@ -70,6 +71,57 @@ const SPREADS = [
         <BookParagraph>无论方案都要考虑备份和私人数据权限。费用表应覆盖计算、存储、请求、出站流量及观测保留，并写明估算假设；预算提醒不一定会阻止扣费，不应把免费额度当长期运行保证。</BookParagraph>
       </div>
     ),
+  },
+  { label: "为迁移定义可测量目标",
+    left: (<div className="space-y-4">
+      <PageTitle>为迁移定义可测量目标</PageTitle>
+      <BookParagraph>{"例一：现有学习网站峰值每秒二十请求，页面响应分位数在可接受范围，但机器故障后人工恢复需两小时。迁移目标可以优先缩短恢复时间，而不是追求十倍吞吐。先记录基线、目标值和测量方法，才能判断云方案解决了什么问题。"}</BookParagraph>
+      <BookParagraph>{"需求文档还应列出不迁移的内容和依赖，例如第三方登录及邮件服务仍保持原接口。记录每个外部依赖的超时、配额与数据边界。迁移是一组风险受控的变化，不应同时重写全部业务、替换所有数据库并引入新编排系统。"}</BookParagraph>
+    </div>),
+    right: (<div className="space-y-4">
+      <PageTitle>架构方案按约束比较</PageTitle>
+      <BookParagraph>{"方案一是单应用实例加托管数据库，运维较少但应用仍有单点；方案二增加跨故障域应用副本与冗余入口，减少局部故障影响；方案三跨地域复制及切换，覆盖更多故障却增加一致性与值班复杂度。"}</BookParagraph>
+      <BookParagraph>{"以维护者只有一人且允许短暂停机为例，方案一可能更符合当前能力，但必须通过恢复演练证明风险可接受。下表不是优劣排名，而是把成本、恢复步骤与故障覆盖范围写清楚。选择最复杂方案却无法维护，可能使实际恢复能力更差。"}</BookParagraph>
+<div className="overflow-x-auto"><table className="min-w-[480px] w-full text-sm border-collapse"><thead><tr><th className="border border-paper-300/80 p-2 text-left">方案</th><th className="border border-paper-300/80 p-2 text-left">覆盖重点</th><th className="border border-paper-300/80 p-2 text-left">新增代价</th></tr></thead><tbody><tr><td className="border border-paper-300/80 p-2">单实例加恢复</td><td className="border border-paper-300/80 p-2">机器故障后重建</td><td className="border border-paper-300/80 p-2">恢复期间停机</td></tr><tr><td className="border border-paper-300/80 p-2">多故障域副本</td><td className="border border-paper-300/80 p-2">部分机器或区域单元故障</td><td className="border border-paper-300/80 p-2">冗余资源和验证</td></tr><tr><td className="border border-paper-300/80 p-2">跨地域灾备</td><td className="border border-paper-300/80 p-2">更大故障范围</td><td className="border border-paper-300/80 p-2">复制、切换与一致性复杂度</td></tr></tbody></table></div>
+    </div>),
+  },
+  { label: "用请求预算找迁移瓶颈",
+    left: (<div className="space-y-4">
+      <PageTitle>用请求预算找迁移瓶颈</PageTitle>
+      <BookParagraph>{"例二：请求平均需要应用处理五十毫秒、数据库一百毫秒、外部接口二百毫秒，忽略重叠时共三百五十毫秒。即使应用计算耗时减少一半，总时间也只是降为三百二十五毫秒。单纯升级计算规格不能解决主要等待。"}</BookParagraph>
+      <BookParagraph>{"Python 3给出350和325，单位毫秒。这个模型忽略并行调用和排队，适合作为定位方向，不是性能保证。迁移后用相同请求样本对照各段耗时，若外部接口占主导，应研究缓存、超时和降级，避免把预算全部投向实例规格。"}</BookParagraph>
+<BookCode language="python" code={"app, database, external = 50, 100, 200\nprint(app + database + external)\nprint(app / 2 + database + external)"} />
+    </div>),
+    right: (<div className="space-y-4">
+      <PageTitle>迁移数据的四次核对</PageTitle>
+      <BookParagraph>{"先核对结构：字段、约束、索引与时区；再核对数量：按日期和用户分组检查；第三核对内容：抽查关键记录或计算稳定摘要；最后核对行为：登录、读取和更新是否符合业务规则。只比较总行数不能发现同数量的错配。"}</BookParagraph>
+      <BookParagraph>{"例三：源库和目标库各有一百条记录，但两个用户的进度被互换，总数完全一致。需要按稳定主键连接后比较业务字段，发现差异再查映射和转换逻辑。校验记录应注明数据时间点，否则迁移期间继续写入会使比较失去意义。"}</BookParagraph>
+    </div>),
+  },
+  { label: "本地模拟对账差异",
+    left: (<div className="space-y-4">
+      <PageTitle>本地模拟对账差异</PageTitle>
+      <BookParagraph>{"下面Python 3用虚构字典模拟源库与目标库，以用户和章节组成稳定键。目标库缺少u2记录，u1进度不同，输出missing和changed对应集合。这里只演示对账，不连接或覆盖真实数据库，可反复执行。"}</BookParagraph>
+      <BookParagraph>{"将真实对账扩展为分批读取与分组统计时，必须保持一致的比较时点和字段规范，例如空值、时区与数值精度。摘要可快速定位不同批次，但最终仍需检查具体差异，不能仅凭随机抽样无误就断言所有数据完全一致。"}</BookParagraph>
+<BookCode language="python" code={"source = {(\"u1\", \"c1\"): 80, (\"u2\", \"c1\"): 50}\ntarget = {(\"u1\", \"c1\"): 70}\nmissing = source.keys() - target.keys()\nchanged = {k for k in source.keys() & target.keys() if source[k] != target[k]}\nprint(\"missing\", sorted(missing))\nprint(\"changed\", sorted(changed))"} />
+    </div>),
+    right: (<div className="space-y-4">
+      <PageTitle>入口切换与数据写入归属</PageTitle>
+      <BookParagraph>{"切换前把旧环境写入流程和新环境同步关系讲清楚，必要时安排短暂停写窗口。DNS缓存会让一部分用户继续进入旧环境；如果两边都接受写入而没有协调机制，会出现同一进度被不同版本覆盖的问题。"}</BookParagraph>
+      <BookParagraph>{"为每个阶段写清唯一写入方、读取方和回退条件，切换后持续检查新旧入口流量。若需要回退，先确认新数据能否兼容或安全补齐旧环境。仅把域名改回去不能恢复数据一致性，回退也应是一份有前提的操作计划。"}</BookParagraph>
+    </div>),
+  },
+  { label: "把故障演练设计成证据",
+    left: (<div className="space-y-4">
+      <PageTitle>把故障演练设计成证据</PageTitle>
+      <BookParagraph>{"例四：桌面推演应用实例突然失联。维护者先从监控确认影响，再按手册找到当前制品和配置，在隔离环境恢复，验证进度读取后计时。记录发现耗时、定位耗时、恢复耗时，能看出改进应落在告警还是自动部署上。"}</BookParagraph>
+      <BookParagraph>{"再推演数据库误删，使用不同流程在隔离位置恢复历史状态并核对合法新增记录。两个演练的目标不同：前者恢复服务，后者恢复正确数据。若把副本故障切换当成误删恢复，就会很快切换到同样缺失记录的副本。"}</BookParagraph>
+    </div>),
+    right: (<div className="space-y-4">
+      <PageTitle>验收材料形成因果链</PageTitle>
+      <BookParagraph>{"一份可审查交付应能从业务约束走到架构选择，再走到配置、费用和实测证据。例如“只有一名维护者”支持减少自建组件，“允许一小时恢复”要求演练确实在该范围内完成，“记录敏感”要求私人网络与对象级授权用例。"}</BookParagraph>
+      <BookParagraph>{"最后进行反向检查：任一收费资源是否对应需求，任一可靠性承诺是否有测试，任一风险是否有负责人。没有验证的目标应明确标为待完成，保留下一阶段计划。这样课程项目才能成为可讨论的工程设计，而不仅是一张包含产品图标的图片。"}</BookParagraph>
+    </div>),
   },
   {
     label: "综合练习与参考思路",
