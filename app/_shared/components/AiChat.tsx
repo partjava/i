@@ -44,10 +44,44 @@ function FloatingAiChat() {
   const draggingRef = useRef(false);
   const pendingDragRef = useRef(false);
 
+  // 获取默认展开位置：对齐顶栏搜索中岛的左侧（与第二张图一致，top: 76px）
+  const getDefaultPos = () => {
+    if (typeof window === 'undefined') return { x: 220, y: 76 };
+    if (window.innerWidth < 768) {
+      const width = Math.min(360, window.innerWidth - 24);
+      return { x: Math.max(12, Math.floor((window.innerWidth - width) / 2)), y: 76 };
+    }
+    const searchIsland =
+      (document.querySelector('.liquid-glass-search')?.closest('.max-w-lg') as HTMLElement | null) ||
+      (document.querySelector('.liquid-glass-search')?.parentElement as HTMLElement | null) ||
+      (document.querySelector('.liquid-glass-search') as HTMLElement | null);
+    if (searchIsland) {
+      const rect = searchIsland.getBoundingClientRect();
+      const left = Math.max(16, Math.min(window.innerWidth - 376, Math.floor(rect.left)));
+      return { x: left, y: 76 };
+    }
+    const fallbackLeft = Math.max(16, Math.min(window.innerWidth - 376, Math.floor((window.innerWidth - 360) / 2)));
+    return { x: fallbackLeft, y: 76 };
+  };
+
+  const getMobileFloatingPos = () => {
+    if (typeof window === 'undefined') return { x: 20, y: 100 };
+    return {
+      x: window.innerWidth - 56 - 16,
+      y: window.innerHeight - 56 - 104,
+    };
+  };
+
   // 监听来自顶部导航栏史迪仔按钮的唤起事件
   useEffect(() => {
     const handleToggle = () => {
-      setOpen((prev) => !prev);
+      setOpen((prev) => {
+        const next = !prev;
+        if (next && !posRef.current) {
+          setPos(getDefaultPos());
+        }
+        return next;
+      });
       setShowHint(false);
     };
     window.addEventListener('toggle-ai-chat', handleToggle);
@@ -75,33 +109,22 @@ function FloatingAiChat() {
     endRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [ai.messages, open]);
 
-  // 初始化位置（当第一次打开时，把固定位置转换为 left/top，这样之后可以拖动）
-  useEffect(() => {
-    if (!pos) {
-      const winW = window.innerWidth;
-      const winH = window.innerHeight;
-      const w = open ? 360 : 56;
-      const h = open ? 480 : 56;
-      const left = Math.max(8, winW - 20 - w);
-      const top = Math.max(8, winH - (winW < 768 ? 104 : 24) - h);
-      setPos({ x: left, y: top });
-    }
-  }, [open, pos]);
-
-  // 手机悬浮球避开底部导航，展开面板后重新约束位置。
+  // 手机端尺寸自适应
   useEffect(() => {
     const fitMobile = () => {
       if (window.innerWidth >= 768) return;
       const width = Math.min(open ? 360 : 56, window.innerWidth - 24);
       const height = open ? Math.min(480, window.innerHeight - 180) : 56;
       setPos(previous => ({
-        x: Math.max(12, Math.min(previous?.x ?? window.innerWidth - width - 16, window.innerWidth - width - 12)),
-        y: Math.max(76, Math.min(previous?.y ?? window.innerHeight - height - 104, window.innerHeight - height - 104)),
+        x: Math.max(12, Math.min(previous?.x ?? Math.floor((window.innerWidth - width) / 2), window.innerWidth - width - 12)),
+        y: Math.max(76, Math.min(previous?.y ?? 76, window.innerHeight - height - 104)),
       }));
     };
-    fitMobile();
-    window.addEventListener('resize', fitMobile);
-    return () => window.removeEventListener('resize', fitMobile);
+    if (open) {
+      fitMobile();
+      window.addEventListener('resize', fitMobile);
+      return () => window.removeEventListener('resize', fitMobile);
+    }
   }, [open]);
 
 
@@ -126,7 +149,7 @@ function FloatingAiChat() {
             draggingRef.current = true;
             document.body.style.userSelect = 'none';
             const rect = containerRef.current?.getBoundingClientRect();
-            const curPos = posRef.current || (rect ? { x: rect.left, y: rect.top } : { x: window.innerWidth / 2 - 180, y: 76 });
+            const curPos = posRef.current || (rect ? { x: rect.left, y: rect.top } : getDefaultPos());
             dragStartRef.current = { mx, my, ox: curPos.x, oy: curPos.y };
           }
         }
@@ -183,17 +206,22 @@ function FloatingAiChat() {
 
   if (studyRoomOpen) return null;
 
+  const isDesktop = typeof window !== 'undefined' ? window.innerWidth >= 768 : true;
+  // 桌面端在未打开时不渲染任何浮动节点，彻底杜绝右下角残留或露出的问题
+  if (!open && isDesktop) return null;
+
+  const activePos = pos || (open ? getDefaultPos() : getMobileFloatingPos());
+
   const panel = (
       <div
         ref={containerRef}
         style={{
           position: 'fixed',
           zIndex: 2147483647,
-          left: pos ? pos.x : (open ? '50%' : undefined),
-          top: pos ? pos.y : (open ? 76 : undefined),
-          right: pos ? undefined : (open ? undefined : 20),
-          bottom: pos ? undefined : (open ? undefined : 24),
-          transform: pos ? undefined : (open ? 'translateX(-50%)' : undefined),
+          left: activePos.x,
+          top: activePos.y,
+          width: open ? 360 : 56,
+          height: open ? 480 : 56,
         }}
       >
       {!open && (
@@ -303,7 +331,7 @@ function FloatingAiChat() {
               >
                 保存为笔记
               </button>
-              <button onClick={() => setOpen(false)} style={{ background: 'transparent', border: 'none', color: '#fff', cursor: 'pointer' }}>✕</button>
+              <button onClick={() => { setOpen(false); setPos(null); }} style={{ background: 'transparent', border: 'none', color: '#fff', cursor: 'pointer' }}>✕</button>
             </div>
           </div>
           <div style={{ padding: 12, height: 360, overflowY: 'auto', background: '#f7fafc' }}>
