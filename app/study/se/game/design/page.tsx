@@ -29,6 +29,7 @@ const SPREADS = [
       <div className="space-y-4">
         <PageTitle>规则如何产生选择</PageTitle>
         <BookParagraph>游戏设计先回答玩家反复做什么、为何值得做、失败会损失什么。核心循环可写为观察障碍、选择路线、执行移动、获得分数、面对更难障碍。每个环节都要有输入与可观察反馈；世界观和画面能加强体验，却不能替代有意义的规则选择。</BookParagraph>
+        <BookParagraph>设计讨论应能落到玩家的一次选择：他看到了什么线索，可以采取什么行动，承担什么代价，又如何知道结果。例如贴近障碍拾取金币，关键不是金币数量，而是玩家能否看清安全路线并理解自己为何成功或失败。</BookParagraph>
       </div>
     ),
     right: (
@@ -74,6 +75,16 @@ const SPREADS = [
       </div>
     ),
   },
+  { label: "把核心循环展开", left: (<div className="space-y-4"><PageTitle>把核心循环展开</PageTitle><BookParagraph>核心循环可以写成观察局势、选择路线、执行移动、获得反馈、重新观察。每一环都需要具体对象：障碍位置是信息，左右移动是动作，生存与得分是结果。如果只写探索、成长、挑战，团队仍不知道第一分钟应制作什么交互。</BookParagraph>
+<BookParagraph>一分钟躲避游戏中，外围循环还包含失败、回看成绩、重试。若失败后等待十秒且没有新信息，重试动力会被打断。先画一次完整短局的事件顺序，再决定成长系统是否真的服务这个循环，而不是为了凑功能列表。</BookParagraph></div>), right: (<div className="space-y-4"><PageTitle>建立可证伪的设计假设</PageTitle><BookParagraph>把“更刺激”改成“有预告的高速障碍让玩家提前选择路线”。原型只保留移动、预告、障碍与受击，先排除美术品质和升级奖励干扰。若玩家仍说看不懂，就需要修改信息呈现，而不是增加更多种敌人。</BookParagraph><div className="overflow-x-auto my-4"><table className="w-full text-sm border-collapse"><thead><tr className="border-b-2"><th className="text-left p-2 font-semibold">原型问题</th><th className="text-left p-2 font-semibold">只改变的条件</th><th className="text-left p-2 font-semibold">可观察证据</th></tr></thead><tbody><tr className="border-b"><td className="p-2">风险是否可读</td><td className="p-2">危险预告时长</td><td className="p-2">首次受击前是否主动避让</td></tr><tr className="border-b"><td className="p-2">奖励是否值得冒险</td><td className="p-2">金币位置或分值</td><td className="p-2">选择危险路线的比例与理由</td></tr><tr className="border-b"><td className="p-2">重试是否顺畅</td><td className="p-2">失败到可操作的间隔</td><td className="p-2">是否愿意立即再玩一局</td></tr></tbody></table></div></div>) },
+  { label: "挑战来自决策空间", left: (<div className="space-y-4"><PageTitle>挑战来自决策空间</PageTitle><BookParagraph>速度越快并不必然越有挑战。若两条路线总有一条完全安全，玩家可能只需机械躲闪；若所有路线都不可达，则结果由运气决定。设计应在玩家移动能力和障碍布局之间留出可选择的安全窗口，让失误能够被解释。</BookParagraph>
+<BookParagraph>例如角色横移一百八十像素每秒，障碍预告后零点五秒到达，理论可横移九十像素。目标路线若相隔一百二十像素，就算瞬间响应也无法完成。先扣除人的反应时间和输入延迟，再设置通路距离，才是在设计可实现的动作。</BookParagraph></div>), right: (<div className="space-y-4"><PageTitle>教学如何逐步增加信息</PageTitle><BookParagraph>第一轮只出现静止障碍，让玩家学会移动；第二轮引入移动方向清晰的敌人；第三轮再要求边躲避边拾取。每次仅增加一个主要信息维度，玩家能把失败归因到新规则。直接叠加速度、数量和方向会让学习目标模糊。</BookParagraph>
+<BookParagraph>教学可以通过安全情境让玩家尝试，而不一定依赖大段文字。先给宽阔空间练习，再让同一规则出现在轻微压力中。观察玩家是否在提示消失后仍会操作，才能区分记住按钮与理解规则。</BookParagraph></div>) },
+  { label: "风险收益不只看均值", left: (<div className="space-y-4"><PageTitle>风险收益不只看均值</PageTitle><BookParagraph>安全路线得十分，危险路线得三十分但可能损失已有分数，可以先算期望收益作为讨论起点。概率是假设而不是事实；熟练玩家成功率可能更高，新手可能根本看不懂风险。把不同水平玩家分开观察，平均成功率才不至于掩盖两极结果。</BookParagraph>
+<BookParagraph>同样期望值的选项，波动也可能完全不同。稳定得分适合保守玩家，大额随机奖励可能吸引冒险者，但不能据此断言后者更好。需要同时说明可见信息、失败代价和玩家是否能通过练习改善结果。</BookParagraph></div>), right: (<div className="space-y-4"><PageTitle>对照三个选择条件</PageTitle><BookParagraph>下面以一次行动的简化分数模型比较条件。危险路线失败概率从四成升到七成，期望值就从正变负；若实际试玩中玩家仍选择它，可能是奖励展示、概率认知或娱乐体验起作用，应通过追问原因继续调查。</BookParagraph><BookParagraph>JavaScript；浏览器控制台或 Node.js 独立运行。输入与预期输出见注释。</BookParagraph><BookCode language="javascript" showLineNumbers code={"// 简化单次选择：收益单位是分数，失败概率由设计假设给出\n// 真实设计还要看失败损失、信息与玩家对风险的偏好\nfunction expectedScore(reward, failChance, loss) {\n  return (1 - failChance) * reward - failChance * loss;\n}\nconsole.log(expectedScore(10, 0.1, 20)); // 7\nconsole.log(expectedScore(30, 0.4, 20)); // 10\nconsole.log(expectedScore(30, 0.7, 20)); // -5"} /></div>) },
+  { label: "反馈让规则可理解", left: (<div className="space-y-4"><PageTitle>反馈让规则可理解</PageTitle><BookParagraph>受击反馈至少交代来源、发生时刻和后果。闪白提示命中，击退显示方向，生命值变化表达代价，短暂无敌提示保护期。如果只播放强烈震屏却不显示生命变化，玩家可能无法区分擦碰、受伤和死亡。反馈强度也应与事件重要性一致。</BookParagraph>
+<BookParagraph>评价失败公平性时，可暂停在受击前一瞬，问玩家能否指出危险来源和可用逃生路线。若路线存在但不可读，改画面和预告；若路线根本不存在，改生成规则；若路线清楚但操作未生效，再查输入系统。</BookParagraph></div>), right: (<div className="space-y-4"><PageTitle>试玩记录怎样支持迭代</PageTitle><BookParagraph>记录具体事件：第几次遭遇、当时位置、采取什么动作、结果如何。把“太难了”还原成“第三次障碍在屏外生成，进入画面时只剩零点一秒”，才能提出可验证的改动。先保留观察，再写解释，避免把设计者猜测当玩家原话。</BookParagraph>
+<BookParagraph>每轮只验证少数关键假设，保存原参数与新参数及取舍理由。缩小障碍碰撞盒可能提高宽容度，也可能让视觉接触缺乏后果；延长预告可能改善可读性，也会降低节奏。记录这类代价，迭代才不会循环改回原处。</BookParagraph></div>) },
   {
     label: "练习：三回合原型",
     left: (
