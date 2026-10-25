@@ -47,11 +47,13 @@ mybatis-plus:
     map-underscore-to-camel-case: true
     # log-impl: org.apache.ibatis.logging.stdout.StdOutImpl  # 生产环境注释掉
 
-# Springdoc Swagger Configuration
+# Springdoc Swagger Configuration（生产环境用 SPRINGDOC_ENABLED=false 关闭）
 springdoc:
   api-docs:
+    enabled: ${SPRINGDOC_ENABLED:true}
     path: /v3/api-docs
   swagger-ui:
+    enabled: ${SPRINGDOC_ENABLED:true}
     path: /swagger-ui.html
     operations-sorter: alpha
 

@@ -366,7 +366,8 @@ function createCatFurMaterial(
 function buildSurfaceFurTufts(
   positions: Float32Array,
   normals: Float32Array,
-  profile: CatProfile
+  profile: CatProfile,
+  uniforms: CatAnimUniforms
 ): THREE.InstancedMesh {
   const maxTufts = 2200;
   // 纤细微弯的四棱锥毛簇
@@ -379,6 +380,126 @@ function buildSurfaceFurTufts(
     roughness: 0.65,
     metalness: 0.05
   });
+
+  // 毛簇同步变形：身体材质的呼吸/转头/动耳/摇尾发生在顶点着色器里，
+  // 普通材质的实例毛簇不会跟随（毛会飘离身体）。这里把同一套变形
+  // 注入毛簇材质——对每个实例的「毛根锚点」施加与身体一致的位移与
+  // 旋转，锥体再相对变形后的锚点伸展，实现逐毛同步。
+  tuftMat.onBeforeCompile = shader => {
+    shader.uniforms.uTime = uniforms.uTime;
+    shader.uniforms.uHeadYaw = uniforms.uHeadYaw;
+    shader.uniforms.uHeadPitch = uniforms.uHeadPitch;
+    shader.uniforms.uHeadRoll = uniforms.uHeadRoll;
+    shader.uniforms.uEarTwitchL = uniforms.uEarTwitchL;
+    shader.uniforms.uEarTwitchR = uniforms.uEarTwitchR;
+    shader.uniforms.uBreath = uniforms.uBreath;
+    shader.uniforms.uEarTipL = { value: profile.earTipL.clone() };
+    shader.uniforms.uEarTipR = { value: profile.earTipR.clone() };
+    shader.uniforms.uEarSize = { value: profile.earSize };
+    shader.uniforms.uHeadPivot = { value: profile.headPivot.clone() };
+    shader.uniforms.uHeadRange = {
+      value: new THREE.Vector2(profile.headRange[0], profile.headRange[1])
+    };
+    shader.uniforms.uHeadZMin = { value: profile.headZMin };
+    shader.uniforms.uTailBase = { value: profile.tailBase.clone() };
+    shader.uniforms.uTailTip = { value: profile.tailTip.clone() };
+    shader.uniforms.uBodyCenter = { value: profile.bodyCenter.clone() };
+
+    shader.vertexShader =
+      `
+      uniform float uTime;
+      uniform float uHeadYaw;
+      uniform float uHeadPitch;
+      uniform float uHeadRoll;
+      uniform float uEarTwitchL;
+      uniform float uEarTwitchR;
+      uniform float uBreath;
+      uniform vec3 uEarTipL;
+      uniform vec3 uEarTipR;
+      uniform float uEarSize;
+      uniform vec3 uHeadPivot;
+      uniform vec2 uHeadRange;
+      uniform float uHeadZMin;
+      uniform vec3 uTailBase;
+      uniform vec3 uTailTip;
+      uniform vec3 uBodyCenter;
+
+      mat3 tuftRotY(float a) {
+        float s = sin(a), c = cos(a);
+        return mat3(c, 0.0, s, 0.0, 1.0, 0.0, -s, 0.0, c);
+      }
+      mat3 tuftRotX(float a) {
+        float s = sin(a), c = cos(a);
+        return mat3(1.0, 0.0, 0.0, 0.0, c, -s, 0.0, s, c);
+      }
+      mat3 tuftRotZ(float a) {
+        float s = sin(a), c = cos(a);
+        return mat3(c, -s, 0.0, s, c, 0.0, 0.0, 0.0, 1.0);
+      }
+      ` +
+      shader.vertexShader.replace(
+        '#include <project_vertex>',
+        `
+        vec4 mvPosition = vec4( transformed, 1.0 );
+        #ifdef USE_INSTANCING
+          // 毛根锚点与实例朝向（猫局部空间）
+          vec3 tuftAnchor = instanceMatrix[3].xyz;
+          mat3 instRot = mat3(instanceMatrix);
+
+          // —— 与身体顶点着色器逐行同步的变形（作用于锚点）——
+          float groundLock = smoothstep(0.08, 0.20, tuftAnchor.y);
+          float breathMask = smoothstep(0.12, 0.25, tuftAnchor.y) * (1.0 - smoothstep(0.42, 0.54, tuftAnchor.y));
+          vec3 toChest = tuftAnchor - uBodyCenter;
+          vec3 deformedAnchor = tuftAnchor
+            + normalize(vec3(toChest.x, 0.15, toChest.z + 0.05)) * (uBreath * 0.012 * breathMask * groundLock);
+          mat3 tuftRot = mat3(1.0);
+
+          float headWeight = smoothstep(uHeadRange.x, uHeadRange.y, tuftAnchor.y) * smoothstep(uHeadZMin - 0.06, uHeadZMin + 0.06, tuftAnchor.z);
+          if (headWeight > 0.001) {
+            mat3 headRot = tuftRotY(uHeadYaw * headWeight) * tuftRotX(uHeadPitch * headWeight) * tuftRotZ(uHeadRoll * headWeight);
+            deformedAnchor = uHeadPivot + headRot * (deformedAnchor - uHeadPivot);
+            tuftRot = headRot * tuftRot;
+          }
+
+          float dEarL = length(tuftAnchor - uEarTipL);
+          float wEarL = 1.0 - smoothstep(0.0, uEarSize, dEarL);
+          if (wEarL > 0.01) {
+            vec3 earPivotL = uEarTipL - vec3(0.0, uEarSize * 0.65, 0.0);
+            mat3 rL = tuftRotZ(uEarTwitchL * wEarL);
+            deformedAnchor = earPivotL + rL * (deformedAnchor - earPivotL);
+            tuftRot = rL * tuftRot;
+          }
+
+          float dEarR = length(tuftAnchor - uEarTipR);
+          float wEarR = 1.0 - smoothstep(0.0, uEarSize, dEarR);
+          if (wEarR > 0.01) {
+            vec3 earPivotR = uEarTipR - vec3(0.0, uEarSize * 0.65, 0.0);
+            mat3 rR = tuftRotZ(-uEarTwitchR * wEarR);
+            deformedAnchor = earPivotR + rR * (deformedAnchor - earPivotR);
+            tuftRot = rR * tuftRot;
+          }
+
+          vec3 tailVec = uTailTip - uTailBase;
+          float tailLen = max(length(tailVec), 0.001);
+          vec3 tailDir = tailVec / tailLen;
+          float tailProj = dot(tuftAnchor - uTailBase, tailDir);
+          vec3 tailClosest = uTailBase + clamp(tailProj, 0.0, tailLen) * tailDir;
+          float tailDist = length(tuftAnchor - tailClosest);
+          float tailMask = smoothstep(0.0, tailLen, tailProj) * (1.0 - smoothstep(0.09, 0.17, tailDist));
+          if (tailMask > 0.001) {
+            float wag = sin(uTime * 3.2 - tailProj * 8.0) * 0.045 * tailMask;
+            deformedAnchor.x += wag;
+            deformedAnchor.y += abs(wag) * 0.25;
+          }
+
+          // 锥体先按实例朝向伸展，再随身体旋转，落到变形后的毛根上
+          mvPosition = vec4(deformedAnchor + tuftRot * (instRot * transformed), 1.0);
+        #endif
+        mvPosition = modelViewMatrix * mvPosition;
+        gl_Position = projectionMatrix * mvPosition;
+        `
+      );
+  };
 
   const instanced = new THREE.InstancedMesh(tuftGeo, tuftMat, maxTufts);
   instanced.castShadow = false;
@@ -675,8 +796,8 @@ export function buildRiggedCatFromGLB(
     root.add(m);
   });
 
-  // 表面 3D 立体毛簇层
-  const furInstancedMesh = buildSurfaceFurTufts(positions, normals, profile);
+  // 表面 3D 立体毛簇层（与身体共享动画 uniforms，毛随呼吸/转头/摇尾同步变形）
+  const furInstancedMesh = buildSurfaceFurTufts(positions, normals, profile, uniforms);
   root.add(furInstancedMesh);
 
   // 3D 发光像素五官组件

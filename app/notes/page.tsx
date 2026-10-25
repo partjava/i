@@ -1,5 +1,6 @@
 'use client';
 import mobileStyles from './mobile-notes.module.css';
+import NoteCard from './components/NoteCard';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '@shared/hooks/useAuth';
 import { useRouter } from 'next/navigation';
@@ -9,7 +10,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import InkWashDecoration from '@shared/components/InkWashDecoration';
 
-interface Note {
+export interface Note {
   id?: string | number; // 后端返回的可能是数字id
   _id?: string; // 兼容可能使用_id的情况
   title: string;
@@ -760,123 +761,24 @@ export default function NotesPage() {
           </div>
         ) : (
           displayNotes.map((note) => (
-            <div
+            <NoteCard
               key={note.id || note._id}
-              id={`note-${note.id || note._id}`}
-              className={`${mobileStyles.note} bg-surface-raised rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow ${
-              isMultiSelectMode && viewMode === 'my' ? 'border-2 ' + (selectedNotes[note.id || note._id || ''] ? 'border-content-muted' : 'border-transparent') : ''
-              } ${!isMultiSelectMode ? 'cursor-pointer' : ''}`}
-              onClick={() => {
-                if (isMultiSelectMode) return;
-                const id = note.id || note._id;
-                rememberListPosition(id);
-                router.push(`/notes/${id}`);
+              note={note}
+              viewMode={viewMode}
+              isMultiSelectMode={isMultiSelectMode}
+              isSelected={!!selectedNotes[note.id || note._id || '']}
+              onToggleSelect={(noteId, checked) =>
+                setSelectedNotes(prev => ({ ...prev, [noteId]: checked }))
+              }
+              onOpen={(noteId) => {
+                rememberListPosition(noteId);
+                router.push(`/notes/${noteId}`);
               }}
-            >
-              <div className="flex justify-between items-start mb-4">
-                {isMultiSelectMode && viewMode === 'my' && (
-                  <div className="mr-3 mt-1">
-                    <input
-                      type="checkbox"
-                      checked={!!selectedNotes[note.id || note._id || '']}
-                      onChange={(e) => {
-                        const noteId = note.id || note._id || '';
-                        setSelectedNotes(prev => ({
-                          ...prev,
-                          [noteId]: e.target.checked
-                        }));
-                      }}
-                      className="h-5 w-5 rounded border-line-strong text-content-muted focus:ring-content-muted"
-                    />
-                  </div>
-                )}
-                <div className="flex-1">
-                  <h3 className="text-xl font-semibold mb-2">
-                    <Link
-                      href={`/notes/${note.id || note._id}`}
-                      className="text-content-muted hover:text-content-primary"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        rememberListPosition(note.id || note._id);
-                      }}
-                    >
-                      {note.title}
-                    </Link>
-                  </h3>
-                  <div className={`${mobileStyles.metadata} flex items-center space-x-4 text-sm text-content-muted mb-2`}>
-                    {note.category && (
-                      <span className="bg-surface-page text-content-primary px-2 py-1 rounded">
-                        {note.category}
-                      </span>
-                    )}
-                    {note.technology && (
-                      <span className="bg-surface-muted text-content-secondary px-2 py-1 rounded">
-                        {note.technology}
-                      </span>
-                    )}
-                    <span>{new Date(note.createdAt).toLocaleDateString()}</span>
-                    {note.author_name && (
-                      <span>作者：{note.author_name}</span>
-                    )}
-                  </div>
-                </div>
-                {viewMode === 'my' && !isMultiSelectMode && (
-                  <div className="flex space-x-2">
-                    <Link
-                      href={`/notes/${note.id || note._id}/edit`}
-                      className="text-content-muted hover:text-content-primary text-sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        rememberListPosition(note.id || note._id);
-                      }}
-                    >
-                      编辑
-                    </Link>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        // 优先使用数字ID，因为API期望数字ID
-                        const numericId = note.id || (note._id ? parseInt(note._id.toString(), 10) : null);
-                        if (numericId) {
-                          handleDeleteNote(numericId.toString());
-                        } else {
-                          alert('无法删除笔记：无效的笔记ID');
-                        }
-                      }}
-                      onMouseDown={(e) => e.stopPropagation()}
-                      className="text-red-600 hover:text-red-800 text-sm"
-                    >
-                      删除
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              <div className={`${mobileStyles.prose} prose max-w-none mb-4`}>
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                  {note.content.length > 200 ? note.content.substring(0, 200) + '...' : note.content}
-                </ReactMarkdown>
-              </div>
-
-              {/* 标签 */}
-              {note.tags && note.tags.length > 0 && (
-                <div className="flex flex-wrap gap-2 mb-4">
-                  {note.tags.map((tag, index) => (
-                    <span key={index} className="bg-surface-page text-content-primary px-2 py-1 text-xs rounded">
-                      #{tag}
-                    </span>
-                  ))}
-                </div>
-              )}
-
-              {/* 统计信息 */}
-              <div className="flex items-center space-x-4 text-sm text-content-muted">
-                <span>👍 {note.likeCount || note.like_count || 0}</span>
-                <span>🔖 {note.bookmarkCount || note.bookmark_count || 0}</span>
-                <span>💬 {note.commentCount || note.comment_count || 0}</span>
-                {note.isPublic && <span className="text-green-600">公开</span>}
-              </div>
-            </div>
+              onEdit={(noteId) => {
+                rememberListPosition(noteId);
+              }}
+              onDelete={handleDeleteNote}
+            />
           ))
         )}
       </div>

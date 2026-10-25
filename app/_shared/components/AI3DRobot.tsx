@@ -1,6 +1,6 @@
 'use client';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { createPortal } from 'react-dom';
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
@@ -24,7 +24,8 @@ import {
   BubbleSide,
   StageMood,
   ThoughtBubbleState,
-  collectCurrentPageContext
+  collectCurrentPageContext,
+  buildQuickActions
 } from './ai-robot/types';
 
 // 工具名 → 思维气泡图标（B5）
@@ -58,6 +59,8 @@ function saveAffection(rec: AffectionRecord) {
 
 export default function AI3DRobot({ onClose }: { onClose: () => void }) {
   const router = useRouter();
+  const pathname = usePathname();
+  const quickActions = buildQuickActions(pathname || '');
   const bubbleBoxRef = useRef<HTMLDivElement>(null);
   const stageContainerRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -923,6 +926,7 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
               setInputValue={handleInputChange}
               onSend={dispatchAgentMessage}
               onShortcut={(t, o) => dispatchAgentMessage(t, o)}
+              quickActions={quickActions}
               enableWebSearch={enableWebSearch}
               onToggleSearch={() => setEnableWebSearch(!enableWebSearch)}
               ttsOn={ttsOn}

@@ -2,6 +2,7 @@
 
 import { SendOutlined } from '@ant-design/icons';
 import styles from '../../AI3DRobot.module.css';
+import type { QuickAction } from './types';
 
 export interface ComposerProps {
   isTyping: boolean;
@@ -9,6 +10,8 @@ export interface ComposerProps {
   setInputValue: (v: string) => void;
   onSend: (text: string) => void;
   onShortcut: (text: string, opts?: { explicitAgent?: string }) => void;
+  /** 按当前路由动态生成的上下文快捷操作 */
+  quickActions: QuickAction[];
   // 联网深搜
   enableWebSearch: boolean;
   onToggleSearch: () => void;
@@ -30,7 +33,7 @@ export interface ComposerProps {
  */
 export default function Composer(props: ComposerProps) {
   const {
-    isTyping, inputValue, setInputValue, onSend, onShortcut,
+    isTyping, inputValue, setInputValue, onSend, onShortcut, quickActions,
     enableWebSearch, onToggleSearch,
     ttsOn, onToggleTts,
     edgeAiOn, edgeStatus, edgeProgress, onToggleEdge,
@@ -41,10 +44,15 @@ export default function Composer(props: ComposerProps) {
     <div className={`${styles.dock} absolute bottom-2.5 sm:bottom-4 left-1/2 -translate-x-1/2 w-full max-w-3xl px-3 sm:px-4 z-20`}>
       <div className={styles.composer}>
         <div className={styles.shortcuts} aria-label="学习快捷操作">
-          <button disabled={isTyping} onClick={() => onShortcut('请解释当前页面的核心知识点，并举一个容易理解的例子。', { explicitAgent: 'navigator' })}>解释当前页</button>
-          <button disabled={isTyping} onClick={() => onShortcut('请根据当前页面内容，帮我找相关的站内课程与练习。', { explicitAgent: 'navigator' })}>找课程</button>
-          <button disabled={isTyping} onClick={() => onShortcut('请结合当前页面和我们的对话，整理一份学习笔记草稿，供我预览后保存。', { explicitAgent: 'note' })}>整理笔记</button>
-          <button disabled={isTyping} onClick={() => onShortcut('请结合我的问题，帮我制定一份循序渐进的学习路线。')}>学习路线</button>
+          {quickActions.map(action => (
+            <button
+              key={action.label}
+              disabled={isTyping}
+              onClick={() => onShortcut(action.text, action.opts)}
+            >
+              {action.label}
+            </button>
+          ))}
         </div>
 
         <div className="flex items-center gap-2">

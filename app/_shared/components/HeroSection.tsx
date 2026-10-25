@@ -1,6 +1,7 @@
 'use client';
 import { TypeAnimation } from 'react-type-animation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import InkWashDecoration from './InkWashDecoration';
 
@@ -75,10 +76,12 @@ export default function HeroSection() {
           {/* 主标题 - 飞逸水墨毛笔字 (使用原生透明无损 PNG 实现完美水墨渲染) */}
           <div className="flex justify-center mb-4">
             {mounted && (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img 
-                src="/images/logo-calligraphy-transparent.png" 
-                alt="PartJava" 
+              <Image
+                src="/images/logo-calligraphy-transparent.png"
+                alt="PartJava"
+                width={660}
+                height={431}
+                priority
                 className="w-[400px] md:w-[660px] h-auto pointer-events-none select-none animate-[fadeIn_1.2s_ease-out]"
               />
             )}

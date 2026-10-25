@@ -42,6 +42,8 @@ import LearningHeatmap from '@shared/components/LearningHeatmap';
 import DataVisualization from '@shared/components/DataVisualization';
 import InkWashDecoration from '@shared/components/InkWashDecoration';
 import AchievementCard from '@shared/components/AchievementCard';
+import AchievementsSection from './components/AchievementsSection';
+import RecentActivityTimeline from './components/RecentActivityTimeline';
 import type { Achievement as AchievementType } from '@shared/types/achievement';
 
 const { Title, Text, Paragraph } = Typography;
@@ -1306,113 +1308,17 @@ export default function ProfilePage() {
             )}
             {/* 成就展示 */}
             {!statsLoading && stats && (
-              <Card
-                title={
-                  <div className="flex items-center text-xl">
-                    <TrophyOutlined className="mr-3 text-yellow-500" />
-                    <span>成就系统</span>
-                  </div>
-                }
-                className={styles.achievements}
-              >
-                <div className="mb-8">
-                  <div className="text-center py-6">
-                    <div className="w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-[#a5b4fc] to-[#6b7d99] rounded-full flex items-center justify-center">
-                      <TrophyOutlined style={{ fontSize: 40, color: 'white' }} />
-                    </div>
-                    <div className="text-2xl font-semibold text-content-primary mb-4">
-                      {achievementSummary.earned} / {achievementSummary.total}
-                    </div>
-                    <Progress
-                      percent={achievementSummary.percent}
-                      strokeColor={{
-                        '0%': '#ffd700',
-                        '100%': '#ff8c00',
-                      }}
-                      trailColor="#f0f0f0"
-                      strokeWidth={10}
-                      showInfo={false}
-                      style={{ width: '100%', display: 'block' }}
-                      className="mb-3"
-                    />
-                    <Text type="secondary">已解锁成就 · {achievementSummary.percent}%</Text>
-                  </div>
-                </div>
-
-                <Divider />
-
-                {/* 成就列表 */}
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold text-content-primary mb-4">可获得的成就</h3>
-
-                  {achievements.length > 0 ? (
-                    <>
-                      <Row gutter={[16, 16]}>
-                        {(showAllAch ? achievements : achievements.slice(0, 6)).map((ach) => (
-                          <Col xs={24} md={12} xl={8} key={ach.id}>
-                            <AchievementCard achievement={ach} />
-                          </Col>
-                        ))}
-                      </Row>
-                      {achievements.length > 6 && (
-                        <div className="text-center mt-4">
-                          <button
-                            onClick={() => setShowAllAch(!showAllAch)}
-                            className="px-6 py-2 text-sm font-medium text-content-secondary bg-surface-raised border border-line-strong rounded-lg hover:bg-surface-muted transition-colors"
-                          >
-                            {showAllAch ? '收起' : `展开全部 (${achievements.length}个)`}
-                          </button>
-                        </div>
-                      )}
-                    </>
-                  ) : (
-                    <div className="text-center py-8 text-content-muted">
-                      暂无成就数据
-                    </div>
-                  )}
-                </div>
-              </Card>
+              <AchievementsSection
+                achievements={achievements}
+                summary={achievementSummary}
+                showAll={showAllAch}
+                onToggleShowAll={() => setShowAllAch(!showAllAch)}
+              />
             )}
 
             {/* 最近活动 */}
-            {(
-              <Card 
-                title={
-                  <div className="flex items-center text-xl">
-                    <CalendarOutlined className="mr-3 text-green-500" />
-                    <span>最近活动</span>
-                  </div>
-                }
-                className="shadow-lg border-0"
-              >
-                {(!stats?.recentActivity || stats.recentActivity.length === 0) && (
-                  <div className="py-8 text-center text-content-muted">暂无活动记录，创建笔记或完成学习后会显示在这里。</div>
-                )}
-                <Timeline>
-                  {stats?.recentActivity?.map((activity, index: number) => (
-                    <Timeline.Item 
-                      key={activity.id || index}
-                      dot={
-                        <div className="w-10 h-10 bg-gradient-to-br from-[#3d4f6b] to-[#0C1F3D] rounded-full flex items-center justify-center">
-                          <BookOutlined style={{ fontSize: 16, color: 'white' }} />
-                        </div>
-                      }
-                    >
-                      <div className="ml-4 pb-4">
-                        <p className="mb-2 text-content-primary font-medium text-base">{activity.content}</p>
-                        <Text type="secondary" className="text-sm">
-                          {new Date(activity.date).toLocaleDateString('zh-CN', {
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric'
-                          })}
-                        </Text>
-                      </div>
-                    </Timeline.Item>
-                  ))}
-                </Timeline>
-              </Card>
-            )}
+            <RecentActivityTimeline activities={stats?.recentActivity} />
+
 
             {/* 数据可视化图表区域 */}
             {!statsLoading && stats && (

@@ -42,13 +42,24 @@ public class SecurityConfig {
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             // 设定会话创建策略为无状态 (Stateless)
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            // 路由策略配置：公开鉴权路径放行，受保护路径按角色和认证拦截
+            // 路由策略配置：显式放行公开只读与匿名可用功能，其余一律要求认证（默认拒绝）
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/auth/**").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/notes/**", "/api/comments/**", "/api/images/**", "/api/stats/**", "/api/search/**").permitAll()
+                // 认证与找回密码流程
+                .requestMatchers("/api/auth/**", "/api/forgot-password/**").permitAll()
+                // 公开只读内容：笔记广场、评论、图片、统计、搜索、课程中心、题库与排行榜
+                .requestMatchers(HttpMethod.GET,
+                    "/api/notes/**", "/api/comments/**", "/api/images/**", "/api/stats/**",
+                    "/api/search/**", "/api/study/**", "/api/challenges/**", "/api/star-challenges/**",
+                    "/api/game/**").permitAll()
+                // AI 对话（前端悬浮助手匿名可用，Next.js middleware 已做 IP 限流）
+                .requestMatchers("/api/ai/**").permitAll()
+                // 管理后台仅管理员
                 .requestMatchers("/api/admin/**").hasAnyRole("ADMIN", "OWNER")
-                .requestMatchers("/api/challenges/**", "/api/notes/**", "/api/comments/**", "/api/user/**").authenticated()
-                .anyRequest().permitAll()
+                // 其余写操作与个人数据接口要求登录
+                .requestMatchers("/api/challenges/**", "/api/notes/**", "/api/comments/**",
+                    "/api/user/**", "/api/challenge-drafts/**", "/api/execute-code/**").authenticated()
+                // 默认拒绝：未显式放行的路径一律需要认证（替换原 anyRequest().permitAll()）
+                .anyRequest().authenticated()
             )
             // 注册 JWT 过滤器在密码校验过滤器之前
             .addFilterBefore(jwtAuthenticationFilter, org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class);
