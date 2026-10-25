@@ -26,17 +26,6 @@
 | 数据库 | MySQL 8.0 + Redis |
 | 后端 | Java 21 + Spring Boot 3.3 |
 
-## 🧭 评审快速导览（3 分钟看懂本项目）
-
-1. **打开 [www.partjava.com](https://www.partjava.com)，用测试账号登录**，点击页面中的 3D 黑猫「禾桔」
-2. **看 Agent 自主决策**：问「帮我找 Java 多线程的课程，顺便让它跳一下」——LLM 会自主调用 RAG 检索 + 3D 神态控制两个工具，气泡上方实时显示 💭plan → ⚡act → ✓observe 执行轨迹，猫会真的跳
-3. **看 RAG 效果**：问「Transformer 注意力机制」「SQL 注入防护」，直达最相关课程页（全站课程混合检索）
-4. **看多模态**：对话框 🎤 语音输入、🔊 朗读开关、📦 端侧语义缓存（首次开启下载模型后，相似问题离线秒回）
-5. **看 AI 闭环**：课程页快捷操作随路由变化（出练习题/笔记提炼）、挑战页 AI 评分、AI 笔记一键入库
-6. **架构详见下文**：双引擎冗余 Agent / 端云协同 RAG / MCP Server，源码入口在 `app/api/ai/agent/stream/` 与 `partjava-ai/`
-
----
-
 ## 🌟 项目亮点
 
 - **🤖 Function Calling AI Agent**：3D 黑猫「禾桔」由 plan → act → observe 自主决策循环驱动，站内领航 / 联网深搜 / 自动写笔记 / 3D 神态控制四大工具由 LLM 自主调度，执行轨迹实时可视化
