@@ -35,7 +35,7 @@ TOOL_LABELS: Dict[str, Dict[str, str]] = {
     },
     "set_companion_state": {
         "label": "🐾 3D 神态控制",
-        "desc": "控制 3D 黑猫袋子的情绪、动作与姿态",
+        "desc": "控制 3D 黑猫禾桔的情绪、动作与姿态",
     },
 }
 
@@ -109,7 +109,7 @@ TOOL_SCHEMAS: List[Dict[str, Any]] = [
         "function": {
             "name": "set_companion_state",
             "description": (
-                "控制 3D 黑猫助教『袋子』的神态与动作。当用户撸猫、夸奖、"
+                "控制 3D 黑猫助教『禾桔』的神态与动作。当用户撸猫、夸奖、"
                 "要求坐下/站起来/跳一下，或回答场景值得庆祝时调用，增强陪伴感。"
             ),
             "parameters": {
@@ -148,7 +148,7 @@ def summarize_tool_result(name: str, result: Dict[str, Any]) -> str:
         if name == "draft_note":
             return f"已生成笔记草稿《{result.get('title', '')}》"
         if name == "set_companion_state":
-            return f"袋子已切换神态：{result.get('state', '')}"
+            return f"禾桔已切换神态：{result.get('state', '')}"
     except Exception:
         pass
     return "执行完成"

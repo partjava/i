@@ -158,7 +158,7 @@ export default function BottomNavigation() {
             );
           })}
 
-          {/* 袋子 AI 按钮 - 悬浮在中间 */}
+          {/* 禾桔 AI 按钮 - 悬浮在中间 */}
           <div className="relative flex flex-col items-center justify-center" style={{ minWidth: '60px' }}>
             <button
               onClick={() => {
@@ -172,7 +172,7 @@ export default function BottomNavigation() {
                 style={{ boxShadow: '0 4px 20px rgba(99,102,241,0.5)' }}>
                 <span className="text-2xl">🤖</span>
               </div>
-              <span className="text-xs mt-1 font-medium text-brand-primary">袋子</span>
+              <span className="text-xs mt-1 font-medium text-brand-primary">禾桔</span>
             </button>
           </div>
 
@@ -279,7 +279,7 @@ export default function BottomNavigation() {
         </div>
       </Drawer>
 
-      {/* 袋子 AI 机器人弹窗 */}
+      {/* 禾桔 AI 机器人弹窗 */}
       {showRobot && <AI3DRobot onClose={() => setShowRobot(false)} />}
 
       <style jsx global>{`

@@ -18,7 +18,7 @@
 
 ## 🌟 项目亮点
 
-- **🤖 Function Calling AI Agent**：3D 黑猫「袋子」由 plan → act → observe 自主决策循环驱动，站内领航 / 联网深搜 / 自动写笔记 / 3D 神态控制四大工具由 LLM 自主调度，执行轨迹实时可视化
+- **🤖 Function Calling AI Agent**：3D 黑猫「禾桔」由 plan → act → observe 自主决策循环驱动，站内领航 / 联网深搜 / 自动写笔记 / 3D 神态控制四大工具由 LLM 自主调度，执行轨迹实时可视化
 - **🔍 端云协同 RAG**：509 个课程页向量化（4096 维特征哈希 TF-IDF）构建检索索引，混合打分（0.6×余弦 + 0.4×标题词面），Next.js 与 Python 双端共享同一向量空间
 - **🔌 MCP 协议支持**：四大 AI 工具同时以 MCP 标准 Server 暴露（`partjava-ai/mcp_server.py`），可被 Claude Desktop / Cursor 等任意 MCP 客户端挂载
 - **🎙️ 多模态交互**：Web Speech API 语音输入 + TTS 朗读；Transformers.js 浏览器端语义缓存（相似问题离线秒回）
@@ -33,7 +33,7 @@
 
 ## 主要功能
 
-### 1. Function Calling 多智能体助手（3D 黑猫「袋子」）
+### 1. Function Calling 多智能体助手（3D 黑猫「禾桔」）
 
 全站右下角悬浮的 3D 像素黑猫，由 `partjava-ai`（Python FastAPI）与 Next.js 内置 Agent 引擎双层驱动：
 - **自主决策**：LLM 通过 Function Calling 自主决定调用哪些工具、什么参数，最多 4 轮工具循环

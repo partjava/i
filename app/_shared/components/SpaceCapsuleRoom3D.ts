@@ -1446,6 +1446,31 @@ export function buildSpaceCapsuleRoom(scene: THREE.Scene): WarmStudyRoomControll
   yellowHandle.rotation.z = -Math.PI / 2;
   yellowMugGroup.add(yellowHandle);
 
+  // ------------------------------------------
+  // ⑫ 漂浮尘埃微粒：暖光束里的细小浮尘缓慢漂移，打破场景的完全静止
+  // ------------------------------------------
+  const dustCount = 42;
+  const dustPositions = new Float32Array(dustCount * 3);
+  const dustSeeds = new Float32Array(dustCount);
+  for (let i = 0; i < dustCount; i++) {
+    dustPositions[i * 3] = (Math.random() - 0.5) * 5.2;
+    dustPositions[i * 3 + 1] = 0.6 + Math.random() * 3.2;
+    dustPositions[i * 3 + 2] = -3.4 + (Math.random() - 0.5) * 2.6;
+    dustSeeds[i] = Math.random() * Math.PI * 2;
+  }
+  const dustGeo = new THREE.BufferGeometry();
+  dustGeo.setAttribute('position', new THREE.BufferAttribute(dustPositions, 3));
+  const dustMat = new THREE.PointsMaterial({
+    color: 0xf0dcc0,
+    size: 0.035,
+    transparent: true,
+    opacity: 0.4,
+    depthWrite: false,
+    sizeAttenuation: true,
+  });
+  const dustPoints = new THREE.Points(dustGeo, dustMat);
+  scene.add(dustPoints);
+
   return {
     robotAnchor,
     virtualPropsGroup,
@@ -1461,6 +1486,16 @@ export function buildSpaceCapsuleRoom(scene: THREE.Scene): WarmStudyRoomControll
       pcFans.forEach((fan, idx) => {
         fan.rotation.z = time * (3.2 + idx * 0.5);
       });
+
+      // ⑫ 浮尘缓漂 + 微光呼吸（每粒尘埃独立相位）
+      const arr = dustGeo.getAttribute('position') as THREE.BufferAttribute;
+      for (let i = 0; i < dustCount; i++) {
+        const seed = dustSeeds[i];
+        arr.setY(i, arr.getY(i) + Math.sin(time * 0.5 + seed) * 0.0006);
+        arr.setX(i, arr.getX(i) + Math.cos(time * 0.32 + seed * 1.7) * 0.0005);
+      }
+      arr.needsUpdate = true;
+      dustMat.opacity = 0.32 + Math.sin(time * 0.7) * 0.1;
     }
   };
 }

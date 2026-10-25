@@ -98,7 +98,7 @@ async def draft_note(topic: str, conversation_text: str = "", page_context: str 
 
 @mcp.tool()
 async def set_companion_state(mood: str, action: str = "talk", posture: str = "") -> str:
-    """控制 3D 黑猫助教『袋子』的神态（mood: happy/curious/normal；
+    """控制 3D 黑猫助教『禾桔』的神态（mood: happy/curious/normal；
     action: jump/tilt_head/wag_tail/talk；posture: standing/crouching）。
     Web 场景下经 SSE 实时下发，MCP 场景返回状态确认。"""
     state = {"mood": mood, "action": action}

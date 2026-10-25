@@ -347,7 +347,7 @@ export const TOOL_LABELS: Record<string, { label: string; desc: string }> = {
   search_site_pages: { label: '🧭 站内课程检索', desc: 'RAG 向量检索 PartJava 310+ 站内课程页面' },
   web_search: { label: '🌐 联网深搜', desc: '调用搜索引擎检索并抓取权威外部资料' },
   draft_note: { label: '📝 提炼写笔记', desc: '把对话或当前页面提炼为结构化 Markdown 笔记草稿' },
-  set_companion_state: { label: '🐾 3D 神态控制', desc: '控制 3D 黑猫袋子的情绪、动作与姿态' },
+  set_companion_state: { label: '🐾 3D 神态控制', desc: '控制 3D 黑猫禾桔的情绪、动作与姿态' },
 };
 
 export const TOOL_AGENT_BADGE: Record<string, string> = {
@@ -408,7 +408,7 @@ export const TOOL_SCHEMAS = [
     function: {
       name: 'set_companion_state',
       description:
-        '控制 3D 黑猫助教『袋子』的神态与动作。当用户撸猫、夸奖、要求坐下/站起来/跳一下，或回答场景值得庆祝时调用，增强陪伴感。',
+        '控制 3D 黑猫助教『禾桔』的神态与动作。当用户撸猫、夸奖、要求坐下/站起来/跳一下，或回答场景值得庆祝时调用，增强陪伴感。',
       parameters: {
         type: 'object',
         properties: {
@@ -427,7 +427,7 @@ export function summarizeToolResult(name: string, result: any): string {
     if (name === 'search_site_pages') return `RAG 命中 ${(result.links || []).length} 个站内课程页`;
     if (name === 'web_search') return `检索到 ${(result.citations || []).length} 条权威资料并抓取正文`;
     if (name === 'draft_note') return `已生成笔记草稿《${result.title || ''}》`;
-    if (name === 'set_companion_state') return `袋子已切换神态：${result.state || ''}`;
+    if (name === 'set_companion_state') return `禾桔已切换神态：${result.state || ''}`;
   } catch {}
   return '执行完成';
 }
@@ -577,7 +577,7 @@ export async function executeTool(name: string, args: Record<string, any>, ctx: 
         ctx.sendSSE('search_status', { stage: 'writing_note', text: '📝 正在提炼对话与当前页面，生成结构化 Markdown 笔记...' });
         const convStr = ctx.history
           .slice(-6)
-          .map((m) => `${m.role === 'user' ? '用户' : '袋子'}: ${m.content}`)
+          .map((m) => `${m.role === 'user' ? '用户' : '禾桔'}: ${m.content}`)
           .join('\n');
         let noteDraft: any = null;
         if (ctx.apiKey) {
@@ -613,7 +613,7 @@ export async function executeTool(name: string, args: Record<string, any>, ctx: 
         if (!noteDraft) {
           const mTitle = ctx.pageContext.match(/标题:\s*(.+)/);
           const autoTitle = mTitle
-            ? `${mTitle[1].trim()} · 袋子智能提炼笔记`
+            ? `${mTitle[1].trim()} · 禾桔智能提炼笔记`
             : `PartJava 学习笔记 · ${topic.slice(0, 18)}`;
           noteDraft = {
             title: autoTitle.slice(0, 35),
@@ -631,7 +631,7 @@ export async function executeTool(name: string, args: Record<string, any>, ctx: 
               : '后端',
             technology: ctx.pageContext.includes('/python/') ? 'Python' : 'Java',
             subcategory: 'AI智能总结',
-            tags: ['袋子笔记', '核心考点', 'PartJava'],
+            tags: ['禾桔笔记', '核心考点', 'PartJava'],
             isPublic: false,
           };
         }

@@ -17,7 +17,7 @@ export default function NotFound() {
       <div className="max-w-lg w-full text-center">
         <div className="text-6xl mb-5">🐈‍⬛</div>
         <h1 className="text-4xl font-bold text-[#5c4033] mb-2">404</h1>
-        <p className="text-base text-[#8b7355] mb-1">袋子在这一页什么也没找到</p>
+        <p className="text-base text-[#8b7355] mb-1">禾桔在这一页什么也没找到</p>
         <p className="text-sm text-[#a89279] mb-8">
           你要访问的页面可能已被移动或从未存在，去别处逛逛吧。
         </p>

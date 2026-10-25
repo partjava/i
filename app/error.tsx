@@ -23,7 +23,7 @@ export default function Error({
     <div className="min-h-screen flex items-center justify-center bg-[#faf6f0] px-6">
       <div className="max-w-md w-full text-center py-16 px-8 rounded-3xl border border-[#8b7355]/25 bg-white/70 shadow-sm">
         <div className="text-5xl mb-4">🐾</div>
-        <h1 className="text-2xl font-bold text-[#5c4033] mb-2">袋子打翻了墨水瓶</h1>
+        <h1 className="text-2xl font-bold text-[#5c4033] mb-2">禾桔打翻了墨水瓶</h1>
         <p className="text-sm text-[#8b7355] leading-relaxed mb-6">
           这个页面渲染时出了点小状况，内容暂时没能正常展示。
           <br />

@@ -45,7 +45,7 @@ class NoteWriter:
             }
 
         system_prompt = (
-            "你是 PartJava 温暖书房的【笔记提炼专家（黑猫袋子）】。\n"
+            "你是 PartJava 温暖书房的【笔记提炼专家（黑猫禾桔）】。\n"
             "请将用户提供的对话内容或当前学习页面内容，提炼整理为一篇结构严谨、重点突出的高质量 Markdown 学习笔记。\n"
             "必须只返回一个合法的 JSON 对象（不要用 ```json 包裹，不要输出多余解释），字段严格如下：\n"
             "{\n"
@@ -149,7 +149,7 @@ class NoteWriter:
                 cat, tech = "算法", "数据结构与算法"
 
         if not title:
-            title = f"袋子助教总结笔记 · {datetime.now().strftime('%Y-%m-%d %H:%M')}"
+            title = f"禾桔助教总结笔记 · {datetime.now().strftime('%Y-%m-%d %H:%M')}"
 
         sections: List[str] = [f"# {title}\n"]
         if conversation_text.strip():
@@ -157,7 +157,7 @@ class NoteWriter:
         if page_context.strip():
             sections.append("## 二、 当前课程页面重点摘录\n\n" + page_context.strip()[:2500])
         sections.append(
-            "## 三、 袋子复习建议\n\n"
+            "## 三、 禾桔复习建议\n\n"
             "- 建议结合 PartJava **在线代码沙箱 (`/code/editor`)** 动手敲一遍核心代码；\n"
             "- 前往 **星际编程挑战 (`/challenges`)** 完成对应章节闯关练习。"
         )
@@ -167,7 +167,7 @@ class NoteWriter:
             "category": cat,
             "technology": tech,
             "subcategory": "AI智能提炼",
-            "tags": [cat, tech, "袋子笔记"],
+            "tags": [cat, tech, "禾桔笔记"],
             "isPublic": False,
         }
 
