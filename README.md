@@ -2,7 +2,19 @@
 
 ![平台首页全貌](https://github.com/partjava/i/blob/main/public/images/images/homepage-overview.png)
 
-**个人学习项目，仅供学习参考，禁止商业用途**
+> **2026 传智杯 · AI Web 网页开发挑战赛参赛作品** —— AI Native 编程学习平台：3D AI 伴侣「禾桔」以 Function Calling Agent 驱动站内 RAG 检索、联网深搜、笔记提炼与 3D 神态控制。
+
+## 团队信息
+
+| 项目 | 内容 |
+|------|------|
+| 团队名称 | **Syntora** |
+| 队长 | 贺思涵 |
+| 组员 | 宋维维、周子轩 |
+| 所属院校 | 武汉晴川学院 |
+| 参赛编号 | 1952552 |
+
+## 项目状态
 
 | 项目 | 状态 |
 |------|------|
@@ -13,6 +25,15 @@
 | 服务器 | Linux + Nginx + PM2 |
 | 数据库 | MySQL 8.0 + Redis |
 | 后端 | Java 21 + Spring Boot 3.3 |
+
+## 🧭 评审快速导览（3 分钟看懂本项目）
+
+1. **打开 [www.partjava.com](https://www.partjava.com)，用测试账号登录**，点击页面中的 3D 黑猫「禾桔」
+2. **看 Agent 自主决策**：问「帮我找 Java 多线程的课程，顺便让它跳一下」——LLM 会自主调用 RAG 检索 + 3D 神态控制两个工具，气泡上方实时显示 💭plan → ⚡act → ✓observe 执行轨迹，猫会真的跳
+3. **看 RAG 效果**：问「Transformer 注意力机制」「SQL 注入防护」，直达最相关课程页（509 页混合检索）
+4. **看多模态**：对话框 🎤 语音输入、🔊 朗读开关、📦 端侧语义缓存（首次开启下载模型后，相似问题离线秒回）
+5. **看 AI 闭环**：课程页快捷操作随路由变化（出练习题/笔记提炼）、挑战页 AI 评分、AI 笔记一键入库
+6. **架构详见下文**：双引擎冗余 Agent / 端云协同 RAG / MCP Server，源码入口在 `app/api/ai/agent/stream/` 与 `partjava-ai/`
 
 ---
 
@@ -33,7 +54,7 @@
 
 ## 主要功能
 
-### 1. Function Calling 多智能体助手（3D 黑猫「禾桔」）
+### 1. Function Calling Agent 助手（3D 黑猫「禾桔」）
 
 全站右下角悬浮的 3D 像素黑猫，由 `partjava-ai`（Python FastAPI）与 Next.js 内置 Agent 引擎双层驱动：
 - **自主决策**：LLM 通过 Function Calling 自主决定调用哪些工具、什么参数，最多 4 轮工具循环
@@ -85,7 +106,7 @@ cd partjava-ai && python mcp_server.py   # stdio 传输的 MCP Server
 
 ### 后端
 - **主后端**：Java 21 + Spring Boot 3.3 + MyBatis-Plus + Spring Security (JWT)
-- **AI 服务**：Python FastAPI 多智能体（`partjava-ai/`），与 Next.js 内置引擎互为冗余
+- **AI 服务**：Python FastAPI Agent 服务（`partjava-ai/`），与 Next.js 内置引擎互为冗余
 - **数据库**：MySQL 8.0（25 张表）+ Redis 7
 
 ### 部署
@@ -190,12 +211,17 @@ node scripts/build-rag-index.mjs
 
 ## 测试
 
-```bash
-# 后端（JUnit 5）：JWT 签发/篡改拒绝/过期判定/随机密钥兜底
-cd partjava-backend && mvn test
+共 **45 个自动化用例**，三层覆盖：
 
-# 前端（Vitest）：RAG 检索相关性 / 工具参数容错解析 / 站内关键词检索
-npm test
+```bash
+# 前端逻辑层（Vitest 19 个）：RAG 检索相关性 / 工具参数容错 / 哈希一致性锚点 / Agent 循环端到端（mock LLM 验证 plan→act→observe 与 SSE 事件序列）
+npx vitest run
+
+# 前端遗留模块（node:test 12 个）：街机物理 / 个人中心客户端逻辑
+node --test scripts/arcade-physics.test.cjs scripts/profile-client.test.cjs
+
+# 后端（JUnit 14 个）：JWT 签发/篡改拒绝/过期判定/随机密钥兜底、注册不泄漏密码哈希、登录透传
+cd partjava-backend && mvn test
 ```
 
 ---
@@ -210,6 +236,6 @@ npm test
 
 ## 许可说明
 
-**本项目为个人学习项目，仅供学习和参考使用。未经作者明确许可，禁止用于商业目的。**
+本项目为 Syntora 团队参加 2026 传智杯 AI Web 网页开发挑战赛的原创参赛作品，代码仅供学习与评审参考，未经团队许可禁止用于商业目的。
 
-Copyright © 2024-2026 PartJava
+Copyright © 2024-2026 Syntora · PartJava
