@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import dynamic from 'next/dynamic';
 import { useAuth } from '@shared/hooks/useAuth';
 import { useUser } from '../providers/UserProvider';
 import { useRouter, usePathname } from 'next/navigation';
@@ -20,7 +21,8 @@ import {
 } from '@ant-design/icons';
 import { useSidebar } from './Sidebar';
 import SettingModal from './SettingModal';
-import AI3DRobot from './AI3DRobot';
+// three.js + VRM 体积大（~1MB+），必须懒加载，避免拖累全站首屏（与 BottomNavigation 保持一致）
+const AI3DRobot = dynamic(() => import('./AI3DRobot'), { ssr: false });
 import StitchLogo from './StitchLogo';
 import GlobalSearch from './GlobalSearch';
 import VipModal from './VipModal';

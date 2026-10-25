@@ -9,6 +9,7 @@
 import re
 from typing import List, Dict, Any, Optional
 from config import settings
+from agents.rag_index import rag_index
 
 
 class SiteNavigatorAgent:
@@ -99,11 +100,27 @@ class SiteNavigatorAgent:
             )
 
     def match_site_links(self, query: str, current_pathname: Optional[str] = None, top_k: int = 4) -> List[Dict[str, str]]:
-        """根据用户问题检索最匹配的站内页面链接"""
+        """根据用户问题检索最匹配的站内页面链接（RAG 向量检索优先，低置信回落关键词）"""
         q = (query or "").strip().lower()
         if not q:
             return []
 
+        # 1) RAG 混合检索（0.6×余弦 + 0.4×标题词面，共享 rag-index.json 向量空间）
+        if rag_index.available:
+            rag_hits = rag_index.search(query, top_k=top_k)
+            if rag_hits:
+                return [
+                    {
+                        "category": h["category"],
+                        "subject": h["subject"],
+                        "name": h["name"],
+                        "href": h["href"],
+                    }
+                    for h in rag_hits
+                ]
+            # RAG 无强相关命中 → 回落关键词打分（同义词映射在关键词层，与 TS 端行为一致）
+
+        # 2) 关键词打分（索引不可用 / RAG 低置信时的兜底层）
         # 提取中文词块与英文单词
         tokens = re.findall(r"[a-z0-9\+\#\.]+|[\u4e00-\u9fa5]{2,}", q)
         # 针对常见同义词扩展

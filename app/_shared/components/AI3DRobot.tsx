@@ -51,6 +51,14 @@ interface NoteDraftItem {
   isPublic: boolean;
 }
 
+interface AgentStepItem {
+  phase: 'plan' | 'act' | 'observe';
+  tool?: string;
+  label: string;
+  detail?: string;
+  status?: 'running' | 'done';
+}
+
 interface Message {
   id: string;
   text: string;
@@ -61,6 +69,8 @@ interface Message {
   noteDraft?: NoteDraftItem;
   activeAgents?: string[];
   modelUsed?: string;
+  agentSteps?: AgentStepItem[];
+  offline?: boolean;
 }
 
 type CatPosture = 'standing' | 'crouching' | 'custom';
@@ -163,6 +173,107 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
 
+  // ===== 多模态：语音输入（Web Speech API）与朗读（TTS）=====
+  const [micListening, setMicListening] = useState(false);
+  const [ttsOn, setTtsOn] = useState(false);
+  const recognitionRef = useRef<any>(null);
+  const notifyErrorRef = useRef<((msg: string) => void) | null>(null);
+
+  // ===== 端云协同：Transformers.js 端侧语义缓存（可选开关）=====
+  const [edgeAiOn, setEdgeAiOn] = useState(false);
+  const [edgeStatus, setEdgeStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
+  const [edgeProgress, setEdgeProgress] = useState(0);
+  const fullAnswerRef = useRef<string>('');
+
+  useEffect(() => {
+    try {
+      setTtsOn(window.localStorage.getItem('partjava-tts-on') === '1');
+      setEdgeAiOn(window.localStorage.getItem('partjava-edge-ai') === '1');
+    } catch {}
+  }, []);
+
+  const toggleTts = useCallback(() => {
+    setTtsOn(prev => {
+      const next = !prev;
+      try {
+        window.localStorage.setItem('partjava-tts-on', next ? '1' : '0');
+      } catch {}
+      if (!next && typeof window !== 'undefined' && window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+      }
+      return next;
+    });
+  }, []);
+
+  const toggleEdgeAi = useCallback(async () => {
+    const next = !edgeAiOn;
+    setEdgeAiOn(next);
+    try {
+      window.localStorage.setItem('partjava-edge-ai', next ? '1' : '0');
+    } catch {}
+    if (next && edgeStatus === 'idle') {
+      setEdgeStatus('loading');
+      try {
+        const { getEmbedder } = await import('@shared/lib/edge-ai');
+        await getEmbedder(pct => setEdgeProgress(pct));
+        setEdgeStatus('ready');
+      } catch {
+        setEdgeStatus('error');
+      }
+    }
+  }, [edgeAiOn, edgeStatus]);
+
+  // 语音识别开关（Chrome/Edge/Safari 支持 webkitSpeechRecognition；实现见 notifyError 之后）
+  const toggleMic = useCallback(() => {
+    if (typeof window === 'undefined') return;
+    const SpeechRecognitionCtor =
+      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognitionCtor) {
+      notifyErrorRef.current?.('当前浏览器不支持语音识别，推荐使用 Chrome / Edge');
+      return;
+    }
+    if (micListening) {
+      recognitionRef.current?.stop();
+      return;
+    }
+    const recognition = new SpeechRecognitionCtor();
+    recognition.lang = 'zh-CN';
+    recognition.interimResults = true;
+    recognition.continuous = false;
+    recognition.onresult = (event: any) => {
+      let transcript = '';
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        transcript += event.results[i][0].transcript;
+      }
+      setInputValue(transcript);
+    };
+    recognition.onend = () => setMicListening(false);
+    recognition.onerror = () => setMicListening(false);
+    recognitionRef.current = recognition;
+    setMicListening(true);
+    recognition.start();
+  }, [micListening]);
+
+  // TTS：朗读 AI 回答（剥离 Markdown 装饰，取正文前段）
+  const speakAnswer = useCallback((text: string) => {
+    if (typeof window === 'undefined' || !window.speechSynthesis) return;
+    const plain = text
+      .replace(/```[\s\S]*?```/g, ' 代码块 ')
+      .replace(/`([^`]+)`/g, '$1')
+      .replace(/!\[[^\]]*\]\([^)]*\)/g, '')
+      .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
+      .replace(/[#>*_~|-]+/g, ' ')
+      .replace(/\s{2,}/g, ' ')
+      .trim()
+      .slice(0, 600);
+    if (!plain) return;
+    const utterance = new SpeechSynthesisUtterance(plain);
+    utterance.lang = 'zh-CN';
+    utterance.rate = 1.05;
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(utterance);
+  }, []);
+
   useEffect(() => {
     bubbleSideRef.current = bubbleSide;
   }, [bubbleSide]);
@@ -177,6 +288,11 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
       setErrorBanner(null);
     }, 4500);
   }, []);
+
+  // notifyError 在 toggleMic 之前声明（引用顺序需要），通过 ref 解耦
+  useEffect(() => {
+    notifyErrorRef.current = notifyError;
+  }, [notifyError]);
 
   // 激活指定形态的灵动黑猫模型
   const activatePostureModel = useCallback((targetPosture: CatPosture) => {
@@ -280,6 +396,41 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
     const useSearch = opts?.forceSearch ?? enableWebSearch;
     setShowBubble(true);
     setSavedNoteTip(null);
+    fullAnswerRef.current = '';
+
+    // 端云协同：端侧语义缓存命中 → 浏览器本地离线秒回（仅普通问答；显式智能体/联网不缓存）
+    if (edgeAiOn && !opts?.explicitAgent && !useSearch) {
+      try {
+        const { embedText, findSemanticMatch } = await import('@shared/lib/edge-ai');
+        if (edgeStatus !== 'ready') setEdgeStatus('loading');
+        const qVec = await embedText(text, pct => setEdgeProgress(pct));
+        setEdgeStatus('ready');
+        if (qVec) {
+          const hit = findSemanticMatch(qVec);
+          if (hit && Date.now() - hit.ts < 7 * 24 * 3600 * 1000) {
+            const now = Date.now();
+            setMessages(prev => [
+              ...prev,
+              { id: `u-${now}`, text, sender: 'user', timestamp: new Date() },
+              {
+                id: `ai-${now + 1}`,
+                text: `⚡ **端侧缓存命中**（浏览器本地语义匹配，未请求云端）\n\n${hit.a}`,
+                sender: 'ai',
+                timestamp: new Date(),
+                activeAgents: ['⚡ 端侧语义缓存·Transformers.js'],
+                modelUsed: 'edge-cache'
+              }
+            ]);
+            setInputValue('');
+            activeCatRef.current?.triggerHappyJump?.();
+            if (ttsOn) speakAnswer(hit.a);
+            return;
+          }
+        }
+      } catch {
+        /* 端侧不可用时静默走云端 */
+      }
+    }
 
     const userMsg: Message = {
       id: `u-${Date.now()}`,
@@ -377,7 +528,8 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
                     ? {
                         ...m,
                         activeAgents: payload.activeAgents,
-                        modelUsed: payload.model
+                        modelUsed: payload.model,
+                        offline: !!payload.offline
                       }
                     : m
                 )
@@ -413,10 +565,46 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
                   m.id === aiMsgId ? { ...m, noteDraft: payload.note } : m
                 )
               );
+            } else if (eventName === 'agent_step') {
+              // Function Calling Agent 的 plan → act → observe 执行轨迹
+              const step: AgentStepItem = {
+                phase: payload.phase || 'act',
+                tool: payload.tool,
+                label: payload.label || payload.tool || '执行工具',
+                detail: payload.detail,
+                status: payload.status
+              };
+              setMessages(prev =>
+                prev.map(m =>
+                  m.id === aiMsgId
+                    ? { ...m, agentSteps: [...(m.agentSteps || []), step] }
+                    : m
+                )
+              );
+              if (step.phase === 'act') {
+                setSearchStatusText(`正在执行 ${step.label}…`);
+              } else if (step.phase === 'observe') {
+                setSearchStatusText(null);
+              }
+            } else if (eventName === 'cat_command') {
+              // LLM 通过 set_companion_state 工具实时控制 3D 黑猫神态
+              if (
+                payload.posture === 'crouching' ||
+                payload.posture === 'standing'
+              ) {
+                activatePostureModel(payload.posture);
+              }
+              if (payload.mood) {
+                activeCatRef.current?.setMood(payload.mood);
+              }
+              if (payload.action === 'jump') {
+                activeCatRef.current?.triggerHappyJump();
+              }
             } else if (eventName === 'token') {
               setSearchStatusText(null);
               const tokenText = payload.text || '';
               if (tokenText) {
+                fullAnswerRef.current += tokenText;
                 activeCatRef.current?.setTalking(true);
                 setMessages(prev =>
                   prev.map(m =>
@@ -427,6 +615,19 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
             } else if (eventName === 'done') {
               setSearchStatusText(null);
               activeCatRef.current?.setTalking(false);
+              // TTS 朗读完整回答 + 端侧缓存沉淀（均为后台异步，不阻塞 UI）
+              if (fullAnswerRef.current) {
+                if (ttsOn) speakAnswer(fullAnswerRef.current);
+                if (edgeAiOn && fullAnswerRef.current.length > 12) {
+                  import('@shared/lib/edge-ai')
+                    .then(({ embedText, saveEdgeCacheEntry }) =>
+                      embedText(text).then(vec => {
+                        if (vec) saveEdgeCacheEntry(text, fullAnswerRef.current, vec);
+                      })
+                    )
+                    .catch(() => {});
+                }
+              }
             }
           } catch {
             // ignore malformed chunk
@@ -903,7 +1104,14 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
             </button>
 
 
-              <div className={styles.modelInfo}>当前服务：{currentModelName}</div>
+              <div className={styles.modelInfo}>
+                当前服务：{currentModelName}
+                {currentModelName === 'offline-smart-fallback' && (
+                  <span className="ml-1.5 px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 text-[10px] font-semibold border border-amber-400/40">
+                    离线降级模式
+                  </span>
+                )}
+              </div>
             </div>
           )}
         </div>
@@ -1101,6 +1309,58 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
                       {/* 黑猫嘴巴说出的流式 Markdown 内容 */}
                       {latestAiMessage && (
                         <div className="space-y-3">
+                          {/* Function Calling Agent 执行轨迹（plan → act → observe） */}
+                          {latestAiMessage.agentSteps &&
+                            latestAiMessage.agentSteps.length > 0 && (
+                              <div className="rounded-xl bg-black/30 border border-[#d4a36a]/25 overflow-hidden">
+                                <div className="px-2.5 py-1.5 text-[10px] font-semibold text-[#d4a36a] flex items-center gap-1.5 bg-[#d4a36a]/10">
+                                  <span>🧠 智能体执行轨迹</span>
+                                  <span className="opacity-60 font-normal">
+                                    自主决策 · {latestAiMessage.agentSteps.length} 步
+                                  </span>
+                                  {latestAiMessage.offline && (
+                                    <span className="ml-auto px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-400/40">
+                                      离线降级模式
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="px-2.5 py-1.5 space-y-1 max-h-28 overflow-y-auto custom-scrollbar">
+                                  {latestAiMessage.agentSteps.map((step, i) => (
+                                    <div
+                                      key={i}
+                                      className="flex items-start gap-1.5 text-[11px] leading-snug"
+                                    >
+                                      <span
+                                        className={
+                                          step.phase === 'plan'
+                                            ? 'text-[#b8a4e8]'
+                                            : step.phase === 'act'
+                                            ? step.status === 'running'
+                                              ? 'text-[#f3c687] animate-pulse'
+                                              : 'text-[#f3c687]'
+                                            : 'text-emerald-400'
+                                        }
+                                      >
+                                        {step.phase === 'plan'
+                                          ? '💭'
+                                          : step.phase === 'act'
+                                          ? '⚡'
+                                          : '✓'}
+                                      </span>
+                                      <span className="text-[#e8dcc8] font-medium flex-shrink-0">
+                                        {step.label}
+                                      </span>
+                                      {step.detail && (
+                                        <span className="text-gray-400/90 truncate">
+                                          {step.detail}
+                                        </span>
+                                      )}
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
                           <div className="prose prose-invert prose-sm max-w-none text-[#f4eadc] leading-relaxed">
                             <ReactMarkdown
                               remarkPlugins={[remarkGfm]}
@@ -1520,6 +1780,43 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
                     </span>
                   </button>
 
+                  {/* TTS 朗读开关（多模态输出） */}
+                  <button
+                    onClick={toggleTts}
+                    className={`px-2.5 py-2 rounded-xl text-xs font-semibold border transition-all flex items-center gap-1 flex-shrink-0 ${
+                      ttsOn
+                        ? 'bg-[#3a2f1d] border-[#d4a36a] text-[#f5d5a3] shadow-[0_0_12px_rgba(212,163,106,0.35)]'
+                        : 'bg-[#24201c] border-white/15 text-[#e9dac3]/70 hover:text-white'
+                    }`}
+                    title={ttsOn ? '语音朗读：开（回答完成后自动朗读）' : '语音朗读：关'}
+                    aria-pressed={ttsOn}
+                  >
+                    <span>{ttsOn ? '🔊' : '🔈'}</span>
+                    <span className="hidden sm:inline">朗读</span>
+                  </button>
+
+                  {/* 端侧语义缓存开关（Transformers.js，端云协同） */}
+                  <button
+                    onClick={toggleEdgeAi}
+                    disabled={edgeStatus === 'loading'}
+                    className={`px-2.5 py-2 rounded-xl text-xs font-semibold border transition-all flex items-center gap-1 flex-shrink-0 ${
+                      edgeAiOn
+                        ? 'bg-[#1d3b2f] border-[#7bd88f] text-[#c9f2d4] shadow-[0_0_12px_rgba(123,216,143,0.3)]'
+                        : 'bg-[#24201c] border-white/15 text-[#e9dac3]/70 hover:text-white'
+                    }`}
+                    title={
+                      edgeStatus === 'loading'
+                        ? `端侧模型下载中 ${edgeProgress}%（首次约120MB，之后本地缓存）`
+                        : '浏览器本地语义缓存（Transformers.js）：相似问题离线秒回'
+                    }
+                    aria-pressed={edgeAiOn}
+                  >
+                    <span>{edgeStatus === 'loading' ? '⏳' : '📦'}</span>
+                    <span className="hidden sm:inline">
+                      {edgeStatus === 'loading' ? `${edgeProgress}%` : '端侧'}
+                    </span>
+                  </button>
+
                   <input
                     type="text"
                     value={inputValue}
@@ -1538,6 +1835,22 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
                     disabled={isTyping}
                     className="flex-1 min-w-0 bg-[#100e0c]/90 text-[#f7efe4] placeholder-[#e9dac3]/45 text-xs sm:text-sm px-3.5 py-2.5 rounded-xl border border-[#d4a36a]/30 focus:outline-none focus:border-[#d4a36a] transition-colors"
                   />
+
+                  {/* 语音输入麦克风（Web Speech API，多模态输入） */}
+                  <button
+                    onClick={toggleMic}
+                    disabled={isTyping}
+                    className={`px-3 py-2.5 rounded-xl border transition-all flex-shrink-0 ${
+                      micListening
+                        ? 'bg-red-500/25 border-red-400/70 text-red-200 animate-pulse'
+                        : 'bg-[#24201c] border-white/15 text-[#e9dac3]/80 hover:text-white'
+                    }`}
+                    title={micListening ? '正在聆听，点击停止' : '语音输入（普通话）'}
+                    aria-label={micListening ? '停止语音输入' : '开始语音输入'}
+                    aria-pressed={micListening}
+                  >
+                    <span>🎤</span>
+                  </button>
 
                   <button
                     onClick={() => dispatchAgentMessage(inputValue)}

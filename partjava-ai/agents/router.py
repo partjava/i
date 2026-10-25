@@ -1,10 +1,17 @@
 """
-四大智能体总控调度器 (Multi-Agent Supervisor Router)
-负责串联：
-- 智能体一 (`site_navigator_agent`)：站内 310+ 页面领航与当前页伴读
-- 智能体二 (`note_writer_agent`)：知识提炼与自动写笔记
-- 智能体三 (`companion_3d_agent`)：编程解题与 3D 黑猫情绪/姿态/品字嘴同步控制
-- 智能体四 (`web_search_pro_agent`)：`deepseek-v4-pro` + `/v1/tools/search` & `/v1/tools/fetch` 联网权威引证
+四大智能体总控调度器 (Multi-Agent Supervisor Router) — Function Calling 驱动
+=============================================================================
+
+核心机制（plan → act → observe 自主决策循环）：
+1. 把四大智能体能力注册为 OpenAI Function Calling 兼容的工具（见 agents/tools.py）；
+2. LLM 在对话中自主决策是否调用工具、以什么参数调用（plan）；
+3. Supervisor 执行工具并把 observation 回填消息列表（act / observe）；
+4. 循环直到 LLM 认为信息充分，最终以流式输出回答（驱动 3D 猫嘴同步）；
+5. 每一步决策与执行都通过 `agent_step` SSE 事件实时推送到前端执行轨迹面板。
+
+确定性兜底：
+- 用户显式操作（点「总结写笔记」按钮 / 打开「联网深搜」开关）→ 跳过 LLM 决策直调工具，保证 UI 可靠性；
+- 未配置 API Key 或接口异常 → 降级为关键词意图路由 + 本地智能回复（并在前端标注「离线降级模式」）。
 """
 
 import json
@@ -13,9 +20,15 @@ from typing import AsyncGenerator, Dict, Any, List, Optional
 import httpx
 from config import settings
 from agents.agent1_navigator import site_navigator_agent
-from agents.agent2_notewriter import note_writer_agent
 from agents.agent3_companion import companion_3d_agent
-from agents.agent4_websearch import web_search_pro_agent
+from agents.tools import (
+    TOOL_SCHEMAS,
+    TOOL_LABELS,
+    ToolExecutor,
+    build_agency_system_instructions,
+    parse_tool_arguments,
+    summarize_tool_result,
+)
 
 
 def format_sse(event: str, data: Any) -> str:
@@ -23,22 +36,29 @@ def format_sse(event: str, data: Any) -> str:
 
 
 class MultiAgentSupervisor:
+    """Function Calling 驱动的多智能体调度器。"""
+
+    # 单轮对话内最多允许的工具决策轮数（防止无限循环刷 API）
+    MAX_TOOL_STEPS = 4
+    # 工具执行 → 前端「激活智能体」胶囊的映射
+    TOOL_AGENT_BADGE = {
+        "search_site_pages": "🧭 智能体一·站内领航伴读",
+        "web_search": "🌐 智能体四·Pro联网深搜",
+        "draft_note": "📝 智能体二·自动写笔记",
+        "set_companion_state": "🐾 智能体三·3D灵动伴侣",
+    }
+
     def detect_intent(self, message: str, enable_web_search: bool, explicit_agent: Optional[str] = None) -> Dict[str, bool]:
+        """关键词意图识别（仅用于离线降级与统计，在线模式由 LLM 自主决策取代）。"""
         msg = (message or "").lower()
         is_note = (
             explicit_agent == "agent2_note"
-            or any(
-                kw in msg
-                for kw in ["写笔记", "生成笔记", "保存笔记", "总结成笔记", "总结本页", "记笔记", "存为笔记"]
-            )
+            or any(kw in msg for kw in ["写笔记", "生成笔记", "保存笔记", "总结成笔记", "总结本页", "记笔记", "存为笔记"])
         )
         is_web_search = (
             enable_web_search
             or explicit_agent == "agent4_search"
-            or any(
-                kw in msg
-                for kw in ["联网", "搜索", "上网查", "官网链接", "专业网站", "权威网站", "外部链接", "最新文档"]
-            )
+            or any(kw in msg for kw in ["联网", "搜索", "上网查", "官网链接", "专业网站", "权威网站", "外部链接", "最新文档"])
         )
         return {
             "use_agent1_navigator": True,
@@ -56,166 +76,373 @@ class MultiAgentSupervisor:
         enable_web_search: bool = False,
         explicit_agent: Optional[str] = None,
     ) -> AsyncGenerator[str, None]:
-        intents = self.detect_intent(message, enable_web_search, explicit_agent)
+        conv_str = "\n".join(
+            [f"{m.get('role', 'user')}: {m.get('content', '')}" for m in history[-8:]]
+        )
+        api_key = settings.DEEPSEEK_API_KEY
+        has_key = bool(api_key and not api_key.startswith("your_"))
 
-        # 1. 【智能体三】率先计算 3D 黑猫的情绪、歪头/跳跃动作与坐姿/站姿切换
-        reaction = companion_3d_agent.analyze_3d_reaction(message)
-        active_agents = ["🐾 智能体三·3D灵动伴侣"]
-        if intents["use_agent1_navigator"]:
-            active_agents.append("🧭 智能体一·站内领航伴读")
-        if intents["use_agent4_search"]:
-            active_agents.append("🌐 智能体四·Pro联网深搜")
-        if intents["use_agent2_note"]:
-            active_agents.append("📝 智能体二·自动写笔记")
+        # 前端副作用事件队列：工具执行时推入，由本生成器在安全时机 yield
+        pending: List[str] = []
+
+        def emit(event: str, data: Dict[str, Any]) -> None:
+            pending.append(format_sse(event, data))
+
+        executor = ToolExecutor(emit=emit, conversation_text=conv_str, page_context=page_context)
+
+        # 【智能体三】率先计算 3D 黑猫的基线情绪/姿态（确定性，零延迟）
+        base_reaction = companion_3d_agent.analyze_3d_reaction(message)
+        active_agents: List[str] = ["🐾 智能体三·3D灵动伴侣", "🧭 智能体一·站内领航伴读"]
+        current_model = settings.DEEPSEEK_MODEL_FLASH
+
+        def merged_reaction() -> Dict[str, Any]:
+            return executor.reaction or base_reaction
+
+        def push_meta(offline: bool = False) -> None:
+            pending.append(
+                format_sse(
+                    "agent_meta",
+                    {
+                        "reaction": merged_reaction(),
+                        "activeAgents": active_agents,
+                        "model": current_model,
+                        "offline": offline,
+                    },
+                )
+            )
+
+        # 【智能体一】零成本本地领航：直接解析 navigation.ts 检索站内页面（不耗 API）
+        nav_frag, site_links = site_navigator_agent.build_system_prompt_fragment(message, page_context)
+        executor.site_links = site_links
+        if site_links:
+            yield format_sse("site_links", {"links": site_links})
+
+        # ============ 离线降级模式（未配置 Key）============
+        if not has_key:
+            async for chunk in self._offline_flow(
+                message=message,
+                executor=executor,
+                pending=pending,
+                push_meta=push_meta,
+                active_agents=active_agents,
+                explicit_agent=explicit_agent,
+                enable_web_search=enable_web_search,
+            ):
+                yield chunk
+            return
+
+        # ============ 在线 Function Calling Agent 循环 ============
+        yield format_sse(
+            "agent_meta",
+            {
+                "reaction": merged_reaction(),
+                "activeAgents": active_agents,
+                "model": current_model,
+                "offline": False,
+            },
+        )
+
+        # 组装初始消息：人设 + 自主决策说明 + 站内导航片段（含当前页伴读上下文）
+        system_content = (
+            companion_3d_agent.SYSTEM_PERSONA
+            + "\n"
+            + build_agency_system_instructions()
+            + "\n"
+            + nav_frag
+        )
+        llm_messages: List[Dict[str, Any]] = [{"role": "system", "content": system_content}]
+        for h in history[-6:]:
+            if h.get("content"):
+                llm_messages.append(
+                    {"role": "assistant" if h.get("role") in ("ai", "assistant") else "user", "content": h["content"]}
+                )
+        llm_messages.append({"role": "user", "content": message})
+
+        streamed_any = False
+        try:
+            async with httpx.AsyncClient(timeout=httpx.Timeout(60.0)) as client:
+                headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
+
+                # ---- 用户显式操作 → 确定性直调工具（保住按钮/开关的可靠体验）----
+                forced_calls: List[Dict[str, str]] = []
+                if explicit_agent == "agent2_note":
+                    forced_calls.append(("draft_note", {"topic": message}))
+                if enable_web_search or explicit_agent == "agent4_search":
+                    forced_calls.append(("web_search", {"query": message}))
+                if forced_calls:
+                    synthesized = []
+                    for idx, (fname, fargs) in enumerate(forced_calls):
+                        call_id = f"forced-{idx}"
+                        synthesized.append(
+                            {
+                                "id": call_id,
+                                "type": "function",
+                                "function": {"name": fname, "arguments": json.dumps(fargs, ensure_ascii=False)},
+                            }
+                        )
+                        meta = TOOL_LABELS.get(fname, {"label": fname, "desc": ""})
+                        yield format_sse(
+                            "agent_step",
+                            {
+                                "phase": "act",
+                                "tool": fname,
+                                "label": meta["label"],
+                                "detail": "用户显式指令，直接执行",
+                                "status": "running",
+                            },
+                        )
+                        result = await executor.execute(fname, fargs)
+                        current_model = self._maybe_upgrade_model(fname)
+                        self._badge_tool(fname, active_agents)
+                        push_meta()
+                        while pending:
+                            yield pending.pop(0)
+                        yield format_sse(
+                            "agent_step",
+                            {
+                                "phase": "observe",
+                                "tool": fname,
+                                "label": meta["label"],
+                                "detail": summarize_tool_result(fname, result),
+                                "status": "done",
+                            },
+                        )
+                        llm_messages.append(
+                            {
+                                "role": "tool",
+                                "tool_call_id": call_id,
+                                "content": json.dumps(result, ensure_ascii=False)[:4000],
+                            }
+                        )
+                    llm_messages.insert(
+                        len(llm_messages) - len(forced_calls) * 2,
+                        {"role": "assistant", "content": "", "tool_calls": synthesized},
+                    )
+
+                # ---- plan → act → observe 自主决策循环 ----
+                tools_enabled = True
+                for _step in range(self.MAX_TOOL_STEPS):
+                    payload: Dict[str, Any] = {
+                        "model": settings.DEEPSEEK_MODEL_FLASH,
+                        "messages": llm_messages,
+                        "stream": False,
+                        "temperature": 0.3,
+                    }
+                    if tools_enabled:
+                        payload["tools"] = TOOL_SCHEMAS
+                        payload["tool_choice"] = "auto"
+
+                    resp = await client.post(
+                        f"{settings.DEEPSEEK_BASE_URL}/chat/completions",
+                        headers=headers,
+                        json=payload,
+                    )
+                    if resp.status_code != 200:
+                        if tools_enabled:
+                            # 可能是不支持 function calling 的模型/网关，去掉 tools 重试一次
+                            tools_enabled = False
+                            continue
+                        raise RuntimeError(f"planning call failed: {resp.status_code} {resp.text[:200]}")
+
+                    msg = resp.json().get("choices", [{}])[0].get("message", {})
+                    tool_calls = msg.get("tool_calls") or []
+                    if not tool_calls:
+                        break  # 模型认为信息充分，直接进入最终流式回答
+
+                    llm_messages.append(
+                        {"role": "assistant", "content": msg.get("content") or "", "tool_calls": tool_calls}
+                    )
+                    if msg.get("content"):
+                        yield format_sse(
+                            "agent_step",
+                            {
+                                "phase": "plan",
+                                "label": "💭 分析任务",
+                                "detail": str(msg["content"])[:160],
+                                "status": "done",
+                            },
+                        )
+
+                    for tc in tool_calls:
+                        func_spec = tc.get("function") or {}
+                        fname = func_spec.get("name", "")
+                        fargs = parse_tool_arguments(func_spec.get("arguments"))
+                        meta = TOOL_LABELS.get(fname, {"label": fname, "desc": ""})
+                        yield format_sse(
+                            "agent_step",
+                            {
+                                "phase": "act",
+                                "tool": fname,
+                                "label": meta["label"],
+                                "detail": str(fargs.get("query") or fargs.get("topic") or meta.get("desc", ""))[:120],
+                                "status": "running",
+                            },
+                        )
+                        result = await executor.execute(fname, fargs)
+                        current_model = self._maybe_upgrade_model(fname)
+                        self._badge_tool(fname, active_agents)
+                        push_meta()
+                        while pending:
+                            yield pending.pop(0)
+                        yield format_sse(
+                            "agent_step",
+                            {
+                                "phase": "observe",
+                                "tool": fname,
+                                "label": meta["label"],
+                                "detail": summarize_tool_result(fname, result),
+                                "status": "done",
+                            },
+                        )
+                        llm_messages.append(
+                            {
+                                "role": "tool",
+                                "tool_call_id": tc.get("id", f"call-{_step}"),
+                                "content": json.dumps(result, ensure_ascii=False)[:4000],
+                            }
+                        )
+
+                # ---- 最终流式回答（不携带 tools，模型专注作答）----
+                final_model = (
+                    settings.DEEPSEEK_MODEL_PRO if executor.citations else settings.DEEPSEEK_MODEL_FLASH
+                )
+                current_model = final_model
+                push_meta()
+                while pending:
+                    yield pending.pop(0)
+
+                async with client.stream(
+                    "POST",
+                    f"{settings.DEEPSEEK_BASE_URL}/chat/completions",
+                    headers=headers,
+                    json={
+                        "model": final_model,
+                        "messages": llm_messages,
+                        "stream": True,
+                        "temperature": 0.6,
+                    },
+                ) as resp:
+                    if resp.status_code == 200:
+                        async for line in resp.aiter_lines():
+                            if not line or not line.startswith("data:"):
+                                continue
+                            data_str = line[5:].strip()
+                            if data_str == "[DONE]":
+                                break
+                            try:
+                                chunk = json.loads(data_str)
+                                delta = chunk.get("choices", [{}])[0].get("delta", {}).get("content", "")
+                                if delta:
+                                    streamed_any = True
+                                    yield format_sse("token", {"text": delta})
+                            except Exception:
+                                continue
+
+        except Exception as e:
+            print(f"[MultiAgentSupervisor] Agent 循环异常，回退离线智能引擎: {e}")
+
+        # 流式失败（Key 失效/接口异常/返回空）→ 融合工具结果的本地智能回复（打字机推送，保持猫嘴同步）
+        if not streamed_any:
+            yield format_sse(
+                "agent_meta",
+                {
+                    "reaction": merged_reaction(),
+                    "activeAgents": active_agents,
+                    "model": "offline-smart-fallback",
+                    "offline": True,
+                },
+            )
+            fallback_reply = self._build_smart_fallback_reply(
+                message=message,
+                site_links=executor.site_links,
+                citations=executor.citations,
+                page_context=page_context,
+                is_note=bool(executor.note_draft),
+                is_search=bool(executor.citations),
+            )
+            chunk_size = 6
+            for i in range(0, len(fallback_reply), chunk_size):
+                yield format_sse("token", {"text": fallback_reply[i : i + chunk_size]})
+                await asyncio.sleep(0.035)
+
+        yield format_sse("done", {"ok": True})
+
+    # ------------------------------------------------------------------
+    # 离线降级流程：关键词意图路由 + 工具层（精选权威索引/本地笔记提炼）+ 本地智能回复
+    # ------------------------------------------------------------------
+    async def _offline_flow(
+        self,
+        *,
+        message: str,
+        executor: ToolExecutor,
+        pending: List[str],
+        push_meta,
+        active_agents: List[str],
+        explicit_agent: Optional[str],
+        enable_web_search: bool,
+    ) -> AsyncGenerator[str, None]:
+        intents = self.detect_intent(message, enable_web_search, explicit_agent)
 
         yield format_sse(
             "agent_meta",
             {
-                "reaction": reaction,
+                "reaction": executor.reaction or {"mood": "normal", "action": "talk"},
                 "activeAgents": active_agents,
-                "model": settings.DEEPSEEK_MODEL_PRO
-                if intents["use_agent4_search"]
-                else settings.DEEPSEEK_MODEL_FLASH,
+                "model": "offline-smart-fallback",
+                "offline": True,
             },
         )
 
-        # 2. 【智能体一】检索全站 310+ 页面路由 + 装配当前页面伴读上下文
-        nav_prompt_frag, site_links = site_navigator_agent.build_system_prompt_fragment(
-            message, page_context
-        )
-        if site_links:
-            yield format_sse("site_links", {"links": site_links})
-
-        # 3. 【智能体四】如果开启了 Pro 联网深搜，执行 /v1/tools/search -> /v1/tools/fetch
-        citations: List[Dict[str, Any]] = []
-        web_rag_frag = ""
+        keyword_jobs: List[Dict[str, str]] = []
         if intents["use_agent4_search"]:
-            yield format_sse(
-                "search_status",
-                {
-                    "stage": "searching",
-                    "text": "🌐 智能体四 (deepseek-v4-pro) 正在调用 /v1/tools/search & /fetch 检索并抓取权威技术网站...",
-                },
-            )
-            citations, web_rag_frag = await web_search_pro_agent.search_and_fetch(message)
-            yield format_sse(
-                "citations",
-                {
-                    "stage": "completed",
-                    "citations": citations,
-                },
-            )
-
-        # 4. 如果用户直接要求【智能体二：总结写笔记】，并行或随后生成结构化笔记草稿
+            keyword_jobs.append(("web_search", {"query": message}, "联网深搜（离线精选权威索引）"))
         if intents["use_agent2_note"]:
+            keyword_jobs.append(("draft_note", {"topic": message}, "提炼写笔记（本地结构化提炼）"))
+
+        for fname, fargs, reason in keyword_jobs:
+            meta = TOOL_LABELS.get(fname, {"label": fname, "desc": ""})
             yield format_sse(
-                "search_status",
-                {
-                    "stage": "writing_note",
-                    "text": "📝 智能体二 (deepseek-flash) 正在提炼对话与当前页面，生成结构化 Markdown 笔记...",
-                },
+                "agent_step",
+                {"phase": "act", "tool": fname, "label": meta["label"], "detail": reason, "status": "running"},
             )
-            conv_str = "\n".join(
-                [f"{m.get('role', 'user')}: {m.get('content', '')}" for m in history[-8:]]
+            await executor.execute(fname, fargs)
+            self._badge_tool(fname, active_agents)
+            push_meta(offline=True)
+            while pending:
+                yield pending.pop(0)
+            yield format_sse(
+                "agent_step",
+                {"phase": "observe", "tool": fname, "label": meta["label"], "detail": "离线降级完成", "status": "done"},
             )
-            note_draft = await note_writer_agent.generate_note(
-                conversation_text=conv_str,
-                page_context=page_context,
-                custom_topic=message,
-            )
-            yield format_sse("note_draft", {"note": note_draft})
 
-        # 5. 组装 System Prompt 并调用 DeepSeek (`deepseek-flash` 或 `deepseek-v4-pro`) 流式输出
-        system_content = (
-            companion_3d_agent.SYSTEM_PERSONA
-            + "\n"
-            + nav_prompt_frag
-            + "\n"
-            + web_rag_frag
+        fallback_reply = self._build_smart_fallback_reply(
+            message=message,
+            site_links=executor.site_links,
+            citations=executor.citations,
+            page_context=executor.page_context,
+            is_note=intents["use_agent2_note"],
+            is_search=intents["use_agent4_search"],
         )
+        chunk_size = 6
+        for i in range(0, len(fallback_reply), chunk_size):
+            yield format_sse("token", {"text": fallback_reply[i : i + chunk_size]})
+            await asyncio.sleep(0.035)
 
-        target_model = (
-            settings.DEEPSEEK_MODEL_PRO
-            if intents["use_agent4_search"]
-            else settings.DEEPSEEK_MODEL_FLASH
-        )
+        yield format_sse("done", {"ok": True, "offline": True})
 
-        api_key = settings.DEEPSEEK_API_KEY
-        streamed_any = False
+    # ------------------------------------------------------------------
+    # 辅助方法
+    # ------------------------------------------------------------------
+    def _maybe_upgrade_model(self, tool_name: str) -> str:
+        """联网深搜执行后，最终回答升级到 Pro 模型以获得更强的综合能力。"""
+        if tool_name == "web_search":
+            return settings.DEEPSEEK_MODEL_PRO
+        return settings.DEEPSEEK_MODEL_FLASH
 
-        if api_key and not api_key.startswith("your_"):
-            try:
-                llm_messages = [{"role": "system", "content": system_content}]
-                for h in history[-6:]:
-                    if h.get("content"):
-                        llm_messages.append(
-                            {
-                                "role": "assistant" if h.get("role") in ("ai", "assistant") else "user",
-                                "content": h["content"],
-                            }
-                        )
-                llm_messages.append({"role": "user", "content": message})
-
-                req_payload: Dict[str, Any] = {
-                    "model": target_model,
-                    "messages": llm_messages,
-                    "stream": True,
-                    "temperature": 0.6,
-                }
-                # 当使用 deepseek-v4-pro 且开启联网搜索时，同时声明内置 web_search 工具支持
-                if target_model == settings.DEEPSEEK_MODEL_PRO and intents["use_agent4_search"]:
-                    req_payload["tools"] = [{"type": "web_search"}]
-
-                async with httpx.AsyncClient(timeout=60.0) as client:
-                    async with client.stream(
-                        "POST",
-                        f"{settings.DEEPSEEK_BASE_URL}/chat/completions",
-                        headers={
-                            "Authorization": f"Bearer {api_key}",
-                            "Content-Type": "application/json",
-                        },
-                        json=req_payload,
-                    ) as resp:
-                        if resp.status_code == 200:
-                            async for line in resp.aiter_lines():
-                                if not line or not line.startswith("data:"):
-                                    continue
-                                data_str = line[5:].strip()
-                                if data_str == "[DONE]":
-                                    break
-                                try:
-                                    chunk = json.loads(data_str)
-                                    delta = (
-                                        chunk.get("choices", [{}])[0]
-                                        .get("delta", {})
-                                        .get("content", "")
-                                    )
-                                    if delta:
-                                        streamed_any = True
-                                        yield format_sse("token", {"text": delta})
-                                except Exception:
-                                    continue
-            except Exception as e:
-                print(f"[MultiAgentSupervisor] DeepSeek 流式请求回退至内置智能引擎: {e}")
-
-        # 6. 如果尚未配置 DeepSeek API Key 或请求回退，使用融合了四大智能体结果的本地流式回复（保证猫嘴同步说话、站内导航、外链引证、笔记卡片 100% 可用！）
-        if not streamed_any:
-            fallback_reply = self._build_smart_fallback_reply(
-                message=message,
-                site_links=site_links,
-                citations=citations,
-                page_context=page_context,
-                is_note=intents["use_agent2_note"],
-                is_search=intents["use_agent4_search"],
-            )
-            # 模拟逼真的流式打字机推送，驱动 3D 黑猫“品”字嘴同步跳动
-            chunk_size = 6
-            for i in range(0, len(fallback_reply), chunk_size):
-                piece = fallback_reply[i : i + chunk_size]
-                yield format_sse("token", {"text": piece})
-                await asyncio.sleep(0.035)
-
-        yield format_sse("done", {"ok": True})
+    def _badge_tool(self, tool_name: str, active_agents: List[str]) -> None:
+        badge = self.TOOL_AGENT_BADGE.get(tool_name)
+        if badge and badge not in active_agents:
+            active_agents.append(badge)
 
     def _build_smart_fallback_reply(
         self,
@@ -234,13 +461,12 @@ class MultiAgentSupervisor:
             )
         elif is_search and citations:
             parts.append(
-                f"喵~ 🐾 **【智能体四 · DeepSeek-V4-Pro 联网深搜】** 已围绕「**{message}**」检索并抓取了 {len(citations)} 个专业权威技术站点：\n"
+                f"喵~ 🐾 **【智能体四 · 联网深搜】** 已围绕「**{message}**」检索并抓取了 {len(citations)} 个专业权威技术站点：\n"
             )
             for c in citations:
                 parts.append(f"- **[{c['index']}] {c['title']}** (`{c['domain']}`)\n  > {c['snippet']}")
             parts.append("\n你可以直接点击气泡底部的 **🌐 权威网站外链卡片** 跳转到对应官网阅读原文！")
         elif page_context.strip():
-            # 提取当前页标题
             first_lines = [ln.strip() for ln in page_context.splitlines() if ln.strip()][:4]
             header_summary = " | ".join(first_lines[:2])
             parts.append(
@@ -255,7 +481,7 @@ class MultiAgentSupervisor:
                 "我现在由 **四大专职智能体** 协同驱动：\n"
                 "- 🧭 **站内领航**：为你检索了 PartJava 站内最相关的课程页面（见下方直达胶囊）；\n"
                 "- 📝 **自动写笔记**：随时点「总结写笔记」，我会将对话或当前页面提炼存入你的笔记库；\n"
-                "- 🌐 **Pro 联网深搜**：点亮下方「🌐 联网深搜 (Pro)」按钮，即可调用 `deepseek-v4-pro` 检索外部权威技术文档！"
+                "- 🌐 **Pro 联网深搜**：点亮下方「🌐 联网深搜 (Pro)」按钮，即可检索外部权威技术文档！"
             )
 
         if site_links:

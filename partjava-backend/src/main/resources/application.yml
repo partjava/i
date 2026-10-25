@@ -9,12 +9,12 @@ spring:
       max-file-size: 10MB
       max-request-size: 10MB
 
-  # Database Connection
+  # Database Connection（凭据通过环境变量注入，模板见 partjavadata/secrets）
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/partjava_notes?useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&characterEncoding=utf-8
-    username: dbuser
-    password: REDACTED
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:partjava_notes}?useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&characterEncoding=utf-8
+    username: "${DB_USER:root}"
+    password: "${DB_PASSWORD:}"
     hikari:
       maximum-pool-size: 20
       minimum-idle: 5
@@ -55,9 +55,14 @@ springdoc:
     path: /swagger-ui.html
     operations-sorter: alpha
 
-# 第三方及 AI 沙箱集成配置
+# JWT 认证（密钥必须通过 JWT_SECRET 环境变量注入；未配置时启动会生成随机密钥并告警，重启后登录态失效）
+jwt:
+  secret: "${JWT_SECRET:}"
+  expiration: 86400000
+
+# 第三方及 AI 沙箱集成配置（密钥全部通过环境变量注入）
 judge0:
-  api-key: "${JUDGE0_API_KEY:REDACTED-JUDGE0-KEY}"
+  api-key: "${JUDGE0_API_KEY:}"
   api-host: "${JUDGE0_API_HOST:judge0-ce.p.rapidapi.com}"
 
 ai:
