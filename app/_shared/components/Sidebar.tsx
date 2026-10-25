@@ -274,7 +274,7 @@ export default function Sidebar() {
   // 自动滚动到高亮项
   useEffect(() => {
     const ref = Object.values(itemRefs.current).find(
-      (el) => el && el.classList.contains('text-gray-900')
+      (el) => el && el.getAttribute('aria-expanded') === 'true'
     );
     if (ref) {
       ref.scrollIntoView({ block: 'center', behavior: 'smooth' });
@@ -306,6 +306,7 @@ export default function Sidebar() {
         <button
           onClick={toggleCollapsed}
           title="展开侧边栏"
+          data-sidebar-toggle
           className={`hidden lg:flex fixed top-[4.75rem] z-40 w-9 h-9 rounded-full bg-white/70 backdrop-blur-xl border border-white/80 shadow-md items-center justify-center text-gray-600 hover:text-gray-900 hover:shadow-lg transition-all ${
             side === 'left' ? 'left-3' : 'right-3'
           }`}
@@ -335,11 +336,12 @@ export default function Sidebar() {
       `}
         style={{
           ...(dragStyle),
-          background: 'linear-gradient(165deg, rgba(255,255,255,0.12) 0%, rgba(238,243,250,0.08) 50%, rgba(255,255,255,0.1) 100%)',
+          background: 'var(--chrome-sidebar-background, linear-gradient(165deg, rgba(255,255,255,0.12) 0%, rgba(238,243,250,0.08) 50%, rgba(255,255,255,0.1) 100%))',
         }}
       >
         {/* 顶部高光（液态玻璃反光） */}
         <div
+          data-glass-highlight
           className="absolute inset-x-0 top-0 h-20 pointer-events-none"
           style={{ background: 'linear-gradient(180deg, rgba(255,255,255,0.10), rgba(255,255,255,0.02) 60%, transparent)' }}
         />
@@ -352,8 +354,9 @@ export default function Sidebar() {
               dragging ? 'cursor-grabbing' : 'lg:cursor-grab'
             }`}
             title="拖动移动位置"
+            data-sidebar-divider
           >
-            <h2 className="text-base font-semibold text-gray-800 flex items-center gap-2 pointer-events-none">
+            <h2 data-sidebar-title className="text-base font-semibold text-gray-800 flex items-center gap-2 pointer-events-none">
               <span className="w-6 h-6 rounded-md bg-gradient-to-br from-indigo-500 to-sky-400 flex items-center justify-center text-white text-xs shadow-sm">☰</span>
               分类导航
             </h2>
@@ -363,6 +366,8 @@ export default function Sidebar() {
                 onMouseDown={(e) => e.stopPropagation()}
                 onTouchStart={(e) => e.stopPropagation()}
                 onClick={() => setIsOpen(false)}
+                data-sidebar-control
+                aria-label="关闭分类导航"
                 className="lg:hidden text-gray-500 hover:text-gray-900"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -375,6 +380,7 @@ export default function Sidebar() {
                 onTouchStart={(e) => e.stopPropagation()}
                 onClick={toggleCollapsed}
                 title="收起侧边栏"
+                data-sidebar-control
                 className="hidden lg:flex w-7 h-7 rounded-md items-center justify-center text-gray-500 hover:text-gray-900 hover:bg-gray-900/10 transition-colors"
               >
                 <svg
@@ -388,7 +394,7 @@ export default function Sidebar() {
           </div>
 
           {/* 导航内容 */}
-          <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
+          <nav data-sidebar-nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
             {Object.entries(navigationItems).map(([category, items]: [string, NavigationItem[]]) => {
               const catOpen = expandedCategory === category;
               const { icon, color } = categoryIcon(category);
@@ -397,6 +403,8 @@ export default function Sidebar() {
                   {/* 一级：大分类 */}
                   <button
                     onClick={() => toggleCategory(category)}
+                    data-sidebar-node
+                    aria-expanded={catOpen}
                     className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-sm font-medium transition-colors ${
                       catOpen
                         ? 'text-gray-900 bg-white/60'
@@ -421,13 +429,15 @@ export default function Sidebar() {
                   {/* 二级：技术列表（平滑展开动画） */}
                   <div className={`grid transition-all duration-300 ${catOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
                     <div className="overflow-hidden">
-                      <div className="ml-5 pl-4 border-l-2 border-white/10 space-y-0.5 my-1">
+                      <div data-sidebar-branch className="ml-5 pl-4 border-l-2 border-white/10 space-y-0.5 my-1">
                         {items.map((item: NavigationItem) => {
                           const itemOpen = expandedItem === item.name;
                           return (
                             <div key={item.code}>
                               <button
                                 onClick={() => toggleItem(item.name)}
+                                data-sidebar-node
+                                aria-expanded={itemOpen}
                                 className={`w-full flex items-center justify-between px-2.5 py-1.5 text-sm rounded-lg transition-colors ${
                                   itemOpen
                                     ? 'text-gray-900 font-semibold bg-white/70'
@@ -458,6 +468,8 @@ export default function Sidebar() {
                                         return (
                                           <Link
                                             key={sub.name}
+                                            data-sidebar-node
+                                            aria-current={active ? 'page' : undefined}
                                             href={sub.href}
                                             onClick={handleLinkClick}
                                             className={`flex items-center gap-2 px-2.5 py-1.5 text-sm rounded-lg transition-colors ${
@@ -467,6 +479,7 @@ export default function Sidebar() {
                                             }`}
                                           >
                                             <span
+                                              data-sidebar-dot
                                               className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${active ? 'bg-gray-800' : 'bg-gray-300'}`}
                                             />
                                             {sub.name}
@@ -489,12 +502,14 @@ export default function Sidebar() {
           </nav>
 
           {/* 底部快捷入口 */}
-          <div className="px-3 py-3 border-t border-white/10 space-y-0.5">
+          <div data-sidebar-divider className="px-3 py-3 border-t border-white/10 space-y-0.5">
             {QUICK_LINKS.map(link => {
               const active = pathname === link.href;
               return (
                 <Link
                   key={link.href}
+                  data-sidebar-node
+                  aria-current={active ? 'page' : undefined}
                   href={link.href}
                   onClick={handleLinkClick}
                   className={`flex items-center gap-2.5 px-2.5 py-2 rounded-lg transition-colors ${
@@ -506,7 +521,7 @@ export default function Sidebar() {
                   <span className="text-base flex-shrink-0">{link.icon}</span>
                   <span className="flex-1 min-w-0">
                     <span className="block text-sm font-medium leading-tight">{link.label}</span>
-                    <span className="block text-[11px] text-gray-400 leading-tight">{link.desc}</span>
+                    <span data-sidebar-description className="block text-[11px] text-gray-400 leading-tight">{link.desc}</span>
                   </span>
                 </Link>
               );

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Navbar from './Navbar';
 import mobileStyles from './MobileLayout.module.css';
+import chromeTheme from './ChromeTheme.module.css';
 import Sidebar, { SidebarProvider, SidebarSpacer } from './Sidebar';
 import BottomNavigation from './BottomNavigation';
 import MobileGestureHandler from './MobileGestureHandler';
@@ -84,9 +85,9 @@ export default function RootLayoutClient({ children }: RootLayoutClientProps) {
           <DevTools />
           <SidebarProvider>
             <MobileGestureHandler>
-              <div className={`${mobileStyles.layout} relative flex flex-col h-screen bg-page-bg dark:bg-page-dark overflow-hidden`}>
+              <div data-theme-shell className={`${chromeTheme.shell} ${mobileStyles.layout} relative flex flex-col h-screen bg-page-bg dark:bg-page-dark overflow-hidden`}>
                 {/* 环境光斑（蓝绿灰配色，透过玻璃形成渐变色调） */}
-                <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
+                <div data-ambient-light className="absolute inset-0 pointer-events-none" aria-hidden="true">
                   <div className="absolute -left-24 -top-10 w-[28rem] h-[28rem] rounded-full bg-sky-500/45 blur-3xl" />
                   <div className="absolute left-8 top-1/3 w-96 h-96 rounded-full bg-emerald-400/40 blur-3xl" />
                   <div className="absolute -left-16 bottom-0 w-[26rem] h-[26rem] rounded-full bg-slate-400/45 blur-3xl" />

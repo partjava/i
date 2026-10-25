@@ -46,11 +46,11 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 // 认证与找回密码流程
                 .requestMatchers("/api/auth/**", "/api/forgot-password/**").permitAll()
-                // 公开只读内容：笔记广场、评论、图片、统计、搜索、课程中心、题库与排行榜
+                // 公开只读内容：笔记广场、评论、图片、统计、搜索、课程中心、题库、公开用户主页与游戏
                 .requestMatchers(HttpMethod.GET,
                     "/api/notes/**", "/api/comments/**", "/api/images/**", "/api/stats/**",
                     "/api/search/**", "/api/study/**", "/api/challenges/**", "/api/star-challenges/**",
-                    "/api/game/**").permitAll()
+                    "/api/game/**", "/api/user/profile-by-id").permitAll()
                 // AI 对话（前端悬浮助手匿名可用，Next.js middleware 已做 IP 限流）
                 .requestMatchers("/api/ai/**").permitAll()
                 // 管理后台仅管理员

@@ -53,9 +53,9 @@ export default function Navbar() {
   // iOS 27 高透晶体液态玻璃胶囊公共样式（与左侧玻璃目录同系超低底色不透明度 + 顶部高光折射）
   const liquidIslandStyle: React.CSSProperties = {
     background:
-      'linear-gradient(165deg, rgba(255, 255, 255, 0.16) 0%, rgba(238, 244, 252, 0.08) 50%, rgba(255, 255, 255, 0.12) 100%)',
+      'var(--chrome-island-background, linear-gradient(165deg, rgba(255, 255, 255, 0.16) 0%, rgba(238, 244, 252, 0.08) 50%, rgba(255, 255, 255, 0.12) 100%))',
     boxShadow:
-      '0 10px 28px rgba(15, 23, 42, 0.08), inset 0 1.5px 0 rgba(255, 255, 255, 0.88), inset 0 -1px 0 rgba(255, 255, 255, 0.35)',
+      'var(--chrome-island-shadow, 0 10px 28px rgba(15, 23, 42, 0.08), inset 0 1.5px 0 rgba(255, 255, 255, 0.88), inset 0 -1px 0 rgba(255, 255, 255, 0.35))',
   };
 
   // JWT 认证无需轮询 session 检查，401 由 FetchInterceptor 处理
@@ -132,10 +132,12 @@ export default function Navbar() {
         {/* 🏝️ 左岛：Logo + 桌面端导航矩阵（iOS 27 高透液态玻璃胶囊） */}
         <div
           className="relative flex items-center h-14 px-3 sm:px-4 rounded-full backdrop-blur-2xl backdrop-saturate-150 border border-white/75 dark:border-white/20 overflow-hidden"
+          data-nav-island
           style={liquidIslandStyle}
         >
           {/* 顶部镜面折射高光带 */}
           <div
+            data-glass-highlight
             className="absolute inset-x-4 top-0 h-5 pointer-events-none"
             style={{
               background:
@@ -175,6 +177,7 @@ export default function Navbar() {
             <Image
               src="/images/logo-calligraphy-transparent.png"
               alt="PartJava"
+              data-nav-wordmark
               width={921}
               height={601}
               className="h-6 sm:h-7 w-auto hidden sm:block drop-shadow-sm"
@@ -182,38 +185,38 @@ export default function Navbar() {
           </Link>
 
           {/* 分隔竖线 */}
-          <span className="hidden md:block w-px h-6 mx-3 bg-white/50 dark:bg-white/15" />
+          <span data-nav-divider className="hidden md:block w-px h-6 mx-3 bg-white/50 dark:bg-white/15" />
 
           {/* 桌面端导航链接 */}
           <div className="hidden md:flex items-center space-x-1 lg:space-x-1.5">
-            <Link href="/" className={navItemClass('/')}>
+            <Link href="/" data-nav-item aria-current={isActive('/') ? 'page' : undefined} className={navItemClass('/')}>
               <HomeOutlined className="text-base mb-0.5" />
               <span className="text-[11px] leading-tight">首页</span>
             </Link>
 
-            <Link href="/notes" className={navItemClass('/notes')}>
+            <Link href="/notes" data-nav-item aria-current={isActive('/notes') ? 'page' : undefined} className={navItemClass('/notes')}>
               <EditOutlined className="text-base mb-0.5" />
               <span className="text-[11px] leading-tight">笔记</span>
             </Link>
 
-            <Link href="/profile" className={navItemClass('/profile')}>
+            <Link href="/profile" data-nav-item aria-current={isActive('/profile') ? 'page' : undefined} className={navItemClass('/profile')}>
               <UserOutlined className="text-base mb-0.5" />
               <span className="text-[11px] leading-tight">{session ? '资料' : '数据'}</span>
             </Link>
 
-            <Link href="/code/editor" className={navItemClass('/code')}>
+            <Link href="/code/editor" data-nav-item aria-current={isActive('/code') ? 'page' : undefined} className={navItemClass('/code')}>
               <CodeOutlined className="text-base mb-0.5" />
               <span className="text-[11px] leading-tight">代码</span>
             </Link>
 
-            <Link href="/challenges" className={navItemClass('/challenges')}>
+            <Link href="/challenges" data-nav-item aria-current={isActive('/challenges') ? 'page' : undefined} className={navItemClass('/challenges')}>
               <svg className="w-4 h-4 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               <span className="text-[11px] leading-tight">挑战</span>
             </Link>
 
-            <Link href="/tools/game" className={navItemClass('/tools/game')}>
+            <Link href="/tools/game" data-nav-item aria-current={isActive('/tools/game') ? 'page' : undefined} className={navItemClass('/tools/game')}>
               <svg className="w-4 h-4 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 6h.01M6 12h.01M6 18h.01M12 6h.01M12 12h.01M12 18h.01M18 6h.01M18 12h.01M18 18h.01" />
               </svg>
@@ -222,6 +225,7 @@ export default function Navbar() {
 
             <button
               onClick={() => setShowRobot(true)}
+              data-nav-item
               className="relative flex flex-col items-center justify-center px-2.5 py-1 rounded-2xl transition-all duration-200 text-content-primary/85 hover:text-brand-primary hover:bg-white/30 dark:hover:bg-white/10"
               title={robotPreloaded ? '机器人已就绪' : '正在加载机器人...'}
             >
@@ -252,10 +256,12 @@ export default function Navbar() {
         <div className="hidden md:flex items-center gap-2.5 flex-1 max-w-lg">
           <div
             className="flex-1 h-14 px-3 rounded-full backdrop-blur-2xl backdrop-saturate-150 border border-white/75 dark:border-white/20 relative overflow-hidden flex items-center"
-            style={liquidIslandStyle}
+            data-nav-island
+          style={liquidIslandStyle}
           >
             <div
-              className="absolute inset-x-4 top-0 h-5 pointer-events-none"
+              data-glass-highlight
+            className="absolute inset-x-4 top-0 h-5 pointer-events-none"
               style={{
                 background:
                   'linear-gradient(180deg, rgba(255,255,255,0.32) 0%, rgba(255,255,255,0.04) 70%, transparent 100%)',
@@ -300,9 +306,11 @@ export default function Navbar() {
         {/* 🏝️ 右岛：用户状态与通知液态玻璃胶囊 */}
         <div
           className="relative flex items-center h-14 px-3 sm:px-3.5 rounded-full backdrop-blur-2xl backdrop-saturate-150 border border-white/75 dark:border-white/20 space-x-2 overflow-hidden"
+          data-nav-island
           style={liquidIslandStyle}
         >
           <div
+            data-glass-highlight
             className="absolute inset-x-3 top-0 h-5 pointer-events-none"
             style={{
               background:
@@ -349,7 +357,7 @@ export default function Navbar() {
                 placement="bottomRight"
                 trigger={['click']}
               >
-                <div className="flex items-center space-x-2 cursor-pointer py-1 pl-1 pr-2.5 rounded-full bg-white/30 hover:bg-white/50 dark:bg-white/10 dark:hover:bg-white/20 border border-white/65 dark:border-white/20 transition-all">
+                <div data-nav-user className="flex items-center space-x-2 cursor-pointer py-1 pl-1 pr-2.5 rounded-full bg-white/30 hover:bg-white/50 dark:bg-white/10 dark:hover:bg-white/20 border border-white/65 dark:border-white/20 transition-all">
                   <Avatar
                     size="small"
                     src={user?.image || session?.user?.image || undefined}
