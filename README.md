@@ -1,8 +1,8 @@
-# PartJava 智能学习平台
+# 禾桔书房 · AI 伴学平台（PartJava）
 
 <!-- 首页全景图：待新截图后放回 public/images/images/ 并恢复此行 -->
 
-> **2026 传智杯 · AI Web 网页开发挑战赛参赛作品** —— AI Native 编程学习平台：3D AI 伴侣「禾桔」以 Function Calling Agent 驱动站内 RAG 检索、联网深搜、笔记提炼与 3D 神态控制。
+> **2026 传智杯 · AI Web 网页开发挑战赛参赛作品** —— AI Native 伴学平台：3D AI 伴侣「禾桔」以 Function Calling Agent 驱动站内 RAG 检索、联网深搜、笔记提炼与 3D 神态控制。
 
 ## 团队信息
 
@@ -285,8 +285,14 @@ cd partjava-backend && mvn test
 
 ---
 
-## 许可说明
+## 版权声明
 
-本项目为 Syntora 团队参加 2026 传智杯 AI Web 网页开发挑战赛的原创参赛作品，代码仅供学习与评审参考，未经团队许可禁止用于商业目的。
+本项目为**私有原创作品**，著作权归 Syntora 团队所有，仅授权本次大赛组委会评审使用。
 
-Copyright © 2024-2026 Syntora · PartJava
+- **禁止**复制、转载、搬运本仓库全部或部分内容到任何平台
+- **禁止**对代码进行复制粘贴、二次开发或用于其他作品
+- **禁止**任何形式的商业使用与传播分发
+
+未经著作权人书面许可实施上述行为均属侵权，我们将依法保留追究法律责任的权利。
+
+Copyright © 2024-2026 Syntora · PartJava · All Rights Reserved
