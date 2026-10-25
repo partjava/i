@@ -752,7 +752,7 @@ export default function Home() {
 
       {/* 学习分类悬停菜单 */}
       <div className="relative">
-        <div className={`${mobileStyles.learningHeader} shadow-md py-4 px-3 md:px-6 border-b border-line-strong`} style={{ background: 'linear-gradient(180deg, #EDF0F5 0%, #e8ecf2 100%)' }}>
+        <div className={`${mobileStyles.learningHeader} always-light-scope shadow-md py-4 px-3 md:px-6 border-b border-line-strong`} style={{ background: 'linear-gradient(180deg, #EDF0F5 0%, #e8ecf2 100%)' }}>
           <div className="max-w-[1400px] mx-auto">
             <h1 className="text-xl md:text-3xl font-bold text-content-primary mb-4 md:mb-6 tracking-wide flex items-center gap-2">
               <Image src="/images/logo-calligraphy-transparent.png" alt="PartJava" width={921} height={601} className="h-7 md:h-10 w-auto inline-block" />

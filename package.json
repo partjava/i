@@ -14,7 +14,6 @@
     "test": "vitest run && node --test scripts/arcade-physics.test.cjs scripts/profile-client.test.cjs"
   },
   "dependencies": {
-    "@huggingface/transformers": "^3.8.1",
     "@monaco-editor/react": "^4.7.0",
     "@pixiv/three-vrm": "^3.4.2",
     "@tailwindcss/typography": "^0.5.16",

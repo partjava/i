@@ -1111,3 +1111,22 @@ body.dark {
     @apply rounded-md border border-line-subtle bg-control-fill px-3 py-2 text-sm text-content-primary placeholder:text-content-muted transition-colors focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-control-ring disabled:bg-surface-muted disabled:text-content-muted;
   }
 }
+
+/* 浅色钉死作用域：背景为设计固定浅色（内联浅色渐变）的区块，
+   强制沿用浅色主题的语义 token，避免深色模式下文字/线条翻浅导致不可读 */
+.always-light-scope {
+  --surface-page: #EDF0F5;
+  --surface-raised: #f5f7fa;
+  --surface-muted: #e2e6ed;
+  --surface-inverse: #0C1F3D;
+  --content-primary: #0C1F3D;
+  --content-secondary: #3d4f6b;
+  --content-muted: #6b7d99;
+  --content-inverse: #ffffff;
+  --content-link: #044BB5;
+  --line-subtle: #d1d6e0;
+  --line-strong: #b8bfcc;
+  --brand-soft: #e0e7ff;
+  --control-fill: #ffffff;
+  background-color: transparent;
+}
