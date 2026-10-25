@@ -351,10 +351,10 @@ export const TOOL_LABELS: Record<string, { label: string; desc: string }> = {
 };
 
 export const TOOL_AGENT_BADGE: Record<string, string> = {
-  search_site_pages: '🧭 智能体一·站内领航伴读',
-  web_search: '🌐 智能体四·Pro联网深搜',
-  draft_note: '📝 智能体二·自动写笔记',
-  set_companion_state: '🐾 智能体三·3D灵动伴侣',
+  search_site_pages: '🧭 站内课程检索',
+  web_search: '🌐 联网深搜',
+  draft_note: '📝 笔记提炼',
+  set_companion_state: '🐾 3D 伴侣',
 };
 
 export const TOOL_SCHEMAS = [

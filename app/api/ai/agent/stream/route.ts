@@ -93,7 +93,7 @@ export async function POST(req: NextRequest) {
           state,
         };
 
-        const activeAgents: string[] = ['🐾 智能体三·3D灵动伴侣', '🧭 智能体一·站内领航伴读'];
+        const activeAgents: string[] = ['🐾 3D 伴侣', '🧭 站内检索'];
         let currentModel = MODEL_FLASH;
         const badgeTool = (toolName: string) => {
           const badge = TOOL_AGENT_BADGE[toolName];
@@ -117,11 +117,11 @@ export async function POST(req: NextRequest) {
             offline: true,
           });
           const isNoteKw =
-            explicitAgent === 'agent2_note' ||
+            explicitAgent === 'note' ||
             ['写笔记', '生成笔记', '保存笔记', '总结成笔记', '总结本页', '记笔记', '存为笔记'].some((k) => msgLower.includes(k));
           const isSearchKw =
             enableWebSearch ||
-            explicitAgent === 'agent4_search' ||
+            explicitAgent === 'search' ||
             ['联网', '搜索', '上网查', '官网链接', '专业网站', '权威网站', '外部链接', '最新文档'].some((k) => msgLower.includes(k));
           const offlineJobs: Array<[string, Record<string, any>, string]> = [];
           if (isSearchKw) offlineJobs.push(['web_search', { query: message }, '联网深搜（离线精选权威索引）']);
@@ -143,11 +143,11 @@ export async function POST(req: NextRequest) {
           let replyText = '';
           if (state.noteDraft) {
             replyText =
-              `喵呜~ 🐾 **【智能体二 · 自动写笔记】** 已经把对话与当前页面提炼成结构化 Markdown 笔记啦！\n\n` +
+              `喵呜~ 🐾 **【笔记提炼】** 已经把对话与当前页面提炼成结构化 Markdown 笔记啦！\n\n` +
               `你可以直接点击气泡下方的 **「⚡ 一键存入我的笔记」** 写入数据库，或者点 **「✏️ 预览与编辑」** 微调后再保存哦！`;
           } else if (state.citations.length > 0) {
             replyText =
-              `喵~ 🐾 **【智能体四 · 联网深搜】** 已围绕「**${message}**」检索并抓取了 ${state.citations.length} 篇专业权威技术资料：\n\n` +
+              `喵~ 🐾 **【联网深搜】** 已围绕「**${message}**」检索并抓取了 ${state.citations.length} 篇专业权威技术资料：\n\n` +
               state.citations
                 .map((c: any) => `- **[${c.index}] ${c.title}** (\`${c.domain}\`)\n  > ${c.snippet}`)
                 .join('\n') +
@@ -198,8 +198,8 @@ export async function POST(req: NextRequest) {
 
         // 用户显式操作 → 确定性直调工具
         const forcedCalls: Array<[string, Record<string, any>]> = [];
-        if (explicitAgent === 'agent2_note') forcedCalls.push(['draft_note', { topic: message }]);
-        if (enableWebSearch || explicitAgent === 'agent4_search') forcedCalls.push(['web_search', { query: message }]);
+        if (explicitAgent === 'note') forcedCalls.push(['draft_note', { topic: message }]);
+        if (enableWebSearch || explicitAgent === 'search') forcedCalls.push(['web_search', { query: message }]);
         if (forcedCalls.length > 0) {
           const synthesized = forcedCalls.map(([fname, fargs], idx) => ({
             id: `forced-${idx}`,
@@ -368,11 +368,11 @@ export async function POST(req: NextRequest) {
           let replyText = '';
           if (state.noteDraft) {
             replyText =
-              `喵呜~ 🐾 **【智能体二 · 自动写笔记】** 已经把对话与当前页面提炼成结构化 Markdown 笔记啦！\n\n` +
+              `喵呜~ 🐾 **【笔记提炼】** 已经把对话与当前页面提炼成结构化 Markdown 笔记啦！\n\n` +
               `你可以直接点击气泡下方的 **「⚡ 一键存入我的笔记」** 写入数据库，或者点 **「✏️ 预览与编辑」** 微调后再保存哦！`;
           } else if (state.citations.length > 0) {
             replyText =
-              `喵~ 🐾 **【智能体四 · 联网深搜】** 已围绕「**${message}**」检索并抓取了 ${state.citations.length} 篇专业权威技术资料：\n\n` +
+              `喵~ 🐾 **【联网深搜】** 已围绕「**${message}**」检索并抓取了 ${state.citations.length} 篇专业权威技术资料：\n\n` +
               state.citations
                 .map((c: any) => `- **[${c.index}] ${c.title}** (\`${c.domain}\`)\n  > ${c.snippet}`)
                 .join('\n') +

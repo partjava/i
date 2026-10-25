@@ -18,9 +18,9 @@
 
 ## 🌟 项目亮点
 
-- **🤖 Function Calling 多智能体**：3D 黑猫「袋子」由 plan → act → observe 自主决策循环驱动，站内领航 / 联网深搜 / 自动写笔记 / 3D 神态控制四大工具由 LLM 自主调度，执行轨迹实时可视化
+- **🤖 Function Calling AI Agent**：3D 黑猫「袋子」由 plan → act → observe 自主决策循环驱动，站内领航 / 联网深搜 / 自动写笔记 / 3D 神态控制四大工具由 LLM 自主调度，执行轨迹实时可视化
 - **🔍 端云协同 RAG**：509 个课程页向量化（4096 维特征哈希 TF-IDF）构建检索索引，混合打分（0.6×余弦 + 0.4×标题词面），Next.js 与 Python 双端共享同一向量空间
-- **🔌 MCP 协议支持**：四大智能体工具同时以 MCP 标准 Server 暴露（`partjava-ai/mcp_server.py`），可被 Claude Desktop / Cursor 等任意 MCP 客户端挂载
+- **🔌 MCP 协议支持**：四大 AI 工具同时以 MCP 标准 Server 暴露（`partjava-ai/mcp_server.py`），可被 Claude Desktop / Cursor 等任意 MCP 客户端挂载
 - **🎙️ 多模态交互**：Web Speech API 语音输入 + TTS 朗读；Transformers.js 浏览器端语义缓存（相似问题离线秒回）
 - **💻 在线代码执行**：Judge0 CE + Spring Boot 代理，支持 10 种语言沙箱运行
 - **🐾 3D 算法可视化**：覆盖 21 种算法的 Three.js 3D 动态演示
@@ -111,7 +111,7 @@ partjava/
 │   ├── _shared/data/rag-index.json  # RAG 向量索引（构建产物，可重建）
 │   └── _shared/components/       # 全局组件（AI3DRobot 3D 黑猫等）
 ├── partjava-ai/                  # Python 多智能体服务
-│   ├── agents/                   #   router(Agent循环) / tools(工具层) / rag_index(向量检索)
+│   ├── agents/                   #   router(调度循环) / navigator / notewriter / websearch / companion / rag_index
 │   ├── mcp_server.py             #   MCP 标准 Server（stdio）
 │   └── main.py                   #   FastAPI 入口（:8000）
 ├── partjava-backend/             # Spring Boot 后端

@@ -76,7 +76,7 @@ interface Message {
 type CatPosture = 'standing' | 'crouching' | 'custom';
 type BubbleSide = 'right' | 'left';
 
-// 采集当前背后打开页面的正文上下文（供智能体一伴读与智能体二写笔记使用）
+// 采集当前背后打开页面的正文上下文（供站内伴读与笔记提炼使用）
 function collectCurrentPageContext(): { pathname: string; contextText: string } {
   if (typeof document === 'undefined' || typeof window === 'undefined') {
     return { pathname: '', contextText: '' };
@@ -147,7 +147,7 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
   const [isDraggingOver, setIsDraggingOver] = useState(false);
   const [errorBanner, setErrorBanner] = useState<string | null>(null);
 
-  // 3D 嘴巴放射气泡与四大智能体状态
+  // 3D 嘴巴放射气泡与工具能力状态
   const [bubbleSide, setBubbleSide] = useState<BubbleSide>('right');
   const [showBubble, setShowBubble] = useState(true);
   const [showHistoryMode, setShowHistoryMode] = useState(false);
@@ -347,7 +347,7 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
     });
   };
 
-  // 一键将智能体二生成的笔记草稿保存到后端 /api/notes
+  // 一键将笔记草稿保存到后端 /api/notes
   const handleDirectSaveNote = async (noteData: any) => {
     if (!noteData || savingNote) return;
     setSavingNote(true);
@@ -536,7 +536,7 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
               );
             } else if (eventName === 'search_status') {
               setSearchStatusText(payload.text
-                ? String(payload.text).replace(/DeepSeek[-\w.]*/gi, '搜索服务').replace(/\bPro\b\s*/gi, '').replace(/四大智能体|专职智能体|智能体[一二三四]?/g, '助手')
+                ? String(payload.text).replace(/DeepSeek[-\w.]*/gi, '搜索服务').replace(/\bPro\b\s*/gi, '')
                 : null);
             } else if (eventName === 'site_links') {
               setMessages(prev =>
@@ -1229,7 +1229,7 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
                     : 'left-3 sm:left-5'
                 } z-10 w-[calc(100%-1.5rem)] sm:w-[410px] md:w-[450px] max-h-[calc(100%-155px)] flex flex-col bg-[#161310]/88 backdrop-blur-xl rounded-2xl border border-[#d4a36a]/45 shadow-[0_16px_48px_rgba(0,0,0,0.65),0_0_24px_rgba(212,163,106,0.18)] transition-all duration-300`}
               >
-                {/* 气泡顶部栏：显示当前工作的四大智能体徽章与控制按钮 */}
+                {/* 气泡顶部栏：显示当前工作的工具能力徽章与控制按钮 */}
                 <div className={styles.bubbleHeader}>
                   <div className="flex items-center space-x-2 min-w-0">
                     <span className="relative flex h-2.5 w-2.5 flex-shrink-0">
@@ -1432,7 +1432,7 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
                             </ReactMarkdown>
                           </div>
 
-                          {/* 【智能体一输出】：站内 310+ 页面一键直达胶囊 */}
+                          {/* 站内检索输出：310+ 页面一键直达胶囊 */}
                           {latestAiMessage.siteLinks &&
                             latestAiMessage.siteLinks.length > 0 && (
                               <div className="pt-2 border-t border-white/10">
@@ -1457,7 +1457,7 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
                               </div>
                             )}
 
-                          {/* 【智能体四输出】：DeepSeek-V4-Pro 联网搜索权威网站外链卡片 */}
+                          {/* 联网深搜输出：权威网站外链卡片 */}
                           {latestAiMessage.citations &&
                             latestAiMessage.citations.length > 0 && (
                               <div className="pt-2 border-t border-white/10">
@@ -1494,7 +1494,7 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
                               </div>
                             )}
 
-                          {/* 【智能体二输出】：结构化 Markdown 笔记一键保存与预览卡片 */}
+                          {/* 笔记提炼输出：结构化 Markdown 笔记保存与预览卡片 */}
                           {latestAiMessage.noteDraft && (
                             <div className="p-3 rounded-xl bg-gradient-to-br from-[#2b2319] to-[#1e1913] border border-[#d4a36a]/60 space-y-2">
                               <div className="flex items-center justify-between">
@@ -1748,15 +1748,15 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
           )}
 
           {/* ==========================================================
-              底部常驻直聊输入坞（Chat Dock）：无需弹窗，直接与四大智能体对话
+              底部常驻直聊输入坞（Chat Dock）：无需弹窗，直接与 AI 黑猫对话
              ========================================================== */}
           {!isLoading && (
             <div className={`${styles.dock} absolute bottom-2.5 sm:bottom-4 left-1/2 -translate-x-1/2 w-full max-w-3xl px-3 sm:px-4 z-20`}>
               <div className={styles.composer}>
                 <div className={styles.shortcuts} aria-label="学习快捷操作">
-                  <button disabled={isTyping} onClick={() => dispatchAgentMessage('请解释当前页面的核心知识点，并举一个容易理解的例子。', { explicitAgent: 'agent1_navigator' })}>解释当前页</button>
-                  <button disabled={isTyping} onClick={() => dispatchAgentMessage('请根据当前页面内容，帮我找相关的站内课程与练习。', { explicitAgent: 'agent1_navigator' })}>找课程</button>
-                  <button disabled={isTyping} onClick={() => dispatchAgentMessage('请结合当前页面和我们的对话，整理一份学习笔记草稿，供我预览后保存。', { explicitAgent: 'agent2_note' })}>整理笔记</button>
+                  <button disabled={isTyping} onClick={() => dispatchAgentMessage('请解释当前页面的核心知识点，并举一个容易理解的例子。', { explicitAgent: 'navigator' })}>解释当前页</button>
+                  <button disabled={isTyping} onClick={() => dispatchAgentMessage('请根据当前页面内容，帮我找相关的站内课程与练习。', { explicitAgent: 'navigator' })}>找课程</button>
+                  <button disabled={isTyping} onClick={() => dispatchAgentMessage('请结合当前页面和我们的对话，整理一份学习笔记草稿，供我预览后保存。', { explicitAgent: 'note' })}>整理笔记</button>
                   <button disabled={isTyping} onClick={() => dispatchAgentMessage('请结合我的问题，帮我制定一份循序渐进的学习路线。')}>学习路线</button>
                 </div>
 

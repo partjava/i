@@ -1,5 +1,5 @@
 """
-智能体四：【全网深搜与权威引证智能体 (DeepSeek-V4-Pro Web Research Agent)】
+【全网深搜与权威引证 (Web Search)】
 职责：
 1. 对接 DeepSeek 2026-10-17 新开放的自研搜索引擎与网页抓取独立工具接口：
    - `POST https://api.deepseek.com/v1/tools/search` (执行网页搜索，5元/千次)
@@ -15,7 +15,7 @@ import httpx
 from config import settings
 
 
-class WebSearchProAgent:
+class WebSearch:
     # 针对常见技术主题的高权重权威官方文档保底/增强库（当未配置 Key 或网络受限时也能精准给出顶级专业链接）
     CURATED_AUTHORITY_DOCS: List[Dict[str, str]] = [
         {
@@ -169,7 +169,7 @@ class WebSearchProAgent:
         rag_context = ""
         if citations:
             rag_context = (
-                "\n【智能体四 (DeepSeek-V4-Pro WebSearch) 检索并抓取的外部权威网站资料】:\n"
+                "\n【联网深搜检索并抓取的权威外部网站资料】:\n"
                 + "\n\n".join(fetched_texts)
                 + "\n请在回答中充分融合上述权威资料，并在提及对应观点时使用 `[1]`、`[2]` 标注来源，或引导用户点击气泡下方的权威外部链接卡片！"
             )
@@ -206,4 +206,4 @@ class WebSearchProAgent:
         ]
 
 
-web_search_pro_agent = WebSearchProAgent()
+web_search = WebSearch()

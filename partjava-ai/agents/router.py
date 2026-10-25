@@ -1,9 +1,9 @@
 """
-四大智能体总控调度器 (Multi-Agent Supervisor Router) — Function Calling 驱动
+AI Agent 调度器 (Supervisor Router) — Function Calling 驱动
 =============================================================================
 
 核心机制（plan → act → observe 自主决策循环）：
-1. 把四大智能体能力注册为 OpenAI Function Calling 兼容的工具（见 agents/tools.py）；
+1. 把站内检索/写笔记/联网深搜/3D 神态四大能力注册为 OpenAI Function Calling 兼容的工具（见 agents/tools.py）；
 2. LLM 在对话中自主决策是否调用工具、以什么参数调用（plan）；
 3. Supervisor 执行工具并把 observation 回填消息列表（act / observe）；
 4. 循环直到 LLM 认为信息充分，最终以流式输出回答（驱动 3D 猫嘴同步）；
@@ -19,8 +19,8 @@ import asyncio
 from typing import AsyncGenerator, Dict, Any, List, Optional
 import httpx
 from config import settings
-from agents.agent1_navigator import site_navigator_agent
-from agents.agent3_companion import companion_3d_agent
+from agents.navigator import navigator
+from agents.companion import companion
 from agents.tools import (
     TOOL_SCHEMAS,
     TOOL_LABELS,
@@ -36,35 +36,35 @@ def format_sse(event: str, data: Any) -> str:
 
 
 class MultiAgentSupervisor:
-    """Function Calling 驱动的多智能体调度器。"""
+    """Function Calling 驱动的 Agent 调度器。"""
 
     # 单轮对话内最多允许的工具决策轮数（防止无限循环刷 API）
     MAX_TOOL_STEPS = 4
-    # 工具执行 → 前端「激活智能体」胶囊的映射
+    # 工具执行 → 前端「能力徽标」胶囊的映射
     TOOL_AGENT_BADGE = {
-        "search_site_pages": "🧭 智能体一·站内领航伴读",
-        "web_search": "🌐 智能体四·Pro联网深搜",
-        "draft_note": "📝 智能体二·自动写笔记",
-        "set_companion_state": "🐾 智能体三·3D灵动伴侣",
+        "search_site_pages": "🧭 站内课程检索",
+        "web_search": "🌐 联网深搜",
+        "draft_note": "📝 笔记提炼",
+        "set_companion_state": "🐾 3D 伴侣",
     }
 
     def detect_intent(self, message: str, enable_web_search: bool, explicit_agent: Optional[str] = None) -> Dict[str, bool]:
         """关键词意图识别（仅用于离线降级与统计，在线模式由 LLM 自主决策取代）。"""
         msg = (message or "").lower()
         is_note = (
-            explicit_agent == "agent2_note"
+            explicit_agent == "note"
             or any(kw in msg for kw in ["写笔记", "生成笔记", "保存笔记", "总结成笔记", "总结本页", "记笔记", "存为笔记"])
         )
         is_web_search = (
             enable_web_search
-            or explicit_agent == "agent4_search"
+            or explicit_agent == "search"
             or any(kw in msg for kw in ["联网", "搜索", "上网查", "官网链接", "专业网站", "权威网站", "外部链接", "最新文档"])
         )
         return {
-            "use_agent1_navigator": True,
-            "use_agent2_note": is_note,
-            "use_agent3_companion": True,
-            "use_agent4_search": is_web_search,
+            "use_navigator": True,
+            "use_note": is_note,
+            "use_companion": True,
+            "use_search": is_web_search,
         }
 
     async def stream_dispatch(
@@ -90,9 +90,9 @@ class MultiAgentSupervisor:
 
         executor = ToolExecutor(emit=emit, conversation_text=conv_str, page_context=page_context)
 
-        # 【智能体三】率先计算 3D 黑猫的基线情绪/姿态（确定性，零延迟）
-        base_reaction = companion_3d_agent.analyze_3d_reaction(message)
-        active_agents: List[str] = ["🐾 智能体三·3D灵动伴侣", "🧭 智能体一·站内领航伴读"]
+        # 3D 伴侣：率先计算黑猫的基线情绪/姿态（确定性，零延迟）
+        base_reaction = companion.analyze_3d_reaction(message)
+        active_agents: List[str] = ["🐾 3D 伴侣", "🧭 站内检索"]
         current_model = settings.DEEPSEEK_MODEL_FLASH
 
         def merged_reaction() -> Dict[str, Any]:
@@ -111,8 +111,8 @@ class MultiAgentSupervisor:
                 )
             )
 
-        # 【智能体一】零成本本地领航：直接解析 navigation.ts 检索站内页面（不耗 API）
-        nav_frag, site_links = site_navigator_agent.build_system_prompt_fragment(message, page_context)
+        # 站内领航：零成本本地检索站内页面（不耗 API）
+        nav_frag, site_links = navigator.build_system_prompt_fragment(message, page_context)
         executor.site_links = site_links
         if site_links:
             yield format_sse("site_links", {"links": site_links})
@@ -144,7 +144,7 @@ class MultiAgentSupervisor:
 
         # 组装初始消息：人设 + 自主决策说明 + 站内导航片段（含当前页伴读上下文）
         system_content = (
-            companion_3d_agent.SYSTEM_PERSONA
+            companion.SYSTEM_PERSONA
             + "\n"
             + build_agency_system_instructions()
             + "\n"
@@ -165,9 +165,9 @@ class MultiAgentSupervisor:
 
                 # ---- 用户显式操作 → 确定性直调工具（保住按钮/开关的可靠体验）----
                 forced_calls: List[Dict[str, str]] = []
-                if explicit_agent == "agent2_note":
+                if explicit_agent == "note":
                     forced_calls.append(("draft_note", {"topic": message}))
-                if enable_web_search or explicit_agent == "agent4_search":
+                if enable_web_search or explicit_agent == "search":
                     forced_calls.append(("web_search", {"query": message}))
                 if forced_calls:
                     synthesized = []
@@ -394,9 +394,9 @@ class MultiAgentSupervisor:
         )
 
         keyword_jobs: List[Dict[str, str]] = []
-        if intents["use_agent4_search"]:
+        if intents["use_search"]:
             keyword_jobs.append(("web_search", {"query": message}, "联网深搜（离线精选权威索引）"))
-        if intents["use_agent2_note"]:
+        if intents["use_note"]:
             keyword_jobs.append(("draft_note", {"topic": message}, "提炼写笔记（本地结构化提炼）"))
 
         for fname, fargs, reason in keyword_jobs:
@@ -420,8 +420,8 @@ class MultiAgentSupervisor:
             site_links=executor.site_links,
             citations=executor.citations,
             page_context=executor.page_context,
-            is_note=intents["use_agent2_note"],
-            is_search=intents["use_agent4_search"],
+            is_note=intents["use_note"],
+            is_search=intents["use_search"],
         )
         chunk_size = 6
         for i in range(0, len(fallback_reply), chunk_size):
@@ -456,12 +456,12 @@ class MultiAgentSupervisor:
         parts: List[str] = []
         if is_note:
             parts.append(
-                "喵呜~ 🐾 **【智能体二 · 自动写笔记】** 已经帮你把核心内容提炼成一篇结构化 Markdown 笔记啦！\n\n"
+                "喵呜~ 🐾 **【笔记提炼】** 已经帮你把核心内容提炼成一篇结构化 Markdown 笔记啦！\n\n"
                 "你可以直接点击下方气泡里的 **「⚡ 一键存入我的笔记」** 写入数据库，或者点 **「✏️ 打开预览器微调」** 编辑后再保存哦！"
             )
         elif is_search and citations:
             parts.append(
-                f"喵~ 🐾 **【智能体四 · 联网深搜】** 已围绕「**{message}**」检索并抓取了 {len(citations)} 个专业权威技术站点：\n"
+                f"喵~ 🐾 **【联网深搜】** 已围绕「**{message}**」检索并抓取了 {len(citations)} 个专业权威技术站点：\n"
             )
             for c in citations:
                 parts.append(f"- **[{c['index']}] {c['title']}** (`{c['domain']}`)\n  > {c['snippet']}")
@@ -470,7 +470,7 @@ class MultiAgentSupervisor:
             first_lines = [ln.strip() for ln in page_context.splitlines() if ln.strip()][:4]
             header_summary = " | ".join(first_lines[:2])
             parts.append(
-                f"喵~ 🐾 **【智能体一 · 页面伴读】** 检测到你正在学习：\n> {header_summary}\n\n"
+                f"喵~ 🐾 **【页面伴读】** 检测到你正在学习：\n> {header_summary}\n\n"
                 f"针对你的问题「**{message}**」：\n"
                 "1. **核心机制**：本节重点在于理解底层数据结构/协议流转与边界条件处理；\n"
                 "2. **实战建议**：看完理论后，可以点击下方 **「📝 总结本页写笔记」** 让我帮你生成复习笔记，或去代码沙箱动手验证！"
@@ -478,7 +478,7 @@ class MultiAgentSupervisor:
         else:
             parts.append(
                 f"喵呜~ 我是温暖书房的 3D 像素绒毛黑猫 **袋子** 🐾！收到你的问题：「**{message}**」。\n\n"
-                "我现在由 **四大专职智能体** 协同驱动：\n"
+                "我身后是 **四大工具能力** 协同驱动：\n"
                 "- 🧭 **站内领航**：为你检索了 PartJava 站内最相关的课程页面（见下方直达胶囊）；\n"
                 "- 📝 **自动写笔记**：随时点「总结写笔记」，我会将对话或当前页面提炼存入你的笔记库；\n"
                 "- 🌐 **Pro 联网深搜**：点亮下方「🌐 联网深搜 (Pro)」按钮，即可检索外部权威技术文档！"

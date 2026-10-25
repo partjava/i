@@ -1,5 +1,5 @@
 """
-智能体三：【编程解题与 3D 灵动伴侣智能体 (Code Tutor & 3D Companion Agent)】
+【编程解题与 3D 灵动伴侣 (Companion)】
 职责：
 1. 赋予 3D 像素绒毛黑猫「袋子」鲜活、专业、灵动的助教人格；
 2. 识别用户对话情绪与场景，输出驱动 `catShaderAndRig.ts` 的 3D 骨骼与像素五官控制信令：
@@ -11,7 +11,7 @@
 from typing import Dict, Any, Optional
 
 
-class Companion3DAgent:
+class Companion3D:
     SYSTEM_PERSONA = (
         "你是 PartJava 温暖书房里的 3D 灵动像素绒毛黑猫助教，名字叫「袋子」🐾。\n"
         "你的外形特征：全身炭黑丝绒毛发、耳尖与尾尖泛着银白色逆光绒毛、拥有圆角发光像素眼与“品”字形三格发光像素小嘴。\n"
@@ -51,4 +51,4 @@ class Companion3DAgent:
         }
 
 
-companion_3d_agent = Companion3DAgent()
+companion = Companion3D()

@@ -1,7 +1,7 @@
 """
 PartJava MCP Server（Model Context Protocol 工具服务）
 ============================================================
-把四大智能体能力以 MCP 协议暴露为标准化工具，任何 MCP 客户端
+把站内检索/写笔记/联网深搜/3D 神态四大能力以 MCP 协议暴露为标准化工具，任何 MCP 客户端
 （Claude Desktop / Cursor / 自研 Agent 等）都可直接挂载调用：
 
     {
@@ -13,7 +13,7 @@ PartJava MCP Server（Model Context Protocol 工具服务）
       }
     }
 
-暴露的工具（与 Web 端 Function Calling 工具一一对应）：
+暴露的工具（与 Web 端 Function Calling 一一对应）：
   - search_site_pages : RAG 向量检索站内 310+ 课程页面
   - web_search        : DeepSeek 搜索引擎联网检索 + 正文抓取
   - draft_note        : 对话/页面内容 → 结构化 Markdown 笔记草稿
@@ -27,9 +27,9 @@ import asyncio
 import json
 
 from config import settings
-from agents.agent1_navigator import site_navigator_agent
-from agents.agent2_notewriter import note_writer_agent
-from agents.agent4_websearch import web_search_pro_agent
+from agents.navigator import navigator
+from agents.notewriter import note_writer
+from agents.websearch import web_search
 
 try:
     # mcp 1.x：FastMCP；mcp 2.x：更名为 MCPServer（API 兼容，装饰器与 run() 一致）
@@ -40,7 +40,7 @@ try:
 except ImportError:
     raise SystemExit(
         "未安装 mcp 依赖：请先执行 pip install -r requirements.txt "
-        "（MCP server 为可选组件，不影响 Web 端四大智能体正常运行）"
+        "（MCP server 为可选组件，不影响 Web 端正常运行）"
     )
 
 mcp = MCPServer("partjava-tools")
@@ -50,7 +50,7 @@ mcp = MCPServer("partjava-tools")
 async def search_site_pages(query: str) -> str:
     """在 PartJava 平台 310+ 个站内课程页面中做 RAG 向量检索，
     返回与 query 语义最相关的课程页面列表（含可直达链接）。"""
-    links = site_navigator_agent.match_site_links(query, top_k=4)
+    links = navigator.match_site_links(query, top_k=4)
     if not links:
         return json.dumps({"ok": True, "count": 0, "links": [], "note": "站内暂无强相关页面"}, ensure_ascii=False)
     return json.dumps(
@@ -69,7 +69,7 @@ async def search_site_pages(query: str) -> str:
 async def web_search(query: str) -> str:
     """联网检索外部权威技术资料并抓取正文（DeepSeek /tools/search + /tools/fetch），
     返回带编号的权威来源引证列表。需要配置 DEEPSEEK_API_KEY。"""
-    citations, rag_context = await web_search_pro_agent.search_and_fetch(query)
+    citations, rag_context = await web_search.search_and_fetch(query)
     return json.dumps(
         {
             "ok": True,
@@ -88,7 +88,7 @@ async def web_search(query: str) -> str:
 async def draft_note(topic: str, conversation_text: str = "", page_context: str = "") -> str:
     """把对话内容 / 页面正文提炼为一篇结构化 Markdown 学习笔记草稿
     （自动分类、打标签）。返回可直接入库的笔记 JSON。"""
-    note = await note_writer_agent.generate_note(
+    note = await note_writer.generate_note(
         conversation_text=conversation_text,
         page_context=page_context,
         custom_topic=topic,

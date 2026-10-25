@@ -1,5 +1,5 @@
 """
-四大智能体工具层 (Function Calling Tool Layer)
+AI Agent 工具层 (Function Calling Tool Layer)
 将站内领航 / 自动写笔记 / 联网深搜 / 3D 神态控制四大能力封装为
 OpenAI Function Calling 兼容的工具 schema 与执行器，供
 Multi-Agent Supervisor 在 plan → act → observe 循环中由 LLM 自主决策调用。
@@ -14,10 +14,10 @@ Multi-Agent Supervisor 在 plan → act → observe 循环中由 LLM 自主决�
 import json
 from typing import Any, Callable, Dict, List, Optional
 
-from agents.agent1_navigator import site_navigator_agent
-from agents.agent2_notewriter import note_writer_agent
-from agents.agent3_companion import companion_3d_agent
-from agents.agent4_websearch import web_search_pro_agent
+from agents.navigator import navigator
+from agents.notewriter import note_writer
+from agents.companion import companion
+from agents.websearch import web_search
 
 # 工具的人类可读标签与一句话说明（用于前端执行轨迹展示）
 TOOL_LABELS: Dict[str, Dict[str, str]] = {
@@ -192,7 +192,7 @@ class ToolExecutor:
         query = str(args.get("query") or "").strip()
         if not query:
             return {"ok": False, "error": "缺少检索关键词 query"}
-        links = site_navigator_agent.match_site_links(query, top_k=4)
+        links = navigator.match_site_links(query, top_k=4)
         if links:
             self.site_links = links
             self.emit("site_links", {"links": links})
@@ -210,7 +210,7 @@ class ToolExecutor:
         query = str(args.get("query") or "").strip()
         if not query:
             return {"ok": False, "error": "缺少检索词 query"}
-        citations, rag_context = await web_search_pro_agent.search_and_fetch(query)
+        citations, rag_context = await web_search.search_and_fetch(query)
         self.citations = citations
         if rag_context:
             self.rag_fragments.append(rag_context)
@@ -230,7 +230,7 @@ class ToolExecutor:
 
     async def _tool_draft_note(self, args: Dict[str, Any]) -> Dict[str, Any]:
         topic = str(args.get("topic") or "").strip()
-        note = await note_writer_agent.generate_note(
+        note = await note_writer.generate_note(
             conversation_text=self.conversation_text,
             page_context=self.page_context,
             custom_topic=topic,

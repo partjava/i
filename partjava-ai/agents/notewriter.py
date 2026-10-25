@@ -1,5 +1,5 @@
 """
-智能体二：【知识提炼与自动写笔记智能体 (Note Summarizer & Writer Agent)】
+【知识提炼与自动写笔记 (Note Writer)】
 职责：
 1. 将「对话上下文」+「当前正在浏览的课程页面正文」+「刚才联网检索到的权威资料」提炼为高质量 Markdown 学习笔记；
 2. 返回严格匹配后端 MySQL `notes` 表 (`Note.java`) 结构的 JSON：
@@ -15,7 +15,7 @@ import httpx
 from config import settings
 
 
-class NoteWriterAgent:
+class NoteWriter:
     def __init__(self) -> None:
         self.valid_categories = ["算法", "前端", "后端", "数据库", "AI", "工具", "安全", "软件工程"]
 
@@ -45,7 +45,7 @@ class NoteWriterAgent:
             }
 
         system_prompt = (
-            "你是 PartJava 温暖书房的【智能体二：知识提炼与自动写笔记专家（黑猫袋子）】。\n"
+            "你是 PartJava 温暖书房的【笔记提炼专家（黑猫袋子）】。\n"
             "请将用户提供的对话内容或当前学习页面内容，提炼整理为一篇结构严谨、重点突出的高质量 Markdown 学习笔记。\n"
             "必须只返回一个合法的 JSON 对象（不要用 ```json 包裹，不要输出多余解释），字段严格如下：\n"
             "{\n"
@@ -172,4 +172,4 @@ class NoteWriterAgent:
         }
 
 
-note_writer_agent = NoteWriterAgent()
+note_writer = NoteWriter()

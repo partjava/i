@@ -31,7 +31,7 @@ module.exports = {
         // DeepSeek（四大智能体）
         DEEPSEEK_API_KEY: 'your-deepseek-api-key',
         DEEPSEEK_BASE_URL: 'https://api.deepseek.com/v1',
-        // 可选：Python FastAPI 智能体服务地址（未启动自动走 Next.js 内置 Agent 引擎）
+        // 可选：Python FastAPI Agent 服务地址（未启动自动走 Next.js 内置 Agent 引擎）
         FASTAPI_AGENT_URL: 'http://127.0.0.1:8000'
       },
       instances: 1,

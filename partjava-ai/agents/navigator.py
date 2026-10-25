@@ -1,5 +1,5 @@
 """
-智能体一：【站内领航与页面伴读智能体 (Site Navigator & Page-Reader Agent)】
+【站内领航与页面伴读 (Site Navigator)】
 职责：
 1. 自动解析 `app/_shared/data/navigation.ts`，构建全站 310+ 学习页面与功能页路由知识库；
 2. 根据用户提问检索最匹配的站内页面（返回可直接点击跳转的 `siteLinks` 胶囊列表）；
@@ -12,7 +12,7 @@ from config import settings
 from agents.rag_index import rag_index
 
 
-class SiteNavigatorAgent:
+class SiteNavigator:
     def __init__(self) -> None:
         self.routes: List[Dict[str, str]] = []
         self._load_routes()
@@ -203,7 +203,7 @@ class SiteNavigatorAgent:
         if matched_links:
             lines = [f"- 《{m['name']}》 (路径: `{m['href']}`)" for m in matched_links]
             links_text = (
-                "\n【智能体一 · 检索到的 PartJava 站内相关页面】:\n"
+                "\n【站内检索 · 命中的 PartJava 相关课程页面】:\n"
                 + "\n".join(lines)
                 + "\n请在回答中自然地向用户推荐这些站内页面（可写成 Markdown 链接如 `[Java · 多线程与并发](/study/computer/java/thread)`）。"
             )
@@ -211,7 +211,7 @@ class SiteNavigatorAgent:
         page_ctx_text = ""
         if page_context and page_context.strip():
             page_ctx_text = (
-                f"\n【智能体一 · 用户当前正在浏览的 PartJava 页面正文上下文】:\n"
+                f"\n【用户当前正在浏览的 PartJava 页面正文上下文】:\n"
                 f"{page_context[:12000]}\n"
                 "如果用户的问题与当前页面相关，请优先结合当前页面内容深入浅出地讲解！"
             )
@@ -219,4 +219,4 @@ class SiteNavigatorAgent:
         return links_text + page_ctx_text, matched_links
 
 
-site_navigator_agent = SiteNavigatorAgent()
+navigator = SiteNavigator()
