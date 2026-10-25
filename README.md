@@ -1,6 +1,6 @@
 # PartJava 智能学习平台
 
-![平台首页全貌](https://github.com/partjava/i/blob/main/public/images/images/homepage-overview.png)
+<!-- 首页全景图：待新截图后放回 public/images/images/ 并恢复此行 -->
 
 > **2026 传智杯 · AI Web 网页开发挑战赛参赛作品** —— AI Native 编程学习平台：3D AI 伴侣「禾桔」以 Function Calling Agent 驱动站内 RAG 检索、联网深搜、笔记提炼与 3D 神态控制。
 
