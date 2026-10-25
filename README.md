@@ -123,6 +123,9 @@ cd partjava-ai && python mcp_server.py   # stdio 传输的 MCP Server
 **AI 书房（3D 伴侣「禾桔」）**
 原生 Three.js 实现，不依赖 react-three-fiber：受限 OrbitControls + ACES 色调映射 + 双侧轮廓光构成摄影棚布光，灯光颜色/强度/曝光作为「情绪参数」随对话状态（思考/联网/发言/庆祝）逐帧插值。猫本体是 GLB 模型经 `buildRiggedCatFromGLB` 重装：自定义 shader 实现炭黑绒毛、Fresnel 逆光银边、Canvas 纹理绘制的像素五官；呼吸、转头、动耳、摇尾等动画全部在**顶点着色器**中按蒙皮权重变形完成，表面绒毛簇是 InstancedMesh，其材质注入同一套变形逻辑——毛根锚点与身体逐顶点同步，毛向随旋转矩阵转动。灵气系统包括：注意力状态机（输入时看输入框、语音时侧耳、无操作时打瞌睡被唤醒）、空闲微动作导演、射线检测的摸猫分区反馈、基于 localStorage 的亲密度记忆（影响微动作频率并注入对话上下文）。对话层为 SSE 流式渲染，Agent 的 plan → act → observe 每一步实时进入执行轨迹面板，思维气泡通过嘴部三维坐标的实时投影定位在猫头顶。
 
+**3D 算法可视化实验室（`visualizer/` 插件体系）**
+算法执行与渲染彻底解耦的注册表架构：每个算法实现为两个纯函数——`generateSteps` 把算法执行过程预生成为步骤序列（数据），`render` 把单个步骤渲染到 THREE.Group（视图）；`SceneManager` 独立管理场景/光照/阴影/相机的生命周期与自适应，HUD 徽章与光效由 Canvas 纹理精灵缓存提供。播放控制只是步骤数组上的游标（步进/暂停/变速），新增算法只需在领域模块里实现两个函数并注册。领域模块覆盖排序与查找、数据结构（AVL/BST/图遍历/动态规划）、数学曲面（Mandelbrot/Lorenz/环面/Klein 瓶等参数曲面网格）与机器学习（K-Means/梯度下降/神经网络/决策树/SVM/PCA/Transformer），嵌入代码沙箱页供边学边验证。
+
 **编程挑战宇宙**
 星图关卡地图采用 DOM 变换布局，星空与星尘是两层 Canvas 粒子（`StarBackground`/`SpaceDust`）；题目体系分离为数据文件（阶段/关卡/测验结构化定义），渲染层包含知识树、测验工作台、Monaco 代码面板、AI 导师侧栏与 SVM 等算法可视化组件；思考题由后端调用大模型按题目自带评分 Prompt 输出结构化分数与评语，数学公式经 remark-math/rehype-katex 渲染。
 
