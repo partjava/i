@@ -11,7 +11,7 @@ import {
   CatFaceTuning
 } from '../cat/catProfiles';
 import { buildRiggedCatFromGLB, RiggedCatController } from '../cat/catShaderAndRig';
-import styles from '../../AI3DRobot.module.css';
+import styles from '../AI3DRobot.module.css';
 import type { CatPosture, StageMood, ThoughtBubbleState } from './types';
 
 export interface CatStageProps {

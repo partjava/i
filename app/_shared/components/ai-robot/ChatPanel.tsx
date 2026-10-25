@@ -7,7 +7,7 @@ const vscDarkPlus =
   require('react-syntax-highlighter/dist/styles/vs2015').default ||
   require('react-syntax-highlighter/dist/styles/vs2015');
 import remarkGfm from 'remark-gfm';
-import styles from '../../AI3DRobot.module.css';
+import styles from '../AI3DRobot.module.css';
 import TracePanel from './TracePanel';
 import type { BubbleSide, Message } from './types';
 

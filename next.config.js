@@ -124,6 +124,20 @@ const nextConfig = {
   poweredByHeader: false,      // 移除X-Powered-By头，增强安全性
   output: 'standalone',        // 生成独立部署包，便于容器化
   
+  // Webpack 配置：处理原生 .node 模块与客户端外部依赖
+  webpack: (config, { isServer }) => {
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      'sharp$': false,
+      'onnxruntime-node$': false,
+    };
+    config.module.rules.push({
+      test: /\.node$/,
+      use: 'ignore-loader',
+    });
+    return config;
+  },
+
   // 代码质量控制（保留严格模式）
   typescript: { ignoreBuildErrors: false },
   eslint: { ignoreDuringBuilds: false },

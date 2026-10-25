@@ -27,7 +27,8 @@ let embedderPromise: Promise<any> | null = null;
 export async function getEmbedder(onProgress?: (pct: number) => void): Promise<any> {
   if (!embedderPromise) {
     embedderPromise = (async () => {
-      const { pipeline, env } = await import('@huggingface/transformers');
+      // @ts-ignore
+      const { pipeline, env } = await import(/* webpackIgnore: true */ 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.3.3');
       env.allowLocalModels = false;
       const embedder = await pipeline('feature-extraction', 'Xenova/multilingual-e5-small', {
         dtype: 'q8',

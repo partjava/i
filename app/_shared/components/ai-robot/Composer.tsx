@@ -1,7 +1,7 @@
 'use client';
 
 import { SendOutlined } from '@ant-design/icons';
-import styles from '../../AI3DRobot.module.css';
+import styles from '../AI3DRobot.module.css';
 import type { QuickAction } from './types';
 
 export interface ComposerProps {
