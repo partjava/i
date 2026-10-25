@@ -30,7 +30,7 @@
 
 1. **打开 [www.partjava.com](https://www.partjava.com)，用测试账号登录**，点击页面中的 3D 黑猫「禾桔」
 2. **看 Agent 自主决策**：问「帮我找 Java 多线程的课程，顺便让它跳一下」——LLM 会自主调用 RAG 检索 + 3D 神态控制两个工具，气泡上方实时显示 💭plan → ⚡act → ✓observe 执行轨迹，猫会真的跳
-3. **看 RAG 效果**：问「Transformer 注意力机制」「SQL 注入防护」，直达最相关课程页（509 页混合检索）
+3. **看 RAG 效果**：问「Transformer 注意力机制」「SQL 注入防护」，直达最相关课程页（全站课程混合检索）
 4. **看多模态**：对话框 🎤 语音输入、🔊 朗读开关、📦 端侧语义缓存（首次开启下载模型后，相似问题离线秒回）
 5. **看 AI 闭环**：课程页快捷操作随路由变化（出练习题/笔记提炼）、挑战页 AI 评分、AI 笔记一键入库
 6. **架构详见下文**：双引擎冗余 Agent / 端云协同 RAG / MCP Server，源码入口在 `app/api/ai/agent/stream/` 与 `partjava-ai/`
@@ -40,12 +40,12 @@
 ## 🌟 项目亮点
 
 - **🤖 Function Calling AI Agent**：3D 黑猫「禾桔」由 plan → act → observe 自主决策循环驱动，站内领航 / 联网深搜 / 自动写笔记 / 3D 神态控制四大工具由 LLM 自主调度，执行轨迹实时可视化
-- **🔍 端云协同 RAG**：509 个课程页向量化（4096 维特征哈希 TF-IDF）构建检索索引，混合打分（0.6×余弦 + 0.4×标题词面），Next.js 与 Python 双端共享同一向量空间
+- **🔍 端云协同 RAG**：全站课程页向量化（特征哈希 TF-IDF）构建检索索引，混合打分（0.6×余弦 + 0.4×标题词面），Next.js 与 Python 双端共享同一向量空间
 - **🔌 MCP 协议支持**：四大 AI 工具同时以 MCP 标准 Server 暴露（`partjava-ai/mcp_server.py`），可被 Claude Desktop / Cursor 等任意 MCP 客户端挂载
 - **🎙️ 多模态交互**：Web Speech API 语音输入 + TTS 朗读；Transformers.js 浏览器端语义缓存（相似问题离线秒回）
 - **💻 在线代码执行**：Judge0 CE + Spring Boot 代理，支持 10 种语言沙箱运行
-- **🐾 3D 算法可视化**：覆盖 21 种算法的 Three.js 3D 动态演示
-- **🏆 成就徽章系统**：15 个成就，数据驱动自动解锁
+- **🐾 3D 算法可视化**：排序/数学曲面/AI 算法的 Three.js 3D 动态演示
+- **🏆 成就徽章系统**：事件驱动架构，学习行为自动解锁成就
 - **📈 数据可视化大屏**：ECharts 实时统计 + 学习热力图
 - **🎨 中国水墨画 UI**：纯 SVG 山水/云雾/墨竹/飞鸟装饰
 - **🔐 多层安全防护**：密钥全环境变量化 + 速率限制 + HTTP 安全头 + 输入校验 + 优雅降级
@@ -64,7 +64,7 @@
 
 ### 2. 端云协同 RAG 知识检索
 
-- **索引构建**：`node scripts/build-rag-index.mjs` 扫描 509 个课程页，抽取文本 → 中文 bigram + 英文词分词 → FNV-1a 特征哈希到 4096 维 → TF-IDF 加权归一化
+- **索引构建**：`node scripts/build-rag-index.mjs` 扫描全站课程页，抽取文本 → 中文 bigram + 英文词分词 → FNV-1a 特征哈希到 4096 维 → TF-IDF 加权归一化
 - **混合检索**：0.6 × 向量余弦 + 0.4 × 标题词面匹配，低置信自动回落关键词层
 - **端侧语义缓存**：浏览器内 Transformers.js（multilingual-e5-small）对问答对做语义匹配，命中即离线秒回
 
@@ -93,60 +93,90 @@ cd partjava-ai && python mcp_server.py   # stdio 传输的 MCP Server
 
 ---
 
-## 技术栈
+## 技术架构
 
-### 前端
-- **框架**：Next.js 14 (App Router) + React 18 + TypeScript（strict 模式）
-- **UI**：Ant Design 5.x + Tailwind CSS 3.x
-- **3D**：Three.js + WebGL（懒加载，不拖累首屏）
-- **AI 交互**：SSE 流式渲染、Function Calling 执行轨迹面板、Web Speech 语音输入/朗读
-- **端侧 AI**：Transformers.js（multilingual-e5-small 语义缓存）
-- **代码编辑器**：Monaco Editor
-- **可视化**：ECharts + D3.js
-
-### 后端
-- **主后端**：Java 21 + Spring Boot 3.3 + MyBatis-Plus + Spring Security (JWT)
-- **AI 服务**：Python FastAPI Agent 服务（`partjava-ai/`），与 Next.js 内置引擎互为冗余
-- **数据库**：MySQL 8.0（25 张表）+ Redis 7
-
-### 部署
-- **Web 服务器**：Nginx 反向代理 + Let's Encrypt SSL 自动续期
-- **进程管理**：PM2（配置模板见 `ecosystem.config.example.js`，真实配置在私有数据仓）
-
----
-
-## 项目结构
+### 总体架构
 
 ```
-partjava/
-├── app/                          # Next.js 前端
-│   ├── admin/                    # 管理后台
-│   ├── api/ai/agent/stream/      # AI Agent SSE 流式接口
-│   │   ├── route.ts              #   Agent 循环（FastAPI 代理 + 内置引擎双链路）
-│   │   └── lib.ts                #   纯逻辑层：RAG 检索/工具 schema/工具执行器（含单测）
-│   ├── challenges/               # 编程挑战宇宙
-│   ├── code/                     # 在线代码编辑器
-│   ├── notes/                    # 智能笔记系统
-│   ├── study/                    # 四大学科学习内容（509 页）
-│   ├── _shared/lib/edge-ai.ts    # Transformers.js 端侧语义缓存
-│   ├── _shared/data/rag-index.json  # RAG 向量索引（构建产物，可重建）
-│   └── _shared/components/       # 全局组件（AI3DRobot 3D 黑猫等）
-├── partjava-ai/                  # Python 多智能体服务
-│   ├── agents/                   #   router(调度循环) / navigator / notewriter / websearch / companion / rag_index
-│   ├── mcp_server.py             #   MCP 标准 Server（stdio）
-│   └── main.py                   #   FastAPI 入口（:8000）
-├── partjava-backend/             # Spring Boot 后端
-│   └── src/main/java/com/partjava/
-│       ├── controller/           # REST API
-│       ├── service/              # 业务逻辑
-│       ├── common/utils/JwtUtils # JWT（密钥仅环境变量注入）
-│       └── config/               # Security / Redis / MyBatis
-├── scripts/
-│   ├── schema.sql                # 脱敏建表语句（25 张表，无数据）
-│   └── build-rag-index.mjs       # RAG 索引构建脚本
-├── ecosystem.config.example.js   # PM2 配置模板
-└── docs/                         # 设计文档
+浏览器
+ ├─ Next.js 前端（App Router · React 18 · TypeScript strict）
+ │   ├─ AI 书房：Three.js WebGL 渲染 + SSE 流式对话 + Web Speech 语音
+ │   ├─ Sanctuary 开屏：iframe 嵌入独立 WebGL 单页应用
+ │   └─ middleware：按 IP + 路径的内存限流、HTTPS 跳转
+ ├─ Next.js API 层
+ │   ├─ Agent 引擎：Function Calling 循环 + RAG 检索（SSE 输出）
+ │   └─ /api/* 透明代理 → Spring Boot
+ ├─ Python FastAPI Agent 服务（与内置引擎同构互备）+ MCP Server
+ └─ Spring Boot 后端（业务 + JWT 安全 + 服务端权威游戏引擎）
+      ├─ MySQL 8 / Redis
+      └─ DeepSeek API · Judge0 代码沙箱
 ```
+
+### 页面与模块的实现方式
+
+**首页与 Sanctuary 开屏**
+首屏是一个独立的 WebGL 单页应用（`public/sanctuary/`），按场景、音频、全息书、桌面配饰、导演控制器等模块组织，经 iframe 嵌入首页并与主站通过 postMessage 通信：滚轮事件穿透到外层滚动容器、`IntersectionObserver` 检测滚出视口后通知内层暂停渲染释放 GPU。首屏以下是统计卡（接口失败自动隐藏的容错设计）、学习分类 mega menu、全局快速搜索、以「桌面文件夹」为隐喻的工具导航舞台（容器支持拖拽调整宽度与内容密度），整体视觉由程序化生成的 SVG 水墨装饰（山水/云雾/墨竹/飞鸟）贯穿收尾。
+
+**学习内容（四大领域课程体系）**
+课程内容以结构化数据常量描述，由统一的书籍 UI 体系渲染——封面、翻页 spreads、正文版式、主题令牌分层组件，新增课程只需添加数据、无需编写布局。每个学习页由布局层自动注入学习追踪器：定时轮询上报学习时长，页面关闭时用 `sendBeacon` 兜底，保证时长统计不丢失；学习进度写入 `study_progress` 表驱动进度面板。课程页内置自研截图标注编辑器：html2canvas 采集 + Canvas 命令栈模式（每步操作是栈上的命令对象，天然支持撤销/重做），画笔、矩形、箭头、文字、剪贴板粘贴皆为实现该接口的命令。
+
+**AI 书房（3D 伴侣「禾桔」）**
+原生 Three.js 实现，不依赖 react-three-fiber：受限 OrbitControls + ACES 色调映射 + 双侧轮廓光构成摄影棚布光，灯光颜色/强度/曝光作为「情绪参数」随对话状态（思考/联网/发言/庆祝）逐帧插值。猫本体是 GLB 模型经 `buildRiggedCatFromGLB` 重装：自定义 shader 实现炭黑绒毛、Fresnel 逆光银边、Canvas 纹理绘制的像素五官；呼吸、转头、动耳、摇尾等动画全部在**顶点着色器**中按蒙皮权重变形完成，表面绒毛簇是 InstancedMesh，其材质注入同一套变形逻辑——毛根锚点与身体逐顶点同步，毛向随旋转矩阵转动。灵气系统包括：注意力状态机（输入时看输入框、语音时侧耳、无操作时打瞌睡被唤醒）、空闲微动作导演、射线检测的摸猫分区反馈、基于 localStorage 的亲密度记忆（影响微动作频率并注入对话上下文）。对话层为 SSE 流式渲染，Agent 的 plan → act → observe 每一步实时进入执行轨迹面板，思维气泡通过嘴部三维坐标的实时投影定位在猫头顶。
+
+**编程挑战宇宙**
+星图关卡地图采用 DOM 变换布局，星空与星尘是两层 Canvas 粒子（`StarBackground`/`SpaceDust`）；题目体系分离为数据文件（阶段/关卡/测验结构化定义），渲染层包含知识树、测验工作台、Monaco 代码面板、AI 导师侧栏与 SVM 等算法可视化组件；思考题由后端调用大模型按题目自带评分 Prompt 输出结构化分数与评语，数学公式经 remark-math/rehype-katex 渲染。
+
+**在线代码沙箱**
+Monaco Editor 封装为受控组件，运行链路为前端提交 → Spring Boot 代理 Judge0 CE（异步轮询取结果 + Base64 解码）→ 返回 stdout/耗时/内存，支持标准输入与多种语言。
+
+**笔记系统**
+列表/详情/编辑三段式，Markdown 全程 ReactMarkdown 渲染，三级分类 + 多标签筛选。特色在与 AI 的闭环：对话中一句话生成结构化笔记草稿（标题/分类/标签由模型产出并经多层 JSON 容错解析），预览弹窗微调后一键入库，形成「学 → 问 → 记」的最短路径。
+
+**个人中心与数据可视化**
+ECharts 驱动学习热力图（类 GitHub 贡献图）与折线/饼/雷达多维度统计；成就是事件驱动架构——用户行为发布为 Spring 事件，监听器自动判定解锁条件并落库，前端只消费结果。
+
+**游戏中心（服务端权威架构）**
+游戏逻辑全部运行在 Java 引擎层：`GameEngine` 基类派生实时与回合制两类引擎，实时类（贪吃蛇/俄罗斯方块等）由服务端按 tick 演进状态并经 SSE 逐帧下发，回合类（数独/五子棋等）按步计算校验；前端 Canvas 只负责渲染与输入采集，另配 TypeScript 物理模块处理本地手感。逻辑在服务端意味着天然防作弊，且同一引擎可服务任意客户端。
+
+**管理后台**
+按 Dashboard / 用户 / 挑战 / 笔记分 Tab，另有系统健康监控与服务端终端控制台（走 ADMIN 角色鉴权的专用接口）。
+
+**移动端与 PWA**
+底部导航 + 边缘手势（滑动返回/呼出菜单）+ Vibration API 触觉反馈；Service Worker 采用版本化缓存策略——静态资源缓存优先、动态页面网络优先、API 永不缓存、离线页预缓存，断网时可优雅降级到离线提示页。
+
+### 服务端实现
+
+**Next.js API 层（TypeScript）**
+`/api/ai/agent/stream` 先代理 FastAPI 服务（超时快速失败），不可用时无缝切换到内置 Agent 引擎——两套引擎共用同一工具 Schema、SSE 事件协议与 RAG 向量空间（`lib.ts` 纯逻辑层，RAG 检索/工具执行器在此并接受单测）。RAG 索引由构建脚本扫描课程页生成：中文二元分词 + 英文词元 → FNV-1a 特征哈希到固定维度 → 次线性 TF-IDF 加权归一化，检索时混合「向量余弦 + 标题词面」打分，低置信自动回落关键词层。端侧模块通过 `webpackIgnore` 的运行时 CDN import 加载 Transformers.js，完全不进构建产物。
+
+**Python FastAPI Agent 服务（`partjava-ai/`）**
+模块化组织：调度循环（router）、站内领航（navigator）、笔记提炼（notewriter）、联网检索（websearch）、3D 伴侣状态（companion）、向量检索（rag_index）。工具层同时以 **MCP 标准 Server**（stdio 传输，兼容 MCP SDK 两代 API）暴露，可被 Claude Desktop / Cursor 等客户端直接挂载。密钥统一从私有数据仓的 dotenv 加载，代码零硬编码。
+
+**Spring Boot 后端（Java 21）**
+经典分层（controller / service / repository + MyBatis-Plus），安全上 JWT 无状态认证 + BCrypt + 默认拒绝的路由策略（显式放行公开只读接口）、生产环境经环境变量关闭 Swagger。成就系统用 Spring 事件解耦；游戏包独立成 controller/engine/model/service/store 完整子系统；数据库结构变更在启动期由迁移配置器执行。
+
+### 数据与本地资产
+
+- **MySQL**：业务库（建表语句见 `scripts/schema.sql`，与数据分离）
+- **Redis**：高频查询缓存
+- **RAG 索引**：`rag-index.json` 为构建产物，课程变更后一条命令重建
+- **浏览器本地**：主题偏好、禾桔亲密度、端侧语义缓存（向量化的问答对）
+- **密钥**：全部环境变量注入，真实值仅存于私有数据仓
+
+### 关键依赖与用途
+
+| 依赖 | 在项目中的用途 |
+|------|----------------|
+| next / react / typescript | App Router 框架与 strict 类型底座 |
+| antd / tailwindcss | 企业级组件 + 原子化样式双体系；全局语义色彩令牌驱动主题 |
+| three | AI 书房与 Sanctuary 的 WebGL 渲染 |
+| @monaco-editor/react | 在线代码编辑器内核 |
+| echarts | 热力图与统计大屏 |
+| framer-motion | 界面过渡与微交互动画 |
+| react-markdown + remark/rehype 系 | 对话流、笔记、课程内容的 Markdown 与公式、代码高亮渲染 |
+| html2canvas / qrcode | 截图编辑器采集 / 笔记分享二维码 |
+| fastapi / uvicorn / httpx / mcp | Python Agent 服务与 MCP Server |
+| spring-boot / mybatis-plus / jjwt / spring-security | 后端框架、ORM、JWT、安全 |
 
 ---
 
