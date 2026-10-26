@@ -17,6 +17,10 @@ import NotePreviewModal from './ai/NotePreviewModal';
 import CatStage from './ai-robot/CatStage';
 import ChatPanel from './ai-robot/ChatPanel';
 import Composer from './ai-robot/Composer';
+import HistoryPanel from './ai-robot/HistoryPanel';
+import { useHejuArchive } from './ai-robot/useHejuArchive';
+import { useAuth } from '../hooks/useAuth';
+import { conversationHistory, cacheScope } from './ai/conversation';
 import styles from './AI3DRobot.module.css';
 import {
   Message,
@@ -119,6 +123,27 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
       timestamp: new Date(),
     }
   ]);
+  const { data: session, status: authStatus } = useAuth();
+  const account = authStatus === 'authenticated' ? session?.user.id || null : null;
+  const archive = useHejuArchive(account, setMessages);
+  const [showArchive, setShowArchive] = useState(false);
+  const accountRef = useRef(account);
+  accountRef.current = account;
+  const requestRef = useRef<AbortController | null>(null);
+  const dispatchLock = useRef(false);
+  const dispatchGeneration = useRef(0);
+  useEffect(() => {
+    requestRef.current?.abort();
+    dispatchGeneration.current++;
+    dispatchLock.current = false;
+    setIsTyping(false);
+    setSearchStatusText(null);
+    setThought(null);
+    fullAnswerRef.current = "";
+    setShowArchive(false);
+    setShowHistoryMode(false);
+    return () => { requestRef.current?.abort(); };
+  }, [account]);
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [searchStatusText, setSearchStatusText] = useState<string | null>(null);
@@ -433,15 +458,35 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
   // ============================================================
   // 核心：Agent SSE 流式调度（驱动猫嘴 / 执行轨迹 / 思维气泡 / 灯光）
   // ============================================================
-  const dispatchAgentMessage = async (
+  const dispatchAgentMessage = async (text: string, opts?: { explicitAgent?: string; forceSearch?: boolean }) => {
+    if (dispatchLock.current || authStatus === 'loading' || archive.loading) return;
+    const generation = ++dispatchGeneration.current;
+    dispatchLock.current = true;
+    try { await performAgentMessage(text, opts); }
+    finally { if (generation === dispatchGeneration.current) dispatchLock.current = false; }
+  };
+
+  const performAgentMessage = async (
     rawText: string,
     opts?: { explicitAgent?: string; forceSearch?: boolean }
   ) => {
     const text = rawText.trim();
     if (!text || isTyping) return;
+    const owner = account;
+    const request = new AbortController();
+    requestRef.current = request;
+    const historySnapshot = conversationHistory(messages.map(m => ({
+      id: m.id, role: m.sender === 'user' ? 'user' as const : 'assistant' as const, content: m.text, failed: m.failed,
+    })));
+    const { pathname, contextText } = collectCurrentPageContext();
+    let scope = '';
+    try { scope = await cacheScope(owner || 'guest', pathname, contextText, historySnapshot); } catch { /* cache unavailable */ }
+    if (request.signal.aborted || accountRef.current !== owner) return;
+
 
     const useSearch = opts?.forceSearch ?? enableWebSearchProxyRef.current;
     setShowBubble(true);
+    setShowHistoryMode(false);
     setSavedNoteTip(null);
     fullAnswerRef.current = '';
 
@@ -456,9 +501,10 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
         const { embedText, findSemanticMatch } = await import('@shared/lib/edge-ai');
         if (edgeStatus !== 'ready') setEdgeStatus('loading');
         const qVec = await embedText(text, pct => setEdgeProgress(pct));
+        if (request.signal.aborted || accountRef.current !== owner) return;
         setEdgeStatus('ready');
         if (qVec) {
-          const hit = findSemanticMatch(qVec);
+          const hit = findSemanticMatch(qVec, scope);
           if (hit && Date.now() - hit.ts < 7 * 24 * 3600 * 1000) {
             const now = Date.now();
             setMessages(prev => [
@@ -477,6 +523,7 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
             activeCatRef.current?.triggerHappyJump?.();
             setStageMoodTemp('celebrate', 1200);
             if (ttsOn) speakAnswer(hit.a);
+            await archive.save(text, hit.a);
             return;
           }
         }
@@ -491,10 +538,7 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
       id: aiMsgId, text: '', sender: 'ai', timestamp: new Date(),
       siteLinks: [], citations: [], activeAgents: []
     };
-    const historySnapshot = messages.slice(-6).map(m => ({
-      role: m.sender === 'user' ? 'user' : 'assistant',
-      content: m.text
-    }));
+
 
     setMessages(prev => [...prev, userMsg, placeholderAiMsg]);
     setInputValue('');
@@ -506,11 +550,14 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
     activeCatRef.current?.setMood('curious');
     activeCatRef.current?.setTalking(true);
 
-    const { pathname, contextText } = collectCurrentPageContext();
+    let streamCompleted = false;
+    let responseFailed = false;
+    let cacheable = true;
     const hint = companionHint();
 
     try {
       const response = await fetch('/api/ai/agent/stream', {
+        signal: request.signal,
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -534,6 +581,7 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
 
       while (true) {
         const { value, done } = await reader.read();
+        if (request.signal.aborted || accountRef.current !== owner) return;
         if (done) break;
         buffer += decoder.decode(value, { stream: true });
         const blocks = buffer.split('\n\n');
@@ -553,6 +601,7 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
             const payload = JSON.parse(dataRaw);
 
             if (eventName === 'agent_meta') {
+              if (payload.offline) cacheable = false;
               const reaction = payload.reaction || {};
               if (reaction.posture === 'crouching' || reaction.posture === 'standing') {
                 activatePostureModel(reaction.posture);
@@ -659,46 +708,57 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
               activeCatRef.current?.setTalking(false);
               setThought(null);
               setStageMoodTemp('celebrate', 1300);
-              if (fullAnswerRef.current) {
-                if (ttsOn) speakAnswer(fullAnswerRef.current);
-                if (edgeAiOn && fullAnswerRef.current.length > 12) {
-                  import('@shared/lib/edge-ai')
-                    .then(({ embedText, saveEdgeCacheEntry }) =>
-                      embedText(text).then(vec => {
-                        if (vec) saveEdgeCacheEntry(text, fullAnswerRef.current, vec);
-                      })
-                    )
-                    .catch(() => {});
-                }
-              }
+              streamCompleted = payload.ok !== false;
+              if (fullAnswerRef.current && ttsOn) speakAnswer(fullAnswerRef.current);
             }
           } catch {
             // ignore malformed chunk
           }
         }
       }
+      if (!streamCompleted || !fullAnswerRef.current.trim()) throw new Error('回答连接中断');
     } catch (err) {
+      if (request.signal.aborted || accountRef.current !== owner) return;
+      cacheable = false;
       console.error('流式回答不可用，尝试普通对话接口:', err);
       setThought(null);
       try {
         const fallbackRes = await fetch('/api/ai/chat', {
+          signal: request.signal,
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message: text, pageContext: contextText })
+          body: JSON.stringify({ message: text, pageContext: contextText, history: historySnapshot })
         });
         const data = await fallbackRes.json();
+        if (!fallbackRes.ok || data.success === false) throw new Error('普通回答接口失败');
+        if (request.signal.aborted || accountRef.current !== owner) return;
         const reply = data?.reply || data?.answer || '喵~ 我刚刚走神啦，请再和我说一次吧！';
-        setMessages(prev => prev.map(m => (m.id === aiMsgId ? { ...m, text: reply } : m)));
+        fullAnswerRef.current = reply;
+        setMessages(prev => prev.map(m => (m.id === aiMsgId ? { ...m, text: reply, notice: '流式连接中断，已切换为普通回答，并保留对话背景。' } : m)));
       } catch {
+        if (request.signal.aborted || accountRef.current !== owner) return;
+        responseFailed = true;
         setMessages(prev =>
           prev.map(m =>
             m.id === aiMsgId
-              ? { ...m, text: '喵呜~ 网络好像打了个盹，你可以试试点击下方快捷按钮或稍后重试🐾' }
+              ? { ...m, text: '这次回答未完成，请点击重试。', failed: true, retryText: text }
               : m
           )
         );
       }
     } finally {
+      const completedAnswer = fullAnswerRef.current;
+      if (!request.signal.aborted && accountRef.current === owner && !responseFailed && completedAnswer.trim()) {
+        await archive.save(text, completedAnswer);
+        if (edgeAiOn && cacheable && scope && completedAnswer.length > 12) {
+          // Capture the completed response; never read a mutable answer ref in a later promise.
+          import('@shared/lib/edge-ai').then(async ({embedText, saveEdgeCacheEntry}) => {
+            const vec = await embedText(text);
+            if (vec && !request.signal.aborted && accountRef.current === owner) saveEdgeCacheEntry(text, completedAnswer, vec, scope);
+          }).catch(() => {});
+        }
+      }
+      if (request.signal.aborted || accountRef.current !== owner) return;
       setIsTyping(false);
       setSearchStatusText(null);
       setThought(null);
@@ -714,8 +774,7 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
   enableWebSearchProxyRef.current = enableWebSearch;
 
   // 用户输入活动（驱动猫看输入框）
-  const handleInputChange = useCallback((v: string) => {
-    setInputValue(v);
+  const handleInputChange = useCallback(() => {
     setUserTyping(true);
     if (userTypingTimerRef.current) clearTimeout(userTypingTimerRef.current);
     userTypingTimerRef.current = setTimeout(() => setUserTyping(false), 2200);
@@ -901,13 +960,24 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
               searchStatusText={searchStatusText}
               savingNote={savingNote}
               savedNoteTip={savedNoteTip}
-              onToggleHistory={() => setShowHistoryMode(!showHistoryMode)}
+              onToggleHistory={() => { setShowArchive(true); void archive.refresh(); }}
               onToggleSide={() => setBubbleSide(prev => (prev === 'right' ? 'left' : 'right'))}
               onCollapse={() => setShowBubble(false)}
               onNavigate={handleNavigate}
+              onRetry={(text) => { void dispatchAgentMessage(text); }}
               onPreviewNote={(note) => { setPreviewNote(note); setShowNotePreview(true); }}
             />
           )}
+
+          {archive.error && !showArchive && <div role="alert" className="absolute top-2 left-1/2 -translate-x-1/2 z-30 max-w-md px-3 py-2 rounded-lg bg-[#34281d] text-amber-100 text-xs">{archive.error}</div>}
+          {showArchive && <HistoryPanel
+            sessions={archive.sessions} loading={archive.loading} error={archive.error} signedIn={!!account}
+            disabled={isTyping || authStatus === 'loading'} activeId={archive.activeId}
+            onClose={() => setShowArchive(false)} onRefresh={() => { void archive.refresh(); }}
+            onNew={() => { if (dispatchLock.current) return; archive.newChat(); setShowArchive(false); setShowHistoryMode(false); setShowBubble(true); }}
+            onCurrent={() => { setShowArchive(false); setShowHistoryMode(true); setShowBubble(true); }}
+            onChoose={async id => { if (dispatchLock.current) return; if (await archive.choose(id)) { setShowArchive(false); setShowHistoryMode(true); setShowBubble(true); } }}
+          />}
 
           {/* 气泡收起时的一键唤起 */}
           {!isLoading && !showBubble && (

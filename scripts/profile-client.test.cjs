@@ -76,3 +76,14 @@ test('achievement progress follows real unlocked list instead of unrelated thres
   assert.deepEqual(getAchievementSummary([], { total: 15, earned: 3 }), { total: 15, earned: 3, percent: 20 });
   assert.deepEqual(getAchievementSummary([], { total: 0, earned: 0 }), { total: 0, earned: 0, percent: 0 });
 });
+
+
+test('avatar conversion preserves alpha instead of painting a white JPEG', async () => {
+  const previous = { FileReader: global.FileReader, Image: global.Image, document: global.document };
+  let format;
+  global.FileReader = class { readAsDataURL() { this.result = 'data:image/png;base64,source'; this.onload(); } };
+  global.Image = class { width = 800; height = 400; set src(value) { this.onload(); } };
+  global.document = { createElement: () => ({ getContext: () => ({ drawImage() {}, fillRect() { throw new Error('alpha flattened'); } }), toDataURL(type) { format = type; return `data:${type};base64,transparent`; } }) };
+  try { assert.equal(await compressAvatar({ type: 'image/png' }), 'data:image/png;base64,transparent'); assert.equal(format, 'image/png'); }
+  finally { Object.assign(global, previous); }
+});

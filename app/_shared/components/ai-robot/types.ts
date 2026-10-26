@@ -21,6 +21,8 @@ export interface CitationItem {
   url: string;
   domain: string;
   snippet: string;
+  source?: 'live' | 'recommended';
+  contentFetched?: boolean;
 }
 
 export interface NoteDraftItem {
@@ -53,6 +55,9 @@ export interface Message {
   modelUsed?: string;
   agentSteps?: AgentStepItem[];
   offline?: boolean;
+  failed?: boolean;
+  retryText?: string;
+  notice?: string;
 }
 
 export type CatPosture = 'standing' | 'crouching' | 'custom';
@@ -74,10 +79,12 @@ export function collectCurrentPageContext(): { pathname: string; contextText: st
     return { pathname: '', contextText: '' };
   }
   const pathname = window.location.pathname;
-  const h = document.querySelector('main h1, main h2, h1');
+  const contentRoot = document.querySelector('#study-book-root') || document.querySelector('main');
+  const h = contentRoot?.querySelector('h1, h2') || document.querySelector('h1');
   const title = h?.textContent?.trim() || document.title || '';
-  const mainEl = document.querySelector('main');
-  const rawText = mainEl?.textContent || '';
+  const copy = contentRoot?.cloneNode(true) as HTMLElement | undefined;
+  copy?.querySelectorAll('button, nav, aside, script, style, [role=tablist], [data-ai-exclude]').forEach(node => node.remove());
+  const rawText = copy?.textContent || '';
   const cleaned = rawText.replace(/\s{3,}/g, '\n').trim();
   const body =
     cleaned.length > 6000

@@ -52,8 +52,8 @@ export function AiTutorPanel({ messages, loading, inputValue, onInputChange, onS
         <div className="flex gap-2 bg-slate-900/60 border border-slate-850 rounded-xl p-2 items-center">
           <input
             type="text" value={inputValue} onChange={(e) => onInputChange(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter') onSend(); }}
-            placeholder="向 AI 咨询代码优化思路..."
+            onKeyDown={(e) => { if (e.key === 'Enter' && !e.nativeEvent.isComposing && !loading) { e.preventDefault(); onSend(); } }}
+            placeholder="问当前题目、代码或运行报错…" disabled={loading}
             className="flex-1 bg-transparent border-none text-xs text-slate-200 placeholder-slate-600 focus:outline-none"
           />
           <button onClick={onSend} disabled={!inputValue.trim() || loading}

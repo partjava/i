@@ -113,6 +113,7 @@ export default function CatStage(props: CatStageProps) {
 
   useEffect(() => {
     if (!canvasRef.current) return;
+    let disposed = false;
     const container = canvasRef.current.parentElement;
     if (!container) return;
 
@@ -132,7 +133,7 @@ export default function CatStage(props: CatStageProps) {
       antialias: true,
       powerPreference: 'high-performance'
     });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
     renderer.setSize(width, height, false);
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -232,12 +233,13 @@ export default function CatStage(props: CatStageProps) {
     let standingReady = false;
     const updateProgress = (prog: number) => {
       // 经由回调上抛进度
-      livePropsRef.current.onProgress?.(prog);
+      if (!disposed) livePropsRef.current.onProgress?.(prog);
     };
 
     loader.load(
       '/models/cat-standing.glb',
       gltf => {
+        if (disposed) return;
         const rigged = buildRiggedCatFromGLB(gltf.scene, SITTING_CAT_PROFILE, 2.18);
         props.riggedCatsRef.current.standing = rigged;
         standingReady = true;
@@ -248,6 +250,7 @@ export default function CatStage(props: CatStageProps) {
         if (xhr.total > 0) updateProgress((xhr.loaded / xhr.total) * 88);
       },
       err => {
+        if (disposed) return;
         console.error('加载坐姿黑猫 GLB 失败:', err);
         livePropsRef.current.onModelReady?.();
       }
@@ -255,6 +258,7 @@ export default function CatStage(props: CatStageProps) {
     loader.load(
       '/models/cat-crouching.glb',
       gltf => {
+        if (disposed) return;
         const rigged = buildRiggedCatFromGLB(gltf.scene, UPRIGHT_CAT_PROFILE, 2.18);
         props.riggedCatsRef.current.crouching = rigged;
         if (!standingReady) {
@@ -270,6 +274,7 @@ export default function CatStage(props: CatStageProps) {
       loader.load(
         url,
         g => {
+          if (disposed) return;
           const rigged = buildRiggedCatFromGLB(g.scene, undefined, 2.18);
           props.riggedCatsRef.current.custom = rigged;
           props.activatePostureModel('custom');
@@ -283,8 +288,15 @@ export default function CatStage(props: CatStageProps) {
     const clock = new THREE.Clock();
     const tmpColor = new THREE.Color();
 
-    const animate = () => {
-      requestAnimationFrame(animate);
+    let frameId = 0;
+    let lastFrameAt = 0;
+    const animate = (now: number) => {
+      if (disposed) return;
+      frameId = requestAnimationFrame(animate);
+      const interval = livePropsRef.current.userTyping ? 1000 / 24 : 1000 / 30;
+      if (document.hidden || now - lastFrameAt < interval) return;
+      lastFrameAt = now;
+
       const dt = Math.min(clock.getDelta(), 0.05);
       const elapsed = clock.getElapsedTime();
       const live = livePropsRef.current;
@@ -455,7 +467,7 @@ export default function CatStage(props: CatStageProps) {
         }
       }
     };
-    animate();
+    frameId = requestAnimationFrame(animate);
 
     // ============ 5. 响应式适配与清理 ============
     const handleResize = () => {
@@ -471,6 +483,8 @@ export default function CatStage(props: CatStageProps) {
     resizeObserver.observe(container);
 
     return () => {
+      disposed = true;
+      cancelAnimationFrame(frameId);
       window.removeEventListener('resize', handleResize);
       window.removeEventListener('keydown', onGlobalActivity);
       container.removeEventListener('pointermove', onPointerMove);
@@ -478,6 +492,12 @@ export default function CatStage(props: CatStageProps) {
       container.removeEventListener('pointerup', onPointerUp);
       resizeObserver.disconnect();
       orbit.dispose();
+      scene.traverse(object => {
+        const mesh = object as THREE.Mesh;
+        mesh.geometry?.dispose();
+        const materials = mesh.material ? (Array.isArray(mesh.material) ? mesh.material : [mesh.material]) : [];
+        materials.forEach(material => material.dispose());
+      });
       renderer.dispose();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps

@@ -42,10 +42,8 @@ export function compressAvatar(file: File): Promise<string> {
           canvas.height = Math.max(1, Math.round(image.height * scale));
           const context = canvas.getContext('2d');
           if (!context) throw new Error('浏览器无法处理图片');
-          context.fillStyle = '#fff';
-          context.fillRect(0, 0, canvas.width, canvas.height);
           context.drawImage(image, 0, 0, canvas.width, canvas.height);
-          resolve(canvas.toDataURL('image/jpeg', 0.7));
+          resolve(canvas.toDataURL(file.type === 'image/jpeg' ? 'image/jpeg' : 'image/png', 0.8));
         } catch (error) { reject(error); }
       };
       image.src = String(reader.result);

@@ -1,11 +1,15 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
+import { useAuth } from '../../hooks/useAuth';
+import { conversationText, conversationHistory } from './conversation';
+import { collectCurrentPageContext } from '../ai-robot/types';
 
 export interface Message {
   id: string;
   role: 'user' | 'assistant';
   content: string;
+  failed?: boolean;
 }
 
 const STORAGE_KEY = 'ai_chat_messages_v1';
@@ -14,10 +18,10 @@ const WELCOME_MESSAGE: Message[] = [
   { id: 'welcome', role: 'assistant', content: '你好！我是PartJava AI助手，有什么我可以帮你的？' },
 ];
 
-function loadInitialMessages(): Message[] {
+function loadInitialMessages(key: string): Message[] {
   if (typeof window === 'undefined') return WELCOME_MESSAGE;
   try {
-    const saved = sessionStorage.getItem(STORAGE_KEY);
+    const saved = sessionStorage.getItem(key);
     if (saved) {
       const parsed = JSON.parse(saved);
       if (Array.isArray(parsed) && parsed.length > 0 && parsed.every((m: any) => m && typeof m.content === 'string')) {
@@ -29,15 +33,29 @@ function loadInitialMessages(): Message[] {
 }
 
 export function useAiChat() {
-  const [messages, setMessages] = useState<Message[]>(loadInitialMessages);
+  const { data: session, status } = useAuth();
+  const storageKey = `${STORAGE_KEY}:${status === 'authenticated' ? session?.user.id : status}`;
+  const ownerRef = useRef(storageKey);
+  ownerRef.current = storageKey;
+  const requestRef = useRef<AbortController | null>(null);
+  const [messages, setMessages] = useState<Message[]>(WELCOME_MESSAGE);
+  useEffect(() => {
+    requestRef.current?.abort();
+    requestRef.current = null;
+    setLoading(false);
+    setShowPreview(false);
+    setPreviewNote(null);
+    setMessages(status === 'loading' ? WELCOME_MESSAGE : loadInitialMessages(storageKey));
+    return () => { requestRef.current?.abort(); };
+  }, [storageKey, status]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [previewNote, setPreviewNote] = useState<any>(null);
 
-  const persist = (msgs: Message[]) => {
-    try { sessionStorage.setItem(STORAGE_KEY, JSON.stringify(msgs)); } catch {}
-  };
+  const persist = useCallback((msgs: Message[]) => {
+    try { sessionStorage.setItem(storageKey, JSON.stringify(msgs)); } catch {}
+  }, [storageKey]);
 
   const appendMessage = useCallback((msg: Message) => {
     setMessages(prev => {
@@ -45,62 +63,54 @@ export function useAiChat() {
       persist(next);
       return next;
     });
-  }, []);
+  }, [persist]);
 
   // 清空对话，回到欢迎语
   const clearConversation = useCallback(() => {
     setMessages(WELCOME_MESSAGE);
     persist(WELCOME_MESSAGE);
-  }, []);
+  }, [persist]);
 
-  const collectPageContent = (): string => {
-    if (typeof document === 'undefined') return '';
-    const pathname = window.location.pathname;
-    const h = document.querySelector('main h1, main h2');
-    const title = h?.textContent?.trim() || '';
-    if (!title && !pathname.startsWith('/study/')) return '';
-    const mainEl = document.querySelector('main');
-    const fullText = mainEl?.textContent || '';
-    const cleaned = fullText.replace(/\s{3,}/g, '\n').trim();
-    const body = cleaned.length > 6000 ? cleaned.slice(0, 6000) + '\n...(内容过长已截断)' : cleaned;
-    const activeTab = document.querySelector('.ant-tabs-tab-active, button.bg-blue-500, .border-blue-500[class*="text-blue"], [class*="border-blue"][class*="text-blue"]');
-    const tabLabel = activeTab?.textContent?.trim() || '';
-    return `[当前学习页面]\n标题: ${title}${tabLabel ? '\n当前小节: ' + tabLabel : ''}\n路径: ${pathname}\n\n页面内容:\n${body}`;
-  };
+  const collectPageContent = () => collectCurrentPageContext().contextText;
 
   const collectConversationText = () => {
-    return messages.map(m => `${m.role === 'user' ? '我' : 'AI助手'}: ${m.content}`).join('\n');
+    return conversationText(messages);
   };
 
   const sendMessage = async (textOverride?: string) => {
     const text = (textOverride ?? input).trim();
-    if (!text) return;
+    if (!text || requestRef.current || loading || status === 'loading') return;
+    const owner = storageKey;
+    const request = new AbortController();
+    requestRef.current = request;
     const userMsg: Message = { id: Date.now().toString(), role: 'user', content: text };
     appendMessage(userMsg);
     if (textOverride === undefined) setInput('');
     setLoading(true);
     try {
       const pageCtx = collectPageContent();
-      const body: any = { message: text };
-      if (pageCtx) body.pageContext = pageCtx;
+      const body = { message: text, history: conversationHistory(messages), pageContext: pageCtx };
       const res = await fetch('/api/ai/chat', {
         method: 'POST',
+        signal: request.signal,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
       if (!res.ok) throw new Error('请求失败');
       const data = await res.json();
       const reply = data?.reply || data?.answer || (typeof data === 'string' ? data : '抱歉，未收到回复');
+      if (request.signal.aborted || ownerRef.current !== owner) return;
       appendMessage({ id: Date.now().toString() + '-ai', role: 'assistant', content: reply });
-    } catch (e) {
-      appendMessage({ id: 'err-' + Date.now(), role: 'assistant', content: '请求失败，请稍后重试' });
+    } catch {
+      if (!request.signal.aborted && ownerRef.current === owner) appendMessage({ id: 'err-' + Date.now(), role: 'assistant', content: '请求失败，请稍后重试', failed: true });
     } finally {
-      setLoading(false);
+      if (requestRef.current === request) { requestRef.current = null; setLoading(false); }
     }
   };
 
   // 调用 AI 生成笔记（期望返回 JSON 包含 title 和 content），失败则直接用原文
   const summarizeAndCreateNote = async () => {
+    if (loading || requestRef.current || status === 'loading') return;
     const conversationText = collectConversationText();
     const pageContent = collectPageContent();
     const text = conversationText.trim() || pageContent;
@@ -109,6 +119,9 @@ export function useAiChat() {
       return;
     }
 
+    const owner = storageKey;
+    const request = new AbortController();
+    requestRef.current = request;
     setLoading(true);
     try {
       const contextHint = pageContent && conversationText.trim() ? `\n\n当前页面参考信息（优先基于对话内容总结，页面信息作为背景补充）:\n${pageContent}` : '';
@@ -132,6 +145,7 @@ ${contentKind}：
 ${text}${contextHint}`;
       const res = await fetch('/api/ai/chat', {
         method: 'POST',
+        signal: request.signal,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: prompt }),
       });
@@ -220,18 +234,21 @@ ${text}${contextHint}`;
         isPublic: typeof parsed.isPublic === 'boolean' ? parsed.isPublic : (parsed.is_public === true || parsed.isPublic === 'true')
       };
 
+      if (request.signal.aborted || ownerRef.current !== owner) return;
       setPreviewNote(notePayload);
       setShowPreview(true);
       return;
     } catch (err: any) {
+      if (request.signal.aborted || ownerRef.current !== owner) return;
       appendMessage({ id: 'sys-' + Date.now(), role: 'assistant', content: `笔记创建失败：${err?.message || String(err)}` });
     } finally {
-      setLoading(false);
+      if (requestRef.current === request) { requestRef.current = null; setLoading(false); }
     }
   };
 
   // 直接把当前对话原文作为笔记创建
   const createNoteFromConversation = async () => {
+    if (loading || status === 'loading') return;
     const conversationText = collectConversationText();
     const pageContent = collectPageContent();
     const text = conversationText.trim() || pageContent;
@@ -266,6 +283,10 @@ ${text}${contextHint}`;
   };
 
   const savePreviewNote = async (note: any) => {
+    if (loading || requestRef.current || status === 'loading') return;
+    const owner = storageKey;
+    const request = new AbortController();
+    requestRef.current = request;
     setLoading(true);
     try {
       const payload = {
@@ -280,6 +301,7 @@ ${text}${contextHint}`;
 
       const res = await fetch('/api/notes', {
         method: 'POST',
+        signal: request.signal,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
@@ -289,12 +311,14 @@ ${text}${contextHint}`;
         throw new Error(err?.message || '创建笔记失败');
       }
 
+      if (request.signal.aborted || ownerRef.current !== owner) return;
       appendMessage({ id: 'sys-' + Date.now(), role: 'assistant', content: '笔记已创建成功' });
       closePreview();
     } catch (err: any) {
+      if (request.signal.aborted || ownerRef.current !== owner) return;
       appendMessage({ id: 'sys-' + Date.now(), role: 'assistant', content: `笔记创建失败：${err?.message || err}` });
     } finally {
-      setLoading(false);
+      if (requestRef.current === request) { requestRef.current = null; setLoading(false); }
     }
   };
 

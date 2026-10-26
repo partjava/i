@@ -789,9 +789,10 @@ export default function ProfilePage() {
               {/* 头像区域 */}
               <div className={styles.avatar}>
                 <div className="relative inline-block">
-                  <div className="w-32 h-32 mx-auto mb-4 rounded-full border-4 border-white shadow-2xl overflow-hidden bg-white">
+                  <div className="w-32 h-32 mx-auto mb-4 rounded-full border-4 border-white shadow-2xl overflow-hidden bg-transparent">
                     <Avatar
                       size={120}
+                      style={{ backgroundColor: 'transparent' }}
                       src={profileForm.image || session?.user?.image || ''}
                       icon={<UserOutlined />}
                       className="w-full h-full"

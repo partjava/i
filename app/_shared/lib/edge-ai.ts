@@ -10,7 +10,7 @@
  * ============================================================
  */
 
-const CACHE_KEY = 'partjava-edge-qa-cache-v1';
+const CACHE_KEY = 'partjava-edge-qa-cache-v2';
 const MAX_CACHE_ENTRIES = 30;
 export const SEMANTIC_MATCH_THRESHOLD = 0.82;
 
@@ -19,6 +19,7 @@ export interface EdgeCacheEntry {
   a: string;
   vec: number[];
   ts: number;
+  scope: string;
 }
 
 let embedderPromise: Promise<any> | null = null;
@@ -93,11 +94,13 @@ function persistCache(entries: EdgeCacheEntry[]): void {
 /** 在端侧缓存中找语义最近的历史问答（≥ 阈值才算命中） */
 export function findSemanticMatch(
   queryVec: Float32Array,
+  scope: string,
   threshold: number = SEMANTIC_MATCH_THRESHOLD
 ): EdgeCacheEntry | null {
   let best: EdgeCacheEntry | null = null;
   let bestScore = 0;
   for (const entry of loadEdgeCache()) {
+    if (!scope || entry.scope !== scope || Date.now() - entry.ts >= 7 * 86400000) continue;
     const score = cosineF32(queryVec, entry.vec || []);
     if (score > bestScore) {
       bestScore = score;
@@ -108,9 +111,9 @@ export function findSemanticMatch(
 }
 
 /** 追加一条问答缓存（查询向量 + 回答全文） */
-export function saveEdgeCacheEntry(q: string, a: string, qVec: Float32Array): void {
-  if (!q.trim() || !a.trim() || qVec.length === 0) return;
-  const entries = loadEdgeCache().filter((e) => e.q !== q);
-  entries.push({ q, a, vec: Array.from(qVec), ts: Date.now() });
+export function saveEdgeCacheEntry(q: string, a: string, qVec: Float32Array, scope: string): void {
+  if (!scope || !q.trim() || !a.trim() || qVec.length === 0) return;
+  const entries = loadEdgeCache().filter((e) => e.q !== q || e.scope !== scope);
+  entries.push({ q, a, vec: Array.from(qVec), ts: Date.now(), scope });
   persistCache(entries);
 }

@@ -425,7 +425,7 @@ export const TOOL_SCHEMAS = [
 export function summarizeToolResult(name: string, result: any): string {
   try {
     if (name === 'search_site_pages') return `RAG 命中 ${(result.links || []).length} 个站内课程页`;
-    if (name === 'web_search') return `检索到 ${(result.citations || []).length} 条权威资料并抓取正文`;
+    if (name === 'web_search') return result.source === 'recommended' ? `实时搜索不可用，推荐 ${(result.citations || []).length} 篇文档` : `实时搜索获得 ${(result.citations || []).length} 条结果，读取 ${result.fetchedCount || 0} 篇正文`;
     if (name === 'draft_note') return `已生成笔记草稿《${result.title || ''}》`;
     if (name === 'set_companion_state') return `禾桔已切换神态：${result.state || ''}`;
   } catch {}
@@ -522,6 +522,7 @@ export async function executeTool(name: string, args: Record<string, any>, ctx: 
                   url,
                   domain,
                   snippet: it.snippet || it.content || '',
+                  source: 'live', contentFetched: false,
                 };
               });
             }
@@ -537,6 +538,7 @@ export async function executeTool(name: string, args: Record<string, any>, ctx: 
                   const fJson = await fResp.json();
                   const textBody = fJson.content || fJson.markdown || fJson.text || '';
                   if (textBody) {
+                    cite.contentFetched = true;
                     fetchedSnippets.push(`[${cite.index}] ${cite.title} (${cite.url}):\n${String(textBody).slice(0, 2500)}`);
                   }
                 }
@@ -556,6 +558,7 @@ export async function executeTool(name: string, args: Record<string, any>, ctx: 
             url: d.url,
             domain: d.domain,
             snippet: d.snippet,
+            source: 'recommended', contentFetched: false,
           }));
         }
         ctx.state.citations = citations;
@@ -564,12 +567,17 @@ export async function executeTool(name: string, args: Record<string, any>, ctx: 
             '【联网深搜抓取到的权威外部资料】:\n' + fetchedSnippets.join('\n\n')
           );
         }
-        ctx.sendSSE('citations', { stage: 'completed', citations });
+        const source = citations.every(c => c.source === 'recommended') ? 'recommended' : 'live';
+        ctx.sendSSE('citations', { stage: 'completed', source, citations });
         return {
           ok: true,
           count: citations.length,
-          citations: citations.map((c) => ({ index: c.index, title: c.title, url: c.url, domain: c.domain })),
-          note: '权威资料正文已注入上下文，回答时请用 [编号] 角标引用',
+          citations: citations.map((c) => ({ index: c.index, title: c.title, url: c.url, domain: c.domain, snippet: c.snippet, source: c.source, contentFetched: c.contentFetched })),
+          source,
+          fetchedCount: fetchedSnippets.length,
+          note: source === 'recommended'
+            ? '实时搜索未获得结果，以下为预置推荐文档，未验证实时内容；请明确告知用户，不要声称已经联网检索或读取正文。'
+            : fetchedSnippets.length > 0 ? '已读取部分正文，回答时请引用 [编号] 并区分摘要与正文。' : '仅获得实时搜索摘要，未读取正文；不要声称已经读取文档全文。',
         };
       }
       case 'draft_note': {

@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { SendOutlined } from '@ant-design/icons';
 import styles from '../AI3DRobot.module.css';
 import type { QuickAction } from './types';
@@ -39,6 +40,14 @@ export default function Composer(props: ComposerProps) {
     edgeAiOn, edgeStatus, edgeProgress, onToggleEdge,
     micListening, onToggleMic,
   } = props;
+
+  const [draft, setDraft] = useState(inputValue);
+  useEffect(() => { setDraft(inputValue); }, [inputValue]);
+  const submit = () => {
+    if (isTyping || !draft.trim()) return;
+    onSend(draft);
+    setDraft('');
+  };
 
   return (
     <div className={`${styles.dock} absolute bottom-2.5 sm:bottom-4 left-1/2 -translate-x-1/2 w-full max-w-3xl px-3 sm:px-4 z-20`}>
@@ -113,12 +122,12 @@ export default function Composer(props: ComposerProps) {
 
           <input
             type="text"
-            value={inputValue}
-            onChange={e => setInputValue(e.target.value)}
+            value={draft}
+            onChange={e => { setDraft(e.target.value); setInputValue(e.target.value); }}
             onKeyDown={e => {
-              if (e.key === 'Enter' && !e.shiftKey) {
+              if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
                 e.preventDefault();
-                onSend(inputValue);
+                submit();
               }
             }}
             placeholder={
@@ -147,8 +156,8 @@ export default function Composer(props: ComposerProps) {
           </button>
 
           <button
-            onClick={() => onSend(inputValue)}
-            disabled={!inputValue.trim() || isTyping}
+            onClick={submit}
+            disabled={!draft.trim() || isTyping}
             className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#d4a36a] to-[#b8894e] hover:from-[#e2b478] hover:to-[#c8985a] text-[#1c1a17] font-bold text-xs sm:text-sm shadow-md transition-all disabled:opacity-45 flex items-center gap-1.5 flex-shrink-0"
           >
             <SendOutlined />

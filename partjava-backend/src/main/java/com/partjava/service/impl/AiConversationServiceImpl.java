@@ -62,7 +62,7 @@ public class AiConversationServiceImpl implements AiConversationService {
         return aiMessageMapper.selectList(
                 new LambdaQueryWrapper<AiMessage>()
                         .eq(AiMessage::getConversationId, convId)
-                        .orderByAsc(AiMessage::getCreatedAt)
+                        .orderByAsc(AiMessage::getCreatedAt, AiMessage::getId)
         );
     }
 

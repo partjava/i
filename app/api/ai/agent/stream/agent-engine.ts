@@ -128,10 +128,12 @@ export function runAgentStream(body: AgentRequestBody, apiKey: string): Readable
           if (state.noteDraft) {
             replyText =
               `喵呜~ 🐾 **【笔记提炼】** 已经把对话与当前页面提炼成结构化 Markdown 笔记啦！\n\n` +
-              `你可以直接点击气泡下方的 **「⚡ 一键存入我的笔记」** 写入数据库，或者点 **「✏️ 预览与编辑」** 微调后再保存哦！`;
+              `请点击气泡下方的 **「预览并保存」**，确认内容后再保存到我的笔记。`;
           } else if (state.citations.length > 0) {
             replyText =
-              `喵~ 🐾 **【联网深搜】** 已围绕「**${message}**」检索并抓取了 ${state.citations.length} 篇专业权威技术资料：\n\n` +
+              (state.citations.every((c: any) => c.source === 'recommended')
+                ? `实时搜索暂不可用，以下是与「${message}」相关的推荐文档，未实时读取正文：\n\n`
+                : `已为「${message}」找到 ${state.citations.length} 条搜索结果。摘要和已读取正文请以资料标记为准：\n\n`) +
               state.citations.map((c: any) => `- **[${c.index}] ${c.title}** (\`${c.domain}\`)\n  > ${c.snippet}`).join('\n') +
               `\n\n点击气泡底部的 **🌐 权威网站外链卡片** 即可直接访问官方文档！`;
           } else {
@@ -304,10 +306,12 @@ export function runAgentStream(body: AgentRequestBody, apiKey: string): Readable
           if (state.noteDraft) {
             replyText =
               `喵呜~ 🐾 **【笔记提炼】** 已经把对话与当前页面提炼成结构化 Markdown 笔记啦！\n\n` +
-              `你可以直接点击气泡下方的 **「⚡ 一键存入我的笔记」** 写入数据库，或者点 **「✏️ 预览与编辑」** 微调后再保存哦！`;
+              `请点击气泡下方的 **「预览并保存」**，确认内容后再保存到我的笔记。`;
           } else if (state.citations.length > 0) {
             replyText =
-              `喵~ 🐾 **【联网深搜】** 已围绕「**${message}**」检索并抓取了 ${state.citations.length} 篇专业权威技术资料：\n\n` +
+              (state.citations.every((c: any) => c.source === 'recommended')
+                ? `实时搜索暂不可用，以下是与「${message}」相关的推荐文档，未实时读取正文：\n\n`
+                : `已为「${message}」找到 ${state.citations.length} 条搜索结果。摘要和已读取正文请以资料标记为准：\n\n`) +
               state.citations.map((c: any) => `- **[${c.index}] ${c.title}** (\`${c.domain}\`)\n  > ${c.snippet}`).join('\n') +
               `\n\n点击气泡底部的 **🌐 权威网站外链卡片** 即可直接访问官方文档！`;
           } else {

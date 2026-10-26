@@ -11,7 +11,7 @@
     "rag:index": "node scripts/build-rag-index.mjs",
     "start": "next start",
     "start:standalone": "node .next/standalone/server.js",
-    "test": "vitest run && node --test scripts/arcade-physics.test.cjs scripts/profile-client.test.cjs"
+    "test": "vitest run && node --test scripts/arcade-physics.test.cjs scripts/profile-client.test.cjs scripts/ai-page-context.test.cjs scripts/challenge-ai-context.test.cjs scripts/ai-conversation.test.cjs scripts/edge-cache.test.cjs"
   },
   "dependencies": {
     "@monaco-editor/react": "^4.7.0",

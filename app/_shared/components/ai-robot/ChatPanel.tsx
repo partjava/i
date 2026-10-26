@@ -24,6 +24,7 @@ export interface ChatPanelProps {
   savingNote: boolean;
   savedNoteTip: string | null;
   onToggleHistory: () => void;
+  onRetry: (text: string) => void;
   onToggleSide: () => void;
   onCollapse: () => void;
   onNavigate: (href: string) => void;
@@ -39,7 +40,7 @@ export default function ChatPanel(props: ChatPanelProps) {
     bubbleBoxRef, messagesEndRef, bubbleSide, isTyping, showHistoryMode,
     messages, latestAiMessage, latestUserMessage, searchStatusText,
     savingNote, savedNoteTip,
-    onToggleHistory, onToggleSide, onCollapse, onNavigate, onPreviewNote,
+    onToggleHistory, onRetry, onToggleSide, onCollapse, onNavigate, onPreviewNote,
   } = props;
 
   return (
@@ -79,7 +80,7 @@ export default function ChatPanel(props: ChatPanelProps) {
             }`}
             title="查看最新回复或完整对话"
           >
-            {showHistoryMode ? '最新回复' : `历史（${messages.length}）`}
+            对话历史
           </button>
           <button
             onClick={onToggleSide}
@@ -123,6 +124,8 @@ export default function ChatPanel(props: ChatPanelProps) {
             {/* AI 流式回复（含执行轨迹 / 课程胶囊 / 引证卡片 / 笔记草稿） */}
             {latestAiMessage && (
               <div className="space-y-3">
+                {latestAiMessage.notice && <p role="status" className="text-xs text-amber-200">{latestAiMessage.notice}</p>}
+                {latestAiMessage.failed && latestAiMessage.retryText && <button disabled={isTyping} onClick={() => onRetry(latestAiMessage.retryText!)} className="px-3 py-1 rounded-lg border border-[#d4a36a] text-[#f3c687]">重试这次提问</button>}
                 <TracePanel steps={latestAiMessage.agentSteps || []} offline={latestAiMessage.offline} />
 
                 {/* B7：流式输出时的墨迹呼吸光 + 墨滴光标 */}
@@ -216,7 +219,7 @@ export default function ChatPanel(props: ChatPanelProps) {
                 {latestAiMessage.citations && latestAiMessage.citations.length > 0 && (
                   <div className="pt-2 border-t border-white/10">
                     <div className="text-[11px] text-[#63c7ff] font-semibold mb-1.5 flex items-center gap-1">
-                      <span>参考资料</span>
+                      <span>{latestAiMessage.citations.every(cite => cite.source === 'recommended') ? '推荐文档（非实时搜索）' : '搜索参考资料'}</span>
                     </div>
                     <div className="space-y-1.5">
                       {latestAiMessage.citations.map(cite => (
@@ -230,6 +233,7 @@ export default function ChatPanel(props: ChatPanelProps) {
                           <div className="flex items-center justify-between gap-2">
                             <span className="text-xs font-semibold text-[#a8e4ec] group-hover:underline truncate">
                               [{cite.index}] {cite.title}
+                              <small className="ml-1 opacity-75">{cite.source === 'recommended' ? '推荐链接' : cite.contentFetched ? '已读取正文' : '搜索摘要'}</small>
                             </span>
                             <span className="text-[10px] px-1.5 py-0.5 rounded bg-black/40 text-[#7fd4e0] font-mono flex-shrink-0">
                               {cite.domain} ↗

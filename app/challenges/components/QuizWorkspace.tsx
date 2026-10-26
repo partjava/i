@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Loader } from 'lucide-react';
 import { useAuth } from '@shared/hooks/useAuth';
@@ -9,6 +9,7 @@ import { SubtopicDetail, getDefaultDetail } from './data';
 import { TheoryQuizPanel } from './TheoryQuizPanel';
 import { CodeEditorPanel } from './CodeEditorPanel';
 import { AiTutorPanel } from './AiTutorPanel';
+import { buildChallengeContext } from './challenge-ai-context';
 
 interface QuizWorkspaceProps {
   selectedNodeName: string;
@@ -41,6 +42,11 @@ export const QuizWorkspace: React.FC<QuizWorkspaceProps> = ({ selectedNodeName, 
   const [userChatInput, setUserChatInput] = useState<string>("");
   const [aiLoading, setAiLoading] = useState<boolean>(false);
 
+  const chatRequestRef = useRef<AbortController | null>(null);
+  const activeDetailRef = useRef(detail);
+  activeDetailRef.current = detail;
+  useEffect(() => () => { chatRequestRef.current?.abort(); }, []);
+
   // ── 加载关卡数据 ──
   useEffect(() => {
     const fetchDetail = async () => {
@@ -65,6 +71,10 @@ export const QuizWorkspace: React.FC<QuizWorkspaceProps> = ({ selectedNodeName, 
 
   // ── 数据加载完成或切换关卡时重置状态 ──
   useEffect(() => {
+    chatRequestRef.current?.abort();
+    chatRequestRef.current = null;
+    setAiLoading(false);
+    setUserChatInput('');
     if (!detail) return;
     setCodeValue(detail.starterCode);
     setTestResults("");
@@ -79,7 +89,9 @@ export const QuizWorkspace: React.FC<QuizWorkspaceProps> = ({ selectedNodeName, 
       if (r.quizAnswers) { setSelectedQuizAnswers(r.quizAnswers); const e: Record<number, boolean> = {}; Object.keys(r.quizAnswers).forEach((k: any) => { e[k] = true; }); setShowQuizExplains(e); }
       if (r.thinkingFeedback) setAiChatMessages([{ sender: 'ai', text: '你好！我是你的星际 AI 助教。' }, { sender: 'ai', text: r.thinkingFeedback }]);
     }
-  }, [activeLevelIndex, levels]);
+    // Updating a run record must not reset the student's edited code or conversation.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [detail?.id]);
 
   // ── 运行代码 ──
   const handleRunCode = async (code: string) => {
@@ -132,28 +144,54 @@ export const QuizWorkspace: React.FC<QuizWorkspaceProps> = ({ selectedNodeName, 
           method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ answer: thinkingAnswer, challengeId: detail.id }),
         });
         const data = await res.json();
-        if (data.success) setAiChatMessages(prev => [...prev, { sender: 'ai', text: data.feedback }]);
+        if (!res.ok || !data.success) throw new Error(data.message || '评分失败，本次未记录成绩');
+        setAiChatMessages(prev => [...prev, { sender: 'ai', text: `评分：${data.score}/10\n${data.feedback}` }]);
       } else {
         setAiChatMessages(prev => [...prev, { sender: 'ai', text: '游客模式，评分未保存。请登录后使用。' }]);
       }
-    } catch { message.error('提交失败'); }
+    } catch (error) { message.error(error instanceof Error ? error.message : '评分失败，本次未记录成绩，请重试'); }
     finally { setAiLoading(false); }
   };
 
   // ── AI 聊天 ──
   const handleSendChat = async () => {
-    if (!userChatInput.trim()) return;
-    const text = userChatInput;
-    setUserChatInput("");
-    setAiChatMessages(prev => [...prev, { sender: "user", text }]);
+    if (!userChatInput.trim() || !detail || aiLoading || chatRequestRef.current) return;
+    const text = userChatInput.trim();
+    const request = new AbortController();
+    chatRequestRef.current = request;
+    const requestDetailId = detail.id;
+    const history = aiChatMessages.filter((_, index) => index > 0).slice(-8)
+      .map(item => ({ role: item.sender === 'user' ? 'user' : 'assistant', content: item.text }));
+    const pageContext = buildChallengeContext({
+      detail, nodeName: selectedNodeName, activeTab, code: codeValue,
+      testResults, thinkingAnswer, selectedAnswers: selectedQuizAnswers,
+    });
+    setUserChatInput('');
+    setAiChatMessages(prev => [...prev, { sender: 'user', text }]);
     setAiLoading(true);
     try {
-      const ctx = detail ? `关卡: ${detail.name || selectedNodeName}\n理论: ${detail.theory || "无"}\n代码: ${detail.starterCode || "无"}` : `关卡: ${selectedNodeName}`;
-      const res = await fetch("/api/ai/chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ prompt: `你是星际 AI 辅导助教。\n${ctx}\n\n学生: ${text}\n请用中文回答，不用 Markdown。` }) });
+      const res = await fetch('/api/ai/chat', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: request.signal,
+        body: JSON.stringify({
+          message: `请结合当前挑战题目辅导我，优先解释思路并给逐步提示；除非我明确要求完整解答，否则不要直接给标准答案。代码请用代码块展示。\n\n我的问题：${text}`,
+          pageContext, history,
+        }),
+      });
       const data = await res.json();
-      setAiChatMessages(prev => [...prev, { sender: "ai", text: data.reply || "AI 未返回有效回复" }]);
-    } catch { setAiChatMessages(prev => [...prev, { sender: "ai", text: "AI 服务连接失败，请稍后再试。" }]); }
-    finally { setAiLoading(false); }
+      if (!res.ok || data.success === false) throw new Error('AI 请求失败');
+      if (!request.signal.aborted && activeDetailRef.current?.id === requestDetailId) {
+        setAiChatMessages(prev => [...prev, { sender: 'ai', text: data.reply || 'AI 未返回有效回复，请重试。' }]);
+      }
+    } catch {
+      if (!request.signal.aborted && activeDetailRef.current?.id === requestDetailId) {
+        setAiChatMessages(prev => [...prev, { sender: 'ai', text: 'AI 服务连接失败，请稍后再试。' }]);
+      }
+    } finally {
+      if (chatRequestRef.current === request) {
+        chatRequestRef.current = null;
+        setAiLoading(false);
+      }
+    }
   };
 
   if (loading) return <div className="w-full h-full flex flex-col items-center justify-center bg-black/60 text-indigo-400 gap-3"><Loader className="w-8 h-8 animate-spin" /><span className="text-xs font-medium tracking-widest font-mono">LOADING STAR DATA...</span></div>;

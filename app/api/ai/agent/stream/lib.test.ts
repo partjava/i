@@ -85,7 +85,7 @@ describe('parseToolArguments — LLM 工具参数容错解析', () => {
 describe('summarizeToolResult — 工具结果摘要', () => {
   it('各工具生成可读摘要', () => {
     expect(summarizeToolResult('search_site_pages', { links: [1, 2] })).toContain('2 个站内课程页');
-    expect(summarizeToolResult('web_search', { citations: [1] })).toContain('1 条权威资料');
+    expect(summarizeToolResult('web_search', { citations: [1], source: 'live', fetchedCount: 0 })).toContain('1 条结果，读取 0 篇正文');
     expect(summarizeToolResult('draft_note', { title: 'JVM 笔记' })).toContain('JVM 笔记');
     expect(summarizeToolResult('set_companion_state', { state: 'happy / jump' })).toContain('happy');
     expect(summarizeToolResult('unknown_tool', {})).toBe('执行完成');
