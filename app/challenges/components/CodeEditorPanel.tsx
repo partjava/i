@@ -1,32 +1,37 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Editor from '@monaco-editor/react';
 import { Play, Terminal, Code, HelpCircle, Sparkles } from 'lucide-react';
 import { message } from 'antd';
+import { ChallengeExecutionMode, challengeResultLabel, shouldRecordChallengePass } from '@shared/components/challenge-execution-state';
 
 interface CodeEditorPanelProps {
   codeValue: string;
   onCodeChange: (val: string) => void;
   testResults: string;
   isRunning: boolean;
-  isPassed: boolean | null;
+  executionStatus: string | null;
+  executionMode: ChallengeExecutionMode | null;
+  resultIsStale: boolean;
+  onCancelRun: () => void;
   canSubmit: boolean;
   solutionCode?: string;
   challengeId: string;
-  onRunCode: (code: string) => void;
+  onRunCode: (code: string, mode: ChallengeExecutionMode) => void;
 }
 
 export function CodeEditorPanel({
-  codeValue, onCodeChange, testResults, isRunning, isPassed,
+  codeValue, onCodeChange, testResults, isRunning, executionStatus, executionMode, resultIsStale, onCancelRun,
   canSubmit, solutionCode, challengeId, onRunCode
 }: CodeEditorPanelProps) {
   const [showSolution, setShowSolution] = useState(false);
+  useEffect(() => setShowSolution(false), [challengeId]);
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden bg-[#030308]">
       {/* 工具栏 */}
-      <div className="h-11 border-b border-slate-900 bg-slate-950/80 px-4 flex justify-between items-center shrink-0">
+      <div className="min-h-11 border-b border-slate-900 bg-slate-950/80 px-4 py-2 flex flex-wrap gap-2 justify-between items-center shrink-0">
         <div className="flex items-center gap-2">
           <Code className="w-4 h-4 text-cyan-400" />
           <span className="text-xs font-bold font-mono text-slate-300">Solution.py</span>
@@ -40,12 +45,20 @@ export function CodeEditorPanel({
               <HelpCircle className="w-3.5 h-3.5 text-cyan-400" /> 查看标准答案
             </button>
           )}
+          {isRunning && <button onClick={onCancelRun} className="text-xs text-slate-400 hover:text-white">停止等待</button>}
           <button
-            onClick={() => onRunCode(codeValue)}
-            disabled={isRunning}
-            className="px-4 py-1.5 rounded-lg text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition flex items-center gap-1 shadow-lg shadow-emerald-600/20"
+            onClick={() => { if (canSubmit && !isRunning && codeValue.trim()) onRunCode(codeValue, 'sample'); }}
+            disabled={isRunning || !canSubmit || !codeValue.trim()}
+            className="px-3 py-1.5 rounded-lg text-xs font-bold text-cyan-100 bg-cyan-950 hover:bg-cyan-900 disabled:opacity-50 transition flex items-center gap-1 border border-cyan-800"
           >
-            <Play className="w-3 h-3 fill-current" /> {isRunning ? "正在运行..." : "运行代码"}
+            <Play className="w-3 h-3 fill-current" /> {isRunning && executionMode === 'sample' ? "样例运行中..." : "运行样例"}
+          </button>
+          <button
+            onClick={() => { if (canSubmit && !isRunning && codeValue.trim()) onRunCode(codeValue, 'submit'); }}
+            disabled={isRunning || !canSubmit || !codeValue.trim()}
+            className="px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 transition flex items-center gap-1 shadow-lg shadow-emerald-600/20"
+          >
+            {isRunning && executionMode === 'submit' ? "正在判题..." : "提交判题"}
           </button>
         </div>
       </div>
@@ -66,18 +79,18 @@ export function CodeEditorPanel({
             <Terminal className="w-3.5 h-3.5 text-cyan-400" />
             <span>控制台输出 (Console Output)</span>
           </div>
-          {isPassed !== null && (
+          {executionStatus !== null && (
             <div className="flex items-center gap-1.5 text-xs font-bold">
-              {isPassed ? (
-                <span className="px-2 py-0.5 rounded bg-emerald-950/40 border border-emerald-500/20 text-emerald-400">Accepted 通过</span>
-              ) : (
-                <span className="px-2 py-0.5 rounded bg-red-950/40 border border-red-500/20 text-red-400">Wrong Answer 未通过</span>
-              )}
+              <span className={`px-2 py-0.5 rounded border ${!resultIsStale && executionMode !== null && shouldRecordChallengePass(executionMode, executionStatus) ? 'bg-emerald-950/40 border-emerald-500/20 text-emerald-400' : 'bg-slate-900 border-slate-700 text-amber-400'}`}>
+                {resultIsStale ? '上次结果：' : ''}{challengeResultLabel(executionMode || 'sample', executionStatus)}
+              </span>
             </div>
           )}
         </div>
         <div className="flex-1 p-4 font-mono text-xs overflow-y-auto bg-[#04040a] text-slate-400 whitespace-pre-wrap leading-relaxed select-text">
-          {testResults || "尚未运行代码。请在上方补全 Python 代码，点击「运行代码」进行断言校验。"}
+          <div className="text-slate-500 mb-2">运行样例仅检查前 1–2 个公开样例，不计通关；提交判题检查完整用例，登录后通过可记录通关。</div>
+          {resultIsStale && <div className="text-amber-400 mb-2">代码已更改，以下结果属于上次提交，请重新运行。</div>}
+          {testResults || "尚未运行代码。可先点击「运行样例」验证，再「提交判题」。"}
         </div>
       </div>
 

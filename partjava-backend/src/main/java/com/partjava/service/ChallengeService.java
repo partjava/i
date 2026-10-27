@@ -25,13 +25,16 @@ public interface ChallengeService {
     ChallengeDetailResp getChallengeDetail(Integer userId, Integer challengeId);
 
     /**
-     * 提交代码运行 Docker 沙箱评测，并更新答题纪录
+     * 提交代码由 OnlineCompiler 完整评测，仅全部通过后更新答题记录
      *
      * @param userId      用户ID
      * @param challengeId 关卡 ID (Integer)
      * @param code        用户填写的 Python 代码
      */
     JudgementResult submitCode(Integer userId, Integer challengeId, String code);
+
+    /** 只运行前两个公开样例；不读取隐藏用例、不记录通关。 */
+    JudgementResult runSampleCode(Integer userId, Integer challengeId, String code);
 
     /**
      * 提交思考题主观回答，调用 AI 智能打分并记录

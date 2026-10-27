@@ -10,6 +10,9 @@ import { TheoryQuizPanel } from './TheoryQuizPanel';
 import { CodeEditorPanel } from './CodeEditorPanel';
 import { AiTutorPanel } from './AiTutorPanel';
 import { buildChallengeContext } from './challenge-ai-context';
+import { executionLabel, normalizeExecutionStatus, readExecutionResponse, ExecutionResponseError, isSubmittedSourceStale } from '@shared/components/execution-state';
+
+import { ChallengeExecutionRequests, ChallengeExecutionMode, challengeResultLabel, shouldRecordChallengePass } from '@shared/components/challenge-execution-state';
 
 interface QuizWorkspaceProps {
   selectedNodeName: string;
@@ -28,7 +31,13 @@ export const QuizWorkspace: React.FC<QuizWorkspaceProps> = ({ selectedNodeName, 
   const [codeValue, setCodeValue] = useState<string>("");
   const [testResults, setTestResults] = useState<string>("");
   const [isRunning, setIsRunning] = useState<boolean>(false);
-  const [isPassed, setIsPassed] = useState<boolean | null>(null);
+  const [executionStatus, setExecutionStatus] = useState<string | null>(null);
+  const [submittedCode, setSubmittedCode] = useState<string | null>(null);
+  const [executionMode, setExecutionMode] = useState<ChallengeExecutionMode | null>(null);
+  const runRequests = useRef(new ChallengeExecutionRequests());
+  const currentRunContext = useRef({ node: selectedNodeName, id: detail?.id });
+  currentRunContext.current = { node: selectedNodeName, id: detail?.id };
+  useEffect(() => () => runRequests.current.cancel(), []);
 
   // ── 选择题状态 ──
   const [selectedQuizAnswers, setSelectedQuizAnswers] = useState<Record<number, number>>({});
@@ -49,12 +58,17 @@ export const QuizWorkspace: React.FC<QuizWorkspaceProps> = ({ selectedNodeName, 
 
   // ── 加载关卡数据 ──
   useEffect(() => {
+    const request = new AbortController();
+    runRequests.current.cancel();
+    setIsRunning(false);
+    setLevels([]);
     const fetchDetail = async () => {
       setLoading(true);
       try {
-        const res = await fetch(`/api/star-challenges/${encodeURIComponent(selectedNodeName)}`);
+        const res = await fetch(`/api/star-challenges/${encodeURIComponent(selectedNodeName)}`, { signal: request.signal });
         const data = await res.json();
-        if (data.success && data.levels?.length > 0) {
+        if (request.signal.aborted) return;
+        if (res.ok && data.success && data.levels?.length > 0) {
           setLevels(data.levels);
           setActiveLevelIndex(Math.min(initialLevelIndex, data.levels.length - 1));
         } else {
@@ -62,11 +76,13 @@ export const QuizWorkspace: React.FC<QuizWorkspaceProps> = ({ selectedNodeName, 
           setActiveLevelIndex(0);
         }
       } catch {
+        if (request.signal.aborted) return;
         setLevels([getDefaultDetail(selectedNodeName)]);
         setActiveLevelIndex(0);
-      } finally { setLoading(false); }
+      } finally { if (!request.signal.aborted) setLoading(false); }
     };
-    fetchDetail();
+    void fetchDetail();
+    return () => request.abort();
   }, [selectedNodeName]);
 
   // ── 数据加载完成或切换关卡时重置状态 ──
@@ -75,47 +91,89 @@ export const QuizWorkspace: React.FC<QuizWorkspaceProps> = ({ selectedNodeName, 
     chatRequestRef.current = null;
     setAiLoading(false);
     setUserChatInput('');
+    runRequests.current.cancel();
+    setIsRunning(false);
+    setSubmittedCode(null);
+    setExecutionStatus(null);
+    setExecutionMode(null);
     if (!detail) return;
     setCodeValue(detail.starterCode);
     setTestResults("");
-    setIsPassed(null);
     setSelectedQuizAnswers({});
     setShowQuizExplains({});
     setThinkingAnswer("");
     setAiChatMessages([{ sender: 'ai', text: '你好！我是你的星际 AI 助教。请编写代码或尝试回答思考题，我会随时帮你提供优化思路或打分。' }]);
     if (detail.userRecord) {
       const r = detail.userRecord;
-      if (r.codePassed) setIsPassed(true);
+      if (r.codePassed) setTestResults("历史记录：该关卡曾通过评测。当前编辑器代码尚未运行。");
       if (r.quizAnswers) { setSelectedQuizAnswers(r.quizAnswers); const e: Record<number, boolean> = {}; Object.keys(r.quizAnswers).forEach((k: any) => { e[k] = true; }); setShowQuizExplains(e); }
       if (r.thinkingFeedback) setAiChatMessages([{ sender: 'ai', text: '你好！我是你的星际 AI 助教。' }, { sender: 'ai', text: r.thinkingFeedback }]);
     }
     // Updating a run record must not reset the student's edited code or conversation.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [detail?.id]);
+  }, [selectedNodeName, detail?.id]);
 
   // ── 运行代码 ──
-  const handleRunCode = async (code: string) => {
-    if (!detail) return;
+  const handleCancelRun = () => {
+    runRequests.current.cancel();
+    setIsRunning(false);
+    setExecutionStatus('CANCELLED');
+    setTestResults(executionLabel('CANCELLED'));
+  };
+  const handleRunCode = async (code: string, mode: ChallengeExecutionMode) => {
+    if (!detail || loading) return;
+    const execution = runRequests.current.beginChallenge(code, detail.id, mode);
+    if (!execution) return;
+    const request = execution.controller;
+    const challengeId = detail.id;
+    const node = selectedNodeName;
+    const isCurrent = () => runRequests.current.isCurrent(request)
+      && currentRunContext.current.id === challengeId && currentRunContext.current.node === node;
+    setSubmittedCode(code);
+    setExecutionMode(execution.mode);
+    setExecutionStatus(null);
     setIsRunning(true);
-    setTestResults("正在启动 Docker Python 沙箱...\n预装库环境: NumPy 1.24, Pandas 2.0, Scikit-learn 1.2...\n");
+    setTestResults(execution.mode === 'sample' ? "正在运行公开样例（不计通关）...\n" : "正在提交完整判题，请稍候...\n");
+    const timeout = setTimeout(() => {
+      if (!isCurrent()) return;
+      runRequests.current.cancel();
+      setIsRunning(false);
+      setExecutionStatus('REQUEST_TIMEOUT');
+      setTestResults('等待结果超时，服务端任务可能仍在运行。');
+    }, execution.waitTimeoutMs);
     try {
-      const res = await fetch(`/api/challenges/${encodeURIComponent(detail.id)}/submit`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code }),
+      const res = await fetch(execution.endpoint, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code }), signal: request.signal,
       });
-      const data = await res.json();
-      if (data.success && data.data) {
+      const data = await readExecutionResponse(res);
+      if (!isCurrent()) return;
+      if (res.ok && data.success === true && data.data) {
         const result = data.data;
-        const passed = result.status === 'ACCEPTED';
-        let output = `\n[沙箱评测完成] - ${result.runtimeMs}ms\n${result.status}\n${'-'.repeat(36)}\n${result.message}`;
-        setTestResults(prev => prev + output);
-        setIsPassed(passed);
-        setLevels(prev => prev.map((l, i) => i === activeLevelIndex ? { ...l, userRecord: { ...l.userRecord, codePassed: passed } } : l));
+        const resultStatus = normalizeExecutionStatus(result.status);
+        setExecutionStatus(resultStatus);
+        setTestResults(`[评测结果] ${challengeResultLabel(execution.mode, resultStatus)}\n耗时: ${result.runtimeMs ?? '未知'}ms\n${'-'.repeat(36)}\n${result.message || ''}`);
+        if (status === 'authenticated' && shouldRecordChallengePass(execution.mode, resultStatus)) {
+          setLevels(prev => prev.map(level => level.id === challengeId
+            ? { ...level, userRecord: { ...level.userRecord, codePassed: true } } : level));
+        }
       } else {
-        setTestResults(prev => prev + `\n\n__TEST_STATUS__:FAILED\n[ERROR] ${data.message || '接口响应异常'}`);
-        setIsPassed(false);
+        const failureStatus = normalizeExecutionStatus(data.data?.status || data.status);
+        setExecutionStatus(failureStatus === 'ACCEPTED' || failureStatus === 'EXECUTED' ? 'SYSTEM_ERROR' : failureStatus);
+        setTestResults(`[请求失败] ${data.message || `HTTP ${res.status}: 未收到有效评测结果`}`);
       }
-    } catch { setTestResults(prev => prev + '\n\n__TEST_STATUS__:FAILED\n[ERROR] 网络连接沙箱超时'); setIsPassed(false); }
-    finally { setIsRunning(false); }
+    } catch (error) {
+      if (isCurrent()) {
+        setExecutionStatus(error instanceof ExecutionResponseError ? error.status : 'NETWORK_ERROR');
+        setTestResults(`[网络或响应错误] ${error instanceof Error ? error.message : '未收到有效评测结果'}`);
+      }
+    } finally {
+      clearTimeout(timeout);
+      if (isCurrent()) {
+        runRequests.current.finish(request);
+        setIsRunning(false);
+      }
+    }
   };
 
   // ── 选择题 ──
@@ -207,7 +265,7 @@ export const QuizWorkspace: React.FC<QuizWorkspaceProps> = ({ selectedNodeName, 
           <span className="text-sm font-extrabold text-white tracking-wider">当前的闯关进度：</span>
           <div className="flex items-center gap-2">
             {levels.map((lvl, i) => (
-              <button key={i} onClick={() => setActiveLevelIndex(i)}
+              <button key={i} onClick={() => { if (i !== activeLevelIndex) { runRequests.current.cancel(); setIsRunning(false); setActiveLevelIndex(i); } }}
                 className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold tracking-wide transition flex items-center gap-1.5 border ${i === activeLevelIndex ? "bg-indigo-500/20 border-indigo-400 text-indigo-300 shadow-[0_0_12px_rgba(99,102,241,0.2)]" : "bg-slate-900 border-slate-800 text-slate-300 hover:border-slate-700 hover:text-white"}`}>
                 ⭐ 第 {lvl.levelIndex} 关：{lvl.levelTitle}
               </button>
@@ -229,8 +287,9 @@ export const QuizWorkspace: React.FC<QuizWorkspaceProps> = ({ selectedNodeName, 
         />
         <CodeEditorPanel
           codeValue={codeValue} onCodeChange={setCodeValue}
-          testResults={testResults} isRunning={isRunning} isPassed={isPassed}
-          canSubmit={true} solutionCode={detail?.solutionCode}
+          testResults={testResults} isRunning={isRunning} executionStatus={executionStatus} executionMode={executionMode}
+          resultIsStale={isSubmittedSourceStale(submittedCode === null ? null : { code: submittedCode }, { code: codeValue })} onCancelRun={handleCancelRun}
+          canSubmit={!loading && Boolean(detail.id)} solutionCode={detail?.solutionCode}
           challengeId={detail?.id} onRunCode={handleRunCode}
         />
         <AiTutorPanel

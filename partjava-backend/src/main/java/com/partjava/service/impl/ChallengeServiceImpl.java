@@ -194,74 +194,63 @@ public class ChallengeServiceImpl implements ChallengeService {
     @Override
     @Transactional
     public JudgementResult submitCode(Integer userId, Integer challengeId, String code) {
-        ChallengeDetail detail = challengeDetailMapper.selectById(challengeId);
-        if (detail == null) {
-            throw new IllegalArgumentException("算法关卡未初始化定义，ID: " + challengeId);
-        }
-
-        JudgementResult result;
-
-        if (detail.getEvaluationScript() == null || detail.getEvaluationScript().trim().isEmpty()) {
-            // 从隐藏判题样例自动生成评测脚本
-            List<Object> evalCases = detail.getEvaluationCases();
-            if (evalCases == null || evalCases.isEmpty()) {
-                evalCases = detail.getTestCases(); // fallback: 用可见测试样例
-            }
-            if (evalCases != null && !evalCases.isEmpty()) {
-                try {
-                    String autoScript = generateEvalScript(evalCases);
-                    result = sandboxService.evaluateCode(code, autoScript, 5.0);
-                } catch (Exception e) {
-                    log.error("自动生成评测脚本失败", e);
-                    result = new JudgementResult("SYSTEM_ERROR", "评测脚本生成失败: " + e.getMessage(), 0);
-                }
-            } else {
-                log.info("📢 [判题引擎] 本关无测试样例，启用语法校验");
-                boolean hasModified = code != null && !code.trim().isEmpty()
-                        && !code.trim().equals(detail.getStarterCode() != null ? detail.getStarterCode().trim() : "")
-                        && (code.contains("def ") || code.contains("class "));
-                if (hasModified) {
-                    result = new JudgementResult("ACCEPTED",
-                            "__TEST_STATUS__:PASSED|代码语法校验通过（本关暂无测试样例）", 50);
-                } else {
-                    result = new JudgementResult("WRONG_ANSWER",
-                            "__TEST_STATUS__:FAILED|请编写有效代码后再次提交", 10);
-                }
-            }
-        } else {
-            result = sandboxService.evaluateCode(code, detail.getEvaluationScript(), 2.0);
-        }
-
-        UserChallengeRecord record = recordMapper.selectOne(
-                new LambdaQueryWrapper<UserChallengeRecord>()
-                        .eq(UserChallengeRecord::getUserId, userId)
-                        .eq(UserChallengeRecord::getChallengeId, challengeId)
-        );
-
-        boolean isNew = (record == null);
-        if (isNew) {
-            record = UserChallengeRecord.builder()
-                    .userId(userId)
-                    .challengeId(challengeId)
-                    .completed(false)
-                    .build();
-        }
-
-        record.setBestCode(code);
-        
-        if ("ACCEPTED".equals(result.getStatus())) {
-            record.setCompleted(true);
-            record.setCompletedAt(LocalDateTime.now());
-            eventPublisher.publishEvent(new UserActionEvent(this, userId, "COMPLETE_CHALLENGE", 1));
-        }
-
-        if (isNew) {
-            recordMapper.insert(record);
-        } else {
-            recordMapper.updateById(record);
-        }
-
+        JudgementResult result = evaluateChallenge(challengeId, code, false);
+        if (userId == null || !"ACCEPTED".equals(result.getStatus())) return result;
+        UserChallengeRecord record = recordMapper.selectOne(new LambdaQueryWrapper<UserChallengeRecord>()
+                .eq(UserChallengeRecord::getUserId, userId).eq(UserChallengeRecord::getChallengeId, challengeId));
+        boolean isNew = record == null;
+        if (isNew) record = UserChallengeRecord.builder().userId(userId).challengeId(challengeId).completed(false).build();
+        boolean firstCompletion = !Boolean.TRUE.equals(record.getCompleted());
+        record.setCompleted(true); record.setLastCode(code); record.setBestCode(code);
+        if (firstCompletion) record.setCompletedAt(LocalDateTime.now());
+        if (isNew) recordMapper.insert(record); else recordMapper.updateById(record);
+        if (firstCompletion) eventPublisher.publishEvent(new UserActionEvent(this, userId, "COMPLETE_CHALLENGE", 1));
         return result;
+    }
+
+    @Override
+    public JudgementResult runSampleCode(Integer userId, Integer challengeId, String code) {
+        // Intentionally no progress query or write in sample mode, even if all samples pass.
+        return evaluateChallenge(challengeId, code, true);
+    }
+
+    private JudgementResult evaluateChallenge(Integer challengeId, String code, boolean samplesOnly) {
+        if (code == null || code.isBlank()) throw new IllegalArgumentException("请先编写代码");
+        if (code.getBytes(StandardCharsets.UTF_8).length > 64 * 1024) throw new IllegalArgumentException("代码不能超过 64 KiB");
+        ChallengeDetail detail = challengeDetailMapper.selectById(challengeId);
+        if (detail == null) throw new IllegalArgumentException("关卡不存在，ID: " + challengeId);
+        List<Object> selected = new ArrayList<>();
+        try {
+            List<Object> publicCases = detail.getTestCases() == null ? List.of() : detail.getTestCases();
+            for (Object value : publicCases) {
+                if (samplesOnly && selected.size() >= 2) break;
+                JsonNode node = objectMapper.valueToTree(value);
+                if (!node.isObject()) throw new IllegalArgumentException("用例格式无效");
+                var copy = (com.fasterxml.jackson.databind.node.ObjectNode) node;
+                copy.put("hidden", false); selected.add(copy);
+            }
+            if (!samplesOnly && detail.getEvaluationCases() != null) {
+                for (Object value : detail.getEvaluationCases()) {
+                    JsonNode node = objectMapper.valueToTree(value);
+                    if (!node.isObject()) throw new IllegalArgumentException("用例格式无效");
+                    var copy = (com.fasterxml.jackson.databind.node.ObjectNode) node;
+                    copy.put("hidden", true); selected.add(copy);
+                }
+            }
+            String spec = buildEvaluationSpec(selected);
+            JudgementResult result = sandboxService.evaluateCode(code, spec, 5.0);
+            if (result == null) return new JudgementResult("SYSTEM_ERROR", "运行服务未返回结果，请重试", 0);
+            if (selected.isEmpty() && "ACCEPTED".equals(result.getStatus())) result.setStatus("EXECUTED");
+            if (samplesOnly) {
+                String hint = selected.isEmpty() ? "本题暂无公开样例，仅执行代码，不记录通关。" : "仅运行 " + selected.size() + " 个公开样例，不记录通关。";
+                result.setMessage(hint + "\n" + result.getMessage());
+            } else if (selected.isEmpty()) result.setMessage("本题暂无测试用例，执行结果不用于通关。\n" + result.getMessage());
+            return result;
+        } catch (IllegalArgumentException exception) {
+            return new JudgementResult("SYSTEM_ERROR", "题目用例配置无效，请管理员检查输入、入口和预期输出", 0);
+        } catch (Exception exception) {
+            return new JudgementResult("SYSTEM_ERROR", "评测请求处理失败，请稍后重试", 0);
+        }
     }
 
     @Override
@@ -330,42 +319,20 @@ public class ChallengeServiceImpl implements ChallengeService {
         return new ThinkingEvaluateResp(score, feedback);
     }
 
-    /**
-     * 从测试样例 JSON 自动生成 Python 评测脚本
-     */
-    private String generateEvalScript(List<Object> testCases) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("import sys, traceback\n");
-        sb.append("test_cases = ");
-        try { sb.append(objectMapper.writeValueAsString(testCases)); } catch (Exception e) { sb.append("[]"); }
-        sb.append("\npassed = 0\n");
-        sb.append("user_funcs = [(n, v) for n, v in list(locals().items()) if callable(v) and not n.startswith('_')]\n");
-        sb.append("fn = user_funcs[-1][1] if user_funcs else None\n");
-        sb.append("for i, tc in enumerate(test_cases):\n");
-        sb.append("    try:\n");
-        sb.append("        inp = str(tc.get('input', '')); expected = str(tc.get('expected', '')).strip()\n");
-        sb.append("        result = ''\n");
-        sb.append("        if fn:\n");
-        sb.append("            try: result = str(fn(inp))\n");
-        sb.append("            except: pass\n");
-        sb.append("            if not result:\n");
-        sb.append("                try: result = str(fn())\n");
-        sb.append("                except: pass\n");
-        sb.append("        if not result:\n");
-        sb.append("            try: result = str(eval(inp)) if inp else ''\n");
-        sb.append("            except: pass\n");
-        sb.append("        if str(result).strip() == expected:\n");
-        sb.append("            passed += 1\n");
-        sb.append("            print(f'Test {i+1}: PASSED')\n");
-        sb.append("        else:\n");
-        sb.append("            print(f'Test {i+1}: FAILED\\n  expected: {repr(expected)}\\n  got: {repr(result)}')\n");
-        sb.append("    except Exception as e:\n");
-        sb.append("        print(f'Test {i+1}: ERROR\\n{traceback.format_exc()}')\n");
-        sb.append("if passed == len(test_cases):\n");
-        sb.append("    print(f'__TEST_STATUS__:PASSED|{passed}/{len(test_cases)} tests passed')\n");
-        sb.append("else:\n");
-        sb.append("    print(f'__TEST_STATUS__:FAILED|{passed}/{len(test_cases)} passed')\n");
-        return sb.toString();
+    /** JSON spec, never executable judge code; expected values stay outside the container. */
+    private String buildEvaluationSpec(List<Object> cases) throws Exception {
+        if (cases.size() > 64) throw new IllegalArgumentException("测试用例数量超限");
+        var array = objectMapper.createArrayNode();
+        for (Object value : cases) {
+            JsonNode node = objectMapper.valueToTree(value);
+            if (!node.isObject() || (!node.has("expected") && !node.has("expectedOutput") && !node.has("expectedException"))) throw new IllegalArgumentException("测试用例缺少 expected");
+            var test = (com.fasterxml.jackson.databind.node.ObjectNode) node;
+            array.add(test);
+        }
+        var spec = objectMapper.createObjectNode().set("cases", array);
+        String json = objectMapper.writeValueAsString(spec);
+        if (json.getBytes(StandardCharsets.UTF_8).length > 128 * 1024) throw new IllegalArgumentException("测试配置过大");
+        return json;
     }
 
     protected String callAI(String prompt) throws Exception {

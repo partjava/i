@@ -4,6 +4,8 @@ import React, { useState } from 'react';
 import { Button, Select, Card, Input, Alert } from 'antd';
 import { PlayCircleOutlined, ClearOutlined, CodeOutlined, SaveOutlined } from '@ant-design/icons';
 
+import { useStandaloneExecution } from './useStandaloneExecution';
+
 const { TextArea } = Input;
 
 interface CodeEditorProps {
@@ -59,8 +61,7 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
   const [code, setCode] = useState('');
   const [language, setLanguage] = useState('python');
   const [input, setInput] = useState('');
-  const [output, setOutput] = useState('');
-  const [isRunning, setIsRunning] = useState(false);
+  const { output, setOutput, isRunning, runCode, cancelRun, stale } = useStandaloneExecution(code, language, input);
   const [isSaving, setIsSaving] = useState(false);
 
   // 支持的编程语言
@@ -104,63 +105,6 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
         'goroutine': '协程示例'
       }[key as keyof typeof templates] || key
     }));
-  };
-
-  // 真正运行代码
-  const runCode = async () => {
-    if (!code.trim()) {
-      setOutput('错误：请输入代码');
-      return;
-    }
-
-    setIsRunning(true);
-    setOutput('正在运行...');
-
-    try {
-      const response = await fetch('/api/execute-code', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          code: code,
-          language: language,
-          input: input
-        }),
-      });
-
-      const result = await response.json();
-
-      if (result.success) {
-        const outputText = `代码执行完成！
-
-语言: ${languages.find(l => l.value === language)?.label}
-状态: ${result.status}
-执行时间: ${result.time}秒
-内存使用: ${result.memory}KB
-输入数据: ${input || '无'}
-
-输出结果:
-${result.output || '(无输出)'}`;
-        
-        if (result.error) {
-          setOutput(outputText + `\n\n错误信息:\n${result.error}`);
-        } else {
-          setOutput(outputText);
-        }
-      } else {
-        setOutput(`执行失败！
-
-错误信息:
-${result.error}`);
-      }
-    } catch (error) {
-      setOutput(`执行失败！
-
-网络错误: ${error instanceof Error ? error.message : '未知错误'}`);
-    } finally {
-      setIsRunning(false);
-    }
   };
 
   // 清空所有内容
@@ -247,13 +191,14 @@ ${output}
               icon={<PlayCircleOutlined />}
               onClick={runCode}
               loading={isRunning}
-              disabled={!code.trim()}
+              disabled={isRunning || !code.trim()}
               size="small"
               className="flex-shrink-0"
             >
               <span className="hidden sm:inline">运行代码</span>
               <span className="sm:hidden">运行</span>
             </Button>
+            {isRunning && <Button size="small" onClick={cancelRun}>停止等待</Button>}
           </div>
           <div className="flex items-center gap-1 md:gap-2 flex-wrap">
             <Select
@@ -339,6 +284,7 @@ for i in range(5):
                 minHeight: typeof window !== 'undefined' && window.innerWidth < 1024 ? '150px' : '200px' 
               }}
             >
+              {stale && <div className="text-amber-500 text-xs mb-2">代码或输入已更改，以下为上次提交的结果，请重新运行。</div>}
               {output ? (
                 <pre className="whitespace-pre-wrap text-xs md:text-sm">{output}</pre>
               ) : (

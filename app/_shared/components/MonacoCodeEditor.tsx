@@ -27,6 +27,8 @@ const Editor = dynamic(() => import('@monaco-editor/react'), {
   )
 });
 
+import { useStandaloneExecution } from './useStandaloneExecution';
+
 const { TextArea } = Input;
 
 interface MonacoCodeEditorProps {
@@ -117,8 +119,7 @@ const MonacoCodeEditor: React.FC<MonacoCodeEditorProps> = ({
   const [code, setCode] = useState('print("Hello, World!")');
   const [language, setLanguage] = useState('python');
   const [input, setInput] = useState('');
-  const [output, setOutput] = useState('');
-  const [isRunning, setIsRunning] = useState(false);
+  const { output, setOutput, isRunning, runCode, cancelRun, stale } = useStandaloneExecution(code, language, input);
   const [isSaving, setIsSaving] = useState(false);
   const [theme, setTheme] = useState<'vs-dark' | 'light'>('vs-dark');
   const editorRef = useRef<any>(null);
@@ -180,6 +181,9 @@ const MonacoCodeEditor: React.FC<MonacoCodeEditorProps> = ({
     lineNumbersMinChars: 3,
   };
 
+  const runCodeRef = useRef(runCode);
+  runCodeRef.current = runCode;
+
   // 编辑器挂载时的回调
   const handleEditorDidMount = (editor: any, monaco: any) => {
     editorRef.current = editor;
@@ -187,7 +191,7 @@ const MonacoCodeEditor: React.FC<MonacoCodeEditorProps> = ({
     
     // 添加快捷键
     editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => {
-      runCode();
+      void runCodeRef.current();
     });
     
     editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => {
@@ -211,109 +215,6 @@ const MonacoCodeEditor: React.FC<MonacoCodeEditorProps> = ({
   const handleEditorLoadError = (error: any) => {
     console.error('Monaco editor failed to load:', error);
     setEditorLoadError(true);
-  };
-
-  // 运行代码
-  const runCode = async () => {
-    if (!code.trim()) {
-      message.error('请输入代码');
-      return;
-    }
-
-    setIsRunning(true);
-    setOutput('正在运行...');
-
-    try {
-      // 先尝试使用真实API执行
-      try {
-        const response = await fetch('/api/execute-code', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            code: code,
-            language: language,
-            input: input
-          }),
-          // 添加超时处理
-          signal: AbortSignal.timeout(15000) // 15秒超时
-        });
-
-        const result = await response.json();
-
-        if (result.success) {
-          const outputText = `✅ 代码执行完成！
-
-🔹 语言: ${languages.find(l => l.value === language)?.label}
-🔹 状态: ${result.status}
-🔹 执行时间: ${result.time}秒
-🔹 内存使用: ${result.memory}KB
-🔹 输入数据: ${input || '无'}
-
-📤 输出结果:
-${result.output || '(无输出)'}`;
-          
-          if (result.error) {
-            setOutput(outputText + `\n\n❌ 错误信息:\n${result.error}`);
-          } else {
-            setOutput(outputText);
-          }
-          message.success('代码执行成功！');
-          setIsRunning(false);
-          return;
-        } else {
-          throw new Error(result.error || '执行失败');
-        }
-      } catch (apiError) {
-        console.error('API执行失败，切换到本地模拟执行:', apiError);
-        
-        // 如果API执行失败，使用本地模拟执行
-        let simulatedOutput = '';
-        
-        // 根据语言和代码进行简单模拟
-        if (language === 'python') {
-          if (code.includes('print')) {
-            simulatedOutput = code.match(/print\(['"](.*?)['"]\)/g)
-              ?.map(m => m.replace(/print\(['"](.*?)['"]\)/, '$1'))
-              ?.join('\n') || 'Hello, World!';
-          } else {
-            simulatedOutput = '程序执行完成，但没有输出。';
-          }
-        } else if (language === 'javascript') {
-          if (code.includes('console.log')) {
-            simulatedOutput = code.match(/console\.log\(['"](.*?)['"]\)/g)
-              ?.map(m => m.replace(/console\.log\(['"](.*?)['"]\)/, '$1'))
-              ?.join('\n') || 'Hello, World!';
-          } else {
-            simulatedOutput = '程序执行完成，但没有输出。';
-          }
-        } else {
-          simulatedOutput = '模拟执行完成。\n输出结果在实际环境中可能有所不同。';
-        }
-        
-        const outputText = `✅ 代码执行完成！(本地模拟)
-
-🔹 语言: ${languages.find(l => l.value === language)?.label}
-🔹 状态: 已完成
-🔹 执行时间: 0.01秒
-🔹 内存使用: 1024KB
-🔹 输入数据: ${input || '无'}
-
-📤 输出结果:
-${simulatedOutput}
-
-⚠️ 注意: 这是本地模拟执行结果，仅供参考。`;
-        
-        setOutput(outputText);
-        message.success('代码执行成功！(本地模拟)');
-      }
-    } catch (error) {
-      setOutput(`❌ 执行失败！\n\n网络错误: ${error instanceof Error ? error.message : '未知错误'}`);
-      message.error('网络错误，请重试');
-    } finally {
-      setIsRunning(false);
-    }
   };
 
   // 保存代码为笔记
@@ -487,10 +388,11 @@ ${output}
               icon={<PlayCircleOutlined />}
               onClick={runCode}
               loading={isRunning}
-              disabled={!code.trim()}
+              disabled={isRunning || !code.trim()}
             >
               {isRunning ? '执行中...' : '运行 (Ctrl+Enter)'}
             </Button>
+            {isRunning && <Button size="small" onClick={cancelRun}>停止等待</Button>}
           </div>
           
           <div className="flex items-center gap-2">
@@ -623,6 +525,7 @@ ${output}
               className="bg-gray-900 text-green-400 p-4 rounded font-mono text-sm overflow-auto"
               style={{ height: `calc(${height} - 240px)`, minHeight: '300px' }}
             >
+              {stale && <div className="text-amber-500 text-xs mb-2">代码或输入已更改，以下为上次提交的结果，请重新运行。</div>}
               {output ? (
                 <pre className="whitespace-pre-wrap">{output}</pre>
               ) : (

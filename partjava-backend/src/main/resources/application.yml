@@ -2,6 +2,8 @@ server:
   port: 8080
 
 spring:
+  config:
+    import: "optional:file:../partjavadata/secrets/onlinecompiler.env[.properties],optional:file:../../partjavadata/secrets/onlinecompiler.env[.properties]"
   application:
     name: partjava-backend
   servlet:
@@ -71,3 +73,10 @@ ai:
   api-key: "${AI_API_KEY:}"
   api-url: "${AI_API_URL:https://api.deepseek.com/v1}"
 
+
+# Challenge execution only; standalone /api/execute-code continues to use Judge0.
+onlinecompiler:
+  api-key: ${ONLINECOMPILER_API_KEY:}
+  base-url: ${ONLINECOMPILER_BASE_URL:https://api.onlinecompiler.io}
+  compiler: ${ONLINECOMPILER_COMPILER:python-3.14}
+  batch-size: ${ONLINECOMPILER_BATCH_SIZE:8}

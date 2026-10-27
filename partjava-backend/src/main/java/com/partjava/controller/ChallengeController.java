@@ -108,9 +108,17 @@ public class ChallengeController {
             @RequestAttribute(value = "userId", required = false) Integer userId,
             @PathVariable("id") Integer challengeId,
             @RequestBody ChallengeSubmitReq req) {
-        Integer activeUserId = getUserIdOrFallback(userId);
-        JudgementResult result = challengeService.submitCode(activeUserId, challengeId, req.getCode());
+        JudgementResult result = challengeService.submitCode(userId, challengeId, req.getCode());
         return ApiResponse.success(result);
+    }
+
+    /** 快速运行公开样例，不会更新通关记录。 */
+    @PostMapping("/challenges/{id}/run")
+    public ApiResponse<JudgementResult> runChallengeSamples(
+            @RequestAttribute(value = "userId", required = false) Integer userId,
+            @PathVariable("id") Integer challengeId,
+            @RequestBody ChallengeSubmitReq req) {
+        return ApiResponse.success(challengeService.runSampleCode(userId, challengeId, req.getCode()));
     }
 
     /**
@@ -206,15 +214,19 @@ public class ChallengeController {
             @PathVariable("subtopicName") String subtopicName,
             @RequestBody Map<String, Object> body,
             @RequestAttribute(value = "userId", required = false) Integer userId) {
-        Integer activeUserId = getUserIdOrFallback(userId);
         Integer challengeId = Integer.parseInt(body.get("challengeId").toString());
-        boolean passed = (boolean) body.get("passed");
-        
-        challengeService.submitCode(activeUserId, challengeId, passed ? "def compat(): pass" : "");
+        Object submitted = body.get("code");
+        if (!(submitted instanceof String code) || code.isBlank()) {
+            throw new IllegalArgumentException("请提交实际代码，不能使用客户端 passed 标记记录通关");
+        }
+        JudgementResult result = challengeService.submitCode(userId, challengeId, code);
         
         Map<String, Object> res = new HashMap<>();
         res.put("success", true);
-        res.put("message", passed ? "代码测试已通过！记录已保存。" : "测试未通过，请继续优化代码！");
+        res.put("status", result.getStatus());
+        res.put("passed", "ACCEPTED".equals(result.getStatus()));
+        res.put("runtimeMs", result.getRuntimeMs());
+        res.put("message", result.getMessage());
         return res;
     }
 
