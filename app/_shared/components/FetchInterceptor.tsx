@@ -48,7 +48,9 @@ export default function FetchInterceptor() {
         const isAuthEndpoint = url.includes('/auth/login') || url.includes('/auth/register');
         if (!isAuthEndpoint) {
           logout();
-          window.location.href = '/auth/login?expired=true';
+          if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/auth/login')) {
+            window.location.href = '/auth/login?expired=true';
+          }
         }
       }
 

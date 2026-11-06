@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, Suspense, useRef, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -11,16 +11,37 @@ import InkWashDecoration from '@shared/components/InkWashDecoration';
 
 function LoginStatusChecker({ onPrefillUsername }: { onPrefillUsername: (u: string) => void }) {
   const searchParams = useSearchParams();
+  const hasTriggeredRef = useRef(false);
+
   useEffect(() => {
-    if (searchParams.get('expired') === 'true') message.info('会话已过期，请重新登录');
-    if (searchParams.get('error') === 'true') message.error('退出登录时发生错误');
+    if (hasTriggeredRef.current) return;
+    hasTriggeredRef.current = true;
+
+    if (searchParams.get('expired') === 'true') {
+      message.info({ content: '会话已过期，请重新登录', key: 'session_expired' });
+    }
+    if (searchParams.get('error') === 'true') {
+      message.error({ content: '退出登录时发生错误', key: 'session_error' });
+    }
     const msg = searchParams.get('message');
-    if (msg) message.success(decodeURIComponent(msg));
+    if (msg) {
+      message.success({ content: decodeURIComponent(msg), key: 'session_msg' });
+    }
     const prefill = searchParams.get('username');
-    if (prefill) onPrefillUsername(decodeURIComponent(prefill));
+    if (prefill) {
+      onPrefillUsername(decodeURIComponent(prefill));
+    }
     if (typeof window !== 'undefined') {
       localStorage.removeItem('user_data');
       sessionStorage.removeItem('user_data');
+      if (searchParams.get('expired') || searchParams.get('error') || searchParams.get('message') || searchParams.get('username')) {
+        const url = new URL(window.location.href);
+        url.searchParams.delete('expired');
+        url.searchParams.delete('error');
+        url.searchParams.delete('message');
+        url.searchParams.delete('username');
+        window.history.replaceState({}, '', url.pathname + (url.search ? url.search : ''));
+      }
     }
   }, [searchParams, onPrefillUsername]);
   return null;
@@ -33,6 +54,10 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [form, setForm] = useState({ email: '', password: '', remember: true });
+
+  const handlePrefillUsername = useCallback((u: string) => {
+    setForm(prev => (prev.email ? prev : { ...prev, email: u }));
+  }, []);
 
   useEffect(() => {
     if (status === 'authenticated' && session?.user) router.push('/');
@@ -75,7 +100,7 @@ export default function LoginPage() {
       </div>
 
       <Suspense fallback={null}>
-        <LoginStatusChecker onPrefillUsername={(u) => setForm(prev => prev.email ? prev : { ...prev, email: u })} />
+        <LoginStatusChecker onPrefillUsername={handlePrefillUsername} />
       </Suspense>
 
       {/* 左侧品牌展示 */}
