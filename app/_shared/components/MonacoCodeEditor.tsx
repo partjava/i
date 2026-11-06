@@ -1,141 +1,385 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
-import { Button, Select, Input, Alert, message, Tooltip, Spin } from 'antd';
-import { 
-  PlayCircleOutlined, 
-  ClearOutlined, 
-  CodeOutlined, 
-  SaveOutlined,
-  CopyOutlined,
-  DownloadOutlined,
-  FullscreenOutlined,
-  LoadingOutlined
-} from '@ant-design/icons';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
+import { Select, message, Tooltip, Spin } from 'antd';
 import dynamic from 'next/dynamic';
+import {
+  Sparkles,
+  Terminal,
+  Cpu,
+  Play,
+  Square,
+  Copy,
+  Check,
+  Download,
+  Save,
+  Trash2,
+  Sun,
+  Moon,
+  Maximize2,
+  Minimize2,
+  FileCode,
+  ShieldCheck,
+  CheckCircle2,
+  AlertCircle,
+  Clock,
+  HardDrive,
+  ChevronDown,
+  ChevronUp,
+} from 'lucide-react';
 
-// 动态导入Monaco编辑器，减少初始加载大小
+// 动态导入 Monaco 编辑器，SSR 关闭
 const Editor = dynamic(() => import('@monaco-editor/react'), {
   ssr: false,
   loading: () => (
-    <div className="flex items-center justify-center" style={{ height: '400px' }}>
-      <Spin 
-        indicator={<LoadingOutlined style={{ fontSize: 36 }} spin />} 
-        tip="编辑器加载中，请稍候..." 
-      />
+    <div className="flex flex-col items-center justify-center h-full min-h-[400px] bg-slate-950/80 text-slate-300">
+      <Spin size="large" />
+      <span className="mt-4 font-mono text-xs tracking-wider text-indigo-300">
+        正在挂载 Monaco 智能核心引擎...
+      </span>
     </div>
-  )
+  ),
 });
 
 import { useStandaloneExecution } from './useStandaloneExecution';
 import InlineCodePatchModal, { CodePatchData } from './InlineCodePatchModal';
 import VisualExecutionTracePlayer from './VisualExecutionTracePlayer';
 import { emitPetCompanionEvent } from '@shared/lib/pet-companion-bus';
-import { Sparkles, Terminal, Cpu } from 'lucide-react';
-
-const { TextArea } = Input;
 
 interface MonacoCodeEditorProps {
   className?: string;
   height?: string;
 }
 
-// Monaco Editor 语言映射
-const monacoLanguageMap: { [key: string]: string } = {
-  'python': 'python',
-  'javascript': 'javascript',
-  'java': 'java',
-  'cpp': 'cpp',
-  'c': 'c',
-  'csharp': 'csharp',
-  'go': 'go',
-  'rust': 'rust',
-  'php': 'php',
-  'ruby': 'ruby',
-  'swift': 'swift',
-  'kotlin': 'kotlin',
-  'typescript': 'typescript',
+// Monaco 语言映射
+const monacoLanguageMap: Record<string, string> = {
+  python: 'python',
+  javascript: 'javascript',
+  java: 'java',
+  cpp: 'cpp',
+  c: 'c',
+  csharp: 'csharp',
+  go: 'go',
+  rust: 'rust',
+  php: 'php',
+  ruby: 'ruby',
+  swift: 'swift',
+  kotlin: 'kotlin',
+  typescript: 'typescript',
 };
 
-// 代码模板
+interface LanguageConfig {
+  value: string;
+  label: string;
+  ext: string;
+  fileName: string;
+  tag: string;
+  badgeColor: string;
+}
+
+const LANGUAGES: LanguageConfig[] = [
+  { value: 'java', label: 'Java', ext: 'java', fileName: 'Main.java', tag: 'JDK 17', badgeColor: '#f97316' },
+  { value: 'python', label: 'Python', ext: 'py', fileName: 'main.py', tag: 'v3.11', badgeColor: '#38bdf8' },
+  { value: 'cpp', label: 'C++', ext: 'cpp', fileName: 'main.cpp', tag: 'GCC 13', badgeColor: '#6366f1' },
+  { value: 'c', label: 'C', ext: 'c', fileName: 'main.c', tag: 'Clang 16', badgeColor: '#94a3b8' },
+  { value: 'javascript', label: 'JavaScript', ext: 'js', fileName: 'index.js', tag: 'Node 20', badgeColor: '#eab308' },
+  { value: 'typescript', label: 'TypeScript', ext: 'ts', fileName: 'index.ts', tag: 'TS 5.4', badgeColor: '#3b82f6' },
+  { value: 'go', label: 'Go', ext: 'go', fileName: 'main.go', tag: 'v1.22', badgeColor: '#06b6d4' },
+  { value: 'rust', label: 'Rust', ext: 'rs', fileName: 'main.rs', tag: 'v1.76', badgeColor: '#fb923c' },
+  { value: 'php', label: 'PHP', ext: 'php', fileName: 'index.php', tag: 'v8.3', badgeColor: '#a855f7' },
+  { value: 'csharp', label: 'C#', ext: 'cs', fileName: 'Program.cs', tag: '.NET 8', badgeColor: '#c084fc' },
+];
+
+// 代码模板库
 const codeTemplates = {
-  python: {
-    'hello-world': 'print("Hello, World!")',
-    'input-output': 'name = input("请输入您的姓名: ")\nprint(f"你好, {name}!")',
-    'loop': 'for i in range(5):\n    print(f"数字: {i}")',
-    'function': 'def greet(name):\n    return f"Hello, {name}!"\n\nresult = greet("World")\nprint(result)',
-    'class': 'class Person:\n    def __init__(self, name):\n        self.name = name\n    \n    def greet(self):\n        return f"Hello, I am {self.name}"\n\nperson = Person("Alice")\nprint(person.greet())',
-    'algorithm': '# 快速排序算法\ndef quicksort(arr):\n    if len(arr) <= 1:\n        return arr\n    \n    pivot = arr[len(arr) // 2]\n    left = [x for x in arr if x < pivot]\n    middle = [x for x in arr if x == pivot]\n    right = [x for x in arr if x > pivot]\n    \n    return quicksort(left) + middle + quicksort(right)\n\n# 测试\narr = [3, 6, 8, 10, 1, 2, 1]\nprint("原数组:", arr)\nprint("排序后:", quicksort(arr))'
+  java: {
+    'hello-world': `public class Main {
+    public static void main(String[] args) {
+        System.out.println("Hello, PartJava Cloud Studio!");
+    }
+}`,
+    'input-output': `import java.util.Scanner;
+
+public class Main {
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+        System.out.print("请输入您的姓名: ");
+        if (scanner.hasNextLine()) {
+            String name = scanner.nextLine();
+            System.out.println("你好, " + name + "! 欢迎体验 Docker 云端沙箱。");
+        }
+        scanner.close();
+    }
+}`,
+    'array': `import java.util.Arrays;
+
+public class Main {
+    public static void main(String[] args) {
+        int[] numbers = {15, 3, 28, 7, 92, 44, 1};
+        System.out.println("原始序列: " + Arrays.toString(numbers));
+        Arrays.sort(numbers);
+        System.out.println("升序排序: " + Arrays.toString(numbers));
+    }
+}`,
+    'class': `class Person {
+    private String name;
+    private int age;
+    
+    public Person(String name, int age) {
+        this.name = name;
+        this.age = age;
+    }
+    
+    public void introduce() {
+        System.out.println("我是 " + name + "，今年 " + age + " 岁，正在 PartJava 实验室编程！");
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        Person dev = new Person("禾桔", 1);
+        dev.introduce();
+    }
+}`,
   },
-  javascript: {
-    'hello-world': 'console.log("Hello, World!");',
-    'function': 'function greet(name) {\n    return `Hello, ${name}!`;\n}\n\nconsole.log(greet("World"));',
-    'array': 'const numbers = [1, 2, 3, 4, 5];\nconst doubled = numbers.map(n => n * 2);\nconsole.log("原数组:", numbers);\nconsole.log("翻倍后:", doubled);',
-    'async': 'async function fetchData() {\n    try {\n        // 模拟异步操作\n        await new Promise(resolve => setTimeout(resolve, 1000));\n        return "数据获取成功";\n    } catch (error) {\n        console.error("错误:", error);\n    }\n}\n\nfetchData().then(console.log);',
-    'class': 'class Person {\n    constructor(name) {\n        this.name = name;\n    }\n    \n    greet() {\n        return `Hello, I am ${this.name}`;\n    }\n}\n\nconst person = new Person("Alice");\nconsole.log(person.greet());'
+  python: {
+    'hello-world': `print("Hello, PartJava Cloud Studio!")`,
+    'input-output': `name = input("请输入您的姓名: ")
+print(f"你好, {name}! 欢迎体验 Python 3 隔离沙箱。")`,
+    'loop': `for i in range(1, 6):
+    print(f"迭代步骤 [{i}]: 2^{i} = {2 ** i}")`,
+    'function': `def fibonacci(n):
+    a, b = 0, 1
+    seq = []
+    for _ in range(n):
+        seq.append(a)
+        a, b = b, a + b
+    return seq
+
+print("斐波那契前10项:", fibonacci(10))`,
+    'class': `class Developer:
+    def __init__(self, name: str, lang: str):
+        self.name = name
+        self.lang = lang
+    
+    def greet(self):
+        return f"我是 {self.name}，正在使用 {self.lang} 编写高性能服务。"
+
+coder = Developer("禾桔", "Python")
+print(coder.greet())`,
+    'algorithm': `# 经典快速排序
+def quicksort(arr):
+    if len(arr) <= 1:
+        return arr
+    pivot = arr[len(arr) // 2]
+    left = [x for x in arr if x < pivot]
+    middle = [x for x in arr if x == pivot]
+    right = [x for x in arr if x > pivot]
+    return quicksort(left) + middle + quicksort(right)
+
+data = [34, 7, 23, 32, 5, 62]
+print("未排序:", data)
+print("快排后:", quicksort(data))`,
   },
   cpp: {
-    'hello-world': '#include <iostream>\nusing namespace std;\n\nint main() {\n    cout << "Hello, World!" << endl;\n    return 0;\n}',
-    'input-output': '#include <iostream>\nusing namespace std;\n\nint main() {\n    int a, b;\n    cout << "请输入两个数字: ";\n    cin >> a >> b;\n    cout << "和为: " << a + b << endl;\n    return 0;\n}',
-    'vector': '#include <iostream>\n#include <vector>\n#include <algorithm>\nusing namespace std;\n\nint main() {\n    vector<int> nums = {5, 2, 8, 1, 9};\n    \n    cout << "原数组: ";\n    for(int num : nums) {\n        cout << num << " ";\n    }\n    cout << endl;\n    \n    sort(nums.begin(), nums.end());\n    \n    cout << "排序后: ";\n    for(int num : nums) {\n        cout << num << " ";\n    }\n    cout << endl;\n    \n    return 0;\n}',
-    'competitive': '#include <bits/stdc++.h>\nusing namespace std;\n\nint main() {\n    ios_base::sync_with_stdio(false);\n    cin.tie(NULL);\n    \n    int n;\n    cin >> n;\n    \n    // 你的代码\n    \n    return 0;\n}',
-    'class': '#include <iostream>\n#include <string>\nusing namespace std;\n\nclass Person {\nprivate:\n    string name;\n    int age;\n\npublic:\n    Person(string n, int a) : name(n), age(a) {}\n    \n    void introduce() {\n        cout << "我是 " << name << "，今年 " << age << " 岁" << endl;\n    }\n};\n\nint main() {\n    Person person("小明", 20);\n    person.introduce();\n    return 0;\n}'
+    'hello-world': `#include <iostream>
+using namespace std;
+
+int main() {
+    cout << "Hello, PartJava Cloud Studio (C++20)!" << endl;
+    return 0;
+}`,
+    'input-output': `#include <iostream>
+using namespace std;
+
+int main() {
+    int a = 0, b = 0;
+    cout << "请输入两个数字: ";
+    if (cin >> a >> b) {
+        cout << "求和结果: " << (a + b) << endl;
+    }
+    return 0;
+}`,
+    'vector': `#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+int main() {
+    vector<int> nums = {5, 2, 8, 1, 9};
+    cout << "原序列: ";
+    for(int n : nums) cout << n << " ";
+    cout << endl;
+
+    sort(nums.begin(), nums.end());
+    cout << "排序后: ";
+    for(int n : nums) cout << n << " ";
+    cout << endl;
+    return 0;
+}`,
+    'competitive': `#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+    cout << "竞赛 I/O 加速环境已就绪" << endl;
+    return 0;
+}`,
   },
-  java: {
-    'hello-world': 'public class Main {\n    public static void main(String[] args) {\n        System.out.println("Hello, World!");\n    }\n}',
-    'input-output': 'import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner scanner = new Scanner(System.in);\n        System.out.print("请输入您的姓名: ");\n        String name = scanner.nextLine();\n        System.out.println("你好, " + name + "!");\n        scanner.close();\n    }\n}',
-    'array': 'import java.util.Arrays;\n\npublic class Main {\n    public static void main(String[] args) {\n        int[] numbers = {5, 2, 8, 1, 9};\n        \n        System.out.println("原数组: " + Arrays.toString(numbers));\n        \n        Arrays.sort(numbers);\n        \n        System.out.println("排序后: " + Arrays.toString(numbers));\n    }\n}',
-    'class': 'class Person {\n    private String name;\n    private int age;\n    \n    public Person(String name, int age) {\n        this.name = name;\n        this.age = age;\n    }\n    \n    public void introduce() {\n        System.out.println("我是 " + name + "，今年 " + age + " 岁");\n    }\n}\n\npublic class Main {\n    public static void main(String[] args) {\n        Person person = new Person("小明", 20);\n        person.introduce();\n    }\n}'
-  },
-  go: {
-    'hello-world': 'package main\n\nimport "fmt"\n\nfunc main() {\n    fmt.Println("Hello, World!")\n}',
-    'input-output': 'package main\n\nimport (\n    "fmt"\n)\n\nfunc main() {\n    var name string\n    fmt.Print("请输入您的姓名: ")\n    fmt.Scanln(&name)\n    fmt.Printf("你好, %s!\\n", name)\n}',
-    'slice': 'package main\n\nimport (\n    "fmt"\n    "sort"\n)\n\nfunc main() {\n    numbers := []int{5, 2, 8, 1, 9}\n    \n    fmt.Println("原切片:", numbers)\n    \n    sort.Ints(numbers)\n    \n    fmt.Println("排序后:", numbers)\n}',
-    'goroutine': 'package main\n\nimport (\n    "fmt"\n    "time"\n)\n\nfunc worker(id int, jobs <-chan int, results chan<- int) {\n    for j := range jobs {\n        fmt.Printf("Worker %d 处理任务 %d\\n", id, j)\n        time.Sleep(time.Second)\n        results <- j * 2\n    }\n}\n\nfunc main() {\n    jobs := make(chan int, 100)\n    results := make(chan int, 100)\n    \n    // 启动3个worker\n    for w := 1; w <= 3; w++ {\n        go worker(w, jobs, results)\n    }\n    \n    // 发送5个任务\n    for j := 1; j <= 5; j++ {\n        jobs <- j\n    }\n    close(jobs)\n    \n    // 收集结果\n    for a := 1; a <= 5; a++ {\n        <-results\n    }\n}'
-  },
-  c: {
-    'hello-world': '#include <stdio.h>\n\nint main() {\n    printf("Hello, World!\\n");\n    return 0;\n}',
-    'input-output': '#include <stdio.h>\n\nint main() {\n    int a, b;\n    printf("请输入两个数字: ");\n    scanf("%d %d", &a, &b);\n    printf("和为: %d\\n", a + b);\n    return 0;\n}'
-  },
-  php: {
-    'hello-world': '<?php\necho "Hello, World!\\n";\n?>',
-    'input-output': '<?php\necho "请输入您的姓名: ";\n$name = trim(fgets(STDIN));\necho "你好, " . $name . "!\\n";\n?>'
-  },
-  rust: {
-    'hello-world': 'fn main() {\n    println!("Hello, World!");\n}',
-    'input-output': 'use std::io;\n\nfn main() {\n    println!("请输入您的姓名: ");\n    let mut name = String::new();\n    io::stdin().read_line(&mut name).expect("读取失败");\n    println!("你好, {}!", name.trim());\n}'
-  },
-  csharp: {
-    'hello-world': 'using System;\n\nclass Program {\n    static void Main() {\n        Console.WriteLine("Hello, World!");\n    }\n}',
-    'input-output': 'using System;\n\nclass Program {\n    static void Main() {\n        Console.Write("请输入您的姓名: ");\n        string name = Console.ReadLine();\n        Console.WriteLine($"你好, {name}!");\n    }\n}'
+  javascript: {
+    'hello-world': `console.log("Hello, PartJava Cloud Studio (Node.js)!");`,
+    'array': `const scores = [88, 92, 79, 95, 100];
+const total = scores.reduce((sum, s) => sum + s, 0);
+console.log("平均成绩:", (total / scores.length).toFixed(1));`,
+    'async': `async function fetchMock() {
+  console.log("正在模拟异步云端沙箱调度...");
+  await new Promise(r => setTimeout(r, 400));
+  return { status: 200, message: "Docker 容器执行完毕" };
+}
+
+fetchMock().then(res => console.log(res));`,
   },
   typescript: {
-    'hello-world': 'console.log("Hello, World!");',
-    'function': 'function greet(name: string): string {\n    return `Hello, ${name}!`;\n}\n\nconsole.log(greet("World"));',
-    'class': 'class Person {\n    private name: string;\n    \n    constructor(name: string) {\n        this.name = name;\n    }\n    \n    greet(): string {\n        return `Hello, I am ${this.name}`;\n    }\n}\n\nconst person = new Person("Alice");\nconsole.log(person.greet());'
-  }
+    'hello-world': `interface StudioUser {
+  id: string;
+  role: 'developer' | 'researcher';
+}
+
+const user: StudioUser = { id: 'TsuYi-禾桔', role: 'developer' };
+console.log(\`欢迎 \${user.id}，权限角色: \${user.role}\`);`,
+  },
+  go: {
+    'hello-world': `package main
+
+import "fmt"
+
+func main() {
+    fmt.Println("Hello, PartJava Cloud Studio (Go 1.22)!")
+}`,
+    'goroutine': `package main
+
+import (
+    "fmt"
+    "sync"
+)
+
+func main() {
+    var wg sync.WaitGroup
+    for i := 1; i <= 3; i++ {
+        wg.Add(1)
+        go func(id int) {
+            defer wg.Done()
+            fmt.Printf("Goroutine #%d 并发启动\\n", id)
+        }(i)
+    }
+    wg.Wait()
+    fmt.Println("所有协程执行完成")
+}`,
+  },
+  rust: {
+    'hello-world': `fn main() {
+    println!("Hello, PartJava Cloud Studio (Rust 1.76)!");
+}`,
+  },
+  c: {
+    'hello-world': `#include <stdio.h>
+
+int main() {
+    printf("Hello, PartJava Cloud Studio (C11)!\\n");
+    return 0;
+}`,
+  },
+  php: {
+    'hello-world': `<?php
+echo "Hello, PartJava Cloud Studio (PHP 8.3)!\\n";
+?>`,
+  },
+  csharp: {
+    'hello-world': `using System;
+
+class Program {
+    static void Main() {
+        Console.WriteLine("Hello, PartJava Cloud Studio (.NET 8)!");
+    }
+}`,
+  },
 } as const;
 
-const MonacoCodeEditor: React.FC<MonacoCodeEditorProps> = ({
+export default function MonacoCodeEditor({
   className = '',
-  height = '600px'
-}) => {
-  const [code, setCode] = useState('print("Hello, World!")');
-  const [language, setLanguage] = useState('python');
-  const [input, setInput] = useState('');
-  const { output, setOutput, isRunning, runCode, cancelRun, stale } = useStandaloneExecution(code, language, input);
-  const [isSaving, setIsSaving] = useState(false);
+  height = '680px',
+}: MonacoCodeEditorProps) {
+  const [language, setLanguage] = useState<string>('java');
+  const [code, setCode] = useState<string>(codeTemplates.java['hello-world']);
+  const [input, setInput] = useState<string>('');
   const [theme, setTheme] = useState<'vs-dark' | 'light'>('vs-dark');
   const [rightTab, setRightTab] = useState<'console' | 'trace'>('console');
+  const [isStdinOpen, setIsStdinOpen] = useState<boolean>(false);
+  const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [copiedCode, setCopiedCode] = useState(false);
+  const [copiedOutput, setCopiedOutput] = useState(false);
+
+  // AI 诊断补丁弹窗
   const [patchLoading, setPatchLoading] = useState(false);
   const [patchData, setPatchData] = useState<CodePatchData | null>(null);
   const [showPatchModal, setShowPatchModal] = useState(false);
+
   const editorRef = useRef<any>(null);
   const decorationsRef = useRef<any[]>([]);
 
-  // 监听报错输出，向禾桔广播伴学提示
+  // 执行引擎
+  const { output, setOutput, isRunning, runCode, cancelRun, stale } =
+    useStandaloneExecution(code, language, input);
+
+  // 移动端适配
+  const [isMobile, setIsMobile] = useState(false);
+  const [editorLoaded, setEditorLoaded] = useState(false);
+  const [editorLoadError, setEditorLoadError] = useState(false);
+
   useEffect(() => {
-    if (output && (output.includes('失败') || output.includes('错误') || output.includes('Error') || output.includes('Exception'))) {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+
+    const timeout = setTimeout(() => {
+      if (!editorLoaded) setEditorLoadError(true);
+    }, 12000);
+
+    return () => {
+      window.removeEventListener('resize', checkMobile);
+      clearTimeout(timeout);
+    };
+  }, [editorLoaded]);
+
+  // 快捷键支持
+  const runCodeRef = useRef(runCode);
+  runCodeRef.current = runCode;
+
+  const currentLangConfig = useMemo(() => {
+    return (
+      LANGUAGES.find((l) => l.value === language) || {
+        value: language,
+        label: language,
+        ext: 'txt',
+        fileName: `main.${language}`,
+        tag: 'Cloud Sandbox',
+        badgeColor: '#6366f1',
+      }
+    );
+  }, [language]);
+
+  // 监听报错输出，向禾桔伴学广播
+  useEffect(() => {
+    if (
+      output &&
+      (output.includes('失败') ||
+        output.includes('错误') ||
+        output.includes('Error') ||
+        output.includes('Exception') ||
+        output.includes('Traceback'))
+    ) {
       emitPetCompanionEvent({
         type: 'error_diagnosis',
         title: '沙箱运行异常',
@@ -145,6 +389,181 @@ const MonacoCodeEditor: React.FC<MonacoCodeEditorProps> = ({
     }
   }, [output]);
 
+  // 切换编程语言
+  const handleLanguageChange = (newLang: string) => {
+    setLanguage(newLang);
+    const langTemplates = codeTemplates[newLang as keyof typeof codeTemplates];
+    const defaultCode = langTemplates
+      ? (langTemplates as any)['hello-world'] || Object.values(langTemplates)[0]
+      : '';
+    setCode(defaultCode || '');
+    setOutput('');
+  };
+
+  // 载入模板
+  const handleLoadTemplate = (templateKey: string) => {
+    const langTemplates = codeTemplates[language as keyof typeof codeTemplates];
+    if (langTemplates && templateKey in langTemplates) {
+      setCode((langTemplates as any)[templateKey]);
+      setOutput('');
+      message.success('已载入模板代码');
+    }
+  };
+
+  // 模板选项
+  const templateOptions = useMemo(() => {
+    const templates = codeTemplates[language as keyof typeof codeTemplates];
+    if (!templates) return [];
+    const labels: Record<string, string> = {
+      'hello-world': '⚡ Hello World',
+      'input-output': '📥 标准输入输出',
+      'array': '📊 数组 / 集合操作',
+      'loop': '🔄 循环迭代',
+      'function': '🧩 函数与模块',
+      'class': '🏛️ 面向对象 / 类',
+      'algorithm': '🚀 经典算法',
+      'competitive': '🏆 算法竞赛模板',
+      'goroutine': '⚡ 高并发协程',
+      'vector': '📐 向量序列',
+      'async': '⏳ 异步 Promise',
+    };
+    return Object.keys(templates).map((key) => ({
+      value: key,
+      label: labels[key] || key,
+    }));
+  }, [language]);
+
+  // 编辑器挂载
+  const handleEditorDidMount = (editor: any, monaco: any) => {
+    editorRef.current = editor;
+    setEditorLoaded(true);
+
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => {
+      void runCodeRef.current();
+    });
+
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => {
+      void saveCodeAsNote();
+    });
+
+    if (isMobile) {
+      editor.updateOptions({
+        minimap: { enabled: false },
+        folding: false,
+        lineNumbers: 'off',
+        glyphMargin: false,
+      });
+    }
+  };
+
+  // 高亮指定行
+  const handleHighlightLine = (line: number) => {
+    if (!editorRef.current || !line) return;
+    try {
+      editorRef.current.revealLineInCenter(line);
+      decorationsRef.current = editorRef.current.deltaDecorations(
+        decorationsRef.current,
+        [
+          {
+            range: {
+              startLineNumber: line,
+              startColumn: 1,
+              endLineNumber: line,
+              endColumn: 1,
+            },
+            options: {
+              isWholeLine: true,
+              className: 'bg-indigo-500/25 border-l-4 border-indigo-400',
+            },
+          },
+        ]
+      );
+    } catch {}
+  };
+
+  // 复制代码
+  const copyCode = async () => {
+    try {
+      await navigator.clipboard.writeText(code);
+      setCopiedCode(true);
+      message.success('代码已复制至剪贴板');
+      setTimeout(() => setCopiedCode(false), 2000);
+    } catch {
+      message.error('复制失败');
+    }
+  };
+
+  // 复制终端输出
+  const copyOutput = async () => {
+    if (!output) return;
+    try {
+      await navigator.clipboard.writeText(output);
+      setCopiedOutput(true);
+      message.success('终端输出已复制');
+      setTimeout(() => setCopiedOutput(false), 2000);
+    } catch {
+      message.error('复制失败');
+    }
+  };
+
+  // 下载文件
+  const downloadCode = () => {
+    const filename = currentLangConfig.fileName;
+    const blob = new Blob([code], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+    message.success(`已保存至本地: ${filename}`);
+  };
+
+  // 保存为笔记
+  const saveCodeAsNote = async () => {
+    if (!code.trim()) {
+      message.warning('请输入有效代码后再保存');
+      return;
+    }
+    setIsSaving(true);
+    try {
+      const noteContent = `# ${language.toUpperCase()} 代码归档
+
+\`\`\`${language}
+${code}
+\`\`\`
+
+${input ? `### 标准输入 (stdin)\n\`\`\`\n${input}\n\`\`\`\n` : ''}
+${output ? `### 终端运行输出\n\`\`\`\n${output}\n\`\`\`\n` : ''}
+
+---
+*归档于 PartJava 云端极客工坊 · ${new Date().toLocaleString()}*`;
+
+      const response = await fetch('/api/notes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          title: `${language.toUpperCase()} 代码归档 - ${new Date().toLocaleDateString()}`,
+          content: noteContent,
+          category: 'programming',
+          tags: [language, 'code', 'partjava-studio'],
+        }),
+      });
+
+      if (response.ok) {
+        message.success('已保存为个人云端笔记！');
+      } else {
+        message.error('保存失败，请检查登录状态');
+      }
+    } catch {
+      message.error('保存失败，网络异常');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // 请求 AI 诊断补丁
   const handleRequestPatch = async () => {
     if (patchLoading || !code.trim()) return;
     setPatchLoading(true);
@@ -163,7 +582,7 @@ const MonacoCodeEditor: React.FC<MonacoCodeEditorProps> = ({
         setPatchData(json.data);
         setShowPatchModal(true);
       } else {
-        message.warning('未能生成修复补丁');
+        message.warning('未检测到明确语法错误或未能生成修复补丁');
       }
     } catch {
       message.error('请求修复服务失败');
@@ -172,395 +591,332 @@ const MonacoCodeEditor: React.FC<MonacoCodeEditorProps> = ({
     }
   };
 
-  const handleHighlightLine = (line: number) => {
-    if (!editorRef.current || !line) return;
-    try {
-      editorRef.current.revealLineInCenter(line);
-      decorationsRef.current = editorRef.current.deltaDecorations(decorationsRef.current, [
-        {
-          range: { startLineNumber: line, startColumn: 1, endLineNumber: line, endColumn: 1 },
-          options: {
-            isWholeLine: true,
-            className: 'bg-indigo-500/20 border-l-4 border-indigo-400',
-          },
-        },
-      ]);
-    } catch {}
-  };
-  const [isMobile, setIsMobile] = useState(false);
-  const [editorLoaded, setEditorLoaded] = useState(false);
-  const [editorLoadError, setEditorLoadError] = useState(false);
-  
-  // 检测移动设备
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
+  // 解析终端输出元数据
+  const parsedOutputMeta = useMemo(() => {
+    if (!output) return null;
+    const isSuccess =
+      output.includes('代码执行完成') || output.includes('状态: 执行成功');
+    const isError =
+      output.includes('代码执行失败') ||
+      output.includes('错误') ||
+      output.includes('Error') ||
+      output.includes('Exception') ||
+      output.includes('Traceback');
+
+    const timeMatch = output.match(/执行时间:\s*([\d\.]+秒|未知)/);
+    const memoryMatch = output.match(/内存使用:\s*([\d\.]+(?:KB|MB)|未知)/);
+
+    return {
+      isSuccess,
+      isError,
+      time: timeMatch ? timeMatch[1] : null,
+      memory: memoryMatch ? memoryMatch[1] : null,
     };
-    
-    // 初始检查
-    checkMobile();
-    
-    // 监听窗口大小变化
-    window.addEventListener('resize', checkMobile);
-    
-    // 设置加载超时
-    const timeout = setTimeout(() => {
-      if (!editorLoaded) {
-        setEditorLoadError(true);
-      }
-    }, 10000); // 10秒超时
-    
-    return () => {
-      window.removeEventListener('resize', checkMobile);
-      clearTimeout(timeout);
-    };
-  }, [editorLoaded]);
+  }, [output]);
 
-  // 支持的编程语言
-  const languages = [
-    { value: 'python', label: 'Python' },
-    { value: 'javascript', label: 'JavaScript' },
-    { value: 'java', label: 'Java' },
-    { value: 'cpp', label: 'C++' },
-    { value: 'c', label: 'C' },
-    { value: 'go', label: 'Go' },
-    { value: 'php', label: 'PHP' },
-    { value: 'rust', label: 'Rust' },
-    { value: 'csharp', label: 'C#' },
-    { value: 'typescript', label: 'TypeScript' },
-  ];
-
-  // 编辑器配置
-  const editorOptions = {
-    minimap: { enabled: false },
-    fontSize: 14,
-    lineNumbers: 'on' as const,
-    roundedSelection: false,
-    scrollBeyondLastLine: false,
-    automaticLayout: true,
-    tabSize: 4,
-    wordWrap: 'on' as const,
-    contextmenu: true,
-    selectOnLineNumbers: true,
-    lineNumbersMinChars: 3,
-  };
-
-  const runCodeRef = useRef(runCode);
-  runCodeRef.current = runCode;
-
-  // 编辑器挂载时的回调
-  const handleEditorDidMount = (editor: any, monaco: any) => {
-    editorRef.current = editor;
-    setEditorLoaded(true);
-    
-    // 添加快捷键
-    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => {
-      void runCodeRef.current();
-    });
-    
-    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => {
-      saveCodeAsNote();
-    });
-    
-    // 针对移动设备优化
-    if (isMobile) {
-      // 减少编辑器功能，提高性能
-      editor.updateOptions({
-        minimap: { enabled: false },
-        folding: false,
-        lineNumbers: 'off',
-        glyphMargin: false,
-        contextmenu: false,
-      });
-    }
-  };
-  
-  // 编辑器加载错误处理
-  const handleEditorLoadError = (error: any) => {
-    console.error('Monaco editor failed to load:', error);
-    setEditorLoadError(true);
-  };
-
-  // 保存代码为笔记
-  const saveCodeAsNote = async () => {
-    if (!code.trim()) {
-      message.error('请输入代码后再保存');
-      return;
-    }
-
-    setIsSaving(true);
-    try {
-      const noteContent = `# ${language.toUpperCase()} 代码
-
-## 代码内容
-\`\`\`${language}
-${code}
-\`\`\`
-
-${input ? `## 输入数据
-\`\`\`
-${input}
-\`\`\`
-` : ''}
-
-${output ? `## 运行结果
-\`\`\`
-${output}
-\`\`\`
-` : ''}
-
----
-*通过 PartJava 在线代码编辑器创建于 ${new Date().toLocaleString()}*`;
-
-      const response = await fetch('/api/notes', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          title: `${language.toUpperCase()} 代码片段 - ${new Date().toLocaleDateString()}`,
-          content: noteContent,
-          category: 'programming',
-          tags: [language, 'code', 'programming', 'partjava']
-        }),
-      });
-
-      if (response.ok) {
-        message.success('代码已保存为笔记！');
-      } else {
-        message.error('保存失败，请重试');
-      }
-    } catch (error) {
-      console.error('保存错误:', error);
-      message.error('保存失败，请重试');
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  // 复制代码到剪贴板
-  const copyCode = async () => {
-    try {
-      await navigator.clipboard.writeText(code);
-      message.success('代码已复制到剪贴板');
-    } catch (error) {
-      message.error('复制失败');
-    }
-  };
-
-  // 下载代码文件
-  const downloadCode = () => {
-    const extensions: { [key: string]: string } = {
-      'python': 'py',
-      'javascript': 'js',
-      'java': 'java',
-      'cpp': 'cpp',
-      'c': 'c',
-      'go': 'go',
-      'php': 'php',
-      'rust': 'rs',
-      'csharp': 'cs',
-      'typescript': 'ts',
-    };
-
-    const extension = extensions[language] || 'txt';
-    const filename = `code.${extension}`;
-    
-    const blob = new Blob([code], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    a.click();
-    URL.revokeObjectURL(url);
-    
-    message.success(`代码已下载为 ${filename}`);
-  };
-
-  // 加载代码模板
-  const loadTemplate = (templateKey: string) => {
-    const languageTemplates = codeTemplates[language as keyof typeof codeTemplates];
-    if (languageTemplates && templateKey in languageTemplates) {
-      const template = languageTemplates[templateKey as keyof typeof languageTemplates];
-      setCode(template);
-      setOutput('');
-      message.success('模板已加载');
-    }
-  };
-
-  // 获取当前语言的模板选项
-  const getTemplateOptions = () => {
-    const templates = codeTemplates[language as keyof typeof codeTemplates];
-    if (!templates) return [];
-    
-    const templateLabels: Record<string, string> = {
-      'hello-world': 'Hello World',
-      'input-output': '输入输出',
-      'loop': '循环示例',
-      'function': '函数示例',
-      'class': '类示例',
-      'array': '数组操作',
-      'async': '异步操作',
-      'vector': '向量操作',
-      'competitive': '竞赛模板',
-      'goroutine': '协程示例',
-      'algorithm': '算法示例',
-      'slice': '切片操作'
-    };
-    
-    return Object.keys(templates).map(key => ({
-      value: key,
-      label: templateLabels[key] || key
-    }));
-  };
-
-  // 清空所有内容
-  const clearAll = () => {
-    setCode('');
-    setInput('');
-    setOutput('');
-    message.info('已清空所有内容');
-  };
-
-  // 切换主题
-  const toggleTheme = () => {
-    setTheme(theme === 'vs-dark' ? 'light' : 'vs-dark');
-  };
+  // Monaco 编辑器高级选项
+  const editorOptions = useMemo(
+    () => ({
+      minimap: { enabled: !isMobile, maxColumn: 36, renderCharacters: false },
+      fontSize: isMobile ? 12.5 : 14,
+      lineHeight: 22,
+      fontFamily:
+        '"JetBrains Mono", "Fira Code", "Cascadia Code", Consolas, monospace',
+      fontLigatures: true,
+      lineNumbers: (isMobile ? 'off' : 'on') as 'off' | 'on',
+      lineNumbersMinChars: 3,
+      roundedSelection: true,
+      scrollBeyondLastLine: false,
+      automaticLayout: true,
+      tabSize: 4,
+      wordWrap: 'on' as const,
+      contextmenu: true,
+      selectOnLineNumbers: true,
+      cursorBlinking: 'smooth' as const,
+      cursorSmoothCaretAnimation: 'on' as const,
+      smoothScrolling: true,
+      renderLineHighlight: 'all' as const,
+      bracketPairColorization: { enabled: true },
+      padding: { top: 14, bottom: 14 },
+    }),
+    [isMobile]
+  );
 
   return (
-    <div className={`bg-white rounded-lg shadow-lg overflow-hidden ${className}`}>
-      {/* 工具栏 */}
-      <div className="bg-gray-50 border-b border-gray-200 p-4">
-        <div className="flex items-center justify-between flex-wrap gap-4">
-          <div className="flex items-center gap-4">
-            <CodeOutlined className="text-blue-600 text-xl" />
+    <div
+      className={`relative flex flex-col rounded-2xl border transition-all duration-300 shadow-2xl ${
+        isFullscreen
+          ? 'fixed inset-0 z-50 rounded-none border-none p-2 sm:p-4 bg-slate-950/98 backdrop-blur-2xl'
+          : 'bg-[#090e1a]/95 border-indigo-500/25 shadow-indigo-950/50'
+      } ${className}`}
+      style={{
+        boxShadow: isFullscreen
+          ? 'none'
+          : '0 20px 50px -10px rgba(10, 15, 30, 0.7), 0 0 0 1px rgba(99, 102, 241, 0.2)',
+      }}
+    >
+      {/* 顶部 macOS 极客视窗控制栏 */}
+      <div className="flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 bg-gradient-to-r from-slate-950 via-[#0d1424] to-slate-950 border-b border-indigo-500/20 rounded-t-2xl flex-wrap gap-2.5">
+        {/* 左侧：Mac 交通灯 + 文件 Tab 胶囊 */}
+        <div className="flex items-center gap-3">
+          {/* macOS 红黄绿交通灯 */}
+          <div className="hidden sm:flex items-center gap-1.5 pr-2 border-r border-white/10">
+            <span className="w-3 h-3 rounded-full bg-rose-500/90 shadow-[0_0_8px_rgba(244,63,94,0.6)] cursor-pointer hover:opacity-80" />
+            <span className="w-3 h-3 rounded-full bg-amber-400/90 shadow-[0_0_8px_rgba(251,191,36,0.6)] cursor-pointer hover:opacity-80" />
+            <span
+              onClick={() => setIsFullscreen(!isFullscreen)}
+              className="w-3 h-3 rounded-full bg-emerald-400/90 shadow-[0_0_8px_rgba(52,211,153,0.6)] cursor-pointer hover:opacity-80"
+              title="切换全屏专注模式"
+            />
+          </div>
+
+          {/* 当前活动文件 Tab 胶囊 */}
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-indigo-950/40 border border-indigo-400/30 shadow-inner">
+            <FileCode
+              className="w-4 h-4"
+              style={{ color: currentLangConfig.badgeColor }}
+            />
+            <span className="font-mono text-xs font-bold text-slate-100 tracking-wide">
+              {currentLangConfig.fileName}
+            </span>
+            <span
+              className="text-[10px] font-mono px-1.5 py-0.2 rounded font-semibold uppercase tracking-wider"
+              style={{
+                backgroundColor: `${currentLangConfig.badgeColor}22`,
+                color: currentLangConfig.badgeColor,
+                border: `1px solid ${currentLangConfig.badgeColor}44`,
+              }}
+            >
+              {currentLangConfig.tag}
+            </span>
+            {stale && (
+              <span
+                className="w-2 h-2 rounded-full bg-amber-400 animate-pulse"
+                title="代码已修改，尚未提交运行"
+              />
+            )}
+          </div>
+
+          {/* 语言选择下拉 */}
+          <div className="relative">
             <Select
               value={language}
-              onChange={(value) => {
-                setLanguage(value);
-                setCode('');
-                setOutput('');
-              }}
-              className="w-36"
-              size="large"
-              options={languages}
+              onChange={handleLanguageChange}
+              size="middle"
+              className="w-28 sm:w-32 custom-dark-select"
+              popupClassName="custom-dark-select-dropdown"
+              options={LANGUAGES.map((l) => ({
+                value: l.value,
+                label: (
+                  <span className="flex items-center justify-between text-xs">
+                    <span>{l.label}</span>
+                    <span className="font-mono text-[10px] text-slate-400">
+                      .{l.ext}
+                    </span>
+                  </span>
+                ),
+              }))}
             />
-            <Button
-              type="primary"
-              size="large"
-              icon={<PlayCircleOutlined />}
-              onClick={runCode}
-              loading={isRunning}
-              disabled={isRunning || !code.trim()}
-            >
-              {isRunning ? '执行中...' : '运行 (Ctrl+Enter)'}
-            </Button>
-            {isRunning && <Button size="small" onClick={cancelRun}>停止等待</Button>}
           </div>
-          
-          <div className="flex items-center gap-2">
-            <Select
-              placeholder="选择模板"
-              className="w-32"
-              onChange={loadTemplate}
-              options={getTemplateOptions()}
-              allowClear
-            />
-            
-            <Tooltip title="复制代码">
-              <Button
-                icon={<CopyOutlined />}
+
+          {/* 经典模板快速载入 */}
+          {templateOptions.length > 0 && (
+            <div className="hidden md:block">
+              <Select
+                placeholder="经典模板"
+                size="middle"
+                className="w-32 lg:w-36 custom-dark-select"
+                popupClassName="custom-dark-select-dropdown"
+                onChange={handleLoadTemplate}
+                options={templateOptions}
+                allowClear
+              />
+            </div>
+          )}
+        </div>
+
+        {/* 右侧：运行主按键 + 快捷工具组 */}
+        <div className="flex items-center gap-2 ml-auto">
+          {/* 主运行按钮（霓虹翠绿流光态） */}
+          <button
+            type="button"
+            onClick={runCode}
+            disabled={isRunning || !code.trim()}
+            className={`relative group px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-xl text-xs sm:text-sm font-bold text-white transition-all duration-200 flex items-center gap-2 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed ${
+              isRunning
+                ? 'bg-amber-600/80 shadow-amber-900/40'
+                : 'bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 hover:brightness-110 shadow-emerald-950/60 hover:shadow-emerald-500/25'
+            }`}
+          >
+            {isRunning ? (
+              <>
+                <Spin size="small" />
+                <span>编译运行中...</span>
+              </>
+            ) : (
+              <>
+                <Play className="w-3.5 h-3.5 fill-current" />
+                <span>运行代码</span>
+                <kbd className="hidden lg:inline-block font-mono text-[10px] bg-black/30 border border-white/20 px-1.5 py-0.5 rounded text-white/90">
+                  Ctrl+↵
+                </kbd>
+              </>
+            )}
+          </button>
+
+          {isRunning && (
+            <button
+              type="button"
+              onClick={cancelRun}
+              className="px-2.5 py-1.5 rounded-xl text-xs font-semibold text-rose-300 bg-rose-500/15 border border-rose-500/30 hover:bg-rose-500/25 transition flex items-center gap-1"
+              title="终止当前容器运行"
+            >
+              <Square className="w-3 h-3 fill-current" />
+              <span>终止</span>
+            </button>
+          )}
+
+          {/* 辅助快捷操作组 */}
+          <div className="flex items-center gap-1 pl-1 border-l border-white/10 text-slate-400">
+            {/* 复制代码 */}
+            <Tooltip title={copiedCode ? '已复制！' : '复制代码'}>
+              <button
+                type="button"
                 onClick={copyCode}
                 disabled={!code.trim()}
-              />
+                className="p-1.5 sm:p-2 rounded-lg bg-white/5 hover:bg-white/10 hover:text-slate-100 text-slate-300 transition"
+              >
+                {copiedCode ? (
+                  <Check className="w-4 h-4 text-emerald-400" />
+                ) : (
+                  <Copy className="w-4 h-4" />
+                )}
+              </button>
             </Tooltip>
-            
-            <Tooltip title="下载代码">
-              <Button
-                icon={<DownloadOutlined />}
+
+            {/* 下载文件 */}
+            <Tooltip title={`下载 ${currentLangConfig.fileName}`}>
+              <button
+                type="button"
                 onClick={downloadCode}
                 disabled={!code.trim()}
-              />
+                className="p-1.5 sm:p-2 rounded-lg bg-white/5 hover:bg-white/10 hover:text-slate-100 text-slate-300 transition"
+              >
+                <Download className="w-4 h-4" />
+              </button>
             </Tooltip>
-            
-            <Tooltip title="切换主题">
-              <Button
-                icon={theme === 'vs-dark' ? '🌞' : '🌙'}
-                onClick={toggleTheme}
-              />
+
+            {/* 保存至笔记 */}
+            <Tooltip title="保存为云端笔记 (Ctrl+S)">
+              <button
+                type="button"
+                onClick={saveCodeAsNote}
+                disabled={isSaving || !code.trim()}
+                className="hidden sm:flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-indigo-500/15 border border-indigo-400/30 text-indigo-300 hover:bg-indigo-500/25 hover:text-indigo-100 text-xs font-medium transition"
+              >
+                <Save className="w-3.5 h-3.5" />
+                <span>{isSaving ? '保存中...' : '归档笔记'}</span>
+              </button>
             </Tooltip>
-            
-            <Button
-              icon={<SaveOutlined />}
-              onClick={saveCodeAsNote}
-              loading={isSaving}
-              disabled={!code.trim()}
-            >
-              保存 (Ctrl+S)
-            </Button>
-            
-            <Button
-              icon={<ClearOutlined />}
-              onClick={clearAll}
-              danger
-            >
-              清空
-            </Button>
+
+            {/* 主题切换 */}
+            <Tooltip title={theme === 'vs-dark' ? '切换浅色主题' : '切换深色主题'}>
+              <button
+                type="button"
+                onClick={() => setTheme(theme === 'vs-dark' ? 'light' : 'vs-dark')}
+                className="p-1.5 sm:p-2 rounded-lg bg-white/5 hover:bg-white/10 hover:text-slate-100 text-slate-300 transition"
+              >
+                {theme === 'vs-dark' ? (
+                  <Sun className="w-4 h-4 text-amber-300" />
+                ) : (
+                  <Moon className="w-4 h-4 text-indigo-300" />
+                )}
+              </button>
+            </Tooltip>
+
+            {/* 全屏切换 */}
+            <Tooltip title={isFullscreen ? '退出全屏 (Esc)' : '全屏专注模式'}>
+              <button
+                type="button"
+                onClick={() => setIsFullscreen(!isFullscreen)}
+                className="p-1.5 sm:p-2 rounded-lg bg-white/5 hover:bg-white/10 hover:text-slate-100 text-slate-300 transition"
+              >
+                {isFullscreen ? (
+                  <Minimize2 className="w-4 h-4 text-sky-400" />
+                ) : (
+                  <Maximize2 className="w-4 h-4" />
+                )}
+              </button>
+            </Tooltip>
           </div>
         </div>
       </div>
 
-      {/* 主要编辑区域 */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-0">
-        {/* 左侧：代码编辑器 */}
-        <div className="border-r border-gray-200">
-          <div className="p-4 bg-gray-50 border-b border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-              <CodeOutlined />
-              代码编辑器
-              <span className="text-sm font-normal text-gray-500">
-                ({languages.find(l => l.value === language)?.label})
+      {/* 核心工作区分割：左侧代码编辑器 + 右侧终端与 JVM 回放 */}
+      <div
+        className="grid grid-cols-1 lg:grid-cols-12 gap-0 overflow-hidden"
+        style={{
+          height: isFullscreen ? 'calc(100vh - 105px)' : height,
+          minHeight: '520px',
+        }}
+      >
+        {/* 左侧：Monaco 代码编辑器 */}
+        <div className="lg:col-span-7 flex flex-col border-b lg:border-b-0 lg:border-r border-indigo-500/20 bg-slate-950/60 overflow-hidden">
+          {/* 编辑器状态小顶栏 */}
+          <div className="flex items-center justify-between px-3 py-1.5 bg-slate-950/90 border-b border-white/5 text-[11px] text-slate-400 shrink-0">
+            <div className="flex items-center gap-2">
+              <span className="font-mono text-slate-300">
+                src/{currentLangConfig.fileName}
               </span>
-            </h3>
+              <span className="text-slate-600">/</span>
+              <span className="text-slate-400 font-mono text-[10px]">
+                {code.split('\n').length} 行 · {code.length} 字符
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2.5">
+              <button
+                type="button"
+                onClick={() => setCode('')}
+                className="hover:text-rose-400 transition flex items-center gap-1 text-[11px]"
+                title="清空当前代码"
+              >
+                <Trash2 className="w-3 h-3" />
+                <span>清空</span>
+              </button>
+            </div>
           </div>
-          <div className="relative">
+
+          {/* Monaco 编辑器本体 */}
+          <div className="flex-1 relative overflow-hidden">
             {editorLoadError ? (
-              // 移动设备上的降级方案 - 使用简单的文本区域
-              <div className="p-4">
-                <Alert
-                  message="编辑器加载失败"
-                  description="高级编辑器加载失败，已切换到兼容模式。如果您使用的是移动设备，这是正常的。"
-                  type="warning"
-                  showIcon
-                  className="mb-4"
-                />
-                <TextArea
+              <div className="p-4 h-full flex flex-col bg-slate-950 text-slate-200">
+                <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs mb-3 flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 shrink-0" />
+                  <span>Monaco 编辑器加载超时，已平滑降级至极速编辑模式。</span>
+                </div>
+                <textarea
                   value={code}
                   onChange={(e) => setCode(e.target.value)}
-                  placeholder={`请输入${languages.find(l => l.value === language)?.label}代码...`}
-                  className="font-mono text-sm"
-                  style={{ height: height }}
-                  autoSize={false}
+                  className="w-full flex-1 p-3 bg-slate-900 border border-slate-800 rounded-xl font-mono text-sm text-slate-100 focus:outline-none focus:border-indigo-500 custom-scrollbar resize-none"
+                  placeholder="在此输入代码..."
                 />
               </div>
             ) : (
-              // 高级编辑器
               <Editor
-                height={height}
+                height="100%"
                 language={monacoLanguageMap[language] || language}
                 value={code}
                 onChange={(value) => setCode(value || '')}
                 onMount={handleEditorDidMount}
                 theme={theme}
                 options={editorOptions}
-                // 注意：Monaco Editor React 包装器不直接支持 onError
-                // 我们通过 useEffect 和超时检测来处理加载错误
                 loading={
-                  <div className="flex flex-col items-center justify-center h-full bg-gray-50">
-                    <Spin size="large" tip="编辑器加载中..." />
-                    <p className="mt-4 text-gray-500">首次加载可能需要一些时间，请耐心等待...</p>
-                    <p className="mt-2 text-gray-400 text-sm">如果长时间未加载，将自动切换到兼容模式</p>
+                  <div className="flex flex-col items-center justify-center h-full bg-slate-950/90 text-slate-300">
+                    <Spin size="large" />
+                    <p className="mt-3 text-xs font-mono text-indigo-300">
+                      Monaco 智能代码引擎初始化...
+                    </p>
                   </div>
                 }
               />
@@ -568,46 +924,48 @@ ${output}
           </div>
         </div>
 
-        {/* 右侧：输入和输出区域 / JVM 变量栈帧回放 */}
-        <div className="flex flex-col h-full bg-slate-950 overflow-hidden">
+        {/* 右侧：交互式终端 / JVM 栈帧与变量演进 */}
+        <div className="lg:col-span-5 flex flex-col bg-slate-950 overflow-hidden">
           {/* 右侧模式切换 Tab */}
-          <div className="px-4 py-2.5 bg-gray-100 border-b border-gray-200 flex items-center justify-between flex-wrap gap-2 shrink-0">
-            <div className="flex items-center gap-1.5 p-1 bg-gray-200/80 rounded-xl">
+          <div className="px-3 py-2 bg-gradient-to-r from-slate-950 via-[#0b101c] to-slate-950 border-b border-indigo-500/20 flex items-center justify-between flex-wrap gap-2 shrink-0">
+            <div className="flex items-center gap-1 p-1 bg-white/[0.04] rounded-xl border border-white/5">
               <button
                 type="button"
                 onClick={() => setRightTab('console')}
-                className={`px-3 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
+                className={`px-3 py-1 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all ${
                   rightTab === 'console'
-                    ? 'bg-white text-blue-600 shadow-sm'
-                    : 'text-gray-600 hover:text-gray-900'
+                    ? 'bg-gradient-to-r from-indigo-600 to-sky-600 text-white shadow-md'
+                    : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
                 <Terminal className="w-3.5 h-3.5" />
                 <span>控制台 (Console)</span>
               </button>
+
               <button
                 type="button"
                 onClick={() => setRightTab('trace')}
-                className={`px-3 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
+                className={`px-3 py-1 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all ${
                   rightTab === 'trace'
-                    ? 'bg-indigo-600 text-white shadow-sm'
-                    : 'text-gray-600 hover:text-gray-900'
+                    ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md'
+                    : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
-                <Cpu className="w-3.5 h-3.5" />
-                <span>🔬 JVM 栈帧与变量回放</span>
+                <Cpu className="w-3.5 h-3.5 text-amber-300" />
+                <span>🔬 JVM 栈帧回放</span>
               </button>
             </div>
 
-            {rightTab === 'console' && output && (
+            {/* 智能诊断与修复入口（右侧常驻） */}
+            {rightTab === 'console' && (
               <button
                 type="button"
                 onClick={handleRequestPatch}
                 disabled={patchLoading}
-                className="px-2.5 py-1 rounded-lg text-xs font-bold text-white bg-gradient-to-r from-amber-500 via-rose-500 to-indigo-600 hover:opacity-90 disabled:opacity-50 transition flex items-center gap-1 shadow-sm"
+                className="relative group px-2.5 py-1 rounded-lg text-xs font-bold text-white bg-gradient-to-r from-amber-500 via-rose-500 to-indigo-600 hover:brightness-110 disabled:opacity-50 transition flex items-center gap-1.5 shadow-md shadow-rose-950/40"
                 title="根据当前输出诊断报错并一键生成热修复补丁"
               >
-                <Sparkles className="w-3.5 h-3.5" />
+                <Sparkles className="w-3.5 h-3.5 text-amber-200 animate-spin-slow" />
                 <span>{patchLoading ? '诊断中...' : '✨ 禾桔诊断修复'}</span>
               </button>
             )}
@@ -615,48 +973,190 @@ ${output}
 
           {rightTab === 'console' ? (
             <div className="flex flex-col flex-1 overflow-hidden">
-              {/* 输入数据 */}
-              <div className="p-4 border-b border-gray-200 bg-white shrink-0">
-                <h3 className="text-sm font-semibold text-gray-800 mb-2">标准输入 (stdin)</h3>
-                <TextArea
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  placeholder="如果程序需要输入数据，请在这里输入..."
-                  className="font-mono text-sm"
-                  rows={4}
-                />
+              {/* 标准输入 (stdin) 折叠/展开区域 */}
+              <div className="border-b border-white/5 bg-slate-950/80 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setIsStdinOpen(!isStdinOpen)}
+                  className="w-full px-3 py-2 flex items-center justify-between text-xs text-slate-400 hover:text-slate-200 transition"
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold text-slate-300">
+                      标准输入 (stdin)
+                    </span>
+                    {input.trim() ? (
+                      <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
+                        已就绪 ({input.length} 字符)
+                      </span>
+                    ) : (
+                      <span className="text-[10px] text-slate-500">
+                        (若程序含 Scanner / cin 则需在此提供)
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1 text-[11px] text-indigo-400">
+                    <span>{isStdinOpen ? '收起' : '展开输入'}</span>
+                    {isStdinOpen ? (
+                      <ChevronUp className="w-3.5 h-3.5" />
+                    ) : (
+                      <ChevronDown className="w-3.5 h-3.5" />
+                    )}
+                  </div>
+                </button>
+
+                {isStdinOpen && (
+                  <div className="p-3 pt-0">
+                    <textarea
+                      value={input}
+                      onChange={(e) => setInput(e.target.value)}
+                      placeholder="如果您的程序需要读取用户输入（例如：Scanner / input / cin），请在这里键入测试数据..."
+                      className="w-full px-3 py-2 bg-slate-900/90 border border-indigo-500/25 rounded-xl font-mono text-xs text-slate-200 focus:outline-none focus:border-sky-400 custom-scrollbar resize-none"
+                      rows={3}
+                    />
+                  </div>
+                )}
               </div>
 
-              {/* 输出结果 */}
-              <div className="flex-1 p-4 bg-gray-900 flex flex-col overflow-hidden">
-                <div className="flex items-center justify-between mb-2 shrink-0">
-                  <h3 className="text-sm font-semibold text-slate-200 flex items-center gap-1.5">
-                    <Terminal className="w-3.5 h-3.5 text-green-400" />
-                    <span>运行结果</span>
-                  </h3>
-                  {output && (
-                    <button
-                      type="button"
-                      onClick={handleRequestPatch}
-                      disabled={patchLoading}
-                      className="text-xs text-amber-300 hover:text-amber-200 flex items-center gap-1 underline"
-                    >
-                      <Sparkles className="w-3 h-3" /> 一键诊断
-                    </button>
-                  )}
+              {/* 终端输出视窗 (真正的黑客控制台) */}
+              <div className="flex-1 flex flex-col p-3 bg-[#060a12] overflow-hidden">
+                {/* 终端 Header 状态栏 */}
+                <div className="flex items-center justify-between pb-2 mb-2 border-b border-white/10 shrink-0">
+                  <div className="flex items-center gap-2 font-mono text-xs text-slate-400">
+                    <span className="text-emerald-400">❯_</span>
+                    <span className="text-slate-300">bash /run/sandbox.sh</span>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    {/* 状态徽标 */}
+                    {isRunning ? (
+                      <span className="flex items-center gap-1.5 text-[11px] font-mono px-2 py-0.5 rounded-full bg-sky-500/15 text-sky-300 border border-sky-400/30">
+                        <span className="w-2 h-2 rounded-full bg-sky-400 animate-ping" />
+                        <span>容器编译执行中</span>
+                      </span>
+                    ) : parsedOutputMeta?.isSuccess ? (
+                      <span className="flex items-center gap-1 text-[11px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-400/30">
+                        <CheckCircle2 className="w-3 h-3" />
+                        <span>执行成功</span>
+                        {parsedOutputMeta.time && (
+                          <span className="text-emerald-400/80">
+                            · {parsedOutputMeta.time}
+                          </span>
+                        )}
+                      </span>
+                    ) : parsedOutputMeta?.isError ? (
+                      <span className="flex items-center gap-1 text-[11px] font-mono px-2 py-0.5 rounded-full bg-rose-500/15 text-rose-300 border border-rose-400/30">
+                        <AlertCircle className="w-3 h-3" />
+                        <span>执行异常</span>
+                      </span>
+                    ) : (
+                      <span className="text-[11px] font-mono text-slate-500">
+                        ● 沙箱就绪
+                      </span>
+                    )}
+
+                    {/* 复制终端内容 */}
+                    {output && (
+                      <button
+                        type="button"
+                        onClick={copyOutput}
+                        className="p-1 rounded text-slate-400 hover:text-slate-100 hover:bg-white/10 transition"
+                        title="复制终端文本"
+                      >
+                        {copiedOutput ? (
+                          <Check className="w-3.5 h-3.5 text-emerald-400" />
+                        ) : (
+                          <Copy className="w-3.5 h-3.5" />
+                        )}
+                      </button>
+                    )}
+
+                    {/* 清空输出 */}
+                    {output && (
+                      <button
+                        type="button"
+                        onClick={() => setOutput('')}
+                        className="p-1 rounded text-slate-400 hover:text-rose-400 hover:bg-white/10 transition"
+                        title="清空终端"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
                 </div>
-                <div 
-                  className="flex-1 bg-black/60 border border-slate-800 text-green-400 p-4 rounded-xl font-mono text-xs overflow-auto select-text leading-relaxed"
-                  style={{ minHeight: '240px' }}
+
+                {/* 终端内容滚动区 */}
+                <div
+                  className="flex-1 bg-black/70 border border-white/5 p-3 rounded-xl font-mono text-xs overflow-auto select-text leading-relaxed custom-scrollbar"
+                  style={{ minHeight: '220px' }}
                 >
-                  {stale && <div className="text-amber-500 text-xs mb-2">代码或输入已更改，以下为上次提交的结果，请重新运行。</div>}
+                  {stale && (
+                    <div className="mb-2.5 p-2 rounded-lg bg-amber-500/15 border border-amber-500/30 text-amber-300 text-xs flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
+                      <span>
+                        代码或输入数据已更改，以下为上次执行的缓存，请按 Ctrl+Enter
+                        重新运行。
+                      </span>
+                    </div>
+                  )}
+
                   {output ? (
-                    <pre className="whitespace-pre-wrap">{output}</pre>
+                    <div className="space-y-1">
+                      <pre
+                        className={`whitespace-pre-wrap ${
+                          parsedOutputMeta?.isError
+                            ? 'text-rose-300'
+                            : 'text-emerald-300'
+                        }`}
+                      >
+                        {output}
+                      </pre>
+
+                      {/* 如果有异常报错，直接在终端底部附赠修复补丁按钮 */}
+                      {parsedOutputMeta?.isError && (
+                        <div className="pt-3 mt-3 border-t border-rose-500/20 flex items-center justify-between">
+                          <span className="text-rose-400/90 text-[11px]">
+                            💡 遇到编译或运行错误？禾桔大模型可自动剖析根因并输出
+                            Diff 补丁。
+                          </span>
+                          <button
+                            type="button"
+                            onClick={handleRequestPatch}
+                            disabled={patchLoading}
+                            className="px-3 py-1 rounded-lg text-xs font-bold text-white bg-gradient-to-r from-amber-500 to-rose-600 hover:brightness-110 transition shadow flex items-center gap-1.5"
+                          >
+                            <Sparkles className="w-3.5 h-3.5 text-amber-200" />
+                            <span>
+                              {patchLoading ? '诊断中...' : '生成一键修复补丁'}
+                            </span>
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   ) : (
-                    <div className="text-gray-500 text-center py-8">
-                      <div className="text-4xl mb-4">💻</div>
-                      <p>点击运行按钮或按 Ctrl+Enter 查看结果...</p>
-                      <p className="text-xs mt-2">PartJava 专业代码编辑器 - 支持语法高亮、代码补全、快捷键等功能</p>
+                    <div className="h-full flex flex-col items-center justify-center text-slate-500 text-center py-10 space-y-3">
+                      <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400">
+                        <Terminal className="w-6 h-6" />
+                      </div>
+                      <div>
+                        <div className="font-semibold text-slate-300 text-sm">
+                          Docker 隔离容器沙箱已就绪
+                        </div>
+                        <p className="text-xs text-slate-500 mt-1 max-w-xs">
+                          编写代码后按{' '}
+                          <kbd className="px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">
+                            Ctrl + Enter
+                          </kbd>{' '}
+                          或点击上方「运行代码」发起沙箱容器编译
+                        </p>
+                      </div>
+                      <div className="flex flex-wrap items-center justify-center gap-2 pt-1 text-[11px] text-slate-400 font-mono">
+                        <span className="px-2 py-0.5 rounded bg-white/5 border border-white/5">
+                          ✓ cgroups 内存配额防护
+                        </span>
+                        <span className="px-2 py-0.5 rounded bg-white/5 border border-white/5">
+                          ✓ 毫秒级隔离冷启动
+                        </span>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -680,20 +1180,36 @@ ${output}
         </div>
       </div>
 
-      {/* 底部提示 */}
-      <div className="bg-blue-50 border-t border-blue-200 p-3">
-        <Alert
-          message="PartJava 在线代码编辑器"
-          description={
-            <div className="text-sm">
-              <strong>快捷键：</strong> Ctrl+Enter 运行代码 | Ctrl+S 保存代码 | 
-              <strong> 功能：</strong> 语法高亮 | 代码补全 | 错误检测 | 多主题支持 | 🔬 JVM 栈帧可视化
-            </div>
-          }
-          type="info"
-          showIcon
-          className="border-none bg-transparent"
-        />
+      {/* 底部 VS Code 风格 Studio 状态条 */}
+      <div className="flex items-center justify-between px-3 sm:px-4 py-1.5 bg-[#050811] border-t border-indigo-500/20 text-[11px] font-mono text-slate-400 rounded-b-2xl flex-wrap gap-2">
+        <div className="flex items-center gap-3">
+          <span className="flex items-center gap-1.5 text-emerald-400">
+            <ShieldCheck className="w-3.5 h-3.5" />
+            <span className="text-slate-300">Docker Sandbox</span>
+            <span className="text-[10px] text-emerald-400/80">Online</span>
+          </span>
+
+          <span className="hidden sm:inline-block text-slate-600">|</span>
+
+          <span className="hidden sm:inline-block text-slate-400">
+            UTF-8 · LF · 缩进: 4 空格
+          </span>
+
+          <span className="hidden md:inline-block text-slate-600">|</span>
+
+          <span className="hidden md:inline-block text-indigo-300">
+            {currentLangConfig.label} ({currentLangConfig.tag})
+          </span>
+        </div>
+
+        <div className="flex items-center gap-3 ml-auto">
+          <span className="hidden lg:inline-block text-slate-400">
+            快捷键: <kbd className="text-slate-300">Ctrl+Enter</kbd> 运行 ·{' '}
+            <kbd className="text-slate-300">Ctrl+S</kbd> 存笔记
+          </span>
+
+          <span className="text-slate-500">PartJava Studio v3.2</span>
+        </div>
       </div>
 
       {/* 禾桔 AI 诊断与热修复补丁弹窗 */}
@@ -709,6 +1225,4 @@ ${output}
       />
     </div>
   );
-};
-
-export default MonacoCodeEditor;
+}
