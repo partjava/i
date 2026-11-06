@@ -55,7 +55,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             // 2. 只有当 Token 解析出了用户名，且当前安全上下文未授权时进行处理
             if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                 if (jwtUtils.validateToken(jwt, username)) {
-                    String authority = role.startsWith("ROLE_") ? role : "ROLE_" + role;
+                    String safeRole = (role == null || role.isBlank()) ? "USER" : role;
+                    String authority = safeRole.startsWith("ROLE_") ? safeRole : "ROLE_" + safeRole;
                     List<SimpleGrantedAuthority> authorities = Collections.singletonList(new SimpleGrantedAuthority(authority));
 
                     UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(

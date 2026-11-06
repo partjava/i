@@ -19,24 +19,28 @@ export default function RegisterPage() {
     e.preventDefault();
     setError('');
 
-    if (!form.username) {
-      setError('登录用户名不能为空');
+    const cleanUsername = form.username.trim();
+    const cleanNickname = form.name.trim() || cleanUsername;
+    const cleanEmail = form.email.trim();
+
+    if (!cleanUsername) {
+      setError('登录账号不能为空');
       return;
     }
-    if (!/^[a-zA-Z][a-zA-Z0-9]*$/.test(form.username)) {
-      setError('登录用户名必须以字母开头，只能包含英文和数字');
+    if (!/^[a-zA-Z0-9_]{5,16}$/.test(cleanUsername)) {
+      setError('登录账号需为 5~16 位字母、数字或下划线');
       return;
     }
-    if (!form.name) {
-      setError('用户昵称不能为空');
+    if (!cleanEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
+      setError('请输入有效的邮箱地址');
+      return;
+    }
+    if (!/^(?=.*[A-Za-z])(?=.*\d)[^\s]{8,20}$/.test(form.password)) {
+      setError('密码需为 8~20 位，且同时包含字母和数字');
       return;
     }
     if (form.password !== form.confirmPassword) {
       setError('两次输入的密码不一致');
-      return;
-    }
-    if (form.password.length < 6) {
-      setError('密码至少需要 6 位字符');
       return;
     }
 
@@ -45,13 +49,18 @@ export default function RegisterPage() {
       const res = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: form.username, nickname: form.name, email: form.email, password: form.password }),
+        body: JSON.stringify({
+          username: cleanUsername,
+          nickname: cleanNickname,
+          email: cleanEmail,
+          password: form.password,
+        }),
       });
-      const data = await res.json();
-      if (res.ok) {
-        router.push('/auth/login?message=注册成功，请登录');
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data?.success !== false) {
+        router.push(`/auth/login?message=${encodeURIComponent('注册成功，请登录')}&username=${encodeURIComponent(cleanUsername)}`);
       } else {
-        setError(data.error || '注册失败，请重试');
+        setError(data?.message || data?.error || '注册失败，请检查填写信息后重试');
       }
     } catch {
       setError('注册失败，请稍后重试');
@@ -171,32 +180,43 @@ export default function RegisterPage() {
             
             {/* 用户名 */}
             <div>
-              <label className="block text-xs font-semibold text-ink-light uppercase tracking-wider mb-1.5">登录用户名 (英文或数字，不能有中文或特殊符号)</label>
+              <label className="block text-xs font-semibold text-ink-light uppercase tracking-wider mb-1.5">
+                登录账号 <span className="font-normal text-ink-lighter">(5~16位字母、数字或下划线)</span>
+              </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <svg className="w-5 h-5 text-ink-lighter/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a3 3 0 106 0" />
                   </svg>
                 </div>
-                <input type="text" required value={form.username}
+                <input type="text" required maxLength={16} value={form.username}
                   onChange={e => setForm({ ...form, username: e.target.value })}
-                  placeholder="请设置您的登录用户名 (如: liming123)"
-                  className="w-full pl-10 pr-4 py-2.5 bg-paper-50 border border-paper-300 focus:border-brand-primary/80 rounded-xl focus:outline-none focus:ring-1 focus:ring-brand-primary/20 text-ink placeholder-ink-lighter transition-all text-sm font-sans" />
+                  placeholder="5~16位字母、数字或下划线"
+                  className={`w-full pl-10 pr-4 py-2.5 bg-paper-50 border rounded-xl focus:outline-none focus:ring-1 text-ink placeholder-ink-lighter transition-all text-sm font-sans ${
+                    form.username && !/^[a-zA-Z0-9_]{5,16}$/.test(form.username.trim())
+                      ? 'border-rose-400 focus:border-rose-500 focus:ring-rose-200'
+                      : 'border-paper-300 focus:border-brand-primary/80 focus:ring-brand-primary/20'
+                  }`} />
               </div>
+              {form.username && !/^[a-zA-Z0-9_]{5,16}$/.test(form.username.trim()) && (
+                <p className="mt-1 text-xs text-rose-500">账号需为 5~16 位英文字母、数字或下划线(_)</p>
+              )}
             </div>
 
             {/* 昵称 */}
             <div>
-              <label className="block text-xs font-semibold text-ink-light uppercase tracking-wider mb-1.5">用户昵称</label>
+              <label className="block text-xs font-semibold text-ink-light uppercase tracking-wider mb-1.5">
+                用户昵称 <span className="font-normal text-ink-lighter">(选填，留空默认同用户名，支持中文)</span>
+              </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <svg className="w-5 h-5 text-ink-lighter/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                   </svg>
                 </div>
-                <input type="text" required value={form.name}
+                <input type="text" value={form.name}
                   onChange={e => setForm({ ...form, name: e.target.value })}
-                  placeholder="给自己取个好听的名字"
+                  placeholder={form.username ? `留空则默认使用 "${form.username.trim()}"` : '给自己取个好听的名字（支持中英文）'}
                   className="w-full pl-10 pr-4 py-2.5 bg-paper-50 border border-paper-300 focus:border-brand-primary/80 rounded-xl focus:outline-none focus:ring-1 focus:ring-brand-primary/20 text-ink placeholder-ink-lighter transition-all text-sm" />
               </div>
             </div>
@@ -219,31 +239,50 @@ export default function RegisterPage() {
 
             {/* 密码 */}
             <div>
-              <label className="block text-xs font-semibold text-ink-light uppercase tracking-wider mb-1.5">密码 (至少6位)</label>
+              <label className="block text-xs font-semibold text-ink-light uppercase tracking-wider mb-1.5">
+                密码 <span className="font-normal text-ink-lighter">(8~20位，需含字母+数字)</span>
+              </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <svg className="w-5 h-5 text-ink-lighter/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                   </svg>
                 </div>
-                <input type={showPassword ? 'text' : 'password'} required value={form.password}
+                <input type={showPassword ? 'text' : 'password'} required maxLength={20} value={form.password}
                   onChange={e => setForm({ ...form, password: e.target.value })}
-                  placeholder="至少 6 位字符"
-                  className="w-full pl-10 pr-12 py-2.5 bg-paper-50 border border-paper-300 focus:border-brand-primary/80 rounded-xl focus:outline-none focus:ring-1 focus:ring-brand-primary/20 text-ink placeholder-ink-lighter transition-all text-sm" />
+                  placeholder="8~20位，必须包含字母和数字"
+                  className={`w-full pl-10 pr-12 py-2.5 bg-paper-50 border rounded-xl focus:outline-none focus:ring-1 text-ink placeholder-ink-lighter transition-all text-sm ${
+                    form.password && !/^(?=.*[A-Za-z])(?=.*\d)[^\s]{8,20}$/.test(form.password)
+                      ? 'border-rose-400 focus:border-rose-500 focus:ring-rose-200'
+                      : 'border-paper-300 focus:border-brand-primary/80 focus:ring-brand-primary/20'
+                  }`} />
                 <button type="button" onClick={() => setShowPassword(!showPassword)}
                   className="absolute inset-y-0 right-0 pr-3 flex items-center text-ink-lighter/50 hover:text-ink transition-colors">
                   <EyeIcon show={showPassword} />
                 </button>
               </div>
+              {form.password && !/^(?=.*[A-Za-z])(?=.*\d)[^\s]{8,20}$/.test(form.password) && (
+                <p className="mt-1 text-xs text-rose-500">密码需为 8~20 位，且同时包含英文字母和数字</p>
+              )}
               {form.password && (
                 <div className="mt-2 flex gap-1">
-                  {[1,2,3,4].map(i => (
-                    <div key={i} className={`h-1.5 flex-1 rounded-full transition-all ${
-                      form.password.length >= i * 3
-                        ? i <= 1 ? 'bg-rose-500/80' : i <= 2 ? 'bg-amber-500/80' : i <= 3 ? 'bg-[#6366f1]/80' : 'bg-[#BBFF5C]/80'
-                        : 'bg-[#0C1F3D]'
-                    }`} />
-                  ))}
+                  {[1,2,3,4].map(i => {
+                    const hasLetter = /[A-Za-z]/.test(form.password);
+                    const hasDigit = /\d/.test(form.password);
+                    const hasSymbol = /[^A-Za-z0-9\s]/.test(form.password);
+                    const score =
+                      (form.password.length >= 8 ? 1 : 0) +
+                      (hasLetter && hasDigit ? 1 : 0) +
+                      (form.password.length >= 12 ? 1 : 0) +
+                      (hasSymbol ? 1 : 0);
+                    return (
+                      <div key={i} className={`h-1.5 flex-1 rounded-full transition-all ${
+                        score >= i
+                          ? score <= 1 ? 'bg-rose-500/80' : score === 2 ? 'bg-amber-500/80' : score === 3 ? 'bg-[#6366f1]/80' : 'bg-emerald-500/80'
+                          : 'bg-paper-200'
+                      }`} />
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -260,10 +299,10 @@ export default function RegisterPage() {
                 <input type={showConfirm ? 'text' : 'password'} required value={form.confirmPassword}
                   onChange={e => setForm({ ...form, confirmPassword: e.target.value })}
                   placeholder="再次输入密码"
-                  className={`w-full pl-10 pr-12 py-2.5 bg-[#08172F]/50 border focus:border-[#BBFF5C]/80 rounded-xl focus:outline-none focus:ring-1 focus:ring-[#BBFF5C]/20 text-[#EDF0F5] placeholder-[#5a6e8f] transition-all text-sm ${
+                  className={`w-full pl-10 pr-12 py-2.5 bg-paper-50 border rounded-xl focus:outline-none focus:ring-1 text-ink placeholder-ink-lighter transition-all text-sm ${
                     form.confirmPassword && form.confirmPassword !== form.password
-                      ? 'border-rose-900/40'
-                      : 'border-[#234272]'
+                      ? 'border-rose-400 focus:border-rose-500 focus:ring-rose-200'
+                      : 'border-paper-300 focus:border-brand-primary/80 focus:ring-brand-primary/20'
                   }`} />
                 <button type="button" onClick={() => setShowConfirm(!showConfirm)}
                   className="absolute inset-y-0 right-0 pr-3 flex items-center text-ink-lighter/50 hover:text-ink transition-colors">
@@ -271,7 +310,7 @@ export default function RegisterPage() {
                 </button>
               </div>
               {form.confirmPassword && form.confirmPassword !== form.password && (
-                <p className="mt-1 text-xs text-rose-400">两次密码输入不一致</p>
+                <p className="mt-1 text-xs text-rose-500">两次密码输入不一致</p>
               )}
             </div>
 

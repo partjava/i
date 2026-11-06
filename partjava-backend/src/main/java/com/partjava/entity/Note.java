@@ -33,6 +33,14 @@ public class Note {
 
     private Boolean isPublic;
     private Long authorId;
+
+    @TableField(exist = false)
+    private String authorName;
+
+    @com.fasterxml.jackson.annotation.JsonProperty("author_name")
+    public String getAuthor_name() {
+        return authorName;
+    }
     
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

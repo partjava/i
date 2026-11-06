@@ -48,13 +48,20 @@ public class NoteServiceImpl implements NoteService {
     public List<Note> listNotes(Long userId, String category, String technology, Boolean isPublic) {
         LambdaQueryWrapper<Note> query = new LambdaQueryWrapper<>();
         
-        // 如果指定了个人或公开筛选
-        if (isPublic != null) {
-            query.eq(Note::getIsPublic, isPublic);
-        }
-        // 如果是私有笔记，必须是当前作者的
-        if (Boolean.FALSE.equals(isPublic) && userId != null) {
-            query.eq(Note::getAuthorId, userId);
+        // 严格隔离“我的笔记”与“公开笔记”，避免新建账号看到其他用户的笔记
+        if (Boolean.FALSE.equals(isPublic)) {
+            if (userId == null) {
+                return List.of();
+            }
+            query.eq(Note::getIsPublic, false).eq(Note::getAuthorId, userId);
+        } else if (Boolean.TRUE.equals(isPublic)) {
+            query.eq(Note::getIsPublic, true);
+        } else {
+            if (userId != null) {
+                query.eq(Note::getAuthorId, userId);
+            } else {
+                query.eq(Note::getIsPublic, true);
+            }
         }
         
         if (category != null && !category.trim().isEmpty()) {
@@ -65,7 +72,38 @@ public class NoteServiceImpl implements NoteService {
         }
         
         query.orderByDesc(Note::getCreatedAt);
-        return noteMapper.selectList(query);
+        List<Note> list = noteMapper.selectList(query);
+        populateAuthorNames(list);
+        return list;
+    }
+
+    private void populateAuthorNames(List<Note> notes) {
+        if (notes == null || notes.isEmpty() || userMapper == null) return;
+        try {
+            List<Long> authorIds = notes.stream()
+                    .map(Note::getAuthorId)
+                    .filter(java.util.Objects::nonNull)
+                    .distinct()
+                    .toList();
+            if (authorIds.isEmpty()) return;
+            List<User> authors = userMapper.selectBatchIds(authorIds);
+            if (authors == null) return;
+            java.util.Map<Long, String> nameMap = new java.util.HashMap<>();
+            for (User u : authors) {
+                if (u != null && u.getId() != null) {
+                    String display = (u.getNickname() != null && !u.getNickname().isBlank())
+                            ? u.getNickname()
+                            : u.getUsername();
+                    nameMap.put(u.getId(), display);
+                }
+            }
+            for (Note n : notes) {
+                if (n != null && n.getAuthorId() != null && n.getAuthorName() == null) {
+                    n.setAuthorName(nameMap.get(n.getAuthorId()));
+                }
+            }
+        } catch (Exception ignored) {
+        }
     }
 
     @Override

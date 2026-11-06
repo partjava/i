@@ -112,7 +112,9 @@ class MultiAgentSupervisor:
             )
 
         # 站内领航：零成本本地检索站内页面（不耗 API）
-        nav_frag, site_links = navigator.build_system_prompt_fragment(message, page_context)
+        nav_frag, site_links = navigator.build_system_prompt_fragment(
+            message, page_context, current_pathname=current_pathname
+        )
         executor.site_links = site_links
         if site_links:
             yield format_sse("site_links", {"links": site_links})
@@ -302,7 +304,9 @@ class MultiAgentSupervisor:
                             }
                         )
 
-                # ---- 最终流式回答（不携带 tools，模型专注作答）----
+                # ---- 最终流式回答（不携带 tools，模型专注作答，注入抓取到的网页正文片段）----
+                if executor.rag_fragments and llm_messages and llm_messages[0].get("role") == "system":
+                    llm_messages[0]["content"] += "\n\n" + "\n\n".join(executor.rag_fragments)
                 final_model = (
                     settings.DEEPSEEK_MODEL_PRO if executor.citations else settings.DEEPSEEK_MODEL_FLASH
                 )
@@ -456,16 +460,21 @@ class MultiAgentSupervisor:
         parts: List[str] = []
         if is_note:
             parts.append(
-                "喵呜~ 🐾 **【笔记提炼】** 已经帮你把核心内容提炼成一篇结构化 Markdown 笔记啦！\n\n"
-                "你可以直接点击下方气泡里的 **「⚡ 一键存入我的笔记」** 写入数据库，或者点 **「✏️ 打开预览器微调」** 编辑后再保存哦！"
+                "喵呜~ 🐾 **【笔记提炼】** 已经把对话与当前页面提炼成结构化 Markdown 笔记啦！\n\n"
+                "请点击气泡下方的 **「预览并保存」**，确认内容后再保存到我的笔记。"
             )
         elif is_search and citations:
-            parts.append(
-                f"喵~ 🐾 **【联网深搜】** 已围绕「**{message}**」检索并抓取了 {len(citations)} 个专业权威技术站点：\n"
-            )
+            if all(c.get("source") == "recommended" for c in citations):
+                parts.append(
+                    f"实时搜索暂不可用，以下是与「{message}」相关的推荐文档，未实时读取正文：\n"
+                )
+            else:
+                parts.append(
+                    f"已为「{message}」找到 {len(citations)} 条搜索结果。摘要和已读取正文请以资料标记为准：\n"
+                )
             for c in citations:
                 parts.append(f"- **[{c['index']}] {c['title']}** (`{c['domain']}`)\n  > {c['snippet']}")
-            parts.append("\n你可以直接点击气泡底部的 **🌐 权威网站外链卡片** 跳转到对应官网阅读原文！")
+            parts.append("\n点击气泡底部的 **🌐 权威网站外链卡片** 即可直接访问官方文档！")
         elif page_context.strip():
             first_lines = [ln.strip() for ln in page_context.splitlines() if ln.strip()][:4]
             header_summary = " | ".join(first_lines[:2])

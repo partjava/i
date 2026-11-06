@@ -45,8 +45,7 @@ public class ChallengeController {
     @GetMapping("/challenges/progress")
     public ApiResponse<ChallengeProgressResp> getGlobalProgress(
             @RequestAttribute(value = "userId", required = false) Integer userId) {
-        Integer activeUserId = getUserIdOrFallback(userId);
-        ChallengeProgressResp progress = challengeService.getGlobalProgress(activeUserId);
+        ChallengeProgressResp progress = challengeService.getGlobalProgress(userId);
         return ApiResponse.success(progress);
     }
 
@@ -95,8 +94,7 @@ public class ChallengeController {
     public ApiResponse<ChallengeDetailResp> getChallengeDetail(
             @RequestAttribute(value = "userId", required = false) Integer userId,
             @PathVariable("id") Integer challengeId) {
-        Integer activeUserId = getUserIdOrFallback(userId);
-        ChallengeDetailResp detail = challengeService.getChallengeDetail(activeUserId, challengeId);
+        ChallengeDetailResp detail = challengeService.getChallengeDetail(userId, challengeId);
         return ApiResponse.success(detail);
     }
 
@@ -154,8 +152,7 @@ public class ChallengeController {
     public ApiResponse<Map<String, String>> getSolution(
             @RequestAttribute(value = "userId", required = false) Integer userId,
             @PathVariable("id") Integer challengeId) {
-        Integer activeUserId = getUserIdOrFallback(userId);
-        String solutionCode = challengeService.getSolution(activeUserId, challengeId);
+        String solutionCode = challengeService.getSolution(userId, challengeId);
         return ApiResponse.success(Map.of("solutionCode", solutionCode));
     }
 
@@ -196,8 +193,7 @@ public class ChallengeController {
     public Map<String, Object> getStarChallenges(
             @PathVariable("subtopicName") String subtopicName,
             @RequestAttribute(value = "userId", required = false) Integer userId) {
-        Integer activeUserId = getUserIdOrFallback(userId);
-        List<ChallengeDetailResp> levels = challengeService.getChallengesBySubtopic(activeUserId, subtopicName);
+        List<ChallengeDetailResp> levels = challengeService.getChallengesBySubtopic(userId, subtopicName);
         
         Map<String, Object> res = new HashMap<>();
         res.put("success", true);
@@ -277,18 +273,20 @@ public class ChallengeController {
     @GetMapping("/challenges/my")
     public ApiResponse<Map<String, Object>> getMyChallenges(
             @RequestAttribute(value = "userId", required = false) Integer userId) {
-        Integer activeUserId = getUserIdOrFallback(userId);
+        if (userId == null) {
+            return ApiResponse.success(Map.of("published", List.of(), "drafts", List.of()));
+        }
 
         // 已发布的题目
         List<Challenge> published = challengeMapper.selectList(
                 new LambdaQueryWrapper<Challenge>()
-                        .eq(Challenge::getAuthorId, activeUserId)
+                        .eq(Challenge::getAuthorId, userId)
                         .eq(Challenge::getStatus, "published")
                         .orderByDesc(Challenge::getCreatedAt)
         );
 
         // 草稿
-        List<ChallengeDraft> drafts = challengeService.getMyDrafts(activeUserId);
+        List<ChallengeDraft> drafts = challengeService.getMyDrafts(userId);
 
         Map<String, Object> res = new HashMap<>();
         res.put("published", published);

@@ -144,7 +144,10 @@ def summarize_tool_result(name: str, result: Dict[str, Any]) -> str:
         if name == "search_site_pages":
             return f"命中 {len(result.get('links', []))} 个站内课程页"
         if name == "web_search":
-            return f"检索到 {len(result.get('citations', []))} 条权威资料并抓取正文"
+            count = len(result.get("citations", []))
+            if result.get("source") == "recommended":
+                return f"实时搜索不可用，已提供 {count} 条推荐文档（未抓取正文）"
+            return f"检索到 {count} 条结果，读取 {result.get('fetchedCount', 0)} 篇正文"
         if name == "draft_note":
             return f"已生成笔记草稿《{result.get('title', '')}》"
         if name == "set_companion_state":
@@ -214,18 +217,40 @@ class ToolExecutor:
         self.citations = citations
         if rag_context:
             self.rag_fragments.append(rag_context)
+        source = (
+            "recommended"
+            if citations and all(c.get("source") == "recommended" for c in citations)
+            else "live"
+        )
+        fetched_count = sum(1 for c in citations if c.get("contentFetched"))
         self.emit(
             "citations",
-            {"stage": "completed", "citations": citations},
+            {"stage": "completed", "source": source, "citations": citations},
         )
+        if source == "recommended":
+            note_msg = "实时搜索未获得结果，以下为预置推荐文档，未验证实时内容；请明确告知用户，不要声称已经联网检索或读取正文。"
+        elif fetched_count > 0:
+            note_msg = "已读取部分正文，回答时请引用 [编号] 并区分摘要与正文。"
+        else:
+            note_msg = "仅获得实时搜索摘要，未读取正文；不要声称已经读取文档全文。"
         return {
             "ok": True,
             "count": len(citations),
             "citations": [
-                {"index": c["index"], "title": c["title"], "url": c["url"], "domain": c["domain"]}
+                {
+                    "index": c["index"],
+                    "title": c["title"],
+                    "url": c["url"],
+                    "domain": c["domain"],
+                    "snippet": c.get("snippet", ""),
+                    "source": c.get("source", source),
+                    "contentFetched": bool(c.get("contentFetched", False)),
+                }
                 for c in citations
             ],
-            "note": "权威资料正文已注入上下文，回答时请用 [编号] 角标引用",
+            "source": source,
+            "fetchedCount": fetched_count,
+            "note": note_msg,
         }
 
     async def _tool_draft_note(self, args: Dict[str, Any]) -> Dict[str, Any]:

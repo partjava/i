@@ -72,6 +72,7 @@ judge0:
 ai:
   api-key: "${AI_API_KEY:}"
   api-url: "${AI_API_URL:https://api.deepseek.com/v1}"
+  model: "${AI_MODEL:deepseek-chat}"
 
 
 # Challenge execution only; standalone /api/execute-code continues to use Judge0.

@@ -10,6 +10,7 @@ import rehypeHighlight from 'rehype-highlight';
 import html2canvas from 'html2canvas';
 import 'highlight.js/styles/github.css';
 import CommentSection from '@shared/components/CommentSection';
+import NoteKnowledgeStudio from '@shared/components/NoteKnowledgeStudio';
 import QRCode from 'qrcode';
 import { useUser } from '@shared/providers/UserProvider';
 import { message } from 'antd';
@@ -52,6 +53,37 @@ export default function NoteDetailPage() {
   const [qrDataUrl, setQrDataUrl] = useState('');
   const [copyTip, setCopyTip] = useState('');
   const [cloning, setCloning] = useState(false);
+  const [showKnowledgeStudio, setShowKnowledgeStudio] = useState(true);
+  const [studioTab, setStudioTab] = useState<'graph' | 'flashcards'>('graph');
+
+  // 从知识图谱节点或闪卡一键定位并高亮笔记原文对应章节
+  const handleScrollToSection = (sectionHeading: string) => {
+    const container = document.getElementById('note-content-area');
+    if (!container || !sectionHeading) return;
+    const normalizedTarget = sectionHeading.trim().toLowerCase();
+    const candidates = Array.from(
+      container.querySelectorAll('h1, h2, h3, h4, strong, p, li')
+    );
+    const matchedEl =
+      candidates.find(el =>
+        (el.textContent || '').trim().toLowerCase().includes(normalizedTarget)
+      ) || container;
+
+    matchedEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    if (matchedEl instanceof HTMLElement && matchedEl !== container) {
+      const prevTransition = matchedEl.style.transition;
+      const prevBg = matchedEl.style.backgroundColor;
+      const prevRadius = matchedEl.style.borderRadius;
+      matchedEl.style.transition = 'background-color 0.4s ease';
+      matchedEl.style.backgroundColor = 'rgba(99, 102, 241, 0.18)';
+      matchedEl.style.borderRadius = '6px';
+      setTimeout(() => {
+        matchedEl.style.backgroundColor = prevBg;
+        matchedEl.style.borderRadius = prevRadius;
+        matchedEl.style.transition = prevTransition;
+      }, 2200);
+    }
+  };
 
   // 一键复用笔记（进阶 VIP 专属）
   const handleClone = async () => {
@@ -407,26 +439,58 @@ export default function NoteDetailPage() {
 
       {/* 笔记内容 */}
       <article className="bg-white rounded-lg shadow-sm border p-8">
-        {/* 标题和元信息 */}
+            {/* 标题和元信息 */}
         <header className="mb-6">
-          <div className="flex justify-between items-start mb-4">
+          <div className="flex flex-wrap justify-between items-start gap-3 mb-4">
             <h1 className="text-3xl font-bold text-gray-900">{note.title}</h1>
-            {isOwner && (
-              <div className="flex space-x-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setStudioTab('graph');
+                  setShowKnowledgeStudio(prev => (studioTab === 'graph' ? !prev : true));
+                }}
+                className={`px-3.5 py-2 rounded-xl text-sm font-semibold flex items-center gap-1.5 border transition-all ${
+                  showKnowledgeStudio && studioTab === 'graph'
+                    ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
+                    : 'bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100'
+                }`}
+              >
+                <span>🌌</span>
+                <span>{showKnowledgeStudio && studioTab === 'graph' ? '收起知识图谱' : 'AI 知识图谱'}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setStudioTab('flashcards');
+                  setShowKnowledgeStudio(prev => (studioTab === 'flashcards' ? !prev : true));
+                }}
+                className={`px-3.5 py-2 rounded-xl text-sm font-semibold flex items-center gap-1.5 border transition-all ${
+                  showKnowledgeStudio && studioTab === 'flashcards'
+                    ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
+                    : 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
+                }`}
+              >
+                <span>🃏</span>
+                <span>3D 闪卡自测</span>
+              </button>
+
+              {isOwner && (
                 <Link
                   href={`/notes/${noteId}/edit`}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                  className="px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 text-sm font-semibold"
                 >
                   编辑
                 </Link>
-              </div>
-            )}
+              )}
+            </div>
           </div>
 
           {/* 元信息 */}
           <div className="flex flex-wrap gap-4 text-sm text-gray-600 mb-4">
-            {note.authorId && (
-              <span>作者ID: {note.authorId}</span>
+            {(note.author_name || note.authorId) && (
+              <span>作者: {note.author_name || `用户 #${note.authorId}`}</span>
             )}
             <span>创建: {new Date(note.createdAt).toLocaleString()}</span>
             {note.updatedAt !== note.createdAt && (
@@ -468,6 +532,21 @@ export default function NoteDetailPage() {
             </div>
           )}
         </header>
+
+        {/* 创新功能 5：可视化知识图谱（力导向星系网络 + 层级思维导图） & 3D 翻转记忆闪卡 */}
+        {showKnowledgeStudio && (
+          <NoteKnowledgeStudio
+            key={studioTab}
+            noteId={noteId}
+            title={note.title}
+            content={note.content}
+            category={note.category}
+            technology={note.technology}
+            tags={note.tags}
+            defaultTab={studioTab}
+            onScrollToSection={handleScrollToSection}
+          />
+        )}
 
 
 

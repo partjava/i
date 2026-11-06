@@ -68,8 +68,15 @@ public class StudyController {
     @GetMapping("/stats")
     public ApiResponse<Map<String, Object>> getStudyStats(
             @RequestAttribute(value = "userId", required = false) Integer userId) {
-        Integer activeUserId = getUserIdOrFallback(userId);
-        Map<String, Object> stats = studyService.getUserStudyStats(activeUserId);
+        if (userId == null) {
+            return ApiResponse.success(Map.of(
+                    "totalStudyTime", 0,
+                    "todayStudyTime", 0,
+                    "completedPages", 0,
+                    "streak", 0
+            ));
+        }
+        Map<String, Object> stats = studyService.getUserStudyStats(userId);
         return ApiResponse.success(stats);
     }
 
@@ -79,8 +86,10 @@ public class StudyController {
     @GetMapping("/progress")
     public ApiResponse<List<StudyProgress>> getProgressList(
             @RequestAttribute(value = "userId", required = false) Integer userId) {
-        Integer activeUserId = getUserIdOrFallback(userId);
-        List<StudyProgress> list = studyService.getPageProgressList(activeUserId);
+        if (userId == null) {
+            return ApiResponse.success(List.of());
+        }
+        List<StudyProgress> list = studyService.getPageProgressList(userId);
         return ApiResponse.success(list);
     }
 

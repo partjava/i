@@ -2,7 +2,9 @@ package com.partjava.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.partjava.entity.AiConversation;
 import com.partjava.entity.AiMessage;
+import com.partjava.repository.AiConversationMapper;
 import com.partjava.repository.AiMessageMapper;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -28,6 +30,7 @@ import java.util.Map;
 public class AiChatController {
 
     private final AiMessageMapper aiMessageMapper;
+    private final AiConversationMapper aiConversationMapper;
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final HttpClient httpClient = HttpClient.newBuilder()
             .connectTimeout(Duration.ofSeconds(10))
@@ -36,19 +39,25 @@ public class AiChatController {
     @Value("${ai.api-key:}")
     private String apiKey;
 
-    @Value("${ai.api-url:https://api.openai.com/v1}")
+    @Value("${ai.api-url:https://api.deepseek.com/v1}")
     private String apiUrl;
 
+    @Value("${ai.model:deepseek-chat}")
+    private String aiModel;
+
     @Autowired
-    public AiChatController(AiMessageMapper aiMessageMapper) {
+    public AiChatController(AiMessageMapper aiMessageMapper, AiConversationMapper aiConversationMapper) {
         this.aiMessageMapper = aiMessageMapper;
+        this.aiConversationMapper = aiConversationMapper;
     }
 
     /**
      * AI 对话端点 — 返回 JSON（前端统一格式）
      */
     @PostMapping("/chat")
-    public ChatResp chat(@RequestBody ChatReq req) {
+    public ChatResp chat(
+            @RequestAttribute(value = "userId", required = false) Integer userId,
+            @RequestBody ChatReq req) {
         String prompt = req.getResolvedPrompt();
         if (prompt == null) {
             throw new IllegalArgumentException("问题内容不能为空");
@@ -64,9 +73,9 @@ public class AiChatController {
             answer = callLLM(prompt, req.getPageContext(), req.getHistory());
         }
 
-        // 保存对话消息历史
-        if (convId != null && convId > 0) {
-            saveConversationMessages(convId, prompt, answer);
+        // 保存对话消息历史（仅当已登录且会话属于当前用户时写入）
+        if (convId != null && convId > 0 && userId != null) {
+            saveConversationMessages(convId, Long.valueOf(userId), prompt, answer);
         }
 
         ChatResp resp = new ChatResp();
@@ -81,7 +90,7 @@ public class AiChatController {
     private String callLLM(String prompt, String pageContext, List<Map<String, String>> history) {
         try {
             Map<String, Object> bodyMap = new HashMap<>();
-            bodyMap.put("model", "deepseek-flash");
+            bodyMap.put("model", aiModel);
             bodyMap.put("stream", false);
             bodyMap.put("messages", buildMessages(prompt, pageContext, history));
 
@@ -134,13 +143,18 @@ public class AiChatController {
     }
 
     /**
-     * 保存提问和回答消息历史至 ai_messages 物理表中
+     * 保存提问和回答消息历史至 ai_messages 物理表中（带会话所有权校验）
      */
-    private void saveConversationMessages(Long convId, String prompt, String assistantReply) {
-        if (convId == null || convId <= 0) {
+    private void saveConversationMessages(Long convId, Long userId, String prompt, String assistantReply) {
+        if (convId == null || convId <= 0 || userId == null) {
             return;
         }
         try {
+            AiConversation conv = aiConversationMapper.selectById(convId);
+            if (conv == null || !userId.equals(conv.getUserId())) {
+                log.warn("拒绝向非本人会话写入消息: convId={}, userId={}", convId, userId);
+                return;
+            }
             // 保存用户消息
             AiMessage userMsg = AiMessage.builder()
                     .conversationId(convId)
@@ -158,6 +172,9 @@ public class AiChatController {
                     .createdAt(LocalDateTime.now())
                     .build();
             aiMessageMapper.insert(assistantMsg);
+
+            conv.setUpdatedAt(LocalDateTime.now());
+            aiConversationMapper.updateById(conv);
         } catch (Exception e) {
             log.error("持久化 AI 会话消息历史失败", e);
         }

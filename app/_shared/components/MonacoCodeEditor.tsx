@@ -28,6 +28,10 @@ const Editor = dynamic(() => import('@monaco-editor/react'), {
 });
 
 import { useStandaloneExecution } from './useStandaloneExecution';
+import InlineCodePatchModal, { CodePatchData } from './InlineCodePatchModal';
+import VisualExecutionTracePlayer from './VisualExecutionTracePlayer';
+import { emitPetCompanionEvent } from '@shared/lib/pet-companion-bus';
+import { Sparkles, Terminal, Cpu } from 'lucide-react';
 
 const { TextArea } = Input;
 
@@ -122,7 +126,67 @@ const MonacoCodeEditor: React.FC<MonacoCodeEditorProps> = ({
   const { output, setOutput, isRunning, runCode, cancelRun, stale } = useStandaloneExecution(code, language, input);
   const [isSaving, setIsSaving] = useState(false);
   const [theme, setTheme] = useState<'vs-dark' | 'light'>('vs-dark');
+  const [rightTab, setRightTab] = useState<'console' | 'trace'>('console');
+  const [patchLoading, setPatchLoading] = useState(false);
+  const [patchData, setPatchData] = useState<CodePatchData | null>(null);
+  const [showPatchModal, setShowPatchModal] = useState(false);
   const editorRef = useRef<any>(null);
+  const decorationsRef = useRef<any[]>([]);
+
+  // 监听报错输出，向禾桔广播伴学提示
+  useEffect(() => {
+    if (output && (output.includes('失败') || output.includes('错误') || output.includes('Error') || output.includes('Exception'))) {
+      emitPetCompanionEvent({
+        type: 'error_diagnosis',
+        title: '沙箱运行异常',
+        message: '检测到代码报错喵！可以点击控制台右上方「✨ 禾桔诊断修复」查看一键修复补丁哦~',
+        mood: 'curious',
+      });
+    }
+  }, [output]);
+
+  const handleRequestPatch = async () => {
+    if (patchLoading || !code.trim()) return;
+    setPatchLoading(true);
+    try {
+      const res = await fetch('/api/ai/code-patch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          code,
+          language,
+          errorOutput: output,
+        }),
+      });
+      const json = await res.json();
+      if (json?.success && json.data) {
+        setPatchData(json.data);
+        setShowPatchModal(true);
+      } else {
+        message.warning('未能生成修复补丁');
+      }
+    } catch {
+      message.error('请求修复服务失败');
+    } finally {
+      setPatchLoading(false);
+    }
+  };
+
+  const handleHighlightLine = (line: number) => {
+    if (!editorRef.current || !line) return;
+    try {
+      editorRef.current.revealLineInCenter(line);
+      decorationsRef.current = editorRef.current.deltaDecorations(decorationsRef.current, [
+        {
+          range: { startLineNumber: line, startColumn: 1, endLineNumber: line, endColumn: 1 },
+          options: {
+            isWholeLine: true,
+            className: 'bg-indigo-500/20 border-l-4 border-indigo-400',
+          },
+        },
+      ]);
+    } catch {}
+  };
   const [isMobile, setIsMobile] = useState(false);
   const [editorLoaded, setEditorLoaded] = useState(false);
   const [editorLoadError, setEditorLoadError] = useState(false);
@@ -504,39 +568,115 @@ ${output}
           </div>
         </div>
 
-        {/* 右侧：输入和输出区域 */}
-        <div className="flex flex-col">
-          {/* 输入数据 */}
-          <div className="p-4 border-b border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-800 mb-3">输入数据</h3>
-            <TextArea
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="如果程序需要输入数据，请在这里输入..."
-              className="font-mono text-sm"
-              rows={6}
-            />
+        {/* 右侧：输入和输出区域 / JVM 变量栈帧回放 */}
+        <div className="flex flex-col h-full bg-slate-950 overflow-hidden">
+          {/* 右侧模式切换 Tab */}
+          <div className="px-4 py-2.5 bg-gray-100 border-b border-gray-200 flex items-center justify-between flex-wrap gap-2 shrink-0">
+            <div className="flex items-center gap-1.5 p-1 bg-gray-200/80 rounded-xl">
+              <button
+                type="button"
+                onClick={() => setRightTab('console')}
+                className={`px-3 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
+                  rightTab === 'console'
+                    ? 'bg-white text-blue-600 shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                <Terminal className="w-3.5 h-3.5" />
+                <span>控制台 (Console)</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setRightTab('trace')}
+                className={`px-3 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
+                  rightTab === 'trace'
+                    ? 'bg-indigo-600 text-white shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                <Cpu className="w-3.5 h-3.5" />
+                <span>🔬 JVM 栈帧与变量回放</span>
+              </button>
+            </div>
+
+            {rightTab === 'console' && output && (
+              <button
+                type="button"
+                onClick={handleRequestPatch}
+                disabled={patchLoading}
+                className="px-2.5 py-1 rounded-lg text-xs font-bold text-white bg-gradient-to-r from-amber-500 via-rose-500 to-indigo-600 hover:opacity-90 disabled:opacity-50 transition flex items-center gap-1 shadow-sm"
+                title="根据当前输出诊断报错并一键生成热修复补丁"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>{patchLoading ? '诊断中...' : '✨ 禾桔诊断修复'}</span>
+              </button>
+            )}
           </div>
 
-          {/* 输出结果 */}
-          <div className="flex-1 p-4">
-            <h3 className="text-lg font-semibold text-gray-800 mb-3">运行结果</h3>
-            <div 
-              className="bg-gray-900 text-green-400 p-4 rounded font-mono text-sm overflow-auto"
-              style={{ height: `calc(${height} - 240px)`, minHeight: '300px' }}
-            >
-              {stale && <div className="text-amber-500 text-xs mb-2">代码或输入已更改，以下为上次提交的结果，请重新运行。</div>}
-              {output ? (
-                <pre className="whitespace-pre-wrap">{output}</pre>
-              ) : (
-                <div className="text-gray-500 text-center py-8">
-                  <div className="text-4xl mb-4">💻</div>
-                  <p>点击运行按钮或按 Ctrl+Enter 查看结果...</p>
-                  <p className="text-xs mt-2">PartJava 专业代码编辑器 - 支持语法高亮、代码补全、快捷键等功能</p>
+          {rightTab === 'console' ? (
+            <div className="flex flex-col flex-1 overflow-hidden">
+              {/* 输入数据 */}
+              <div className="p-4 border-b border-gray-200 bg-white shrink-0">
+                <h3 className="text-sm font-semibold text-gray-800 mb-2">标准输入 (stdin)</h3>
+                <TextArea
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  placeholder="如果程序需要输入数据，请在这里输入..."
+                  className="font-mono text-sm"
+                  rows={4}
+                />
+              </div>
+
+              {/* 输出结果 */}
+              <div className="flex-1 p-4 bg-gray-900 flex flex-col overflow-hidden">
+                <div className="flex items-center justify-between mb-2 shrink-0">
+                  <h3 className="text-sm font-semibold text-slate-200 flex items-center gap-1.5">
+                    <Terminal className="w-3.5 h-3.5 text-green-400" />
+                    <span>运行结果</span>
+                  </h3>
+                  {output && (
+                    <button
+                      type="button"
+                      onClick={handleRequestPatch}
+                      disabled={patchLoading}
+                      className="text-xs text-amber-300 hover:text-amber-200 flex items-center gap-1 underline"
+                    >
+                      <Sparkles className="w-3 h-3" /> 一键诊断
+                    </button>
+                  )}
                 </div>
-              )}
+                <div 
+                  className="flex-1 bg-black/60 border border-slate-800 text-green-400 p-4 rounded-xl font-mono text-xs overflow-auto select-text leading-relaxed"
+                  style={{ minHeight: '240px' }}
+                >
+                  {stale && <div className="text-amber-500 text-xs mb-2">代码或输入已更改，以下为上次提交的结果，请重新运行。</div>}
+                  {output ? (
+                    <pre className="whitespace-pre-wrap">{output}</pre>
+                  ) : (
+                    <div className="text-gray-500 text-center py-8">
+                      <div className="text-4xl mb-4">💻</div>
+                      <p>点击运行按钮或按 Ctrl+Enter 查看结果...</p>
+                      <p className="text-xs mt-2">PartJava 专业代码编辑器 - 支持语法高亮、代码补全、快捷键等功能</p>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
-          </div>
+          ) : (
+            /* 🔬 JVM 栈帧与变量演进可视化回放面板 */
+            <div className="flex-1 overflow-hidden" style={{ minHeight: '440px' }}>
+              <VisualExecutionTracePlayer
+                currentCode={code}
+                language={language}
+                onLoadScenarioCode={(newCode) => {
+                  setCode(newCode);
+                  setLanguage('java');
+                  message.success('已载入经典算法代码并生成可视化步骤');
+                }}
+                onHighlightLine={handleHighlightLine}
+              />
+            </div>
+          )}
         </div>
       </div>
 
@@ -547,7 +687,7 @@ ${output}
           description={
             <div className="text-sm">
               <strong>快捷键：</strong> Ctrl+Enter 运行代码 | Ctrl+S 保存代码 | 
-              <strong> 功能：</strong> 语法高亮 | 代码补全 | 错误检测 | 多主题支持
+              <strong> 功能：</strong> 语法高亮 | 代码补全 | 错误检测 | 多主题支持 | 🔬 JVM 栈帧可视化
             </div>
           }
           type="info"
@@ -555,6 +695,18 @@ ${output}
           className="border-none bg-transparent"
         />
       </div>
+
+      {/* 禾桔 AI 诊断与热修复补丁弹窗 */}
+      <InlineCodePatchModal
+        open={showPatchModal}
+        onClose={() => setShowPatchModal(false)}
+        originalCode={code}
+        patch={patchData}
+        language={language}
+        onApplyPatch={(fixedCode) => {
+          setCode(fixedCode);
+        }}
+      />
     </div>
   );
 };

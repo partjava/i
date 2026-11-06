@@ -195,10 +195,10 @@ class SiteNavigator:
         return results
 
     def build_system_prompt_fragment(
-        self, query: str, page_context: Optional[str] = None
+        self, query: str, page_context: Optional[str] = None, current_pathname: Optional[str] = None
     ) -> tuple[str, List[Dict[str, str]]]:
         """生成注入给大模型的站内路由地图与当前页面伴读上下文"""
-        matched_links = self.match_site_links(query, top_k=4)
+        matched_links = self.match_site_links(query, current_pathname=current_pathname, top_k=4)
         links_text = ""
         if matched_links:
             lines = [f"- 《{m['name']}》 (路径: `{m['href']}`)" for m in matched_links]

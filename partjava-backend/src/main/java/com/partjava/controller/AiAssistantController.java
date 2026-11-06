@@ -35,8 +35,11 @@ public class AiAssistantController {
     @Value("${ai.api-key:}")
     private String apiKey;
 
-    @Value("${ai.api-url:https://api.openai.com/v1}")
+    @Value("${ai.api-url:https://api.deepseek.com/v1}")
     private String apiUrl;
+
+    @Value("${ai.model:deepseek-chat}")
+    private String aiModel;
 
     @PostMapping("/assistant")
     public ApiResponse<AssistantResp> assistant(@RequestBody AssistantReq req) {
@@ -60,7 +63,7 @@ public class AiAssistantController {
     private String requestModel(String question) {
         try {
             Map<String, Object> bodyMap = new HashMap<>();
-            bodyMap.put("model", "deepseek-flash");
+            bodyMap.put("model", aiModel);
             bodyMap.put("stream", false);
             bodyMap.put("messages", List.of(Map.of("role", "user", "content", question)));
 

@@ -31,13 +31,25 @@ export function getToken(): string | null {
   return localStorage.getItem(TOKEN_KEY);
 }
 
-function setToken(token: string): void {
+export function setToken(token: string): void {
+  if (typeof window === 'undefined') return;
   localStorage.setItem(TOKEN_KEY, token);
+}
+
+function clearSessionCaches(): void {
+  if (typeof window === 'undefined') return;
+  try {
+    sessionStorage.removeItem('notes_cache_my');
+    sessionStorage.removeItem('notes_cache_public');
+    sessionStorage.removeItem('user_data');
+    localStorage.removeItem('user_data');
+  } catch {}
 }
 
 function clearToken(): void {
   localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(USER_KEY);
+  clearSessionCaches();
 }
 
 // ─── 用户信息存取 ───────────────────────────────────────────────────────────
@@ -84,12 +96,13 @@ export async function login(emailOrUsername: string, password: string): Promise<
     // Java ApiResponse 格式: { success: true, data: {...}, message: '...' }
     if (res.ok && json.success && json.data?.token) {
       const data = json.data;
+      clearSessionCaches();
       setToken(data.token);
 
       const user: JwtUser = {
         id: String(data.id ?? ''),
-        name: data.username ?? '',
-        email: data.email ?? emailOrUsername,
+        name: data.name || data.nickname || data.username || '',
+        email: data.email || emailOrUsername,
         username: data.username ?? '',
         role: data.role ?? 'USER',
         image: data.avatar ?? null,

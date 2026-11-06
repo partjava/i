@@ -62,6 +62,8 @@ public class ChallengeServiceImpl implements ChallengeService {
     private String aiApiKey;
     @Value("${ai.api-url:https://api.deepseek.com/v1}")
     private String aiApiUrl;
+    @Value("${ai.model:deepseek-chat}")
+    private String aiModel = "deepseek-chat";
 
     @Autowired
     public ChallengeServiceImpl(ChallengeMapper challengeMapper,
@@ -87,8 +89,8 @@ public class ChallengeServiceImpl implements ChallengeService {
                 new LambdaQueryWrapper<Challenge>().eq(Challenge::getStatus, "published")
         );
 
-        // 2. 获取该用户的全部做题记录 (star_challenge_records)
-        List<UserChallengeRecord> records = recordMapper.selectList(
+        // 2. 获取该用户的全部做题记录 (star_challenge_records)，未登录时为空
+        List<UserChallengeRecord> records = (userId == null) ? List.of() : recordMapper.selectList(
                 new LambdaQueryWrapper<UserChallengeRecord>().eq(UserChallengeRecord::getUserId, userId)
         );
 
@@ -154,7 +156,7 @@ public class ChallengeServiceImpl implements ChallengeService {
                 )
         ).collect(Collectors.toList());
 
-        UserChallengeRecord record = recordMapper.selectOne(
+        UserChallengeRecord record = (userId == null) ? null : recordMapper.selectOne(
                 new LambdaQueryWrapper<UserChallengeRecord>()
                         .eq(UserChallengeRecord::getUserId, userId)
                         .eq(UserChallengeRecord::getChallengeId, challengeId)
@@ -292,28 +294,30 @@ public class ChallengeServiceImpl implements ChallengeService {
             throw new IllegalArgumentException("AI 评分失败，本次未记录成绩，请稍后重试");
         }
 
-        UserChallengeRecord record = recordMapper.selectOne(
-                new LambdaQueryWrapper<UserChallengeRecord>()
-                        .eq(UserChallengeRecord::getUserId, userId)
-                        .eq(UserChallengeRecord::getChallengeId, challengeId)
-        );
+        if (userId != null) {
+            UserChallengeRecord record = recordMapper.selectOne(
+                    new LambdaQueryWrapper<UserChallengeRecord>()
+                            .eq(UserChallengeRecord::getUserId, userId)
+                            .eq(UserChallengeRecord::getChallengeId, challengeId)
+            );
 
-        boolean isNew = (record == null);
-        if (isNew) {
-            record = UserChallengeRecord.builder()
-                    .userId(userId)
-                    .challengeId(challengeId)
-                    .completed(false)
-                    .build();
-        }
+            boolean isNew = (record == null);
+            if (isNew) {
+                record = UserChallengeRecord.builder()
+                        .userId(userId)
+                        .challengeId(challengeId)
+                        .completed(false)
+                        .build();
+            }
 
-        record.setThinkingFeedback(feedback);
-        record.setThinkingScore(score);
+            record.setThinkingFeedback(feedback);
+            record.setThinkingScore(score);
 
-        if (isNew) {
-            recordMapper.insert(record);
-        } else {
-            recordMapper.updateById(record);
+            if (isNew) {
+                recordMapper.insert(record);
+            } else {
+                recordMapper.updateById(record);
+            }
         }
 
         return new ThinkingEvaluateResp(score, feedback);
@@ -337,7 +341,7 @@ public class ChallengeServiceImpl implements ChallengeService {
 
     protected String callAI(String prompt) throws Exception {
         Map<String, Object> bodyMap = new HashMap<>();
-        bodyMap.put("model", "deepseek-flash");
+        bodyMap.put("model", aiModel);
         bodyMap.put("stream", false);
         bodyMap.put("messages", List.of(Map.of("role", "user", "content", prompt)));
 
@@ -377,27 +381,29 @@ public class ChallengeServiceImpl implements ChallengeService {
             }
         }
 
-        UserChallengeRecord record = recordMapper.selectOne(
-                new LambdaQueryWrapper<UserChallengeRecord>()
-                        .eq(UserChallengeRecord::getUserId, userId)
-                        .eq(UserChallengeRecord::getChallengeId, challengeId)
-        );
+        if (userId != null) {
+            UserChallengeRecord record = recordMapper.selectOne(
+                    new LambdaQueryWrapper<UserChallengeRecord>()
+                            .eq(UserChallengeRecord::getUserId, userId)
+                            .eq(UserChallengeRecord::getChallengeId, challengeId)
+            );
 
-        boolean isNew = (record == null);
-        if (isNew) {
-            record = UserChallengeRecord.builder()
-                    .userId(userId)
-                    .challengeId(challengeId)
-                    .completed(false)
-                    .build();
-        }
+            boolean isNew = (record == null);
+            if (isNew) {
+                record = UserChallengeRecord.builder()
+                        .userId(userId)
+                        .challengeId(challengeId)
+                        .completed(false)
+                        .build();
+            }
 
-        record.setQuizAnswers(answers);
+            record.setQuizAnswers(answers);
 
-        if (isNew) {
-            recordMapper.insert(record);
-        } else {
-            recordMapper.updateById(record);
+            if (isNew) {
+                recordMapper.insert(record);
+            } else {
+                recordMapper.updateById(record);
+            }
         }
 
         return allCorrect;
@@ -405,7 +411,7 @@ public class ChallengeServiceImpl implements ChallengeService {
 
     @Override
     public String getSolution(Integer userId, Integer challengeId) {
-        UserChallengeRecord record = recordMapper.selectOne(
+        UserChallengeRecord record = (userId == null) ? null : recordMapper.selectOne(
                 new LambdaQueryWrapper<UserChallengeRecord>()
                         .eq(UserChallengeRecord::getUserId, userId)
                         .eq(UserChallengeRecord::getChallengeId, challengeId)

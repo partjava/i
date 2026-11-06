@@ -125,10 +125,10 @@ export function useStudyTimer({
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          //
+          time: unrecordedSeconds,
           category: currentCategory,
           technology: currentTechnology,
-          description
+          activity: description || `在线学习 ${unrecordedMinutes || 1} 分钟`,
         }),
       });
       
@@ -187,14 +187,17 @@ export function useStudyTimer({
         }
 
         //
-        if (navigator.sendBeacon) {
-          navigator.sendBeacon('/api/study/sync-time', JSON.stringify({
-            time: unrecordedMinutes > 0 ? unrecordedMinutes : 1,
+        fetch('/api/study/sync-time', {
+          method: 'POST',
+          keepalive: true,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            time: unrecordedSeconds,
             category: currentCategory,
             technology: currentTechnology,
-            description: ''
-          }));
-        }
+            activity: `在线学习 ${unrecordedMinutes > 0 ? unrecordedMinutes : 1} 分钟`,
+          }),
+        }).catch(() => {});
       }
     };
     

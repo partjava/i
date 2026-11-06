@@ -29,7 +29,7 @@ import json
 from config import settings
 from agents.navigator import navigator
 from agents.notewriter import note_writer
-from agents.websearch import web_search
+from agents.websearch import web_search as web_search_engine
 
 try:
     # mcp 1.x：FastMCP；mcp 2.x：更名为 MCPServer（API 兼容，装饰器与 run() 一致）
@@ -69,13 +69,21 @@ async def search_site_pages(query: str) -> str:
 async def web_search(query: str) -> str:
     """联网检索外部权威技术资料并抓取正文（DeepSeek /tools/search + /tools/fetch），
     返回带编号的权威来源引证列表。需要配置 DEEPSEEK_API_KEY。"""
-    citations, rag_context = await web_search.search_and_fetch(query)
+    citations, rag_context = await web_search_engine.search_and_fetch(query)
     return json.dumps(
         {
             "ok": True,
             "count": len(citations),
             "citations": [
-                {"index": c["index"], "title": c["title"], "url": c["url"], "domain": c["domain"]}
+                {
+                    "index": c["index"],
+                    "title": c["title"],
+                    "url": c["url"],
+                    "domain": c["domain"],
+                    "snippet": c.get("snippet", ""),
+                    "source": c.get("source", "recommended"),
+                    "contentFetched": bool(c.get("contentFetched", False)),
+                }
                 for c in citations
             ],
             "context_preview": rag_context[:1200],

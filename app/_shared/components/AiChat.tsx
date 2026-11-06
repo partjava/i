@@ -72,21 +72,29 @@ function FloatingAiChat() {
     };
   };
 
-  // 监听来自顶部导航栏史迪仔按钮的唤起事件
+  // 监听来自顶部导航栏史迪仔按钮或禾桔伴学气泡的唤起事件
   useEffect(() => {
-    const handleToggle = () => {
+    const handleToggle = (ev: Event) => {
+      const customEv = ev as CustomEvent<{ prompt?: string; forceOpen?: boolean }>;
+      const promptText = customEv?.detail?.prompt;
+      const forceOpen = customEv?.detail?.forceOpen;
       setOpen((prev) => {
-        const next = !prev;
+        const next = forceOpen || promptText ? true : !prev;
         if (next && !posRef.current) {
           setPos(getDefaultPos());
         }
         return next;
       });
       setShowHint(false);
+      if (promptText) {
+        setTimeout(() => {
+          void ai.sendMessage(promptText);
+        }, 120);
+      }
     };
     window.addEventListener('toggle-ai-chat', handleToggle);
     return () => window.removeEventListener('toggle-ai-chat', handleToggle);
-  }, []);
+  }, [ai]);
   const dragStartPosRef = useRef({ x: 0, y: 0 });
   const dragStartRef = useRef<{ mx: number; my: number; ox: number; oy: number }>({ mx: 0, my: 0, ox: 0, oy: 0 });
   const containerRef = useRef<HTMLDivElement | null>(null);

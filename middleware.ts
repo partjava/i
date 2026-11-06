@@ -3,6 +3,8 @@ import { NextRequest, NextResponse } from 'next/server'
 const rateMap = new Map<string, { count: number; resetAt: number }>()
 
 const LIMITS: Record<string, { max: number; windowMs: number }> = {
+  '/api/ai/agent/stream': { max: 30, windowMs: 60000 },
+  '/api/ai/assistant': { max: 30, windowMs: 60000 },
   '/api/ai/chat': { max: 30, windowMs: 60000 },
   '/api/ai/conversations': { max: 60, windowMs: 60000 },
   '/api/execute-code': { max: 20, windowMs: 60000 },
@@ -33,13 +35,20 @@ export function middleware(request: NextRequest) {
   )
   if (!route) return NextResponse.next()
 
-  const [, { max, windowMs }] = route
+  const [prefix, { max, windowMs }] = route
   const ip =
     request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
     request.headers.get('x-real-ip') ||
     'anonymous'
-  const id = `${ip}:${pathname}`
+  const id = `${ip}:${prefix}`
   const now = Date.now()
+
+  if (rateMap.size > 2000) {
+    for (const [k, v] of rateMap.entries()) {
+      if (now > v.resetAt) rateMap.delete(k)
+    }
+  }
+
   let entry = rateMap.get(id)
 
   if (!entry || now > entry.resetAt) {

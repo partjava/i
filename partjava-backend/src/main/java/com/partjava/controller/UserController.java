@@ -179,7 +179,7 @@ public class UserController {
 
             // (5) 打卡记录
             List<Map<String, Object>> studySessions = jdbcTemplate.queryForList(
-                    "SELECT * FROM study_sessions WHERE user_id = ? ORDER BY session_date DESC LIMIT 100",
+                    "SELECT * FROM study_sessions WHERE user_id = ? ORDER BY created_at DESC LIMIT 100",
                     userId
             );
             exportMap.put("studySessions", studySessions);

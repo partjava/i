@@ -13,20 +13,21 @@ export default function ForgotPasswordPage() {
   const handleSubmit = async (values: { email: string }) => {
     try {
       setLoading(true);
-      
-      // 这里应该调用重置密码的API
-      // 暂时显示提示信息
-      message.info('密码重置功能正在开发中，请联系管理员');
-      
-      // 模拟API调用
-      setTimeout(() => {
-        setLoading(false);
-        message.success('如果该邮箱存在，重置链接已发送到您的邮箱');
-      }, 1000);
-      
-    } catch (error) {
-      setLoading(false);
+      const res = await fetch('/api/forgot-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: values.email.trim() }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data?.success !== false) {
+        message.success(data?.message || '如果该邮箱存在，重置链接已发送到您的邮箱');
+      } else {
+        message.error(data?.message || '发送重置邮件失败，请稍后重试');
+      }
+    } catch {
       message.error('发送重置邮件失败，请重试');
+    } finally {
+      setLoading(false);
     }
   };
 

@@ -129,6 +129,8 @@ class WebSearch:
                                     "url": url,
                                     "domain": domain,
                                     "snippet": item.get("snippet") or item.get("content") or item.get("summary") or "",
+                                    "source": "live",
+                                    "contentFetched": False,
                                 }
                             )
 
@@ -149,6 +151,7 @@ class WebSearch:
                                     or ""
                                 )
                                 if page_body:
+                                    cite["contentFetched"] = True
                                     fetched_texts.append(
                                         f"### 来源 [{cite['index']}] {cite['title']} ({cite['url']})\n"
                                         f"{str(page_body)[:3500]}"
@@ -161,13 +164,9 @@ class WebSearch:
         # 2. 如果未配置 Key 或官方搜索返回为空，补充精选权威技术站点索引，确保永远返回有价值的专业外链卡片
         if not citations:
             citations = self._match_curated_authorities(user_query, max_results=max_results)
-            for c in citations:
-                fetched_texts.append(
-                    f"### 权威参考 [{c['index']}] {c['title']} ({c['url']})\n摘要: {c['snippet']}"
-                )
 
         rag_context = ""
-        if citations:
+        if fetched_texts:
             rag_context = (
                 "\n【联网深搜检索并抓取的权威外部网站资料】:\n"
                 + "\n\n".join(fetched_texts)
@@ -201,6 +200,8 @@ class WebSearch:
                 "url": d["url"],
                 "domain": d["domain"],
                 "snippet": d["snippet"],
+                "source": "recommended",
+                "contentFetched": False,
             }
             for idx, d in enumerate(picked)
         ]

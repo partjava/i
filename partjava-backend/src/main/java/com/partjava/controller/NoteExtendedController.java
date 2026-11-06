@@ -67,10 +67,14 @@ public class NoteExtendedController {
     public ApiResponse<List<Note>> searchNotes(@RequestAttribute(value = "userId", required = false) Integer userId,
                                                @RequestParam(value = "q", required = false) String q,
                                                @RequestParam(value = "query", required = false) String query) {
-        Long activeUserId = getUserIdOrFallback(userId);
         String keyword = q != null ? q : query;
-        LambdaQueryWrapper<Note> wrapper = new LambdaQueryWrapper<Note>()
-                .and(scope -> scope.eq(Note::getIsPublic, true).or().eq(Note::getAuthorId, activeUserId));
+        LambdaQueryWrapper<Note> wrapper = new LambdaQueryWrapper<>();
+        if (userId != null) {
+            Long activeUserId = Long.valueOf(userId);
+            wrapper.and(scope -> scope.eq(Note::getIsPublic, true).or().eq(Note::getAuthorId, activeUserId));
+        } else {
+            wrapper.eq(Note::getIsPublic, true);
+        }
         if (keyword != null && !keyword.trim().isEmpty()) {
             String clean = keyword.trim();
             wrapper.and(search -> search.like(Note::getTitle, clean).or().like(Note::getContent, clean));
@@ -117,8 +121,11 @@ public class NoteExtendedController {
     @GetMapping("/api/notes/{id}/favorite")
     public ApiResponse<Map<String, Object>> getFavoriteState(@RequestAttribute(value = "userId", required = false) Integer userId,
                                                             @PathVariable("id") Long noteId) {
+        if (userId == null) {
+            return ApiResponse.success(Map.of("favorite", false));
+        }
         NoteBookmark bookmark = noteBookmarkMapper.selectOne(new LambdaQueryWrapper<NoteBookmark>()
-                .eq(NoteBookmark::getUserId, getUserIdOrFallback(userId))
+                .eq(NoteBookmark::getUserId, Long.valueOf(userId))
                 .eq(NoteBookmark::getNoteId, noteId));
         return ApiResponse.success(Map.of("favorite", bookmark != null));
     }

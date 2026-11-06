@@ -13,7 +13,7 @@ public interface ChallengeMapper extends BaseMapper<Challenge> {
 
     @Select("SELECT u.id AS user_id, u.username, " +
             "COUNT(DISTINCT r.challenge_id) AS completed, " +
-            "COALESCE(SUM(c.points), 0) AS points " +
+            "COUNT(DISTINCT r.challenge_id) * 10 AS points " +
             "FROM users u " +
             "LEFT JOIN star_challenge_records r ON u.id = r.user_id AND r.code_passed = 1 " +
             "LEFT JOIN star_challenges c ON r.challenge_id = c.id " +

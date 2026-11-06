@@ -1,6 +1,7 @@
 package com.partjava.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.AllArgsConstructor;
@@ -20,6 +21,10 @@ public class UserAchievement {
     private Integer id;
     private Integer userId;
     private String achievementId;
+    private String title;
+    private String description;
+    @TableField("earned_at")
     private LocalDateTime unlockedAt;
+    @TableField(exist = false)
     private LocalDateTime createdAt;
 }

@@ -33,7 +33,7 @@ public class NoteController {
             @RequestParam(value = "category", required = false) String category,
             @RequestParam(value = "technology", required = false) String technology,
             @RequestParam(value = "isPublic", required = false) Boolean isPublic) {
-        Long activeUserId = getUserIdOrFallback(userId);
+        Long activeUserId = userId != null ? Long.valueOf(userId) : null;
         List<Note> list = noteService.listNotes(activeUserId, category, technology, isPublic);
         return ApiResponse.success(list);
     }

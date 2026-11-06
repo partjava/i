@@ -46,11 +46,15 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 // 认证与找回密码流程
                 .requestMatchers("/api/auth/**", "/api/forgot-password/**").permitAll()
-                // 公开只读内容：笔记广场、评论、图片、统计、搜索、课程中心、题库、公开用户主页与游戏
+                // 公开只读内容：笔记广场、评论、图片、统计、搜索、课程中心、题库与公开用户主页
                 .requestMatchers(HttpMethod.GET,
                     "/api/notes/**", "/api/comments/**", "/api/images/**", "/api/stats/**",
                     "/api/search/**", "/api/study/**", "/api/challenges/**", "/api/star-challenges/**",
-                    "/api/game/**", "/api/user/profile-by-id").permitAll()
+                    "/api/user/profile-by-id").permitAll()
+                // 极客小游戏接口允许游客体验（含开局与操作 POST）
+                .requestMatchers("/api/game/**").permitAll()
+                // AI 账号会话历史要求登录认证
+                .requestMatchers("/api/ai/conversations/**").authenticated()
                 // AI 对话（前端悬浮助手匿名可用，Next.js middleware 已做 IP 限流）
                 .requestMatchers("/api/ai/**").permitAll()
                 // 管理后台仅管理员
@@ -61,6 +65,11 @@ public class SecurityConfig {
                 // 默认拒绝：未显式放行的路径一律需要认证（替换原 anyRequest().permitAll()）
                 .anyRequest().authenticated()
             )
+            // 未登录或 Token 过期访问受保护资源时统一返回 401，便于前端拦截器识别并清理失效会话
+            .exceptionHandling(ex -> ex.authenticationEntryPoint(
+                (request, response, authException) ->
+                    response.sendError(jakarta.servlet.http.HttpServletResponse.SC_UNAUTHORIZED, "未登录或登录状态已过期")
+            ))
             // 注册 JWT 过滤器在密码校验过滤器之前
             .addFilterBefore(jwtAuthenticationFilter, org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class);
 

@@ -13,6 +13,7 @@ import { buildChallengeContext } from './challenge-ai-context';
 import { executionLabel, normalizeExecutionStatus, readExecutionResponse, ExecutionResponseError, isSubmittedSourceStale } from '@shared/components/execution-state';
 
 import { ChallengeExecutionRequests, ChallengeExecutionMode, challengeResultLabel, shouldRecordChallengePass } from '@shared/components/challenge-execution-state';
+import { emitPetCompanionEvent } from '@shared/lib/pet-companion-bus';
 
 interface QuizWorkspaceProps {
   selectedNodeName: string;
@@ -156,6 +157,21 @@ export const QuizWorkspace: React.FC<QuizWorkspaceProps> = ({ selectedNodeName, 
         if (status === 'authenticated' && shouldRecordChallengePass(execution.mode, resultStatus)) {
           setLevels(prev => prev.map(level => level.id === challengeId
             ? { ...level, userRecord: { ...level.userRecord, codePassed: true } } : level));
+          emitPetCompanionEvent({
+            type: 'celebrate',
+            title: '关卡评测全部通过！',
+            message: `太棒了喵！关卡「${detail.levelTitle || detail.name || selectedNodeName}」完整通过测试！已为你点亮星空成就！`,
+            mood: 'happy',
+            speak: true,
+          });
+        } else if (resultStatus !== 'ACCEPTED' && resultStatus !== 'EXECUTED' && resultStatus !== 'CANCELLED') {
+          emitPetCompanionEvent({
+            type: 'error_diagnosis',
+            title: '禾桔发现报错喵~',
+            message: `别灰心！「${challengeResultLabel(execution.mode, resultStatus)}」已捕获，点击控制台的「✨ 禾桔诊断修复」查看一键修复补丁吧！`,
+            promptToAsk: `我在关卡【${detail.levelTitle || detail.name || selectedNodeName}】遇到报错：${challengeResultLabel(execution.mode, resultStatus)}，请给我一些思路提示`,
+            mood: 'curious',
+          });
         }
       } else {
         const failureStatus = normalizeExecutionStatus(data.data?.status || data.status);

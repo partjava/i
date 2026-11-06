@@ -173,6 +173,8 @@ public class AchievementListener {
             userAchievement = UserAchievement.builder()
                     .userId(userId)
                     .achievementId(achievement.getId())
+                    .title(achievement.getName() != null ? achievement.getName() : achievement.getId())
+                    .description(achievement.getDescription())
                     .createdAt(LocalDateTime.now())
                     .build();
             userAchievementMapper.insert(userAchievement);

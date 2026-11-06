@@ -29,21 +29,21 @@ export default function FetchInterceptor() {
       if (isApiRequest) {
         const token = getToken();
         if (token) {
+          const headers = new Headers(finalInit.headers);
+          if (!headers.has('Authorization')) {
+            headers.set('Authorization', `Bearer ${token}`);
+          }
           finalInit = {
             ...finalInit,
-            headers: {
-              // 已有的 headers 优先（允许组件手动覆盖）
-              Authorization: `Bearer ${token}`,
-              ...((finalInit.headers as Record<string, string>) ?? {}),
-            },
+            headers,
           };
         }
       }
 
       const response = await originalFetch(input, finalInit);
 
-      // 处理 401：token 过期/无效，自动登出
-      if (response.status === 401 && isApiRequest) {
+      // 处理 401：仅当本地持有 token 且已过期/无效时，自动登出并跳转登录页
+      if (response.status === 401 && isApiRequest && getToken()) {
         // 排除登录/注册接口本身
         const isAuthEndpoint = url.includes('/auth/login') || url.includes('/auth/register');
         if (!isAuthEndpoint) {

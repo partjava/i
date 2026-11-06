@@ -72,13 +72,15 @@ export default function SimpleLearningTracker() {
           time: minutes * 60, // 转秒
           category: getPageCategory(pathname),
           technology: getPageCategory(pathname),
+          activity: `在线学习 ${minutes} 分钟`,
         }),
       });
     } catch (error) {
       // 静默失败，不影响用户体验
     }
 
-    // 重置计时器
+    // 重置计时器与起点时间戳，避免下一秒被重算回累计秒数
+    startTimeRef.current = Date.now();
     setSeconds(0);
   };
 
@@ -134,12 +136,17 @@ export default function SimpleLearningTracker() {
     const handleUnload = () => {
       if (isActive && seconds >= 60) {
         const minutes = Math.floor(seconds / 60);
-        navigator.sendBeacon('/api/study/sync-time', JSON.stringify({
-          time: minutes * 60, // 转秒
-          category: getPageCategory(pathname),
-          technology: getPageCategory(pathname),
-          description: `在线学习 ${minutes} 分钟`,
-        }));
+        fetch('/api/study/sync-time', {
+          method: 'POST',
+          keepalive: true,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            time: minutes * 60, // 转秒
+            category: getPageCategory(pathname),
+            technology: getPageCategory(pathname),
+            activity: `在线学习 ${minutes} 分钟`,
+          }),
+        }).catch(() => {});
       }
     };
 

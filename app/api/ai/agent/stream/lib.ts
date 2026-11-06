@@ -575,6 +575,7 @@ export async function executeTool(name: string, args: Record<string, any>, ctx: 
           citations: citations.map((c) => ({ index: c.index, title: c.title, url: c.url, domain: c.domain, snippet: c.snippet, source: c.source, contentFetched: c.contentFetched })),
           source,
           fetchedCount: fetchedSnippets.length,
+          fetchedExcerpts: fetchedSnippets.map((s) => s.slice(0, 1200)),
           note: source === 'recommended'
             ? '实时搜索未获得结果，以下为预置推荐文档，未验证实时内容；请明确告知用户，不要声称已经联网检索或读取正文。'
             : fetchedSnippets.length > 0 ? '已读取部分正文，回答时请引用 [编号] 并区分摘要与正文。' : '仅获得实时搜索摘要，未读取正文；不要声称已经读取文档全文。',

@@ -260,7 +260,10 @@ export function runAgentStream(body: AgentRequestBody, apiKey: string): Readable
           }
         }
 
-        // 最终流式回答（不携带 tools）
+        // 最终流式回答（不携带 tools，并将工具抓取到的 RAG 正文片段注入系统上下文）
+        if (state.ragFragments.length > 0 && llmMessages[0]?.role === 'system') {
+          llmMessages[0].content += '\n\n' + state.ragFragments.join('\n\n');
+        }
         const finalModel = state.citations.length > 0 ? MODEL_PRO : MODEL_FLASH;
         try {
           const llmResp = await fetch(`${DEEPSEEK_BASE_URL}/chat/completions`, {

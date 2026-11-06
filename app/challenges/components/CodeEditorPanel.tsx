@@ -2,9 +2,11 @@
 
 import React, { useState, useEffect } from 'react';
 import Editor from '@monaco-editor/react';
-import { Play, Terminal, Code, HelpCircle, Sparkles } from 'lucide-react';
+import { Play, Terminal, Code, HelpCircle, Sparkles, Loader2, Wrench } from 'lucide-react';
 import { message } from 'antd';
 import { ChallengeExecutionMode, challengeResultLabel, shouldRecordChallengePass } from '@shared/components/challenge-execution-state';
+import InlineCodePatchModal, { CodePatchData } from '@shared/components/InlineCodePatchModal';
+import { emitPetCompanionEvent } from '@shared/lib/pet-companion-bus';
 
 interface CodeEditorPanelProps {
   codeValue: string;
@@ -26,7 +28,43 @@ export function CodeEditorPanel({
   canSubmit, solutionCode, challengeId, onRunCode
 }: CodeEditorPanelProps) {
   const [showSolution, setShowSolution] = useState(false);
-  useEffect(() => setShowSolution(false), [challengeId]);
+  const [patchLoading, setPatchLoading] = useState(false);
+  const [patchData, setPatchData] = useState<CodePatchData | null>(null);
+  const [showPatchModal, setShowPatchModal] = useState(false);
+
+  useEffect(() => {
+    setShowSolution(false);
+    setShowPatchModal(false);
+    setPatchData(null);
+  }, [challengeId]);
+
+  const handleRequestPatch = async () => {
+    if (patchLoading || !codeValue.trim()) return;
+    setPatchLoading(true);
+    try {
+      const res = await fetch('/api/ai/code-patch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          code: codeValue,
+          language: 'python',
+          errorOutput: testResults,
+          solutionCode: solutionCode || '',
+        }),
+      });
+      const json = await res.json();
+      if (json?.success && json.data) {
+        setPatchData(json.data);
+        setShowPatchModal(true);
+      } else {
+        message.warning('未能生成修复补丁，请稍后重试');
+      }
+    } catch {
+      message.error('请求修复服务失败');
+    } finally {
+      setPatchLoading(false);
+    }
+  };
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden bg-[#030308]">
@@ -79,13 +117,32 @@ export function CodeEditorPanel({
             <Terminal className="w-3.5 h-3.5 text-cyan-400" />
             <span>控制台输出 (Console Output)</span>
           </div>
-          {executionStatus !== null && (
-            <div className="flex items-center gap-1.5 text-xs font-bold">
-              <span className={`px-2 py-0.5 rounded border ${!resultIsStale && executionMode !== null && shouldRecordChallengePass(executionMode, executionStatus) ? 'bg-emerald-950/40 border-emerald-500/20 text-emerald-400' : 'bg-slate-900 border-slate-700 text-amber-400'}`}>
-                {resultIsStale ? '上次结果：' : ''}{challengeResultLabel(executionMode || 'sample', executionStatus)}
-              </span>
-            </div>
-          )}
+          <div className="flex items-center gap-2">
+            {/* 当运行出错或未通过时，浮现一键诊断修复按钮 */}
+            {testResults && (
+              <button
+                type="button"
+                onClick={handleRequestPatch}
+                disabled={patchLoading}
+                className="px-2.5 py-1 rounded-lg text-xs font-bold text-white bg-gradient-to-r from-amber-500 via-rose-500 to-indigo-600 hover:opacity-90 disabled:opacity-50 transition flex items-center gap-1.5 shadow-md shadow-indigo-500/20"
+                title="让 3D 灵宠禾桔根据报错信息生成修复补丁与红绿 Diff 对比"
+              >
+                {patchLoading ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Sparkles className="w-3.5 h-3.5" />
+                )}
+                <span>{patchLoading ? '诊断中...' : '✨ 禾桔诊断修复'}</span>
+              </button>
+            )}
+            {executionStatus !== null && (
+              <div className="flex items-center gap-1.5 text-xs font-bold">
+                <span className={`px-2 py-0.5 rounded border ${!resultIsStale && executionMode !== null && shouldRecordChallengePass(executionMode, executionStatus) ? 'bg-emerald-950/40 border-emerald-500/20 text-emerald-400' : 'bg-slate-900 border-slate-700 text-amber-400'}`}>
+                  {resultIsStale ? '上次结果：' : ''}{challengeResultLabel(executionMode || 'sample', executionStatus)}
+                </span>
+              </div>
+            )}
+          </div>
         </div>
         <div className="flex-1 p-4 font-mono text-xs overflow-y-auto bg-[#04040a] text-slate-400 whitespace-pre-wrap leading-relaxed select-text">
           <div className="text-slate-500 mb-2">运行样例仅检查前 1–2 个公开样例，不计通关；提交判题检查完整用例，登录后通过可记录通关。</div>
@@ -118,6 +175,18 @@ export function CodeEditorPanel({
           </div>
         </div>
       )}
+
+      {/* 禾桔 AI 诊断与热修复补丁弹窗 */}
+      <InlineCodePatchModal
+        open={showPatchModal}
+        onClose={() => setShowPatchModal(false)}
+        originalCode={codeValue}
+        patch={patchData}
+        language="python"
+        onApplyPatch={(fixedCode) => {
+          onCodeChange(fixedCode);
+        }}
+      />
     </div>
   );
 }

@@ -179,8 +179,8 @@ public class UserProfileServiceImpl implements UserProfileService {
         // 4. 同时同步更新 users 主表数据以配合全局会话拉取
         if (data.getUsername() != null && !data.getUsername().trim().isEmpty()) {
             String newUsername = data.getUsername().trim();
-            if (!newUsername.matches("^[a-zA-Z0-9]+$")) {
-                throw new IllegalArgumentException("用户名只能是英文和数字的组合");
+            if (!newUsername.matches("^[a-zA-Z0-9_]{5,16}$")) {
+                throw new IllegalArgumentException("登录账号需为 5~16 位字母、数字或下划线");
             }
             User existingUser = userMapper.selectOne(
                     new LambdaQueryWrapper<User>()

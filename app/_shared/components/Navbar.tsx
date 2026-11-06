@@ -26,6 +26,13 @@ const AI3DRobot = dynamic(() => import('./AI3DRobot'), { ssr: false });
 import StitchLogo from './StitchLogo';
 import GlobalSearch from './GlobalSearch';
 import VipModal from './VipModal';
+import {
+  PetCompanionEventDetail,
+  speakWithHeju,
+  stopHejuSpeech,
+  subscribePetCompanionEvent,
+  subscribePetSpeakingState,
+} from '../lib/pet-companion-bus';
 
 export default function Navbar() {
   const { data: session, status, signOut } = useAuth();
@@ -37,6 +44,28 @@ export default function Navbar() {
   const [showRobot, setShowRobot] = useState(false);
   const [robotPreloaded, setRobotPreloaded] = useState(false);
   const [showVip, setShowVip] = useState(false);
+  const [companionBubble, setCompanionBubble] = useState<PetCompanionEventDetail | null>(null);
+  const [isHejuSpeaking, setIsHejuSpeaking] = useState(false);
+
+  // 订阅全站「禾桔」主动伴学事件，直接赋能顶部导航栏 AI 助手按钮（无需右下角冗余悬浮球）
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const unsubEvent = subscribePetCompanionEvent(detail => {
+      setCompanionBubble(detail);
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(() => {
+        setCompanionBubble(null);
+      }, detail.durationMs || 9000);
+    });
+    const unsubSpeak = subscribePetSpeakingState(speaking => {
+      setIsHejuSpeaking(speaking);
+    });
+    return () => {
+      if (timer) clearTimeout(timer);
+      unsubEvent();
+      unsubSpeak();
+    };
+  }, []);
 
   const isActive = (href: string) => {
     if (href === '/') return pathname === '/';
@@ -274,32 +303,130 @@ export default function Navbar() {
             />
           </div>
 
-          {/* 🐱 AI 学习助手：透明圆泡泡背景 + 像素黑猫，进入学习页面自动消失 */}
+          {/* 🐱 AI 学习助手：透明圆泡泡背景 + 像素黑猫 + 主动伴学情绪共振气泡 */}
           {!pathname?.startsWith('/study') && (
-            <Tooltip title="AI 学习助手">
-              <button
-                onClick={() => {
-                  window.dispatchEvent(new CustomEvent('toggle-ai-chat'));
-                }}
-                className="w-16 h-12 rounded-[50%] flex-shrink-0 flex items-center justify-center transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer relative overflow-hidden group"
-                style={{
-                  width: 64, height: 48, minWidth: 64, borderRadius: '50%',
-                  background:
-                    'radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.72) 0%, rgba(255, 255, 255, 0.22) 55%, rgba(186, 230, 253, 0.32) 100%)',
-                  backdropFilter: 'blur(16px) saturate(180%)',
-                  WebkitBackdropFilter: 'blur(16px) saturate(180%)',
-                  border: '1.5px solid rgba(255, 255, 255, 0.85)',
-                  boxShadow:
-                    '0 8px 24px rgba(15, 23, 42, 0.1), inset 0 2px 4px rgba(255, 255, 255, 0.95), inset 0 -2px 6px rgba(56, 189, 248, 0.25)',
-                }}
-                aria-label="打开AI助手"
-              >
-                <span
-                  className="absolute top-1.5 left-2.5 w-3.5 h-1.5 rounded-full bg-white/80 blur-[0.6px] rotate-[-25deg] pointer-events-none"
-                />
-                <StitchLogo size={42} className="scale-110" />
-              </button>
-            </Tooltip>
+            <div className="relative flex-shrink-0">
+              <Tooltip title="AI 学习助手（禾桔伴学中枢）">
+                <button
+                  onClick={() => {
+                    setCompanionBubble(null);
+                    window.dispatchEvent(new CustomEvent('toggle-ai-chat'));
+                  }}
+                  className={`w-16 h-12 rounded-[50%] flex-shrink-0 flex items-center justify-center transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer relative overflow-hidden group ${
+                    companionBubble
+                      ? companionBubble.type === 'celebrate'
+                        ? 'ring-2 ring-emerald-400 animate-bounce'
+                        : 'ring-2 ring-amber-400 animate-pulse'
+                      : ''
+                  }`}
+                  style={{
+                    width: 64, height: 48, minWidth: 64, borderRadius: '50%',
+                    background:
+                      'radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.72) 0%, rgba(255, 255, 255, 0.22) 55%, rgba(186, 230, 253, 0.32) 100%)',
+                    backdropFilter: 'blur(16px) saturate(180%)',
+                    WebkitBackdropFilter: 'blur(16px) saturate(180%)',
+                    border: '1.5px solid rgba(255, 255, 255, 0.85)',
+                    boxShadow:
+                      '0 8px 24px rgba(15, 23, 42, 0.1), inset 0 2px 4px rgba(255, 255, 255, 0.95), inset 0 -2px 6px rgba(56, 189, 248, 0.25)',
+                  }}
+                  aria-label="打开AI助手"
+                >
+                  <span
+                    className="absolute top-1.5 left-2.5 w-3.5 h-1.5 rounded-full bg-white/80 blur-[0.6px] rotate-[-25deg] pointer-events-none"
+                  />
+                  <StitchLogo size={42} className="scale-110" />
+                  {isHejuSpeaking && (
+                    <span className="absolute bottom-1 right-2 w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399] animate-ping" />
+                  )}
+                </button>
+              </Tooltip>
+
+              {/* 🐾 顶栏「禾桔」主动伴学弹出胶囊（报错诊断提醒 / 通关庆贺 / 卡壳点拨） */}
+              {companionBubble && (
+                <div
+                  className="absolute right-0 top-14 w-80 rounded-2xl p-3.5 shadow-2xl border backdrop-blur-xl z-50 transition-all"
+                  style={{
+                    background:
+                      companionBubble.type === 'celebrate'
+                        ? 'linear-gradient(145deg, rgba(6, 78, 59, 0.95), rgba(15, 23, 42, 0.96))'
+                        : 'linear-gradient(145deg, rgba(30, 27, 75, 0.96), rgba(15, 23, 42, 0.96))',
+                    borderColor:
+                      companionBubble.type === 'celebrate'
+                        ? 'rgba(52, 211, 153, 0.45)'
+                        : 'rgba(129, 140, 248, 0.45)',
+                  }}
+                >
+                  <div className="flex items-start justify-between gap-2 mb-1.5">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-base">
+                        {companionBubble.type === 'celebrate' ? '🎉' : '🐾'}
+                      </span>
+                      <span className="text-xs font-bold text-white">
+                        {companionBubble.title}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setCompanionBubble(null)}
+                      className="text-slate-400 hover:text-white text-xs px-1"
+                    >
+                      ✕
+                    </button>
+                  </div>
+
+                  <p className="text-xs text-slate-200 leading-relaxed mb-3">
+                    {companionBubble.message}
+                  </p>
+
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-1.5">
+                      {companionBubble.promptToAsk && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const prompt = companionBubble.promptToAsk;
+                            setCompanionBubble(null);
+                            window.dispatchEvent(
+                              new CustomEvent('toggle-ai-chat', {
+                                detail: { prompt, forceOpen: true },
+                              })
+                            );
+                          }}
+                          className="px-2.5 py-1 rounded-lg bg-indigo-500 hover:bg-indigo-400 text-white text-[11px] font-semibold transition-colors"
+                        >
+                          💬 一键请教助教
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setCompanionBubble(null);
+                          setShowRobot(true);
+                        }}
+                        className="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-slate-200 text-[11px] font-medium transition-colors"
+                      >
+                        🐱 召唤 3D 禾桔
+                      </button>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (isHejuSpeaking) {
+                          stopHejuSpeech();
+                        } else {
+                          speakWithHeju(companionBubble.message);
+                        }
+                      }}
+                      className="px-2 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-emerald-300 text-[11px] font-medium transition-colors"
+                      title="语音播报"
+                    >
+                      {isHejuSpeaking ? '⏹ 停止' : '🔊 朗读'}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           )}
         </div>
 

@@ -13,6 +13,10 @@ import {
   buildRiggedCatFromGLB,
   RiggedCatController
 } from './cat/catShaderAndRig';
+import {
+  subscribePetCompanionEvent,
+  subscribePetSpeakingState
+} from '@shared/lib/pet-companion-bus';
 import NotePreviewModal from './ai/NotePreviewModal';
 import CatStage from './ai-robot/CatStage';
 import ChatPanel from './ai-robot/ChatPanel';
@@ -330,9 +334,38 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
     const utterance = new SpeechSynthesisUtterance(plain);
     utterance.lang = 'zh-CN';
     utterance.rate = 1.05;
+    utterance.onstart = () => {
+      activeCatRef.current?.setTalking(true);
+    };
+    utterance.onend = () => {
+      activeCatRef.current?.setTalking(false);
+    };
+    utterance.onerror = () => {
+      activeCatRef.current?.setTalking(false);
+    };
     window.speechSynthesis.cancel();
     window.speechSynthesis.speak(utterance);
   }, []);
+
+  // 订阅全站「禾桔」伴学事件总线与语音口型律动状态
+  useEffect(() => {
+    const unsubSpeak = subscribePetSpeakingState(speaking => {
+      activeCatRef.current?.setTalking(speaking);
+    });
+    const unsubEvent = subscribePetCompanionEvent(ev => {
+      if (ev.mood === 'happy' || ev.type === 'celebrate') {
+        activeCatRef.current?.setMood('happy');
+        activeCatRef.current?.triggerHappyJump();
+        spawnFlyEmojis('🎉', 4);
+      } else if (ev.mood === 'curious' || ev.type === 'error_diagnosis' || ev.type === 'stuck_hint') {
+        activeCatRef.current?.setMood('curious');
+      }
+    });
+    return () => {
+      unsubSpeak();
+      unsubEvent();
+    };
+  }, [spawnFlyEmojis]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });

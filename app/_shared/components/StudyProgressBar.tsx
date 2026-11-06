@@ -16,8 +16,19 @@ function useStudyCompletion() {
       const res = await fetch('/api/study/progress');
       if (!res.ok) return;
       const data = await res.json();
-      const progress: Record<string, boolean> = data.progress || {};
-      setCompleted(!!progress[path]);
+      const progress: Record<string, boolean> = {};
+      if (Array.isArray(data?.data)) {
+        for (const item of data.data) {
+          if (item?.pagePath) {
+            progress[item.pagePath] = Boolean(item.isCompleted ?? item.completed);
+          }
+        }
+      } else if (data?.progress && typeof data.progress === 'object') {
+        Object.assign(progress, data.progress);
+      }
+      if (Object.keys(progress).length > 0) {
+        setCompleted(!!progress[path]);
+      }
 
       Object.entries(progress).forEach(([key, val]) => {
         if (val) localStorage.setItem('study_completed_' + key, '1');

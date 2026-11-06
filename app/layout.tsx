@@ -16,8 +16,8 @@ export const metadata: Metadata = {
     title: 'PartJava',
   },
   icons: {
-    icon: '/favicon.ico',
-    apple: '/favicon.ico',
+    icon: '/icons/favicon.ico',
+    apple: '/icons/icon-192x192.png',
   },
   openGraph: {
     title: 'PartJava - 编程学习与开发工具导航平台',

@@ -9,18 +9,20 @@ import { message } from 'antd';
 import EyePet from '@shared/components/EyePet';
 import InkWashDecoration from '@shared/components/InkWashDecoration';
 
-function LoginStatusChecker() {
+function LoginStatusChecker({ onPrefillUsername }: { onPrefillUsername: (u: string) => void }) {
   const searchParams = useSearchParams();
   useEffect(() => {
     if (searchParams.get('expired') === 'true') message.info('会话已过期，请重新登录');
     if (searchParams.get('error') === 'true') message.error('退出登录时发生错误');
     const msg = searchParams.get('message');
     if (msg) message.success(decodeURIComponent(msg));
+    const prefill = searchParams.get('username');
+    if (prefill) onPrefillUsername(decodeURIComponent(prefill));
     if (typeof window !== 'undefined') {
       localStorage.removeItem('user_data');
       sessionStorage.removeItem('user_data');
     }
-  }, [searchParams]);
+  }, [searchParams, onPrefillUsername]);
   return null;
 }
 
@@ -38,20 +40,23 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.email || !form.password) {
+    const account = form.email.trim();
+    if (!account || !form.password) {
       setError('请填写用户名/邮箱和密码');
       return;
     }
     setLoading(true);
     setError('');
     try {
-      const result = await signIn(form.email, form.password);
+      const result = await signIn(account, form.password);
       if (result?.error) {
         setError(result.error || '用户名、邮箱或密码错误，请重试');
       } else if (result?.success) {
         message.success('登录成功');
         await new Promise(r => setTimeout(r, 300));
-        window.location.href = '/';
+        const params = new URLSearchParams(window.location.search);
+        const redirectTarget = params.get('callbackUrl') || params.get('redirect') || '/';
+        window.location.href = redirectTarget.startsWith('/') ? redirectTarget : '/';
       }
     } catch {
       setError('登录失败，请稍后重试');
@@ -69,7 +74,9 @@ export default function LoginPage() {
         <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] rounded-full bg-[#BBFF5C]/5 blur-[100px] pointer-events-none" />
       </div>
 
-      <Suspense fallback={null}><LoginStatusChecker /></Suspense>
+      <Suspense fallback={null}>
+        <LoginStatusChecker onPrefillUsername={(u) => setForm(prev => prev.email ? prev : { ...prev, email: u })} />
+      </Suspense>
 
       {/* 左侧品牌展示 */}
       <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden z-10 border-r border-paper-300"
@@ -238,6 +245,20 @@ export default function LoginPage() {
                 </span>
               ) : '登 录'}
             </button>
+
+            <div className="pt-2 flex items-center justify-between text-xs text-ink-lighter border-t border-paper-200">
+              <span>支持登录用户名或注册邮箱直接登录</span>
+              <button
+                type="button"
+                onClick={() => {
+                  setForm({ ...form, email: 'example@qq.com', password: '123456' });
+                  setError('');
+                }}
+                className="text-brand-primary hover:underline font-medium"
+              >
+                填入体验账号
+              </button>
+            </div>
           </form>
 
           <div className="mt-8 text-center text-xs text-ink-lighter">

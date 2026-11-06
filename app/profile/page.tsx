@@ -603,7 +603,12 @@ export default function ProfilePage() {
         cache: 'no-store'
       });
 
-      const updatedProfile = await readProfileResponse<{ user?: Partial<ProfileFormData> }>(response);
+      const updatedProfile = await readProfileResponse<{ user?: Partial<ProfileFormData>; token?: string }>(response);
+
+      if (updatedProfile.token) {
+        const { setToken } = await import('@shared/lib/auth-client');
+        setToken(updatedProfile.token);
+      }
 
       // 立即更新本地状态
       setProfileForm(submitData);
@@ -1024,15 +1029,16 @@ export default function ProfilePage() {
               className="max-w-2xl mx-auto"
             >
               <Form.Item
-                label={<span className="text-base font-semibold">登录用户名 (只能是英文与数字的组合)</span>}
+                label={<span className="text-base font-semibold">登录账号 (5~16位字母、数字或下划线)</span>}
                 name="username"
                 rules={[
-                  { required: true, message: '请输入登录用户名' },
-                  { pattern: /^[a-zA-Z0-9]+$/, message: '用户名只能由英文和数字组成' }
+                  { required: true, message: '请输入登录账号' },
+                  { pattern: /^[a-zA-Z0-9_]{5,16}$/, message: '登录账号需为 5~16 位字母、数字或下划线' }
                 ]}
               >
                 <Input 
-                  placeholder="请输入您的登录用户名" 
+                  placeholder="请输入 5~16 位登录账号" 
+                  maxLength={16}
                   size="large"
                   className="rounded-lg font-sans"
                 />

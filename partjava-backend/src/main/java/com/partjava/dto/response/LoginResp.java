@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+
 @Data
 @Builder
 @NoArgsConstructor
@@ -14,5 +16,11 @@ public class LoginResp {
     private long expiresIn;
     private Long id;
     private String username;
+    private String name;
+    private String email;
     private String role;
+    private String avatar;
+    private Boolean vip;
+    private Integer vipLevel;
+    private LocalDateTime vipExpireTime;
 }
