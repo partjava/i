@@ -59,11 +59,11 @@ export const SITTING_CAT_PROFILE: CatProfile = {
     centerX: -0.11,
     eyeY: 0.64,
     eyeSpacing: 0.198,
-    eyeW: 0.046,
-    eyeH: 0.046,
+    eyeW: 0.03,
+    eyeH: 0.062,
     mouthY: 0.553,
     mouthSize: 0.018,
-    surfaceOffset: 0.009
+    surfaceOffset: 0.006
   },
   earTipL: v(-0.268, 1.0, 0.279),
   earTipR: v(0.083, 0.981, 0.294),
@@ -88,11 +88,11 @@ export const UPRIGHT_CAT_PROFILE: CatProfile = {
     centerX: -0.004,
     eyeY: 0.684,
     eyeSpacing: 0.243,
-    eyeW: 0.046,
-    eyeH: 0.046,
+    eyeW: 0.03,
+    eyeH: 0.06,
     mouthY: 0.6,
     mouthSize: 0.016,
-    surfaceOffset: 0.010
+    surfaceOffset: 0.008
   },
   earTipL: v(-0.234, 0.997, 0.17),
   earTipR: v(0.201, 1.0, 0.145),
