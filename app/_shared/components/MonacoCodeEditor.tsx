@@ -708,7 +708,7 @@ ${output ? `### 终端运行输出\n\`\`\`\n${output}\n\`\`\`\n` : ''}
               options={LANGUAGES.map((l) => ({
                 value: l.value,
                 label: (
-                  <span className="flex items-center justify-between text-xs">
+                  <span className="flex items-center justify-between text-xs font-semibold text-slate-100">
                     <span>{l.label}</span>
                     <span className="font-mono text-[10px] text-slate-400">
                       .{l.ext}
@@ -723,7 +723,12 @@ ${output ? `### 终端运行输出\n\`\`\`\n${output}\n\`\`\`\n` : ''}
           {templateOptions.length > 0 && (
             <div className="hidden md:block">
               <Select
-                placeholder="经典模板"
+                placeholder={
+                  <span className="text-slate-200 font-medium flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-indigo-300" />
+                    <span>经典模板</span>
+                  </span>
+                }
                 size="middle"
                 className="w-32 lg:w-36 custom-dark-select"
                 popupClassName="custom-dark-select-dropdown"
