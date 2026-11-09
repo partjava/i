@@ -1,11 +1,28 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
+import { Modal } from 'antd';
 import EyePet from '@shared/components/EyePet';
 import InkWashDecoration from '@shared/components/InkWashDecoration';
+import {
+  User,
+  Smile,
+  Mail,
+  Lock,
+  ShieldCheck,
+  Eye,
+  EyeOff,
+  CheckCircle2,
+  AlertCircle,
+  Sparkles,
+  ArrowRight,
+  Rocket,
+  Code2,
+  Award,
+} from 'lucide-react';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -13,29 +30,63 @@ export default function RegisterPage() {
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-  const [form, setForm] = useState({ username: '', name: '', email: '', password: '', confirmPassword: '', bio: '', location: '', website: '', github: '' });
+  const [focusField, setFocusField] = useState<'none' | 'account' | 'password' | 'confirm'>('none');
+  const [regSuccess, setRegSuccess] = useState(false);
+  const [legalModal, setLegalModal] = useState<'terms' | 'privacy' | null>(null);
+  const [form, setForm] = useState({
+    username: '',
+    name: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+  });
+
+  // 实时校验辅助状态
+  const cleanUsername = form.username.trim();
+  const isUsernameValid = /^[a-zA-Z0-9_]{5,16}$/.test(cleanUsername);
+  const cleanEmail = form.email.trim();
+  const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail);
+
+  const hasLen = form.password.length >= 8 && form.password.length <= 20 && !/\s/.test(form.password);
+  const hasLetter = /[A-Za-z]/.test(form.password);
+  const hasDigit = /\d/.test(form.password);
+  const hasSymbol = /[^A-Za-z0-9\s]/.test(form.password);
+  const isPasswordValid = /^(?=.*[A-Za-z])(?=.*\d)[^\s]{8,20}$/.test(form.password);
+  const isConfirmMatch = Boolean(form.confirmPassword && form.confirmPassword === form.password);
+
+  const passwordScore =
+    (hasLen ? 1 : 0) +
+    (hasLetter && hasDigit ? 1 : 0) +
+    (form.password.length >= 12 ? 1 : 0) +
+    (hasSymbol ? 1 : 0);
+
+  const strengthMeta = [
+    { label: '待完善', color: 'text-slate-400', bar: 'bg-slate-200' },
+    { label: '弱', color: 'text-rose-500', bar: 'bg-rose-500' },
+    { label: '中等', color: 'text-amber-500', bar: 'bg-amber-500' },
+    { label: '强', color: 'text-indigo-600', bar: 'bg-indigo-500' },
+    { label: '极高安全', color: 'text-emerald-600', bar: 'bg-emerald-500' },
+  ][passwordScore];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
-    const cleanUsername = form.username.trim();
     const cleanNickname = form.name.trim() || cleanUsername;
-    const cleanEmail = form.email.trim();
 
     if (!cleanUsername) {
       setError('登录账号不能为空');
       return;
     }
-    if (!/^[a-zA-Z0-9_]{5,16}$/.test(cleanUsername)) {
+    if (!isUsernameValid) {
       setError('登录账号需为 5~16 位字母、数字或下划线');
       return;
     }
-    if (!cleanEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
+    if (!cleanEmail || !isEmailValid) {
       setError('请输入有效的邮箱地址');
       return;
     }
-    if (!/^(?=.*[A-Za-z])(?=.*\d)[^\s]{8,20}$/.test(form.password)) {
+    if (!isPasswordValid) {
       setError('密码需为 8~20 位，且同时包含字母和数字');
       return;
     }
@@ -58,7 +109,10 @@ export default function RegisterPage() {
       });
       const data = await res.json().catch(() => ({}));
       if (res.ok && data?.success !== false) {
-        router.push(`/auth/login?message=${encodeURIComponent('注册成功，请登录')}&username=${encodeURIComponent(cleanUsername)}`);
+        setRegSuccess(true);
+        router.push(
+          `/auth/login?message=${encodeURIComponent('注册成功，请登录')}&username=${encodeURIComponent(cleanUsername)}`
+        );
       } else {
         setError(data?.message || data?.error || '注册失败，请检查填写信息后重试');
       }
@@ -69,73 +123,110 @@ export default function RegisterPage() {
     }
   };
 
-  const EyeIcon = ({ show }: { show: boolean }) => show ? (
-    <svg className="w-5 h-5 text-ink-lighter/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
-    </svg>
-  ) : (
-    <svg className="w-5 h-5 text-ink-lighter/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-    </svg>
-  );
-
   return (
-    <div className="min-h-screen flex bg-paper-100 relative overflow-hidden font-sans text-ink">
-
-      {/* 背景晕染 */}
-      <div className="absolute inset-0 z-0">
-        <div className="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] rounded-full bg-[#BBFF5C]/5 blur-[100px] pointer-events-none" />
-        <div className="absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] rounded-full bg-[#6366f1]/5 blur-[100px] pointer-events-none" />
+    <div className="min-h-screen flex bg-[#f8fafc] relative overflow-hidden font-sans text-slate-800">
+      {/* 柔和极光背景装饰 */}
+      <div className="absolute inset-0 z-0 pointer-events-none">
+        <div className="absolute top-[-12%] right-[-8%] w-[520px] h-[520px] rounded-full bg-indigo-500/8 blur-[120px]" />
+        <div className="absolute bottom-[-12%] left-[-8%] w-[520px] h-[520px] rounded-full bg-sky-400/10 blur-[110px]" />
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#e2e8f050_1px,transparent_1px),linear-gradient(to_bottom,#e2e8f050_1px,transparent_1px)] bg-[size:36px_36px]" />
       </div>
 
-      {/* 左侧品牌展示 */}
-      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden z-10 border-r border-paper-300"
-        style={{ background: 'radial-gradient(circle at 30% 30%, #eef2f8 0%, #EDF0F5 100%)' }}>
-
+      {/* 左侧：品牌展示与禾桔灵宠互动舞台 */}
+      <div
+        className="hidden lg:flex lg:w-[50%] relative overflow-hidden z-10 border-r border-slate-200/80"
+        style={{
+          background: 'radial-gradient(circle at 30% 25%, #f1f5f9 0%, #e8edf5 100%)',
+        }}
+      >
         {/* 水墨装饰 */}
-        <div className="absolute left-0 top-0 bottom-0 w-32 opacity-10">
+        <div className="absolute left-0 top-0 bottom-0 w-32 opacity-10 pointer-events-none">
           <InkWashDecoration variant="bamboo" height={700} />
         </div>
-        <div className="absolute top-10 right-0 w-1/3 opacity-20">
+        <div className="absolute top-8 right-0 w-1/3 opacity-15 pointer-events-none">
           <InkWashDecoration variant="birds" height={200} />
         </div>
 
-        <div className="absolute inset-0 opacity-15">
-          {[...Array(5)].map((_, i) => (
-            <div key={i} className="absolute rounded-full border border-brand-primary/20"
-              style={{
-                width: `${(i + 1) * 140}px`, height: `${(i + 1) * 140}px`,
-                top: '50%', left: '50%',
-                transform: 'translate(-50%, -50%)',
-              }} />
-          ))}
-        </div>
-        <div className="relative z-10 flex flex-col justify-center px-20 text-ink">
-          <div className="mb-8">
-            <Image src="/images/logo-calligraphy-transparent.png" alt="PartJava" width={921} height={601} className="w-[280px] md:w-[360px] h-auto mx-auto" />
-            <p className="text-lg text-ink-light mt-2 font-light text-center">水墨素笺与 Docker 沙箱交互式学习平台</p>
+        <div className="relative z-10 flex flex-col justify-center w-full max-w-xl mx-auto px-12 xl:px-16 py-8">
+          <div className="text-center mb-5">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-700 text-xs font-mono font-semibold mb-2.5">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span>JOIN PARTJAVA DEVELOPER UNIVERSE</span>
+            </div>
+            <Image
+              src="/images/logo-calligraphy-transparent.png"
+              alt="PartJava"
+              width={921}
+              height={601}
+              priority
+              className="w-[230px] xl:w-[260px] h-auto mx-auto drop-shadow-sm"
+            />
+            <p className="text-sm xl:text-base text-slate-600 mt-1 font-normal">
+              开启专属云端 Docker 沙箱与全栈进阶之旅
+            </p>
           </div>
 
-          {/* 灵宠全息展示 */}
-          <div className="flex justify-center mb-10 relative bg-white/60 py-6 rounded-2xl border border-paper-300" style={{ height: 180 }}>
-            <div className="absolute inset-0 bg-gradient-to-t from-brand-primary/5 to-transparent rounded-2xl pointer-events-none" />
-            <EyePet />
+          {/* 禾桔黑猫互动舞台 */}
+          <div className="relative flex flex-col items-center justify-center mb-5 bg-white/80 backdrop-blur-md pt-5 pb-3 px-6 rounded-3xl border border-white shadow-[0_12px_36px_rgba(15,23,42,0.06)]">
+            <div className="absolute top-3 left-4 flex items-center gap-1.5 text-[11px] font-mono text-slate-400">
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
+              <span>禾桔隐私护航</span>
+            </div>
+            <div className="absolute top-3 right-4 text-[11px] text-indigo-500 font-medium">
+              {focusField === 'password' || focusField === 'confirm'
+                ? showPassword || showConfirm
+                  ? '🫣 帮你核对密码'
+                  : '🙈 捂眼防偷看中'
+                : '🐾 陪伴注册中'}
+            </div>
+            <div className="mt-3">
+              <EyePet
+                focusField={focusField}
+                showPassword={showPassword || showConfirm}
+                hasError={!!error}
+                isSuccess={regSuccess}
+                inputLength={form.username.length + form.email.length}
+              />
+            </div>
           </div>
 
-          <div className="space-y-6">
+          {/* 三步进阶路径卡片 */}
+          <div className="space-y-2.5">
             {[
-              { step: '01', title: '创建账号', desc: '填写基础及扩展属性，即可开启专属云端沙箱容器' },
-              { step: '02', title: '开始记录', desc: '在每个行星关卡下撰写学习笔记，渲染精美 LaTeX 公式' },
-              { step: '03', title: '坚持打卡', desc: '基于 Redis Bitmaps 统计 365 天打卡，激活大地图 3D 星环' },
+              {
+                step: '01',
+                icon: <Rocket className="w-4 h-4 text-indigo-600" />,
+                title: '初始化专属极客通行证',
+                desc: '10 秒极速注册，立即分配独立云端学习档案与 Docker 编译沙箱配额',
+              },
+              {
+                step: '02',
+                icon: <Code2 className="w-4 h-4 text-sky-600" />,
+                title: '沉浸式编程与 3D 算法推演',
+                desc: '边学边练 31 种三维流形算法、JVM 栈帧回放与 Markdown/LaTeX 素笺笔记',
+              },
+              {
+                step: '03',
+                icon: <Award className="w-4 h-4 text-emerald-600" />,
+                title: '点亮 365 天打卡热力星环',
+                desc: '基于 Redis 位图记录每日成长轨迹，解锁全栈知识图谱与闯关勋章',
+              },
             ].map((item) => (
-              <div key={item.step} className="flex items-start gap-4">
-                <div className="w-9 h-9 bg-white border border-paper-300 rounded-xl flex items-center justify-center flex-shrink-0 text-sm font-black text-brand-primary shadow-sm">
+              <div
+                key={item.step}
+                className="p-3.5 rounded-2xl bg-white/75 backdrop-blur-sm border border-white/90 shadow-sm hover:shadow-md hover:bg-white transition-all flex items-center gap-3.5"
+              >
+                <div className="w-9 h-9 bg-indigo-50/80 border border-indigo-100 rounded-xl flex items-center justify-center shrink-0 text-xs font-black text-indigo-600">
                   {item.step}
                 </div>
-                <div>
-                  <div className="font-semibold text-ink text-base">{item.title}</div>
-                  <div className="text-xs text-ink-lighter mt-1">{item.desc}</div>
+                <div className="flex-1 min-w-0">
+                  <div className="font-bold text-slate-800 text-xs sm:text-sm flex items-center gap-1.5">
+                    {item.icon}
+                    <span>{item.title}</span>
+                  </div>
+                  <div className="text-[11px] text-slate-500 mt-0.5 truncate">
+                    {item.desc}
+                  </div>
                 </div>
               </div>
             ))}
@@ -143,200 +234,363 @@ export default function RegisterPage() {
         </div>
       </div>
 
-      {/* 手机端灵宠 */}
-      <div className="lg:hidden fixed top-16 right-4 z-50">
-        <EyePet />
+      {/* 手机端右上角灵宠挂件 */}
+      <div className="lg:hidden fixed top-14 right-2 z-50">
+        <EyePet
+          compact
+          focusField={focusField}
+          showPassword={showPassword || showConfirm}
+          hasError={!!error}
+          isSuccess={regSuccess}
+        />
       </div>
 
-      {/* 右侧表单区 */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center px-6 py-12 z-10 overflow-y-auto max-h-screen my-auto">
-        <div className="w-full max-w-md bg-white shadow-frost-lg border border-paper-300 p-8 rounded-3xl my-6">
-
+      {/* 右侧：注册表单卡片区 */}
+      <div className="w-full lg:w-[50%] flex items-center justify-center px-4 sm:px-6 py-8 z-10">
+        <div className="w-full max-w-[480px] bg-white/95 backdrop-blur-xl shadow-[0_20px_50px_rgba(15,23,42,0.08)] border border-slate-200/80 p-6 sm:p-8 rounded-3xl">
           {/* 移动端 Logo */}
-          <div className="lg:hidden text-center mb-8">
-            <Image src="/images/logo-calligraphy-transparent.png" alt="PartJava" width={921} height={601} className="w-[140px] h-auto mx-auto" />
+          <div className="lg:hidden text-center mb-5">
+            <Image
+              src="/images/logo-calligraphy-transparent.png"
+              alt="PartJava"
+              width={921}
+              height={601}
+              className="w-[140px] h-auto mx-auto"
+            />
           </div>
 
-          <div className="mb-8">
-            <h2 className="text-3xl font-black text-ink tracking-wide">创建账号 🚀</h2>
-            <p className="mt-2 text-ink-light text-sm">
-              已有账号？{' '}
-              <Link href="/auth/login" className="text-brand-primary hover:text-brand-hover transition-colors font-medium">
-                立即登录
+          <div className="mb-5">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-600 text-xs font-semibold mb-1.5">
+              <Sparkles className="w-3 h-3" />
+              <span>免费开启云端实验室</span>
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+              创建极客账号
+            </h2>
+            <p className="mt-1 text-slate-500 text-sm">
+              已有 PartJava 账号？{' '}
+              <Link
+                href="/auth/login"
+                className="text-indigo-600 hover:text-indigo-500 transition-colors font-semibold underline-offset-4 hover:underline"
+              >
+                直接登录 →
               </Link>
             </p>
           </div>
 
           {error && (
-            <div className="mb-6 p-3 bg-state-dangerSoft border border-state-danger/30 rounded-xl flex items-center gap-2.5 text-state-danger text-sm">
-              <svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-              </svg>
-              {error}
+            <div className="mb-4 p-3 bg-rose-50 border border-rose-200 rounded-2xl flex items-center gap-2.5 text-rose-600 text-xs sm:text-sm font-medium">
+              <AlertCircle className="w-4 h-4 shrink-0 text-rose-500" />
+              <span>{error}</span>
             </div>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            
-            {/* 用户名 */}
-            <div>
-              <label className="block text-xs font-semibold text-ink-light uppercase tracking-wider mb-1.5">
-                登录账号 <span className="font-normal text-ink-lighter">(5~16位字母、数字或下划线)</span>
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <svg className="w-5 h-5 text-ink-lighter/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a3 3 0 106 0" />
-                  </svg>
+            {/* 第一行：登录账号 + 用户昵称（桌面端双列并排，紧凑清爽） */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              {/* 登录账号 */}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                  登录账号 <span className="text-rose-500">*</span>
+                </label>
+                <div className="relative group">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 group-focus-within:text-indigo-600">
+                    <User className="w-4 h-4" />
+                  </div>
+                  <input
+                    type="text"
+                    required
+                    maxLength={16}
+                    value={form.username}
+                    onFocus={() => setFocusField('account')}
+                    onBlur={() => setFocusField('none')}
+                    onChange={(e) => {
+                      setForm({ ...form, username: e.target.value });
+                      if (error) setError('');
+                    }}
+                    placeholder="5~16位字母/数字/下划线"
+                    className={`w-full pl-9 pr-8 py-2.5 bg-slate-50/80 focus:bg-white border rounded-xl focus:outline-none focus:ring-4 text-slate-900 placeholder-slate-400 transition-all text-xs sm:text-sm ${
+                      form.username && !isUsernameValid
+                        ? 'border-rose-400 focus:border-rose-500 focus:ring-rose-500/10'
+                        : isUsernameValid
+                        ? 'border-emerald-300 focus:border-indigo-500 focus:ring-indigo-500/10'
+                        : 'border-slate-200 focus:border-indigo-500 focus:ring-indigo-500/10'
+                    }`}
+                  />
+                  {isUsernameValid && (
+                    <div className="absolute inset-y-0 right-0 pr-2.5 flex items-center pointer-events-none text-emerald-500">
+                      <CheckCircle2 className="w-4 h-4" />
+                    </div>
+                  )}
                 </div>
-                <input type="text" required maxLength={16} value={form.username}
-                  onChange={e => setForm({ ...form, username: e.target.value })}
-                  placeholder="5~16位字母、数字或下划线"
-                  className={`w-full pl-10 pr-4 py-2.5 bg-paper-50 border rounded-xl focus:outline-none focus:ring-1 text-ink placeholder-ink-lighter transition-all text-sm font-sans ${
-                    form.username && !/^[a-zA-Z0-9_]{5,16}$/.test(form.username.trim())
-                      ? 'border-rose-400 focus:border-rose-500 focus:ring-rose-200'
-                      : 'border-paper-300 focus:border-brand-primary/80 focus:ring-brand-primary/20'
-                  }`} />
+                {form.username && !isUsernameValid && (
+                  <p className="mt-1 text-[11px] text-rose-500">需 5~16 位字母、数字或 _</p>
+                )}
               </div>
-              {form.username && !/^[a-zA-Z0-9_]{5,16}$/.test(form.username.trim()) && (
-                <p className="mt-1 text-xs text-rose-500">账号需为 5~16 位英文字母、数字或下划线(_)</p>
-              )}
+
+              {/* 用户昵称 */}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                  显示昵称 <span className="font-normal text-slate-400">(选填，支持中文)</span>
+                </label>
+                <div className="relative group">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 group-focus-within:text-indigo-600">
+                    <Smile className="w-4 h-4" />
+                  </div>
+                  <input
+                    type="text"
+                    maxLength={24}
+                    value={form.name}
+                    onFocus={() => setFocusField('account')}
+                    onBlur={() => setFocusField('none')}
+                    onChange={(e) => setForm({ ...form, name: e.target.value })}
+                    placeholder={cleanUsername ? `默认 "${cleanUsername}"` : '取个好听的昵称'}
+                    className="w-full pl-9 pr-3 py-2.5 bg-slate-50/80 focus:bg-white border border-slate-200 focus:border-indigo-500 rounded-xl focus:outline-none focus:ring-4 focus:ring-indigo-500/10 text-slate-900 placeholder-slate-400 transition-all text-xs sm:text-sm"
+                  />
+                </div>
+              </div>
             </div>
 
-            {/* 昵称 */}
+            {/* 邮箱地址 */}
             <div>
-              <label className="block text-xs font-semibold text-ink-light uppercase tracking-wider mb-1.5">
-                用户昵称 <span className="font-normal text-ink-lighter">(选填，留空默认同用户名，支持中文)</span>
+              <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                电子邮箱 <span className="text-rose-500">*</span>{' '}
+                <span className="font-normal text-slate-400">(支持直接作为登录账号及找回密码)</span>
               </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <svg className="w-5 h-5 text-ink-lighter/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                  </svg>
+              <div className="relative group">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 group-focus-within:text-indigo-600">
+                  <Mail className="w-4 h-4" />
                 </div>
-                <input type="text" value={form.name}
-                  onChange={e => setForm({ ...form, name: e.target.value })}
-                  placeholder={form.username ? `留空则默认使用 "${form.username.trim()}"` : '给自己取个好听的名字（支持中英文）'}
-                  className="w-full pl-10 pr-4 py-2.5 bg-paper-50 border border-paper-300 focus:border-brand-primary/80 rounded-xl focus:outline-none focus:ring-1 focus:ring-brand-primary/20 text-ink placeholder-ink-lighter transition-all text-sm" />
+                <input
+                  type="email"
+                  autoComplete="email"
+                  required
+                  value={form.email}
+                  onFocus={() => setFocusField('account')}
+                  onBlur={() => setFocusField('none')}
+                  onChange={(e) => {
+                    setForm({ ...form, email: e.target.value });
+                    if (error) setError('');
+                  }}
+                  placeholder="yourname@example.com"
+                  className={`w-full pl-10 pr-9 py-2.5 bg-slate-50/80 focus:bg-white border rounded-xl focus:outline-none focus:ring-4 text-slate-900 placeholder-slate-400 transition-all text-sm ${
+                    form.email && !isEmailValid
+                      ? 'border-rose-400 focus:border-rose-500 focus:ring-rose-500/10'
+                      : isEmailValid
+                      ? 'border-emerald-300 focus:border-indigo-500 focus:ring-indigo-500/10'
+                      : 'border-slate-200 focus:border-indigo-500 focus:ring-indigo-500/10'
+                  }`}
+                />
+                {isEmailValid && (
+                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-emerald-500">
+                    <CheckCircle2 className="w-4 h-4" />
+                  </div>
+                )}
               </div>
             </div>
 
-            {/* 邮箱 */}
+            {/* 登录密码 */}
             <div>
-              <label className="block text-xs font-semibold text-ink-light uppercase tracking-wider mb-1.5">邮箱地址</label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <svg className="w-5 h-5 text-ink-lighter/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                  </svg>
-                </div>
-                <input type="email" autoComplete="email" required value={form.email}
-                  onChange={e => setForm({ ...form, email: e.target.value })}
-                  placeholder="your@email.com"
-                  className="w-full pl-10 pr-4 py-2.5 bg-paper-50 border border-paper-300 focus:border-brand-primary/80 rounded-xl focus:outline-none focus:ring-1 focus:ring-brand-primary/20 text-ink placeholder-ink-lighter transition-all text-sm" />
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="block text-xs font-bold text-slate-700">
+                  设置登录密码 <span className="text-rose-500">*</span>
+                </label>
+                {form.password && (
+                  <span className={`text-[11px] font-bold ${strengthMeta.color}`}>
+                    安全强度：{strengthMeta.label}
+                  </span>
+                )}
               </div>
-            </div>
-
-            {/* 密码 */}
-            <div>
-              <label className="block text-xs font-semibold text-ink-light uppercase tracking-wider mb-1.5">
-                密码 <span className="font-normal text-ink-lighter">(8~20位，需含字母+数字)</span>
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <svg className="w-5 h-5 text-ink-lighter/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                  </svg>
+              <div className="relative group">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 group-focus-within:text-indigo-600">
+                  <Lock className="w-4 h-4" />
                 </div>
-                <input type={showPassword ? 'text' : 'password'} required maxLength={20} value={form.password}
-                  onChange={e => setForm({ ...form, password: e.target.value })}
-                  placeholder="8~20位，必须包含字母和数字"
-                  className={`w-full pl-10 pr-12 py-2.5 bg-paper-50 border rounded-xl focus:outline-none focus:ring-1 text-ink placeholder-ink-lighter transition-all text-sm ${
-                    form.password && !/^(?=.*[A-Za-z])(?=.*\d)[^\s]{8,20}$/.test(form.password)
-                      ? 'border-rose-400 focus:border-rose-500 focus:ring-rose-200'
-                      : 'border-paper-300 focus:border-brand-primary/80 focus:ring-brand-primary/20'
-                  }`} />
-                <button type="button" onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-ink-lighter/50 hover:text-ink transition-colors">
-                  <EyeIcon show={showPassword} />
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  required
+                  maxLength={20}
+                  value={form.password}
+                  onFocus={() => setFocusField('password')}
+                  onBlur={() => setFocusField('none')}
+                  onChange={(e) => {
+                    setForm({ ...form, password: e.target.value });
+                    if (error) setError('');
+                  }}
+                  placeholder="8~20位，需同时包含字母和数字"
+                  className={`w-full pl-10 pr-11 py-2.5 bg-slate-50/80 focus:bg-white border rounded-xl focus:outline-none focus:ring-4 text-slate-900 placeholder-slate-400 transition-all text-sm ${
+                    form.password && !isPasswordValid
+                      ? 'border-rose-400 focus:border-rose-500 focus:ring-rose-500/10'
+                      : isPasswordValid
+                      ? 'border-emerald-300 focus:border-indigo-500 focus:ring-indigo-500/10'
+                      : 'border-slate-200 focus:border-indigo-500 focus:ring-indigo-500/10'
+                  }`}
+                />
+                <button
+                  type="button"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-indigo-600 transition-colors"
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
-              {form.password && !/^(?=.*[A-Za-z])(?=.*\d)[^\s]{8,20}$/.test(form.password) && (
-                <p className="mt-1 text-xs text-rose-500">密码需为 8~20 位，且同时包含英文字母和数字</p>
-              )}
-              {form.password && (
-                <div className="mt-2 flex gap-1">
-                  {[1,2,3,4].map(i => {
-                    const hasLetter = /[A-Za-z]/.test(form.password);
-                    const hasDigit = /\d/.test(form.password);
-                    const hasSymbol = /[^A-Za-z0-9\s]/.test(form.password);
-                    const score =
-                      (form.password.length >= 8 ? 1 : 0) +
-                      (hasLetter && hasDigit ? 1 : 0) +
-                      (form.password.length >= 12 ? 1 : 0) +
-                      (hasSymbol ? 1 : 0);
-                    return (
-                      <div key={i} className={`h-1.5 flex-1 rounded-full transition-all ${
-                        score >= i
-                          ? score <= 1 ? 'bg-rose-500/80' : score === 2 ? 'bg-amber-500/80' : score === 3 ? 'bg-[#6366f1]/80' : 'bg-emerald-500/80'
-                          : 'bg-paper-200'
-                      }`} />
-                    );
-                  })}
+
+              {/* 实时密码规则胶囊与强度进度条 */}
+              <div className="mt-2 space-y-1.5">
+                {form.password && (
+                  <div className="flex gap-1.5">
+                    {[1, 2, 3, 4].map((i) => (
+                      <div
+                        key={i}
+                        className={`h-1.5 flex-1 rounded-full transition-all duration-300 ${
+                          passwordScore >= i ? strengthMeta.bar : 'bg-slate-200'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                )}
+                <div className="flex flex-wrap items-center gap-2 text-[11px]">
+                  <span
+                    className={`px-2 py-0.5 rounded-md border transition-colors ${
+                      hasLen
+                        ? 'bg-emerald-50 border-emerald-200 text-emerald-700 font-medium'
+                        : 'bg-slate-50 border-slate-200 text-slate-400'
+                    }`}
+                  >
+                    {hasLen ? '✓' : '○'} 8~20 位长度
+                  </span>
+                  <span
+                    className={`px-2 py-0.5 rounded-md border transition-colors ${
+                      hasLetter
+                        ? 'bg-emerald-50 border-emerald-200 text-emerald-700 font-medium'
+                        : 'bg-slate-50 border-slate-200 text-slate-400'
+                    }`}
+                  >
+                    {hasLetter ? '✓' : '○'} 包含英文字母
+                  </span>
+                  <span
+                    className={`px-2 py-0.5 rounded-md border transition-colors ${
+                      hasDigit
+                        ? 'bg-emerald-50 border-emerald-200 text-emerald-700 font-medium'
+                        : 'bg-slate-50 border-slate-200 text-slate-400'
+                    }`}
+                  >
+                    {hasDigit ? '✓' : '○'} 包含数字
+                  </span>
                 </div>
-              )}
+              </div>
             </div>
 
             {/* 确认密码 */}
             <div>
-              <label className="block text-xs font-semibold text-ink-light uppercase tracking-wider mb-1.5">确认密码</label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <svg className="w-5 h-5 text-ink-lighter/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                  </svg>
+              <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                确认登录密码 <span className="text-rose-500">*</span>
+              </label>
+              <div className="relative group">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 group-focus-within:text-indigo-600">
+                  <ShieldCheck className="w-4 h-4" />
                 </div>
-                <input type={showConfirm ? 'text' : 'password'} required value={form.confirmPassword}
-                  onChange={e => setForm({ ...form, confirmPassword: e.target.value })}
-                  placeholder="再次输入密码"
-                  className={`w-full pl-10 pr-12 py-2.5 bg-paper-50 border rounded-xl focus:outline-none focus:ring-1 text-ink placeholder-ink-lighter transition-all text-sm ${
-                    form.confirmPassword && form.confirmPassword !== form.password
-                      ? 'border-rose-400 focus:border-rose-500 focus:ring-rose-200'
-                      : 'border-paper-300 focus:border-brand-primary/80 focus:ring-brand-primary/20'
-                  }`} />
-                <button type="button" onClick={() => setShowConfirm(!showConfirm)}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-ink-lighter/50 hover:text-ink transition-colors">
-                  <EyeIcon show={showConfirm} />
+                <input
+                  type={showConfirm ? 'text' : 'password'}
+                  required
+                  value={form.confirmPassword}
+                  onFocus={() => setFocusField('confirm')}
+                  onBlur={() => setFocusField('none')}
+                  onChange={(e) => {
+                    setForm({ ...form, confirmPassword: e.target.value });
+                    if (error) setError('');
+                  }}
+                  placeholder="请再次输入密码以确认无误"
+                  className={`w-full pl-10 pr-11 py-2.5 bg-slate-50/80 focus:bg-white border rounded-xl focus:outline-none focus:ring-4 text-slate-900 placeholder-slate-400 transition-all text-sm ${
+                    form.confirmPassword && !isConfirmMatch
+                      ? 'border-rose-400 focus:border-rose-500 focus:ring-rose-500/10'
+                      : isConfirmMatch
+                      ? 'border-emerald-300 focus:border-indigo-500 focus:ring-indigo-500/10'
+                      : 'border-slate-200 focus:border-indigo-500 focus:ring-indigo-500/10'
+                  }`}
+                />
+                <button
+                  type="button"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => setShowConfirm(!showConfirm)}
+                  className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-indigo-600 transition-colors"
+                >
+                  {showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
-              {form.confirmPassword && form.confirmPassword !== form.password && (
-                <p className="mt-1 text-xs text-rose-500">两次密码输入不一致</p>
+              {form.confirmPassword && !isConfirmMatch && (
+                <p className="mt-1 text-[11px] text-rose-500">两次输入的密码不一致</p>
               )}
             </div>
 
-            <button type="submit" disabled={loading}
-              className="w-full py-3.5 px-4 rounded-xl text-white font-black text-base transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed mt-4 shadow-[0_4px_15px_rgba(187,255,92,0.15)] hover:opacity-95"
-              style={{ background: loading ? '#1e1b4b' : 'linear-gradient(135deg, #6366f1, #BBFF5C)', color: loading ? '#b8bfcc' : '#0C1F3D' }}>
+            {/* 提交按钮 */}
+            <button
+              type="submit"
+              disabled={loading}
+              className="group w-full py-3.5 px-4 rounded-xl text-white font-bold text-sm sm:text-base transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed mt-2 bg-gradient-to-r from-indigo-600 via-indigo-500 to-sky-500 hover:from-indigo-500 hover:to-sky-400 shadow-[0_10px_25px_-5px_rgba(99,102,241,0.45)] hover:shadow-[0_14px_30px_-5px_rgba(99,102,241,0.55)] active:scale-[0.99] flex items-center justify-center gap-2"
+            >
               {loading ? (
-                <span className="flex items-center justify-center gap-2">
-                  <svg className="animate-spin w-5 h-5 text-white" fill="none" viewBox="0 0 24 24">
+                <>
+                  <svg className="animate-spin w-4 h-4 text-white" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                   </svg>
-                  云端账号初始化中...
-                </span>
-              ) : '注 册'}
+                  <span>正在初始化云端沙箱账号...</span>
+                </>
+              ) : (
+                <>
+                  <span>立即创建账号</span>
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </>
+              )}
             </button>
           </form>
 
-          <div className="mt-8 text-center text-xs text-ink-lighter">
-            注册即代表您已仔细阅读并同意{' '}
-            <span className="text-brand-primary hover:text-brand-hover cursor-pointer transition-colors">服务协议</span>
-            与
-            <span className="text-[#6366f1] hover:text-[#818cf8] cursor-pointer transition-colors">隐私权政策</span>
+          {/* 底部协议 */}
+          <div className="mt-5 text-center text-xs text-slate-400">
+            注册即代表您已阅读并同意{' '}
+            <button
+              type="button"
+              onClick={() => setLegalModal('terms')}
+              className="text-indigo-600 hover:text-indigo-500 font-medium hover:underline"
+            >
+              《服务协议》
+            </button>{' '}
+            与{' '}
+            <button
+              type="button"
+              onClick={() => setLegalModal('privacy')}
+              className="text-indigo-600 hover:text-indigo-500 font-medium hover:underline"
+            >
+              《隐私权政策》
+            </button>
           </div>
         </div>
       </div>
+
+      {/* 协议与隐私弹窗 */}
+      <Modal
+        open={legalModal !== null}
+        onCancel={() => setLegalModal(null)}
+        onOk={() => setLegalModal(null)}
+        okText="我已了解"
+        cancelButtonProps={{ style: { display: 'none' } }}
+        title={legalModal === 'terms' ? 'PartJava 平台服务协议' : 'PartJava 隐私权保护政策'}
+      >
+        {legalModal === 'terms' ? (
+          <div className="space-y-2.5 text-xs sm:text-sm text-slate-600 leading-relaxed py-2">
+            <p>1. <strong>服务范围</strong>：PartJava 提供在线交互式编程教程、Markdown/LaTeX 学习笔记、3D 算法流形推演及 Docker 隔离代码沙箱服务。</p>
+            <p>2. <strong>沙箱安全规范</strong>：请勿在在线代码编辑器与判题终端内运行恶意网络扫描、挖矿程序或破坏容器隔离的指令，系统配有 cgroups 资源配额与审计保护。</p>
+            <p>3. <strong>知识产权</strong>：用户在平台撰写的原创学习笔记归用户所有；平台内置课程、3D 可视化模型与题库仅供个人学习交流使用。</p>
+          </div>
+        ) : (
+          <div className="space-y-2.5 text-xs sm:text-sm text-slate-600 leading-relaxed py-2">
+            <p>1. <strong>信息收集最小化</strong>：我们仅收集您注册时主动填写的账号、昵称与邮箱，用于跨设备同步学习进度、打卡日历与云端笔记。</p>
+            <p>2. <strong>凭证加密存储</strong>：您的个人密码经过高强度单向哈希加盐加密存储，平台任何人员与 AI 伴学模块均无法读取您的明文密码。</p>
+            <p>3. <strong>数据自主权</strong>：您可随时在个人中心导出、编辑或删除您的学习笔记与历史对话记录。</p>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }
