@@ -223,7 +223,7 @@ export default function CatStage(props: CatStageProps) {
     };
     const onGlobalActivity = () => markActivity();
 
-    container.addEventListener('pointermove', onPointerMove);
+    window.addEventListener('pointermove', onPointerMove);
     container.addEventListener('pointerdown', onPointerDown);
     container.addEventListener('pointerup', onPointerUp);
     window.addEventListener('keydown', onGlobalActivity);
@@ -487,7 +487,7 @@ export default function CatStage(props: CatStageProps) {
       cancelAnimationFrame(frameId);
       window.removeEventListener('resize', handleResize);
       window.removeEventListener('keydown', onGlobalActivity);
-      container.removeEventListener('pointermove', onPointerMove);
+      window.removeEventListener('pointermove', onPointerMove);
       container.removeEventListener('pointerdown', onPointerDown);
       container.removeEventListener('pointerup', onPointerUp);
       resizeObserver.disconnect();
