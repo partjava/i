@@ -59,7 +59,8 @@ public class UserController {
     public ApiResponse<LearningStatsResp> getLearningStats() {
         User user = getCurrentUser();
         Long userId = user.getId();
-        Map<String, Integer> mergedMap = new HashMap<>();
+        Map<String, Integer> countMap = new HashMap<>();
+        Map<String, Integer> durationMap = new HashMap<>();
 
         // 统计近 365 天该学员创建的笔记计数并按天分组
         String notesSql = "SELECT DATE(created_at) as date, COUNT(*) as count FROM notes " +
@@ -69,12 +70,14 @@ public class UserController {
         jdbcTemplate.query(notesSql, rs -> {
             Date dateVal = rs.getDate("date");
             if (dateVal != null) {
-                mergedMap.put(dateVal.toString(), rs.getInt("count"));
+                countMap.put(dateVal.toString(), rs.getInt("count"));
             }
         }, userId);
 
-        // 统计近 365 天该学员的打卡计时学习片段并按天分组
-        String sessionsSql = "SELECT DATE(created_at) as date, COUNT(*) as count FROM study_sessions " +
+        // 统计近 365 天该学员的打卡计时学习片段与每日累计学习秒数并按天分组
+        String sessionsSql = "SELECT DATE(created_at) as date, COUNT(*) as count, " +
+                "COALESCE(SUM(CASE WHEN study_time > 86400 THEN 3600 ELSE study_time END), 0) as total_seconds " +
+                "FROM study_sessions " +
                 "WHERE user_id = ? AND created_at >= DATE_SUB(NOW(), INTERVAL 365 DAY) " +
                 "GROUP BY DATE(created_at)";
 
@@ -82,14 +85,17 @@ public class UserController {
             Date dateVal = rs.getDate("date");
             if (dateVal != null) {
                 String dateStr = dateVal.toString();
-                int currentCount = mergedMap.getOrDefault(dateStr, 0);
-                mergedMap.put(dateStr, currentCount + rs.getInt("count"));
+                int currentCount = countMap.getOrDefault(dateStr, 0);
+                countMap.put(dateStr, currentCount + rs.getInt("count"));
+
+                int currentSeconds = durationMap.getOrDefault(dateStr, 0);
+                durationMap.put(dateStr, currentSeconds + rs.getInt("total_seconds"));
             }
         }, userId);
 
         // 将合并后的每日打卡活动总数映射为前台日历所需要的 0 ~ 4 着色等级
         List<LearningStatsResp.HeatmapData> heatmapDataList = new ArrayList<>();
-        mergedMap.forEach((dateStr, count) -> {
+        countMap.forEach((dateStr, count) -> {
             int level = 0;
             if (count >= 10) {
                 level = 4;
@@ -100,7 +106,8 @@ public class UserController {
             } else if (count >= 1) {
                 level = 1;
             }
-            heatmapDataList.add(new LearningStatsResp.HeatmapData(dateStr, count, level));
+            int durationSeconds = durationMap.getOrDefault(dateStr, 0);
+            heatmapDataList.add(new LearningStatsResp.HeatmapData(dateStr, count, level, durationSeconds));
         });
 
         LearningStatsResp resp = LearningStatsResp.builder()

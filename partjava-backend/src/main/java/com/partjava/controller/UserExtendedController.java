@@ -31,6 +31,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 @RestController
@@ -148,8 +149,53 @@ public class UserExtendedController {
         List<Map<String, Object>> dailyStats = new ArrayList<>();
         List<Map<String, Object>> categoryStats = new ArrayList<>();
         try {
-            dailyStats = jdbcTemplate.queryForList(
-                    "SELECT DATE(created_at) AS date, ROUND(SUM(CASE WHEN study_time > 86400 THEN 3600 ELSE study_time END) / 60) AS studyTime, 0 AS notes FROM study_sessions WHERE user_id = ? AND created_at >= DATE_SUB(NOW(), INTERVAL 60 DAY) GROUP BY DATE(created_at) ORDER BY date", uid);
+            // 聚合近 60 天的学习时长与创建的笔记篇数（按天合并，支持双轴趋势展示）
+            Map<String, Map<String, Object>> dailyStatsMap = new TreeMap<>();
+
+            // 1. 统计学习时长（按天汇总为分钟）
+            List<Map<String, Object>> rawStudy = jdbcTemplate.queryForList(
+                    "SELECT DATE(created_at) AS date, ROUND(SUM(CASE WHEN study_time > 86400 THEN 3600 ELSE study_time END) / 60) AS studyTime " +
+                    "FROM study_sessions WHERE user_id = ? AND created_at >= DATE_SUB(NOW(), INTERVAL 60 DAY) " +
+                    "GROUP BY DATE(created_at)", uid);
+            for (Map<String, Object> row : rawStudy) {
+                Object d = row.get("date");
+                if (d != null) {
+                    String dateStr = d.toString();
+                    Map<String, Object> item = dailyStatsMap.computeIfAbsent(dateStr, k -> {
+                        Map<String, Object> m = new HashMap<>();
+                        m.put("date", k);
+                        m.put("studyTime", 0);
+                        m.put("notes", 0);
+                        return m;
+                    });
+                    Number st = (Number) row.get("studyTime");
+                    item.put("studyTime", st != null ? st.intValue() : 0);
+                }
+            }
+
+            // 2. 统计近 60 天创建的笔记数量（按天汇总）
+            List<Map<String, Object>> rawNotes = jdbcTemplate.queryForList(
+                    "SELECT DATE(created_at) AS date, COUNT(*) AS notesCount " +
+                    "FROM notes WHERE author_id = ? AND created_at >= DATE_SUB(NOW(), INTERVAL 60 DAY) " +
+                    "GROUP BY DATE(created_at)", uid);
+            for (Map<String, Object> row : rawNotes) {
+                Object d = row.get("date");
+                if (d != null) {
+                    String dateStr = d.toString();
+                    Map<String, Object> item = dailyStatsMap.computeIfAbsent(dateStr, k -> {
+                        Map<String, Object> m = new HashMap<>();
+                        m.put("date", k);
+                        m.put("studyTime", 0);
+                        m.put("notes", 0);
+                        return m;
+                    });
+                    Number nc = (Number) row.get("notesCount");
+                    item.put("notes", nc != null ? nc.intValue() : 0);
+                }
+            }
+
+            dailyStats = new ArrayList<>(dailyStatsMap.values());
+
             List<Map<String, Object>> rawCat = jdbcTemplate.queryForList(
                     "SELECT category, COUNT(*) AS cnt FROM notes WHERE author_id = ? AND category IS NOT NULL AND category != '' GROUP BY category ORDER BY cnt DESC LIMIT 10", uid);
             for (Map<String, Object> row : rawCat) {
@@ -158,7 +204,8 @@ public class UserExtendedController {
                 item.put("count", row.get("cnt"));
                 categoryStats.add(item);
             }
-        } catch (Exception ignored) {
+        } catch (Exception e) {
+            System.out.println(">>> DAILY STATS ERROR: " + e.getClass().getSimpleName() + " - " + e.getMessage());
         }
 
         List<Map<String, Object>> achievementList = new ArrayList<>();

@@ -279,7 +279,7 @@ export default function VisualExecutionTracePlayer({
       </div>
 
       {/* 核心演进画布三栏：当前行说明 / 数组与指针堆视图 / JVM 栈帧与变量表 */}
-      <div className="flex-1 p-4 overflow-y-auto space-y-4 bg-gradient-to-b from-[#090d18] to-[#04060c]">
+      <div className="flex-1 p-4 overflow-y-auto custom-scrollbar space-y-4 bg-gradient-to-b from-[#090d18] to-[#04060c]">
         {/* 步骤语义说明 */}
         <div className="p-3 bg-slate-900/70 border border-indigo-500/20 rounded-xl flex items-center justify-between gap-3">
           <div className="flex items-center gap-2.5">
@@ -315,8 +315,8 @@ export default function VisualExecutionTracePlayer({
                       <span className="text-emerald-400">{arrName}</span> [{arr.length}]
                     </div>
 
-                    {/* 数组格子横向排布 */}
-                    <div className="flex items-start gap-1.5 overflow-x-auto pb-6 pt-1">
+                    {/* 数组格子横向排布：完全杜绝纵向滑动条与下方徽标遮挡问题 */}
+                    <div className="flex items-start gap-2 overflow-x-auto overflow-y-hidden pt-1 pb-3 custom-scrollbar">
                       {arr.map((val, idx) => {
                         const isActive = activeSpec?.indices.includes(idx);
                         const status = activeSpec?.status;
@@ -334,9 +334,9 @@ export default function VisualExecutionTracePlayer({
                         );
 
                         return (
-                          <div key={idx} className="relative flex flex-col items-center">
+                          <div key={idx} className="flex flex-col items-center shrink-0">
                             {/* 数组下标 */}
-                            <span className="text-[10px] font-mono text-slate-500 mb-0.5">
+                            <span className="text-[10px] font-mono text-slate-500 mb-1">
                               [{idx}]
                             </span>
                             {/* 元素方块 */}
@@ -345,23 +345,21 @@ export default function VisualExecutionTracePlayer({
                             >
                               {String(val)}
                             </div>
-                            {/* 下方游标徽章 */}
-                            {matchedPointers.length > 0 && (
-                              <div className="absolute top-16 flex flex-col items-center gap-0.5">
-                                {matchedPointers.map((p, pIdx) => (
-                                  <span
-                                    key={pIdx}
-                                    style={{
-                                      backgroundColor: p.color || '#38bdf8',
-                                      color: '#020617',
-                                    }}
-                                    className="px-1.5 py-0.2 rounded text-[10px] font-mono font-black shadow-md uppercase tracking-wider"
-                                  >
-                                    ↑ {p.name}
-                                  </span>
-                                ))}
-                              </div>
-                            )}
+                            {/* 下方游标徽章（采用自然文档流排列，彻底杜绝绝对定位导致的截断与遮挡） */}
+                            <div className="mt-1.5 flex flex-col items-center gap-1 min-h-[22px]">
+                              {matchedPointers.map((p, pIdx) => (
+                                <span
+                                  key={pIdx}
+                                  style={{
+                                    backgroundColor: p.color || '#38bdf8',
+                                    color: '#020617',
+                                  }}
+                                  className="px-2 py-0.5 rounded text-[10px] font-mono font-black shadow-md uppercase tracking-wider shrink-0 whitespace-nowrap leading-tight"
+                                >
+                                  ↑ {p.name}
+                                </span>
+                              ))}
+                            </div>
                           </div>
                         );
                       })}
@@ -382,7 +380,7 @@ export default function VisualExecutionTracePlayer({
               <span>JVM 线程调用栈帧 (Call Stack - 深度 {currentStep.callStack.length})</span>
             </div>
 
-            <div className="space-y-1.5 max-h-36 overflow-y-auto pr-1">
+            <div className="space-y-1.5 max-h-36 overflow-y-auto custom-scrollbar pr-1">
               {currentStep.callStack.map((frame, fIdx) => {
                 const isTop = fIdx === currentStep.callStack.length - 1;
                 return (
@@ -415,7 +413,7 @@ export default function VisualExecutionTracePlayer({
             </div>
 
             {variableEntries.length > 0 ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-36 overflow-y-auto pr-1">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-36 overflow-y-auto custom-scrollbar pr-1">
                 {variableEntries.map(([k, v]) => (
                   <div
                     key={k}

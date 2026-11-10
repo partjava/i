@@ -1,7 +1,7 @@
 'use client';
 
 import { HeatmapData } from '@shared/types/achievement';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 
 interface LearningHeatmapProps {
   data: HeatmapData[];
@@ -14,10 +14,47 @@ export default function LearningHeatmap({ data, year, hideTitle = false }: Learn
   const detectedYear = year || (data.length > 0 ? new Date(data[0].date).getFullYear() : new Date().getFullYear());
   const months = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
   const weekDays = ['日', '一', '二', '三', '四', '五', '六'];
+
+  // 用户点击或选中的具体格子详情
+  const [selectedDay, setSelectedDay] = useState<{
+    date: string;
+    count: number;
+    level: number;
+    duration: number;
+  } | null>(null);
+
+  // 格式化学习总时长展示
+  const formatDurationText = (seconds?: number) => {
+    if (!seconds || seconds <= 0) return '0 分钟';
+    const totalMinutes = Math.floor(seconds / 60);
+    if (totalMinutes < 1) {
+      return `${seconds} 秒`;
+    }
+    const hours = Math.floor(totalMinutes / 60);
+    const mins = totalMinutes % 60;
+    if (hours === 0) {
+      return `${mins} 分钟`;
+    }
+    if (mins === 0) {
+      return `${hours} 小时`;
+    }
+    return `${hours} 小时 ${mins} 分钟`;
+  };
+
+  // 格式化日期全称
+  const formatDateLabel = (dateStr: string) => {
+    try {
+      const [y, m, d] = dateStr.split('-').map(Number);
+      const dateObj = new Date(y, m - 1, d);
+      const weekMap = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+      return `${y}年${m}月${d}日 ${weekMap[dateObj.getDay()] || ''}`;
+    } catch {
+      return dateStr;
+    }
+  };
   
   // 生成一年的日期格子
   const yearData = useMemo(() => {
-    
     const startDate = new Date(detectedYear, 0, 1);
     const endDate = new Date(detectedYear, 11, 31);
     const days = [];
@@ -38,26 +75,20 @@ export default function LearningHeatmap({ data, year, hideTitle = false }: Learn
       }
     });
     
-    
     // 生成全年日期
     const current = new Date(startDate);
-    let matchCount = 0;
     while (current <= endDate) {
       const dateStr = current.toISOString().split('T')[0];
       const dayData = dataMap.get(dateStr);
       
-      if (dayData) {
-        matchCount++;
-      }
-      
       days.push({
         date: dateStr,
         count: dayData?.count || 0,
-        level: dayData?.level || 0
+        level: dayData?.level || 0,
+        duration: dayData?.duration || 0,
       });
       current.setDate(current.getDate() + 1);
     }
-    
     
     return days;
   }, [data, detectedYear]);
@@ -101,7 +132,7 @@ export default function LearningHeatmap({ data, year, hideTitle = false }: Learn
       {!hideTitle ? (
         <div className="mb-4">
           <h3 className="text-lg font-semibold text-gray-900">学习热力图</h3>
-          <p className="text-xs text-gray-500 mt-0.5">{detectedYear}年学习记录</p>
+          <p className="text-xs text-gray-500 mt-0.5">{detectedYear}年学习记录（点击方块可查看当日学习频次与时长）</p>
         </div>
       ) : (
         <div className="mb-3 flex items-center justify-between text-xs text-gray-500 font-medium">
@@ -144,31 +175,106 @@ export default function LearningHeatmap({ data, year, hideTitle = false }: Learn
             
             {/* 热力图格子 */}
             <div className="grid grid-flow-col gap-1" style={{ gridTemplateRows: 'repeat(7, 1fr)' }}>
-              {yearData.map((day, index) => (
-                <div
-                  key={index}
-                  className={`w-3 h-3 rounded-sm ${
-                    day ? getLevelColor(day.level) : ''
-                  } ${day ? 'cursor-pointer hover:ring-1 hover:ring-gray-400' : ''}`}
-                  title={day ? `${day.date}: ${day.count}次学习` : ''}
-                />
-              ))}
+              {yearData.map((day, index) => {
+                const isSelected = selectedDay && day && selectedDay.date === day.date;
+                return (
+                  <div
+                    key={index}
+                    onClick={() => {
+                      if (day) {
+                        setSelectedDay(day);
+                      }
+                    }}
+                    className={`w-3 h-3 rounded-sm transition-all duration-150 ${
+                      day ? getLevelColor(day.level) : ''
+                    } ${
+                      day
+                        ? 'cursor-pointer hover:scale-125 hover:ring-2 hover:ring-emerald-400 hover:z-20'
+                        : ''
+                    } ${
+                      isSelected
+                        ? 'ring-2 ring-emerald-600 scale-125 z-20 shadow-xs'
+                        : ''
+                    }`}
+                    title={
+                      day
+                        ? `${formatDateLabel(day.date)}: 学习 ${day.count} 次 · 学习时长 ${formatDurationText(day.duration)}`
+                        : ''
+                    }
+                  />
+                );
+              })}
             </div>
           </div>
           
-          {/* 图例 */}
-          <div className="flex items-center gap-2 mt-4 text-xs text-gray-600">
-            <span>少</span>
-            <div className="flex gap-1">
-              {[0, 1, 2, 3, 4].map(level => (
-                <div
-                  key={level}
-                  className={`w-3 h-3 rounded-sm ${getLevelColor(level)}`}
-                />
-              ))}
+          {/* 图例与引导说明 */}
+          <div className="flex items-center justify-between flex-wrap gap-2 mt-4 text-xs text-gray-600">
+            <div className="flex items-center gap-2">
+              <span>少</span>
+              <div className="flex gap-1">
+                {[0, 1, 2, 3, 4].map(level => (
+                  <div
+                    key={level}
+                    className={`w-3 h-3 rounded-sm ${getLevelColor(level)}`}
+                  />
+                ))}
+              </div>
+              <span>多</span>
             </div>
-            <span>多</span>
+
+            <span className="text-[11px] text-gray-400">
+              💡 提示：点击任意方块可固定查看该日打卡次数与累计时长
+            </span>
           </div>
+
+          {/* 选中的日期详情横幅（点击任意方块实时弹出展示：学习频次 + 学习时长） */}
+          {selectedDay && (
+            <div className="mt-3.5 px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-50 via-teal-50/50 to-sky-50/70 border border-emerald-200/90 shadow-xs flex items-center justify-between flex-wrap gap-2 animate-fadeIn">
+              <div className="flex items-center gap-3">
+                <span className="w-8 h-8 rounded-lg bg-emerald-500/15 text-emerald-700 flex items-center justify-center text-sm font-bold shrink-0">
+                  📅
+                </span>
+                <div>
+                  <div className="text-xs font-bold text-slate-800 flex items-center gap-2">
+                    <span>{formatDateLabel(selectedDay.date)}</span>
+                    <span
+                      className={`text-[10px] px-1.5 py-0.2 rounded font-mono font-bold ${
+                        selectedDay.count > 0
+                          ? 'bg-emerald-100 text-emerald-700'
+                          : 'bg-slate-100 text-slate-500'
+                      }`}
+                    >
+                      {selectedDay.count > 0 ? '✓ 已打卡' : '未打卡'}
+                    </span>
+                  </div>
+                  <div className="text-xs text-slate-600 mt-0.5 flex items-center gap-3 font-mono">
+                    <span>
+                      学习频次:{' '}
+                      <strong className="text-emerald-700 font-bold">
+                        {selectedDay.count}
+                      </strong>{' '}
+                      次
+                    </span>
+                    <span>·</span>
+                    <span>
+                      学习时长:{' '}
+                      <strong className="text-sky-700 font-bold">
+                        {formatDurationText(selectedDay.duration)}
+                      </strong>
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setSelectedDay(null)}
+                className="text-[11px] text-slate-400 hover:text-slate-600 transition"
+              >
+                ✕ 关闭
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>

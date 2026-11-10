@@ -19,9 +19,15 @@ export default function DataVisualization({ stats, isGuest }: DataVisualizationP
     // 如果有每日统计数据，直接使用
     if (stats.dailyStats && Array.isArray(stats.dailyStats) && stats.dailyStats.length > 0) {
       return stats.dailyStats.map((item: any) => {
-        // 格式化日期显示
-        const dateObj = new Date(item.date);
-        const dayLabel = `${dateObj.getMonth() + 1}/${dateObj.getDate()}`;
+        // 格式化日期显示（防御时区偏移）
+        let dayLabel = '';
+        if (typeof item.date === 'string' && /^\d{4}-\d{2}-\d{2}/.test(item.date)) {
+          const parts = item.date.split(/[-T ]/);
+          dayLabel = `${parseInt(parts[1], 10)}/${parseInt(parts[2], 10)}`;
+        } else {
+          const dateObj = new Date(item.date);
+          dayLabel = `${dateObj.getMonth() + 1}/${dateObj.getDate()}`;
+        }
         
         return {
           date: dayLabel,
@@ -183,8 +189,12 @@ export default function DataVisualization({ stats, isGuest }: DataVisualizationP
         name: '笔记数量',
         type: 'bar',
         yAxisIndex: 1,
+        barMaxWidth: 20,
         data: weeklyData.map((d: any) => d.notes),
-        itemStyle: { color: '#10b981' }
+        itemStyle: { 
+          color: '#10b981',
+          borderRadius: [4, 4, 0, 0]
+        }
       }
     ]
   });

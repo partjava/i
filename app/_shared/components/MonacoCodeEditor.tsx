@@ -309,6 +309,97 @@ class Program {
   },
 } as const;
 
+// 注册与学习页面完全一致的 Atom One 语法高亮主题（保持编辑器原有视窗背景色不变）
+const registerAtomOneThemes = (monaco: any) => {
+  if (!monaco?.editor) return;
+  try {
+    monaco.editor.defineTheme('atom-one-dark', {
+      base: 'vs-dark',
+      inherit: true,
+      rules: [
+        { token: '', foreground: 'abb2bf' },
+        { token: 'comment', foreground: '5c6370', fontStyle: 'italic' },
+        { token: 'comment.doc', foreground: '5c6370', fontStyle: 'italic' },
+        { token: 'keyword', foreground: 'c678dd' },
+        { token: 'keyword.control', foreground: 'c678dd' },
+        { token: 'keyword.operator', foreground: '56b6c2' },
+        { token: 'keyword.directive', foreground: 'c678dd' },
+        { token: 'keyword.directive.include', foreground: 'c678dd' },
+        { token: 'storage', foreground: 'c678dd' },
+        { token: 'storage.type', foreground: 'c678dd' },
+        { token: 'storage.modifier', foreground: 'c678dd' },
+        { token: 'string', foreground: '98c379' },
+        { token: 'string.escape', foreground: '56b6c2' },
+        { token: 'string.regexp', foreground: '98c379' },
+        { token: 'number', foreground: 'd19a66' },
+        { token: 'number.hex', foreground: 'd19a66' },
+        { token: 'number.float', foreground: 'd19a66' },
+        { token: 'constant.numeric', foreground: 'd19a66' },
+        { token: 'constant.language', foreground: 'd19a66' },
+        { token: 'entity.name.function', foreground: '61afef' },
+        { token: 'support.function', foreground: '61afef' },
+        { token: 'identifier', foreground: 'abb2bf' },
+        { token: 'type.identifier', foreground: 'e5c07b' },
+        { token: 'entity.name.type', foreground: 'e5c07b' },
+        { token: 'entity.name.class', foreground: 'e5c07b' },
+        { token: 'support.class', foreground: 'e5c07b' },
+        { token: 'support.type', foreground: 'e5c07b' },
+        { token: 'type', foreground: 'e5c07b' },
+        { token: 'class', foreground: 'e5c07b' },
+        { token: 'variable', foreground: 'e06c75' },
+        { token: 'variable.parameter', foreground: 'e06c75' },
+        { token: 'variable.predefined', foreground: 'e5c07b' },
+        { token: 'operator', foreground: '56b6c2' },
+        { token: 'delimiter', foreground: 'abb2bf' },
+        { token: 'delimiter.bracket', foreground: 'abb2bf' },
+        { token: 'delimiter.parenthesis', foreground: 'abb2bf' },
+        { token: 'tag', foreground: 'e06c75' },
+        { token: 'attribute.name', foreground: 'd19a66' },
+        { token: 'attribute.value', foreground: '98c379' },
+        { token: 'annotation', foreground: 'e5c07b' },
+        { token: 'meta.decorator', foreground: 'e5c07b' },
+      ],
+      colors: {
+        'editor.background': '#1e1e1e', // 保持原有暗黑视窗背景不变（背景不用改）
+        'editor.foreground': '#abb2bf',
+        'editorLineNumber.foreground': '#4b5263',
+        'editorLineNumber.activeForeground': '#abb2bf',
+        'editorCursor.foreground': '#528bff',
+        'editor.selectionBackground': '#3e445177',
+        'editor.inactiveSelectionBackground': '#3e445144',
+      },
+    });
+
+    monaco.editor.defineTheme('atom-one-light', {
+      base: 'vs',
+      inherit: true,
+      rules: [
+        { token: '', foreground: '383a42' },
+        { token: 'comment', foreground: 'a0a1a7', fontStyle: 'italic' },
+        { token: 'keyword', foreground: 'a626a4' },
+        { token: 'storage', foreground: 'a626a4' },
+        { token: 'storage.type', foreground: 'a626a4' },
+        { token: 'string', foreground: '50a14f' },
+        { token: 'number', foreground: '986801' },
+        { token: 'entity.name.function', foreground: '4078f2' },
+        { token: 'support.function', foreground: '4078f2' },
+        { token: 'entity.name.type', foreground: 'c18401' },
+        { token: 'entity.name.class', foreground: 'c18401' },
+        { token: 'support.class', foreground: 'c18401' },
+        { token: 'variable', foreground: 'e45649' },
+        { token: 'operator', foreground: '0184bc' },
+        { token: 'delimiter', foreground: '383a42' },
+      ],
+      colors: {
+        'editor.background': '#ffffff', // 保持原有浅色视窗背景不变（背景不用改）
+        'editor.foreground': '#383a42',
+      },
+    });
+  } catch (e) {
+    console.warn('registerAtomOneThemes warning:', e);
+  }
+};
+
 export default function MonacoCodeEditor({
   className = '',
   height = '680px',
@@ -336,7 +427,7 @@ export default function MonacoCodeEditor({
     }
   }, [externalCode, externalLanguage, externalVersion]);
   const [input, setInput] = useState<string>('');
-  const [theme, setTheme] = useState<'vs-dark' | 'light'>('vs-dark');
+  const [theme, setTheme] = useState<'atom-one-dark' | 'atom-one-light'>('atom-one-dark');
   const [rightTab, setRightTab] = useState<'console' | 'trace'>('console');
   const [tracePlaySignal, setTracePlaySignal] = useState<number>(0);
   const [isStdinOpen, setIsStdinOpen] = useState<boolean>(false);
@@ -468,6 +559,9 @@ export default function MonacoCodeEditor({
   const handleEditorDidMount = (editor: any, monaco: any) => {
     editorRef.current = editor;
     setEditorLoaded(true);
+
+    registerAtomOneThemes(monaco);
+    monaco.editor.setTheme(theme);
 
     editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => {
       void runCodeRef.current();
@@ -856,13 +950,13 @@ ${output ? `### 终端运行输出\n\`\`\`\n${output}\n\`\`\`\n` : ''}
             </Tooltip>
 
             {/* 主题切换 */}
-            <Tooltip title={theme === 'vs-dark' ? '切换浅色主题' : '切换深色主题'}>
+            <Tooltip title={theme === 'atom-one-dark' ? '切换浅色主题' : '切换深色主题'}>
               <button
                 type="button"
-                onClick={() => setTheme(theme === 'vs-dark' ? 'light' : 'vs-dark')}
+                onClick={() => setTheme(theme === 'atom-one-dark' ? 'atom-one-light' : 'atom-one-dark')}
                 className="p-1.5 sm:p-2 rounded-lg bg-white/5 hover:bg-white/10 hover:text-slate-100 text-slate-300 transition"
               >
-                {theme === 'vs-dark' ? (
+                {theme === 'atom-one-dark' ? (
                   <Sun className="w-4 h-4 text-amber-300" />
                 ) : (
                   <Moon className="w-4 h-4 text-indigo-300" />
@@ -944,6 +1038,7 @@ ${output ? `### 终端运行输出\n\`\`\`\n${output}\n\`\`\`\n` : ''}
                 language={monacoLanguageMap[language] || language}
                 value={code}
                 onChange={(value) => setCode(value || '')}
+                beforeMount={registerAtomOneThemes}
                 onMount={handleEditorDidMount}
                 theme={theme}
                 options={editorOptions}

@@ -1200,3 +1200,163 @@ body.dark {
   color: #ffffff !important;
 }
 
+/* ============================================================
+   统一代码高亮语法主题：Atom One 调色板
+   （背景保持各卡片与编辑器原本设计，仅统一语法 Token 颜色，与学习页面风格一致）
+   ============================================================ */
+
+/* 保证 hljs 代码块不被强制覆盖背景色 */
+.hljs,
+pre code.hljs {
+  background: transparent !important;
+}
+
+/* 浅色背景（笔记详情卡片、Markdown 预览区等：使用 Atom One 精选高对比度色） */
+.hljs-comment,
+.hljs-quote {
+  color: #6a737d !important;
+  font-style: italic;
+}
+
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-subst,
+.hljs-doctag,
+.hljs-formula {
+  color: #a626a4 !important; /* 紫色 Keyword / Class / Def */
+  font-weight: 600;
+}
+
+.hljs-string,
+.hljs-regexp,
+.hljs-addition,
+.hljs-attribute,
+.hljs-meta .hljs-string {
+  color: #50a14f !important; /* 鲜活浅绿 String */
+}
+
+.hljs-title,
+.hljs-section,
+.hljs-selector-id,
+.hljs-symbol,
+.hljs-bullet,
+.hljs-link {
+  color: #4078f2 !important; /* 天蓝 / 青蓝 Function / Title */
+}
+
+.hljs-title.class_,
+.hljs-class .hljs-title,
+.hljs-built_in,
+.hljs-type {
+  color: #c18401 !important; /* 金黄 / 暖金 Class / Built-in */
+}
+
+.hljs-number,
+.hljs-literal,
+.hljs-attr,
+.hljs-template-variable {
+  color: #986801 !important; /* 琥珀橙 Number / Attr */
+}
+
+.hljs-variable,
+.hljs-params,
+.hljs-name {
+  color: #e45649 !important; /* 珊瑚红 Variable / Param */
+}
+
+.hljs-operator {
+  color: #0184bc !important; /* 青蓝 Operator */
+}
+
+.hljs-punctuation,
+.hljs-delimiter {
+  color: #383a42;
+}
+
+/* 深色背景下（全站深色模式、3D推演代码面板、暗色代码卡片：使用 Atom One Dark 原生高亮霓虹色） */
+body.dark .hljs-comment,
+body.dark .hljs-quote,
+.dark-code-studio .hljs-comment,
+.dark-code-studio .hljs-quote {
+  color: #5c6370 !important;
+  font-style: italic;
+}
+
+body.dark .hljs-keyword,
+body.dark .hljs-selector-tag,
+body.dark .hljs-subst,
+body.dark .hljs-doctag,
+body.dark .hljs-formula,
+.dark-code-studio .hljs-keyword,
+.dark-code-studio .hljs-selector-tag,
+.dark-code-studio .hljs-subst,
+.dark-code-studio .hljs-doctag,
+.dark-code-studio .hljs-formula {
+  color: #c678dd !important; /* Atom One Dark 亮紫 */
+  font-weight: 500;
+}
+
+body.dark .hljs-string,
+body.dark .hljs-regexp,
+body.dark .hljs-addition,
+body.dark .hljs-attribute,
+body.dark .hljs-meta .hljs-string,
+.dark-code-studio .hljs-string,
+.dark-code-studio .hljs-regexp,
+.dark-code-studio .hljs-addition,
+.dark-code-studio .hljs-attribute,
+.dark-code-studio .hljs-meta .hljs-string {
+  color: #98c379 !important; /* Atom One Dark 生动浅绿 */
+}
+
+body.dark .hljs-title,
+body.dark .hljs-section,
+body.dark .hljs-selector-id,
+body.dark .hljs-symbol,
+body.dark .hljs-bullet,
+body.dark .hljs-link,
+.dark-code-studio .hljs-title,
+.dark-code-studio .hljs-section,
+.dark-code-studio .hljs-selector-id,
+.dark-code-studio .hljs-symbol,
+.dark-code-studio .hljs-bullet,
+.dark-code-studio .hljs-link {
+  color: #61afef !important; /* Atom One Dark 亮青蓝 */
+}
+
+body.dark .hljs-title.class_,
+body.dark .hljs-class .hljs-title,
+body.dark .hljs-built_in,
+body.dark .hljs-type,
+.dark-code-studio .hljs-title.class_,
+.dark-code-studio .hljs-class .hljs-title,
+.dark-code-studio .hljs-built_in,
+.dark-code-studio .hljs-type {
+  color: #e5c07b !important; /* Atom One Dark 金黄 */
+}
+
+body.dark .hljs-number,
+body.dark .hljs-literal,
+body.dark .hljs-attr,
+body.dark .hljs-template-variable,
+.dark-code-studio .hljs-number,
+.dark-code-studio .hljs-literal,
+.dark-code-studio .hljs-attr,
+.dark-code-studio .hljs-template-variable {
+  color: #d19a66 !important; /* Atom One Dark 亮橙 */
+}
+
+body.dark .hljs-variable,
+body.dark .hljs-params,
+body.dark .hljs-name,
+.dark-code-studio .hljs-variable,
+.dark-code-studio .hljs-params,
+.dark-code-studio .hljs-name {
+  color: #e06c75 !important; /* Atom One Dark 珊瑚粉红 */
+}
+
+body.dark .hljs-operator,
+.dark-code-studio .hljs-operator {
+  color: #56b6c2 !important; /* Atom One Dark 浅青 */
+}
+

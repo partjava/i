@@ -23,5 +23,6 @@ public class LearningStatsResp {
         private String date;
         private Integer count;
         private Integer level; // 0, 1, 2, 3, 4
+        private Integer duration; // 学习总时长（秒）
     }
 }

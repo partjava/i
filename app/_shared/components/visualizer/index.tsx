@@ -19,6 +19,7 @@ import {
 } from './modules/machineLearning';
 import { CodeLanguage, resolveStepCodeTrace } from './codeTraceMap';
 import MathFormulaBox from './MathFormulaBox';
+import hljs from 'highlight.js';
 
 function generateStepsForAlgorithm(
   algorithm: string,
@@ -469,7 +470,7 @@ export default function AlgorithmVisualizer({
             {/* 中部：完整平铺源码视窗（零横向滚动条 + 智能悬挂折行 + 行尾内联实时变量） */}
             <div
               ref={codeContainerRef}
-              className="flex-1 flex flex-col justify-center font-mono text-[12px] sm:text-[12.5px] leading-[1.65] py-2.5 select-text overflow-x-hidden"
+              className="flex-1 flex flex-col justify-center font-mono text-[12px] sm:text-[12.5px] leading-[1.65] py-2.5 select-text overflow-x-hidden dark-code-studio"
             >
               {codeTrace.lines.map((lineText, idx) => {
                 const lineNum = idx + 1;
@@ -478,6 +479,20 @@ export default function AlgorithmVisualizer({
                 const leadingSpaces = lineText.match(/^\s*/)?.[0].length || 0;
                 const trimmedCode = lineText.trimStart();
                 const indentRem = Math.min(leadingSpaces * 0.46, 5.5);
+
+                let highlightedHtml = '';
+                try {
+                  const hlLang = codeLang === 'cpp' ? 'cpp' : codeLang;
+                  highlightedHtml = hljs.highlight(trimmedCode || ' ', {
+                    language: hlLang,
+                    ignoreIllegals: true,
+                  }).value;
+                } catch {
+                  highlightedHtml = (trimmedCode || ' ')
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;');
+                }
 
                 return (
                   <div
@@ -505,14 +520,18 @@ export default function AlgorithmVisualizer({
                       )}
                     </div>
 
-                    {/* 代码文本内容：彻底移除单行 overflow-x-auto，采用悬挂缩进软折行保证 100% 完整展示 */}
+                    {/* 代码文本内容：悬挂缩进软折行 + Atom One 代码高亮 */}
                     <div
                       className="flex-1 min-w-0 whitespace-pre-wrap break-words font-mono"
                       style={{
                         paddingLeft: `${indentRem}rem`,
                       }}
                     >
-                      <span>{trimmedCode || ' '}</span>
+                      <span
+                        className="hljs"
+                        style={{ background: 'transparent' }}
+                        dangerouslySetInnerHTML={{ __html: highlightedHtml }}
+                      />
                       {isFirstActive && inlineActiveVarSummary && (
                         <span className="ml-2.5 inline-flex items-center px-1.5 py-0.2 rounded bg-sky-500/15 border border-sky-400/30 text-[10.5px] font-mono font-normal text-sky-300 align-baseline">
                           // {inlineActiveVarSummary}

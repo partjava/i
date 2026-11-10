@@ -28,4 +28,5 @@ export interface HeatmapData {
   date: string;
   count: number;
   level: 0 | 1 | 2 | 3 | 4; // 0-4 表示活跃度级别
+  duration?: number; // 学习总时长（秒）
 } 

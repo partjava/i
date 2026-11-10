@@ -10,7 +10,6 @@ import remarkMath from 'remark-math';
 import rehypeHighlight from 'rehype-highlight';
 import rehypeKatex from 'rehype-katex';
 import html2canvas from 'html2canvas';
-import 'highlight.js/styles/github.css';
 import 'katex/dist/katex.min.css';
 import CommentSection from '@shared/components/CommentSection';
 import NoteKnowledgeStudio from '@shared/components/NoteKnowledgeStudio';
@@ -435,12 +434,16 @@ export default function NoteDetailPage() {
 
   return (
     <div className="flex min-h-screen">
-      {/* 左侧导航栏 */}
-      <div className={`${sidebarCollapsed ? 'w-12' : 'w-72'} bg-gray-50 border-r transition-all duration-300 flex-shrink-0 relative`}>
+      {/* 左侧导航栏（固定吸顶 sticky，向上滑动长笔记时始终保持在屏幕左侧完整显示） */}
+      <div
+        className={`${
+          sidebarCollapsed ? 'w-12' : 'w-72'
+        } bg-gray-50 border-r transition-all duration-300 flex-shrink-0 relative sticky top-0 self-start h-[calc(100vh-72px)] overflow-y-auto custom-scrollbar z-20`}
+      >
         {/* 收缩/展开按钮 */}
         <button
           onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-          className="absolute -right-3 top-16 z-10 w-6 h-6 bg-white border border-gray-300 rounded-full flex items-center justify-center shadow-sm hover:bg-gray-50 transition-colors"
+          className="absolute -right-3 top-16 z-30 w-6 h-6 bg-white border border-gray-300 rounded-full flex items-center justify-center shadow-sm hover:bg-gray-50 transition-colors"
           title={sidebarCollapsed ? '展开侧边栏' : '收缩侧边栏'}
         >
           <svg className={`w-3 h-3 text-gray-600 transition-transform duration-300 ${sidebarCollapsed ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -449,13 +452,13 @@ export default function NoteDetailPage() {
         </button>
 
         {!sidebarCollapsed && (
-          <div className="p-6">
-            <div className="mt-12">
+          <div className="p-4 sm:p-5">
+            <div className="mt-8">
               <button
                 onClick={() => router.back()}
-                className="text-blue-600 hover:text-blue-800 flex items-center mb-6 text-lg font-medium"
+                className="text-blue-600 hover:text-blue-800 flex items-center mb-4 text-base font-medium transition-colors"
               >
-                <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                 </svg>
                 返回笔记列表
@@ -464,22 +467,22 @@ export default function NoteDetailPage() {
             
             {/* 操作按钮 */}
             {session && (
-              <div className="space-y-3" style={{ marginTop: '30px', padding: '20px' }}>
-                <button onClick={handleLike} className={`w-full flex items-center justify-center space-x-2 px-4 py-3 rounded-lg text-base font-medium transition-colors ${liked ? 'bg-red-100 text-red-700 border border-red-200' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}`}>
-                  <svg className="w-5 h-5" fill={liked ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>
+              <div className="space-y-2.5 mt-3">
+                <button onClick={handleLike} className={`w-full flex items-center justify-center space-x-2 px-3.5 py-2.5 rounded-lg text-sm font-medium transition-colors ${liked ? 'bg-red-100 text-red-700 border border-red-200' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}`}>
+                  <svg className="w-4 h-4" fill={liked ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>
                   <span>{liked ? '已点赞' : '点赞'}</span>
-                  {likeCount > 0 && <span className="bg-gray-200 px-2 py-1 rounded-full text-xs">{likeCount}</span>}
+                  {likeCount > 0 && <span className="bg-gray-200 px-2 py-0.5 rounded-full text-xs">{likeCount}</span>}
                 </button>
 
-                <button onClick={handleBookmark} className={`w-full flex items-center justify-center space-x-2 px-4 py-3 rounded-lg text-base font-medium transition-colors ${bookmarked ? 'bg-yellow-100 text-yellow-700 border border-yellow-200' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}`}>
-                  <svg className="w-5 h-5" fill={bookmarked ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" /></svg>
+                <button onClick={handleBookmark} className={`w-full flex items-center justify-center space-x-2 px-3.5 py-2.5 rounded-lg text-sm font-medium transition-colors ${bookmarked ? 'bg-yellow-100 text-yellow-700 border border-yellow-200' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}`}>
+                  <svg className="w-4 h-4" fill={bookmarked ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" /></svg>
                   <span>{bookmarked ? '已收藏' : '收藏'}</span>
-                  {bookmarkCount > 0 && <span className="bg-gray-200 px-2 py-1 rounded-full text-xs">{bookmarkCount}</span>}
+                  {bookmarkCount > 0 && <span className="bg-gray-200 px-2 py-0.5 rounded-full text-xs">{bookmarkCount}</span>}
                 </button>
 
                 {/* 分享按钮 */}
-                <button onClick={handleShare} className="w-full flex items-center justify-center space-x-2 px-4 py-3 rounded-lg text-base font-medium bg-white text-gray-700 hover:bg-blue-50 hover:text-blue-600 border border-gray-200 transition-colors">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" /></svg>
+                <button onClick={handleShare} className="w-full flex items-center justify-center space-x-2 px-3.5 py-2.5 rounded-lg text-sm font-medium bg-white text-gray-700 hover:bg-blue-50 hover:text-blue-600 border border-gray-200 transition-colors">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" /></svg>
                   <span>分享</span>
                 </button>
 
@@ -488,15 +491,15 @@ export default function NoteDetailPage() {
                   <button
                     onClick={handleClone}
                     disabled={cloning}
-                    className={`w-full flex items-center justify-center space-x-2 px-4 py-3 rounded-lg text-base font-medium border transition-all duration-200
+                    className={`w-full flex items-center justify-center space-x-2 px-3.5 py-2.5 rounded-lg text-sm font-medium border transition-all duration-200
                       ${(user?.vipLevel ?? 0) >= 2
-                        ? 'bg-gradient-to-r from-purple-600 to-cyan-500 text-white border-transparent hover:opacity-90 hover:scale-105 shadow-lg shadow-purple-500/20'
+                        ? 'bg-gradient-to-r from-purple-600 to-cyan-500 text-white border-transparent hover:opacity-90 hover:scale-102 shadow-md shadow-purple-500/20'
                         : 'bg-purple-50 text-purple-400 border-purple-200 cursor-pointer hover:bg-purple-100'
                       }
                     `}
                     title={(user?.vipLevel ?? 0) >= 2 ? '一键复用此笔记到我的笔记库' : '进阶 VIP 专属功能'}
                   >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                     </svg>
                     <span>{cloning ? '复用中...' : (user?.vipLevel ?? 0) >= 2 ? '🌟 一键复用' : '🌟 复用（进阶VIP）'}</span>
@@ -504,18 +507,18 @@ export default function NoteDetailPage() {
                 )}
 
                 {/* 导出按钮组 */}
-                <div className="border border-gray-200 rounded-lg overflow-hidden">
-                  <div className="px-3 py-2 bg-gray-50 text-xs text-gray-500 font-medium">导出笔记</div>
-                  <button onClick={handleScreenshot} className="w-full flex items-center space-x-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors border-t border-gray-100">
+                <div className="border border-gray-200 rounded-lg overflow-hidden bg-white shadow-xs">
+                  <div className="px-3 py-2 bg-gray-50/90 text-xs text-gray-500 font-semibold border-b border-gray-100">导出笔记</div>
+                  <button onClick={handleScreenshot} className="w-full flex items-center space-x-2 px-3.5 py-2 text-xs text-gray-700 hover:bg-gray-50 transition-colors">
                     <span>📸</span><span>截图保存</span>
                   </button>
-                  <button onClick={handleExportPdf} className="w-full flex items-center space-x-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors border-t border-gray-100">
+                  <button onClick={handleExportPdf} className="w-full flex items-center space-x-2 px-3.5 py-2 text-xs text-gray-700 hover:bg-gray-50 transition-colors border-t border-gray-100">
                     <span>📕</span><span>导出 PDF</span>
                   </button>
-                  <button onClick={handleExportMd} className="w-full flex items-center space-x-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors border-t border-gray-100">
+                  <button onClick={handleExportMd} className="w-full flex items-center space-x-2 px-3.5 py-2 text-xs text-gray-700 hover:bg-gray-50 transition-colors border-t border-gray-100">
                     <span>📄</span><span>导出 Markdown</span>
                   </button>
-                  <button onClick={handleExportTxt} className="w-full flex items-center space-x-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors border-t border-gray-100">
+                  <button onClick={handleExportTxt} className="w-full flex items-center space-x-2 px-3.5 py-2 text-xs text-gray-700 hover:bg-gray-50 transition-colors border-t border-gray-100">
                     <span>📝</span><span>导出纯文本</span>
                   </button>
                 </div>

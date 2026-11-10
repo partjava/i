@@ -42,6 +42,8 @@ import LearningHeatmap from '@shared/components/LearningHeatmap';
 import DataVisualization from '@shared/components/DataVisualization';
 import InkWashDecoration from '@shared/components/InkWashDecoration';
 import AchievementCard from '@shared/components/AchievementCard';
+import EyePet from '@shared/components/EyePet';
+import { ShieldCheck } from 'lucide-react';
 import AchievementsSection from './components/AchievementsSection';
 import RecentActivityTimeline from './components/RecentActivityTimeline';
 import type { Achievement as AchievementType } from '@shared/types/achievement';
@@ -63,6 +65,7 @@ interface UnifiedHeatmapData {
   date: string;
   count: number;
   level: 0 | 1 | 2 | 3 | 4;
+  duration?: number;
 }
 
 interface ProfileFormData {
@@ -120,6 +123,32 @@ export default function ProfilePage() {
   const [refreshing, setRefreshing] = useState(false);
   const [isGuest, setIsGuest] = useState(false);
   const [showAllAch, setShowAllAch] = useState(false);
+  const [showTotalMinutes, setShowTotalMinutes] = useState(false);
+  const timeToggleTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (timeToggleTimerRef.current) {
+        clearTimeout(timeToggleTimerRef.current);
+      }
+    };
+  }, []);
+
+  const handleToggleStudyTime = () => {
+    if (timeToggleTimerRef.current) {
+      clearTimeout(timeToggleTimerRef.current);
+      timeToggleTimerRef.current = null;
+    }
+    setShowTotalMinutes((prev) => {
+      const next = !prev;
+      if (next) {
+        timeToggleTimerRef.current = setTimeout(() => {
+          setShowTotalMinutes(false);
+        }, 4000);
+      }
+      return next;
+    });
+  };
 
   const refreshInFlight = useRef(false);
   const editingRef = useRef(false);
@@ -690,11 +719,14 @@ export default function ProfilePage() {
     }
   };
 
+  const getSafeStudyMinutes = (minutes?: number) => {
+    if (!minutes || minutes <= 0) return 0;
+    return minutes > 86400 ? Math.round(minutes / 60) : Math.round(minutes);
+  };
+
   const formatStudyTime = (minutes: number) => {
-    if (!minutes || minutes <= 0) return '0分钟';
-    
-    // 智能防御：防止历史脏数据或极端单条秒数直接传入，超过单日分钟数上限(>86400)则转为分钟
-    const safeMinutes = minutes > 86400 ? Math.round(minutes / 60) : Math.round(minutes);
+    const safeMinutes = getSafeStudyMinutes(minutes);
+    if (safeMinutes <= 0) return '0分钟';
     if (safeMinutes < 60) return `${safeMinutes}分钟`;
     
     const hours = Math.floor(safeMinutes / 60);
@@ -782,7 +814,8 @@ export default function ProfilePage() {
               </svg>
             </div>
             
-            <div className={`${styles.identity} relative z-10`}>
+            <div className="relative z-10 flex flex-col lg:flex-row items-center lg:items-center justify-between gap-8">
+              <div className={`${styles.identity} flex-1 min-w-0 w-full`}>
               {/* 头像区域 */}
               <div className={styles.avatar}>
                 <div className="relative inline-block">
@@ -999,6 +1032,25 @@ export default function ProfilePage() {
                 </Space>
               </div>
             </div>
+
+            {/* 右侧：禾桔灵宠伴学互动舞台 */}
+            <div className="hidden lg:flex flex-col items-center justify-center flex-shrink-0 self-center my-auto">
+              <div className="relative flex flex-col items-center justify-center bg-white/90 backdrop-blur-md pt-5 pb-3 px-6 rounded-3xl border border-white/60 shadow-[0_12px_36px_rgba(15,23,42,0.22)] hover:shadow-[0_16px_40px_rgba(15,23,42,0.3)] transition-all select-none">
+                <div className="absolute top-3 left-4 flex items-center gap-1.5 text-[11px] font-mono text-slate-500">
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
+                  <span>禾桔安全守卫中</span>
+                </div>
+                <div className="absolute top-3 right-4 text-[11px] text-indigo-500 font-medium">
+                  👀 眼神实时跟随
+                </div>
+                <div className="mt-3">
+                  <EyePet 
+                    customBubble={saving ? '正在保存你的新资料喵~ 💾' : editMode ? '正在用心编辑个人名片喵~ ✨' : undefined}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
           </div>
         </Card>
 
@@ -1252,34 +1304,77 @@ export default function ProfilePage() {
                 <Divider />
 
                 <Row gutter={[24, 24]}>
-                  <Col xs={24} md={8}>
-                    <div className="text-center p-6 bg-gradient-to-br from-[#EDF0F5] to-[#e2e6ed] rounded-lg">
-                      <ClockCircleOutlined className="text-3xl text-purple-500 mb-3" />
-                      <div className="text-xl font-semibold text-content-primary mb-1 whitespace-nowrap">
-                        {formatStudyTime(stats?.learning?.totalStudyTime || 0)}
-                      </div>
-                      <div className="text-sm text-content-muted">总学习时间</div>
-                    </div>
-                  </Col>
-                  <Col xs={24} md={8}>
+                  {/* 左侧长方形卡片：总学习时间（点击切换分钟/小时，定时自动恢复） */}
+                  <Col xs={24} md={12}>
                     <div 
-                      className={`text-center p-6 bg-gradient-to-br from-[#EDF0F5] to-[#e2e6ed] rounded-lg ${!isGuest ? 'cursor-pointer hover:shadow-md transition-all duration-200' : ''}`}
-                      onClick={() => !isGuest && router.push('/profile/bookmarks')}
+                      className="group relative p-5 sm:p-6 bg-gradient-to-br from-[#EDF0F5] to-[#e2e6ed] rounded-xl flex items-center justify-between cursor-pointer hover:shadow-md hover:border-purple-200 border border-transparent transition-all duration-200 select-none"
+                      onClick={handleToggleStudyTime}
+                      title="点击切换显示格式（小时/纯分钟）"
                     >
-                      <BookOutlined className="text-3xl text-yellow-500 mb-3" />
-                      <div className="text-xl font-semibold text-content-primary mb-1">
-                        {stats?.engagement?.bookmarksReceived || 0}
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-600 text-2xl flex-shrink-0 group-hover:scale-105 transition-transform">
+                          <ClockCircleOutlined />
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="text-sm text-content-muted">总学习时间</span>
+                            <span className="text-[11px] px-1.5 py-0.5 rounded-full bg-purple-100 text-purple-700 font-medium">
+                              {showTotalMinutes ? '纯分钟' : '点击切分钟'}
+                            </span>
+                          </div>
+                          <div className="text-2xl sm:text-3xl font-bold text-content-primary whitespace-nowrap tracking-tight">
+                            {showTotalMinutes 
+                              ? `${getSafeStudyMinutes(stats?.learning?.totalStudyTime).toLocaleString()} 分钟`
+                              : formatStudyTime(stats?.learning?.totalStudyTime || 0)}
+                          </div>
+                        </div>
                       </div>
-                      <div className="text-sm text-content-muted">我的收藏</div>
+                      <div className="hidden sm:flex flex-col items-end text-xs text-content-muted opacity-70 group-hover:opacity-100 transition-opacity pr-1">
+                        <span className="text-[11px] text-purple-600 font-medium">
+                          {showTotalMinutes ? '4秒后恢复' : '点击切换'}
+                        </span>
+                        <span className="text-[10px] text-content-muted">小时 / 分钟</span>
+                      </div>
                     </div>
                   </Col>
-                  <Col xs={24} md={8}>
-                    <div className="text-center p-6 bg-gradient-to-br from-[#EDF0F5] to-[#e2e6ed] rounded-lg">
-                      <CommentOutlined className="text-3xl text-cyan-500 mb-3" />
-                      <div className="text-xl font-semibold text-content-primary mb-1">
-                        {stats?.engagement?.commentsReceived || 0}
+
+                  {/* 右侧长方形卡片：收藏与点赞合并（点击打开收藏页面） */}
+                  <Col xs={24} md={12}>
+                    <div 
+                      className={`group p-5 sm:p-6 bg-gradient-to-br from-[#EDF0F5] to-[#e2e6ed] rounded-xl flex items-center justify-around border border-transparent select-none ${
+                        !isGuest ? 'cursor-pointer hover:shadow-md hover:border-yellow-200 transition-all duration-200' : ''
+                      }`}
+                      onClick={() => !isGuest && router.push('/profile/bookmarks')}
+                      title="点击查看我的收藏"
+                    >
+                      {/* 我的收藏 */}
+                      <div className="flex items-center gap-3.5 flex-1 justify-center">
+                        <div className="w-12 h-12 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-500 text-2xl flex-shrink-0 group-hover:scale-105 transition-transform">
+                          <BookOutlined />
+                        </div>
+                        <div>
+                          <div className="text-2xl sm:text-3xl font-bold text-content-primary">
+                            {stats?.engagement?.bookmarksReceived || 0}
+                          </div>
+                          <div className="text-sm text-content-muted">我的收藏</div>
+                        </div>
                       </div>
-                      <div className="text-sm text-content-muted">评论数</div>
+
+                      {/* 分隔线 */}
+                      <div className="h-10 w-[1px] bg-slate-300 mx-2" />
+
+                      {/* 获得点赞 */}
+                      <div className="flex items-center gap-3.5 flex-1 justify-center">
+                        <div className="w-12 h-12 rounded-xl bg-rose-500/10 flex items-center justify-center text-rose-500 text-2xl flex-shrink-0 group-hover:scale-105 transition-transform">
+                          <HeartOutlined />
+                        </div>
+                        <div>
+                          <div className="text-2xl sm:text-3xl font-bold text-content-primary">
+                            {stats?.engagement?.likesReceived || 0}
+                          </div>
+                          <div className="text-sm text-content-muted">获得点赞</div>
+                        </div>
+                      </div>
                     </div>
                   </Col>
                 </Row>
