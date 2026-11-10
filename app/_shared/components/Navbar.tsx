@@ -495,8 +495,9 @@ export default function Navbar() {
                   <Avatar
                     size="small"
                     src={user?.image || session?.user?.image || undefined}
-                    icon={!(user?.image || (session?.user?.image)) ? <UserOutlined /> : undefined}
-                    className="bg-brand-primary shadow-sm"
+                    icon={!(user?.image || session?.user?.image) ? <UserOutlined className="text-slate-500 text-xs" /> : undefined}
+                    style={{ backgroundColor: (user?.image || session?.user?.image) ? 'transparent' : '#f1f5f9' }}
+                    className="shadow-sm border border-black/5 dark:border-white/10 overflow-hidden flex items-center justify-center shrink-0"
                   />
                   <span className="text-xs sm:text-sm font-semibold text-content-primary hidden md:block">
                     {user?.name || session?.user?.name || session?.user?.email?.split('@')[0]}
