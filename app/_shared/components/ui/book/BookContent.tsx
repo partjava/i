@@ -179,8 +179,16 @@ export function BookCode({
 
   return (
     <div className="rounded-md overflow-hidden border border-paper-300/80 my-4 shadow-sm">
+      {/* 供 AI 伴学与「总结并保存」精准读取的隐藏完整 Markdown 代码块（不受折叠高度与行号干扰） */}
+      <pre className="sr-only" data-book-raw-code="true">
+        {`\n\`\`\`${language || ''}\n${code}\n\`\`\`\n`}
+      </pre>
+
       {/* 顶栏：语言标签 + 复制按钮 */}
-      <div className="flex items-center justify-between bg-[#1a1a18] text-paper-100/70 text-[11px] px-4 py-1.5">
+      <div
+        data-ai-exclude="true"
+        className="flex items-center justify-between bg-[#1a1a18] text-paper-100/70 text-[11px] px-4 py-1.5"
+      >
         <span className="font-code tracking-wide">{language || 'code'}</span>
         <button
           onClick={handleCopy}
@@ -207,6 +215,7 @@ export function BookCode({
       {/* 代码区域（可折叠） */}
       <div
         ref={wrapperRef}
+        data-ai-exclude="true"
         className="relative overflow-hidden transition-all duration-300 bg-[#1a1a18]"
         style={{ maxHeight: expanded || !isLong ? 'none' : foldedHeight }}
       >

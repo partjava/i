@@ -124,25 +124,42 @@ export function useAiChat() {
     requestRef.current = request;
     setLoading(true);
     try {
-      const contextHint = pageContent && conversationText.trim() ? `\n\n当前页面参考信息（优先基于对话内容总结，页面信息作为背景补充）:\n${pageContent}` : '';
-      const contentKind = conversationText.trim() ? (
-        conversationText.trim() && pageContent ? '以下对话和页面内容' : '以下对话内容'
-      ) : '当前页面内容';
+      const hasPage = Boolean(pageContent && pageContent.trim());
+      const hasConv = Boolean(conversationText && conversationText.trim());
+      const combinedSource =
+        hasPage && hasConv
+          ? `【第一部分：当前打开页面的正文与代码块（必须重点读取并保留其中的代码框架/实现）】\n${pageContent}\n\n【第二部分：当前AI伴学对话记录】\n${conversationText}`
+          : hasPage
+          ? pageContent
+          : conversationText;
+
+      const contentKind =
+        hasPage && hasConv
+          ? '当前学习页面内容（含页面代码）与对话记录'
+          : hasPage
+          ? '当前学习页面内容（含页面代码）'
+          : '以下对话内容';
+
       const prompt = `你是学习笔记助手。请把${contentKind}整理为一条高质量的学习笔记，使用 Markdown 格式，返回严格的JSON对象（不要包含\`\`\`json标记）。
 
+核心排版与内容要求：
+1. **必须读取并包含当前页面中的代码块/代码框架**：如果页面或对话中包含代码，请务必在笔记中使用 \`\`\`python 或对应语言代码块完整整理出来（如果是练习题代码框架，可以结合核心原理补全关键实现或加上清晰注释）。
+2. **严禁滥用代码块包裹简短变量名**：像 \`v_new\`、\`P(s,a,s')\`、\`-inf\` 这类短变量或行内公式必须直接嵌在句子里作为行内代码，绝不能单独拆成多行代码块。
+3. **结构紧凑清晰**：使用 \`##\` 分节、列表与加粗重点。
+
 JSON字段要求：
-- title: 精准简短的标题（不超过30字）
-- content: 结构清晰的笔记正文（Markdown：用标题##分节、用列表、用代码块\`\`\`、用加粗强调重点）
+- title: 精准简短的标题（不超过30字，优先贴合当前打开页面的章节与练习主题）
+- content: 结构清晰的笔记正文（Markdown格式）
 - category: 分类（如：算法、前端、后端、数据库、AI、工具、安全）
 - technology: 涉及的技术（如：React, Java, Python, SQL）
 - subcategory: 子分类（可选，留空字符串也行）
-- tags: 标签数组（如：["算法","动态规划"]）
+- tags: 标签数组（如：["强化学习","MDP","动态规划"]）
 - isPublic: 是否公开（true或false）
 
 只返回一个JSON对象，不要extra文字。
 
-${contentKind}：
-${text}${contextHint}`;
+待整理的原始内容：
+${combinedSource}`;
       const res = await fetch('/api/ai/chat', {
         method: 'POST',
         signal: request.signal,

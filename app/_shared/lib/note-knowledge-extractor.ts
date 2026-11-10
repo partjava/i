@@ -67,10 +67,52 @@ function cleanMarkdownText(raw: string): string {
 }
 
 /**
+ * 规范化笔记 Markdown：
+ * 将仅包含单个短变量名/短算式（无换行、无语言标识且长度较短）的三反引号代码块收敛为行内代码，
+ * 避免短短几个字母在正文中独占一整行厚重代码块。
+ */
+export function normalizeNoteMarkdown(raw: string): string {
+  if (!raw) return '';
+  return raw.replace(/```([a-zA-Z0-9_-]*)\r?\n([\s\S]*?)```/g, (fullMatch, lang: string, body: string) => {
+    const trimmed = body.trim();
+    const lines = trimmed.split(/\r?\n/);
+    // 多行代码块保留原样
+    if (lines.length !== 1) return fullMatch;
+    const singleLine = lines[0].trim();
+    // 仅有单个变量名、常数或极短表达式（如 v_new, -inf, P(s,a,s)=0, R(s,a,s), P*R）且无语句特征时，转为行内代码
+    const isShortInlineToken =
+      !lang &&
+      singleLine.length > 0 &&
+      singleLine.length <= 26 &&
+      !/^(def |class |public |private |function |const |let |var |import |from |return |if |for |while |SELECT |INSERT |UPDATE )/i.test(singleLine) &&
+      !singleLine.endsWith(';') &&
+      !singleLine.endsWith('{') &&
+      !singleLine.endsWith(':');
+
+    if (isShortInlineToken) {
+      return `\`${singleLine}\``;
+    }
+    return fullMatch;
+  });
+}
+
+function isMeaningfulCodeTerm(term: string): boolean {
+  const t = term.trim();
+  if (t.length < 3 || t.length > 28) return false;
+  if (/^[-+]?(?:inf|nan|\d+(?:\.\d+)?)$/i.test(t)) return false;
+  if (/^(?:true|false|null|none|pass|break|continue)$/i.test(t)) return false;
+  // 过滤纯短数学单字母乘加项（如 P*R, s', a, γ, P(s,a,s)=0）
+  if (/^[A-Za-z]\s*[*+\-/=]\s*[A-Za-z0-9]+$/.test(t)) return false;
+  if (/^[A-Za-z]\([a-z0-9,'"\s]+\)(?:=[0-9a-zA-Z+-]+)?$/i.test(t) && t.length <= 12) return false;
+  return /[a-zA-Z_]{2,}/.test(t);
+}
+
+/**
  * 解析 Markdown 笔记结构，提取章节、加粗术语、行内代码、代码块与要点列表
  */
 function parseMarkdownSections(title: string, content: string): ParsedSection[] {
-  const lines = (content || '').split(/\r?\n/);
+  const normalizedContent = normalizeNoteMarkdown(content || '');
+  const lines = normalizedContent.split(/\r?\n/);
   const sections: ParsedSection[] = [];
   let current: ParsedSection = {
     level: 1,
@@ -93,11 +135,11 @@ function parseMarkdownSections(title: string, content: string): ParsedSection[] 
       );
       current.boldTerms = Array.from(new Set(boldMatches)).slice(0, 5);
 
-      // 提取行内代码词
+      // 提取行内代码词（过滤无意义的极短算式或字面量，如 -inf, P*R, P(s,a,s)=0）
       const strippedCodeBlocks = bodyText.replace(/```[\s\S]*?```/g, '');
-      const codeMatches = Array.from(strippedCodeBlocks.matchAll(/`([^`\n]{2,30})`/g)).map(m =>
-        m[1].trim()
-      );
+      const codeMatches = Array.from(strippedCodeBlocks.matchAll(/`([^`\n]{2,30})`/g))
+        .map(m => m[1].trim())
+        .filter(isMeaningfulCodeTerm);
       current.codeTerms = Array.from(new Set(codeMatches)).slice(0, 5);
 
       sections.push(current);

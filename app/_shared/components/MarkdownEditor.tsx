@@ -1,8 +1,11 @@
 'use client';
-import { useState, useRef } from 'react';
+import { useState, useRef, createContext, useContext } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
+import { normalizeNoteMarkdown } from '@shared/lib/note-knowledge-extractor';
+
+const EditorPreContext = createContext(false);
 
 interface MarkdownEditorProps {
   value: string;
@@ -135,14 +138,27 @@ export default function MarkdownEditor({ value, onChange, placeholder, className
                 remarkPlugins={[remarkGfm]}
                 rehypePlugins={[rehypeHighlight]}
                 components={{
-                  code({ node, inline, className, children, ...props }: any) {
-                    const match = /language-(\w+)/.exec(className || '');
-                    return !inline && match ? (
-                      <pre className={className} {...props}>
-                        <code className={className}>{children}</code>
-                      </pre>
-                    ) : (
-                      <code className="bg-gray-100 px-1 py-0.5 rounded text-sm" {...props}>
+                  pre({ children }) {
+                    return (
+                      <EditorPreContext.Provider value={true}>
+                        <pre className="not-prose my-2.5 p-3 rounded-xl bg-slate-50 border border-slate-200 overflow-x-auto text-xs font-mono leading-relaxed text-slate-800">
+                          {children}
+                        </pre>
+                      </EditorPreContext.Provider>
+                    );
+                  },
+                  code({ className, children, ...props }: any) {
+                    // eslint-disable-next-line react-hooks/rules-of-hooks
+                    const isInsidePre = useContext(EditorPreContext);
+                    if (isInsidePre) {
+                      return (
+                        <code className={className} style={{ background: 'transparent', padding: 0 }} {...props}>
+                          {children}
+                        </code>
+                      );
+                    }
+                    return (
+                      <code className="inline px-1.5 py-0.5 mx-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-200/70 font-mono text-xs before:content-none after:content-none" {...props}>
                         {children}
                       </code>
                     );
@@ -172,7 +188,7 @@ export default function MarkdownEditor({ value, onChange, placeholder, className
                   },
                 }}
               >
-                {value || '# 预览区域\n\n在左侧编辑区域输入Markdown内容，这里会实时显示预览效果。\n\n支持的功能：\n- **粗体**、*斜体*\n- `行内代码`\n- 代码块\n- 表格\n- 列表\n- 链接等'}
+                {normalizeNoteMarkdown(value || '# 预览区域\n\n在左侧编辑区域输入Markdown内容，这里会实时显示预览效果。\n\n支持的功能：\n- **粗体**、*斜体*\n- `行内代码`\n- 代码块\n- 表格\n- 列表\n- 链接等')}
               </ReactMarkdown>
             </div>
           </div>

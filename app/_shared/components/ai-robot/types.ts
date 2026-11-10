@@ -85,10 +85,10 @@ export function collectCurrentPageContext(): { pathname: string; contextText: st
   const copy = contentRoot?.cloneNode(true) as HTMLElement | undefined;
   copy?.querySelectorAll('button, nav, aside, script, style, [role=tablist], [data-ai-exclude]').forEach(node => node.remove());
   const rawText = copy?.textContent || '';
-  const cleaned = rawText.replace(/\s{3,}/g, '\n').trim();
+  const cleaned = rawText.replace(/[ \t]{3,}/g, ' ').replace(/\n{3,}/g, '\n\n').trim();
   const body =
-    cleaned.length > 6000
-      ? cleaned.slice(0, 6000) + '\n...(内容过长已截断)'
+    cleaned.length > 8000
+      ? cleaned.slice(0, 8000) + '\n...(内容过长已截断)'
       : cleaned;
   if (!title && !body) {
     return { pathname, contextText: '' };

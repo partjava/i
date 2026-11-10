@@ -1,19 +1,134 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, createContext, useContext, useMemo } from 'react';
 import { useAuth } from '@shared/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import remarkMath from 'remark-math';
 import rehypeHighlight from 'rehype-highlight';
+import rehypeKatex from 'rehype-katex';
 import html2canvas from 'html2canvas';
 import 'highlight.js/styles/github.css';
+import 'katex/dist/katex.min.css';
 import CommentSection from '@shared/components/CommentSection';
 import NoteKnowledgeStudio from '@shared/components/NoteKnowledgeStudio';
+import { normalizeNoteMarkdown } from '@shared/lib/note-knowledge-extractor';
 import QRCode from 'qrcode';
 import { useUser } from '@shared/providers/UserProvider';
 import { message } from 'antd';
+
+const PreBlockContext = createContext(false);
+
+function extractTextFromReactNode(node: any): string {
+  if (node == null || typeof node === 'boolean') return '';
+  if (typeof node === 'string' || typeof node === 'number') return String(node);
+  if (Array.isArray(node)) return node.map(extractTextFromReactNode).join('');
+  if (typeof node === 'object' && node.props) {
+    return extractTextFromReactNode(node.props.children);
+  }
+  return '';
+}
+
+function NoteCodeBlock({
+  className,
+  children,
+}: {
+  className?: string;
+  children: React.ReactNode;
+}) {
+  const [copied, setCopied] = useState(false);
+  const rawText = useMemo(() => extractTextFromReactNode(children).replace(/\n$/, ''), [children]);
+  const trimmed = rawText.trim();
+  const lines = trimmed ? trimmed.split(/\r?\n/) : [''];
+  const langMatch = /language-([a-zA-Z0-9_-]+)/.exec(className || '');
+  const lang = langMatch ? langMatch[1].toLowerCase() : '';
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(rawText);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {}
+  };
+
+  // 单行极短标识（兜底保护：若未带语言且只有简短词组，使用紧凑内联胶囊样式）
+  const isFormulaBanner =
+    lines.length <= 2 &&
+    !lang &&
+    trimmed.length > 0 &&
+    trimmed.length <= 120 &&
+    (/[=≈≠≤≥∑Σ∏∫γλθπ]|max_|min_|arg\s*max/i.test(trimmed) ||
+      (trimmed.includes('=') && !trimmed.endsWith(';') && !trimmed.endsWith('{') && !trimmed.endsWith(':')));
+
+  if (lines.length === 1 && !lang && trimmed.length <= 26 && !isFormulaBanner) {
+    return (
+      <span className="not-prose inline-flex items-center px-2 py-0.5 my-0.5 rounded-md bg-indigo-50/90 text-indigo-700 border border-indigo-200/80 font-mono text-[13px] font-medium">
+        {trimmed}
+      </span>
+    );
+  }
+
+  // 核心公式横幅卡片（替代原先黑底套白底的厚重双层 pre 框）
+  if (isFormulaBanner) {
+    return (
+      <div className="not-prose my-2.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-indigo-50/90 via-slate-50 to-sky-50/80 border border-indigo-200/80 shadow-sm flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5 min-w-0 overflow-x-auto">
+          <span className="shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-indigo-600/10 text-indigo-700 border border-indigo-200 text-[11px] font-bold tracking-wide">
+            ∑ 公式
+          </span>
+          <code className="font-mono text-[13.5px] font-semibold text-indigo-950 whitespace-pre">
+            {trimmed}
+          </code>
+        </div>
+        <button
+          type="button"
+          onClick={handleCopy}
+          className="shrink-0 px-2 py-1 rounded-md text-[11px] font-medium text-indigo-600 hover:bg-indigo-100/80 transition-colors"
+        >
+          {copied ? '✓ 已复制' : '复制'}
+        </button>
+      </div>
+    );
+  }
+
+  // 标准多行代码块：纤薄现代 IDE 卡片（无外层黑框，紧凑顶栏 + 一键复制）
+  return (
+    <div className="not-prose my-3 rounded-xl overflow-hidden border border-slate-200/90 bg-[#f8fafc] shadow-sm">
+      <div className="h-8 px-3.5 bg-slate-100/90 border-b border-slate-200/80 flex items-center justify-between select-none">
+        <div className="flex items-center gap-2">
+          <span className="flex items-center gap-1">
+            <span className="w-2 h-2 rounded-full bg-rose-400/80" />
+            <span className="w-2 h-2 rounded-full bg-amber-400/80" />
+            <span className="w-2 h-2 rounded-full bg-emerald-400/80" />
+          </span>
+          <span className="ml-1 px-1.5 py-0.5 rounded bg-white text-slate-600 border border-slate-200/80 font-mono text-[10px] font-semibold uppercase tracking-wider">
+            {lang || 'code'}
+          </span>
+          <span className="text-[11px] text-slate-400 font-mono">
+            {lines.length} {lines.length > 1 ? 'lines' : 'line'}
+          </span>
+        </div>
+        <button
+          type="button"
+          onClick={handleCopy}
+          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium text-slate-600 hover:text-indigo-600 hover:bg-white border border-transparent hover:border-slate-200/80 transition-all"
+        >
+          {copied ? '✓ 已复制' : '复制代码'}
+        </button>
+      </div>
+      <pre className="m-0 px-4 py-3 overflow-x-auto bg-[#f8fafc] text-[13px] leading-[1.6] font-mono text-slate-800">
+        <code
+          className={className}
+          style={{ background: 'transparent', padding: 0, color: 'inherit', fontSize: 'inherit' }}
+        >
+          {children}
+        </code>
+      </pre>
+    </div>
+  );
+}
 
 interface Note {
   _id: string;
@@ -550,33 +665,88 @@ export default function NoteDetailPage() {
 
 
 
-        {/* 笔记内容 - Markdown渲染 */}
-        <div id="note-content-area" className="prose prose-lg max-w-none">
+        {/* 笔记内容 - 紧凑现代技术文档排版 */}
+        <div
+          id="note-content-area"
+          className="mt-6 pt-6 border-t border-slate-100 text-[15px] leading-7 text-slate-700"
+        >
           <ReactMarkdown
-            remarkPlugins={[remarkGfm]}
-            rehypePlugins={[rehypeHighlight]}
+            remarkPlugins={[remarkGfm, remarkMath]}
+            rehypePlugins={[rehypeKatex, rehypeHighlight]}
             components={{
-              code({ node, inline, className, children, ...props }: any) {
-                const match = /language-(\w+)/.exec(className || '');
-                if (!inline) {
-                  // 块级代码：有语言标识或没有，统一用浅色背景
-                  return (
-                    <pre style={{ background: '#f6f8fa', borderRadius: '6px', padding: '16px', overflowX: 'auto' }}>
-                      <code className={className} style={{ background: 'none', color: '#24292e', fontSize: '0.875em' }} {...props}>{children}</code>
-                    </pre>
-                  );
-                }
-                // 行内代码
+              pre({ children }) {
                 return (
-                  <code className="bg-gray-100 px-1 py-0.5 rounded text-sm font-mono" {...props}>
+                  <PreBlockContext.Provider value={true}>
+                    {children}
+                  </PreBlockContext.Provider>
+                );
+              },
+              code({ className, children, ...props }: any) {
+                // eslint-disable-next-line react-hooks/rules-of-hooks
+                const isInsidePre = useContext(PreBlockContext);
+                if (isInsidePre) {
+                  return <NoteCodeBlock className={className}>{children}</NoteCodeBlock>;
+                }
+                // 行内代码：精致胶囊样式，绝不破坏行内排版流
+                return (
+                  <code
+                    className="inline px-1.5 py-0.5 mx-0.5 rounded-md bg-indigo-50/90 text-indigo-700 border border-indigo-200/75 font-mono text-[0.86em] font-medium align-baseline before:content-none after:content-none"
+                    {...props}
+                  >
                     {children}
                   </code>
                 );
               },
+              h1({ children }) {
+                return (
+                  <h1 className="text-xl font-extrabold text-slate-900 mt-6 mb-3 pb-2 border-b border-slate-200/80 flex items-center gap-2.5">
+                    <span className="w-1.5 h-5 rounded-full bg-indigo-600 shrink-0" />
+                    <span>{children}</span>
+                  </h1>
+                );
+              },
+              h2({ children }) {
+                return (
+                  <h2 className="text-lg font-bold text-slate-900 mt-5 mb-2.5 pb-1.5 border-b border-slate-100 flex items-center gap-2">
+                    <span className="w-1.5 h-4 rounded-full bg-indigo-500 shrink-0" />
+                    <span>{children}</span>
+                  </h2>
+                );
+              },
+              h3({ children }) {
+                return (
+                  <h3 className="text-[15px] font-bold text-slate-800 mt-4 mb-1.5 flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 shrink-0" />
+                    <span>{children}</span>
+                  </h3>
+                );
+              },
+              p({ children }) {
+                return <p className="my-2 leading-7 text-slate-700">{children}</p>;
+              },
+              ul({ children }) {
+                return <ul className="my-2 space-y-1.5 pl-5 list-disc marker:text-indigo-500">{children}</ul>;
+              },
+              ol({ children }) {
+                return <ol className="my-2 space-y-1.5 pl-5 list-decimal marker:text-indigo-600 marker:font-semibold">{children}</ol>;
+              },
+              li({ children }) {
+                return <li className="leading-7 text-slate-700 pl-1">{children}</li>;
+              },
+              blockquote({ children }) {
+                return (
+                  <blockquote className="my-3 pl-3.5 pr-3 py-2 rounded-r-xl border-l-4 border-indigo-500 bg-indigo-50/50 text-slate-700 text-sm">
+                    {children}
+                  </blockquote>
+                );
+              },
+              hr() {
+                return <hr className="my-5 border-slate-200/80" />;
+              },
               table({ children }) {
                 return (
-                  <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200 border border-gray-300">
+                  <div className="my-3 overflow-x-auto rounded-xl border border-slate-200 shadow-sm">
+                    <table className="min-w-full divide-y divide-slate-200">
                       {children}
                     </table>
                   </div>
@@ -584,21 +754,21 @@ export default function NoteDetailPage() {
               },
               th({ children }) {
                 return (
-                  <th className="px-4 py-2 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">
+                  <th className="px-3.5 py-2 bg-slate-50 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider border-b border-slate-200">
                     {children}
                   </th>
                 );
               },
               td({ children }) {
                 return (
-                  <td className="px-4 py-2 text-sm text-gray-900 border-b border-gray-200">
+                  <td className="px-3.5 py-2 text-sm text-slate-800 border-b border-slate-100">
                     {children}
                   </td>
                 );
               },
             }}
           >
-            {note.content}
+            {normalizeNoteMarkdown(note.content)}
           </ReactMarkdown>
         </div>
       </article>
