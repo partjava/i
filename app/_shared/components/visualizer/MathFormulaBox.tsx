@@ -23,6 +23,18 @@ function renderLatexSafe(latex: string, displayMode = true): string {
   }
 }
 
+function splitLatexClauses(latex: string): string[] {
+  if (!latex) return [];
+  // 若包含多行矩阵/分段函数环境，保持整体渲染不拆分
+  if (latex.includes('\\begin{')) {
+    return [latex];
+  }
+  return latex
+    .split(/,\s*\\q?quad\s*|;\s*\\q?quad\s*|\\qquad\s*/g)
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
 export default function MathFormulaBox({
   algorithmId,
   fallbackText,
@@ -30,14 +42,16 @@ export default function MathFormulaBox({
 }: MathFormulaBoxProps) {
   const detail = ALGORITHM_LATEX_MAP[algorithmId];
 
-  const primaryHtml = useMemo(() => {
-    if (!detail?.latex) return '';
-    return renderLatexSafe(detail.latex, !compact);
-  }, [detail?.latex, compact]);
+  const primaryClausesHtml = useMemo(() => {
+    if (!detail?.latex) return [];
+    const clauses = splitLatexClauses(detail.latex);
+    return clauses.map((c) => renderLatexSafe(c, false));
+  }, [detail?.latex]);
 
-  const secondaryHtml = useMemo(() => {
-    if (!detail?.secondaryLatex || compact) return '';
-    return renderLatexSafe(detail.secondaryLatex, false);
+  const secondaryClausesHtml = useMemo(() => {
+    if (!detail?.secondaryLatex || compact) return [];
+    const clauses = splitLatexClauses(detail.secondaryLatex);
+    return clauses.map((c) => renderLatexSafe(c, false));
   }, [detail?.secondaryLatex, compact]);
 
   if (!detail) {
@@ -50,27 +64,40 @@ export default function MathFormulaBox({
 
   if (compact) {
     return (
-      <div
-        className="text-sky-200 overflow-x-auto max-w-full py-0.5 [&_.katex]:text-[12px] sm:[&_.katex]:text-[13px]"
-        dangerouslySetInnerHTML={{ __html: primaryHtml }}
-      />
+      <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 text-sky-100 overflow-hidden py-1 [&_.katex]:text-[15px] sm:[&_.katex]:text-[16.5px]">
+        {primaryClausesHtml.map((html, idx) => (
+          <span
+            key={idx}
+            className="inline-flex items-center"
+            dangerouslySetInnerHTML={{ __html: html }}
+          />
+        ))}
+      </div>
     );
   }
 
   return (
     <div className="space-y-3">
-      {/* 主核心数学方程（KaTeX 高清独立公式块） */}
-      <div className="px-3.5 py-3 rounded-xl bg-slate-900/90 border border-sky-500/30 shadow-inner overflow-x-auto custom-scrollbar">
-        <div
-          className="text-sky-100 text-center [&_.katex-display]:my-1 [&_.katex]:text-sm sm:[&_.katex]:text-base"
-          dangerouslySetInnerHTML={{ __html: primaryHtml }}
-        />
-        {secondaryHtml && (
-          <div className="mt-2 pt-2 border-t border-white/10 text-center">
-            <div
-              className="text-indigo-200/95 [&_.katex]:text-xs sm:[&_.katex]:text-[13px]"
-              dangerouslySetInnerHTML={{ __html: secondaryHtml }}
+      {/* 主核心数学方程（KaTeX 高清大字号自适应折行公式块，零滚动条） */}
+      <div className="px-4 py-3.5 rounded-xl bg-slate-900/90 border border-sky-500/30 shadow-inner overflow-hidden">
+        <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2.5 text-sky-100 [&_.katex]:text-[16px] sm:[&_.katex]:text-[18.5px]">
+          {primaryClausesHtml.map((html, idx) => (
+            <span
+              key={idx}
+              className="inline-flex items-center"
+              dangerouslySetInnerHTML={{ __html: html }}
             />
+          ))}
+        </div>
+        {secondaryClausesHtml.length > 0 && (
+          <div className="mt-3 pt-2.5 border-t border-white/10 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-indigo-200/95 [&_.katex]:text-[14px] sm:[&_.katex]:text-[15.5px]">
+            {secondaryClausesHtml.map((html, idx) => (
+              <span
+                key={idx}
+                className="inline-flex items-center"
+                dangerouslySetInnerHTML={{ __html: html }}
+              />
+            ))}
           </div>
         )}
       </div>

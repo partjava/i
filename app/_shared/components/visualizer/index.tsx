@@ -277,28 +277,28 @@ export default function AlgorithmVisualizer({
         </div>
       </div>
 
-      {/* 独立全宽核心数学律横幅（脱离 3D 画布遮挡区，彻底消除与右上角镜头按钮的重叠与小滚动条） */}
+      {/* 独立全宽核心数学律横幅（脱离 3D 画布遮挡区，大字号高清自适应排布，彻底消除横向/纵向滚动条） */}
       {showHudFormula ? (
         <div
-          className="px-3.5 py-2 rounded-xl border flex flex-wrap items-center justify-between gap-3"
+          className="px-4 py-2.5 rounded-xl border flex flex-wrap items-center justify-between gap-3 overflow-hidden"
           style={{
-            background: 'linear-gradient(90deg, rgba(15, 23, 42, 0.92) 0%, rgba(17, 24, 39, 0.88) 100%)',
-            borderColor: 'rgba(56, 189, 248, 0.28)',
+            background: 'linear-gradient(90deg, rgba(15, 23, 42, 0.94) 0%, rgba(17, 24, 39, 0.90) 100%)',
+            borderColor: 'rgba(56, 189, 248, 0.32)',
           }}
         >
-          <div className="flex items-center gap-3 min-w-0 flex-1 overflow-x-auto">
-            <span className="shrink-0 px-2 py-0.5 rounded-md bg-sky-500/15 border border-sky-400/30 text-[11px] font-mono font-bold text-sky-300 flex items-center gap-1">
+          <div className="flex flex-wrap items-center gap-3.5 min-w-0 flex-1 overflow-hidden">
+            <span className="shrink-0 px-2.5 py-1 rounded-lg bg-sky-500/15 border border-sky-400/30 text-xs font-mono font-bold text-sky-300 flex items-center gap-1.5">
               <span>🧮</span>
               <span>核心数学律 (LaTeX)</span>
             </span>
-            <div className="min-w-0 flex-1">
+            <div className="min-w-0 flex-1 overflow-hidden">
               <MathFormulaBox algorithmId={algorithm} compact={true} />
             </div>
           </div>
           <button
             type="button"
             onClick={() => setShowHudFormula(false)}
-            className="shrink-0 text-[11px] text-slate-400 hover:text-white px-2 py-0.5 rounded hover:bg-white/5 transition-colors"
+            className="shrink-0 text-xs text-slate-400 hover:text-white px-2 py-1 rounded-lg hover:bg-white/5 transition-colors"
             title="收起公式横幅"
           >
             收起 ✕
