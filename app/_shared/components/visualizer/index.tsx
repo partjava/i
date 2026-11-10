@@ -191,9 +191,6 @@ export default function AlgorithmVisualizer({
       if (currentStep >= steps.length - 1) {
         setCurrentStep(0);
       }
-      // 开启自动推演时同步开启代码演示与双联放大视图
-      setShowCodeStudio(true);
-      setTheaterZoom(true);
       setIsPlaying(true);
     }
   };
@@ -656,7 +653,9 @@ export default function AlgorithmVisualizer({
                 ? '⏸ 暂停演示'
                 : currentStep >= steps.length - 1 && steps.length > 0
                 ? '↻ 重新播放'
-                : '▶ 自动推演 (3D + 代码)'}
+                : showCodeStudio
+                ? '▶ 自动推演 (3D + 代码)'
+                : '▶ 自动推演 (3D)'}
             </button>
 
             <button
