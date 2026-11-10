@@ -62,14 +62,18 @@ export default function CodeEditorPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] text-slate-800 relative overflow-hidden py-4 sm:py-8 selection:bg-indigo-500/20 selection:text-indigo-700">
+    <div className="min-h-screen bg-[#f8fafc] text-slate-800 relative overflow-x-clip py-4 sm:py-8 selection:bg-indigo-500/20 selection:text-indigo-700">
       {/* 现代极简浅色背景微光与网格装饰 */}
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_-10%,rgba(99,102,241,0.08),transparent)] pointer-events-none" />
       <div className="absolute top-1/4 right-0 w-[450px] h-[450px] bg-sky-400/5 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute bottom-1/3 left-0 w-[500px] h-[500px] bg-indigo-400/5 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute inset-0 bg-[linear-gradient(to_right,#e2e8f060_1px,transparent_1px),linear-gradient(to_bottom,#e2e8f060_1px,transparent_1px)] bg-[size:36px_36px] pointer-events-none" />
 
-      <div className="relative z-10 max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+      <div
+        className={`relative z-10 mx-auto px-3 sm:px-5 lg:px-6 transition-all duration-300 ${
+          activeTab === 'visualizer' ? 'max-w-[1720px]' : 'max-w-7xl'
+        }`}
+      >
         {/* 顶部 Hero 科技工坊主标头（浅色背景适配） */}
         <div className="text-center pt-2 pb-6 md:pb-8">
           {/* 状态徽标小胶囊 */}
@@ -204,19 +208,19 @@ export default function CodeEditorPage() {
 
         {/* 模式二：3D 算法演进矩阵 (Visualizer Matrix) */}
         {activeTab === 'visualizer' && (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-6">
-            {/* 左侧控制与算法列表面板 */}
-            <div className="lg:col-span-4 xl:col-span-3 space-y-4">
+          <div className="flex flex-col lg:flex-row gap-4 xl:gap-5 items-start">
+            {/* 左侧控制与算法列表面板（Sticky 视口悬浮固定，上下滑动页面时始终完整保留在屏幕左侧） */}
+            <div className="w-full lg:w-[275px] xl:w-[290px] shrink-0 lg:sticky lg:top-[74px] lg:self-start lg:max-h-[calc(100vh-5.2rem)] flex flex-col gap-3">
               {/* 算法选择卡片 */}
               <div
-                className="rounded-2xl p-4 border shadow-xl"
+                className="flex-1 min-h-0 flex flex-col rounded-2xl p-3.5 border shadow-xl"
                 style={{
                   background: 'linear-gradient(165deg, #0d1526 0%, #111c33 100%)',
                   borderColor: 'rgba(99, 102, 241, 0.25)',
                 }}
               >
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-base font-bold text-slate-100 flex items-center gap-2">
+                <div className="flex items-center justify-between mb-2.5 shrink-0">
+                  <h3 className="text-sm sm:text-base font-bold text-slate-100 flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-sky-400 shadow-[0_0_8px_#38bdf8]" />
                     <span>算法流形矩阵</span>
                   </h3>
@@ -226,12 +230,12 @@ export default function CodeEditorPage() {
                 </div>
 
                 {/* 分类筛选胶囊 */}
-                <div className="flex flex-wrap gap-1.5 mb-3 pb-3 border-b border-white/10">
+                <div className="flex flex-wrap gap-1.5 mb-2.5 pb-2.5 border-b border-white/10 shrink-0">
                   {ALGORITHM_CATEGORIES.map((cat) => (
                     <button
                       key={cat.id}
                       onClick={() => setActiveCategory(cat.id)}
-                      className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all ${
+                      className={`px-2.5 py-0.5 rounded-full text-xs font-medium transition-all ${
                         activeCategory === cat.id
                           ? 'bg-gradient-to-r from-indigo-500 to-sky-500 text-white shadow-md'
                           : 'bg-white/5 text-slate-400 hover:text-slate-200 hover:bg-white/10'
@@ -243,28 +247,28 @@ export default function CodeEditorPage() {
                 </div>
 
                 {/* 算法列表 */}
-                <div className="space-y-1.5 max-h-[390px] overflow-y-auto overflow-x-hidden pr-1 custom-scrollbar">
+                <div className="flex-1 min-h-[170px] max-h-[280px] xl:max-h-[330px] space-y-1.5 overflow-y-auto overflow-x-hidden pr-1 custom-scrollbar">
                   {filteredAlgorithms.map((algo) => {
                     const active = selectedAlgorithm === algo.id;
                     return (
                       <button
                         key={algo.id}
                         onClick={() => setSelectedAlgorithm(algo.id)}
-                        className={`w-full text-left px-3 py-2.5 rounded-xl transition-all text-sm border ${
+                        className={`w-full text-left px-2.5 py-2 rounded-xl transition-all text-sm border ${
                           active
                             ? 'bg-gradient-to-r from-indigo-600/80 to-sky-600/70 text-white border-indigo-400/60 shadow-lg'
                             : 'bg-white/[0.03] text-slate-300 border-white/5 hover:bg-white/[0.08] hover:border-white/15'
                         }`}
                       >
                         <div className="flex items-center gap-2.5">
-                          <span className="text-lg w-7 h-7 rounded-lg bg-white/10 flex items-center justify-center shrink-0">
+                          <span className="text-base w-6 h-6 rounded-lg bg-white/10 flex items-center justify-center shrink-0">
                             {algo.icon}
                           </span>
                           <div className="flex-1 min-w-0">
-                            <div className="font-semibold truncate text-xs sm:text-sm">
+                            <div className="font-semibold truncate text-xs sm:text-[13px]">
                               {algo.name}
                             </div>
-                            <div className="text-[11px] mt-0.5 flex items-center gap-2">
+                            <div className="text-[10.5px] mt-0.5 flex items-center gap-1.5">
                               <span
                                 className={
                                   active ? 'text-indigo-100/90' : 'text-slate-400'
@@ -295,14 +299,14 @@ export default function CodeEditorPage() {
               {/* 数据输入 */}
               {currentAlgorithm?.needsData ? (
                 <div
-                  className="rounded-2xl p-4 border shadow-xl"
+                  className="shrink-0 rounded-2xl p-3.5 border shadow-xl"
                   style={{
                     background: 'linear-gradient(165deg, #0d1526 0%, #111c33 100%)',
                     borderColor: 'rgba(99, 102, 241, 0.25)',
                   }}
                 >
-                  <div className="flex items-center justify-between mb-2.5">
-                    <h3 className="text-sm font-bold text-slate-100">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-xs sm:text-sm font-bold text-slate-100">
                       输入序列数据
                     </h3>
                     <span className="text-[11px] font-mono text-slate-400">
@@ -312,13 +316,13 @@ export default function CodeEditorPage() {
                   <textarea
                     value={inputData}
                     onChange={(e) => handleDataChange(e.target.value)}
-                    className="w-full px-3 py-2 bg-slate-950/80 border border-indigo-500/30 rounded-xl text-slate-100 font-mono text-xs focus:border-sky-400 focus:outline-none"
+                    className="w-full px-2.5 py-1.5 bg-slate-950/80 border border-indigo-500/30 rounded-xl text-slate-100 font-mono text-xs focus:border-sky-400 focus:outline-none"
                     rows={2}
                     placeholder="输入数字，用逗号分隔"
                   />
                   <button
                     onClick={generateRandomData}
-                    className="w-full mt-2.5 px-4 py-2 rounded-xl text-xs font-bold text-white transition-all hover:brightness-110 shadow-md"
+                    className="w-full mt-2 px-3 py-1.5 rounded-xl text-xs font-bold text-white transition-all hover:brightness-110 shadow-md"
                     style={{
                       background:
                         'linear-gradient(135deg, #0ea5e9 0%, #6366f1 100%)',
@@ -329,17 +333,17 @@ export default function CodeEditorPage() {
                 </div>
               ) : (
                 <div
-                  className="rounded-2xl p-4 border shadow-xl text-center"
+                  className="shrink-0 rounded-2xl p-3.5 border shadow-xl text-center"
                   style={{
                     background: 'linear-gradient(165deg, #0d1526 0%, #111c33 100%)',
                     borderColor: 'rgba(99, 102, 241, 0.25)',
                   }}
                 >
-                  <div className="text-2xl mb-1.5">✨</div>
-                  <h3 className="text-sm font-bold text-slate-100 mb-1">
+                  <div className="text-xl mb-1">✨</div>
+                  <h3 className="text-xs sm:text-sm font-bold text-slate-100 mb-0.5">
                     三维空间自动建模
                   </h3>
-                  <p className="text-xs text-slate-400">
+                  <p className="text-[11px] text-slate-400 leading-snug">
                     该算法由三维流形方程、图拓扑或动态规划状态集自动生成推演空间
                   </p>
                 </div>
@@ -347,14 +351,14 @@ export default function CodeEditorPage() {
 
               {/* 演示速度控制 */}
               <div
-                className="rounded-2xl p-4 border shadow-xl"
+                className="shrink-0 rounded-2xl p-3.5 border shadow-xl"
                 style={{
                   background: 'linear-gradient(165deg, #0d1526 0%, #111c33 100%)',
                   borderColor: 'rgba(99, 102, 241, 0.25)',
                 }}
               >
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-sm font-bold text-slate-100">
+                <div className="flex items-center justify-between mb-1.5">
+                  <h3 className="text-xs sm:text-sm font-bold text-slate-100">
                     单步演示间隔
                   </h3>
                   <span className="text-xs font-mono text-sky-400 font-semibold">
@@ -370,15 +374,15 @@ export default function CodeEditorPage() {
                   onChange={(e) => setSpeed(parseInt(e.target.value, 10))}
                   className="w-full accent-indigo-500 cursor-pointer"
                 />
-                <div className="flex justify-between text-[11px] text-slate-400 mt-1">
+                <div className="flex justify-between text-[10.5px] text-slate-400 mt-1">
                   <span>极速 (100ms)</span>
                   <span>慢放 (2000ms)</span>
                 </div>
               </div>
             </div>
 
-            {/* 右侧：3D 主舞台与深度数学理论 */}
-            <div className="lg:col-span-8 xl:col-span-9 space-y-4">
+            {/* 右侧：3D 主舞台与完整代码双联舱 + 深度数学理论 */}
+            <div className="flex-1 min-w-0 w-full space-y-4">
               <div
                 className="rounded-2xl p-4 sm:p-5 border shadow-2xl"
                 style={{

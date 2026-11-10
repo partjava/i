@@ -77,6 +77,7 @@ export default function AlgorithmVisualizer({
   const [steps, setSteps] = useState<VisualizationStep[]>([]);
   const [autoOrbit, setAutoOrbit] = useState(true);
   const [showCodeStudio, setShowCodeStudio] = useState(true);
+  const [theaterZoom, setTheaterZoom] = useState(true);
   const [codeLang, setCodeLang] = useState<CodeLanguage>('java');
   const [showHudFormula, setShowHudFormula] = useState(true);
 
@@ -97,7 +98,7 @@ export default function AlgorithmVisualizer({
     };
   }, []);
 
-  // Trigger resize on SceneManager when toggling split code studio
+  // Trigger resize on SceneManager when toggling split code studio or theater zoom
   useEffect(() => {
     const timer = setTimeout(() => {
       if (typeof window !== 'undefined') {
@@ -105,7 +106,7 @@ export default function AlgorithmVisualizer({
       }
     }, 60);
     return () => clearTimeout(timer);
-  }, [showCodeStudio]);
+  }, [showCodeStudio, theaterZoom]);
 
   // 2. Apply optimal camera preset & generate steps when algorithm or data changes
   useEffect(() => {
@@ -181,6 +182,9 @@ export default function AlgorithmVisualizer({
       if (currentStep >= steps.length - 1) {
         setCurrentStep(0);
       }
+      // 开启自动推演时同步开启代码演示与双联放大视图
+      setShowCodeStudio(true);
+      setTheaterZoom(true);
       setIsPlaying(true);
     }
   };
@@ -193,8 +197,15 @@ export default function AlgorithmVisualizer({
     }
   };
 
+  // 提取当前帧内高亮变量，用于激活代码行尾的内联调试胶囊展示
+  const inlineActiveVarSummary = useMemo(() => {
+    const highlighted = codeTrace.variables.filter((v) => v.highlight);
+    const pick = highlighted.length > 0 ? highlighted.slice(0, 2) : codeTrace.variables.slice(0, 2);
+    return pick.map((v) => `${v.name}=${v.value}`).join(' · ');
+  }, [codeTrace.variables]);
+
   return (
-    <div className="space-y-3.5">
+    <div className="space-y-3">
       {/* 顶部算法专属图例栏 + 视图切换 + 实时指标徽章 */}
       <div
         className="flex flex-wrap items-center justify-between gap-2.5 px-3.5 py-2.5 rounded-xl border text-xs"
@@ -218,7 +229,7 @@ export default function AlgorithmVisualizer({
           ))}
         </div>
 
-        {/* 右侧：实时遥测指标胶囊 + 代码演示舱开关 */}
+        {/* 右侧：实时遥测指标胶囊 + 双联放大 + 代码演示舱开关 */}
         <div className="flex flex-wrap items-center gap-2">
           {activeStep?.metrics &&
             Object.entries(activeStep.metrics).map(([k, v]) => (
@@ -231,9 +242,30 @@ export default function AlgorithmVisualizer({
               </span>
             ))}
 
+          {showCodeStudio && (
+            <button
+              type="button"
+              onClick={() => setTheaterZoom((v) => !v)}
+              className={`px-2.5 py-1 rounded-lg font-mono text-[11px] font-bold border transition-all flex items-center gap-1 ${
+                theaterZoom
+                  ? 'bg-sky-500/20 text-sky-300 border-sky-400/40'
+                  : 'bg-slate-800/80 text-slate-300 border-white/10 hover:bg-slate-700'
+              }`}
+              title="同时放大左侧 3D 舞台与右侧完整代码推演面板"
+            >
+              <span>{theaterZoom ? '🗖 双联放大: 开启' : '🗗 标准高度'}</span>
+            </button>
+          )}
+
           <button
             type="button"
-            onClick={() => setShowCodeStudio((v) => !v)}
+            onClick={() => {
+              setShowCodeStudio((v) => {
+                const next = !v;
+                if (next) setTheaterZoom(true);
+                return next;
+              });
+            }}
             className={`px-2.5 py-1 rounded-lg font-mono text-[11px] font-bold border transition-all flex items-center gap-1.5 ${
               showCodeStudio
                 ? 'bg-emerald-500/20 text-emerald-300 border-emerald-400/40 shadow-[0_0_12px_rgba(16,185,129,0.2)]'
@@ -245,16 +277,55 @@ export default function AlgorithmVisualizer({
         </div>
       </div>
 
-      {/* 主体核心区：3D 交互式主画布舞台 + 右侧同步代码演示与变量追踪舱 */}
+      {/* 独立全宽核心数学律横幅（脱离 3D 画布遮挡区，彻底消除与右上角镜头按钮的重叠与小滚动条） */}
+      {showHudFormula ? (
+        <div
+          className="px-3.5 py-2 rounded-xl border flex flex-wrap items-center justify-between gap-3"
+          style={{
+            background: 'linear-gradient(90deg, rgba(15, 23, 42, 0.92) 0%, rgba(17, 24, 39, 0.88) 100%)',
+            borderColor: 'rgba(56, 189, 248, 0.28)',
+          }}
+        >
+          <div className="flex items-center gap-3 min-w-0 flex-1 overflow-x-auto">
+            <span className="shrink-0 px-2 py-0.5 rounded-md bg-sky-500/15 border border-sky-400/30 text-[11px] font-mono font-bold text-sky-300 flex items-center gap-1">
+              <span>🧮</span>
+              <span>核心数学律 (LaTeX)</span>
+            </span>
+            <div className="min-w-0 flex-1">
+              <MathFormulaBox algorithmId={algorithm} compact={true} />
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowHudFormula(false)}
+            className="shrink-0 text-[11px] text-slate-400 hover:text-white px-2 py-0.5 rounded hover:bg-white/5 transition-colors"
+            title="收起公式横幅"
+          >
+            收起 ✕
+          </button>
+        </div>
+      ) : (
+        <div className="flex justify-start">
+          <button
+            type="button"
+            onClick={() => setShowHudFormula(true)}
+            className="px-2.5 py-1 rounded-lg bg-slate-900/80 border border-sky-500/30 text-[11px] font-mono text-sky-300 hover:bg-slate-800 transition-colors"
+          >
+            🧮 展开核心数学律 (LaTeX)
+          </button>
+        </div>
+      )}
+
+      {/* 主体核心区：左 3D 交互式巨幕舞台 (50%) + 右 完整代码推演与变量追踪舱 (50%) 同时放大 */}
       <div
         className={`grid grid-cols-1 ${
-          showCodeStudio ? 'xl:grid-cols-12' : ''
-        } gap-3.5 items-stretch`}
+          showCodeStudio ? 'lg:grid-cols-12' : ''
+        } gap-4 items-stretch`}
       >
-        {/* 左侧：3D 交互式主画布舞台 */}
+        {/* 左侧：3D 交互式主画布舞台（随代码演示同步放大，自动撑满右侧完整代码高度） */}
         <div
           className={`${
-            showCodeStudio ? 'xl:col-span-7' : 'w-full'
+            showCodeStudio ? 'lg:col-span-6' : 'w-full'
           } relative rounded-2xl overflow-hidden border shadow-2xl select-none flex flex-col`}
           style={{
             background:
@@ -264,38 +335,17 @@ export default function AlgorithmVisualizer({
         >
           <canvas
             ref={canvasRef}
-            className="w-full h-[380px] sm:h-[450px] md:h-[500px] block cursor-grab active:cursor-grabbing"
+            className={`w-full flex-1 ${
+              showCodeStudio && theaterZoom
+                ? 'min-h-[480px] sm:min-h-[540px]'
+                : 'min-h-[400px] sm:min-h-[460px]'
+            } block cursor-grab active:cursor-grabbing`}
           />
 
-          {/* 左上角：实时 KaTeX 数学建模公式悬浮胶囊 */}
-          <div className="absolute top-3 left-3 max-w-[62%] sm:max-w-[68%] z-10">
-            {showHudFormula ? (
-              <div className="bg-slate-950/80 backdrop-blur-md border border-sky-500/30 rounded-xl px-3 py-1.5 shadow-lg">
-                <div className="flex items-center justify-between gap-2 mb-0.5">
-                  <span className="text-[10px] font-mono font-bold text-sky-400 flex items-center gap-1">
-                    <span>🧮</span>
-                    <span>核心数学律 (LaTeX)</span>
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setShowHudFormula(false)}
-                    className="text-[10px] text-slate-400 hover:text-white px-1"
-                    title="收起公式浮窗"
-                  >
-                    ✕
-                  </button>
-                </div>
-                <MathFormulaBox algorithmId={algorithm} compact={true} />
-              </div>
-            ) : (
-              <button
-                type="button"
-                onClick={() => setShowHudFormula(true)}
-                className="px-2.5 py-1 rounded-xl bg-slate-950/75 backdrop-blur-md border border-sky-500/30 text-[11px] font-mono text-sky-300 hover:bg-slate-900/90 shadow-lg"
-              >
-                🧮 展开公式 HUD
-              </button>
-            )}
+          {/* 左上角：算法空间状态微标（不遮挡右上角镜头按钮） */}
+          <div className="absolute top-3 left-3 pointer-events-none flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-950/70 backdrop-blur-md border border-white/10 text-[11px] font-mono text-slate-300 z-10">
+            <span className="w-2 h-2 rounded-full bg-sky-400 animate-pulse" />
+            <span>3D 空间流形舞台</span>
           </div>
 
           {/* 右上角 3D 摄像机交互悬浮工具条 */}
@@ -313,14 +363,14 @@ export default function AlgorithmVisualizer({
             </button>
             <button
               onClick={() => managerRef.current?.zoomBy(0.85)}
-              title="拉近镜头"
+              title="拉近放大 3D 图形"
               className="w-7 h-7 rounded-lg text-xs text-slate-300 hover:text-white hover:bg-white/10 flex items-center justify-center transition-all"
             >
               ➕
             </button>
             <button
               onClick={() => managerRef.current?.zoomBy(1.18)}
-              title="拉远镜头"
+              title="拉远 3D 图形"
               className="w-7 h-7 rounded-lg text-xs text-slate-300 hover:text-white hover:bg-white/10 flex items-center justify-center transition-all"
             >
               ➖
@@ -344,21 +394,21 @@ export default function AlgorithmVisualizer({
           </div>
         </div>
 
-        {/* 右侧：⚡ 实时代码演示动画与帧内变量追踪舱 */}
+        {/* 右侧：⚡ 完整代码推演动画与帧内变量追踪舱（50% 对称宽屏，全量代码平铺零横拉条） */}
         {showCodeStudio && (
           <div
-            className="xl:col-span-5 rounded-2xl border shadow-2xl flex flex-col overflow-hidden"
+            className="lg:col-span-6 rounded-2xl border shadow-2xl flex flex-col overflow-hidden"
             style={{
               background:
                 'linear-gradient(165deg, #090f1d 0%, #0d1629 100%)',
-              borderColor: 'rgba(99, 102, 241, 0.32)',
+              borderColor: 'rgba(99, 102, 241, 0.34)',
             }}
           >
             {/* 顶部控制栏：标题 + 语言切换 (Java/Python/C++) + 一键载入 IDE */}
-            <div className="px-3.5 py-2.5 border-b border-white/10 bg-slate-950/70 flex flex-wrap items-center justify-between gap-2">
+            <div className="px-3.5 py-2.5 border-b border-white/10 bg-slate-950/75 flex flex-wrap items-center justify-between gap-2">
               <div className="flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-                <span className="text-xs font-bold text-slate-100">
+                <span className="text-xs sm:text-[13px] font-bold text-slate-100">
                   ⚡ 同步代码推演动画
                 </span>
                 <span
@@ -380,7 +430,7 @@ export default function AlgorithmVisualizer({
                       key={lang}
                       type="button"
                       onClick={() => setCodeLang(lang)}
-                      className={`px-2 py-0.5 rounded-md text-[10px] font-mono font-bold uppercase transition-all ${
+                      className={`px-2.5 py-0.5 rounded-md text-[10.5px] font-mono font-bold uppercase transition-all ${
                         codeLang === lang
                           ? 'bg-indigo-600 text-white shadow'
                           : 'text-slate-400 hover:text-slate-200'
@@ -397,7 +447,7 @@ export default function AlgorithmVisualizer({
                     onClick={() =>
                       onOpenInEditor(codeTrace.runnableCode, 'java')
                     }
-                    className="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-gradient-to-r from-indigo-600 to-sky-500 text-white hover:brightness-110 transition-all shadow-sm"
+                    className="px-2.5 py-1 rounded-lg text-[10.5px] font-bold bg-gradient-to-r from-indigo-600 to-sky-500 text-white hover:brightness-110 transition-all shadow-sm"
                     title="将当前算法完整可运行代码载入极客代码工坊 IDE 编译运行"
                   >
                     🚀 载入 IDE 运行
@@ -406,26 +456,31 @@ export default function AlgorithmVisualizer({
               </div>
             </div>
 
-            {/* 中部：逐行高亮滚动源码视窗 */}
+            {/* 中部：完整平铺源码视窗（零横向滚动条 + 智能悬挂折行 + 行尾内联实时变量） */}
             <div
               ref={codeContainerRef}
-              className="flex-1 max-h-[295px] sm:max-h-[315px] overflow-y-auto font-mono text-[11.5px] leading-[1.65] py-2 select-text custom-scrollbar"
+              className="flex-1 flex flex-col justify-center font-mono text-[12px] sm:text-[12.5px] leading-[1.65] py-2.5 select-text overflow-x-hidden"
             >
               {codeTrace.lines.map((lineText, idx) => {
                 const lineNum = idx + 1;
                 const isActive = codeTrace.activeLines.includes(lineNum);
+                const isFirstActive = codeTrace.activeLines[0] === lineNum;
+                const leadingSpaces = lineText.match(/^\s*/)?.[0].length || 0;
+                const trimmedCode = lineText.trimStart();
+                const indentRem = Math.min(leadingSpaces * 0.46, 5.5);
+
                 return (
                   <div
                     key={lineNum}
                     data-code-line={lineNum}
-                    className={`relative flex items-center px-3 py-0.5 transition-all duration-300 ${
+                    className={`relative flex items-start px-3 py-0.5 transition-all duration-300 border-l-2 ${
                       isActive
-                        ? 'bg-gradient-to-r from-indigo-500/30 via-sky-500/20 to-transparent text-white font-semibold'
-                        : 'text-slate-300/85 hover:bg-white/[0.03]'
+                        ? 'bg-gradient-to-r from-indigo-500/30 via-sky-500/18 to-transparent text-white font-semibold border-sky-400'
+                        : 'text-slate-300/90 hover:bg-white/[0.03] border-transparent'
                     }`}
                   >
-                    {/* 左侧荧光聚光灯竖条 + 动态执行指针箭头 */}
-                    <div className="w-6 shrink-0 flex items-center justify-start">
+                    {/* 左侧行号与动态执行指针箭头 */}
+                    <div className="w-6 shrink-0 flex items-center justify-start pt-[1px] select-none">
                       {isActive ? (
                         <span
                           className="text-xs font-bold animate-pulse"
@@ -434,28 +489,38 @@ export default function AlgorithmVisualizer({
                           ▶
                         </span>
                       ) : (
-                        <span className="text-[10px] text-slate-600">
+                        <span className="text-[10.5px] text-slate-500">
                           {String(lineNum).padStart(2, '0')}
                         </span>
                       )}
                     </div>
 
-                    {/* 代码文本内容 */}
-                    <pre className="flex-1 overflow-x-auto whitespace-pre font-mono">
-                      {lineText}
-                    </pre>
+                    {/* 代码文本内容：彻底移除单行 overflow-x-auto，采用悬挂缩进软折行保证 100% 完整展示 */}
+                    <div
+                      className="flex-1 min-w-0 whitespace-pre-wrap break-words font-mono"
+                      style={{
+                        paddingLeft: `${indentRem}rem`,
+                      }}
+                    >
+                      <span>{trimmedCode || ' '}</span>
+                      {isFirstActive && inlineActiveVarSummary && (
+                        <span className="ml-2.5 inline-flex items-center px-1.5 py-0.2 rounded bg-sky-500/15 border border-sky-400/30 text-[10.5px] font-mono font-normal text-sky-300 align-baseline">
+                          // {inlineActiveVarSummary}
+                        </span>
+                      )}
+                    </div>
 
                     {/* 右侧当前执行行动态徽标 */}
                     {isActive && (
                       <span
-                        className="ml-2 px-1.5 py-0.2 rounded text-[9px] font-mono font-bold shrink-0 border animate-pulse"
+                        className="ml-2 px-1.5 py-0.2 rounded text-[9.5px] font-mono font-bold shrink-0 border mt-[2px]"
                         style={{
                           color: codeTrace.phaseColor,
                           borderColor: `${codeTrace.phaseColor}66`,
                           backgroundColor: `${codeTrace.phaseColor}20`,
                         }}
                       >
-                        LINE {lineNum}
+                        L{lineNum}
                       </span>
                     )}
                   </div>
@@ -475,7 +540,7 @@ export default function AlgorithmVisualizer({
                 </span>
               </div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
                 {codeTrace.variables.map((v, i) => (
                   <div
                     key={i}
@@ -485,7 +550,7 @@ export default function AlgorithmVisualizer({
                         : 'bg-slate-900/90 border-white/10 text-slate-300'
                     }`}
                   >
-                    <div className="text-[9px] text-slate-400 truncate">
+                    <div className="text-[9.5px] text-slate-400 truncate">
                       {v.name}
                     </div>
                     <div

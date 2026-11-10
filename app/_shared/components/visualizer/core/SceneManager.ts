@@ -152,7 +152,13 @@ export class SceneManager {
   }
 
   private updateCameraFromSpherical() {
-    const offset = new THREE.Vector3().setFromSpherical(this.spherical);
+    const aspect = this.camera.aspect || 1.5;
+    // 当分屏模式下 3D 画布宽高比变窄时，自动微调视距以保证横向柱体/节点完整呈现在画面中央
+    const aspectCompensation =
+      aspect < 1.32 ? Math.min(1.22, 1.32 / Math.max(aspect, 0.78)) : 1.0;
+    const effectiveSpherical = this.spherical.clone();
+    effectiveSpherical.radius *= aspectCompensation;
+    const offset = new THREE.Vector3().setFromSpherical(effectiveSpherical);
     this.camera.position.copy(this.target).add(offset);
     this.camera.lookAt(this.target);
   }
