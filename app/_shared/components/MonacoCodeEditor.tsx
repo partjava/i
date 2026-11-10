@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useEffect, useMemo } from 'react';
+import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { Select, message, Tooltip, Spin } from 'antd';
 import dynamic from 'next/dynamic';
 import {
@@ -315,6 +315,7 @@ export default function MonacoCodeEditor({
   const [input, setInput] = useState<string>('');
   const [theme, setTheme] = useState<'vs-dark' | 'light'>('vs-dark');
   const [rightTab, setRightTab] = useState<'console' | 'trace'>('console');
+  const [tracePlaySignal, setTracePlaySignal] = useState<number>(0);
   const [isStdinOpen, setIsStdinOpen] = useState<boolean>(false);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -353,9 +354,16 @@ export default function MonacoCodeEditor({
     };
   }, [editorLoaded]);
 
+  const handleTriggerRun = () => {
+    if (rightTab === 'trace') {
+      setTracePlaySignal(prev => prev + 1);
+    }
+    void runCode();
+  };
+
   // 快捷键支持
-  const runCodeRef = useRef(runCode);
-  runCodeRef.current = runCode;
+  const runCodeRef = useRef(handleTriggerRun);
+  runCodeRef.current = handleTriggerRun;
 
   const currentLangConfig = useMemo(() => {
     return (
@@ -457,7 +465,7 @@ export default function MonacoCodeEditor({
   };
 
   // 高亮指定行
-  const handleHighlightLine = (line: number) => {
+  const handleHighlightLine = useCallback((line: number) => {
     if (!editorRef.current || !line) return;
     try {
       editorRef.current.revealLineInCenter(line);
@@ -479,7 +487,7 @@ export default function MonacoCodeEditor({
         ]
       );
     } catch {}
-  };
+  }, []);
 
   // 复制代码
   const copyCode = async () => {
@@ -745,7 +753,7 @@ ${output ? `### 终端运行输出\n\`\`\`\n${output}\n\`\`\`\n` : ''}
           {/* 主运行按钮（霓虹翠绿流光态） */}
           <button
             type="button"
-            onClick={runCode}
+            onClick={handleTriggerRun}
             disabled={isRunning || !code.trim()}
             className={`relative group px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-xl text-xs sm:text-sm font-bold text-white transition-all duration-200 flex items-center gap-2 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed ${
               isRunning
@@ -1173,10 +1181,11 @@ ${output ? `### 终端运行输出\n\`\`\`\n${output}\n\`\`\`\n` : ''}
               <VisualExecutionTracePlayer
                 currentCode={code}
                 language={language}
+                playSignal={tracePlaySignal}
                 onLoadScenarioCode={(newCode) => {
                   setCode(newCode);
                   setLanguage('java');
-                  message.success('已载入经典算法代码并生成可视化步骤');
+                  message.success('已载入经典算法代码并启动 JVM 栈帧回放');
                 }}
                 onHighlightLine={handleHighlightLine}
               />

@@ -44,7 +44,7 @@ export const CLASSIC_TRACE_SCENARIOS: TraceScenario[] = [
     language: 'java',
     category: '双指针与查找',
     description: '演示经典双指针 left、right 与中点 mid 在有序数组中逼近目标值 11 的执行过程。',
-    code: `public class BinarySearchVisual {
+    code: `public class Main {
     public static int search(int[] arr, int target) {
         int left = 0;
         int right = arr.length - 1;
@@ -215,7 +215,7 @@ export const CLASSIC_TRACE_SCENARIOS: TraceScenario[] = [
     language: 'java',
     category: '经典排序',
     description: '演示双重循环下相邻元素比对、临时变量 temp 暂存以及就地交换的内存演变。',
-    code: `public class BubbleSortVisual {
+    code: `public class Main {
     public static void bubbleSort(int[] arr) {
         int n = arr.length;
         for (int i = 0; i < n - 1; i++) {
@@ -384,7 +384,7 @@ export const CLASSIC_TRACE_SCENARIOS: TraceScenario[] = [
     language: 'java',
     category: '递归与调用栈',
     description: '通过斐波那契数列 fib(4) 展示 JVM 线程调用栈帧的逐层压入 (Push) 与返回弹出 (Pop)。',
-    code: `public class RecursionStackVisual {
+    code: `public class Main {
     public static int fib(int n) {
         if (n <= 1) {
             return n; // 递归基
@@ -533,7 +533,7 @@ export const CLASSIC_TRACE_SCENARIOS: TraceScenario[] = [
     language: 'java',
     category: '动态规划',
     description: '演示爬楼梯问题中状态转移方程 dp[i] = dp[i-1] + dp[i-2] 状态表从前至后的状态推导。',
-    code: `public class DPClimbingStairs {
+    code: `public class Main {
     public static int climbStairs(int n) {
         int[] dp = new int[n + 1];
         dp[0] = 1;

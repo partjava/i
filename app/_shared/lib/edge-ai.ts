@@ -1,17 +1,16 @@
 /**
- * 端侧 AI（Transformers.js）— 浏览器内语义缓存
+ * 端侧 AI 语义向量缓存引擎（Browser-Native Semantic Embedding & Cache）
  * ============================================================
- * 端云协同设计：在浏览器本地跑多语言 embedding 模型，把最近的
- * 问答对向量化缓存；新问题先做端侧余弦匹配，命中即离线秒回，
- * 未命中再走云端 Agent。全部推理在浏览器完成（WebGPU/WASM），
- * 首次启用时从 HuggingFace CDN 拉取模型（约 120MB，q8 量化）。
- *
- * 模型：Xenova/multilingual-e5-small（384 维，中英文均可）
+ * 端云协同设计：在浏览器本地运行零外部网络阻塞的 384 维多语言字符/词元
+ * N-Gram 语义特征哈希编码器（L2 归一化），将最近的问答对向量化缓存；
+ * 新问题先在浏览器端侧做余弦相似度匹配，命中即离线毫秒级秒回，
+ * 未命中则无缝流式请求云端 Agent（彻底杜绝 HuggingFace CDN 在国内网络超时卡死对话的问题）。
  * ============================================================
  */
 
 const CACHE_KEY = 'partjava-edge-qa-cache-v2';
 const MAX_CACHE_ENTRIES = 30;
+const EMBEDDING_DIM = 384;
 export const SEMANTIC_MATCH_THRESHOLD = 0.82;
 
 export interface EdgeCacheEntry {
@@ -22,43 +21,94 @@ export interface EdgeCacheEntry {
   scope: string;
 }
 
-let embedderPromise: Promise<any> | null = null;
+/**
+ * 计算文本的 384 维 L2 归一化语义特征向量（融合中文字符 Unigram/Bigram/Trigram 与英文技术词元）
+ */
+function computeLocalSemanticVector(rawText: string): Float32Array {
+  const vec = new Float32Array(EMBEDDING_DIM);
+  const clean = String(rawText || '')
+    .toLowerCase()
+    .replace(/^query:\s*/i, '')
+    .replace(/[^\u4e00-\u9fa5a-z0-9+#._-]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 512);
 
-/** 懒加载 Transformers.js feature-extraction pipeline（仅首次调用时下载） */
-export async function getEmbedder(onProgress?: (pct: number) => void): Promise<any> {
-  if (!embedderPromise) {
-    embedderPromise = (async () => {
-      // @ts-ignore
-      const { pipeline, env } = await import(/* webpackIgnore: true */ 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.3.3');
-      env.allowLocalModels = false;
-      const embedder = await pipeline('feature-extraction', 'Xenova/multilingual-e5-small', {
-        dtype: 'q8',
-        progress_callback: (info: any) => {
-          if (info?.status === 'progress' && typeof info.progress === 'number') {
-            onProgress?.(Math.round(info.progress));
-          }
-        },
-      });
-      return embedder;
-    })().catch((err) => {
-      embedderPromise = null; // 失败后允许重试
-      throw err;
-    });
+  if (!clean) return vec;
+
+  const addFeature = (token: string, weight: number) => {
+    let h1 = 2166136261;
+    let h2 = 16777619;
+    for (let i = 0; i < token.length; i++) {
+      const c = token.charCodeAt(i);
+      h1 ^= c;
+      h1 = Math.imul(h1, 16777619);
+      h2 ^= c * 31 + i;
+      h2 = Math.imul(h2, 1099511627);
+    }
+    const idx = Math.abs(h1) % EMBEDDING_DIM;
+    const sign = (h2 & 1) === 0 ? 1 : -1;
+    vec[idx] += sign * weight;
+  };
+
+  // 1) 英文/数字技术词元特征
+  const words = clean.split(' ').filter(Boolean);
+  for (let i = 0; i < words.length; i++) {
+    const w = words[i];
+    addFeature(`w:${w}`, 1.8);
+    if (i + 1 < words.length) {
+      addFeature(`wb:${w}_${words[i + 1]}`, 2.2);
+    }
   }
-  return embedderPromise;
+
+  // 2) 连续字符 Unigram / Bigram / Trigram 特征（适配中文自然语言提问）
+  const compact = clean.replace(/\s+/g, '');
+  for (let i = 0; i < compact.length; i++) {
+    addFeature(`c1:${compact[i]}`, 1.0);
+    if (i + 1 < compact.length) {
+      addFeature(`c2:${compact.slice(i, i + 2)}`, 1.75);
+    }
+    if (i + 2 < compact.length) {
+      addFeature(`c3:${compact.slice(i, i + 3)}`, 2.1);
+    }
+  }
+
+  // 3) L2 归一化
+  let normSq = 0;
+  for (let i = 0; i < EMBEDDING_DIM; i++) {
+    normSq += vec[i] * vec[i];
+  }
+  if (normSq > 1e-12) {
+    const invNorm = 1.0 / Math.sqrt(normSq);
+    for (let i = 0; i < EMBEDDING_DIM; i++) {
+      vec[i] *= invNorm;
+    }
+  }
+
+  return vec;
+}
+
+/** 获取浏览器本地特征提取器（零外部 CDN 阻塞，瞬时就绪） */
+export async function getEmbedder(onProgress?: (pct: number) => void): Promise<(input: string) => Promise<{ data: Float32Array }>> {
+  onProgress?.(100);
+  return async (input: string) => ({
+    data: computeLocalSemanticVector(input),
+  });
 }
 
 /** 文本 → 384 维归一化向量；失败返回 null（端侧不可用时静默走云端） */
 export async function embedText(text: string, onProgress?: (pct: number) => void): Promise<Float32Array | null> {
   try {
-    const embedder = await getEmbedder(onProgress);
-    const input = `query: ${String(text || '').slice(0, 512)}`;
-    const output = await embedder(input, { pooling: 'mean', normalize: true });
-    const data = output?.data;
-    if (data && typeof data.length === 'number') {
-      return data instanceof Float32Array ? data : new Float32Array(data);
+    onProgress?.(100);
+    const vec = computeLocalSemanticVector(text);
+    let nonZero = false;
+    for (let i = 0; i < vec.length; i++) {
+      if (vec[i] !== 0) {
+        nonZero = true;
+        break;
+      }
     }
-    return null;
+    return nonZero ? vec : null;
   } catch {
     return null;
   }

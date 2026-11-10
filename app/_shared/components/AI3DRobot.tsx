@@ -807,7 +807,8 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
   enableWebSearchProxyRef.current = enableWebSearch;
 
   // 用户输入活动（驱动猫看输入框）
-  const handleInputChange = useCallback(() => {
+  const handleInputChange = useCallback((val: string) => {
+    setInputValue(val);
     setUserTyping(true);
     if (userTypingTimerRef.current) clearTimeout(userTypingTimerRef.current);
     userTypingTimerRef.current = setTimeout(() => setUserTyping(false), 2200);

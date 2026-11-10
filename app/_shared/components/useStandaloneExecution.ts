@@ -32,9 +32,13 @@ export function useStandaloneExecution(code: string, language: string, input: st
       setOutput(`${executionLabel('REQUEST_TIMEOUT')}\n服务端任务可能仍在运行。`);
     }, 60000);
     try {
+      const normalizedCode =
+        language === 'java'
+          ? code.replace(/\bpublic\s+class\s+(?!Main\b)[A-Za-z_]\w*/, 'public class Main')
+          : code;
       const response = await fetch('/api/execute-code', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code, language, input }), signal: request.signal,
+        body: JSON.stringify({ code: normalizedCode, language, input }), signal: request.signal,
       });
       const result = await readExecutionResponse(response);
       if (!requests.current.isCurrent(request)) return;

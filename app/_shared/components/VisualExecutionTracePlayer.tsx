@@ -23,6 +23,7 @@ import {
 interface VisualExecutionTracePlayerProps {
   currentCode: string;
   language: string;
+  playSignal?: number;
   onLoadScenarioCode?: (code: string) => void;
   onHighlightLine?: (line: number) => void;
 }
@@ -30,21 +31,57 @@ interface VisualExecutionTracePlayerProps {
 export default function VisualExecutionTracePlayer({
   currentCode,
   language,
+  playSignal = 0,
   onLoadScenarioCode,
   onHighlightLine,
 }: VisualExecutionTracePlayerProps) {
   const [selectedScenarioId, setSelectedScenarioId] = useState<string>('binary-search');
   const [activeScenario, setActiveScenario] = useState<TraceScenario>(CLASSIC_TRACE_SCENARIOS[0]);
   const [stepIndex, setStepIndex] = useState(0);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [speedMs, setSpeedMs] = useState(1000); // 1秒/步
+  const [isPlaying, setIsPlaying] = useState(true);
+  const [speedMs, setSpeedMs] = useState(900); // 0.9秒/步
 
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const didInitRef = useRef(false);
 
-  // 切换经典算法模板
+  // 首次打开 JVM 栈帧面板时，若左侧还是简短默认模板，自动载入当前演示算法代码并开始播放
+  useEffect(() => {
+    if (didInitRef.current) return;
+    didInitRef.current = true;
+    if (currentCode.split('\n').length <= 8 && onLoadScenarioCode) {
+      onLoadScenarioCode(CLASSIC_TRACE_SCENARIOS[0].code);
+    }
+  }, [currentCode, onLoadScenarioCode]);
+
+  // 响应顶部「运行代码」按钮触发：自动从头开始回放当前场景或当前代码
+  useEffect(() => {
+    if (!playSignal) return;
+    const matched = CLASSIC_TRACE_SCENARIOS.find(
+      s => s.code.trim() === currentCode.trim()
+    );
+    if (matched) {
+      setSelectedScenarioId(matched.id);
+      setActiveScenario(matched);
+    } else {
+      const steps = generateAdHocTraceFromCode(currentCode, language);
+      setSelectedScenarioId('current-code');
+      setActiveScenario({
+        id: 'current-code',
+        title: '当前编辑器代码实时推演',
+        language,
+        category: '用户自定义',
+        description: '基于当前编辑器编写的代码进行内存变量与执行帧逐帧演化追踪。',
+        code: currentCode,
+        steps,
+      });
+    }
+    setStepIndex(0);
+    setIsPlaying(true);
+  }, [playSignal]);
+
+  // 切换经典算法模板（载入代码并立即自动启动逐帧回放）
   const handleSelectScenario = (scenarioId: string) => {
     setSelectedScenarioId(scenarioId);
-    setIsPlaying(false);
     if (scenarioId === 'current-code') {
       const steps = generateAdHocTraceFromCode(currentCode, language);
       setActiveScenario({
@@ -57,6 +94,7 @@ export default function VisualExecutionTracePlayer({
         steps,
       });
       setStepIndex(0);
+      setIsPlaying(true);
     } else {
       const found = CLASSIC_TRACE_SCENARIOS.find(s => s.id === scenarioId);
       if (found) {
@@ -65,6 +103,7 @@ export default function VisualExecutionTracePlayer({
         if (onLoadScenarioCode) {
           onLoadScenarioCode(found.code);
         }
+        setIsPlaying(true);
       }
     }
   };
@@ -166,7 +205,12 @@ export default function VisualExecutionTracePlayer({
             <SkipBack className="w-3.5 h-3.5" />
           </button>
           <button
-            onClick={() => setIsPlaying(!isPlaying)}
+            onClick={() => {
+              if (!isPlaying && stepIndex >= activeScenario.steps.length - 1) {
+                setStepIndex(0);
+              }
+              setIsPlaying(!isPlaying);
+            }}
             className="px-3 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs flex items-center gap-1 transition shadow-md shadow-indigo-600/30"
           >
             {isPlaying ? (
