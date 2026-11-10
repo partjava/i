@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import MonacoCodeEditor from '../../_shared/components/MonacoCodeEditor';
 import StudyTimeTracker from '../../_shared/components/StudyTimeTracker';
 import AlgorithmVisualizer, {
@@ -9,6 +10,7 @@ import AlgorithmVisualizer, {
   ALGORITHM_REGISTRY,
   getAlgorithmMeta,
 } from '../../_shared/components/AlgorithmVisualizer';
+import MathFormulaBox from '../../_shared/components/visualizer/MathFormulaBox';
 import {
   Terminal,
   Cpu,
@@ -19,6 +21,7 @@ import {
   Code2,
   Box,
   Compass,
+  Network,
 } from 'lucide-react';
 
 export default function CodeEditorPage() {
@@ -28,6 +31,8 @@ export default function CodeEditorPage() {
   const [inputData, setInputData] = useState('5,3,8,4,2,7,1,6');
   const [data, setData] = useState([5, 3, 8, 4, 2, 7, 1, 6]);
   const [speed, setSpeed] = useState(900);
+  const [injectedCode, setInjectedCode] = useState<string | undefined>(undefined);
+  const [injectedLang, setInjectedLang] = useState<string>('java');
 
   const currentAlgorithm = getAlgorithmMeta(selectedAlgorithm);
   const filteredAlgorithms =
@@ -111,8 +116,15 @@ export default function CodeEditorPage() {
             </span>
             <span className="px-2.5 py-1 rounded-xl bg-white border border-slate-200/90 shadow-sm flex items-center gap-1.5">
               <Compass className="w-3.5 h-3.5 text-indigo-600" />
-              <span>31 种 3D 算法流形</span>
+              <span>31 种 3D 算法流形 + 同步代码动画</span>
             </span>
+            <Link
+              href="/knowledge-graph"
+              className="px-2.5 py-1 rounded-xl bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-700 shadow-sm flex items-center gap-1.5 transition-all"
+            >
+              <Network className="w-3.5 h-3.5 text-indigo-600" />
+              <span>🌐 全栈知识图谱 →</span>
+            </Link>
           </div>
         </div>
 
@@ -182,7 +194,11 @@ export default function CodeEditorPage() {
             </div>
 
             {/* Monaco 编辑器暗黑专业视窗（全宽主画布） */}
-            <MonacoCodeEditor height="700px" />
+            <MonacoCodeEditor
+              height="700px"
+              externalCode={injectedCode}
+              externalLanguage={injectedLang}
+            />
           </div>
         )}
 
@@ -396,6 +412,11 @@ export default function CodeEditorPage() {
                   algorithm={selectedAlgorithm}
                   data={data}
                   speed={speed}
+                  onOpenInEditor={(codeToLoad, langToLoad) => {
+                    setInjectedCode(codeToLoad);
+                    setInjectedLang(langToLoad);
+                    setActiveTab('editor');
+                  }}
                 />
 
                 {/* 算法深度理论与数学建模矩阵 */}
@@ -409,34 +430,39 @@ export default function CodeEditorPage() {
                   <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-white/10">
                     <h3 className="text-sm sm:text-base font-bold text-indigo-200 flex items-center gap-2">
                       <span>📐</span>
-                      <span>深度数学原理与四层结构剖析</span>
+                      <span>深度数学原理与四层结构剖析（KaTeX 高清公式排版）</span>
                     </h3>
                     <span className="text-xs font-mono px-2.5 py-0.5 rounded-full bg-sky-500/15 text-sky-300 border border-sky-400/30">
                       {currentAlgorithm.complexity}
                     </span>
                   </div>
 
-                  {/* 核心数学方程与核心机制 */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <div className="p-3.5 rounded-xl bg-slate-950/70 border border-indigo-500/25">
-                      <div className="text-xs font-bold text-sky-400 mb-1 flex items-center gap-1.5">
+                  {/* 核心数学方程（全宽高清 KaTeX 公式与符号释义卡片） */}
+                  <div className="p-4 rounded-xl bg-slate-950/80 border border-sky-500/30 shadow-lg">
+                    <div className="text-xs font-bold text-sky-400 mb-2.5 flex items-center justify-between">
+                      <span className="flex items-center gap-1.5">
                         <span>🧮</span>
-                        <span>核心数学方程 / 状态不变式</span>
-                      </div>
-                      <p className="text-xs sm:text-sm font-mono text-slate-100 leading-relaxed">
-                        {currentAlgorithm.mathFormula}
-                      </p>
+                        <span>核心数学方程 / 状态不变式与符号释义</span>
+                      </span>
+                      <span className="text-[10px] font-mono text-indigo-300 bg-indigo-500/15 px-2 py-0.5 rounded border border-indigo-400/25">
+                        KaTeX Mathematical Engine
+                      </span>
                     </div>
+                    <MathFormulaBox
+                      algorithmId={selectedAlgorithm}
+                      fallbackText={currentAlgorithm.mathFormula}
+                    />
+                  </div>
 
-                    <div className="p-3.5 rounded-xl bg-slate-950/70 border border-indigo-500/25">
-                      <div className="text-xs font-bold text-indigo-400 mb-1 flex items-center gap-1.5">
-                        <span>🌌</span>
-                        <span>三维几何与空间映射原理</span>
-                      </div>
-                      <p className="text-xs sm:text-sm text-slate-200 leading-relaxed">
-                        {currentAlgorithm.principle}
-                      </p>
+                  {/* 三维几何与空间映射原理 */}
+                  <div className="p-3.5 rounded-xl bg-slate-950/70 border border-indigo-500/25">
+                    <div className="text-xs font-bold text-indigo-400 mb-1 flex items-center gap-1.5">
+                      <span>🌌</span>
+                      <span>三维几何与空间映射原理</span>
                     </div>
+                    <p className="text-xs sm:text-sm text-slate-200 leading-relaxed">
+                      {currentAlgorithm.principle}
+                    </p>
                   </div>
 
                   {/* 四层深度理论递进拆解 */}

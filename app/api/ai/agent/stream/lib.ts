@@ -76,7 +76,8 @@ export interface SiteLinkResult {
 export function buildAllSiteRoutes(): SiteRouteItem[] {
   const routes: SiteRouteItem[] = [
     { category: '核心功能', subject: '星际编程闯关', name: '编程挑战与题库闯关', href: '/challenges', keywords: '挑战 刷题 题库 闯关 排行榜 练习 编程题' },
-    { category: '核心功能', subject: '在线代码沙箱', name: '多语言在线代码编辑器', href: '/code/editor', keywords: '代码 编辑器 运行 编译 在线编程 沙箱 ide' },
+    { category: '核心功能', subject: '在线代码沙箱', name: '多语言在线代码编辑器与3D算法推演', href: '/code/editor', keywords: '代码 编辑器 运行 编译 在线编程 沙箱 ide 3d算法 可视化' },
+    { category: '核心功能', subject: '全栈知识图谱', name: '全栈知识星系图谱与进阶路线', href: '/knowledge-graph', keywords: '知识图谱 图谱 学习路线 知识库 星系 体系 导图' },
     { category: '核心功能', subject: '随堂笔记中心', name: '学习笔记广场与我的笔记', href: '/notes', keywords: '笔记 markdown 记录 总结 收藏 公开笔记' },
     { category: '核心功能', subject: '3D算法可视化', name: '3D 交互式算法实验室', href: '/study/computer/ds/basic', keywords: '3d算法 可视化 红黑树 排序 图论 链表 二叉树 动画' },
     { category: '核心功能', subject: '极客解压游戏', name: '趣味编程小游戏中心', href: '/tools/game', keywords: '游戏 放松 解压 贪吃蛇 2048' },

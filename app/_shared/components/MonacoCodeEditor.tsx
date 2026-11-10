@@ -49,6 +49,8 @@ import { emitPetCompanionEvent } from '@shared/lib/pet-companion-bus';
 interface MonacoCodeEditorProps {
   className?: string;
   height?: string;
+  externalCode?: string;
+  externalLanguage?: string;
 }
 
 // Monaco 语言映射
@@ -309,9 +311,20 @@ class Program {
 export default function MonacoCodeEditor({
   className = '',
   height = '680px',
+  externalCode,
+  externalLanguage,
 }: MonacoCodeEditorProps) {
-  const [language, setLanguage] = useState<string>('java');
-  const [code, setCode] = useState<string>(codeTemplates.java['hello-world']);
+  const [language, setLanguage] = useState<string>(externalLanguage || 'java');
+  const [code, setCode] = useState<string>(externalCode || codeTemplates.java['hello-world']);
+
+  useEffect(() => {
+    if (externalCode) {
+      setCode(externalCode);
+    }
+    if (externalLanguage) {
+      setLanguage(externalLanguage);
+    }
+  }, [externalCode, externalLanguage]);
   const [input, setInput] = useState<string>('');
   const [theme, setTheme] = useState<'vs-dark' | 'light'>('vs-dark');
   const [rightTab, setRightTab] = useState<'console' | 'trace'>('console');

@@ -20,6 +20,11 @@ export interface LegendItem {
   glow?: boolean;
 }
 
+export interface FormulaSymbolItem {
+  sym: string;
+  desc: string;
+}
+
 export interface AlgorithmMeta {
   id: string;
   name: string;
@@ -31,6 +36,8 @@ export interface AlgorithmMeta {
   legends: LegendItem[];
   complexity: string;
   mathFormula: string;
+  latexFormula?: string;
+  formulaSymbols?: FormulaSymbolItem[];
   principle: string;
   deepLayers: string[];
   implementation: string;
@@ -41,6 +48,7 @@ export interface VisualizationStep {
   type: string;
   description: string;
   metrics?: Record<string, string | number>;
+  codeLine?: number;
   [key: string]: any;
 }
 
@@ -48,4 +56,5 @@ export interface AlgorithmVisualizerProps {
   algorithm: string;
   data: number[];
   speed?: number;
+  onOpenInEditor?: (code: string, lang: 'java' | 'python' | 'cpp') => void;
 }

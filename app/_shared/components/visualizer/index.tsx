@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { AlgorithmVisualizerProps, VisualizationStep } from './types';
 import { getAlgorithmMeta } from './registry';
 import { SceneManager } from './core/SceneManager';
@@ -17,6 +17,8 @@ import {
   generateMachineLearningSteps,
   renderMachineLearning,
 } from './modules/machineLearning';
+import { CodeLanguage, resolveStepCodeTrace } from './codeTraceMap';
+import MathFormulaBox from './MathFormulaBox';
 
 function generateStepsForAlgorithm(
   algorithm: string,
@@ -68,14 +70,19 @@ export default function AlgorithmVisualizer({
   algorithm,
   data,
   speed = 1000,
+  onOpenInEditor,
 }: AlgorithmVisualizerProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const [steps, setSteps] = useState<VisualizationStep[]>([]);
   const [autoOrbit, setAutoOrbit] = useState(true);
+  const [showCodeStudio, setShowCodeStudio] = useState(true);
+  const [codeLang, setCodeLang] = useState<CodeLanguage>('java');
+  const [showHudFormula, setShowHudFormula] = useState(true);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const managerRef = useRef<SceneManager | null>(null);
+  const codeContainerRef = useRef<HTMLDivElement>(null);
 
   const meta = getAlgorithmMeta(algorithm);
 
@@ -89,6 +96,16 @@ export default function AlgorithmVisualizer({
       managerRef.current = null;
     };
   }, []);
+
+  // Trigger resize on SceneManager when toggling split code studio
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('resize'));
+      }
+    }, 60);
+    return () => clearTimeout(timer);
+  }, [showCodeStudio]);
 
   // 2. Apply optimal camera preset & generate steps when algorithm or data changes
   useEffect(() => {
@@ -124,6 +141,39 @@ export default function AlgorithmVisualizer({
     return () => clearTimeout(timer);
   }, [isPlaying, currentStep, steps.length, speed]);
 
+  const activeStep = steps[currentStep];
+  const progressPercent =
+    steps.length > 1 ? Math.round((currentStep / (steps.length - 1)) * 100) : 0;
+
+  // 5. Resolve synchronized live code lines & variables for current step
+  const codeTrace = useMemo(
+    () =>
+      resolveStepCodeTrace(
+        algorithm,
+        activeStep,
+        currentStep,
+        steps.length,
+        codeLang
+      ),
+    [algorithm, activeStep, currentStep, steps.length, codeLang]
+  );
+
+  // Smooth scroll active line into view inside the code container
+  useEffect(() => {
+    if (!showCodeStudio || !codeContainerRef.current) return;
+    const targetLine = codeTrace.activeLines[0];
+    if (!targetLine) return;
+    const lineEl = codeContainerRef.current.querySelector(
+      `[data-code-line="${targetLine}"]`
+    ) as HTMLElement | null;
+    if (lineEl) {
+      const container = codeContainerRef.current;
+      const targetScroll =
+        lineEl.offsetTop - container.clientHeight / 2 + lineEl.clientHeight / 2;
+      container.scrollTo({ top: Math.max(0, targetScroll), behavior: 'smooth' });
+    }
+  }, [codeTrace.activeLines, showCodeStudio, codeLang]);
+
   const handlePlayToggle = () => {
     if (isPlaying) {
       setIsPlaying(false);
@@ -143,18 +193,14 @@ export default function AlgorithmVisualizer({
     }
   };
 
-  const activeStep = steps[currentStep];
-  const progressPercent =
-    steps.length > 1 ? Math.round((currentStep / (steps.length - 1)) * 100) : 0;
-
   return (
-    <div className="space-y-3">
-      {/* 顶部算法专属图例栏 + 实时指标徽章 */}
+    <div className="space-y-3.5">
+      {/* 顶部算法专属图例栏 + 视图切换 + 实时指标徽章 */}
       <div
         className="flex flex-wrap items-center justify-between gap-2.5 px-3.5 py-2.5 rounded-xl border text-xs"
         style={{
-          background: 'rgba(15, 23, 42, 0.82)',
-          borderColor: 'rgba(148, 163, 184, 0.16)',
+          background: 'rgba(15, 23, 42, 0.85)',
+          borderColor: 'rgba(148, 163, 184, 0.18)',
         }}
       >
         <div className="flex flex-wrap items-center gap-3.5 text-slate-300">
@@ -172,10 +218,10 @@ export default function AlgorithmVisualizer({
           ))}
         </div>
 
-        {/* 实时遥测指标胶囊 */}
-        {activeStep?.metrics && (
-          <div className="flex flex-wrap items-center gap-2">
-            {Object.entries(activeStep.metrics).map(([k, v]) => (
+        {/* 右侧：实时遥测指标胶囊 + 代码演示舱开关 */}
+        <div className="flex flex-wrap items-center gap-2">
+          {activeStep?.metrics &&
+            Object.entries(activeStep.metrics).map(([k, v]) => (
               <span
                 key={k}
                 className="px-2.5 py-0.5 rounded-md font-mono text-[11px] bg-indigo-500/15 text-indigo-200 border border-indigo-400/25"
@@ -184,68 +230,276 @@ export default function AlgorithmVisualizer({
                 <strong className="text-sky-300">{v}</strong>
               </span>
             ))}
-          </div>
-        )}
-      </div>
 
-      {/* 3D 交互式主画布舞台 */}
-      <div
-        className="relative rounded-2xl overflow-hidden border shadow-2xl select-none"
-        style={{
-          background:
-            'radial-gradient(circle at 50% 32%, #131f3a 0%, #070c18 100%)',
-          borderColor: 'rgba(99, 102, 241, 0.28)',
-        }}
-      >
-        <canvas
-          ref={canvasRef}
-          className="w-full h-[380px] sm:h-[460px] md:h-[520px] block cursor-grab active:cursor-grabbing"
-        />
-
-        {/* 右上角 3D 摄像机交互悬浮工具条 */}
-        <div className="absolute top-3 right-3 flex items-center gap-1.5 bg-slate-950/75 backdrop-blur-md border border-white/10 rounded-xl p-1.5 shadow-lg">
           <button
-            onClick={handleToggleAutoOrbit}
-            title="开启/关闭镜头自动环绕"
-            className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${
-              autoOrbit
-                ? 'bg-sky-500/25 text-sky-300 border border-sky-400/40'
-                : 'text-slate-400 hover:text-white hover:bg-white/10'
+            type="button"
+            onClick={() => setShowCodeStudio((v) => !v)}
+            className={`px-2.5 py-1 rounded-lg font-mono text-[11px] font-bold border transition-all flex items-center gap-1.5 ${
+              showCodeStudio
+                ? 'bg-emerald-500/20 text-emerald-300 border-emerald-400/40 shadow-[0_0_12px_rgba(16,185,129,0.2)]'
+                : 'bg-slate-800/80 text-slate-300 border-white/10 hover:bg-slate-700'
             }`}
           >
-            {autoOrbit ? '🔄 环绕中' : '⏸️ 固定视角'}
+            <span>{showCodeStudio ? '⚡ 同步代码演示: 开启' : '💻 开启代码演示动画'}</span>
           </button>
-          <button
-            onClick={() => managerRef.current?.zoomBy(0.85)}
-            title="拉近镜头"
-            className="w-7 h-7 rounded-lg text-xs text-slate-300 hover:text-white hover:bg-white/10 flex items-center justify-center transition-all"
-          >
-            ➕
-          </button>
-          <button
-            onClick={() => managerRef.current?.zoomBy(1.18)}
-            title="拉远镜头"
-            className="w-7 h-7 rounded-lg text-xs text-slate-300 hover:text-white hover:bg-white/10 flex items-center justify-center transition-all"
-          >
-            ➖
-          </button>
-          <button
-            onClick={() => managerRef.current?.resetCamera()}
-            title="复位当前算法最佳视角"
-            className="px-2.5 py-1 rounded-lg text-xs font-medium text-indigo-200 bg-indigo-500/20 hover:bg-indigo-500/35 border border-indigo-400/30 transition-all"
-          >
-            🎥 复位视角
-          </button>
+        </div>
+      </div>
+
+      {/* 主体核心区：3D 交互式主画布舞台 + 右侧同步代码演示与变量追踪舱 */}
+      <div
+        className={`grid grid-cols-1 ${
+          showCodeStudio ? 'xl:grid-cols-12' : ''
+        } gap-3.5 items-stretch`}
+      >
+        {/* 左侧：3D 交互式主画布舞台 */}
+        <div
+          className={`${
+            showCodeStudio ? 'xl:col-span-7' : 'w-full'
+          } relative rounded-2xl overflow-hidden border shadow-2xl select-none flex flex-col`}
+          style={{
+            background:
+              'radial-gradient(circle at 50% 32%, #131f3a 0%, #070c18 100%)',
+            borderColor: 'rgba(99, 102, 241, 0.28)',
+          }}
+        >
+          <canvas
+            ref={canvasRef}
+            className="w-full h-[380px] sm:h-[450px] md:h-[500px] block cursor-grab active:cursor-grabbing"
+          />
+
+          {/* 左上角：实时 KaTeX 数学建模公式悬浮胶囊 */}
+          <div className="absolute top-3 left-3 max-w-[62%] sm:max-w-[68%] z-10">
+            {showHudFormula ? (
+              <div className="bg-slate-950/80 backdrop-blur-md border border-sky-500/30 rounded-xl px-3 py-1.5 shadow-lg">
+                <div className="flex items-center justify-between gap-2 mb-0.5">
+                  <span className="text-[10px] font-mono font-bold text-sky-400 flex items-center gap-1">
+                    <span>🧮</span>
+                    <span>核心数学律 (LaTeX)</span>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setShowHudFormula(false)}
+                    className="text-[10px] text-slate-400 hover:text-white px-1"
+                    title="收起公式浮窗"
+                  >
+                    ✕
+                  </button>
+                </div>
+                <MathFormulaBox algorithmId={algorithm} compact={true} />
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setShowHudFormula(true)}
+                className="px-2.5 py-1 rounded-xl bg-slate-950/75 backdrop-blur-md border border-sky-500/30 text-[11px] font-mono text-sky-300 hover:bg-slate-900/90 shadow-lg"
+              >
+                🧮 展开公式 HUD
+              </button>
+            )}
+          </div>
+
+          {/* 右上角 3D 摄像机交互悬浮工具条 */}
+          <div className="absolute top-3 right-3 flex items-center gap-1.5 bg-slate-950/75 backdrop-blur-md border border-white/10 rounded-xl p-1.5 shadow-lg z-10">
+            <button
+              onClick={handleToggleAutoOrbit}
+              title="开启/关闭镜头自动环绕"
+              className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${
+                autoOrbit
+                  ? 'bg-sky-500/25 text-sky-300 border border-sky-400/40'
+                  : 'text-slate-400 hover:text-white hover:bg-white/10'
+              }`}
+            >
+              {autoOrbit ? '🔄 环绕中' : '⏸️ 固定视角'}
+            </button>
+            <button
+              onClick={() => managerRef.current?.zoomBy(0.85)}
+              title="拉近镜头"
+              className="w-7 h-7 rounded-lg text-xs text-slate-300 hover:text-white hover:bg-white/10 flex items-center justify-center transition-all"
+            >
+              ➕
+            </button>
+            <button
+              onClick={() => managerRef.current?.zoomBy(1.18)}
+              title="拉远镜头"
+              className="w-7 h-7 rounded-lg text-xs text-slate-300 hover:text-white hover:bg-white/10 flex items-center justify-center transition-all"
+            >
+              ➖
+            </button>
+            <button
+              onClick={() => managerRef.current?.resetCamera()}
+              title="复位当前算法最佳视角"
+              className="px-2.5 py-1 rounded-lg text-xs font-medium text-indigo-200 bg-indigo-500/20 hover:bg-indigo-500/35 border border-indigo-400/30 transition-all"
+            >
+              🎥 复位
+            </button>
+          </div>
+
+          {/* 左下角交互提示 */}
+          <div className="hidden sm:flex absolute bottom-3 left-3 items-center gap-2 px-3 py-1 rounded-lg bg-slate-950/65 backdrop-blur-md border border-white/10 text-[11px] text-slate-400 pointer-events-none">
+            <span>🖱️ 左键拖拽 360° 旋转</span>
+            <span>·</span>
+            <span>滚轮缩放</span>
+            <span>·</span>
+            <span>右键/Shift 平移</span>
+          </div>
         </div>
 
-        {/* 左下角交互提示 */}
-        <div className="hidden sm:flex absolute bottom-3 left-3 items-center gap-2 px-3 py-1 rounded-lg bg-slate-950/65 backdrop-blur-md border border-white/10 text-[11px] text-slate-400 pointer-events-none">
-          <span>🖱️ 左键拖拽 360° 旋转</span>
-          <span>·</span>
-          <span>滚轮缩放</span>
-          <span>·</span>
-          <span>右键/Shift 平移</span>
-        </div>
+        {/* 右侧：⚡ 实时代码演示动画与帧内变量追踪舱 */}
+        {showCodeStudio && (
+          <div
+            className="xl:col-span-5 rounded-2xl border shadow-2xl flex flex-col overflow-hidden"
+            style={{
+              background:
+                'linear-gradient(165deg, #090f1d 0%, #0d1629 100%)',
+              borderColor: 'rgba(99, 102, 241, 0.32)',
+            }}
+          >
+            {/* 顶部控制栏：标题 + 语言切换 (Java/Python/C++) + 一键载入 IDE */}
+            <div className="px-3.5 py-2.5 border-b border-white/10 bg-slate-950/70 flex flex-wrap items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                <span className="text-xs font-bold text-slate-100">
+                  ⚡ 同步代码推演动画
+                </span>
+                <span
+                  className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold border"
+                  style={{
+                    color: codeTrace.phaseColor,
+                    borderColor: `${codeTrace.phaseColor}55`,
+                    backgroundColor: `${codeTrace.phaseColor}1a`,
+                  }}
+                >
+                  {codeTrace.phaseBadge}
+                </span>
+              </div>
+
+              <div className="flex items-center gap-1.5">
+                <div className="inline-flex rounded-lg bg-slate-900 p-0.5 border border-white/10">
+                  {(['java', 'python', 'cpp'] as CodeLanguage[]).map((lang) => (
+                    <button
+                      key={lang}
+                      type="button"
+                      onClick={() => setCodeLang(lang)}
+                      className={`px-2 py-0.5 rounded-md text-[10px] font-mono font-bold uppercase transition-all ${
+                        codeLang === lang
+                          ? 'bg-indigo-600 text-white shadow'
+                          : 'text-slate-400 hover:text-slate-200'
+                      }`}
+                    >
+                      {lang === 'cpp' ? 'C++' : lang}
+                    </button>
+                  ))}
+                </div>
+
+                {onOpenInEditor && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      onOpenInEditor(codeTrace.runnableCode, 'java')
+                    }
+                    className="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-gradient-to-r from-indigo-600 to-sky-500 text-white hover:brightness-110 transition-all shadow-sm"
+                    title="将当前算法完整可运行代码载入极客代码工坊 IDE 编译运行"
+                  >
+                    🚀 载入 IDE 运行
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* 中部：逐行高亮滚动源码视窗 */}
+            <div
+              ref={codeContainerRef}
+              className="flex-1 max-h-[295px] sm:max-h-[315px] overflow-y-auto font-mono text-[11.5px] leading-[1.65] py-2 select-text custom-scrollbar"
+            >
+              {codeTrace.lines.map((lineText, idx) => {
+                const lineNum = idx + 1;
+                const isActive = codeTrace.activeLines.includes(lineNum);
+                return (
+                  <div
+                    key={lineNum}
+                    data-code-line={lineNum}
+                    className={`relative flex items-center px-3 py-0.5 transition-all duration-300 ${
+                      isActive
+                        ? 'bg-gradient-to-r from-indigo-500/30 via-sky-500/20 to-transparent text-white font-semibold'
+                        : 'text-slate-300/85 hover:bg-white/[0.03]'
+                    }`}
+                  >
+                    {/* 左侧荧光聚光灯竖条 + 动态执行指针箭头 */}
+                    <div className="w-6 shrink-0 flex items-center justify-start">
+                      {isActive ? (
+                        <span
+                          className="text-xs font-bold animate-pulse"
+                          style={{ color: codeTrace.phaseColor }}
+                        >
+                          ▶
+                        </span>
+                      ) : (
+                        <span className="text-[10px] text-slate-600">
+                          {String(lineNum).padStart(2, '0')}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* 代码文本内容 */}
+                    <pre className="flex-1 overflow-x-auto whitespace-pre font-mono">
+                      {lineText}
+                    </pre>
+
+                    {/* 右侧当前执行行动态徽标 */}
+                    {isActive && (
+                      <span
+                        className="ml-2 px-1.5 py-0.2 rounded text-[9px] font-mono font-bold shrink-0 border animate-pulse"
+                        style={{
+                          color: codeTrace.phaseColor,
+                          borderColor: `${codeTrace.phaseColor}66`,
+                          backgroundColor: `${codeTrace.phaseColor}20`,
+                        }}
+                      >
+                        LINE {lineNum}
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* 底部：实时帧内变量与寄存器快照面板 */}
+            <div className="p-3 border-t border-white/10 bg-slate-950/90 space-y-2">
+              <div className="flex items-center justify-between text-[11px]">
+                <span className="font-bold text-indigo-300 flex items-center gap-1.5">
+                  <span>📊</span>
+                  <span>实时帧内变量与状态监视器 (Live Watch)</span>
+                </span>
+                <span className="font-mono text-[10px] text-slate-400">
+                  帧 {currentStep + 1}/{Math.max(steps.length, 1)}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
+                {codeTrace.variables.map((v, i) => (
+                  <div
+                    key={i}
+                    className={`px-2.5 py-1.5 rounded-lg border font-mono text-[11px] transition-all duration-300 ${
+                      v.highlight
+                        ? 'bg-indigo-500/20 border-sky-400/50 text-sky-200 shadow-[0_0_10px_rgba(56,189,248,0.18)]'
+                        : 'bg-slate-900/90 border-white/10 text-slate-300'
+                    }`}
+                  >
+                    <div className="text-[9px] text-slate-400 truncate">
+                      {v.name}
+                    </div>
+                    <div
+                      className="font-bold truncate text-xs mt-0.5"
+                      title={v.value}
+                    >
+                      {v.value}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* 底部一体化暗曜蓝播控与解说台 */}
@@ -324,7 +578,7 @@ export default function AlgorithmVisualizer({
                 ? '⏸ 暂停演示'
                 : currentStep >= steps.length - 1 && steps.length > 0
                 ? '↻ 重新播放'
-                : '▶ 自动推演'}
+                : '▶ 自动推演 (3D + 代码)'}
             </button>
 
             <button
