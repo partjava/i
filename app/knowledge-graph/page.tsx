@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -25,6 +25,13 @@ import {
   ArrowRight,
   GitBranch,
   Flame,
+  ZoomIn,
+  ZoomOut,
+  RotateCcw,
+  Maximize2,
+  Minimize2,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 
 const ReactECharts = dynamic(() => import('echarts-for-react'), { ssr: false });
@@ -32,11 +39,16 @@ const ReactECharts = dynamic(() => import('echarts-for-react'), { ssr: false });
 const STORAGE_KEY = 'partjava_global_kg_mastery_v1';
 
 export default function GlobalKnowledgeGraphPage() {
-  const [viewMode, setViewMode] = useState<'force' | 'radial' | 'roadmap'>('force');
+  const [viewMode, setViewMode] = useState<'force' | 'radial' | 'roadmap'>('radial');
   const [domainFilter, setDomainFilter] = useState<string>('全部');
   const [showTopics, setShowTopics] = useState<boolean>(true);
+  const [radialExpandAll, setRadialExpandAll] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedNodeId, setSelectedNodeId] = useState<string>('subj_数据结构与算法');
+  const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
+  const echartsInstanceRef = useRef<any>(null);
+  const canvasContainerRef = useRef<HTMLDivElement>(null);
+
   const [masteryMap, setMasteryMap] = useState<Record<string, MasteryStatus>>({
     subj_Java: 'mastered',
     subj_Python: 'mastered',
@@ -54,6 +66,53 @@ export default function GlobalKnowledgeGraphPage() {
       }
     } catch {}
   }, []);
+
+  // Listen to fullscreen changes
+  useEffect(() => {
+    const handleFsChange = () => {
+      const isFs = !!document.fullscreenElement;
+      setIsFullscreen(isFs);
+      setTimeout(() => {
+        echartsInstanceRef.current?.resize?.();
+      }, 150);
+    };
+    document.addEventListener('fullscreenchange', handleFsChange);
+    return () => document.removeEventListener('fullscreenchange', handleFsChange);
+  }, []);
+
+  const handleToggleFullscreen = () => {
+    if (!canvasContainerRef.current) return;
+    if (!document.fullscreenElement) {
+      canvasContainerRef.current.requestFullscreen().then(() => setIsFullscreen(true)).catch(() => {});
+    } else {
+      document.exitFullscreen().then(() => setIsFullscreen(false)).catch(() => {});
+    }
+  };
+
+  const handleZoom = (direction: 'in' | 'out') => {
+    const inst = echartsInstanceRef.current;
+    if (!inst) return;
+    const opt = inst.getOption();
+    if (!opt || !opt.series || !opt.series[0]) return;
+    const currentZoom = opt.series[0].zoom || 1;
+    const nextZoom = direction === 'in' ? Math.min(3.5, currentZoom * 1.25) : Math.max(0.35, currentZoom / 1.25);
+    inst.setOption({
+      series: [{ zoom: nextZoom }],
+    });
+  };
+
+  const handleResetZoom = () => {
+    const inst = echartsInstanceRef.current;
+    if (!inst) return;
+    inst.setOption({
+      series: [
+        {
+          zoom: 1,
+          center: null,
+        },
+      ],
+    });
+  };
 
   const handleSetMastery = (nodeId: string, status: MasteryStatus) => {
     setMasteryMap((prev) => {
@@ -104,6 +163,24 @@ export default function GlobalKnowledgeGraphPage() {
     );
   }, [graphData.nodes, selectedNodeId]);
 
+  // Jump to another node by name (e.g. from prerequisite links)
+  const handleSelectNodeByName = (name: string) => {
+    if (!name || name === '零基础可直接入门' || name === '综合项目实战') return;
+    const clean = name.replace(/^[⬅️➡️\s]+/, '').trim();
+    const target =
+      graphData.nodes.find((n) => n.name === clean || n.name.includes(clean)) ||
+      graphData.nodes.find((n) => n.id === `subj_${clean}`);
+    if (target) {
+      setSelectedNodeId(target.id);
+      emitPetCompanionEvent({
+        type: 'info',
+        title: `已聚焦前置学科「${target.name}」`,
+        message: target.summary,
+        durationMs: 4500,
+      });
+    }
+  };
+
   // Statistics
   const stats = useMemo(() => {
     const totalSubjects = Object.values(navigationItems).reduce(
@@ -131,7 +208,14 @@ export default function GlobalKnowledgeGraphPage() {
       const treeRoot = {
         name: 'PartJava 全栈星系',
         id: 'hub_partjava',
-        itemStyle: { color: '#6366f1', borderColor: '#c7d2fe', borderWidth: 3 },
+        depth: 0,
+        itemStyle: {
+          color: '#6366f1',
+          borderColor: '#e0e7ff',
+          borderWidth: 3,
+          shadowBlur: 20,
+          shadowColor: 'rgba(99, 102, 241, 0.8)',
+        },
         children: Object.entries(navigationItems)
           .filter(([dName]) => domainFilter === '全部' || dName === domainFilter)
           .map(([dName, subjs]) => {
@@ -139,19 +223,39 @@ export default function GlobalKnowledgeGraphPage() {
             return {
               name: dName,
               id: `domain_${dName}`,
-              itemStyle: { color: dColor, borderColor: '#fff', borderWidth: 2 },
-              children: subjs.map((s) => ({
-                name: s.name,
-                id: `subj_${s.name}`,
-                itemStyle: { color: dColor },
-                children: showTopics
-                  ? (s.subitems || []).slice(0, 6).map((t, idx) => ({
-                      name: t.name,
-                      id: `topic_${s.name}_${idx}`,
-                      itemStyle: { color: '#38bdf8' },
-                    }))
-                  : [],
-              })),
+              depth: 1,
+              itemStyle: {
+                color: dColor,
+                borderColor: '#ffffff',
+                borderWidth: 2,
+                shadowBlur: 14,
+                shadowColor: dColor,
+              },
+              children: subjs.map((s) => {
+                const isSelected = selectedNodeId === `subj_${s.name}`;
+                return {
+                  name: s.name,
+                  id: `subj_${s.name}`,
+                  depth: 2,
+                  itemStyle: {
+                    color: dColor,
+                    borderColor: isSelected ? '#ffffff' : 'rgba(255,255,255,0.4)',
+                    borderWidth: isSelected ? 3 : 1.5,
+                    shadowBlur: isSelected ? 18 : 6,
+                    shadowColor: isSelected ? '#38bdf8' : dColor,
+                  },
+                  children: (s.subitems || []).slice(0, 6).map((t, idx) => ({
+                    name: t.name,
+                    id: `topic_${s.name}_${idx}`,
+                    depth: 3,
+                    itemStyle: {
+                      color: '#38bdf8',
+                      borderColor: 'rgba(255,255,255,0.5)',
+                      borderWidth: 1,
+                    },
+                  })),
+                };
+              }),
             };
           }),
       };
@@ -160,9 +264,28 @@ export default function GlobalKnowledgeGraphPage() {
         backgroundColor: 'transparent',
         tooltip: {
           trigger: 'item',
-          backgroundColor: 'rgba(15, 23, 42, 0.92)',
-          borderColor: 'rgba(99, 102, 241, 0.4)',
+          backgroundColor: 'rgba(15, 23, 42, 0.94)',
+          borderColor: 'rgba(99, 102, 241, 0.5)',
+          padding: [10, 14],
           textStyle: { color: '#f8fafc', fontSize: 12 },
+          formatter: (params: any) => {
+            const data = params.data;
+            if (!data) return params.name;
+            const depth = data.depth ?? 2;
+            const depthLabel =
+              depth === 0
+                ? '全栈核心枢纽'
+                : depth === 1
+                ? '核心技术领域'
+                : depth === 2
+                ? '主干学科体系 (点击展开/折叠章节)'
+                : '章节核心考点';
+            return `<div style="max-width:240px;white-space:normal;line-height:1.6;">
+              <div style="font-weight:800;color:#38bdf8;font-size:13px;margin-bottom:2px;">${data.name}</div>
+              <div style="font-size:11px;color:#94a3b8;margin-bottom:4px;">${depthLabel}</div>
+              <div style="font-size:10px;color:#cbd5e1;">💡 点击节点即可展开分支并联动右侧知识详情</div>
+            </div>`;
+          },
         },
         series: [
           {
@@ -174,23 +297,54 @@ export default function GlobalKnowledgeGraphPage() {
             left: '8%',
             right: '8%',
             symbol: 'emptyCircle',
-            symbolSize: 10,
-            initialTreeDepth: 3,
+            symbolSize: (rawVal: any, params: any) => {
+              const depth = params?.data?.depth ?? 2;
+              if (depth === 0) return 22;
+              if (depth === 1) return 15;
+              if (depth === 2) return 11;
+              return 6;
+            },
+            // 默认展开到第 2 层（主干学科），彻底避免最外层章节文字重叠糊成一团！
+            // 用户点击学科节点可随时展开单个学科的花瓣，或通过右上角按钮一键展开全部
+            initialTreeDepth: radialExpandAll ? 3 : 2,
             animationDurationUpdate: 650,
             roam: true,
             label: {
+              position: 'right',
+              align: 'left',
+              verticalAlign: 'middle',
+              rotate: 'radial',
+              distance: 6,
               color: '#e2e8f0',
               fontSize: 11,
               fontWeight: 600,
             },
             leaves: {
               label: {
+                position: 'right',
+                align: 'left',
+                verticalAlign: 'middle',
+                rotate: 'radial',
+                distance: 6,
                 color: '#94a3b8',
                 fontSize: 10,
+                fontWeight: 500,
+              },
+            },
+            emphasis: {
+              focus: 'ancestor',
+              blurScope: 'coordinateSystem',
+              lineStyle: {
+                width: 3,
+                color: '#38bdf8',
+              },
+              label: {
+                color: '#ffffff',
+                fontWeight: 700,
               },
             },
             lineStyle: {
-              color: 'rgba(99, 102, 241, 0.45)',
+              color: 'rgba(129, 140, 248, 0.42)',
               width: 1.5,
               curveness: 0.5,
             },
@@ -273,13 +427,14 @@ export default function GlobalKnowledgeGraphPage() {
         trigger: 'item',
         backgroundColor: 'rgba(15, 23, 42, 0.94)',
         borderColor: 'rgba(56, 189, 248, 0.4)',
+        padding: [10, 14],
         textStyle: { color: '#f8fafc', fontSize: 12 },
         formatter: (params: any) => {
           if (params.dataType === 'node') {
             const node = graphData.nodes.find((item) => item.id === params.data.id);
             if (!node) return params.name;
-            return `<div style="max-width:260px;white-space:normal;">
-              <div style="font-weight:800;color:#38bdf8;margin-bottom:4px;">${node.name}</div>
+            return `<div style="max-width:260px;white-space:normal;line-height:1.6;">
+              <div style="font-weight:800;color:#38bdf8;margin-bottom:4px;font-size:13px;">${node.name}</div>
               <div style="font-size:11px;color:#cbd5e1;margin-bottom:4px;">领域：${node.domain} · 难度：${node.difficulty}</div>
               <div style="font-size:11px;color:#94a3b8;">${node.summary}</div>
             </div>`;
@@ -306,11 +461,11 @@ export default function GlobalKnowledgeGraphPage() {
           categories,
           roam: true,
           draggable: true,
-          zoom: domainFilter === '全部' ? 0.88 : 1.05,
+          zoom: domainFilter === '全部' ? 0.92 : 1.05,
           force: {
-            repulsion: domainFilter === '全部' ? 260 : 320,
-            edgeLength: [45, 115],
-            gravity: 0.12,
+            repulsion: domainFilter === '全部' ? 320 : 380,
+            edgeLength: [55, 140],
+            gravity: 0.1,
           },
           emphasis: {
             focus: 'adjacency',
@@ -319,12 +474,19 @@ export default function GlobalKnowledgeGraphPage() {
         },
       ],
     };
-  }, [viewMode, graphData, domainFilter, showTopics, selectedNode, masteryMap]);
+  }, [viewMode, graphData, domainFilter, selectedNode, masteryMap, radialExpandAll, selectedNodeId]);
 
   const handleChartNodeClick = (params: any) => {
     const id = params?.data?.id;
-    if (id && graphData.nodes.some((n) => n.id === id)) {
-      setSelectedNodeId(id);
+    if (id) {
+      if (graphData.nodes.some((n) => n.id === id)) {
+        setSelectedNodeId(id);
+      } else if (id.startsWith('subj_')) {
+        setSelectedNodeId(id);
+      } else if (id.startsWith('domain_')) {
+        const dName = id.replace('domain_', '');
+        setDomainFilter(dName);
+      }
     }
   };
 
@@ -463,7 +625,31 @@ export default function GlobalKnowledgeGraphPage() {
               </button>
             ))}
 
-            {viewMode !== 'roadmap' && (
+            {viewMode === 'radial' && (
+              <button
+                type="button"
+                onClick={() => setRadialExpandAll((v) => !v)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-medium border transition-all flex items-center gap-1 ${
+                  radialExpandAll
+                    ? 'bg-indigo-50 text-indigo-700 border-indigo-200'
+                    : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+                }`}
+              >
+                {radialExpandAll ? (
+                  <>
+                    <EyeOff className="w-3.5 h-3.5" />
+                    <span>🍃 折叠到学科主干</span>
+                  </>
+                ) : (
+                  <>
+                    <Eye className="w-3.5 h-3.5" />
+                    <span>🌸 展开全部章节</span>
+                  </>
+                )}
+              </button>
+            )}
+
+            {viewMode === 'force' && (
               <button
                 type="button"
                 onClick={() => setShowTopics((v) => !v)}
@@ -619,29 +805,108 @@ export default function GlobalKnowledgeGraphPage() {
               </div>
             ) : (
               <div
-                className="relative rounded-2xl overflow-hidden border shadow-2xl"
+                ref={canvasContainerRef}
+                className="relative rounded-3xl overflow-hidden border shadow-2xl transition-all duration-300"
                 style={{
                   background:
-                    'radial-gradient(circle at 50% 35%, #111c35 0%, #070c18 100%)',
-                  borderColor: 'rgba(99, 102, 241, 0.3)',
+                    'radial-gradient(circle at 50% 45%, #0e1b38 0%, #081024 55%, #030612 100%)',
+                  borderColor: 'rgba(99, 102, 241, 0.35)',
+                  boxShadow:
+                    '0 20px 50px rgba(2, 6, 23, 0.6), inset 0 0 80px rgba(99, 102, 241, 0.08)',
                 }}
               >
-                {/* 画布左上角提示 */}
-                <div className="absolute top-3.5 left-4 z-10 flex flex-wrap items-center gap-2 pointer-events-none">
-                  <span className="px-3 py-1 rounded-xl bg-slate-950/80 backdrop-blur-md border border-indigo-400/30 text-xs font-bold text-indigo-200">
-                    {viewMode === 'force'
-                      ? '🌌 力导向知识星系 (支持滚轮缩放 / 拖拽节点 / 点击透视)'
-                      : '🎡 360° 全栈径向知识树 (点击节点展开/折叠章节)'}
+                {/* 背景精美星轨同心圆线条 */}
+                <div className="absolute inset-0 pointer-events-none flex items-center justify-center opacity-30">
+                  <div className="w-[320px] h-[320px] rounded-full border border-dashed border-indigo-400/25" />
+                  <div className="absolute w-[500px] h-[500px] rounded-full border border-indigo-400/15" />
+                  <div className="absolute w-[680px] h-[680px] rounded-full border border-dashed border-sky-400/10" />
+                </div>
+
+                {/* 画布左上角状态与提示浮岛 */}
+                <div className="absolute top-4 left-4 z-10 flex flex-wrap items-center gap-2 pointer-events-none">
+                  <span className="px-3 py-1 rounded-xl bg-slate-950/85 backdrop-blur-md border border-indigo-400/35 text-xs font-bold text-indigo-200 shadow-md flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                    <span>
+                      {viewMode === 'force'
+                        ? '🌌 力导向知识星系 (支持滚轮缩放 / 拖拽节点 / 交互透视)'
+                        : radialExpandAll
+                        ? '🎡 360° 径向知识树 · 全景展开视图'
+                        : '🎡 360° 径向知识树 (点击学科节点展开对应章节花瓣)'}
+                    </span>
                   </span>
-                  <span className="px-2.5 py-1 rounded-xl bg-slate-950/75 border border-sky-400/25 text-[11px] font-mono text-sky-300">
-                    当前加载 {graphData.nodes.length} 节点 · {graphData.links.length} 关联边
+                  <span className="px-2.5 py-1 rounded-xl bg-slate-950/80 backdrop-blur-md border border-sky-400/30 text-[11px] font-mono text-sky-300 shadow-md">
+                    {graphData.nodes.length} 核心节点 · {graphData.links.length} 拓扑依赖
                   </span>
                 </div>
 
-                <div className="h-[540px] sm:h-[640px] w-full">
+                {/* 画布右上角：缩放与视角交互控制面板 (HUD Controls) */}
+                <div className="absolute top-4 right-4 z-20 flex items-center gap-1.5 bg-slate-950/80 backdrop-blur-md p-1.5 rounded-2xl border border-indigo-400/30 shadow-xl">
+                  <button
+                    type="button"
+                    onClick={() => handleZoom('in')}
+                    title="放大画布"
+                    className="p-1.5 rounded-xl text-slate-300 hover:text-white hover:bg-indigo-600/30 transition-colors"
+                  >
+                    <ZoomIn className="w-4 h-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleZoom('out')}
+                    title="缩小画布"
+                    className="p-1.5 rounded-xl text-slate-300 hover:text-white hover:bg-indigo-600/30 transition-colors"
+                  >
+                    <ZoomOut className="w-4 h-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleResetZoom}
+                    title="复位视角"
+                    className="p-1.5 rounded-xl text-slate-300 hover:text-white hover:bg-indigo-600/30 transition-colors"
+                  >
+                    <RotateCcw className="w-4 h-4" />
+                  </button>
+
+                  {viewMode === 'radial' && (
+                    <button
+                      type="button"
+                      onClick={() => setRadialExpandAll((v) => !v)}
+                      title={radialExpandAll ? '折叠到学科主干' : '展开全部章节'}
+                      className="px-2 py-1 rounded-xl text-xs font-semibold text-sky-300 bg-sky-500/15 hover:bg-sky-500/25 border border-sky-400/30 transition-all flex items-center gap-1"
+                    >
+                      {radialExpandAll ? '🍃 折叠' : '🌸 展开全部'}
+                    </button>
+                  )}
+
+                  <div className="w-px h-4 bg-white/20 mx-0.5" />
+
+                  <button
+                    type="button"
+                    onClick={handleToggleFullscreen}
+                    title={isFullscreen ? '退出全屏' : '全屏透视'}
+                    className="p-1.5 rounded-xl text-slate-300 hover:text-white hover:bg-indigo-600/30 transition-colors"
+                  >
+                    {isFullscreen ? (
+                      <Minimize2 className="w-4 h-4" />
+                    ) : (
+                      <Maximize2 className="w-4 h-4" />
+                    )}
+                  </button>
+                </div>
+
+                {/* 画布底端交互小提示 */}
+                <div className="absolute bottom-3 left-4 z-10 pointer-events-none">
+                  <span className="text-[11px] text-slate-400/80 bg-slate-950/60 px-2.5 py-1 rounded-lg backdrop-blur-sm border border-white/5">
+                    💡 鼠标滚轮缩放 · 左键平移拖拽 · 点击学科展开花瓣并同步右侧透视
+                  </span>
+                </div>
+
+                <div className="h-[580px] sm:h-[680px] lg:h-[720px] w-full">
                   <ReactECharts
                     option={chartOption}
                     style={{ height: '100%', width: '100%' }}
+                    onChartReady={(instance: any) => {
+                      echartsInstanceRef.current = instance;
+                    }}
                     onEvents={{
                       click: handleChartNodeClick,
                     }}
@@ -654,40 +919,72 @@ export default function GlobalKnowledgeGraphPage() {
           {/* 右侧：节点深度透视与行动舱 (Node Inspector Studio) */}
           <div className="lg:col-span-4 space-y-4">
             <div
-              className="rounded-2xl p-5 border shadow-2xl text-slate-100 space-y-4"
+              className="rounded-3xl p-5 sm:p-6 border shadow-2xl text-slate-100 space-y-4.5 transition-all"
               style={{
-                background: 'linear-gradient(165deg, #0b1120 0%, #111c33 100%)',
-                borderColor: 'rgba(99, 102, 241, 0.32)',
+                background:
+                  'linear-gradient(165deg, #0e172e 0%, #091022 60%, #050914 100%)',
+                borderColor: 'rgba(99, 102, 241, 0.35)',
+                boxShadow:
+                  '0 20px 45px rgba(2, 6, 23, 0.6), inset 0 0 40px rgba(99, 102, 241, 0.05)',
               }}
             >
               {/* 顶部节点头信息 */}
-              <div className="flex items-start justify-between gap-2 pb-3 border-b border-white/10">
+              <div className="flex items-start justify-between gap-2 pb-3.5 border-b border-white/10">
                 <div>
-                  <div className="flex flex-wrap items-center gap-1.5 mb-1.5">
-                    <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-400/30">
+                  <div className="flex flex-wrap items-center gap-1.5 mb-2">
+                    <span
+                      className="px-2.5 py-0.5 rounded-full text-[11px] font-bold border shadow-sm"
+                      style={{
+                        backgroundColor: `${DOMAIN_META[selectedNode?.domain]?.color || '#6366f1'}22`,
+                        color: DOMAIN_META[selectedNode?.domain]?.color || '#818cf8',
+                        borderColor: `${DOMAIN_META[selectedNode?.domain]?.color || '#6366f1'}44`,
+                      }}
+                    >
                       {selectedNode?.domain}
                     </span>
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-mono bg-sky-500/15 text-sky-300 border border-sky-400/30">
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono bg-sky-500/15 text-sky-300 border border-sky-400/30">
                       难度: {selectedNode?.difficulty}
                     </span>
                   </div>
-                  <h2 className="text-lg sm:text-xl font-extrabold text-white">
+                  <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">
                     {selectedNode?.name}
                   </h2>
                 </div>
               </div>
 
               {/* 掌握状态三档切换器 */}
-              <div className="p-3 rounded-xl bg-slate-950/70 border border-white/10">
-                <div className="text-[11px] text-slate-400 mb-2 font-medium">
-                  当前节点学习掌握状态（自动持久保存）：
+              <div className="p-3.5 rounded-2xl bg-slate-950/75 border border-white/10 shadow-inner">
+                <div className="text-[11px] text-slate-400 mb-2 font-medium flex items-center justify-between">
+                  <span>当前掌握状态 (本地自动保存)：</span>
+                  <span className="text-[10px] text-slate-500 font-mono">
+                    {currentMastery === 'mastered'
+                      ? '已点亮星系'
+                      : currentMastery === 'learning'
+                      ? '攻克中'
+                      : '未解锁'}
+                  </span>
                 </div>
-                <div className="grid grid-cols-3 gap-1.5">
+                <div className="grid grid-cols-3 gap-2">
                   {(
                     [
-                      { id: 'locked', label: '🔒 待学习', activeCls: 'bg-slate-700 text-white border-slate-500' },
-                      { id: 'learning', label: '🔥 攻克中', activeCls: 'bg-amber-500/30 text-amber-200 border-amber-400' },
-                      { id: 'mastered', label: '✅ 已掌握', activeCls: 'bg-emerald-500/30 text-emerald-200 border-emerald-400' },
+                      {
+                        id: 'locked',
+                        label: '🔒 待学习',
+                        activeCls:
+                          'bg-slate-700/80 text-white border-slate-400 shadow-md',
+                      },
+                      {
+                        id: 'learning',
+                        label: '🔥 攻克中',
+                        activeCls:
+                          'bg-gradient-to-r from-amber-500/30 to-orange-500/30 text-amber-200 border-amber-400 shadow-[0_0_12px_rgba(245,158,11,0.25)]',
+                      },
+                      {
+                        id: 'mastered',
+                        label: '✅ 已掌握',
+                        activeCls:
+                          'bg-gradient-to-r from-emerald-500/30 to-teal-500/30 text-emerald-200 border-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.25)]',
+                      },
                     ] as const
                   ).map((item) => (
                     <button
@@ -696,10 +993,10 @@ export default function GlobalKnowledgeGraphPage() {
                       onClick={() =>
                         selectedNode && handleSetMastery(selectedNode.id, item.id)
                       }
-                      className={`py-1.5 px-2 rounded-lg text-xs font-bold border transition-all ${
+                      className={`py-2 px-2 rounded-xl text-xs font-bold border transition-all ${
                         currentMastery === item.id
                           ? item.activeCls
-                          : 'bg-slate-900/60 text-slate-400 border-white/5 hover:text-slate-200'
+                          : 'bg-slate-900/60 text-slate-400 border-white/5 hover:text-slate-200 hover:bg-slate-900'
                       }`}
                     >
                       {item.label}
@@ -709,11 +1006,13 @@ export default function GlobalKnowledgeGraphPage() {
               </div>
 
               {/* 节点核心概述 */}
-              <div className="p-3.5 rounded-xl bg-slate-950/60 border border-indigo-500/20">
-                <div className="text-xs font-bold text-sky-400 mb-1">
-                  📌 知识模块定位与概述
+              <div className="p-3.5 rounded-2xl bg-slate-950/65 border border-indigo-500/25 relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-indigo-500 to-sky-400" />
+                <div className="text-xs font-bold text-sky-300 mb-1.5 flex items-center gap-1.5">
+                  <span className="text-sm">📌</span>
+                  <span>知识模块定位与概述</span>
                 </div>
-                <p className="text-xs text-slate-300 leading-relaxed">
+                <p className="text-xs text-slate-300 leading-relaxed pl-1">
                   {selectedNode?.summary}
                 </p>
               </div>
@@ -721,17 +1020,18 @@ export default function GlobalKnowledgeGraphPage() {
               {/* 核心知识点列表 */}
               {selectedNode?.keyPoints && selectedNode.keyPoints.length > 0 && (
                 <div className="space-y-2">
-                  <div className="text-xs font-bold text-indigo-300">
-                    🔬 核心章节与关键考点
+                  <div className="text-xs font-bold text-indigo-300 flex items-center gap-1.5">
+                    <span>🔬</span>
+                    <span>核心章节与关键考点</span>
                   </div>
-                  <div className="space-y-1.5 max-h-44 overflow-y-auto pr-1 custom-scrollbar">
+                  <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
                     {selectedNode.keyPoints.map((pt, idx) => (
                       <div
                         key={idx}
-                        className="px-3 py-2 rounded-xl bg-white/[0.04] border border-white/10 text-xs text-slate-200 flex items-center gap-2"
+                        className="px-3 py-2 rounded-xl bg-white/[0.04] border border-white/10 text-xs text-slate-200 flex items-center gap-2.5 hover:bg-white/[0.08] transition-colors"
                       >
-                        <span className="w-4 h-4 rounded bg-indigo-500/25 text-indigo-300 font-mono text-[10px] font-bold flex items-center justify-center shrink-0">
-                          {idx + 1}
+                        <span className="w-5 h-5 rounded-lg bg-indigo-500/25 text-indigo-300 font-mono text-[11px] font-bold flex items-center justify-center shrink-0 border border-indigo-400/20">
+                          {String(idx + 1).padStart(2, '0')}
                         </span>
                         <span className="truncate">{pt}</span>
                       </div>
@@ -740,27 +1040,52 @@ export default function GlobalKnowledgeGraphPage() {
                 </div>
               )}
 
-              {/* 先后置学习路径 */}
+              {/* 先后置学习路径（支持点击穿梭跳转至关联学科！） */}
               <div className="grid grid-cols-2 gap-2.5 text-xs">
-                <div className="p-2.5 rounded-xl bg-slate-950/60 border border-white/10">
-                  <div className="text-[10px] text-slate-400 mb-1">⬅️ 前置依赖基础</div>
-                  <div className="font-semibold text-slate-200 truncate">
+                <button
+                  type="button"
+                  onClick={() =>
+                    handleSelectNodeByName(
+                      selectedNode?.prerequisites?.[0] || ''
+                    )
+                  }
+                  className="p-3 rounded-2xl bg-slate-950/65 border border-white/10 text-left hover:border-indigo-400/40 hover:bg-slate-900/80 transition-all group"
+                >
+                  <div className="text-[10px] text-slate-400 mb-1 flex items-center justify-between">
+                    <span>⬅️ 前置依赖基础</span>
+                    <span className="text-[9px] text-indigo-300 opacity-0 group-hover:opacity-100 transition-opacity">
+                      跳转
+                    </span>
+                  </div>
+                  <div className="font-semibold text-slate-200 truncate group-hover:text-sky-300 transition-colors">
                     {selectedNode?.prerequisites?.[0] || '零基础可直接入门'}
                   </div>
-                </div>
-                <div className="p-2.5 rounded-xl bg-slate-950/60 border border-white/10">
-                  <div className="text-[10px] text-slate-400 mb-1">➡️ 后续进阶方向</div>
-                  <div className="font-semibold text-sky-300 truncate">
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    handleSelectNodeByName(selectedNode?.nextSteps?.[0] || '')
+                  }
+                  className="p-3 rounded-2xl bg-slate-950/65 border border-white/10 text-left hover:border-indigo-400/40 hover:bg-slate-900/80 transition-all group"
+                >
+                  <div className="text-[10px] text-slate-400 mb-1 flex items-center justify-between">
+                    <span>➡️ 后续进阶方向</span>
+                    <span className="text-[9px] text-indigo-300 opacity-0 group-hover:opacity-100 transition-opacity">
+                      跳转
+                    </span>
+                  </div>
+                  <div className="font-semibold text-sky-300 truncate group-hover:text-sky-200 transition-colors">
                     {selectedNode?.nextSteps?.[0] || '综合项目实战'}
                   </div>
-                </div>
+                </button>
               </div>
 
               {/* 三大一键直达行动按钮 */}
               <div className="pt-2 space-y-2.5">
                 <Link
                   href={selectedNode?.href || '/study'}
-                  className="w-full py-2.5 px-4 rounded-xl font-bold text-xs sm:text-sm text-white bg-gradient-to-r from-indigo-600 via-indigo-500 to-sky-500 hover:brightness-110 transition-all shadow-lg flex items-center justify-center gap-2"
+                  className="w-full py-3 px-4 rounded-2xl font-bold text-xs sm:text-sm text-white bg-gradient-to-r from-indigo-600 via-indigo-500 to-sky-500 hover:brightness-110 active:scale-[0.99] transition-all shadow-lg shadow-indigo-600/30 flex items-center justify-center gap-2"
                 >
                   <BookOpen className="w-4 h-4" />
                   <span>📖 进入《{selectedNode?.name}》课程学习</span>
@@ -769,7 +1094,7 @@ export default function GlobalKnowledgeGraphPage() {
                 <div className="grid grid-cols-2 gap-2">
                   <Link
                     href="/code/editor"
-                    className="py-2 px-3 rounded-xl font-bold text-xs text-emerald-200 bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-400/35 transition-all flex items-center justify-center gap-1.5"
+                    className="py-2.5 px-3 rounded-xl font-bold text-xs text-emerald-200 bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-400/35 transition-all flex items-center justify-center gap-1.5 active:scale-[0.98]"
                   >
                     <Code2 className="w-3.5 h-3.5" />
                     <span>💻 代码工坊演练</span>
@@ -778,7 +1103,7 @@ export default function GlobalKnowledgeGraphPage() {
                   <button
                     type="button"
                     onClick={() => selectedNode && handleAskHeju(selectedNode)}
-                    className="py-2 px-3 rounded-xl font-bold text-xs text-amber-200 bg-amber-500/15 hover:bg-amber-500/25 border border-amber-400/35 transition-all flex items-center justify-center gap-1.5"
+                    className="py-2.5 px-3 rounded-xl font-bold text-xs text-amber-200 bg-amber-500/15 hover:bg-amber-500/25 border border-amber-400/35 transition-all flex items-center justify-center gap-1.5 active:scale-[0.98]"
                   >
                     <Sparkles className="w-3.5 h-3.5" />
                     <span>🤖 召唤禾桔讲解</span>
@@ -792,3 +1117,4 @@ export default function GlobalKnowledgeGraphPage() {
     </div>
   );
 }
+

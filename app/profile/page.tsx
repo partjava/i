@@ -229,7 +229,7 @@ export default function ProfilePage() {
           name: '平台总览',
           jobTitle: '',
           company: '',
-          bio: `${data.totalUsers || 0} 位学习者正在使用本平台，共创建了 ${data.totalNotes || 0} 篇学习笔记，累计学习 ${Math.floor((data.totalStudyTime || 0) / 60)} 小时。${data.todayNotes > 0 ? `今日新增 ${data.todayNotes} 篇笔记，` : ''}${data.weeklyActiveUsers > 0 ? `本周 ${data.weeklyActiveUsers} 位用户活跃。` : ''}加入我们，开始你的学习之旅！`,
+          bio: `${data.totalUsers || 0} 位学习者正在使用本平台，共创建了 ${data.totalNotes || 0} 篇学习笔记，累计学习 ${Math.floor((data.totalStudyTime || 0) / 3600)} 小时。${data.todayNotes > 0 ? `今日新增 ${data.todayNotes} 篇笔记，` : ''}${data.weeklyActiveUsers > 0 ? `本周 ${data.weeklyActiveUsers} 位用户活跃。` : ''}加入我们，开始你的学习之旅！`,
           location: '全球',
           github: '',
           website: '',
@@ -691,27 +691,19 @@ export default function ProfilePage() {
   };
 
   const formatStudyTime = (minutes: number) => {
-    if (minutes < 60) return `${minutes}分钟`;
+    if (!minutes || minutes <= 0) return '0分钟';
     
-    const hours = Math.floor(minutes / 60);
-    const remainingMinutes = minutes % 60;
+    // 智能防御：防止历史脏数据或极端单条秒数直接传入，超过单日分钟数上限(>86400)则转为分钟
+    const safeMinutes = minutes > 86400 ? Math.round(minutes / 60) : Math.round(minutes);
+    if (safeMinutes < 60) return `${safeMinutes}分钟`;
     
-    if (hours < 24) {
-      if (remainingMinutes === 0) {
-        return `${hours}小时`;
-      } else {
-        return `${hours}小时${remainingMinutes}分钟`;
-      }
+    const hours = Math.floor(safeMinutes / 60);
+    const remainingMinutes = safeMinutes % 60;
+    
+    if (remainingMinutes === 0) {
+      return `${hours}小时`;
     }
-    
-    const days = Math.floor(hours / 24);
-    const remainingHours = hours % 24;
-    
-    if (remainingHours === 0) {
-      return `${days}天`;
-    } else {
-      return `${days}天${remainingHours}小时`;
-    }
+    return `${hours}小时${remainingMinutes}分`;
   };
 
   const achievementSummary = getAchievementSummary(achievements, stats?.achievements);
@@ -1263,7 +1255,7 @@ export default function ProfilePage() {
                   <Col xs={24} md={8}>
                     <div className="text-center p-6 bg-gradient-to-br from-[#EDF0F5] to-[#e2e6ed] rounded-lg">
                       <ClockCircleOutlined className="text-3xl text-purple-500 mb-3" />
-                      <div className="text-xl font-semibold text-content-primary mb-1">
+                      <div className="text-xl font-semibold text-content-primary mb-1 whitespace-nowrap">
                         {formatStudyTime(stats?.learning?.totalStudyTime || 0)}
                       </div>
                       <div className="text-sm text-content-muted">总学习时间</div>
@@ -1305,10 +1297,11 @@ export default function ProfilePage() {
                 }
                 className={styles.heatmap}
               >
-                <div className="p-6 bg-gradient-to-r from-[#EDF0F5] to-[#e2e6ed] rounded-lg">
+                <div className="p-4 sm:p-6 bg-gradient-to-r from-[#EDF0F5] to-[#e2e6ed] rounded-lg">
                   <LearningHeatmap
                     data={heatmapData}
                     year={new Date().getFullYear()}
+                    hideTitle={true}
                   />
                 </div>
               </Card>

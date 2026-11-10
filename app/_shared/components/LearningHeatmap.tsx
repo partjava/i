@@ -6,9 +6,10 @@ import { useMemo } from 'react';
 interface LearningHeatmapProps {
   data: HeatmapData[];
   year?: number;
+  hideTitle?: boolean;
 }
 
-export default function LearningHeatmap({ data, year }: LearningHeatmapProps) {
+export default function LearningHeatmap({ data, year, hideTitle = false }: LearningHeatmapProps) {
   // 自动检测数据中的年份，如果没有数据则使用当前年份
   const detectedYear = year || (data.length > 0 ? new Date(data[0].date).getFullYear() : new Date().getFullYear());
   const months = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
@@ -96,13 +97,20 @@ export default function LearningHeatmap({ data, year }: LearningHeatmapProps) {
   }, [detectedYear, months]);
   
   return (
-    <div className="bg-white rounded-xl p-6 shadow-sm">
-      <div className="mb-4">
-        <h3 className="text-lg font-semibold text-gray-900">学习热力图</h3>
-        <p className="text-sm text-gray-500 mt-1">{detectedYear}年学习记录</p>
-      </div>
+    <div className="bg-white rounded-xl p-4 sm:p-5 shadow-sm">
+      {!hideTitle ? (
+        <div className="mb-4">
+          <h3 className="text-lg font-semibold text-gray-900">学习热力图</h3>
+          <p className="text-xs text-gray-500 mt-0.5">{detectedYear}年学习记录</p>
+        </div>
+      ) : (
+        <div className="mb-3 flex items-center justify-between text-xs text-gray-500 font-medium">
+          <span>{detectedYear} 年全年度打卡热力</span>
+          <span>共记录 {yearData.filter(d => d && d.count > 0).length} 天有效打卡</span>
+        </div>
+      )}
       
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto pb-1 scrollbar-thin scrollbar-thumb-slate-300 scrollbar-track-transparent">
         <div className="inline-block min-w-full">
           {/* 月份标签 */}
           <div className="flex mb-2 relative" style={{ height: '20px', paddingLeft: '28px' }}>

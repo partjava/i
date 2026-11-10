@@ -130,7 +130,9 @@ public class UserExtendedController {
         long earnedAchievements = 0;
         long totalAchievements = 0;
         try {
-            totalStudyTime = jdbcTemplate.queryForObject("SELECT COALESCE(SUM(study_time), 0) FROM study_sessions WHERE user_id = ?", Long.class, uid);
+            totalStudyTime = jdbcTemplate.queryForObject(
+                    "SELECT COALESCE(SUM(CASE WHEN study_time > 86400 THEN 3600 ELSE study_time END), 0) FROM study_sessions WHERE user_id = ?",
+                    Long.class, uid);
             studyDays = jdbcTemplate.queryForObject("SELECT COUNT(DISTINCT DATE(created_at)) FROM study_sessions WHERE user_id = ?", Long.class, uid);
             categories = jdbcTemplate.queryForObject("SELECT COUNT(DISTINCT category) FROM notes WHERE author_id = ? AND category IS NOT NULL AND category != ''", Long.class, uid);
             technologies = jdbcTemplate.queryForObject("SELECT COUNT(DISTINCT technology) FROM notes WHERE author_id = ? AND technology IS NOT NULL AND technology != ''", Long.class, uid);
@@ -147,7 +149,7 @@ public class UserExtendedController {
         List<Map<String, Object>> categoryStats = new ArrayList<>();
         try {
             dailyStats = jdbcTemplate.queryForList(
-                    "SELECT DATE(created_at) AS date, SUM(study_time) AS studyTime, 0 AS notes FROM study_sessions WHERE user_id = ? AND created_at >= DATE_SUB(NOW(), INTERVAL 60 DAY) GROUP BY DATE(created_at) ORDER BY date", uid);
+                    "SELECT DATE(created_at) AS date, ROUND(SUM(CASE WHEN study_time > 86400 THEN 3600 ELSE study_time END) / 60) AS studyTime, 0 AS notes FROM study_sessions WHERE user_id = ? AND created_at >= DATE_SUB(NOW(), INTERVAL 60 DAY) GROUP BY DATE(created_at) ORDER BY date", uid);
             List<Map<String, Object>> rawCat = jdbcTemplate.queryForList(
                     "SELECT category, COUNT(*) AS cnt FROM notes WHERE author_id = ? AND category IS NOT NULL AND category != '' GROUP BY category ORDER BY cnt DESC LIMIT 10", uid);
             for (Map<String, Object> row : rawCat) {
@@ -196,9 +198,17 @@ public class UserExtendedController {
             }
         } catch (Exception ignored) {
         }
+        long totalStudyMinutes = totalStudyTime > 0 ? (totalStudyTime / 60) : 0;
         result.put("notes", Map.of("total", totalNotes, "public", publicNotes, "private", totalNotes - publicNotes, "firstNoteDate", "", "lastActivityDate", ""));
         result.put("engagement", Map.of("likesReceived", totalLikes, "bookmarksReceived", bookmarks, "commentsReceived", comments));
-        result.put("learning", Map.of("categoriesStudied", categories, "technologiesStudied", technologies, "totalStudyTime", totalStudyTime, "studyDays", studyDays, "studyDaysTotal", studyDays));
+        result.put("learning", Map.of(
+                "categoriesStudied", categories,
+                "technologiesStudied", technologies,
+                "totalStudyTime", totalStudyMinutes,
+                "totalStudyTimeSeconds", totalStudyTime,
+                "studyDays", studyDays,
+                "studyDaysTotal", studyDays
+        ));
         result.put("achievements", Map.of("total", totalAchievements, "earned", Math.max(earnedCount, (int) earnedAchievements)));
         result.put("achievementList", achievementList);
         result.put("dailyStats", dailyStats);
@@ -272,7 +282,8 @@ public class UserExtendedController {
             raw.put("comments_received", jdbcTemplate.queryForObject("SELECT COUNT(*) FROM comments WHERE note_id IN (SELECT id FROM notes WHERE author_id = ?)", Long.class, uid));
             raw.put("categories", jdbcTemplate.queryForObject("SELECT COUNT(DISTINCT category) FROM notes WHERE author_id = ? AND category IS NOT NULL AND category != ''", Long.class, uid));
             raw.put("technologies", jdbcTemplate.queryForObject("SELECT COUNT(DISTINCT technology) FROM notes WHERE author_id = ? AND technology IS NOT NULL AND technology != ''", Long.class, uid));
-            raw.put("study_time_total", jdbcTemplate.queryForObject("SELECT COALESCE(SUM(study_time), 0) FROM study_sessions WHERE user_id = ?", Long.class, uid));
+            raw.put("study_time_total", jdbcTemplate.queryForObject("SELECT COALESCE(SUM(CASE WHEN study_time > 86400 THEN 3600 ELSE study_time END), 0) FROM study_sessions WHERE user_id = ?", Long.class, uid));
+            raw.put("study_time_minutes", jdbcTemplate.queryForObject("SELECT COALESCE(ROUND(SUM(CASE WHEN study_time > 86400 THEN 3600 ELSE study_time END) / 60), 0) FROM study_sessions WHERE user_id = ?", Long.class, uid));
             raw.put("study_days", jdbcTemplate.queryForObject("SELECT COUNT(DISTINCT DATE(created_at)) FROM study_sessions WHERE user_id = ?", Long.class, uid));
             raw.put("achievements_earned", jdbcTemplate.queryForObject("SELECT COUNT(*) FROM user_achievements WHERE user_id = ?", Long.class, uid));
             raw.put("achievements_total", achievementMapper.selectCount(null));
