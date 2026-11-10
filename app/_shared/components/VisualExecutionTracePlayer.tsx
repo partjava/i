@@ -24,7 +24,7 @@ interface VisualExecutionTracePlayerProps {
   currentCode: string;
   language: string;
   playSignal?: number;
-  onLoadScenarioCode?: (code: string) => void;
+  onLoadScenarioCode?: (code: string, language?: string) => void;
   onHighlightLine?: (line: number) => void;
 }
 
@@ -44,12 +44,12 @@ export default function VisualExecutionTracePlayer({
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const didInitRef = useRef(false);
 
-  // 首次打开 JVM 栈帧面板时，若左侧还是简短默认模板，自动载入当前演示算法代码并开始播放
+  // 首次打开栈帧面板时，若左侧还是简短默认 Hello World 模板，自动载入当前 C++ 演示算法代码并开始播放
   useEffect(() => {
     if (didInitRef.current) return;
     didInitRef.current = true;
-    if (currentCode.split('\n').length <= 8 && onLoadScenarioCode) {
-      onLoadScenarioCode(CLASSIC_TRACE_SCENARIOS[0].code);
+    if (currentCode.includes('Hello, PartJava Cloud Studio') && onLoadScenarioCode) {
+      onLoadScenarioCode(CLASSIC_TRACE_SCENARIOS[0].code, CLASSIC_TRACE_SCENARIOS[0].language);
     }
   }, [currentCode, onLoadScenarioCode]);
 
@@ -101,7 +101,7 @@ export default function VisualExecutionTracePlayer({
         setActiveScenario(found);
         setStepIndex(0);
         if (onLoadScenarioCode) {
-          onLoadScenarioCode(found.code);
+          onLoadScenarioCode(found.code, found.language);
         }
         setIsPlaying(true);
       }
@@ -152,7 +152,7 @@ export default function VisualExecutionTracePlayer({
           <span className="text-xs font-bold text-slate-100">经典算法内存回放场景：</span>
         </div>
 
-        <div className="flex items-center gap-1.5 overflow-x-auto max-w-full">
+        <div className="flex flex-wrap items-center gap-1.5 max-w-full">
           {CLASSIC_TRACE_SCENARIOS.map(s => (
             <button
               key={s.id}

@@ -78,7 +78,7 @@ export default function AlgorithmVisualizer({
   const [autoOrbit, setAutoOrbit] = useState(true);
   const [showCodeStudio, setShowCodeStudio] = useState(true);
   const [theaterZoom, setTheaterZoom] = useState(true);
-  const [codeLang, setCodeLang] = useState<CodeLanguage>('java');
+  const [codeLang, setCodeLang] = useState<CodeLanguage>('cpp');
   const [showHudFormula, setShowHudFormula] = useState(true);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -425,7 +425,7 @@ export default function AlgorithmVisualizer({
 
               <div className="flex items-center gap-1.5">
                 <div className="inline-flex rounded-lg bg-slate-900 p-0.5 border border-white/10">
-                  {(['java', 'python', 'cpp'] as CodeLanguage[]).map((lang) => (
+                  {(['cpp', 'python', 'java'] as CodeLanguage[]).map((lang) => (
                     <button
                       key={lang}
                       type="button"
@@ -445,12 +445,12 @@ export default function AlgorithmVisualizer({
                   <button
                     type="button"
                     onClick={() =>
-                      onOpenInEditor(codeTrace.runnableCode, 'java')
+                      onOpenInEditor(codeTrace.runnableCode, codeLang)
                     }
                     className="px-2.5 py-1 rounded-lg text-[10.5px] font-bold bg-gradient-to-r from-indigo-600 to-sky-500 text-white hover:brightness-110 transition-all shadow-sm"
-                    title="将当前算法完整可运行代码载入极客代码工坊 IDE 编译运行"
+                    title="将当前选中语言的可运行算法代码载入极客代码工坊 IDE 编译运行"
                   >
-                    🚀 载入 IDE 运行
+                    🚀 载入 IDE 运行 ({codeLang === 'cpp' ? 'C++' : codeLang.toUpperCase()})
                   </button>
                 )}
               </div>

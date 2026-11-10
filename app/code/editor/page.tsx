@@ -32,7 +32,8 @@ export default function CodeEditorPage() {
   const [data, setData] = useState([5, 3, 8, 4, 2, 7, 1, 6]);
   const [speed, setSpeed] = useState(900);
   const [injectedCode, setInjectedCode] = useState<string | undefined>(undefined);
-  const [injectedLang, setInjectedLang] = useState<string>('java');
+  const [injectedLang, setInjectedLang] = useState<string>('cpp');
+  const [injectedVersion, setInjectedVersion] = useState<number>(0);
 
   const currentAlgorithm = getAlgorithmMeta(selectedAlgorithm);
   const filteredAlgorithms =
@@ -202,6 +203,7 @@ export default function CodeEditorPage() {
               height="700px"
               externalCode={injectedCode}
               externalLanguage={injectedLang}
+              externalVersion={injectedVersion}
             />
           </div>
         )}
@@ -419,6 +421,7 @@ export default function CodeEditorPage() {
                   onOpenInEditor={(codeToLoad, langToLoad) => {
                     setInjectedCode(codeToLoad);
                     setInjectedLang(langToLoad);
+                    setInjectedVersion((v) => v + 1);
                     setActiveTab('editor');
                   }}
                 />

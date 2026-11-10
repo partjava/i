@@ -51,6 +51,7 @@ interface MonacoCodeEditorProps {
   height?: string;
   externalCode?: string;
   externalLanguage?: string;
+  externalVersion?: number;
 }
 
 // Monaco 语言映射
@@ -80,9 +81,9 @@ interface LanguageConfig {
 }
 
 const LANGUAGES: LanguageConfig[] = [
-  { value: 'java', label: 'Java', ext: 'java', fileName: 'Main.java', tag: 'JDK 17', badgeColor: '#f97316' },
-  { value: 'python', label: 'Python', ext: 'py', fileName: 'main.py', tag: 'v3.11', badgeColor: '#38bdf8' },
   { value: 'cpp', label: 'C++', ext: 'cpp', fileName: 'main.cpp', tag: 'GCC 13', badgeColor: '#6366f1' },
+  { value: 'python', label: 'Python', ext: 'py', fileName: 'main.py', tag: 'v3.11', badgeColor: '#38bdf8' },
+  { value: 'java', label: 'Java', ext: 'java', fileName: 'Main.java', tag: 'JDK 17', badgeColor: '#f97316' },
   { value: 'c', label: 'C', ext: 'c', fileName: 'main.c', tag: 'Clang 16', badgeColor: '#94a3b8' },
   { value: 'javascript', label: 'JavaScript', ext: 'js', fileName: 'index.js', tag: 'Node 20', badgeColor: '#eab308' },
   { value: 'typescript', label: 'TypeScript', ext: 'ts', fileName: 'index.ts', tag: 'TS 5.4', badgeColor: '#3b82f6' },
@@ -313,18 +314,27 @@ export default function MonacoCodeEditor({
   height = '680px',
   externalCode,
   externalLanguage,
+  externalVersion = 0,
 }: MonacoCodeEditorProps) {
-  const [language, setLanguage] = useState<string>(externalLanguage || 'java');
-  const [code, setCode] = useState<string>(externalCode || codeTemplates.java['hello-world']);
+  const [language, setLanguage] = useState<string>(externalLanguage || 'cpp');
+  const [code, setCode] = useState<string>(externalCode || codeTemplates.cpp['hello-world']);
 
   useEffect(() => {
-    if (externalCode) {
-      setCode(externalCode);
-    }
     if (externalLanguage) {
       setLanguage(externalLanguage);
     }
-  }, [externalCode, externalLanguage]);
+    if (externalCode) {
+      setCode(externalCode);
+      if (editorRef.current && editorRef.current.getValue() !== externalCode) {
+        editorRef.current.setValue(externalCode);
+      }
+      if (externalVersion > 0) {
+        message.success(
+          `已将算法源码载入 IDE (${externalLanguage === 'cpp' ? 'C++' : (externalLanguage || 'C++').toUpperCase()})`
+        );
+      }
+    }
+  }, [externalCode, externalLanguage, externalVersion]);
   const [input, setInput] = useState<string>('');
   const [theme, setTheme] = useState<'vs-dark' | 'light'>('vs-dark');
   const [rightTab, setRightTab] = useState<'console' | 'trace'>('console');
@@ -1195,10 +1205,13 @@ ${output ? `### 终端运行输出\n\`\`\`\n${output}\n\`\`\`\n` : ''}
                 currentCode={code}
                 language={language}
                 playSignal={tracePlaySignal}
-                onLoadScenarioCode={(newCode) => {
+                onLoadScenarioCode={(newCode, newLang) => {
                   setCode(newCode);
-                  setLanguage('java');
-                  message.success('已载入经典算法代码并启动 JVM 栈帧回放');
+                  setLanguage(newLang || 'cpp');
+                  if (editorRef.current && editorRef.current.getValue() !== newCode) {
+                    editorRef.current.setValue(newCode);
+                  }
+                  message.success('已载入 C++ 经典算法代码并启动栈帧回放');
                 }}
                 onHighlightLine={handleHighlightLine}
               />
