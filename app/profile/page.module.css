@@ -29,10 +29,9 @@
 .metrics :global(.ant-card:hover) { transform: translateY(-3px); box-shadow: 0 10px 28px rgba(21,40,68,.09); }
 .metrics :global(.ant-card-body) { padding: 20px 12px; }
 .metrics :global(.text-3xl) { color: var(--content-primary, #20344e); font-size: 30px; font-variant-numeric: tabular-nums; }
-.learning :global(.ant-row) { row-gap: 18px !important; }
-.learning :global(.ant-col > div) { padding: 18px 12px; background: rgba(136,158,186,.08); border-radius: 14px; }
+.learning :global(.ant-row) { row-gap: 12px !important; }
 .learning :global(.ant-progress-circle) { max-width: 100%; }
-.learning :global(.ant-divider) { margin-block: 20px; }
+.learning :global(.ant-divider) { margin-block: 10px !important; }
 .heatmap :global(.ant-card-body) > div { padding: 12px; background: rgba(136,158,186,.06); overflow-x: auto; border-radius: 14px; }
 .achievements :global(.ant-card-body) > div:first-child { background: linear-gradient(110deg,rgba(255,189,69,.10),rgba(136,158,186,.04)); border: 1px solid rgba(224,171,68,.15); border-radius: 16px; padding: 20px 24px; margin-bottom: 24px; }
 .achievements :global(.ant-card-body) > div:first-child > div { display: grid; grid-template-columns: 64px minmax(0,1fr); column-gap: 20px; align-items: center; text-align: left; padding: 0; }

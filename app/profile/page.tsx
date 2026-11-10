@@ -1268,9 +1268,9 @@ export default function ProfilePage() {
                 }
                 className={styles.learning}
               >
-                <Row gutter={[48, 32]}>
-                  <Col xs={24} md={12}>
-                    <div className="text-center p-8 bg-gradient-to-br from-[#EDF0F5] to-[#e2e6ed] rounded-xl">
+                <Row gutter={[16, 16]}>
+                  <Col xs={12} sm={12}>
+                    <div className="text-center p-3 sm:p-4 bg-gradient-to-br from-[#EDF0F5] to-[#e2e6ed] rounded-xl">
                       <Progress
                         type="circle"
                         percent={Math.min(100, ((stats?.notes?.public || 0) / Math.max(1, stats?.notes?.total || 1)) * 100)}
@@ -1279,13 +1279,13 @@ export default function ProfilePage() {
                           '0%': '#52c41a',
                           '100%': '#73d13d',
                         }}
-                        size={140}
+                        size={105}
                       />
-                      <p className="mt-4 text-xl font-semibold text-content-primary">公开笔记</p>
+                      <p className="mt-2 text-sm sm:text-base font-semibold text-content-primary mb-0">公开笔记</p>
                     </div>
                   </Col>
-                  <Col xs={24} md={12}>
-                    <div className="text-center p-8 bg-gradient-to-br from-[#EDF0F5] to-[#e2e6ed] rounded-xl">
+                  <Col xs={12} sm={12}>
+                    <div className="text-center p-3 sm:p-4 bg-gradient-to-br from-[#EDF0F5] to-[#e2e6ed] rounded-xl">
                       <Progress
                         type="circle"
                         percent={Math.min(100, (stats?.learning?.categoriesStudied || 0) * 10)}
@@ -1294,85 +1294,77 @@ export default function ProfilePage() {
                           '0%': '#1890ff',
                           '100%': '#40a9ff',
                         }}
-                        size={140}
+                        size={105}
                       />
-                      <p className="mt-4 text-xl font-semibold text-content-primary">学习领域</p>
+                      <p className="mt-2 text-sm sm:text-base font-semibold text-content-primary mb-0">学习领域</p>
                     </div>
                   </Col>
                 </Row>
 
-                <Divider />
+                <Divider style={{ margin: '12px 0' }} />
 
-                <Row gutter={[24, 24]}>
+                <Row gutter={[12, 12]}>
                   {/* 左侧长方形卡片：总学习时间（点击切换分钟/小时，定时自动恢复） */}
-                  <Col xs={24} md={12}>
+                  <Col xs={24} sm={12}>
                     <div 
-                      className="group relative p-5 sm:p-6 bg-gradient-to-br from-[#EDF0F5] to-[#e2e6ed] rounded-xl flex items-center justify-between cursor-pointer hover:shadow-md hover:border-purple-200 border border-transparent transition-all duration-200 select-none"
+                      className="group relative p-3 sm:p-3.5 bg-gradient-to-br from-[#EDF0F5] to-[#e2e6ed] rounded-xl flex items-center gap-2.5 sm:gap-3 cursor-pointer hover:shadow-md hover:border-purple-200 border border-transparent transition-all duration-200 select-none h-full"
                       onClick={handleToggleStudyTime}
                       title="点击切换显示格式（小时/纯分钟）"
                     >
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-600 text-2xl flex-shrink-0 group-hover:scale-105 transition-transform">
-                          <ClockCircleOutlined />
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="text-sm text-content-muted">总学习时间</span>
-                            <span className="text-[11px] px-1.5 py-0.5 rounded-full bg-purple-100 text-purple-700 font-medium">
-                              {showTotalMinutes ? '纯分钟' : '点击切分钟'}
-                            </span>
-                          </div>
-                          <div className="text-2xl sm:text-3xl font-bold text-content-primary whitespace-nowrap tracking-tight">
-                            {showTotalMinutes 
-                              ? `${getSafeStudyMinutes(stats?.learning?.totalStudyTime).toLocaleString()} 分钟`
-                              : formatStudyTime(stats?.learning?.totalStudyTime || 0)}
-                          </div>
-                        </div>
+                      <div className="w-9 h-9 rounded-lg bg-purple-500/10 flex items-center justify-center text-purple-600 text-lg flex-shrink-0 group-hover:scale-105 transition-transform">
+                        <ClockCircleOutlined />
                       </div>
-                      <div className="hidden sm:flex flex-col items-end text-xs text-content-muted opacity-70 group-hover:opacity-100 transition-opacity pr-1">
-                        <span className="text-[11px] text-purple-600 font-medium">
-                          {showTotalMinutes ? '4秒后恢复' : '点击切换'}
-                        </span>
-                        <span className="text-[10px] text-content-muted">小时 / 分钟</span>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center justify-between gap-1 mb-0.5">
+                          <span className="text-xs text-content-muted whitespace-nowrap">总学习时间</span>
+                          <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-purple-100 text-purple-700 font-medium whitespace-nowrap">
+                            {showTotalMinutes ? '纯分钟' : '切分钟'}
+                          </span>
+                        </div>
+                        <div className="text-base sm:text-lg font-bold text-content-primary whitespace-nowrap tracking-tight">
+                          {showTotalMinutes 
+                            ? `${getSafeStudyMinutes(stats?.learning?.totalStudyTime).toLocaleString()} 分钟`
+                            : formatStudyTime(stats?.learning?.totalStudyTime || 0)}
+                        </div>
                       </div>
                     </div>
                   </Col>
 
                   {/* 右侧长方形卡片：收藏与点赞合并（点击打开收藏页面） */}
-                  <Col xs={24} md={12}>
+                  <Col xs={24} sm={12}>
                     <div 
-                      className={`group p-5 sm:p-6 bg-gradient-to-br from-[#EDF0F5] to-[#e2e6ed] rounded-xl flex items-center justify-around border border-transparent select-none ${
+                      className={`group p-3 sm:p-3.5 bg-gradient-to-br from-[#EDF0F5] to-[#e2e6ed] rounded-xl flex items-center justify-around border border-transparent select-none h-full ${
                         !isGuest ? 'cursor-pointer hover:shadow-md hover:border-yellow-200 transition-all duration-200' : ''
                       }`}
                       onClick={() => !isGuest && router.push('/profile/bookmarks')}
                       title="点击查看我的收藏"
                     >
                       {/* 我的收藏 */}
-                      <div className="flex items-center gap-3.5 flex-1 justify-center">
-                        <div className="w-12 h-12 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-500 text-2xl flex-shrink-0 group-hover:scale-105 transition-transform">
+                      <div className="flex items-center gap-1.5 sm:gap-2 flex-1 justify-center min-w-0">
+                        <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-500 text-base flex-shrink-0 group-hover:scale-105 transition-transform">
                           <BookOutlined />
                         </div>
-                        <div>
-                          <div className="text-2xl sm:text-3xl font-bold text-content-primary">
+                        <div className="min-w-0">
+                          <div className="text-base sm:text-lg font-bold text-content-primary leading-tight">
                             {stats?.engagement?.bookmarksReceived || 0}
                           </div>
-                          <div className="text-sm text-content-muted">我的收藏</div>
+                          <div className="text-[11px] text-content-muted whitespace-nowrap">我的收藏</div>
                         </div>
                       </div>
 
                       {/* 分隔线 */}
-                      <div className="h-10 w-[1px] bg-slate-300 mx-2" />
+                      <div className="h-6 w-[1px] bg-slate-300 mx-1 flex-shrink-0" />
 
                       {/* 获得点赞 */}
-                      <div className="flex items-center gap-3.5 flex-1 justify-center">
-                        <div className="w-12 h-12 rounded-xl bg-rose-500/10 flex items-center justify-center text-rose-500 text-2xl flex-shrink-0 group-hover:scale-105 transition-transform">
+                      <div className="flex items-center gap-1.5 sm:gap-2 flex-1 justify-center min-w-0">
+                        <div className="w-8 h-8 rounded-lg bg-rose-500/10 flex items-center justify-center text-rose-500 text-base flex-shrink-0 group-hover:scale-105 transition-transform">
                           <HeartOutlined />
                         </div>
-                        <div>
-                          <div className="text-2xl sm:text-3xl font-bold text-content-primary">
+                        <div className="min-w-0">
+                          <div className="text-base sm:text-lg font-bold text-content-primary leading-tight">
                             {stats?.engagement?.likesReceived || 0}
                           </div>
-                          <div className="text-sm text-content-muted">获得点赞</div>
+                          <div className="text-[11px] text-content-muted whitespace-nowrap">获得点赞</div>
                         </div>
                       </div>
                     </div>
