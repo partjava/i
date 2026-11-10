@@ -218,15 +218,19 @@ export default function GamePage() {
   const Renderer = selectedGame ? GAME_COMPONENTS[selectedGame] : null;
 
   return (
-    <div className="game-center-root">
+    <div className="game-center-root min-h-screen bg-[#f8fafc] text-slate-800 relative overflow-hidden">
+      {/* 浅色科技感背景网格与光晕装饰（与极客代码工坊保持一致） */}
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_-10%,rgba(99,102,241,0.08),transparent)] pointer-events-none" />
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#e2e8f060_1px,transparent_1px),linear-gradient(to_bottom,#e2e8f060_1px,transparent_1px)] bg-[size:36px_36px] pointer-events-none" />
+
       {/* 顶部国风极客背景装饰 */}
-      <div className="w-full overflow-hidden">
+      <div className="w-full overflow-hidden relative z-10">
         <InkWashDecoration variant="landscape" height={160} />
       </div>
-      <InkWashDecoration variant="birds" height={45} className="-mt-3" />
+      <InkWashDecoration variant="birds" height={45} className="-mt-3 relative z-10" />
 
-      {/* 极客电竞感 Hero 头部 */}
-      <div className="hero-banner">
+      {/* 极客 Hero 头部（优雅浅色科技风） */}
+      <div className="hero-banner relative z-10">
         <div className="hero-inner">
           <div className="hero-badge">
             <span className="dot" />
@@ -261,7 +265,7 @@ export default function GamePage() {
         </div>
       </div>
 
-      <div className="main-content-container">
+      <div className="main-content-container relative z-10">
         {/* 常玩快捷入口栏 */}
         {recentGames.length > 0 && (
           <div className="recent-games-bar">
@@ -383,7 +387,7 @@ export default function GamePage() {
       )}
 
       {/* 底部国风点缀 */}
-      <div className="w-full overflow-hidden mt-12">
+      <div className="w-full overflow-hidden mt-12 relative z-10">
         <InkWashDecoration variant="bamboo" height={90} />
         <InkWashDecoration variant="landscape" height={180} />
       </div>
@@ -391,16 +395,14 @@ export default function GamePage() {
       <style jsx>{`
         .game-center-root {
           min-height: 100vh;
-          background: #0f1118;
-          color: #f4eadc;
+          background: #f8fafc;
+          color: #1e293b;
         }
 
         .hero-banner {
-          background: radial-gradient(circle at 50% 20%, #202b3c 0%, #111420 85%);
-          padding: 32px 20px 36px;
+          background: transparent;
+          padding: 24px 20px 28px;
           text-align: center;
-          border-bottom: 1px solid rgba(212, 163, 106, 0.2);
-          box-shadow: 0 10px 30px rgba(0,0,0,0.4);
         }
         .hero-inner {
           max-width: 860px;
@@ -410,32 +412,33 @@ export default function GamePage() {
           display: inline-flex;
           align-items: center;
           gap: 6px;
-          padding: 4px 12px;
+          padding: 4px 14px;
           border-radius: 20px;
-          background: rgba(212, 163, 106, 0.12);
-          border: 1px solid rgba(212, 163, 106, 0.3);
-          color: #f5d5a3;
+          background: rgba(99, 102, 241, 0.08);
+          border: 1px solid rgba(99, 102, 241, 0.22);
+          color: #4f46e5;
           font-size: 11px;
           font-family: monospace;
-          letter-spacing: 0.12em;
+          letter-spacing: 0.1em;
           margin-bottom: 12px;
+          font-weight: 600;
         }
         .hero-badge .dot {
           width: 6px; height: 6px; border-radius: 50%;
-          background: #d4a36a; box-shadow: 0 0 8px #d4a36a;
+          background: #6366f1; box-shadow: 0 0 8px #6366f1;
         }
         .hero-title {
           font-size: 2.3em;
-          font-weight: 800;
+          font-weight: 900;
           margin: 0 0 10px;
-          color: #fff;
-          font-family: serif;
-          letter-spacing: 0.05em;
-          text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+          background: linear-gradient(135deg, #0f172a 0%, #1e293b 60%, #334155 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          letter-spacing: -0.02em;
         }
         .hero-desc {
           font-size: 0.95em;
-          color: #a8b2c4;
+          color: #64748b;
           max-width: 640px;
           margin: 0 auto 20px;
           line-height: 1.6;
@@ -445,10 +448,11 @@ export default function GamePage() {
           display: inline-flex;
           align-items: center;
           gap: 16px;
-          background: rgba(255,255,255,0.04);
+          background: #ffffff;
           padding: 8px 24px;
           border-radius: 30px;
-          border: 1px solid rgba(255,255,255,0.08);
+          border: 1px solid rgba(226, 232, 240, 0.9);
+          box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04);
         }
         .hero-stat-item {
           display: flex;
@@ -457,24 +461,24 @@ export default function GamePage() {
         }
         .hero-stat-item .num {
           font-weight: 800;
-          color: #f3c687;
+          color: #d97706;
           font-family: monospace;
           font-size: 16px;
         }
         .hero-stat-item .lbl {
           font-size: 11px;
-          color: #8c97aa;
+          color: #64748b;
         }
         .hero-stat-sep {
           width: 1px;
           height: 14px;
-          background: rgba(255,255,255,0.15);
+          background: #e2e8f0;
         }
 
         .main-content-container {
           max-width: 1240px;
           margin: 0 auto;
-          padding: 24px 20px 40px;
+          padding: 16px 20px 40px;
         }
 
         .recent-games-bar {
@@ -482,15 +486,16 @@ export default function GamePage() {
           align-items: center;
           flex-wrap: wrap;
           gap: 8px;
-          background: rgba(255,255,255,0.03);
-          border: 1px solid rgba(255,255,255,0.06);
+          background: #ffffff;
+          border: 1px solid rgba(226, 232, 240, 0.9);
+          box-shadow: 0 2px 8px rgba(15, 23, 42, 0.03);
           padding: 10px 16px;
-          border-radius: 12px;
+          border-radius: 14px;
           margin-bottom: 22px;
         }
         .recent-label {
           font-size: 12px;
-          color: #a0a8b8;
+          color: #64748b;
           font-weight: 600;
         }
         .recent-tags {
@@ -503,26 +508,29 @@ export default function GamePage() {
           display: inline-flex;
           align-items: center;
           gap: 6px;
-          padding: 4px 10px;
-          border-radius: 8px;
-          background: rgba(212,163,106,0.12);
-          border: 1px solid rgba(212,163,106,0.25);
-          color: #fcebd5;
+          padding: 4px 12px;
+          border-radius: 10px;
+          background: #f8fafc;
+          border: 1px solid #e2e8f0;
+          color: #334155;
           font-size: 12px;
+          font-weight: 500;
           cursor: pointer;
           transition: all 0.2s;
         }
         .recent-pill:hover {
-          background: rgba(212,163,106,0.28);
-          border-color: #d4a36a;
+          background: #f1f5f9;
+          border-color: #cbd5e1;
+          color: #0f172a;
         }
         .recent-score {
           font-size: 10px;
-          background: rgba(0,0,0,0.3);
-          padding: 1px 5px;
-          border-radius: 4px;
-          color: #56b6c2;
+          background: #e0f2fe;
+          padding: 1px 6px;
+          border-radius: 6px;
+          color: #0369a1;
           font-family: monospace;
+          font-weight: 700;
         }
 
         .filter-nav-bar {
@@ -544,30 +552,38 @@ export default function GamePage() {
           align-items: center;
           gap: 6px;
           padding: 8px 16px;
-          border-radius: 10px;
-          background: #181b26;
-          border: 1px solid rgba(255,255,255,0.08);
-          color: #9ba4b5;
+          border-radius: 12px;
+          background: #ffffff;
+          border: 1px solid #e2e8f0;
+          color: #64748b;
           font-size: 13px;
-          font-weight: 500;
+          font-weight: 600;
           cursor: pointer;
           transition: all 0.2s;
+          box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
         }
         .cat-tab:hover {
-          color: #fff;
-          background: #202434;
+          color: #0f172a;
+          background: #f8fafc;
+          border-color: #cbd5e1;
         }
         .cat-tab.active {
-          background: linear-gradient(135deg, #d4a36a 0%, #a87942 100%);
-          color: #12100d;
+          background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+          color: #ffffff;
           font-weight: 700;
-          border-color: #d4a36a;
-          box-shadow: 0 4px 14px rgba(212,163,106,0.25);
+          border-color: #0f172a;
+          box-shadow: 0 4px 14px rgba(15, 23, 42, 0.15);
         }
         .cat-count {
           font-size: 11px;
-          opacity: 0.8;
+          opacity: 0.85;
           font-family: monospace;
+          padding: 1px 6px;
+          border-radius: 8px;
+          background: rgba(0, 0, 0, 0.06);
+        }
+        .cat-tab.active .cat-count {
+          background: rgba(255, 255, 255, 0.2);
         }
 
         .search-box-wrapper {
@@ -580,28 +596,30 @@ export default function GamePage() {
           position: absolute;
           left: 12px;
           font-size: 13px;
-          opacity: 0.6;
+          opacity: 0.5;
         }
         .search-input {
           width: 100%;
           padding: 8px 32px 8px 34px;
-          border-radius: 10px;
-          background: #181b26;
-          border: 1px solid rgba(255,255,255,0.1);
-          color: #fff;
+          border-radius: 12px;
+          background: #ffffff;
+          border: 1px solid #e2e8f0;
+          color: #0f172a;
           font-size: 13px;
           outline: none;
-          transition: border-color 0.2s;
+          transition: border-color 0.2s, box-shadow 0.2s;
+          box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
         }
         .search-input:focus {
-          border-color: #d4a36a;
+          border-color: #6366f1;
+          box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
         }
         .clear-search-btn {
           position: absolute;
           right: 10px;
           background: none;
           border: none;
-          color: #777;
+          color: #94a3b8;
           cursor: pointer;
           font-size: 12px;
         }
@@ -613,23 +631,24 @@ export default function GamePage() {
         }
 
         .game-card {
-          background: linear-gradient(145deg, #181b26 0%, #131520 100%);
-          border-radius: 16px;
-          border: 1px solid rgba(255, 255, 255, 0.08);
-          padding: 16px 18px;
+          background: #ffffff;
+          border-radius: 18px;
+          border: 1px solid rgba(226, 232, 240, 0.95);
+          box-shadow: 0 4px 18px rgba(15, 23, 42, 0.03);
+          padding: 18px 20px;
           display: flex;
           flex-direction: column;
           justify-content: space-between;
           cursor: pointer;
-          min-height: 180px;
+          min-height: 185px;
           transition: transform 0.22s, box-shadow 0.22s, border-color 0.22s;
           position: relative;
           overflow: hidden;
         }
         .game-card:hover {
           transform: translateY(-5px);
-          border-color: rgba(212, 163, 106, 0.45);
-          box-shadow: 0 14px 34px rgba(0,0,0,0.5), 0 0 20px rgba(212,163,106,0.12);
+          border-color: rgba(99, 102, 241, 0.4);
+          box-shadow: 0 16px 36px rgba(15, 23, 42, 0.08), 0 0 20px rgba(99, 102, 241, 0.06);
         }
 
         .card-top-row {
@@ -640,28 +659,30 @@ export default function GamePage() {
         }
         .category-pill {
           font-size: 10px;
-          padding: 2px 7px;
+          padding: 2.5px 8px;
           border-radius: 6px;
-          background: rgba(255,255,255,0.06);
-          color: #a4adc0;
-          font-weight: 500;
+          background: #f1f5f9;
+          color: #475569;
+          font-weight: 600;
         }
         .hot-pill {
           font-size: 10px;
-          padding: 2px 7px;
+          padding: 2.5px 8px;
           border-radius: 6px;
-          background: rgba(224, 108, 117, 0.18);
-          color: #ff858d;
-          font-weight: 600;
+          background: #fff1f2;
+          border: 1px solid #ffe4e6;
+          color: #e11d48;
+          font-weight: 700;
         }
         .best-score-badge {
           margin-left: auto;
           font-size: 11px;
-          color: #56b6c2;
+          color: #0284c7;
           font-weight: bold;
           font-family: monospace;
-          background: rgba(86,182,194,0.12);
-          padding: 2px 6px;
+          background: #f0f9ff;
+          border: 1px solid #e0f2fe;
+          padding: 2px 7px;
           border-radius: 6px;
         }
 
@@ -670,7 +691,7 @@ export default function GamePage() {
           margin-bottom: 12px;
         }
         .game-icon {
-          font-size: 2.4em;
+          font-size: 2.5em;
           display: inline-block;
           margin-bottom: 6px;
           transition: transform 0.2s;
@@ -680,16 +701,16 @@ export default function GamePage() {
         }
         .game-name {
           font-size: 16px;
-          font-weight: 700;
-          color: #f7efe4;
+          font-weight: 800;
+          color: #0f172a;
           margin: 0 0 4px;
-          letter-spacing: 0.02em;
+          letter-spacing: -0.01em;
         }
         .game-desc {
-          font-size: 11px;
-          color: #8c97aa;
+          font-size: 11.5px;
+          color: #64748b;
           margin: 0;
-          line-height: 1.4;
+          line-height: 1.5;
           display: -webkit-box;
           -webkit-line-clamp: 2;
           -webkit-box-orient: vertical;
@@ -701,31 +722,32 @@ export default function GamePage() {
           align-items: center;
           justify-content: space-between;
           padding-top: 10px;
-          border-top: 1px solid rgba(255,255,255,0.05);
+          border-top: 1px solid #f1f5f9;
         }
         .diff-pill {
           font-size: 11px;
-          color: #d4a36a;
-          font-weight: 500;
+          color: #d97706;
+          font-weight: 600;
         }
         .start-btn-label {
           font-size: 11px;
-          color: #56b6c2;
-          font-weight: 600;
+          color: #4f46e5;
+          font-weight: 700;
           opacity: 0.85;
-          transition: opacity 0.2s;
+          transition: opacity 0.2s, transform 0.2s;
         }
         .game-card:hover .start-btn-label {
           opacity: 1;
-          color: #d4a36a;
+          transform: translateX(2px);
+          color: #4338ca;
         }
 
         .empty-state {
           text-align: center;
           padding: 60px 20px;
-          background: rgba(255,255,255,0.02);
-          border-radius: 16px;
-          border: 1px dashed rgba(255,255,255,0.1);
+          background: #ffffff;
+          border-radius: 18px;
+          border: 1px dashed #cbd5e1;
         }
         .empty-icon {
           font-size: 40px;
@@ -734,13 +756,18 @@ export default function GamePage() {
         }
         .clear-filter-btn {
           margin-top: 14px;
-          background: #d4a36a;
-          color: #12100d;
+          background: #0f172a;
+          color: #ffffff;
           border: none;
-          padding: 6px 16px;
-          border-radius: 8px;
+          padding: 8px 18px;
+          border-radius: 10px;
           font-weight: 600;
+          font-size: 13px;
           cursor: pointer;
+          transition: background 0.2s;
+        }
+        .clear-filter-btn:hover {
+          background: #1e293b;
         }
 
         @media (max-width: 1100px) {

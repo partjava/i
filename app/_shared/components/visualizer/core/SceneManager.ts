@@ -220,7 +220,7 @@ export class SceneManager {
     e.preventDefault();
   };
 
-  private handleResize = () => {
+  public resize = () => {
     if (!this.canvas) return;
     const w = this.canvas.clientWidth;
     const h = this.canvas.clientHeight;
@@ -228,6 +228,10 @@ export class SceneManager {
     this.camera.aspect = w / h;
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(w, h, false);
+  };
+
+  private handleResize = () => {
+    this.resize();
   };
 
   private bindEvents() {

@@ -98,15 +98,24 @@ export default function AlgorithmVisualizer({
     };
   }, []);
 
-  // Trigger resize on SceneManager when toggling split code studio or theater zoom
+  // Trigger resize on SceneManager and re-render step when toggling split code studio or theater zoom
   useEffect(() => {
     const timer = setTimeout(() => {
+      if (managerRef.current) {
+        managerRef.current.resize();
+        if (steps.length > 0) {
+          const step = steps[Math.min(currentStep, steps.length - 1)];
+          if (step) {
+            renderStepToGroup(algorithm, managerRef.current, step);
+          }
+        }
+      }
       if (typeof window !== 'undefined') {
         window.dispatchEvent(new Event('resize'));
       }
     }, 60);
     return () => clearTimeout(timer);
-  }, [showCodeStudio, theaterZoom]);
+  }, [showCodeStudio, theaterZoom, algorithm, currentStep, steps]);
 
   // 2. Apply optimal camera preset & generate steps when algorithm or data changes
   useEffect(() => {
@@ -322,11 +331,15 @@ export default function AlgorithmVisualizer({
           showCodeStudio ? 'lg:grid-cols-12' : ''
         } gap-4 items-stretch`}
       >
-        {/* 左侧：3D 交互式主画布舞台（随代码演示同步放大，自动撑满右侧完整代码高度） */}
+        {/* 左侧：3D 交互式主画布舞台（随代码演示同步放大，独立关闭时依然保持全宽巨幕） */}
         <div
           className={`${
             showCodeStudio ? 'lg:col-span-6' : 'w-full'
-          } relative rounded-2xl overflow-hidden border shadow-2xl select-none flex flex-col`}
+          } relative rounded-2xl overflow-hidden border shadow-2xl select-none flex flex-col ${
+            theaterZoom
+              ? 'h-[540px] sm:h-[620px] lg:h-[680px]'
+              : 'h-[460px] sm:h-[520px]'
+          }`}
           style={{
             background:
               'radial-gradient(circle at 50% 32%, #131f3a 0%, #070c18 100%)',
@@ -335,11 +348,7 @@ export default function AlgorithmVisualizer({
         >
           <canvas
             ref={canvasRef}
-            className={`w-full flex-1 ${
-              showCodeStudio && theaterZoom
-                ? 'min-h-[480px] sm:min-h-[540px]'
-                : 'min-h-[400px] sm:min-h-[460px]'
-            } block cursor-grab active:cursor-grabbing`}
+            className="w-full h-full block cursor-grab active:cursor-grabbing"
           />
 
           {/* 左上角：算法空间状态微标（不遮挡右上角镜头按钮） */}
@@ -397,7 +406,11 @@ export default function AlgorithmVisualizer({
         {/* 右侧：⚡ 完整代码推演动画与帧内变量追踪舱（50% 对称宽屏，全量代码平铺零横拉条） */}
         {showCodeStudio && (
           <div
-            className="lg:col-span-6 rounded-2xl border shadow-2xl flex flex-col overflow-hidden"
+            className={`lg:col-span-6 rounded-2xl border shadow-2xl flex flex-col overflow-hidden ${
+              theaterZoom
+                ? 'h-[540px] sm:h-[620px] lg:h-[680px]'
+                : 'h-[460px] sm:h-[520px]'
+            }`}
             style={{
               background:
                 'linear-gradient(165deg, #090f1d 0%, #0d1629 100%)',
