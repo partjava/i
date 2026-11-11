@@ -247,7 +247,7 @@ export const QuizWorkspace: React.FC<QuizWorkspaceProps> = ({ selectedNodeName, 
       const res = await fetch('/api/ai/chat', {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: request.signal,
         body: JSON.stringify({
-          message: `请结合当前挑战题目辅导我，优先解释思路并给逐步提示；除非我明确要求完整解答，否则不要直接给标准答案。代码请用代码块展示。\n\n我的问题：${text}`,
+          message: `请结合当前挑战题目辅导我，优先解释思路并给逐步提示；除非我明确要求完整解答，否则不要直接给标准答案。请使用 Markdown 排版，代码用标注语言的代码块，行内公式用 $...$，独立公式用单独成行的 $$ 包裹。\n\n我的问题：${text}`,
           pageContext, history,
         }),
       });

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { BookOpen, Settings, ChevronRight, ArrowLeft, Cpu, Sparkles, Loader } from 'lucide-react';
+import { BookOpen, Settings, ChevronRight, ArrowLeft, Sparkles, Loader } from 'lucide-react';
 import { Stage } from './data';
 import { SvmVisualizer } from './SvmVisualizer';
 import ReactMarkdown from 'react-markdown';
@@ -255,51 +255,63 @@ export const KnowledgeTree: React.FC<KnowledgeTreeProps> = ({
       </div>
 
       {/* 右侧核心知识看板展示区 */}
-      <div className="flex-1 border border-slate-900 bg-slate-950/50 backdrop-blur-md rounded-2xl p-8 overflow-y-auto flex flex-col justify-between z-10">
+      <div className="min-w-0 flex-1 border border-slate-900 bg-slate-950/50 backdrop-blur-md rounded-2xl p-4 sm:p-8 overflow-y-auto flex flex-col z-10">
         {loading ? (
           <div className="flex-1 flex flex-col items-center justify-center text-indigo-400 gap-2">
             <Loader className="w-6 h-6 animate-spin" />
             <span className="text-[10px] font-mono tracking-widest uppercase">Fetching node specifications...</span>
           </div>
         ) : (
-          <div className="max-w-3xl space-y-6">
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <span className="text-xs uppercase text-indigo-400 font-bold tracking-widest font-mono">SELECTED NODE</span>
-                <ChevronRight className="w-3 h-3 text-slate-600" />
-                <span className="text-xs text-slate-400">{selectedStage.name}</span>
-                {detail?.isOfficial === false && (
-                  <>
-                    <ChevronRight className="w-3 h-3 text-slate-600" />
-                    <span className="px-2 py-0.5 rounded bg-purple-500/10 border border-purple-500/30 text-purple-400 text-[9px] font-mono">
-                      VIP 共创
-                    </span>
-                  </>
-                )}
+          <div className="mx-auto w-full max-w-6xl space-y-6">
+            <div className="flex flex-wrap items-end justify-between gap-4 border-b border-slate-800/70 pb-5">
+              <div className="min-w-0 space-y-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs uppercase text-indigo-400 font-bold tracking-widest font-mono">SELECTED NODE</span>
+                  <ChevronRight className="w-3 h-3 text-slate-600" />
+                  <span className="text-xs text-slate-400">{selectedStage.name}</span>
+                  {detail?.isOfficial === false && (
+                    <>
+                      <ChevronRight className="w-3 h-3 text-slate-600" />
+                      <span className="px-2 py-0.5 rounded bg-purple-500/10 border border-purple-500/30 text-purple-400 text-[9px] font-mono">
+                        VIP 共创
+                      </span>
+                    </>
+                  )}
+                </div>
+                <h2 className="text-3xl font-extrabold text-white">{selectedNodeName}</h2>
               </div>
-              <h2 className="text-3xl font-extrabold text-white">{selectedNodeName}</h2>
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="text-xs text-slate-400">
+                  通过本关将获得 <strong className="text-cyan-400 font-bold">{selectedStage.id * 10} 分</strong> 探索积分
+                </div>
+                <button
+                  onClick={onStartQuiz}
+                  className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-xs font-bold text-white tracking-wider flex items-center gap-1.5 shadow-lg shadow-indigo-600/30 hover:scale-105 transition duration-200"
+                >
+                  开始实战闯关 <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
             </div>
 
             {/* 看板文字简介区（如果有后台数据库内容就用数据库的，否则使用动态生成的模版以防写死成 SVM） */}
-            <div className="space-y-4 text-sm text-slate-300 leading-relaxed border-t border-slate-900/60 pt-4 font-normal">
+            <div className="grid items-start gap-5 text-sm text-slate-300 leading-relaxed [grid-template-columns:repeat(auto-fit,minmax(min(100%,22rem),1fr))]">
               {detail?.theory ? (
-                <div className="max-h-[220px] overflow-y-auto pr-2 scrollbar-thin">
+                <div className="min-w-0 max-w-3xl [overflow-wrap:anywhere]">
                   {renderTheoryMarkdown(detail.theory)}
                 </div>
               ) : (
                 <p className="text-slate-600 text-xs italic">暂无理论内容</p>
               )}
               
-              <div className="bg-slate-900/40 border border-indigo-950/60 rounded-xl p-4 space-y-2">
-                <h4 className="text-xs font-bold text-indigo-300 flex items-center gap-1">
+              {(detail?.latexFormulas?.length > 0 || detail?.expectedOutput) && (
+                <div className="min-w-0 overflow-x-auto bg-slate-900/40 border border-indigo-950/60 rounded-xl p-4 space-y-2">
+                  <h4 className="text-xs font-bold text-indigo-300 flex items-center gap-1">
                   <Settings className="w-3.5 h-3.5" /> 核心考核指标与公式
-                </h4>
+                  </h4>
 
-                {detail?.latexFormulas?.length > 0 ? (
                   <ul className="list-disc list-inside text-xs text-slate-400 space-y-1.5 pl-1.5">
-                    {detail.latexFormulas.map((formula: string, fIdx: number) => (
+                    {detail.latexFormulas?.map((formula: string, fIdx: number) => (
                       <li key={fIdx} className="flex items-center gap-1.5 flex-wrap">
-                        <span>核心关系算子:</span>
                         <span className="text-indigo-400 font-mono inline-block">
                           <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
                             {`$${formula}$`}
@@ -309,37 +321,13 @@ export const KnowledgeTree: React.FC<KnowledgeTreeProps> = ({
                     ))}
                     {detail.expectedOutput && <li>预期输出: <code className="px-1 py-0.5 rounded bg-slate-950 text-cyan-400">{detail.expectedOutput}</code></li>}
                   </ul>
-                ) : (
-                  <p className="text-xs text-slate-600 italic">暂无公式</p>
-                )}
-              </div>
+                </div>
+              )}
             </div>
 
-            {selectedNodeName === "支持向量机 (SVM)" ? (
-              <SvmVisualizer />
-            ) : (
-              // 其它课程提供默认的精美科幻图表占位
-              <div className="bg-slate-900/40 border border-slate-800 rounded-xl p-6 flex flex-col items-center max-w-sm">
-                <div className="w-12 h-12 rounded-full border border-dashed border-indigo-500/30 flex items-center justify-center mb-3">
-                  <Cpu className="w-5 h-5 text-indigo-400 animate-pulse" />
-                </div>
-                <span className="text-[11px] text-slate-400">已自动载入 {selectedNodeName} 沙箱模块</span>
-              </div>
-            )}
+            {selectedNodeName === "支持向量机 (SVM)" && <SvmVisualizer />}
           </div>
         )}
-
-        <div className="border-t border-slate-900 pt-6 mt-6 flex justify-between items-center">
-          <div className="text-xs text-slate-400">
-            通过本关将获得 <strong className="text-cyan-400 font-bold">{selectedStage.id * 10} 分</strong> 探索积分
-          </div>
-          <button
-            onClick={onStartQuiz}
-            className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-xs font-bold text-white tracking-wider flex items-center gap-1.5 shadow-lg shadow-indigo-600/30 hover:scale-105 transition duration-200"
-          >
-            开始实战闯关 <ChevronRight className="w-4 h-4" />
-          </button>
-        </div>
       </div>
     </motion.div>
   );
