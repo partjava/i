@@ -24,13 +24,15 @@
     "testCases": [
       {
         "name": "validate passes",
-        "input": {
-          "data": {
+        "mode": "function",
+        "function": "validate_input",
+        "args": [
+          {
             "text": "hello",
             "count": 3
           },
-          "schema": {}
-        },
+          {}
+        ],
         "expected": true
       }
     ],
@@ -77,8 +79,10 @@
     "testCases": [
       {
         "name": "onnx export and inference",
-        "input": {
-          "params": {
+        "mode": "function",
+        "function": "export_onnx",
+        "args": [
+          {
             "weight": [
               [
                 0.5,
@@ -94,21 +98,15 @@
               0.2
             ]
           },
-          "inputShape": [
+          [
             1,
             2
           ],
-          "outputShape": [
+          [
             1,
             2
-          ],
-          "inputData": [
-            [
-              1,
-              2
-            ]
           ]
-        },
+        ],
         "expected": true
       }
     ],
@@ -204,9 +202,9 @@
     "testCases": [
       {
         "name": "ram estimation",
-        "input": {
-          "modelSizeB": 7
-        },
+        "mode": "function",
+        "function": "ollama_list_models",
+        "args": [],
         "expected": {
           "model_size_billions": 7,
           "fp16_ram_gb": 14,
@@ -258,12 +256,14 @@
     "testCases": [
       {
         "name": "kv cache size",
-        "input": {
-          "layers": 32,
-          "hidden": 4096,
-          "maxLen": 2048,
-          "batch": 4
-        },
+        "mode": "function",
+        "function": "estimate_kv_cache_size",
+        "args": [
+          32,
+          4096,
+          2048,
+          4
+        ],
         "expected": {
           "bytes": 4294967296,
           "gb": 4
@@ -309,14 +309,16 @@
     "testCases": [
       {
         "name": "async process",
-        "input": {
-          "requests": [
+        "mode": "function",
+        "function": "async_process",
+        "args": [
+          [
             "a",
             "b",
             "c"
           ],
-          "timeout": 5
-        },
+          5
+        ],
         "expected": [
           "ok:a",
           "ok:b",
@@ -363,8 +365,10 @@
     "testCases": [
       {
         "name": "fuse conv bn",
-        "input": {
-          "graph": {
+        "mode": "function",
+        "function": "fuse_conv_bn",
+        "args": [
+          {
             "nodes": [
               {
                 "op": "Conv",
@@ -383,7 +387,7 @@
               }
             ]
           }
-        },
+        ],
         "expected": true
       }
     ],
@@ -527,8 +531,10 @@
     "testCases": [
       {
         "name": "continuous batching",
-        "input": {
-          "requests": [
+        "mode": "function",
+        "function": "continuous_batching",
+        "args": [
+          [
             1,
             2,
             3,
@@ -538,9 +544,9 @@
             7,
             8
           ],
-          "maxBatch": 4,
-          "maxLen": 5
-        },
+          4,
+          5
+        ],
         "expected": true
       }
     ],

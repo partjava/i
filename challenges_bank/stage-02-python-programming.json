@@ -25,26 +25,32 @@
     "testCases": [
       {
         "name": "parses integer",
-        "input": {
-          "value": "100",
-          "targetType": "int"
-        },
+        "mode": "function",
+        "function": "parse_config_value",
+        "args": [
+          "100",
+          "int"
+        ],
         "expected": 100
       },
       {
         "name": "parses bool true",
-        "input": {
-          "value": "true",
-          "targetType": "bool"
-        },
+        "mode": "function",
+        "function": "parse_config_value",
+        "args": [
+          "true",
+          "bool"
+        ],
         "expected": true
       },
       {
         "name": "parses list[int]",
-        "input": {
-          "value": "1,2,3",
-          "targetType": "list[int]"
-        },
+        "mode": "function",
+        "function": "parse_config_value",
+        "args": [
+          "1,2,3",
+          "list[int]"
+        ],
         "expected": [
           1,
           2,
@@ -53,11 +59,13 @@
       },
       {
         "name": "invalid int raises",
-        "input": {
-          "value": "abc",
-          "targetType": "int"
-        },
-        "expected": "error"
+        "mode": "function",
+        "function": "parse_config_value",
+        "args": [
+          "abc",
+          "int"
+        ],
+        "expectedException": "ValueError"
       }
     ],
     "quizzes": [
@@ -114,8 +122,10 @@
     "testCases": [
       {
         "name": "filters below warn",
-        "input": {
-          "logs": [
+        "mode": "function",
+        "function": "filter_logs",
+        "args": [
+          [
             {
               "timestamp": "10:00:01",
               "level": "DEBUG",
@@ -132,8 +142,8 @@
               "message": "connected"
             }
           ],
-          "minLevel": "WARN"
-        },
+          "WARN"
+        ],
         "expected": [
           {
             "timestamp": "10:00:02",
@@ -144,10 +154,12 @@
       },
       {
         "name": "empty input",
-        "input": {
-          "logs": [],
-          "minLevel": "INFO"
-        },
+        "mode": "function",
+        "function": "filter_logs",
+        "args": [
+          [],
+          "INFO"
+        ],
         "expected": []
       }
     ],
@@ -205,8 +217,10 @@
     "testCases": [
       {
         "name": "two batches with error",
-        "input": {
-          "tasks": [
+        "mode": "function",
+        "function": "run_batches",
+        "args": [
+          [
             {
               "id": 1,
               "payload": "ok"
@@ -220,9 +234,9 @@
               "payload": "fine"
             }
           ],
-          "batchSize": 2,
-          "interval": 0
-        },
+          2,
+          0
+        ],
         "expected": [
           {
             "batch": 1,
@@ -251,11 +265,13 @@
       },
       {
         "name": "empty tasks",
-        "input": {
-          "tasks": [],
-          "batchSize": 5,
-          "interval": 0
-        },
+        "mode": "function",
+        "function": "run_batches",
+        "args": [
+          [],
+          5,
+          0
+        ],
         "expected": []
       }
     ],
@@ -314,25 +330,11 @@
     "testCases": [
       {
         "name": "second call returns cached",
-        "input": {
-          "maxSize": 3,
-          "calls": [
-            {
-              "args": [
-                2,
-                3
-              ],
-              "kwargs": {}
-            },
-            {
-              "args": [
-                2,
-                3
-              ],
-              "kwargs": {}
-            }
-          ]
-        },
+        "mode": "function",
+        "function": "memoize_n",
+        "args": [
+          3
+        ],
         "expected": [
           {
             "result": 5,
@@ -346,35 +348,11 @@
       },
       {
         "name": "evicts oldest when full",
-        "input": {
-          "maxSize": 2,
-          "calls": [
-            {
-              "args": [
-                1
-              ],
-              "kwargs": {}
-            },
-            {
-              "args": [
-                2
-              ],
-              "kwargs": {}
-            },
-            {
-              "args": [
-                3
-              ],
-              "kwargs": {}
-            },
-            {
-              "args": [
-                1
-              ],
-              "kwargs": {}
-            }
-          ]
-        },
+        "mode": "function",
+        "function": "memoize_n",
+        "args": [
+          2
+        ],
         "expected": [
           {
             "result": 1,
@@ -449,15 +427,17 @@
     "testCases": [
       {
         "name": "basic sliding windows",
-        "input": {
-          "numbers": [
+        "mode": "function",
+        "function": "sliding_window_stats",
+        "args": [
+          [
             1,
             2,
             3,
             4
           ],
-          "windowSize": 3
-        },
+          3
+        ],
         "expected": [
           {
             "avg": 2,
@@ -473,13 +453,15 @@
       },
       {
         "name": "not enough values",
-        "input": {
-          "numbers": [
+        "mode": "function",
+        "function": "sliding_window_stats",
+        "args": [
+          [
             1,
             2
           ],
-          "windowSize": 5
-        },
+          5
+        ],
         "expected": []
       }
     ],
@@ -537,8 +519,10 @@
     "testCases": [
       {
         "name": "sort by score desc",
-        "input": {
-          "data": [
+        "mode": "function",
+        "function": "multi_field_sort",
+        "args": [
+          [
             {
               "name": "A",
               "score": 85
@@ -548,13 +532,13 @@
               "score": 90
             }
           ],
-          "rules": [
+          [
             {
               "field": "score",
               "desc": true
             }
           ]
-        },
+        ],
         "expected": [
           {
             "name": "B",
@@ -568,8 +552,10 @@
       },
       {
         "name": "missing field sorted last",
-        "input": {
-          "data": [
+        "mode": "function",
+        "function": "multi_field_sort",
+        "args": [
+          [
             {
               "name": "A"
             },
@@ -578,13 +564,13 @@
               "score": 100
             }
           ],
-          "rules": [
+          [
             {
               "field": "score",
               "desc": true
             }
           ]
-        },
+        ],
         "expected": [
           {
             "name": "B",
@@ -650,20 +636,22 @@
     "testCases": [
       {
         "name": "deep merge nested",
-        "input": {
-          "base": {
+        "mode": "function",
+        "function": "deep_merge",
+        "args": [
+          {
             "a": 1,
             "b": {
               "x": 10
             }
           },
-          "override": {
+          {
             "b": {
               "y": 20
             }
           },
-          "conflict": "overwrite"
-        },
+          "overwrite"
+        ],
         "expected": {
           "a": 1,
           "b": {
@@ -674,16 +662,18 @@
       },
       {
         "name": "overwrite scalar",
-        "input": {
-          "base": {
+        "mode": "function",
+        "function": "deep_merge",
+        "args": [
+          {
             "a": 1,
             "b": 2
           },
-          "override": {
+          {
             "b": 99
           },
-          "conflict": "overwrite"
-        },
+          "overwrite"
+        ],
         "expected": {
           "a": 1,
           "b": 99
@@ -745,12 +735,14 @@
     "testCases": [
       {
         "name": "basic analysis",
-        "input": {
-          "rolePermissions": {
+        "mode": "function",
+        "function": "analyze_permissions",
+        "args": [
+          {
             "admin": {},
             "viewer": {}
           },
-          "userRoles": {
+          {
             "alice": [
               "admin"
             ],
@@ -758,7 +750,7 @@
               "viewer"
             ]
           }
-        },
+        ],
         "expected": {
           "users": {
             "alice": {
@@ -781,17 +773,19 @@
       },
       {
         "name": "unknown role ignored",
-        "input": {
-          "rolePermissions": {
+        "mode": "function",
+        "function": "analyze_permissions",
+        "args": [
+          {
             "user": {}
           },
-          "userRoles": {
+          {
             "alice": [
               "user",
               "superadmin"
             ]
           }
-        },
+        ],
         "expected": {
           "users": {
             "alice": {
@@ -859,19 +853,21 @@
     "testCases": [
       {
         "name": "counts keywords",
-        "input": {
-          "logLines": [
+        "mode": "function",
+        "function": "count_keywords",
+        "args": [
+          [
             "Error: connection failed",
             "WARN: disk 85%",
             "error: timeout",
             "Info: started",
             "ERROR: crash"
           ],
-          "keywords": [
+          [
             "error",
             "warn"
           ]
-        },
+        ],
         "expected": [
           {
             "keyword": "error",
@@ -885,15 +881,17 @@
       },
       {
         "name": "zero count",
-        "input": {
-          "logLines": [
+        "mode": "function",
+        "function": "count_keywords",
+        "args": [
+          [
             "everything ok"
           ],
-          "keywords": [
+          [
             "error",
             "debug"
           ]
-        },
+        ],
         "expected": [
           {
             "keyword": "error",
@@ -960,12 +958,14 @@
     "testCases": [
       {
         "name": "clean basic record",
-        "input": {
-          "record": {
+        "mode": "function",
+        "function": "clean_json_record",
+        "args": [
+          {
             "user_name": "alice",
             "user_age": "30"
           }
-        },
+        ],
         "expected": {
           "userName": "alice",
           "userAge": 30
@@ -973,12 +973,14 @@
       },
       {
         "name": "string to bool",
-        "input": {
-          "record": {
+        "mode": "function",
+        "function": "clean_json_record",
+        "args": [
+          {
             "is_active": "true",
             "score": "95.5"
           }
-        },
+        ],
         "expected": {
           "isActive": true,
           "score": 95.5
@@ -1039,8 +1041,10 @@
     "testCases": [
       {
         "name": "group sum",
-        "input": {
-          "data": [
+        "mode": "function",
+        "function": "group_aggregate",
+        "args": [
+          [
             {
               "department": "Engineering",
               "salary": 15000
@@ -1054,10 +1058,10 @@
               "salary": 8000
             }
           ],
-          "groupBy": "department",
-          "aggField": "salary",
-          "aggFunc": "sum"
-        },
+          "department",
+          "salary",
+          "sum"
+        ],
         "expected": [
           {
             "department": "Engineering",
@@ -1073,8 +1077,10 @@
       },
       {
         "name": "avg aggregation",
-        "input": {
-          "data": [
+        "mode": "function",
+        "function": "group_aggregate",
+        "args": [
+          [
             {
               "dept": "A",
               "val": 10
@@ -1088,10 +1094,10 @@
               "val": 15
             }
           ],
-          "groupBy": "dept",
-          "aggField": "val",
-          "aggFunc": "avg"
-        },
+          "dept",
+          "val",
+          "avg"
+        ],
         "expected": [
           {
             "dept": "A",
@@ -1601,14 +1607,16 @@
     "testCases": [
       {
         "name": "parses valid lines",
-        "input": {
-          "logLines": [
+        "mode": "function",
+        "function": "parse_log_lines",
+        "args": [
+          [
             "INFO | 10:00:00 | server | started",
             "# this is a comment",
             "",
             "ERROR | 10:00:05 | db | timeout"
           ]
-        },
+        ],
         "expected": [
           {
             "level": "INFO",
@@ -1626,11 +1634,13 @@
       },
       {
         "name": "skips malformed line",
-        "input": {
-          "logLines": [
+        "mode": "function",
+        "function": "parse_log_lines",
+        "args": [
+          [
             "bad line without pipes"
           ]
-        },
+        ],
         "expected": []
       }
     ],
@@ -1688,18 +1698,20 @@
     "testCases": [
       {
         "name": "succeeds on first try",
-        "input": {
-          "maxAttempts": 3,
-          "failCount": 0
-        },
+        "mode": "function",
+        "function": "retry",
+        "args": [
+          3
+        ],
         "expected": "success"
       },
       {
         "name": "retries until success",
-        "input": {
-          "maxAttempts": 3,
-          "failCount": 2
-        },
+        "mode": "function",
+        "function": "retry",
+        "args": [
+          3
+        ],
         "expected": "success"
       }
     ],
@@ -1757,8 +1769,10 @@
     "testCases": [
       {
         "name": "sort by age",
-        "input": {
-          "users": [
+        "mode": "function",
+        "function": "sort_users",
+        "args": [
+          [
             {
               "name": "Alice",
               "age": 30,
@@ -1769,11 +1783,8 @@
               "age": 25,
               "score": 90
             }
-          ],
-          "keys": [
-            "by_age"
           ]
-        },
+        ],
         "expected": [
           {
             "name": "Bob",
@@ -1789,8 +1800,10 @@
       },
       {
         "name": "sort by score desc",
-        "input": {
-          "users": [
+        "mode": "function",
+        "function": "sort_users",
+        "args": [
+          [
             {
               "name": "Alice",
               "age": 30,
@@ -1801,11 +1814,8 @@
               "age": 25,
               "score": 90
             }
-          ],
-          "keys": [
-            "by_score_desc"
           ]
-        },
+        ],
         "expected": [
           {
             "name": "Bob",
@@ -1871,44 +1881,56 @@
     "testCases": [
       {
         "name": "simple",
-        "input": {
-          "s": "()"
-        },
+        "mode": "function",
+        "function": "is_valid",
+        "args": [
+          "()"
+        ],
         "expected": true
       },
       {
         "name": "all types",
-        "input": {
-          "s": "()[]{}"
-        },
+        "mode": "function",
+        "function": "is_valid",
+        "args": [
+          "()[]{}"
+        ],
         "expected": true
       },
       {
         "name": "mismatched",
-        "input": {
-          "s": "(]"
-        },
+        "mode": "function",
+        "function": "is_valid",
+        "args": [
+          "(]"
+        ],
         "expected": false
       },
       {
         "name": "wrong order",
-        "input": {
-          "s": "([)]"
-        },
+        "mode": "function",
+        "function": "is_valid",
+        "args": [
+          "([)]"
+        ],
         "expected": false
       },
       {
         "name": "nested",
-        "input": {
-          "s": "{[]}"
-        },
+        "mode": "function",
+        "function": "is_valid",
+        "args": [
+          "{[]}"
+        ],
         "expected": true
       },
       {
         "name": "empty",
-        "input": {
-          "s": ""
-        },
+        "mode": "function",
+        "function": "is_valid",
+        "args": [
+          ""
+        ],
         "expected": true
       }
     ],
@@ -1953,9 +1975,11 @@
     "testCases": [
       {
         "name": "n=5",
-        "input": {
-          "n": 5
-        },
+        "mode": "function",
+        "function": "fizzbuzz",
+        "args": [
+          5
+        ],
         "expected": [
           "1",
           "2",
@@ -1966,9 +1990,11 @@
       },
       {
         "name": "n=1",
-        "input": {
-          "n": 1
-        },
+        "mode": "function",
+        "function": "fizzbuzz",
+        "args": [
+          1
+        ],
         "expected": [
           "1"
         ]
@@ -2014,15 +2040,17 @@
     "testCases": [
       {
         "name": "example 1",
-        "input": {
-          "nums": [
+        "mode": "function",
+        "function": "two_sum",
+        "args": [
+          [
             2,
             7,
             11,
             15
           ],
-          "target": 9
-        },
+          9
+        ],
         "expected": [
           0,
           1
@@ -2030,14 +2058,16 @@
       },
       {
         "name": "example 2",
-        "input": {
-          "nums": [
+        "mode": "function",
+        "function": "two_sum",
+        "args": [
+          [
             3,
             2,
             4
           ],
-          "target": 6
-        },
+          6
+        ],
         "expected": [
           1,
           2
@@ -2084,23 +2114,29 @@
     "testCases": [
       {
         "name": "classic",
-        "input": {
-          "s": "A man, a plan, a canal: Panama"
-        },
+        "mode": "function",
+        "function": "is_palindrome",
+        "args": [
+          "A man, a plan, a canal: Panama"
+        ],
         "expected": true
       },
       {
         "name": "not palindrome",
-        "input": {
-          "s": "race a car"
-        },
+        "mode": "function",
+        "function": "is_palindrome",
+        "args": [
+          "race a car"
+        ],
         "expected": false
       },
       {
         "name": "empty",
-        "input": {
-          "s": " "
-        },
+        "mode": "function",
+        "function": "is_palindrome",
+        "args": [
+          " "
+        ],
         "expected": true
       }
     ],
@@ -2144,8 +2180,10 @@
     "testCases": [
       {
         "name": "rotate 3",
-        "input": {
-          "nums": [
+        "mode": "function",
+        "function": "rotate",
+        "args": [
+          [
             1,
             2,
             3,
@@ -2154,8 +2192,8 @@
             6,
             7
           ],
-          "k": 3
-        },
+          3
+        ],
         "expected": [
           5,
           6,
@@ -2168,13 +2206,15 @@
       },
       {
         "name": "k>n",
-        "input": {
-          "nums": [
+        "mode": "function",
+        "function": "rotate",
+        "args": [
+          [
             1,
             2
           ],
-          "k": 3
-        },
+          3
+        ],
         "expected": [
           2,
           1
@@ -2221,8 +2261,10 @@
     "testCases": [
       {
         "name": "overlapping",
-        "input": {
-          "intervals": [
+        "mode": "function",
+        "function": "merge_intervals",
+        "args": [
+          [
             [
               1,
               3
@@ -2240,7 +2282,7 @@
               18
             ]
           ]
-        },
+        ],
         "expected": [
           [
             1,
@@ -2258,8 +2300,10 @@
       },
       {
         "name": "adjacent",
-        "input": {
-          "intervals": [
+        "mode": "function",
+        "function": "merge_intervals",
+        "args": [
+          [
             [
               1,
               4
@@ -2269,7 +2313,7 @@
               5
             ]
           ]
-        },
+        ],
         "expected": [
           [
             1,
@@ -2279,9 +2323,11 @@
       },
       {
         "name": "empty",
-        "input": {
-          "intervals": []
-        },
+        "mode": "function",
+        "function": "merge_intervals",
+        "args": [
+          []
+        ],
         "expected": []
       }
     ],
@@ -2325,10 +2371,12 @@
     "testCases": [
       {
         "name": "top 2",
-        "input": {
-          "text": "i love coding and i love python",
-          "k": 2
-        },
+        "mode": "function",
+        "function": "top_k_frequent",
+        "args": [
+          "i love coding and i love python",
+          2
+        ],
         "expected": [
           [
             "i",
@@ -2381,18 +2429,20 @@
     "testCases": [
       {
         "name": "basic",
-        "input": {
-          "nums1": [
+        "mode": "function",
+        "function": "set_operations",
+        "args": [
+          [
             1,
             2,
             2,
             1
           ],
-          "nums2": [
+          [
             2,
             2
           ]
-        },
+        ],
         "expected": {
           "intersection": [
             2
@@ -2443,8 +2493,10 @@
     "testCases": [
       {
         "name": "found",
-        "input": {
-          "files": [
+        "mode": "function",
+        "function": "find_files",
+        "args": [
+          [
             {
               "path": "/a.txt",
               "content": "hello world"
@@ -2454,23 +2506,25 @@
               "content": "nope"
             }
           ],
-          "keyword": "hello"
-        },
+          "hello"
+        ],
         "expected": [
           "/a.txt"
         ]
       },
       {
         "name": "no match",
-        "input": {
-          "files": [
+        "mode": "function",
+        "function": "find_files",
+        "args": [
+          [
             {
               "path": "/a.txt",
               "content": "hi"
             }
           ],
-          "keyword": "xyz"
-        },
+          "xyz"
+        ],
         "expected": []
       }
     ],
@@ -2514,8 +2568,10 @@
     "testCases": [
       {
         "name": "nested",
-        "input": {
-          "obj": {
+        "mode": "function",
+        "function": "flatten_json",
+        "args": [
+          {
             "a": 1,
             "b": {
               "c": 2,
@@ -2525,7 +2581,7 @@
               ]
             }
           }
-        },
+        ],
         "expected": {
           "a": 1,
           "b.c": 2,
@@ -2573,9 +2629,11 @@
     "testCases": [
       {
         "name": "simple",
-        "input": {
-          "text": "name,age\\nAlice,30\\nBob,25"
-        },
+        "mode": "function",
+        "function": "parse_csv",
+        "args": [
+          "name,age\\nAlice,30\\nBob,25"
+        ],
         "expected": [
           {
             "name": "Alice",
@@ -2589,9 +2647,11 @@
       },
       {
         "name": "quoted",
-        "input": {
-          "text": "name,note\\nAlice,\\\"hello, world\\\""
-        },
+        "mode": "function",
+        "function": "parse_csv",
+        "args": [
+          "name,note\\nAlice,\\\"hello, world\\\""
+        ],
         "expected": [
           {
             "name": "Alice",
@@ -2968,9 +3028,9 @@
     "testCases": [
       {
         "name": "first 6",
-        "input": {
-          "n": 6
-        },
+        "mode": "function",
+        "function": "fibonacci",
+        "args": [],
         "expected": [
           0,
           1,
@@ -3021,9 +3081,9 @@
     "testCases": [
       {
         "name": "timer works",
-        "input": {
-          "funcName": "test"
-        },
+        "mode": "function",
+        "function": "timer",
+        "args": [],
         "expected": true
       }
     ],

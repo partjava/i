@@ -26,14 +26,16 @@
     "testCases": [
       {
         "name": "2-layer MLP",
-        "input": {
-          "x": [
+        "mode": "function",
+        "function": "mlp_forward",
+        "args": [
+          [
             [
               1,
               2
             ]
           ],
-          "params": [
+          [
             [
               [
                 0.1,
@@ -48,19 +50,8 @@
               0.5,
               0.5
             ]
-          ],
-          "W2": [
-            [
-              0.1
-            ],
-            [
-              0.2
-            ]
-          ],
-          "b2": [
-            0
           ]
-        },
+        ],
         "expected": true
       }
     ],
@@ -200,24 +191,28 @@
     "testCases": [
       {
         "name": "perfect mse zero",
-        "input": {
-          "yPred": [
+        "mode": "function",
+        "function": "mse_loss",
+        "args": [
+          [
             1,
             2,
             3
           ],
-          "yTrue": [
+          [
             1,
             2,
             3
           ]
-        },
+        ],
         "expected": 0
       },
       {
         "name": "cross entropy",
-        "input": {
-          "yPred": [
+        "mode": "function",
+        "function": "mse_loss",
+        "args": [
+          [
             [
               0.9,
               0.1
@@ -227,7 +222,7 @@
               0.8
             ]
           ],
-          "yTrue": [
+          [
             [
               1,
               0
@@ -237,7 +232,7 @@
               1
             ]
           ]
-        },
+        ],
         "expected": 0.287
       }
     ],
@@ -295,14 +290,22 @@
     "testCases": [
       {
         "name": "linear backward shapes",
-        "input": {
-          "x": [
+        "mode": "function",
+        "function": "linear_backward",
+        "args": [
+          [
+            [
+              0.1,
+              0.2
+            ]
+          ],
+          [
             [
               1,
               2
             ]
           ],
-          "W": [
+          [
             [
               0.1,
               0.2
@@ -311,18 +314,8 @@
               0.3,
               0.4
             ]
-          ],
-          "b": [
-            0.5,
-            0.5
-          ],
-          "dout": [
-            [
-              0.1,
-              0.2
-            ]
           ]
-        },
+        ],
         "expected": true
       }
     ],
@@ -466,8 +459,10 @@
     "testCases": [
       {
         "name": "train updates running stats",
-        "input": {
-          "X": [
+        "mode": "function",
+        "function": "batchnorm_train",
+        "args": [
+          [
             [
               1,
               2
@@ -481,23 +476,23 @@
               6
             ]
           ],
-          "gamma": [
+          [
             1,
             1
           ],
-          "beta": [
+          [
             0,
             0
           ],
-          "runningMean": [
+          [
             0,
             0
           ],
-          "runningVar": [
+          [
             1,
             1
           ]
-        },
+        ],
         "expected": true
       }
     ],
@@ -556,31 +551,35 @@
     "testCases": [
       {
         "name": "training mask varies",
-        "input": {
-          "x": [
+        "mode": "function",
+        "function": "dropout_forward",
+        "args": [
+          [
             [
               1,
               2,
               3
             ]
           ],
-          "keepProb": 0.5
-        },
+          0.5
+        ],
         "expected": true
       },
       {
         "name": "inference no dropout",
-        "input": {
-          "x": [
+        "mode": "function",
+        "function": "dropout_forward",
+        "args": [
+          [
             [
               1,
               2,
               3
             ]
           ],
-          "keepProb": 0.5,
-          "training": false
-        },
+          0.5,
+          false
+        ],
         "expected": [
           [
             1,
@@ -641,12 +640,14 @@
     "testCases": [
       {
         "name": "3x3 kernel valid",
-        "input": {
-          "img": 36,
-          "kernel": 9,
-          "stride": 1,
-          "padding": 0
-        },
+        "mode": "function",
+        "function": "conv2d_forward",
+        "args": [
+          36,
+          9,
+          1,
+          0
+        ],
         "expected": 4
       }
     ],
@@ -747,20 +748,22 @@
     "testCases": [
       {
         "name": "focal vs cross entropy",
-        "input": {
-          "y_pred": [
+        "mode": "function",
+        "function": "focal_loss",
+        "args": [
+          [
             0.9,
             0.1,
             0.7,
             0.3
           ],
-          "y_true": [
+          [
             1,
             0,
             1,
             0
           ]
-        },
+        ],
         "expected": true
       }
     ],
@@ -852,14 +855,16 @@
     "testCases": [
       {
         "name": "sgd vs adam",
-        "input": {
-          "x0": [
+        "mode": "function",
+        "function": "sgd",
+        "args": [
+          [
             1.5,
             1.5
           ],
-          "lr": 0.01,
-          "steps": 200
-        },
+          0.01,
+          200
+        ],
         "expected": true
       }
     ],
@@ -974,8 +979,10 @@
     "testCases": [
       {
         "name": "dropout shape",
-        "input": {
-          "x": [
+        "mode": "function",
+        "function": "dropout",
+        "args": [
+          [
             [
               1,
               2,
@@ -987,8 +994,8 @@
               6
             ]
           ],
-          "keepProb": 0.5
-        },
+          0.5
+        ],
         "expected": true
       }
     ],

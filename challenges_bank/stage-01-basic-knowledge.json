@@ -25,8 +25,10 @@
     "testCases": [
       {
         "name": "load stalls dominate",
-        "input": {
-          "instructionStats": {
+        "mode": "function",
+        "function": "profile_pipeline_workload",
+        "args": [
+          {
             "load": {
               "count": 1000,
               "base_cpi": 1,
@@ -38,8 +40,8 @@
               "stall": 0.1
             }
           },
-          "frequencyHz": 2000000000
-        },
+          2000000000
+        ],
         "expected": {
           "time_ms": 0.0032,
           "bottleneck": "load"
@@ -47,8 +49,10 @@
       },
       {
         "name": "branch stalls dominate",
-        "input": {
-          "instructionStats": {
+        "mode": "function",
+        "function": "profile_pipeline_workload",
+        "args": [
+          {
             "branch": {
               "count": 400,
               "base_cpi": 1,
@@ -60,10 +64,10 @@
               "stall": 0.2
             }
           },
-          "frequencyHz": 1000000000
-        },
+          1000000000
+        ],
         "expected": {
-          "time_ms": 0.004,
+          "time_ms": 0.0044,
           "bottleneck": "branch"
         }
       }
@@ -121,8 +125,10 @@
     "testCases": [
       {
         "name": "basic lru pressure",
-        "input": {
-          "pageRequests": [
+        "mode": "function",
+        "function": "simulate_page_cache",
+        "args": [
+          [
             1,
             2,
             3,
@@ -132,8 +138,8 @@
             2,
             5
           ],
-          "capacity": 3
-        },
+          3
+        ],
         "expected": {
           "hits": 2,
           "misses": 6,
@@ -142,14 +148,16 @@
       },
       {
         "name": "zero capacity",
-        "input": {
-          "pageRequests": [
+        "mode": "function",
+        "function": "simulate_page_cache",
+        "args": [
+          [
             1,
             1,
             1
           ],
-          "capacity": 0
-        },
+          0
+        ],
         "expected": {
           "hits": 0,
           "misses": 3,
@@ -211,8 +219,10 @@
     "testCases": [
       {
         "name": "longest prefix wins",
-        "input": {
-          "routes": [
+        "mode": "function",
+        "function": "lookup_route",
+        "args": [
+          [
             {
               "cidr": "10.0.0.0/8",
               "next_hop": "eth0"
@@ -226,21 +236,23 @@
               "next_hop": "eth2"
             }
           ],
-          "targetIp": "10.1.2.33"
-        },
+          "10.1.2.33"
+        ],
         "expected": "eth2"
       },
       {
         "name": "no route drops",
-        "input": {
-          "routes": [
+        "mode": "function",
+        "function": "lookup_route",
+        "args": [
+          [
             {
               "cidr": "192.168.0.0/16",
               "next_hop": "lan"
             }
           ],
-          "targetIp": "8.8.8.8"
-        },
+          "8.8.8.8"
+        ],
         "expected": "DROP"
       }
     ],
@@ -369,10 +381,12 @@
     "testCases": [
       {
         "name": "normal grep args",
-        "input": {
-          "keyword": "error",
-          "filename": "app.log"
-        },
+        "mode": "function",
+        "function": "build_grep_args",
+        "args": [
+          "error",
+          "app.log"
+        ],
         "expected": [
           "grep",
           "--",
@@ -382,10 +396,12 @@
       },
       {
         "name": "dangerous filename stays argument",
-        "input": {
-          "keyword": "error",
-          "filename": "app.log; rm -rf /"
-        },
+        "mode": "function",
+        "function": "build_grep_args",
+        "args": [
+          "error",
+          "app.log; rm -rf /"
+        ],
         "expected": [
           "grep",
           "--",
@@ -448,13 +464,15 @@
     "testCases": [
       {
         "name": "inode exhausted first",
-        "input": {
-          "fileCount": 1000000,
-          "avgFileSize": 100,
-          "blockSize": 4096,
-          "totalBlocks": 2000000,
-          "totalInodes": 500000
-        },
+        "mode": "function",
+        "function": "plan_small_file_storage",
+        "args": [
+          1000000,
+          100,
+          4096,
+          2000000,
+          500000
+        ],
         "expected": {
           "fits": false,
           "bottleneck": "inode"
@@ -462,13 +480,15 @@
       },
       {
         "name": "block exhausted first",
-        "input": {
-          "fileCount": 1000,
-          "avgFileSize": 9000,
-          "blockSize": 4096,
-          "totalBlocks": 2000,
-          "totalInodes": 5000
-        },
+        "mode": "function",
+        "function": "plan_small_file_storage",
+        "args": [
+          1000,
+          9000,
+          4096,
+          2000,
+          5000
+        ],
         "expected": {
           "fits": false,
           "bottleneck": "block"
@@ -528,10 +548,12 @@
     "testCases": [
       {
         "name": "dangerous config",
-        "input": {
-          "octal": "666",
-          "fileType": "config"
-        },
+        "mode": "function",
+        "function": "audit_permission",
+        "args": [
+          "666",
+          "config"
+        ],
         "expected": [
           "group_writable",
           "others_writable"
@@ -539,10 +561,12 @@
       },
       {
         "name": "safe script",
-        "input": {
-          "octal": "750",
-          "fileType": "script"
-        },
+        "mode": "function",
+        "function": "audit_permission",
+        "args": [
+          "750",
+          "script"
+        ],
         "expected": []
       }
     ],
@@ -599,8 +623,10 @@
     "testCases": [
       {
         "name": "alert by zombie rate",
-        "input": {
-          "processes": [
+        "mode": "function",
+        "function": "detect_process_anomaly",
+        "args": [
+          [
             {
               "pid": 1,
               "state": "S"
@@ -618,9 +644,9 @@
               "state": "R"
             }
           ],
-          "zombieCountThreshold": 5,
-          "zombieRateThreshold": 0.2
-        },
+          5,
+          0.2
+        ],
         "expected": {
           "zombies": 2,
           "zombie_rate": 0.5,
@@ -629,11 +655,13 @@
       },
       {
         "name": "empty process list",
-        "input": {
-          "processes": [],
-          "zombieCountThreshold": 1,
-          "zombieRateThreshold": 0.1
-        },
+        "mode": "function",
+        "function": "detect_process_anomaly",
+        "args": [
+          [],
+          1,
+          0.1
+        ],
         "expected": {
           "zombies": 0,
           "zombie_rate": 0,
@@ -694,26 +722,30 @@
     "testCases": [
       {
         "name": "pipefail catches earlier failure",
-        "input": {
-          "exitCodes": [
+        "mode": "function",
+        "function": "evaluate_pipeline",
+        "args": [
+          [
             1,
             0,
             0
           ],
-          "pipefail": true
-        },
+          true
+        ],
         "expected": 1
       },
       {
         "name": "normal mode hides earlier failure",
-        "input": {
-          "exitCodes": [
+        "mode": "function",
+        "function": "evaluate_pipeline",
+        "args": [
+          [
             1,
             0,
             0
           ],
-          "pipefail": false
-        },
+          false
+        ],
         "expected": 0
       }
     ],
@@ -770,14 +802,16 @@
     "testCases": [
       {
         "name": "missing origin",
-        "input": {
-          "repo": {
+        "mode": "function",
+        "function": "check_repo_ready",
+        "args": [
+          {
             "has_git_dir": true,
             "origin_url": "",
             "default_branch": "main",
             "detached_head": false
           }
-        },
+        ],
         "expected": {
           "ready": false,
           "issues": [
@@ -787,14 +821,16 @@
       },
       {
         "name": "healthy repo",
-        "input": {
-          "repo": {
+        "mode": "function",
+        "function": "check_repo_ready",
+        "args": [
+          {
             "has_git_dir": true,
             "origin_url": "git@example.com:a/b.git",
             "default_branch": "main",
             "detached_head": false
           }
-        },
+        ],
         "expected": {
           "ready": true,
           "issues": []
@@ -854,14 +890,16 @@
     "testCases": [
       {
         "name": "mixed changes",
-        "input": {
-          "files": [
+        "mode": "function",
+        "function": "plan_commit_batches",
+        "args": [
+          [
             "app/page.tsx",
             "app/page.test.ts",
             "docs/api.md",
             "package.json"
           ]
-        },
+        ],
         "expected": {
           "code": [
             "app/page.tsx"
@@ -879,11 +917,13 @@
       },
       {
         "name": "github workflow is config",
-        "input": {
-          "files": [
+        "mode": "function",
+        "function": "plan_commit_batches",
+        "args": [
+          [
             ".github/workflows/ci.yml"
           ]
-        },
+        ],
         "expected": {
           "code": [],
           "test": [],
@@ -947,22 +987,24 @@
     "testCases": [
       {
         "name": "overlapping same file",
-        "input": {
-          "branchA": [
+        "mode": "function",
+        "function": "estimate_merge_conflicts",
+        "args": [
+          [
             {
               "file": "app.ts",
               "start": 10,
               "end": 20
             }
           ],
-          "branchB": [
+          [
             {
               "file": "app.ts",
               "start": 15,
               "end": 30
             }
           ]
-        },
+        ],
         "expected": {
           "risk": "high",
           "files": [
@@ -972,22 +1014,24 @@
       },
       {
         "name": "same file no overlap",
-        "input": {
-          "branchA": [
+        "mode": "function",
+        "function": "estimate_merge_conflicts",
+        "args": [
+          [
             {
               "file": "app.ts",
               "start": 1,
               "end": 5
             }
           ],
-          "branchB": [
+          [
             {
               "file": "app.ts",
               "start": 10,
               "end": 15
             }
           ]
-        },
+        ],
         "expected": {
           "risk": "low",
           "files": []
@@ -1047,16 +1091,18 @@
     "testCases": [
       {
         "name": "basic rebase",
-        "input": {
-          "baseCommits": [
+        "mode": "function",
+        "function": "simulate_rebase",
+        "args": [
+          [
             "A",
             "B"
           ],
-          "featureCommits": [
+          [
             "C",
             "D"
           ]
-        },
+        ],
         "expected": [
           "A",
           "B",
@@ -1066,12 +1112,14 @@
       },
       {
         "name": "no feature commits",
-        "input": {
-          "baseCommits": [
+        "mode": "function",
+        "function": "simulate_rebase",
+        "args": [
+          [
             "A"
           ],
-          "featureCommits": []
-        },
+          []
+        ],
         "expected": [
           "A"
         ]
@@ -1130,9 +1178,11 @@
     "testCases": [
       {
         "name": "single conflict",
-        "input": {
-          "text": "<<<<<<< HEAD\nold\n=======\nnew\n>>>>>>> feature"
-        },
+        "mode": "function",
+        "function": "parse_conflict_blocks",
+        "args": [
+          "<<<<<<< HEAD\nold\n=======\nnew\n>>>>>>> feature"
+        ],
         "expected": {
           "count": 1,
           "blocks": [
@@ -1145,9 +1195,11 @@
       },
       {
         "name": "no conflict",
-        "input": {
-          "text": "clean file"
-        },
+        "mode": "function",
+        "function": "parse_conflict_blocks",
+        "args": [
+          "clean file"
+        ],
         "expected": {
           "count": 0,
           "blocks": []
@@ -1205,8 +1257,10 @@
     "testCases": [
       {
         "name": "sequential high hit",
-        "input": {
-          "accesses": [
+        "mode": "function",
+        "function": "simulate_cache",
+        "args": [
+          [
             0,
             4,
             8,
@@ -1216,9 +1270,9 @@
             24,
             28
           ],
-          "cacheLines": 4,
-          "lineSize": 8
-        },
+          4,
+          8
+        ],
         "expected": 7
       }
     ],
@@ -1262,8 +1316,10 @@
     "testCases": [
       {
         "name": "first fit basic",
-        "input": {
-          "freeList": [
+        "mode": "function",
+        "function": "first_fit",
+        "args": [
+          [
             [
               0,
               100
@@ -1277,8 +1333,8 @@
               600
             ]
           ],
-          "size": 50
-        },
+          50
+        ],
         "expected": 0
       }
     ],
@@ -1322,10 +1378,12 @@
     "testCases": [
       {
         "name": "/24 to 8 subnets",
-        "input": {
-          "networkCidr": "192.168.0.0/24",
-          "numSubnets": 8
-        },
+        "mode": "function",
+        "function": "subnet_calc",
+        "args": [
+          "192.168.0.0/24",
+          8
+        ],
         "expected": {
           "new_prefix": 27,
           "subnets": 8,
@@ -1374,9 +1432,11 @@
     "testCases": [
       {
         "name": "encode hello",
-        "input": {
-          "data": "Hello"
-        },
+        "mode": "function",
+        "function": "encode_base64",
+        "args": [
+          "Hello"
+        ],
         "expected": "SGVsbG8="
       }
     ],
@@ -1419,15 +1479,17 @@
     "testCases": [
       {
         "name": "glob matching",
-        "input": {
-          "files": [
+        "mode": "function",
+        "function": "search_by_name",
+        "args": [
+          [
             "readme.md",
             "main.py",
             "test.py",
             "notes.txt"
           ],
-          "pattern": "*.md"
-        },
+          "*.md"
+        ],
         "expected": [
           "readme.md"
         ]
@@ -1473,11 +1535,13 @@
     "testCases": [
       {
         "name": "over soft limit",
-        "input": {
-          "usage": 85,
-          "softLimit": 80,
-          "hardLimit": 100
-        },
+        "mode": "function",
+        "function": "check_quota",
+        "args": [
+          85,
+          80,
+          100
+        ],
         "expected": {
           "status": "warning",
           "usage": 85,
@@ -1525,8 +1589,10 @@
     "testCases": [
       {
         "name": "detect full access",
-        "input": {
-          "entries": [
+        "mode": "function",
+        "function": "audit_sudoers",
+        "args": [
+          [
             {
               "user": "alice",
               "commands": "ALL",
@@ -1540,7 +1606,7 @@
               "nopasswd": true
             }
           ]
-        },
+        ],
         "expected": [
           "alice - FULL ACCESS",
           "bob - NOPASSWD"
@@ -1587,8 +1653,10 @@
     "testCases": [
       {
         "name": "lower nice = higher priority",
-        "input": {
-          "processes": [
+        "mode": "function",
+        "function": "schedule_next",
+        "args": [
+          [
             {
               "pid": 1,
               "runtime": 10,
@@ -1600,7 +1668,7 @@
               "nice": 5
             }
           ]
-        },
+        ],
         "expected": 1
       }
     ],
@@ -1643,8 +1711,10 @@
     "testCases": [
       {
         "name": "rotate large file",
-        "input": {
-          "logFiles": [
+        "mode": "function",
+        "function": "simulate_logrotate",
+        "args": [
+          [
             {
               "name": "app.log",
               "size_mb": 150,
@@ -1656,9 +1726,9 @@
               "age_days": 30
             }
           ],
-          "maxAgeDays": 7,
-          "maxSizeMb": 100
-        },
+          7,
+          100
+        ],
         "expected": 1
       }
     ],
@@ -1702,17 +1772,19 @@
     "testCases": [
       {
         "name": "safe branches",
-        "input": {
-          "branches": [
+        "mode": "function",
+        "function": "cleanup_branches",
+        "args": [
+          [
             "main",
             "feature-old",
             "feature-wip"
           ],
-          "mergedBranches": [
+          [
             "feature-old"
           ],
-          "defaultBranch": "main"
-        },
+          "main"
+        ],
         "expected": {
           "safe_to_delete": [
             "feature-old"
@@ -1763,8 +1835,10 @@
     "testCases": [
       {
         "name": "squash 3 to 2",
-        "input": {
-          "commits": [
+        "mode": "function",
+        "function": "simulate_squash",
+        "args": [
+          [
             {
               "id": "a",
               "message": "WIP 1"
@@ -1778,8 +1852,8 @@
               "message": "final"
             }
           ],
-          "targetCount": 2
-        },
+          2
+        ],
         "expected": 2
       }
     ],
@@ -1823,19 +1897,21 @@
     "testCases": [
       {
         "name": "no conflict",
-        "input": {
-          "base": {
+        "mode": "function",
+        "function": "auto_merge",
+        "args": [
+          {
             "10": "a"
           },
-          "aChanges": {
+          {
             "10": "a",
             "15": "new"
           },
-          "bChanges": {
+          {
             "10": "a",
             "20": "new2"
           }
-        },
+        ],
         "expected": {
           "conflicts": 0,
           "auto_merged": 2,
@@ -1883,22 +1959,24 @@
     "testCases": [
       {
         "name": "low conflict",
-        "input": {
-          "featureCommits": [
+        "mode": "function",
+        "function": "predict_rebase_conflicts",
+        "args": [
+          [
             {
               "file": "a.py",
               "start": 1,
               "end": 5
             }
           ],
-          "targetCommits": [
+          [
             {
               "file": "a.py",
               "start": 10,
               "end": 15
             }
           ]
-        },
+        ],
         "expected": {
           "total_conflicts": 0,
           "recommendation": "rebase ok"
@@ -1946,11 +2024,13 @@
     "testCases": [
       {
         "name": "collaborative project",
-        "input": {
-          "branchA": "feature",
-          "branchB": "main",
-          "situation": "collaborative"
-        },
+        "mode": "function",
+        "function": "recommend_strategy",
+        "args": [
+          "feature",
+          "main",
+          "collaborative"
+        ],
         "expected": "merge --no-ff (保留分支痕迹)"
       }
     ],

@@ -25,16 +25,18 @@
     "testCases": [
       {
         "name": "project onto x-axis",
-        "input": {
-          "v": [
+        "mode": "function",
+        "function": "project",
+        "args": [
+          [
             3,
             4
           ],
-          "onto": [
+          [
             1,
             0
           ]
-        },
+        ],
         "expected": [
           3,
           0
@@ -42,16 +44,18 @@
       },
       {
         "name": "orthogonal component",
-        "input": {
-          "v": [
+        "mode": "function",
+        "function": "project",
+        "args": [
+          [
             3,
             4
           ],
-          "onto": [
+          [
             1,
             0
           ]
-        },
+        ],
         "expected": [
           0,
           4
@@ -112,8 +116,10 @@
     "testCases": [
       {
         "name": "2x2 invertible",
-        "input": {
-          "A": [
+        "mode": "function",
+        "function": "solve_linear",
+        "args": [
+          [
             [
               3,
               1
@@ -123,11 +129,11 @@
               2
             ]
           ],
-          "b": [
+          [
             5,
             5
           ]
-        },
+        ],
         "expected": [
           1,
           2
@@ -135,8 +141,10 @@
       },
       {
         "name": "singular matrix",
-        "input": {
-          "A": [
+        "mode": "function",
+        "function": "solve_linear",
+        "args": [
+          [
             [
               1,
               2
@@ -146,11 +154,11 @@
               4
             ]
           ],
-          "b": [
+          [
             1,
             2
           ]
-        },
+        ],
         "expected": null
       }
     ],
@@ -209,8 +217,10 @@
     "testCases": [
       {
         "name": "4x4 matrix compression ratio",
-        "input": {
-          "A": [
+        "mode": "function",
+        "function": "svd_decompose",
+        "args": [
+          [
             [
               1,
               2,
@@ -235,15 +245,16 @@
               15,
               16
             ]
-          ],
-          "k": 2
-        },
+          ]
+        ],
         "expected": 0.6667
       },
       {
         "name": "svd_compress reduces error with more k",
-        "input": {
-          "A": [
+        "mode": "function",
+        "function": "svd_decompose",
+        "args": [
+          [
             [
               1,
               0
@@ -252,9 +263,8 @@
               0,
               2
             ]
-          ],
-          "k": 1
-        },
+          ]
+        ],
         "expected": [
           [
             1,
@@ -426,8 +436,10 @@
     "testCases": [
       {
         "name": "predict spam",
-        "input": {
-          "data": [
+        "mode": "function",
+        "function": "train_naive_bayes",
+        "args": [
+          [
             {
               "features": [
                 1,
@@ -460,19 +472,16 @@
               ],
               "label": "ham"
             }
-          ],
-          "features": [
-            1,
-            0,
-            1
           ]
-        },
+        ],
         "expected": "spam"
       },
       {
         "name": "predict ham",
-        "input": {
-          "data": [
+        "mode": "function",
+        "function": "train_naive_bayes",
+        "args": [
+          [
             {
               "features": [
                 1,
@@ -505,13 +514,8 @@
               ],
               "label": "ham"
             }
-          ],
-          "features": [
-            0,
-            1,
-            0
           ]
-        },
+        ],
         "expected": "ham"
       }
     ],
@@ -658,13 +662,15 @@
     "testCases": [
       {
         "name": "gaussian MLE",
-        "input": {
-          "data": [
+        "mode": "function",
+        "function": "gaussian_mle",
+        "args": [
+          [
             1,
             2,
             3
           ]
-        },
+        ],
         "expected": {
           "mu": 2,
           "sigma": 0.8165
@@ -672,14 +678,16 @@
       },
       {
         "name": "bernoulli MLE",
-        "input": {
-          "data": [
+        "mode": "function",
+        "function": "gaussian_mle",
+        "args": [
+          [
             1,
             0,
             1,
             1
           ]
-        },
+        ],
         "expected": {
           "p": 0.75
         }
@@ -739,25 +747,27 @@
     "testCases": [
       {
         "name": "quadratic function passes",
-        "input": {
-          "f": "lambda x: x[0]**2 + x[1]**2",
-          "grad": "lambda x: np.array([2*x[0], 2*x[1]])",
-          "x": [
+        "mode": "function",
+        "function": "numerical_gradient",
+        "args": [
+          "lambda x: x[0]**2 + x[1]**2",
+          [
             1,
             2
           ]
-        },
+        ],
         "expected": true
       },
       {
         "name": "wrong gradient fails",
-        "input": {
-          "f": "lambda x: x[0]**2",
-          "grad": "lambda x: np.array([0])",
-          "x": [
+        "mode": "function",
+        "function": "numerical_gradient",
+        "args": [
+          "lambda x: x[0]**2",
+          [
             3
           ]
-        },
+        ],
         "expected": false
       }
     ],
@@ -897,18 +907,22 @@
     "testCases": [
       {
         "name": "exp approx at x=1 order 5",
-        "input": {
-          "x": 1,
-          "order": 5
-        },
+        "mode": "function",
+        "function": "exp_approx",
+        "args": [
+          1,
+          5
+        ],
         "expected": 2.71667
       },
       {
         "name": "sin approx at x=0.5 order 3",
-        "input": {
-          "x": 0.5,
-          "order": 3
-        },
+        "mode": "function",
+        "function": "exp_approx",
+        "args": [
+          0.5,
+          3
+        ],
         "expected": 0.47917
       }
     ],
@@ -963,16 +977,18 @@
     "testCases": [
       {
         "name": "2d vectors",
-        "input": {
-          "a": [
+        "mode": "function",
+        "function": "verify_cauchy_schwarz",
+        "args": [
+          [
             3,
             4
           ],
-          "b": [
+          [
             1,
             2
           ]
-        },
+        ],
         "expected": {
           "cos_theta": 0.8682,
           "inequality_holds": true
@@ -1020,8 +1036,10 @@
     "testCases": [
       {
         "name": "2x2 invertible",
-        "input": {
-          "A": [
+        "mode": "function",
+        "function": "matrix_analysis",
+        "args": [
+          [
             [
               4,
               7
@@ -1031,7 +1049,7 @@
               6
             ]
           ]
-        },
+        ],
         "expected": {
           "det": 10,
           "invertible": true
@@ -1078,8 +1096,10 @@
     "testCases": [
       {
         "name": "3x3 rank 2",
-        "input": {
-          "A": [
+        "mode": "function",
+        "function": "svd_analysis",
+        "args": [
+          [
             [
               1,
               2,
@@ -1096,7 +1116,7 @@
               9
             ]
           ]
-        },
+        ],
         "expected": {
           "rank": 2
         }
@@ -1144,8 +1164,10 @@
     "testCases": [
       {
         "name": "2x2 matrix",
-        "input": {
-          "A": [
+        "mode": "function",
+        "function": "eigen_analysis",
+        "args": [
+          [
             [
               2,
               1
@@ -1155,7 +1177,7 @@
               2
             ]
           ]
-        },
+        ],
         "expected": {
           "eigenvalues": [
             3,
@@ -1206,20 +1228,24 @@
     "testCases": [
       {
         "name": "medical test",
-        "input": {
-          "prior": 0.01,
-          "likelihood": 0.99,
-          "false_positive": 0.01
-        },
+        "mode": "function",
+        "function": "bayes_theorem",
+        "args": [
+          0.01,
+          0.99,
+          0.01
+        ],
         "expected": 0.5
       },
       {
         "name": "perfect test",
-        "input": {
-          "prior": 0.5,
-          "likelihood": 1,
-          "false_positive": 0
-        },
+        "mode": "function",
+        "function": "bayes_theorem",
+        "args": [
+          0.5,
+          1,
+          0
+        ],
         "expected": 1
       }
     ],
@@ -1264,10 +1290,12 @@
     "testCases": [
       {
         "name": "clt n=30 m=1000",
-        "input": {
-          "n": 30,
-          "m": 1000
-        },
+        "mode": "function",
+        "function": "clt_simulation",
+        "args": [
+          30,
+          1000
+        ],
         "expected": true
       }
     ],
@@ -1312,15 +1340,17 @@
     "testCases": [
       {
         "name": "coin flips",
-        "input": {
-          "data": [
+        "mode": "function",
+        "function": "bernoulli_mle",
+        "args": [
+          [
             1,
             0,
             1,
             1,
             0
           ]
-        },
+        ],
         "expected": {
           "p_hat": 0.6
         }
@@ -1367,10 +1397,12 @@
     "testCases": [
       {
         "name": "gradient at origin",
-        "input": {
-          "x": 0,
-          "y": 0
-        },
+        "mode": "function",
+        "function": "gradient_at",
+        "args": [
+          0,
+          0
+        ],
         "expected": {
           "grad": [
             0,
@@ -1421,11 +1453,13 @@
     "testCases": [
       {
         "name": "lr=0.01 converges",
-        "input": {
-          "x0": 3,
-          "lr": 0.01,
-          "steps": 100
-        },
+        "mode": "function",
+        "function": "gradient_descent",
+        "args": [
+          3,
+          0.01,
+          100
+        ],
         "expected": true
       }
     ],
@@ -1470,18 +1504,22 @@
     "testCases": [
       {
         "name": "x=0.5 order 5",
-        "input": {
-          "x": 0.5,
-          "order": 5
-        },
+        "mode": "function",
+        "function": "taylor_ln",
+        "args": [
+          0.5,
+          5
+        ],
         "expected": true
       },
       {
         "name": "x=0 order 3",
-        "input": {
-          "x": 0,
-          "order": 3
-        },
+        "mode": "function",
+        "function": "taylor_ln",
+        "args": [
+          0,
+          3
+        ],
         "expected": {
           "approx": 0,
           "exact": 0,

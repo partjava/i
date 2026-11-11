@@ -24,9 +24,11 @@
     "testCases": [
       {
         "name": "fmm basic",
-        "input": {
-          "text": "我们在野生动物园玩",
-          "vocab": [
+        "mode": "function",
+        "function": "fmm_segment",
+        "args": [
+          "我们在野生动物园玩",
+          [
             "我们",
             "在",
             "野生",
@@ -34,8 +36,8 @@
             "动物园",
             "玩"
           ],
-          "maxLen": 5
-        },
+          5
+        ],
         "expected": [
           "我们",
           "在",
@@ -155,8 +157,10 @@
     "testCases": [
       {
         "name": "vocab build",
-        "input": {
-          "sentences": [
+        "mode": "function",
+        "function": "build_vocab",
+        "args": [
+          [
             [
               "我",
               "爱",
@@ -168,7 +172,7 @@
               "有趣"
             ]
           ]
-        },
+        ],
         "expected": true
       }
     ],
@@ -215,16 +219,18 @@
     "testCases": [
       {
         "name": "mask basic",
-        "input": {
-          "tokens": [
+        "mode": "function",
+        "function": "mask_tokens",
+        "args": [
+          [
             0,
             1,
             2,
             3,
             4
           ],
-          "maskId": 100
-        },
+          100
+        ],
         "expected": true
       }
     ],
@@ -386,8 +392,10 @@
     "testCases": [
       {
         "name": "attention shape",
-        "input": {
-          "Q": [
+        "mode": "function",
+        "function": "scaled_dot_product_attention",
+        "args": [
+          [
             [
               1,
               2
@@ -397,7 +405,7 @@
               4
             ]
           ],
-          "K": [
+          [
             [
               1,
               2
@@ -407,7 +415,7 @@
               4
             ]
           ],
-          "V": [
+          [
             [
               1,
               0
@@ -417,7 +425,7 @@
               1
             ]
           ]
-        },
+        ],
         "expected": true
       }
     ],
@@ -463,8 +471,10 @@
     "testCases": [
       {
         "name": "multi-head shape",
-        "input": {
-          "X": [
+        "mode": "function",
+        "function": "split_heads",
+        "args": [
+          [
             [
               1,
               2,
@@ -490,8 +500,8 @@
               16
             ]
           ],
-          "h": 2
-        },
+          2
+        ],
         "expected": true
       }
     ],
@@ -591,11 +601,13 @@
     "testCases": [
       {
         "name": "bpe merge",
-        "input": {
-          "word": "lowest",
-          "merges": {},
-          "n": 2
-        },
+        "mode": "function",
+        "function": "bpe_tokenize",
+        "args": [
+          "lowest",
+          {},
+          2
+        ],
         "expected": true
       }
     ],
@@ -638,16 +650,18 @@
     "testCases": [
       {
         "name": "bm25 scores",
-        "input": {
-          "query": "hello",
-          "docs": [
+        "mode": "function",
+        "function": "bm25",
+        "args": [
+          "hello",
+          [
             "hello world",
             "hello there",
             "hi world"
           ],
-          "k1": 1.5,
-          "b": 0.75
-        },
+          1.5,
+          0.75
+        ],
         "expected": true
       }
     ],
@@ -737,8 +751,10 @@
     "testCases": [
       {
         "name": "mlm loss",
-        "input": {
-          "logits": [
+        "mode": "function",
+        "function": "mlm_loss",
+        "args": [
+          [
             [
               0,
               0
@@ -748,15 +764,15 @@
               0
             ]
           ],
-          "target_ids": [
+          [
             1,
             1
           ],
-          "mask": [
+          [
             1,
             0
           ]
-        },
+        ],
         "expected": true
       }
     ],
@@ -1022,8 +1038,10 @@
     "testCases": [
       {
         "name": "mha",
-        "input": {
-          "X": [
+        "mode": "function",
+        "function": "softmax",
+        "args": [
+          [
             [
               1,
               0,
@@ -1036,113 +1054,8 @@
               1,
               0
             ]
-          ],
-          "Wq": [
-            [
-              1,
-              0,
-              0,
-              0
-            ],
-            [
-              0,
-              1,
-              0,
-              0
-            ],
-            [
-              0,
-              0,
-              1,
-              0
-            ],
-            [
-              0,
-              0,
-              0,
-              1
-            ]
-          ],
-          "Wk": [
-            [
-              1,
-              0,
-              0,
-              0
-            ],
-            [
-              0,
-              1,
-              0,
-              0
-            ],
-            [
-              0,
-              0,
-              1,
-              0
-            ],
-            [
-              0,
-              0,
-              0,
-              1
-            ]
-          ],
-          "Wv": [
-            [
-              1,
-              0,
-              0,
-              0
-            ],
-            [
-              0,
-              1,
-              0,
-              0
-            ],
-            [
-              0,
-              0,
-              1,
-              0
-            ],
-            [
-              0,
-              0,
-              0,
-              1
-            ]
-          ],
-          "Wo": [
-            [
-              1,
-              0,
-              0,
-              0
-            ],
-            [
-              0,
-              1,
-              0,
-              0
-            ],
-            [
-              0,
-              0,
-              1,
-              0
-            ],
-            [
-              0,
-              0,
-              0,
-              1
-            ]
-          ],
-          "h": 2
-        },
+          ]
+        ],
         "expected": true
       }
     ],

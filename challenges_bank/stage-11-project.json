@@ -25,9 +25,11 @@
     "testCases": [
       {
         "name": "classify returns intent",
-        "input": {
-          "text": "我的手机订单ABC12345678一直没到货",
-          "categories": {
+        "mode": "function",
+        "function": "classify_intent",
+        "args": [
+          "我的手机订单ABC12345678一直没到货",
+          {
             "退货": [
               "退货",
               "退款"
@@ -44,7 +46,7 @@
               "不满"
             ]
           }
-        },
+        ],
         "expected": {
           "intent": "物流查询",
           "confidence": 1
@@ -93,30 +95,12 @@
     "testCases": [
       {
         "name": "basic completion",
-        "input": {
-          "code": "def hello()\n    pri",
-          "pos": 20,
-          "snippets": [
-            {
-              "keywords": [
-                "print"
-              ],
-              "code": "print()"
-            },
-            {
-              "keywords": [
-                "return"
-              ],
-              "code": "return None"
-            },
-            {
-              "keywords": [
-                "import"
-              ],
-              "code": "import os"
-            }
-          ]
-        },
+        "mode": "function",
+        "function": "extract_context",
+        "args": [
+          "def hello()\n    pri",
+          20
+        ],
         "expected": true
       }
     ],
@@ -219,17 +203,19 @@
     "testCases": [
       {
         "name": "build interface",
-        "input": {
-          "inputs": [
+        "mode": "function",
+        "function": "build_interface",
+        "args": [
+          [
             "text",
             "image"
           ],
-          "outputs": [
+          [
             "label"
           ],
-          "fn": "classify",
-          "title": "Image Classifier"
-        },
+          "classify",
+          "Image Classifier"
+        ],
         "expected": {
           "title": "Image Classifier",
           "num_inputs": 2,
@@ -281,8 +267,10 @@
     "testCases": [
       {
         "name": "compute metrics",
-        "input": {
-          "yTrue": [
+        "mode": "function",
+        "function": "compute_metrics",
+        "args": [
+          [
             1,
             0,
             1,
@@ -294,7 +282,7 @@
             1,
             0
           ],
-          "yPred": [
+          [
             1,
             0,
             0,
@@ -306,7 +294,7 @@
             1,
             0
           ]
-        },
+        ],
         "expected": true
       }
     ],
@@ -349,9 +337,11 @@
     "testCases": [
       {
         "name": "negative route",
-        "input": {
-          "text": "The product is broken and I am very angry"
-        },
+        "mode": "function",
+        "function": "preprocess",
+        "args": [
+          "The product is broken and I am very angry"
+        ],
         "expected": "priority_agent"
       }
     ],
@@ -394,9 +384,11 @@
     "testCases": [
       {
         "name": "review",
-        "input": {
-          "code": "x==True\\n try:\\n  pass\\nexcept:\\n  pass"
-        },
+        "mode": "function",
+        "function": "check_style",
+        "args": [
+          "x==True\\n try:\\n  pass\\nexcept:\\n  pass"
+        ],
         "expected": true
       }
     ],
@@ -439,14 +431,16 @@
     "testCases": [
       {
         "name": "decompose",
-        "input": {
-          "task": "Analyze sales data and generate a report",
-          "capabilities": [
+        "mode": "function",
+        "function": "decompose_task",
+        "args": [
+          "Analyze sales data and generate a report",
+          [
             "data",
             "analy",
             "report"
           ]
-        },
+        ],
         "expected": [
           "fetch_data",
           "analyze",
@@ -493,18 +487,20 @@
     "testCases": [
       {
         "name": "demo",
-        "input": {
-          "model": [
+        "mode": "function",
+        "function": "build_demo",
+        "args": [
+          [
             0.5,
             -0.3,
             0.8
           ],
-          "inputSchema": [
+          [
             "feature1",
             "feature2",
             "feature3"
           ]
-        },
+        ],
         "expected": true
       }
     ],
@@ -547,20 +543,22 @@
     "testCases": [
       {
         "name": "metrics",
-        "input": {
-          "y_true": [
+        "mode": "function",
+        "function": "compute_metrics",
+        "args": [
+          [
             1,
             0,
             1,
             1
           ],
-          "y_pred": [
+          [
             0.9,
             0.1,
             0.8,
             0.7
           ]
-        },
+        ],
         "expected": true
       }
     ],

@@ -122,8 +122,10 @@
     "testCases": [
       {
         "name": "linearly separable",
-        "input": {
-          "X": [
+        "mode": "function",
+        "function": "fit_gd",
+        "args": [
+          [
             [
               1,
               0
@@ -137,12 +139,12 @@
               -1
             ]
           ],
-          "y": [
+          [
             0,
             1,
             0
           ]
-        },
+        ],
         "expected": [
           0,
           1,
@@ -204,22 +206,14 @@
     "testCases": [
       {
         "name": "linear svm prediction",
-        "input": {
-          "X": [
-            [
-              1,
-              1
-            ],
-            [
-              2,
-              2
-            ]
-          ],
-          "w": [
+        "mode": "function",
+        "function": "margin",
+        "args": [
+          [
             1,
             -1
           ]
-        },
+        ],
         "expected": [
           -1,
           -1
@@ -227,12 +221,14 @@
       },
       {
         "name": "margin calculation",
-        "input": {
-          "w": [
+        "mode": "function",
+        "function": "margin",
+        "args": [
+          [
             1,
             0
           ]
-        },
+        ],
         "expected": 2
       }
     ],
@@ -290,32 +286,16 @@
     "testCases": [
       {
         "name": "best split feature 0",
-        "input": {
-          "X": [
-            [
-              1,
-              3
-            ],
-            [
-              1,
-              4
-            ],
-            [
-              2,
-              5
-            ],
-            [
-              2,
-              6
-            ]
-          ],
-          "y": [
+        "mode": "function",
+        "function": "entropy",
+        "args": [
+          [
             0,
             0,
             1,
             1
           ]
-        },
+        ],
         "expected": {
           "feature": 0,
           "threshold": 1,
@@ -377,8 +357,10 @@
     "testCases": [
       {
         "name": "ensemble prediction",
-        "input": {
-          "X": [
+        "mode": "function",
+        "function": "bootstrap_sample",
+        "args": [
+          [
             [
               1
             ],
@@ -398,17 +380,15 @@
               12
             ]
           ],
-          "y": [
+          [
             0,
             0,
             0,
             1,
             1,
             1
-          ],
-          "nTrees": 3,
-          "maxDepth": 2
-        },
+          ]
+        ],
         "expected": [
           0,
           1
@@ -469,8 +449,10 @@
     "testCases": [
       {
         "name": "gbdt fits decreasing mse",
-        "input": {
-          "X": [
+        "mode": "function",
+        "function": "fit_gbdt",
+        "args": [
+          [
             [
               1
             ],
@@ -484,15 +466,15 @@
               4
             ]
           ],
-          "y": [
+          [
             1,
             2,
             3,
             4
           ],
-          "nEstimators": 3,
-          "lr": 0.3
-        },
+          3,
+          0.3
+        ],
         "expected": true
       }
     ],
@@ -550,8 +532,10 @@
     "testCases": [
       {
         "name": "knn prediction",
-        "input": {
-          "X_train": [
+        "mode": "function",
+        "function": "fit_knn",
+        "args": [
+          [
             [
               1,
               1
@@ -569,24 +553,13 @@
               10
             ]
           ],
-          "y_train": [
+          [
             0,
             0,
             1,
             1
-          ],
-          "X_test": [
-            [
-              1,
-              1.5
-            ],
-            [
-              9,
-              9.5
-            ]
-          ],
-          "k": 3
-        },
+          ]
+        ],
         "expected": [
           0,
           1
@@ -647,8 +620,10 @@
     "testCases": [
       {
         "name": "kmeans two clusters",
-        "input": {
-          "X": [
+        "mode": "function",
+        "function": "initialize_centroids",
+        "args": [
+          [
             [
               1,
               0
@@ -666,8 +641,8 @@
               10
             ]
           ],
-          "k": 2
-        },
+          2
+        ],
         "expected": true
       }
     ],
@@ -725,8 +700,10 @@
     "testCases": [
       {
         "name": "two clusters plus noise",
-        "input": {
-          "X": [
+        "mode": "function",
+        "function": "dbscan",
+        "args": [
+          [
             [
               1,
               1
@@ -752,9 +729,9 @@
               100
             ]
           ],
-          "eps": 2,
-          "minPts": 2
-        },
+          2,
+          2
+        ],
         "expected": {
           "n_clusters": 2,
           "noise": 1
@@ -815,8 +792,10 @@
     "testCases": [
       {
         "name": "two far clusters",
-        "input": {
-          "X": [
+        "mode": "function",
+        "function": "agglomerative_clustering",
+        "args": [
+          [
             [
               1,
               1
@@ -842,9 +821,9 @@
               12
             ]
           ],
-          "nClusters": 2,
-          "linkage": "single"
-        },
+          2,
+          "single"
+        ],
         "expected": [
           0,
           0,
@@ -910,8 +889,10 @@
     "testCases": [
       {
         "name": "explained variance",
-        "input": {
-          "X": [
+        "mode": "function",
+        "function": "pca_fit",
+        "args": [
+          [
             [
               1,
               1,
@@ -938,7 +919,7 @@
               5
             ]
           ]
-        },
+        ],
         "expected": true
       }
     ],
@@ -1100,8 +1081,10 @@
     "testCases": [
       {
         "name": "batch norm zero mean",
-        "input": {
-          "X": [
+        "mode": "function",
+        "function": "batch_norm_forward",
+        "args": [
+          [
             [
               1,
               5
@@ -1115,15 +1098,15 @@
               7
             ]
           ],
-          "gamma": [
+          [
             1,
             1
           ],
-          "beta": [
+          [
             0,
             0
           ]
-        },
+        ],
         "expected": true
       }
     ],
@@ -1179,8 +1162,10 @@
     "testCases": [
       {
         "name": "ridge shrinks coefs",
-        "input": {
-          "X": [
+        "mode": "function",
+        "function": "compare_coefs",
+        "args": [
+          [
             [
               1,
               2
@@ -1198,18 +1183,18 @@
               5
             ]
           ],
-          "y": [
+          [
             2,
             3,
             4,
             5
           ],
-          "lambdas": [
+          [
             0,
             1,
             10
           ]
-        },
+        ],
         "expected": true
       }
     ],
@@ -1254,8 +1239,10 @@
     "testCases": [
       {
         "name": "3-class classification",
-        "input": {
-          "X": [
+        "mode": "function",
+        "function": "fit_softmax",
+        "args": [
+          [
             [
               1,
               0
@@ -1281,7 +1268,7 @@
               2
             ]
           ],
-          "y": [
+          [
             0,
             0,
             0,
@@ -1289,10 +1276,10 @@
             1,
             2
           ],
-          "lr": 0.1,
-          "steps": 1000,
-          "numClasses": 3
-        },
+          0.1,
+          1000,
+          3
+        ],
         "expected": true
       }
     ],
@@ -1402,8 +1389,10 @@
     "testCases": [
       {
         "name": "simple regression tree",
-        "input": {
-          "X": [
+        "mode": "function",
+        "function": "best_split",
+        "args": [
+          [
             [
               1
             ],
@@ -1423,17 +1412,15 @@
               6
             ]
           ],
-          "y": [
+          [
             1,
             2,
             3,
             3.5,
             5,
             6
-          ],
-          "maxDepth": 3,
-          "minSamples": 2
-        },
+          ]
+        ],
         "expected": true
       }
     ],
@@ -1477,8 +1464,10 @@
     "testCases": [
       {
         "name": "oob score",
-        "input": {
-          "X": [
+        "mode": "function",
+        "function": "bootstrap_sample",
+        "args": [
+          [
             [
               1
             ],
@@ -1498,17 +1487,15 @@
               12
             ]
           ],
-          "y": [
+          [
             0,
             0,
             0,
             1,
             1,
             1
-          ],
-          "nTrees": 5,
-          "maxDepth": 3
-        },
+          ]
+        ],
         "expected": true
       }
     ],
@@ -1554,8 +1541,10 @@
     "testCases": [
       {
         "name": "gbdt fits sine",
-        "input": {
-          "X": [
+        "mode": "function",
+        "function": "gbdt_fit",
+        "args": [
+          [
             [
               0
             ],
@@ -1581,7 +1570,7 @@
               3.5
             ]
           ],
-          "y": [
+          [
             0,
             0.48,
             0.84,
@@ -1591,10 +1580,10 @@
             0,
             -0.48
           ],
-          "nEstimators": 20,
-          "lr": 0.3,
-          "maxDepth": 3
-        },
+          20,
+          0.3,
+          3
+        ],
         "expected": true
       }
     ],
@@ -1639,8 +1628,10 @@
     "testCases": [
       {
         "name": "weighted knn",
-        "input": {
-          "X_train": [
+        "mode": "function",
+        "function": "knn_regression_predict",
+        "args": [
+          [
             [
               1,
               1
@@ -1658,20 +1649,20 @@
               11
             ]
           ],
-          "y_train": [
+          [
             1,
             2,
             10,
             11
           ],
-          "X_test": [
+          [
             [
               3,
               3
             ]
           ],
-          "k": 2
-        },
+          2
+        ],
         "expected": true
       }
     ],
@@ -1716,8 +1707,10 @@
     "testCases": [
       {
         "name": "kmeans++ vs random",
-        "input": {
-          "X": [
+        "mode": "function",
+        "function": "kmeans_plusplus_init",
+        "args": [
+          [
             [
               1,
               1
@@ -1739,8 +1732,8 @@
               10
             ]
           ],
-          "k": 2
-        },
+          2
+        ],
         "expected": true
       }
     ],
@@ -1784,8 +1777,10 @@
     "testCases": [
       {
         "name": "dbscan with k-dist",
-        "input": {
-          "X": [
+        "mode": "function",
+        "function": "k_distance_plot",
+        "args": [
+          [
             [
               1,
               1
@@ -1815,8 +1810,8 @@
               100
             ]
           ],
-          "k": 2
-        },
+          2
+        ],
         "expected": true
       }
     ],
@@ -1861,8 +1856,10 @@
     "testCases": [
       {
         "name": "dendrogram 2 clusters",
-        "input": {
-          "X": [
+        "mode": "function",
+        "function": "agglomerative",
+        "args": [
+          [
             [
               1,
               1
@@ -1879,9 +1876,8 @@
               11,
               11
             ]
-          ],
-          "linkage": "single"
-        },
+          ]
+        ],
         "expected": true
       }
     ],
@@ -1926,8 +1922,10 @@
     "testCases": [
       {
         "name": "pca whitening",
-        "input": {
-          "X": [
+        "mode": "function",
+        "function": "pca_fit",
+        "args": [
+          [
             [
               1,
               0
@@ -1948,9 +1946,8 @@
               2,
               0
             ]
-          ],
-          "nComponents": 2
-        },
+          ]
+        ],
         "expected": true
       }
     ],
@@ -2061,8 +2058,10 @@
     "testCases": [
       {
         "name": "bn vs ln",
-        "input": {
-          "X": [
+        "mode": "function",
+        "function": "batch_norm",
+        "args": [
+          [
             [
               1,
               2,
@@ -2079,17 +2078,17 @@
               9
             ]
           ],
-          "gamma": [
+          [
             1,
             1,
             1
           ],
-          "beta": [
+          [
             0,
             0,
             0
           ]
-        },
+        ],
         "expected": true
       }
     ],
