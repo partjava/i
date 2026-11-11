@@ -1,6 +1,6 @@
 # 禾桔书房 · AI 伴学平台（PartJava）
 
-![平台首页全景图](./public/images/images/homepage-overview.png)
+![沉浸式 3D 数字开屏书房全景](./public/images/images/homepage-sanctuary.png)
 
 > **2026 传智杯 · AI Web 网页开发挑战赛参赛作品** —— AI Native 伴学平台：3D AI 伴侣「禾桔」以 Function Calling Agent 驱动站内 RAG 检索、联网深搜、笔记提炼与 3D 神态控制。
 
@@ -22,7 +22,7 @@
 | 评审测试账号 | `example@qq.com` / `123456` |
 | 前端 | Next.js 14（App Router）· React 18 · TypeScript · Tailwind CSS · Ant Design |
 | 后端 | Java 21 · Spring Boot 3.3 · MySQL 8 · Redis |
-| AI 服务 | Python FastAPI · DeepSeek · MCP 协议 |
+| AI 服务 | Python FastAPI · deepseek-flash / deepseek-v4-pro · MCP 协议 |
 
 ---
 
@@ -82,9 +82,13 @@
 - **全栈知识星系拓扑图谱**：基于 360 度径向树（Radial Tree）与力导向关系算法，覆盖 15 大核心技术领域，防重叠折叠交互，支持宏观脉络与双页书籍微观精读一键直达；
 - **全栈进阶闯关路线**：以游戏化通关流线串联基础筑基到高阶架构的技术攀登路线，右侧联动搭载“节点深度透视舱”。
 
-![拟真双页书籍翻页学习界面](./public/images/images/study-book-view.png)
-![全栈知识星系拓扑图谱](./public/images/images/study-knowledge-graph.png)
-![全栈进阶闯关路线与节点深度透视舱](./public/images/images/study-roadmap.png)
+| 沉浸式双页书籍翻页学习界面 | 全栈课程知识库卡片导览系统 |
+| :---: | :---: |
+| ![沉浸式双页书籍翻页学习界面](./public/images/images/study-book-flip.png) | ![全栈课程知识库卡片导览系统](./public/images/images/study-book-view.png) |
+
+| 全栈知识星系拓扑图谱 | 全栈进阶闯关路线与节点透视舱 |
+| :---: | :---: |
+| ![全栈知识星系拓扑图谱](./public/images/images/study-knowledge-graph.png) | ![全栈进阶闯关路线与节点透视舱](./public/images/images/study-roadmap.png) |
 
 ### 4. 3D AI 伴侣「禾桔」与 Function Calling 决策闭环
 
