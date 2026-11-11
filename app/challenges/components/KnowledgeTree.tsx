@@ -4,7 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { BookOpen, Settings, ChevronRight, ArrowLeft, Sparkles, Loader } from 'lucide-react';
 import { Stage } from './data';
-import { SvmVisualizer } from './SvmVisualizer';
+import { SvmHingeVisualizer, SvmKernelVisualizer } from './visualizers/machine-learning/SvmVisualizers';
+import { findBasicKnowledgeVisualizer } from './visualizers/basic-knowledge';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
@@ -92,6 +93,13 @@ export const KnowledgeTree: React.FC<KnowledgeTreeProps> = ({
   const [loading, setLoading] = useState<boolean>(true);
 
   const detail = allLevels[previewIdx] || null;
+  const svmLevel = selectedNodeName === '支持向量机 (SVM)' ? detail?.levelTitle : null;
+  const SvmVisualizer = svmLevel === 'SVM 铰链损失分类器'
+    ? SvmHingeVisualizer
+    : svmLevel === 'SVM 核函数与对偶' ? SvmKernelVisualizer : null;
+  const Visualizer = selectedStage.id === 1
+    ? findBasicKnowledgeVisualizer(selectedNodeName, detail?.levelTitle)
+    : SvmVisualizer;
 
   // 动态加载子话题所有关卡
   useEffect(() => {
@@ -294,7 +302,8 @@ export const KnowledgeTree: React.FC<KnowledgeTreeProps> = ({
             </div>
 
             {/* 看板文字简介区（如果有后台数据库内容就用数据库的，否则使用动态生成的模版以防写死成 SVM） */}
-            <div className="grid items-start gap-5 text-sm text-slate-300 leading-relaxed [grid-template-columns:repeat(auto-fit,minmax(min(100%,22rem),1fr))]">
+            <div className="grid items-start gap-6 [grid-template-columns:repeat(auto-fit,minmax(min(100%,22rem),1fr))]">
+            <div className={`min-w-0 space-y-5 text-sm leading-relaxed text-slate-300 ${Visualizer ? '' : 'mx-auto w-full max-w-3xl'}`}>
               {detail?.theory ? (
                 <div className="min-w-0 max-w-3xl [overflow-wrap:anywhere]">
                   {renderTheoryMarkdown(detail.theory)}
@@ -325,7 +334,8 @@ export const KnowledgeTree: React.FC<KnowledgeTreeProps> = ({
               )}
             </div>
 
-            {selectedNodeName === "支持向量机 (SVM)" && <SvmVisualizer />}
+            {Visualizer && <Visualizer />}
+            </div>
           </div>
         )}
       </div>
