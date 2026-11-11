@@ -173,6 +173,7 @@ public class ChallengeServiceImpl implements ChallengeService {
         resp.setTheory(detail.getTheoryMarkdown());
         resp.setLatexFormulas(detail.getLatexFormulas());
         resp.setStarterCode(detail.getStarterCode());
+        resp.setPublicSamples(publicSamples(detail));
         resp.setConceptualQuizzes(quizItems);
         
         resp.setThinkingQuestion(new ChallengeDetailResp.ThinkingQuestionConfig(
@@ -191,6 +192,21 @@ public class ChallengeServiceImpl implements ChallengeService {
         }
 
         return resp;
+    }
+
+    private List<Map<String, Object>> publicSamples(ChallengeDetail detail) {
+        if (detail.getTestCases() == null) return List.of();
+        List<Map<String, Object>> samples = new ArrayList<>();
+        for (Object value : detail.getTestCases().stream().limit(2).toList()) {
+            JsonNode test = objectMapper.valueToTree(value);
+            if (test == null || !test.isObject() || test.path("hidden").asBoolean(false)) continue;
+            Map<String, Object> sample = new java.util.LinkedHashMap<>();
+            for (String key : List.of("input", "stdin", "args", "kwargs", "function", "entryPoint", "expected", "expectedOutput", "expectedException")) {
+                if (test.has(key)) sample.put(key, test.get(key));
+            }
+            if (!sample.isEmpty()) samples.add(sample);
+        }
+        return samples;
     }
 
     @Override

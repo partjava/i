@@ -1,5 +1,6 @@
 'use client';
 
+import { Intervals } from './ConceptDiagram';
 import { ScenarioVisualizer } from './ScenarioVisualizer';
 
 const replayedCommits = [[], ['C′'], ['C′', 'D′']];
@@ -9,10 +10,14 @@ export function GitRebaseLevel1() {
     <ScenarioVisualizer
       title="提交历史重放模拟器"
       description="依次把功能提交重放到新的基底。"
+      diagramOnly
       renderDiagram={active => (
         <svg viewBox="0 0 320 112" className="w-full" role="img" aria-label={active === 0 ? 'A 分出主分支 B 和功能分支 C、D' : `新历史：A、B、${replayedCommits[active].join('、')}`}>
-          <path d="M32 38 H108 M32 38 V78 H182" fill="none" stroke="#64748b" strokeWidth="2" />
+          <path d="M32 38 H108 M32 38 L108 78 H182" fill="none" stroke="#64748b" strokeWidth="2" />
           {active > 0 && <path d={`M108 38 H${108 + 75 * active}`} stroke="#a78bfa" strokeWidth="2" />}
+          {replayedCommits[active].map((name, index) => (
+            <path key={name} d={`M${108 + 74 * index} 78 Q${156 + 75 * index} 78 ${183 + 75 * index} 38`} fill="none" stroke="#a78bfa" strokeDasharray="4 4" />
+          ))}
           {[
             { name: 'A', x: 32, y: 38, color: '#94a3b8' },
             { name: 'B', x: 108, y: 38, color: '#22d3ee' },
@@ -25,7 +30,8 @@ export function GitRebaseLevel1() {
               <text x={x} y={y} dy=".35em" textAnchor="middle" fill={color} fontSize="11">{name}</text>
             </g>
           ))}
-          <text x="108" y="15" textAnchor="middle" fill="#67e8f9" fontSize="11">{active === 0 ? 'main' : '重放后的路径'}</text>
+          <text x="108" y="15" textAnchor="middle" fill="#67e8f9" fontSize="11">main</text>
+          {active > 0 && <text x={108 + 75 * active} y="15" textAnchor="middle" fill="#c4b5fd" fontSize="11">新 feature</text>}
           <text x="108" y="105" textAnchor="middle" fill="#94a3b8" fontSize="11">原 feature 路径</text>
         </svg>
       )}
@@ -43,6 +49,8 @@ export function GitRebaseLevel2() {
     <ScenarioVisualizer
       title="Rebase 冲突预测器"
       description="按每个功能提交检查目标分支上的变更。"
+      diagramOnly
+      renderDiagram={active => <Intervals ranges={[[10, 20], [[10, 15], [18, 25], [30, 35]][active] as [number, number]]} sharedFile={active !== 0} />}
       scenarios={[
         { label: "首个提交", steps: ["目标分支改 parser.ts 10–20", "功能提交 C 改 reader.ts", "无同文件重叠"] },
         { label: "下一提交", steps: ["目标分支仍改 parser.ts 10–20", "功能提交 D 改 parser.ts 18–25", "重叠 18–20，可能需要解决"] },

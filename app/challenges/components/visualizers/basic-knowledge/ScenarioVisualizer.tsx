@@ -7,11 +7,12 @@ interface Scenario {
   steps: string[];
 }
 
-export function ScenarioVisualizer({ title, description, scenarios, renderDiagram }: {
+export function ScenarioVisualizer({ title, description, scenarios, renderDiagram, diagramOnly = false }: {
   title: string;
   description: string;
   scenarios: Scenario[];
   renderDiagram?: (active: number) => ReactNode;
+  diagramOnly?: boolean;
 }) {
   const [active, setActive] = useState(0);
 
@@ -33,14 +34,15 @@ export function ScenarioVisualizer({ title, description, scenarios, renderDiagra
         ))}
       </div>
       {renderDiagram && <div className="mb-4 rounded-xl border border-slate-800 bg-slate-950 p-4">{renderDiagram(active)}</div>}
-      <ol aria-live="polite" className="space-y-2 border-l border-indigo-900/70 pl-3">
+      {diagramOnly && <p aria-live="polite" className="text-xs leading-relaxed text-cyan-200">{scenarios[active].steps.at(-1)}</p>}
+      {!diagramOnly && <ol aria-live="polite" className="space-y-2 border-l border-indigo-900/70 pl-3">
         {scenarios[active].steps.map((step, index, steps) => (
           <li key={index} className={`flex items-start gap-2 rounded-lg border px-3 py-2 text-xs leading-relaxed [overflow-wrap:anywhere] ${index === steps.length - 1 ? 'border-cyan-900 bg-cyan-950/40 text-cyan-200' : 'border-slate-800 bg-slate-950 text-slate-200'}`}>
             <span aria-hidden="true" className="grid size-5 shrink-0 place-items-center rounded-full bg-indigo-950 font-mono text-[10px] text-indigo-200">{index + 1}</span>
             <span className="min-w-0">{step}</span>
           </li>
         ))}
-      </ol>
+      </ol>}
     </section>
   );
 }

@@ -675,20 +675,61 @@
     "topicName": "强化学习",
     "subtopicName": "Q-Learning",
     "levelIndex": 2,
-    "levelTitle": "强化学习",
+    "levelTitle": "ε 贪心与衰减策略",
     "difficulty": "foundation",
     "accessLevel": "member",
     "tags": [
       "Q-Learning"
     ],
-    "theoryContent": "epsilon 衰减策略",
-    "latexFormulas": "实现 epsilon 贪心策略的衰减：训练初期探索多，后期利用多。",
-    "starterCode": [
-      "epsilon = max(eps_end, eps_start*decay^step)"
+    "theoryContent": "### ε 贪心与衰减策略\n\n- `epsilon_greedy(Q, state, epsilon)` 接收二维 Q 表、状态下标和探索概率，返回整数动作下标。以 ε 的概率在当前状态的所有动作中均匀随机选择，否则选择 Q 值最大的动作，并列时取最小下标。\n- `decay_schedule(eps_start, eps_end, decay, steps)` 返回长度为 `steps` 的列表。第 0 步从初始值计算，每步乘以衰减因子，最低为 `eps_end`。当 `steps=0` 时返回空列表。",
+    "latexFormulas": [
+      "\\epsilon_t=\\max(\\epsilon_{end},\\epsilon_{start}\\cdot decay^t)"
     ],
-    "solutionCode": "import numpy as np\ndef epsilon_greedy(Q, state, epsilon): pass\ndef decay_schedule(eps_start, eps_end, decay, steps): pass",
-    "expectedOutput": "True",
-    "testCases": [],
+    "starterCode": "def epsilon_greedy(Q, state, epsilon):\n    pass\n\ndef decay_schedule(eps_start, eps_end, decay, steps):\n    pass",
+    "solutionCode": "import random\n\ndef epsilon_greedy(Q, state, epsilon):\n    values = Q[state]\n    if random.random() < epsilon:\n        return random.randrange(len(values))\n    return max(range(len(values)), key=values.__getitem__)\n\ndef decay_schedule(eps_start, eps_end, decay, steps):\n    return [max(eps_end, eps_start * decay ** step) for step in range(steps)]",
+    "expectedOutput": "[1.0, 0.5, 0.25, 0.2, 0.2]",
+    "testCases": [
+      {
+        "name": "decay floor",
+        "mode": "function",
+        "function": "decay_schedule",
+        "args": [
+          1.0,
+          0.2,
+          0.5,
+          5
+        ],
+        "expected": [
+          1.0,
+          0.5,
+          0.25,
+          0.2,
+          0.2
+        ]
+      },
+      {
+        "name": "greedy action",
+        "mode": "function",
+        "function": "epsilon_greedy",
+        "args": [
+          [
+            [
+              0,
+              3,
+              1
+            ],
+            [
+              4,
+              1,
+              2
+            ]
+          ],
+          0,
+          0
+        ],
+        "expected": 1
+      }
+    ],
     "quizzes": [
       {
         "question": "训练策略相关",
@@ -722,21 +763,104 @@
     "topicName": "强化学习",
     "subtopicName": "SARSA",
     "levelIndex": 2,
-    "levelTitle": "强化学习",
+    "levelTitle": "SARSA(λ) 资格迹",
     "difficulty": "foundation",
     "accessLevel": "member",
     "tags": [
       "SARSA"
     ],
-    "theoryContent": "SARSA(lambda) 实现",
-    "latexFormulas": "实现 SARSA(lambda) 使用资格迹（Eligibility Traces），加速 TD 学习。",
-    "starterCode": [
-      "E(s,a) <- gamma*lambda*E(s,a)+1",
-      "Q(s,a) += alpha*delta*E(s,a)"
+    "theoryContent": "### SARSA(λ) 资格迹\n\n实现 `sarsa_lambda(env, episodes, alpha, gamma, epsilon, lam)`，返回二维 Q 表。\n\n- `env.start`（字典键 `start`）是每回合起始状态下标。`env[\"transitions\"][s][a]` 是固定的 `[next_state, reward, done]`。终止状态的动作列表为空，给定环境的每条路径都会终止。\n- Q 表每行与该状态的动作数一致，初始值为 0。每回合把资格迹清零。按 ε 贪心选动作，Q 值并列时取最小下标。\n- 每步先累加当前状态动作的资格迹，再用 TD 误差更新 Q 表，最后将资格迹乘以 γλ。终止步的下一状态价值为 0。\n- `episodes` 是回合数，`alpha` 是学习率，`gamma` 是折扣因子，`epsilon` 是探索概率，`lam` 是资格迹衰减参数。公开样例的探索概率为 0。",
+    "latexFormulas": [
+      "\\delta=r+\\gamma Q(s^{\\prime},a^{\\prime})-Q(s,a)",
+      "Q\\leftarrow Q+\\alpha\\delta E"
     ],
-    "solutionCode": "import numpy as np\ndef sarsa_lambda(env, episodes, alpha, gamma, epsilon, lam): pass",
-    "expectedOutput": "True",
-    "testCases": [],
+    "starterCode": "def sarsa_lambda(env, episodes, alpha, gamma, epsilon, lam):\n    pass",
+    "solutionCode": "import random\n\ndef sarsa_lambda(env, episodes, alpha, gamma, epsilon, lam):\n    transitions = env[\"transitions\"]\n    q = [[0.0] * len(actions) for actions in transitions]\n\n    def choose(state):\n        actions = q[state]\n        if random.random() < epsilon:\n            return random.randrange(len(actions))\n        return max(range(len(actions)), key=actions.__getitem__)\n\n    for _ in range(episodes):\n        traces = [[0.0] * len(actions) for actions in transitions]\n        state = env[\"start\"]\n        if not q[state]:\n            continue\n        action = choose(state)\n        while True:\n            next_state, reward, done = transitions[state][action]\n            next_action = None if done else choose(next_state)\n            next_value = 0.0 if done else q[next_state][next_action]\n            delta = reward + gamma * next_value - q[state][action]\n            traces[state][action] += 1.0\n            for s, actions in enumerate(q):\n                for a in range(len(actions)):\n                    actions[a] += alpha * delta * traces[s][a]\n                    traces[s][a] *= gamma * lam\n            if done:\n                break\n            state, action = next_state, next_action\n    return q",
+    "expectedOutput": "[[0.5], [1.0], []]",
+    "testCases": [
+      {
+        "name": "reward propagates along trace",
+        "mode": "function",
+        "function": "sarsa_lambda",
+        "args": [
+          {
+            "start": 0,
+            "transitions": [
+              [
+                [
+                  1,
+                  0,
+                  false
+                ]
+              ],
+              [
+                [
+                  2,
+                  1,
+                  true
+                ]
+              ],
+              []
+            ]
+          },
+          1,
+          1,
+          1,
+          0,
+          0.5
+        ],
+        "expected": [
+          [
+            0.5
+          ],
+          [
+            1.0
+          ],
+          []
+        ]
+      },
+      {
+        "name": "lambda zero updates only current action",
+        "mode": "function",
+        "function": "sarsa_lambda",
+        "args": [
+          {
+            "start": 0,
+            "transitions": [
+              [
+                [
+                  1,
+                  0,
+                  false
+                ]
+              ],
+              [
+                [
+                  2,
+                  1,
+                  true
+                ]
+              ],
+              []
+            ]
+          },
+          1,
+          1,
+          1,
+          0,
+          0
+        ],
+        "expected": [
+          [
+            0.0
+          ],
+          [
+            1.0
+          ],
+          []
+        ]
+      }
+    ],
     "quizzes": [
       {
         "question": "训练策略相关",

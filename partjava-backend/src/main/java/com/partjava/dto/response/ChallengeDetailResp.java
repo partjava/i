@@ -17,6 +17,7 @@ public class ChallengeDetailResp {
     private String theory;
     private List<String> latexFormulas;
     private String starterCode;
+    private List<Map<String, Object>> publicSamples;
     private String lastSavedCode;
     private List<QuizItem> conceptualQuizzes;
     private ThinkingQuestionConfig thinkingQuestion;

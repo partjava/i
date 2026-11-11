@@ -91,6 +91,17 @@ export interface SubtopicDetail {
   latexFormulas: string[];
   starterCode: string;
   expectedOutput: string;
+  publicSamples?: Array<{
+    input?: unknown;
+    stdin?: unknown;
+    args?: unknown[];
+    kwargs?: Record<string, unknown>;
+    function?: string;
+    entryPoint?: string;
+    expected?: unknown;
+    expectedOutput?: unknown;
+    expectedException?: string;
+  }>;
   conceptualQuizzes: {
     question: string;
     options: string[];

@@ -51,7 +51,7 @@ export function MyChallengesDrawer({ onClose }: MyChallengesDrawerProps) {
   // 选中小节变化时，自动计算下一个可用序号
   useEffect(() => {
     let cancelled = false;
-    fetch(`/api/star-challenges/${encodeURIComponent(form.subtopicName)}`)
+    fetch(`/api/star-challenges/levels?subtopicName=${encodeURIComponent(form.subtopicName)}`)
       .then(r => r.json())
       .then(data => {
         if (!cancelled && data.success && data.levels) {

@@ -90,6 +90,7 @@ export const KnowledgeTree: React.FC<KnowledgeTreeProps> = ({
 }) => {
   const [allLevels, setAllLevels] = useState<any[]>([]);
   const [previewIdx, setPreviewIdx] = useState<number>(0);
+  const [loadError, setLoadError] = useState(false);
   const [loading, setLoading] = useState<boolean>(true);
 
   const detail = allLevels[previewIdx] || null;
@@ -103,12 +104,17 @@ export const KnowledgeTree: React.FC<KnowledgeTreeProps> = ({
 
   // 动态加载子话题所有关卡
   useEffect(() => {
+    const request = new AbortController();
     const fetchDetail = async () => {
       setLoading(true);
+      setLoadError(false);
       try {
-        const res = await fetch(`/api/star-challenges/${encodeURIComponent(selectedNodeName)}`);
+        const res = await fetch(`/api/star-challenges/levels?subtopicName=${encodeURIComponent(selectedNodeName)}`, { signal: request.signal });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
-        if (data.success && data.levels && data.levels.length > 0) {
+        if (request.signal.aborted) return;
+        if (!data.success || !Array.isArray(data.levels)) throw new Error("Invalid challenge response");
+        if (data.levels.length > 0) {
           setAllLevels(data.levels);
           setPreviewIdx(Math.min(selectedLevelIndex || 0, data.levels.length - 1));
         } else {
@@ -116,15 +122,18 @@ export const KnowledgeTree: React.FC<KnowledgeTreeProps> = ({
           setPreviewIdx(0);
         }
       } catch (err) {
+        if (request.signal.aborted) return;
+        setLoadError(true);
         console.error('获取知识树看板数据失败:', err);
         setAllLevels([]);
         setPreviewIdx(0);
       } finally {
-        setLoading(false);
+        if (!request.signal.aborted) setLoading(false);
       }
     };
 
     fetchDetail();
+    return () => request.abort();
   }, [selectedNodeName, selectedLevelIndex]);
 
   // 当用户在侧边栏点击关卡时切换预览
@@ -309,7 +318,7 @@ export const KnowledgeTree: React.FC<KnowledgeTreeProps> = ({
                   {renderTheoryMarkdown(detail.theory)}
                 </div>
               ) : (
-                <p className="text-slate-600 text-xs italic">暂无理论内容</p>
+                <p className="text-slate-600 text-xs italic">{loadError ? "题目加载失败，请重新选择关卡" : "暂无理论内容"}</p>
               )}
               
               {(detail?.latexFormulas?.length > 0 || detail?.expectedOutput) && (

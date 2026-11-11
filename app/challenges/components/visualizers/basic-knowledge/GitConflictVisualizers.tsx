@@ -1,5 +1,6 @@
 'use client';
 
+import { Flow, Lanes } from './ConceptDiagram';
 import { ScenarioVisualizer } from './ScenarioVisualizer';
 
 export function GitConflictLevel1() {
@@ -7,6 +8,8 @@ export function GitConflictLevel1() {
     <ScenarioVisualizer
       title="冲突标记解析器"
       description="按标记读取两侧内容。"
+      diagramOnly
+      renderDiagram={active => <Lanes rows={[["标记", [["<<<<<<< HEAD", "=======", ">>>>>>> feature"][active], "violet"]], ["ours", ["color = blue", active === 0 ? "cyan" : "muted"]], ["theirs", ["color = green", active === 1 ? "cyan" : "muted"]]]} />}
       scenarios={[
         { label: "进入当前分支", steps: ["<<<<<<< HEAD", "color = blue", "收集为 ours"] },
         { label: "切换到传入分支", steps: ["=======", "color = green", "收集为 theirs"] },
@@ -21,6 +24,8 @@ export function GitConflictLevel2() {
     <ScenarioVisualizer
       title="合并策略选择器"
       description="按目标比较合并策略。"
+      diagramOnly
+      renderDiagram={active => <Flow nodes={[["main + feature", "main + feature", "main + B + C"][active], ["普通三方合并", "ours", "octopus"][active], [["合并两侧改动", "保留 main 的文件树", "生成多父提交"][active], "violet"]]} />}
       scenarios={[
         { label: "常规双分支", steps: ["两边都需要合入", "普通三方合并", "保留不冲突修改，冲突需解决"] },
         { label: "保留当前树", steps: ["需要记录合并关系并保留当前内容", "ours 策略", "合并结果的树沿用当前分支"] },

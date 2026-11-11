@@ -71,11 +71,33 @@ export function TheoryQuizPanel({
               <span className="px-2 py-0.5 rounded bg-purple-500/10 border border-purple-500/30 text-purple-400 text-[9px] font-mono">VIP 创作者出题</span>
             )}
             <div className="border-b border-slate-900 pb-4 mb-4">{renderMarkdown(detail.theory)}</div>
-            <div className="bg-slate-900/40 border border-slate-800 rounded-xl p-4">
-              <h4 className="text-xs font-bold text-cyan-400 mb-2">测试断言与目标：</h4>
-              <p className="text-[11px] text-slate-400">你的 Python 函数必须接收指定的输入数据并生成运算结果。</p>
-              <div className="mt-2 text-[10px] text-indigo-300 font-mono">期望正确输出: {detail.expectedOutput}</div>
-            </div>
+            {!!detail.publicSamples?.length && (
+              <section className="space-y-3 rounded-xl border border-slate-800 bg-slate-900/40 p-4">
+                <h4 className="font-bold text-cyan-400">公开样例</h4>
+                <p className="text-slate-400">按编辑器中的函数签名实现，参考下面的输入和预期结果。</p>
+                {detail.publicSamples.map((sample, index) => {
+                  const entry = sample.function || sample.entryPoint;
+                  const input = sample.stdin !== undefined ? sample.stdin : sample.input;
+                  const expected = sample.expected !== undefined ? sample.expected : sample.expectedOutput;
+                  const fields = [
+                    [sample.stdin !== undefined ? '标准输入' : sample.args !== undefined ? '位置参数（按顺序）' : '输入', sample.stdin !== undefined ? input : sample.args ?? input],
+                    ['关键字参数', sample.kwargs],
+                    [sample.expectedException ? '预期异常' : '预期结果', sample.expectedException || expected],
+                  ] as const;
+                  return (
+                    <div key={index} className="space-y-2 rounded-lg bg-slate-950/60 p-3">
+                      <h5 className="font-semibold text-slate-200">样例 {index + 1}{entry && <code className="ml-2 text-indigo-300">{entry}</code>}</h5>
+                      {fields.map(([label, value]) => value !== undefined && (
+                        <div key={label}>
+                          <p className="mb-1 text-slate-400">{label}</p>
+                          <pre className="whitespace-pre-wrap break-words text-indigo-200">{typeof value === 'string' && sample.stdin === value ? value : JSON.stringify(value, null, 2)}</pre>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })}
+              </section>
+            )}
           </div>
         )}
 

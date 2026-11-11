@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import { Loader } from 'lucide-react';
 import { useAuth } from '@shared/hooks/useAuth';
 import { message } from 'antd';
-import { SubtopicDetail, getDefaultDetail } from './data';
+import { SubtopicDetail } from './data';
 import { TheoryQuizPanel } from './TheoryQuizPanel';
 import { CodeEditorPanel } from './CodeEditorPanel';
 import { AiTutorPanel } from './AiTutorPanel';
@@ -27,6 +27,8 @@ export const QuizWorkspace: React.FC<QuizWorkspaceProps> = ({ selectedNodeName, 
   const [activeLevelIndex, setActiveLevelIndex] = useState<number>(0);
   const detail = levels[activeLevelIndex] || null;
   const [loading, setLoading] = useState<boolean>(true);
+  const [loadError, setLoadError] = useState(false);
+  const [loadAttempt, setLoadAttempt] = useState(0);
 
   // ── 代码编辑器状态 ──
   const [codeValue, setCodeValue] = useState<string>("");
@@ -65,26 +67,26 @@ export const QuizWorkspace: React.FC<QuizWorkspaceProps> = ({ selectedNodeName, 
     setLevels([]);
     const fetchDetail = async () => {
       setLoading(true);
+      setLoadError(false);
       try {
-        const res = await fetch(`/api/star-challenges/${encodeURIComponent(selectedNodeName)}`, { signal: request.signal });
+        const res = await fetch(`/api/star-challenges/levels?subtopicName=${encodeURIComponent(selectedNodeName)}`, { signal: request.signal });
         const data = await res.json();
         if (request.signal.aborted) return;
-        if (res.ok && data.success && data.levels?.length > 0) {
+        if (!res.ok || !data.success || !Array.isArray(data.levels)) {
+          throw new Error('Challenge details unavailable');
+        }
+        if (data.levels.length > 0) {
           setLevels(data.levels);
           setActiveLevelIndex(Math.min(initialLevelIndex, data.levels.length - 1));
-        } else {
-          setLevels([getDefaultDetail(selectedNodeName)]);
-          setActiveLevelIndex(0);
         }
       } catch {
         if (request.signal.aborted) return;
-        setLevels([getDefaultDetail(selectedNodeName)]);
-        setActiveLevelIndex(0);
+        setLoadError(true);
       } finally { if (!request.signal.aborted) setLoading(false); }
     };
     void fetchDetail();
     return () => request.abort();
-  }, [selectedNodeName]);
+  }, [selectedNodeName, loadAttempt]);
 
   // ── 数据加载完成或切换关卡时重置状态 ──
   useEffect(() => {
@@ -200,7 +202,7 @@ export const QuizWorkspace: React.FC<QuizWorkspaceProps> = ({ selectedNodeName, 
     setShowQuizExplains(prev => ({ ...prev, [qIdx]: true }));
     if (status === 'authenticated') {
       try {
-        await fetch(`/api/star-challenges/${encodeURIComponent(selectedNodeName)}/submit-quiz`, {
+        await fetch('/api/star-challenges/submit-quiz', {
           method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ answers: newAns, challengeId: detail.id }),
         });
       } catch {}
@@ -214,7 +216,7 @@ export const QuizWorkspace: React.FC<QuizWorkspaceProps> = ({ selectedNodeName, 
     setAiChatMessages(prev => [...prev, { sender: 'user', text: `思考题回答：\n${thinkingAnswer}` }]);
     try {
       if (status === 'authenticated') {
-        const res = await fetch(`/api/star-challenges/${encodeURIComponent(selectedNodeName)}/submit-thinking`, {
+        const res = await fetch('/api/star-challenges/submit-thinking', {
           method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ answer: thinkingAnswer, challengeId: detail.id }),
         });
         const data = await res.json();
@@ -269,7 +271,16 @@ export const QuizWorkspace: React.FC<QuizWorkspaceProps> = ({ selectedNodeName, 
   };
 
   if (loading) return <div className="w-full h-full flex flex-col items-center justify-center bg-black/60 text-indigo-400 gap-3"><Loader className="w-8 h-8 animate-spin" /><span className="text-xs font-medium tracking-widest font-mono">LOADING STAR DATA...</span></div>;
-  if (!detail) return null;
+  if (!detail) return (
+    <div className="flex h-full flex-col items-center justify-center gap-4 text-sm text-slate-300">
+      <p role="status">{loadError ? '关卡加载失败，暂时无法运行样例或提交判题。' : '本章节暂无可用关卡。'}</p>
+      {loadError && (
+        <button type="button" onClick={() => setLoadAttempt(attempt => attempt + 1)} className="rounded-lg bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-500">
+          重新加载关卡
+        </button>
+      )}
+    </div>
+  );
 
   return (
     <motion.div initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }} transition={{ duration: 0.3 }}

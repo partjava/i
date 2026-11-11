@@ -1,5 +1,6 @@
 'use client';
 
+import { Lanes, Meters } from './ConceptDiagram';
 import { ScenarioVisualizer } from './ScenarioVisualizer';
 
 export function ProcessManagementLevel1() {
@@ -7,6 +8,8 @@ export function ProcessManagementLevel1() {
     <ScenarioVisualizer
       title="进程状态异常探测器"
       description="阈值为 3 个，或比例严格超过 20%。"
+      diagramOnly
+      renderDiagram={active => <Meters rows={[["僵尸进程数量", [1, 3, 2][active], 3, active === 1 ? "amber" : "cyan"], ["僵尸比例（%）", [10, 15, 40][active], 20, active === 2 ? "amber" : "cyan"]]} />}
       scenarios={[
         { label: "正常", steps: ["采样 10 个进程", "1 个 Z 状态，占 10%", "不告警"] },
         { label: "数量触发", steps: ["采样 20 个进程", "3 个 Z 状态，占 15%", "达到数量阈值"] },
@@ -21,6 +24,8 @@ export function ProcessManagementLevel2() {
     <ScenarioVisualizer
       title="进程优先级调度器"
       description="比较 nice 与虚拟运行时间的作用。"
+      diagramOnly
+      renderDiagram={active => <Lanes rows={[["进程 A", [active === 0 ? "nice −5" : active === 1 ? "vruntime 8" : "睡眠", active === 2 ? "muted" : "cyan"]], ["进程 B", [active === 0 ? "nice +5" : "vruntime 12", "cyan"]], ["调度", [[ "A 的虚拟时间增长更慢", "A 优先运行", "B 是唯一可运行进程"][active], "violet"]]]} />}
       scenarios={[
         { label: "相同用时", steps: ["进程 A nice −5，B nice +5", "A 权重更大", "A 的虚拟运行时间增长更慢"] },
         { label: "选择下一个", steps: ["A vruntime 8，B vruntime 12", "两者都可运行", "优先选择 A"] },

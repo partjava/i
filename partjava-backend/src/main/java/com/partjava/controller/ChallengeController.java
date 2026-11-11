@@ -189,6 +189,13 @@ public class ChallengeController {
         return res;
     }
 
+    @GetMapping("/star-challenges/levels")
+    public Map<String, Object> getStarChallengeLevels(
+            @RequestParam("subtopicName") String subtopicName,
+            @RequestAttribute(value = "userId", required = false) Integer userId) {
+        return getStarChallenges(subtopicName, userId);
+    }
+
     @GetMapping("/star-challenges/{subtopicName}")
     public Map<String, Object> getStarChallenges(
             @PathVariable("subtopicName") String subtopicName,
@@ -229,9 +236,8 @@ public class ChallengeController {
     /**
      * 老前端 POST /star-challenges/{subtopicName}/submit-quiz
      */
-    @PostMapping("/star-challenges/{subtopicName}/submit-quiz")
+    @PostMapping({"/star-challenges/submit-quiz", "/star-challenges/{subtopicName}/submit-quiz"})
     public Map<String, Object> submitQuizCompat(
-            @PathVariable("subtopicName") String subtopicName,
             @RequestBody Map<String, Object> body,
             @RequestAttribute(value = "userId", required = false) Integer userId) {
         Integer activeUserId = getUserIdOrFallback(userId);
@@ -248,9 +254,8 @@ public class ChallengeController {
     /**
      * 老前端 POST /star-challenges/{subtopicName}/submit-thinking
      */
-    @PostMapping("/star-challenges/{subtopicName}/submit-thinking")
+    @PostMapping({"/star-challenges/submit-thinking", "/star-challenges/{subtopicName}/submit-thinking"})
     public Map<String, Object> submitThinkingCompat(
-            @PathVariable("subtopicName") String subtopicName,
             @RequestBody Map<String, Object> body,
             @RequestAttribute(value = "userId", required = false) Integer userId) {
         Integer activeUserId = getUserIdOrFallback(userId);

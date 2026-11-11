@@ -1,5 +1,6 @@
 'use client';
 
+import { Lanes } from './ConceptDiagram';
 import { ScenarioVisualizer } from './ScenarioVisualizer';
 
 export function LinuxCommandsLevel1() {
@@ -7,6 +8,8 @@ export function LinuxCommandsLevel1() {
     <ScenarioVisualizer
       title="安全批处理命令生成器"
       description="查看参数数组如何保留文件名边界。"
+      diagramOnly
+      renderDiagram={active => <Lanes rows={[["可执行文件", "grep"], ["参数数组", "-e", "ERROR", "--", [["app.log", "app one.log", "-notes.log"][active], "violet"]]]} />}
       scenarios={[
         { label: "普通文件", steps: ["关键词 ERROR", "文件 app.log", "[grep, -e, ERROR, --, app.log]"] },
         { label: "含空格", steps: ["关键词 ERROR", "文件 app one.log", "app one.log 仍是一个参数"] },
@@ -21,6 +24,8 @@ export function LinuxCommandsLevel2() {
     <ScenarioVisualizer
       title="批量文件搜索工具"
       description="分别查看文件名过滤与内容匹配。"
+      diagramOnly
+      renderDiagram={active => <Lanes rows={[["文件名匹配", "app.log", ["notes.txt", "muted"], "db.log"], ["内容匹配", [active === 0 ? "app.log" : active === 1 ? "app.log · ERROR" : "app.log · 无匹配", active === 2 ? "muted" : "cyan"], ["db.log", active === 0 ? "cyan" : "muted"]]]} />}
       scenarios={[
         { label: "找日志", steps: ["文件 app.log、notes.txt、db.log", "模式 *.log", "app.log、db.log"] },
         { label: "搜 ERROR", steps: ["app.log 含 ERROR，db.log 含 INFO", "先筛 *.log，再搜内容", "仅 app.log"] },

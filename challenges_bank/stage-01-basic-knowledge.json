@@ -111,7 +111,7 @@
       "lru",
       "page-cache"
     ],
-    "theoryContent": "### 编程挑战：内存页缓存压力模拟器\n\n操作系统通过页缓存减少磁盘 I/O。当缓存容量有限时，必须淘汰旧页面。LRU 会淘汰最近最少使用的页面。\n\n本题要求你模拟一个页面访问序列，统计缺页次数、命中次数和命中率。这个问题与数据库缓冲池、Redis 缓存和浏览器缓存都有相似思想。\n\n命中率定义为：\n\n$$HitRate = \\frac{Hits}{Hits + Misses}$$",
+    "theoryContent": "### 编程挑战：内存页缓存压力模拟器\n\n操作系统通过页缓存减少磁盘 I/O。当缓存容量有限时，必须淘汰旧页面。LRU 会淘汰最近最少使用的页面。\n\n本题要求你模拟一个页面访问序列，统计缺页次数、命中次数和命中率。这个问题与数据库缓冲池、Redis 缓存和浏览器缓存都有相似思想。\n\n命中率定义为：\n\n$$HitRate = \\frac{Hits}{Hits + Misses}$$\n\n### 实现要求\n\n- 补全 `simulate_page_cache(page_requests, capacity)`。按顺序处理页面编号列表，`capacity` 是最多能缓存的页面数。\n- 命中时更新该页面的最近使用顺序。缺页时装入该页面，缓存满了就先淘汰最久未使用的页面。\n- 返回字典 `{\"hits\": ..., \"misses\": ..., \"hit_rate\": ...}`。命中率保留最多 4 位小数。空访问列表的命中率为 0；容量小于等于 0 时，每次访问都算缺页。",
     "latexFormulas": [
       "HitRate = \\frac{Hits}{Hits + Misses}"
     ],
