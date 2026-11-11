@@ -1,6 +1,6 @@
 # 禾桔书房 · AI 伴学平台（PartJava）
 
-![沉浸式 3D 数字开屏书房全景](./public/images/images/homepage-sanctuary.png)
+![平台首页全景图](./public/images/images/homepage-overview.png)
 
 > **2026 传智杯 · AI Web 网页开发挑战赛参赛作品** —— AI Native 伴学平台：3D AI 伴侣「禾桔」以 Function Calling Agent 驱动站内 RAG 检索、联网深搜、笔记提炼与 3D 神态控制。
 
@@ -59,11 +59,13 @@
 
 ## 主要功能
 
-### 1. 沉浸式 3D 数字开屏书房（Sanctuary）
+### 1. 沉浸式 3D 数字开屏书房（Sanctuary）与功能生态
 
 独立 WebGL 应用以 iframe 优雅嵌入主站，通过专属三通道 `postMessage` 协议实现外层滚轮无缝穿透、平滑滚动引导，并在滚出视口后由 `IntersectionObserver` 自动挂起渲染循环，释放 GPU 算力：
 
-![沉浸式 3D 数字开屏书房](./public/images/images/homepage-sanctuary.png)
+| 沉浸式 3D 数字开屏书房 | 首页功能入口生态区与水墨风格页脚 |
+| :---: | :---: |
+| ![沉浸式 3D 数字开屏书房](./public/images/images/homepage-sanctuary.png) | ![首页功能入口生态区与水墨风格页脚](./public/images/images/homepage-ecosystem.png) |
 
 ### 2. 拟人化鉴权与全域灵宠伴学（登录与注册）
 
