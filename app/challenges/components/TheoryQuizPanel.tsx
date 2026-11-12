@@ -9,6 +9,34 @@ import rehypeHighlight from 'rehype-highlight';
 import rehypeKatex from 'rehype-katex';
 import { SubtopicDetail } from './data';
 
+// 智能格式化单项参数值：短数组/基础值单行显示，复杂对象紧凑显示
+function formatParamValue(val: any): string {
+  if (val === undefined) return '';
+  if (typeof val === 'string') return JSON.stringify(val);
+  if (typeof val === 'number' || typeof val === 'boolean' || val === null) return String(val);
+  if (Array.isArray(val)) {
+    const compact = JSON.stringify(val);
+    if (compact.length <= 80 || val.every(v => typeof v === 'number' || typeof v === 'string')) {
+      return compact;
+    }
+    return JSON.stringify(val, null, 2);
+  }
+  return JSON.stringify(val, null, 2);
+}
+
+// 从初始代码中提取形参名称
+function getParamNames(starterCode?: string, fnName?: string): string[] {
+  if (!starterCode) return [];
+  const regex = new RegExp(`def\\s+${fnName || '[a-zA-Z0-9_]+'}\\s*\\(([^)]*)\\)`);
+  const match = starterCode.match(regex);
+  if (!match || !match[1]) return [];
+  return match[1]
+    .split(',')
+    .map(p => p.trim())
+    .filter(p => p && p !== 'self')
+    .map(p => p.split(':')[0].trim());
+}
+
 interface TheoryQuizPanelProps {
   activeTab: 'theory' | 'conceptual' | 'thinking';
   onTabChange: (tab: 'theory' | 'conceptual' | 'thinking') => void;
@@ -75,25 +103,74 @@ export function TheoryQuizPanel({
             {!!detail.publicSamples?.length && (
               <section className="space-y-3 rounded-xl border border-slate-800 bg-slate-900/40 p-4">
                 <h4 className="font-bold text-cyan-400">公开样例</h4>
-                <p className="text-slate-400">按编辑器中的函数签名实现，参考下面的输入和预期结果。</p>
+                <p className="text-slate-400 text-xs">按编辑器中的函数签名实现，参考下面的输入和预期结果。</p>
                 {detail.publicSamples.map((sample, index) => {
                   const entry = sample.function || sample.entryPoint;
-                  const input = sample.stdin !== undefined ? sample.stdin : sample.input;
                   const expected = sample.expected !== undefined ? sample.expected : sample.expectedOutput;
-                  const fields = [
-                    [sample.stdin !== undefined ? '标准输入' : sample.args !== undefined ? '位置参数（按顺序）' : '输入', sample.stdin !== undefined ? input : sample.args ?? input],
-                    ['关键字参数', sample.kwargs],
-                    [sample.expectedException ? '预期异常' : '预期结果', sample.expectedException || expected],
-                  ] as const;
+                  const paramNames = getParamNames(detail.starterCode, entry);
+                  const isStdin = sample.stdin !== undefined;
+                  const argsList = Array.isArray(sample.args) ? (sample.args as any[]) : null;
+
                   return (
-                    <div key={index} className="space-y-2 rounded-lg bg-slate-950/60 p-3">
-                      <h5 className="font-semibold text-slate-200">样例 {index + 1}{entry && <code className="ml-2 text-indigo-300">{entry}</code>}</h5>
-                      {fields.map(([label, value]) => value !== undefined && (
-                        <div key={label}>
-                          <p className="mb-1 text-slate-400">{label}</p>
-                          <pre className="whitespace-pre-wrap break-words text-indigo-200">{typeof value === 'string' && sample.stdin === value ? value : JSON.stringify(value, null, 2)}</pre>
+                    <div key={index} className="space-y-2.5 rounded-lg bg-slate-950/70 p-3 border border-slate-850">
+                      <div className="flex items-center justify-between border-b border-slate-800/60 pb-2">
+                        <h5 className="font-semibold text-slate-200 text-xs">
+                          样例 {index + 1}
+                        </h5>
+                        {entry && (
+                          <span className="text-[11px] font-mono text-cyan-400 bg-cyan-950/40 px-2 py-0.5 rounded border border-cyan-800/40">
+                            {entry}
+                          </span>
+                        )}
+                      </div>
+
+                      {isStdin ? (
+                        <div>
+                          <p className="mb-1 text-slate-400 text-[11px]">标准输入 (stdin)</p>
+                          <pre className="whitespace-pre-wrap break-words text-indigo-200 font-mono text-xs bg-slate-900/60 p-2 rounded">{String(sample.stdin)}</pre>
                         </div>
-                      ))}
+                      ) : argsList ? (
+                        <div>
+                          <p className="mb-1 text-slate-400 text-[11px]">输入参数</p>
+                          <div className="bg-slate-900/60 p-2.5 rounded font-mono text-xs space-y-1.5">
+                            {argsList.map((argVal: any, aIdx: number) => {
+                              const pName = paramNames[aIdx] || (argsList.length === 1 ? 'input' : `arg${aIdx + 1}`);
+                              return (
+                                <div key={aIdx} className="text-slate-300 flex flex-wrap gap-1 items-baseline">
+                                  <span className="text-indigo-400 font-bold">{pName}</span>
+                                  <span className="text-slate-500">=</span>
+                                  <span className="text-cyan-200 whitespace-pre-wrap break-all">{formatParamValue(argVal)}</span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ) : (
+                        sample.input !== undefined && (
+                          <div>
+                            <p className="mb-1 text-slate-400 text-[11px]">输入</p>
+                            <pre className="whitespace-pre-wrap break-words text-indigo-200 font-mono text-xs bg-slate-900/60 p-2 rounded">
+                              {formatParamValue(sample.input)}
+                            </pre>
+                          </div>
+                        )
+                      )}
+
+                      {sample.kwargs && Object.keys(sample.kwargs).length > 0 && (
+                        <div>
+                          <p className="mb-1 text-slate-400 text-[11px]">关键字参数</p>
+                          <pre className="whitespace-pre-wrap break-words text-indigo-200 font-mono text-xs bg-slate-900/60 p-2 rounded">
+                            {JSON.stringify(sample.kwargs, null, 2)}
+                          </pre>
+                        </div>
+                      )}
+
+                      <div>
+                        <p className="mb-1 text-slate-400 text-[11px]">{sample.expectedException ? '预期异常' : '预期结果'}</p>
+                        <pre className="whitespace-pre-wrap break-words text-emerald-300 font-mono text-xs bg-slate-900/60 p-2 rounded">
+                          {sample.expectedException || formatParamValue(expected)}
+                        </pre>
+                      </div>
                     </div>
                   );
                 })}

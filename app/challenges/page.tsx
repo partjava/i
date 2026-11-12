@@ -116,13 +116,16 @@ export default function UniversePage() {
     syncNavigation('tree', stage, firstNode, 0);
   }, [syncNavigation]);
 
-  const handleSelectNode = useCallback((node: string) => {
-    syncNavigation(currentLayer === 'universe' ? 'tree' : currentLayer, selectedStage, node, 0);
+  const handleSelectNode = useCallback((node: string, level: number = 0) => {
+    syncNavigation(currentLayer === 'universe' ? 'tree' : currentLayer, selectedStage, node, level);
   }, [syncNavigation, currentLayer, selectedStage]);
 
   const handleSelectLevel = useCallback((level: number) => {
-    syncNavigation(currentLayer === 'universe' ? 'tree' : currentLayer, selectedStage, selectedNodeName, level);
-  }, [syncNavigation, currentLayer, selectedStage, selectedNodeName]);
+    setSelectedNodeNameState(currNode => {
+      syncNavigation(currentLayer === 'universe' ? 'tree' : currentLayer, selectedStage, currNode, level);
+      return currNode;
+    });
+  }, [syncNavigation, currentLayer, selectedStage]);
 
   const handleStartQuiz = useCallback(() => {
     syncNavigation('quiz', selectedStage, selectedNodeName, selectedLevelIndex);

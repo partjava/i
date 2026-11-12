@@ -14,14 +14,10 @@ import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
 
 // 小节折叠组件（独立管理展开/收起状态）
-function SubtopicSection({ child, isSelected, onSelectNode, onSelectLevel, challenges, totalLevels, passedLevels, allPassed }: {
-  child: string; isSelected: boolean; onSelectNode: (n: string) => void; onSelectLevel: (i: number) => void;
+function SubtopicSection({ child, isSelected, onSelectNode, challenges, totalLevels, passedLevels, allPassed }: {
+  child: string; isSelected: boolean; onSelectNode: (n: string, levelIndex?: number) => void;
   challenges: any[]; totalLevels: number; passedLevels: number; allPassed: boolean;
 }) {
-  const handleLevelClick = (idx: number) => {
-    onSelectNode(child);
-    onSelectLevel(idx);
-  };
   const [expanded, setExpanded] = useState(isSelected);
   useEffect(() => {
     if (isSelected) setExpanded(true);
@@ -30,7 +26,7 @@ function SubtopicSection({ child, isSelected, onSelectNode, onSelectLevel, chall
   return (
     <div className="mb-1">
       <button
-        onClick={() => { setExpanded(!expanded); onSelectNode(child); onSelectLevel(0); }}
+        onClick={() => { setExpanded(!expanded); onSelectNode(child, 0); }}
         className={`w-full text-left px-3 py-2 rounded-lg text-xs flex justify-between items-center transition ${
           isSelected ? 'bg-indigo-600/25 text-indigo-300 border border-indigo-500/20' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/40'
         }`}
@@ -53,7 +49,7 @@ function SubtopicSection({ child, isSelected, onSelectNode, onSelectLevel, chall
           {challenges.map((lv: any, lIdx: number) => {
             const lvPassed = Boolean(lv.completed || lv.record?.codePassed || lv.record?.isPassed || lv.userRecord?.codePassed);
             return (
-              <button key={lIdx} onClick={() => handleLevelClick(lv.levelIndex - 1)}
+              <button key={lIdx} onClick={() => onSelectNode(child, lIdx)}
                 className={`w-full text-left px-2.5 py-1.5 rounded-lg text-[11px] flex justify-between items-center transition ${isSelected ? 'bg-indigo-600/15 text-indigo-300' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/30'}`}
               >
                 <div className="flex items-center gap-1.5 min-w-0 w-[85%]">
@@ -75,7 +71,7 @@ interface KnowledgeTreeProps {
   selectedStage: Stage;
   selectedNodeName: string;
   selectedLevelIndex?: number;
-  onSelectNode: (nodeName: string) => void;
+  onSelectNode: (nodeName: string, levelIndex?: number) => void;
   onSelectLevel: (levelIndex: number) => void;
   onBackToUniverse: () => void;
   onStartQuiz: () => void;
@@ -142,8 +138,7 @@ export const KnowledgeTree: React.FC<KnowledgeTreeProps> = ({
 
   // 当用户在侧边栏点击关卡时切换预览
   const handleLevelClick = (child: string, levelIdx: number) => {
-    onSelectNode(child);
-    onSelectLevel(levelIdx);
+    onSelectNode(child, levelIdx);
     setPreviewIdx(levelIdx);
   };
 
@@ -198,7 +193,6 @@ export const KnowledgeTree: React.FC<KnowledgeTreeProps> = ({
                       child={child}
                       isSelected={isSelected}
                       onSelectNode={onSelectNode}
-                      onSelectLevel={onSelectLevel}
                       challenges={childChallenges}
                       totalLevels={totalLevels}
                       passedLevels={passedLevels}
