@@ -280,19 +280,27 @@ public class ChallengeServiceImpl implements ChallengeService {
                 }
             }
 
-            // 2. 只有 ACCEPTED 时才写通关记录与最优/最新代码到主记录表
-            if ("ACCEPTED".equals(result.getStatus())) {
-                UserChallengeRecord record = recordMapper.selectOne(new LambdaQueryWrapper<UserChallengeRecord>()
-                        .eq(UserChallengeRecord::getUserId, userId).eq(UserChallengeRecord::getChallengeId, challengeId));
-                boolean isNew = record == null;
-                if (isNew) record = UserChallengeRecord.builder().userId(userId).challengeId(challengeId).completed(false).build();
-                boolean firstCompletion = !Boolean.TRUE.equals(record.getCompleted());
-                record.setCompleted(true);
-                record.setLastCode(code);
-                record.setBestCode(code);
-                if (firstCompletion) record.setCompletedAt(LocalDateTime.now());
-                if (isNew) recordMapper.insert(record); else recordMapper.updateById(record);
-                if (firstCompletion) eventPublisher.publishEvent(new UserActionEvent(this, userId, "COMPLETE_CHALLENGE", 1));
+            // 2. 更新最新代码，若 ACCEPTED 则更新最优代码与通关状态
+            if (userId != null) {
+                try {
+                    UserChallengeRecord record = recordMapper.selectOne(new LambdaQueryWrapper<UserChallengeRecord>()
+                            .eq(UserChallengeRecord::getUserId, userId).eq(UserChallengeRecord::getChallengeId, challengeId));
+                    boolean isNew = record == null;
+                    if (isNew) record = UserChallengeRecord.builder().userId(userId).challengeId(challengeId).completed(false).build();
+                    record.setLastCode(code);
+                    if ("ACCEPTED".equals(result.getStatus())) {
+                        boolean firstCompletion = !Boolean.TRUE.equals(record.getCompleted());
+                        record.setCompleted(true);
+                        record.setBestCode(code);
+                        if (firstCompletion) record.setCompletedAt(LocalDateTime.now());
+                        if (isNew) recordMapper.insert(record); else recordMapper.updateById(record);
+                        if (firstCompletion) eventPublisher.publishEvent(new UserActionEvent(this, userId, "COMPLETE_CHALLENGE", 1));
+                    } else {
+                        if (isNew) recordMapper.insert(record); else recordMapper.updateById(record);
+                    }
+                } catch (Exception e) {
+                    log.warn("更新挑战用户代码记录失败: {}", e.getMessage());
+                }
             }
         }
         return result;
@@ -310,8 +318,27 @@ public class ChallengeServiceImpl implements ChallengeService {
 
     @Override
     public JudgementResult runSampleCode(Integer userId, Integer challengeId, String code) {
-        // Intentionally no progress query or write in sample mode, even if all samples pass.
-        return evaluateChallenge(challengeId, code, true);
+        JudgementResult result = evaluateChallenge(challengeId, code, true);
+        if (result != null && userId != null) {
+            try {
+                String subStatus = "ACCEPTED".equals(result.getStatus()) ? "SAMPLE_ACCEPTED" : ("[样例] " + result.getStatus());
+                ChallengeSubmission submission = ChallengeSubmission.builder()
+                        .challengeId(challengeId)
+                        .userId(userId)
+                        .code(code)
+                        .language("python")
+                        .status(subStatus)
+                        .score(0)
+                        .executionTime(result.getRuntimeMs())
+                        .errorMessage("ACCEPTED".equals(result.getStatus()) ? null : result.getMessage())
+                        .submittedAt(LocalDateTime.now())
+                        .build();
+                submissionMapper.insert(submission);
+            } catch (Exception e) {
+                log.warn("保存挑战样例运行历史记录失败: {}", e.getMessage());
+            }
+        }
+        return result;
     }
 
     private JudgementResult evaluateChallenge(Integer challengeId, String code, boolean samplesOnly) {

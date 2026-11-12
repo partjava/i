@@ -7,6 +7,7 @@ import { message } from 'antd';
 import { ChallengeExecutionMode, challengeResultLabel, shouldRecordChallengePass } from '@shared/components/challenge-execution-state';
 import InlineCodePatchModal, { CodePatchData } from '@shared/components/InlineCodePatchModal';
 import { emitPetCompanionEvent } from '@shared/lib/pet-companion-bus';
+import { getAuthHeaders } from '@shared/lib/auth-client';
 
 interface SubmissionItem {
   id: number;
@@ -60,7 +61,9 @@ export function CodeEditorPanel({
     if (!challengeId) return;
     setHistoryLoading(true);
     try {
-      const res = await fetch(`/api/challenges/${challengeId}/submissions`);
+      const res = await fetch(`/api/challenges/${challengeId}/submissions`, {
+        headers: { ...getAuthHeaders() },
+      });
       const json = await res.json();
       if (json?.success && Array.isArray(json.data)) {
         setSubmissions(json.data);

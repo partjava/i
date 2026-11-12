@@ -13,12 +13,12 @@ import ChallengeTab from './components/ChallengeTab';
 import NoteTab from './components/NoteTab';
 import HealthModal from './components/HealthModal';
 import InkWashDecoration from '@shared/components/InkWashDecoration';
-import { getStoredUser } from '@shared/lib/auth-client';
+import { getStoredUser, getAuthHeaders } from '@shared/lib/auth-client';
 
 /** 通用 fetch 封装 */
 async function api(url: string, options?: RequestInit) {
   const res = await fetch(url, {
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
     ...options,
   });
   if (!res.ok) throw new Error(`API 错误: ${res.status}`);

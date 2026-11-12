@@ -7,6 +7,7 @@ import { Popconfirm } from 'antd';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
+import { getAuthHeaders } from '@shared/lib/auth-client';
 
 interface AdminSubmission {
   id: number;
@@ -92,7 +93,9 @@ export default function ChallengeTab({ challenges, drafts, users, onApproveDraft
       if (status) params.append('status', status);
       if (challengeId) params.append('challengeId', String(challengeId));
       if (userId) params.append('userId', String(userId));
-      const res = await fetch(`/api/admin/submissions?${params.toString()}`);
+      const res = await fetch(`/api/admin/submissions?${params.toString()}`, {
+        headers: { ...getAuthHeaders() },
+      });
       const json = await res.json();
       if (json.success && json.data) {
         setSubmissions(json.data.records || []);

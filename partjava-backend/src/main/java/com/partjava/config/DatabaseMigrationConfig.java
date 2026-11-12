@@ -117,6 +117,14 @@ public class DatabaseMigrationConfig {
                 log.debug("users.vip 列类型可能已为 INT: {}", e.getMessage());
             }
 
+            // 8. 移除 challenge_submissions 对旧 challenges 表的错误外键约束
+            try {
+                jdbcTemplate.execute("ALTER TABLE challenge_submissions DROP FOREIGN KEY challenge_submissions_ibfk_1");
+                log.info("challenge_submissions_ibfk_1 外键约束移除成功");
+            } catch (Exception e) {
+                log.debug("challenge_submissions_ibfk_1 可能已移除: {}", e.getMessage());
+            }
+
             log.info("数据库 DDL 自动迁移成功！");
         } catch (Exception e) {
             log.error("数据库 DDL 迁移失败", e);

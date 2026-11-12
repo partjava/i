@@ -110,7 +110,8 @@ public class ChallengeController {
             @RequestAttribute(value = "userId", required = false) Integer userId,
             @PathVariable("id") Integer challengeId,
             @RequestBody ChallengeSubmitReq req) {
-        JudgementResult result = challengeService.submitCode(userId, challengeId, req.getCode());
+        Integer activeUserId = getUserIdOrFallback(userId);
+        JudgementResult result = challengeService.submitCode(activeUserId, challengeId, req.getCode());
         return ApiResponse.success(result);
     }
 
@@ -120,7 +121,8 @@ public class ChallengeController {
             @RequestAttribute(value = "userId", required = false) Integer userId,
             @PathVariable("id") Integer challengeId,
             @RequestBody ChallengeSubmitReq req) {
-        return ApiResponse.success(challengeService.runSampleCode(userId, challengeId, req.getCode()));
+        Integer activeUserId = getUserIdOrFallback(userId);
+        return ApiResponse.success(challengeService.runSampleCode(activeUserId, challengeId, req.getCode()));
     }
 
     /**
@@ -167,8 +169,8 @@ public class ChallengeController {
     public ApiResponse<List<com.partjava.entity.ChallengeSubmission>> getSubmissions(
             @RequestAttribute(value = "userId", required = false) Integer userId,
             @PathVariable("id") Integer challengeId) {
-        if (userId == null) return ApiResponse.success(List.of());
-        List<com.partjava.entity.ChallengeSubmission> list = challengeService.getUserSubmissions(userId, challengeId);
+        Integer activeUserId = getUserIdOrFallback(userId);
+        List<com.partjava.entity.ChallengeSubmission> list = challengeService.getUserSubmissions(activeUserId, challengeId);
         return ApiResponse.success(list);
     }
 

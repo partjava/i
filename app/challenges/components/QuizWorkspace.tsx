@@ -14,6 +14,7 @@ import { executionLabel, normalizeExecutionStatus, readExecutionResponse, Execut
 
 import { ChallengeExecutionRequests, ChallengeExecutionMode, challengeResultLabel, shouldRecordChallengePass } from '@shared/components/challenge-execution-state';
 import { emitPetCompanionEvent } from '@shared/lib/pet-companion-bus';
+import { getAuthHeaders } from '@shared/lib/auth-client';
 
 interface QuizWorkspaceProps {
   selectedNodeName: string;
@@ -183,7 +184,7 @@ export const QuizWorkspace: React.FC<QuizWorkspaceProps> = ({
     }, execution.waitTimeoutMs);
     try {
       const res = await fetch(execution.endpoint, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        method: 'POST', headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
         body: JSON.stringify({ code }), signal: request.signal,
       });
       const data = await readExecutionResponse(res);
@@ -198,7 +199,7 @@ export const QuizWorkspace: React.FC<QuizWorkspaceProps> = ({
             ? { ...level, completed: true, userRecord: { ...level.userRecord, codePassed: true, isPassed: true } } : level));
           onChallengePassed?.();
           // 异步获取标答代码
-          fetch(`/api/challenges/${challengeId}/solution`)
+          fetch(`/api/challenges/${challengeId}/solution`, { headers: { ...getAuthHeaders() } })
             .then(res => res.json())
             .then(data => {
               if (data.success && data.data?.solutionCode) {
