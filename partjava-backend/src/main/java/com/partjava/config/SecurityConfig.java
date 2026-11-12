@@ -79,8 +79,19 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        // 允许的来源，例如 Next.js 开发端口和正式域名
-        configuration.setAllowedOrigins(List.of("http://localhost:3000", "https://www.partjava.com"));
+        // 允许的来源：开发端口、partjava 主域名以及 pyigpt 独立域名（支持 http 与 https）
+        configuration.setAllowedOriginPatterns(List.of(
+            "http://localhost:*",
+            "http://127.0.0.1:*",
+            "https://*.partjava.com",
+            "http://*.partjava.com",
+            "https://partjava.com",
+            "http://partjava.com",
+            "https://*.pyigpt.com",
+            "http://*.pyigpt.com",
+            "https://pyigpt.com",
+            "http://pyigpt.com"
+        ));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-Requested-With"));
         configuration.setExposedHeaders(List.of("Authorization"));
