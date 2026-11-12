@@ -2,7 +2,7 @@
 
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@shared/hooks/useAuth';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import {
   HomeOutlined,
@@ -34,6 +34,13 @@ export default function BottomNavigation() {
   const { data: session } = useAuth();
   const [moreOpen, setMoreOpen] = useState(false);
   const [showRobot, setShowRobot] = useState(false);
+  const [isPyiGpt, setIsPyiGpt] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setIsPyiGpt(window.location.hostname.includes('pyigpt.com'));
+    }
+  }, []);
 
   // 主要导航项（显示在底部栏）
   const primaryNavItems: NavItem[] = [
@@ -41,7 +48,7 @@ export default function BottomNavigation() {
       key: 'home',
       icon: <HomeOutlined />,
       label: '首页',
-      href: '/',
+      href: isPyiGpt ? '/home' : '/',
       primary: true,
     },
     {
@@ -105,8 +112,8 @@ export default function BottomNavigation() {
   };
 
   const isActive = (href: string) => {
-    if (href === '/') {
-      return pathname === '/';
+    if (href === '/' || href === '/home') {
+      return isPyiGpt ? pathname === '/home' : (pathname === '/' || pathname === '/home');
     }
     return pathname.startsWith(href);
   };

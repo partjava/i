@@ -46,6 +46,15 @@ export default function Navbar() {
   const [showVip, setShowVip] = useState(false);
   const [companionBubble, setCompanionBubble] = useState<PetCompanionEventDetail | null>(null);
   const [isHejuSpeaking, setIsHejuSpeaking] = useState(false);
+  const [isPyiGpt, setIsPyiGpt] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setIsPyiGpt(window.location.hostname.includes('pyigpt.com'));
+    }
+  }, []);
+
+  const homeHref = isPyiGpt ? '/home' : '/';
 
   // 订阅全站「禾桔」主动伴学事件，直接赋能顶部导航栏 AI 助手按钮（无需右下角冗余悬浮球）
   useEffect(() => {
@@ -68,7 +77,12 @@ export default function Navbar() {
   }, []);
 
   const isActive = (href: string) => {
-    if (href === '/') return pathname === '/';
+    if (href === '/' || href === '/home') {
+      return isPyiGpt ? pathname === '/home' : (pathname === '/' || pathname === '/home');
+    }
+    if (href === '/challenges') {
+      return isPyiGpt ? (pathname === '/challenges' || pathname === '/') : pathname?.startsWith('/challenges');
+    }
     return pathname?.startsWith(href);
   };
 
@@ -188,7 +202,7 @@ export default function Navbar() {
           </button>
 
           {/* Logo */}
-          <Link href="/" className="relative flex items-center space-x-2 pr-1">
+          <Link href={homeHref} className="relative flex items-center space-x-2 pr-1">
             <div
               className="w-9 h-9 rounded-full flex items-center justify-center overflow-hidden transition-all duration-200 hover:scale-105 relative"
               style={{
@@ -218,7 +232,7 @@ export default function Navbar() {
 
           {/* 桌面端导航链接 */}
           <div className="hidden md:flex items-center space-x-1 lg:space-x-1.5">
-            <Link href="/" data-nav-item aria-current={isActive('/') ? 'page' : undefined} className={navItemClass('/')}>
+            <Link href={homeHref} data-nav-item aria-current={isActive(homeHref) ? 'page' : undefined} className={navItemClass(homeHref)}>
               <HomeOutlined className="text-base mb-0.5" />
               <span className="text-[11px] leading-tight">首页</span>
             </Link>
