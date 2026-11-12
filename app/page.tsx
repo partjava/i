@@ -27,6 +27,7 @@ import ToolGroupPreview from './_shared/components/ToolGroupPreview';
 import BackToTop from './_shared/components/BackToTop';
 import QuickSearch from './_shared/components/QuickSearch';
 import InkWashDecoration from './_shared/components/InkWashDecoration';
+import SiteFooter from './_shared/components/SiteFooter';
 import { useSidebar } from './_shared/components/Sidebar';
 import mobileStyles from './mobile-home.module.css';
 
@@ -1020,6 +1021,9 @@ export default function Home() {
 
       {/* 底部水墨收尾（缩减高度） */}
       <InkWashDecoration variant="landscape" height={120} className="bg-surface-page" />
+
+      {/* 网站合规备案与页脚 */}
+      <SiteFooter />
 
       {/* 工具分组预览弹窗 */}
       {previewGroup && (() => {

@@ -9,6 +9,7 @@ import MarkdownEditor from '@shared/components/MarkdownEditor';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import InkWashDecoration from '@shared/components/InkWashDecoration';
+import SiteFooter from '@shared/components/SiteFooter';
 
 export interface Note {
   id?: string | number; // 后端返回的可能是数字id
@@ -992,6 +993,9 @@ export default function NotesPage() {
       {/* 水墨画底部装饰 */}
       <InkWashDecoration variant="bamboo" height={80} className="bg-surface-page mt-8" />
       <InkWashDecoration variant="landscape" height={180} className="bg-surface-page" />
+
+      {/* 网站合规备案与页脚 */}
+      <SiteFooter />
     </div>
   );
 }

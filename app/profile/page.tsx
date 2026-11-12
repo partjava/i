@@ -41,6 +41,7 @@ import {
 import LearningHeatmap from '@shared/components/LearningHeatmap';
 import DataVisualization from '@shared/components/DataVisualization';
 import InkWashDecoration from '@shared/components/InkWashDecoration';
+import SiteFooter from '@shared/components/SiteFooter';
 import AchievementCard from '@shared/components/AchievementCard';
 import EyePet from '@shared/components/EyePet';
 import { ShieldCheck } from 'lucide-react';
@@ -1425,6 +1426,9 @@ export default function ProfilePage() {
       {/* 水墨画底部装饰 */}
       <InkWashDecoration variant="bamboo" height={48} className="bg-surface-page mt-8" />
       <InkWashDecoration variant="landscape" height={80} className="bg-surface-page" />
+
+      {/* 网站合规备案与页脚 */}
+      <SiteFooter />
     </div>
   );
 } 
