@@ -10,6 +10,8 @@ import com.partjava.entity.ChallengeDetail;
 import com.partjava.entity.ChallengeQuiz;
 import com.partjava.entity.UserChallengeRecord;
 import com.partjava.entity.ChallengeDraft;
+import com.partjava.entity.ChallengeSubmission;
+import com.partjava.repository.ChallengeSubmissionMapper;
 import com.partjava.event.UserActionEvent;
 import com.partjava.repository.ChallengeMapper;
 import com.partjava.repository.ChallengeDetailMapper;
@@ -52,6 +54,7 @@ public class ChallengeServiceImpl implements ChallengeService {
     private final ChallengeDraftMapper draftMapper;
     private final SandboxService sandboxService;
     private final ApplicationEventPublisher eventPublisher;
+    private final ChallengeSubmissionMapper submissionMapper;
 
     // AI 评分
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -65,7 +68,6 @@ public class ChallengeServiceImpl implements ChallengeService {
     @Value("${ai.model:deepseek-chat}")
     private String aiModel = "deepseek-chat";
 
-    @Autowired
     public ChallengeServiceImpl(ChallengeMapper challengeMapper,
                                ChallengeDetailMapper challengeDetailMapper,
                                ChallengeQuizMapper challengeQuizMapper,
@@ -73,6 +75,18 @@ public class ChallengeServiceImpl implements ChallengeService {
                                ChallengeDraftMapper draftMapper,
                                SandboxService sandboxService,
                                ApplicationEventPublisher eventPublisher) {
+        this(challengeMapper, challengeDetailMapper, challengeQuizMapper, recordMapper, draftMapper, sandboxService, eventPublisher, null);
+    }
+
+    @Autowired
+    public ChallengeServiceImpl(ChallengeMapper challengeMapper,
+                               ChallengeDetailMapper challengeDetailMapper,
+                               ChallengeQuizMapper challengeQuizMapper,
+                               UserChallengeRecordMapper recordMapper,
+                               ChallengeDraftMapper draftMapper,
+                               SandboxService sandboxService,
+                               ApplicationEventPublisher eventPublisher,
+                               ChallengeSubmissionMapper submissionMapper) {
         this.challengeMapper = challengeMapper;
         this.challengeDetailMapper = challengeDetailMapper;
         this.challengeQuizMapper = challengeQuizMapper;
@@ -80,6 +94,7 @@ public class ChallengeServiceImpl implements ChallengeService {
         this.draftMapper = draftMapper;
         this.sandboxService = sandboxService;
         this.eventPublisher = eventPublisher;
+        this.submissionMapper = submissionMapper;
     }
 
     @Override
@@ -202,6 +217,8 @@ public class ChallengeServiceImpl implements ChallengeService {
             recMap.put("thinkingScore", record.getThinkingScore());
             recMap.put("thinkingFeedback", record.getThinkingFeedback());
             recMap.put("quizAnswers", record.getQuizAnswers());
+            recMap.put("lastCode", record.getLastCode());
+            recMap.put("bestCode", record.getBestCode());
             resp.setRecord(recMap);
             resp.setUserRecord(recMap);
         } else {
@@ -242,17 +259,53 @@ public class ChallengeServiceImpl implements ChallengeService {
     @Transactional
     public JudgementResult submitCode(Integer userId, Integer challengeId, String code) {
         JudgementResult result = evaluateChallenge(challengeId, code, false);
-        if (userId == null || !"ACCEPTED".equals(result.getStatus())) return result;
-        UserChallengeRecord record = recordMapper.selectOne(new LambdaQueryWrapper<UserChallengeRecord>()
-                .eq(UserChallengeRecord::getUserId, userId).eq(UserChallengeRecord::getChallengeId, challengeId));
-        boolean isNew = record == null;
-        if (isNew) record = UserChallengeRecord.builder().userId(userId).challengeId(challengeId).completed(false).build();
-        boolean firstCompletion = !Boolean.TRUE.equals(record.getCompleted());
-        record.setCompleted(true); record.setLastCode(code); record.setBestCode(code);
-        if (firstCompletion) record.setCompletedAt(LocalDateTime.now());
-        if (isNew) recordMapper.insert(record); else recordMapper.updateById(record);
-        if (firstCompletion) eventPublisher.publishEvent(new UserActionEvent(this, userId, "COMPLETE_CHALLENGE", 1));
+        if (userId != null) {
+            // 1. 记录提交历史记录
+            if (submissionMapper != null) {
+                try {
+                    ChallengeSubmission submission = ChallengeSubmission.builder()
+                            .challengeId(challengeId)
+                            .userId(userId)
+                            .code(code)
+                            .language("python")
+                            .status(result.getStatus())
+                            .score("ACCEPTED".equals(result.getStatus()) ? 100 : 0)
+                            .executionTime(result.getRuntimeMs())
+                            .errorMessage("ACCEPTED".equals(result.getStatus()) ? null : result.getMessage())
+                            .submittedAt(LocalDateTime.now())
+                            .build();
+                    submissionMapper.insert(submission);
+                } catch (Exception e) {
+                    log.warn("保存挑战提交历史记录失败: {}", e.getMessage());
+                }
+            }
+
+            // 2. 只有 ACCEPTED 时才写通关记录与最优/最新代码到主记录表
+            if ("ACCEPTED".equals(result.getStatus())) {
+                UserChallengeRecord record = recordMapper.selectOne(new LambdaQueryWrapper<UserChallengeRecord>()
+                        .eq(UserChallengeRecord::getUserId, userId).eq(UserChallengeRecord::getChallengeId, challengeId));
+                boolean isNew = record == null;
+                if (isNew) record = UserChallengeRecord.builder().userId(userId).challengeId(challengeId).completed(false).build();
+                boolean firstCompletion = !Boolean.TRUE.equals(record.getCompleted());
+                record.setCompleted(true);
+                record.setLastCode(code);
+                record.setBestCode(code);
+                if (firstCompletion) record.setCompletedAt(LocalDateTime.now());
+                if (isNew) recordMapper.insert(record); else recordMapper.updateById(record);
+                if (firstCompletion) eventPublisher.publishEvent(new UserActionEvent(this, userId, "COMPLETE_CHALLENGE", 1));
+            }
+        }
         return result;
+    }
+
+    @Override
+    public List<ChallengeSubmission> getUserSubmissions(Integer userId, Integer challengeId) {
+        if (userId == null || challengeId == null || submissionMapper == null) return List.of();
+        return submissionMapper.selectList(new LambdaQueryWrapper<ChallengeSubmission>()
+                .eq(ChallengeSubmission::getUserId, userId)
+                .eq(ChallengeSubmission::getChallengeId, challengeId)
+                .orderByDesc(ChallengeSubmission::getSubmittedAt)
+                .last("LIMIT 50"));
     }
 
     @Override

@@ -29,11 +29,11 @@ public class UserChallengeRecord {
     @TableField("code_passed")
     private Boolean completed;               // code_passed = 1 表示通关
 
-    @TableField(exist = false)
-    private String bestCode;                 // 老表结构暂无最优代码备份，设为不持久化
+    @TableField("best_code")
+    private String bestCode;                 // 最优代码备份
 
-    @TableField(exist = false)
-    private String lastCode;                 // 设为不持久化
+    @TableField("last_code")
+    private String lastCode;                 // 最后一次提交代码
 
     @TableField(value = "quiz_answers", typeHandler = JacksonTypeHandler.class)
     private Map<String, Integer> quizAnswers; // 用户的选择题作答草稿

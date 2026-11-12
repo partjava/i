@@ -223,7 +223,7 @@ export default function UniversePage() {
         </header>
 
         {/* 主视口 */}
-        <div className="flex-1 overflow-hidden relative">
+        <main className="flex-1 overflow-hidden relative">
           {currentLayer === 'universe' && (
             <SpaceUniverse onSelectStage={handleSelectStage} />
           )}
@@ -249,7 +249,7 @@ export default function UniversePage() {
               onChallengePassed={loadChallenges}
             />
           )}
-        </div>
+        </main>
       </div>
 
       {/* 🌐 导航 Sidebar 改为右侧放置，修改为 border-l 贴合右边缘 */}

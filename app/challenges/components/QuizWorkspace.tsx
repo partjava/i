@@ -107,13 +107,26 @@ export const QuizWorkspace: React.FC<QuizWorkspaceProps> = ({
     setExecutionStatus(null);
     setExecutionMode(null);
     if (!detail) return;
-    setCodeValue(detail.starterCode);
+    const userRec = detail.userRecord || detail.record;
+    let initialCode = detail.starterCode;
+    if (typeof window !== 'undefined') {
+      try {
+        const localCode = localStorage.getItem(`challenge_code_${detail.id}`);
+        if (localCode && localCode.trim()) {
+          initialCode = localCode;
+        } else if (userRec?.lastCode || userRec?.bestCode) {
+          initialCode = userRec.lastCode || userRec.bestCode;
+        }
+      } catch {}
+    } else if (userRec?.lastCode || userRec?.bestCode) {
+      initialCode = userRec.lastCode || userRec.bestCode;
+    }
+    setCodeValue(initialCode);
     setTestResults("");
     setSelectedQuizAnswers({});
     setShowQuizExplains({});
     setThinkingAnswer("");
     setAiChatMessages([{ sender: 'ai', text: '你好！我是你的星际 AI 助教。请编写代码或尝试回答思考题，我会随时帮你提供优化思路或打分。' }]);
-    const userRec = detail.userRecord || detail.record;
     if (userRec || detail.completed) {
       const r = userRec || {};
       if (r.codePassed || r.isPassed || detail.completed) setTestResults("历史记录：该关卡曾通过评测。当前编辑器代码尚未运行。");
@@ -359,10 +372,18 @@ export const QuizWorkspace: React.FC<QuizWorkspaceProps> = ({
           onSubmitThinking={handleSubmitThinking} aiLoading={aiLoading}
         />
         <CodeEditorPanel
-          codeValue={codeValue} onCodeChange={setCodeValue}
+          codeValue={codeValue}
+          onCodeChange={(val) => {
+            setCodeValue(val);
+            if (detail?.id && typeof window !== 'undefined') {
+              try {
+                localStorage.setItem(`challenge_code_${detail.id}`, val);
+              } catch {}
+            }
+          }}
           testResults={testResults} isRunning={isRunning} executionStatus={executionStatus} executionMode={executionMode}
           resultIsStale={isSubmittedSourceStale(submittedCode === null ? null : { code: submittedCode }, { code: codeValue })} onCancelRun={handleCancelRun}
-          canSubmit={!loading && Boolean(detail.id)} solutionCode={detail?.solutionCode}
+          canSubmit={!loading && Boolean(detail.id)} solutionCode={detail?.solutionCode} starterCode={detail?.starterCode}
           challengeId={detail?.id} onRunCode={handleRunCode}
         />
         <AiTutorPanel

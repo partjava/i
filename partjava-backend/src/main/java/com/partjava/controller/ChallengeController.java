@@ -160,6 +160,18 @@ public class ChallengeController {
         return ApiResponse.success(Map.of("solutionCode", solutionCode));
     }
 
+    /**
+     * G. 获取用户在当前关卡的提交历史记录 (GET /challenges/{id}/submissions)
+     */
+    @GetMapping("/challenges/{id}/submissions")
+    public ApiResponse<List<com.partjava.entity.ChallengeSubmission>> getSubmissions(
+            @RequestAttribute(value = "userId", required = false) Integer userId,
+            @PathVariable("id") Integer challengeId) {
+        if (userId == null) return ApiResponse.success(List.of());
+        List<com.partjava.entity.ChallengeSubmission> list = challengeService.getUserSubmissions(userId, challengeId);
+        return ApiResponse.success(list);
+    }
+
     // ─── 以下为兼容老前端 star-challenges 系列 API 的代理路由接口（直接返回平铺 Map，不包裹 ApiResponse） ───
 
     /**

@@ -94,4 +94,9 @@ public interface ChallengeService {
      * 管理员驳回出题草稿
      */
     void rejectDraft(Integer adminId, Integer draftId, String comment);
+
+    /**
+     * 获取用户在当前关卡的历史提交记录
+     */
+    java.util.List<com.partjava.entity.ChallengeSubmission> getUserSubmissions(Integer userId, Integer challengeId);
 }

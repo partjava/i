@@ -383,6 +383,17 @@ function FloatingAiChat() {
           </div>
         </div>
       )}
+
+      {/* 笔记预览编辑模态 */}
+      {ai.showPreview && ai.previewNote && (
+        <NotePreviewModal
+          note={ai.previewNote}
+          onChange={ai.setPreviewNote}
+          onClose={ai.closePreview}
+          onSave={() => ai.savePreviewNote(ai.previewNote)}
+          loading={ai.loading}
+        />
+      )}
     </div>
   );
 
