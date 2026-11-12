@@ -22,6 +22,12 @@ public class ChallengeDetailResp {
     private List<QuizItem> conceptualQuizzes;
     private ThinkingQuestionConfig thinkingQuestion;
     private Boolean completed;
+    private Boolean codePassed;
+    private Map<String, Object> record;
+    private Map<String, Object> userRecord;
+    private Integer thinkingScore;
+    private String thinkingFeedback;
+    private String solutionCode;
     private Map<String, Integer> quizAnswers;
     
     // ─── 补充前端所需的关卡和阶段位置核心属性 ───
@@ -37,6 +43,8 @@ public class ChallengeDetailResp {
         private String question;
         private List<String> options;
         private String explanation;
+        private Integer answer;
+        private Integer correctIndex;
     }
 
     @Data

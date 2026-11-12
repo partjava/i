@@ -30,35 +30,112 @@ export default function UniversePage() {
   // 'universe' -> 宇宙探索星球图层
   // 'tree' -> 知识节点树图层
   // 'quiz' -> 编程练习和AI答疑层
-  // 从 URL 恢复上次的页面状态，避免刷新丢失
-  const getInitialLayer = () => {
-    if (typeof window !== 'undefined') {
-      const p = new URLSearchParams(window.location.search);
-      const l = p.get('layer');
-      if (l === 'tree' || l === 'quiz') return l;
+  // 从 URL 及本地缓存恢复上次的页面状态，彻底解决刷新跳回默认 SVM 的问题
+  const getInitialState = () => {
+    if (typeof window === 'undefined') {
+      return {
+        layer: 'universe' as const,
+        stage: STAGES[0],
+        nodeName: STAGES[0]?.topics[0]?.children[0] || '计算机组成原理',
+        levelIndex: 0
+      };
     }
-    return 'universe';
-  };
-  const [currentLayer, setCurrentLayerState] = useState<'universe' | 'tree' | 'quiz'>(getInitialLayer);
+    const p = new URLSearchParams(window.location.search);
+    const l = p.get('layer');
+    const layer: 'universe' | 'tree' | 'quiz' = (l === 'tree' || l === 'quiz') ? l : 'universe';
 
-  const setCurrentLayer = useCallback((layer: 'universe' | 'tree' | 'quiz') => {
+    // 尝试从 URL 或 sessionStorage 恢复 stage (默认第1阶段基础知识)
+    const stageParam = p.get('stage') || sessionStorage.getItem('star_challenge_stage_id');
+    const stageId = stageParam ? parseInt(stageParam, 10) : 1;
+    const stage = STAGES.find(s => s.id === stageId) || STAGES[0];
+
+    // 尝试从 URL 或 sessionStorage 恢复 node
+    const nodeParam = p.get('node') || sessionStorage.getItem('star_challenge_node');
+    const defaultNode = stage?.topics[0]?.children[0] || '';
+    let nodeName = defaultNode;
+    if (nodeParam) {
+      try {
+        nodeName = decodeURIComponent(nodeParam);
+      } catch {
+        nodeName = nodeParam;
+      }
+    }
+
+    // 尝试从 URL 恢复 level
+    const levelParam = p.get('level');
+    const levelIndex = levelParam ? Math.max(0, parseInt(levelParam, 10)) : 0;
+
+    return { layer, stage, nodeName, levelIndex };
+  };
+
+  const [initial] = useState(getInitialState);
+  const [currentLayer, setCurrentLayerState] = useState<'universe' | 'tree' | 'quiz'>(initial.layer);
+  const [selectedStage, setSelectedStageState] = useState<Stage>(initial.stage);
+  const [selectedNodeName, setSelectedNodeNameState] = useState<string>(initial.nodeName);
+  const [selectedLevelIndex, setSelectedLevelIndexState] = useState<number>(initial.levelIndex);
+
+  // 统一同步 URL 与浏览器历史记录
+  const syncNavigation = useCallback((
+    layer: 'universe' | 'tree' | 'quiz',
+    stage: Stage,
+    node: string,
+    level: number
+  ) => {
     setCurrentLayerState(layer);
+    setSelectedStageState(stage);
+    setSelectedNodeNameState(node);
+    setSelectedLevelIndexState(level);
+
     if (typeof window !== 'undefined') {
       const url = new URL(window.location.href);
-      if (layer === 'universe') url.searchParams.delete('layer');
-      else url.searchParams.set('layer', layer);
+      if (layer === 'universe') {
+        url.searchParams.delete('layer');
+        url.searchParams.delete('stage');
+        url.searchParams.delete('node');
+        url.searchParams.delete('level');
+      } else {
+        url.searchParams.set('layer', layer);
+        url.searchParams.set('stage', String(stage.id));
+        if (node) url.searchParams.set('node', node);
+        url.searchParams.set('level', String(level));
+      }
       window.history.replaceState({}, '', url.toString());
+      try {
+        sessionStorage.setItem('star_challenge_stage_id', String(stage.id));
+        if (node) sessionStorage.setItem('star_challenge_node', node);
+      } catch {}
     }
   }, []);
+
+  const setCurrentLayer = useCallback((layer: 'universe' | 'tree' | 'quiz') => {
+    syncNavigation(layer, selectedStage, selectedNodeName, selectedLevelIndex);
+  }, [syncNavigation, selectedStage, selectedNodeName, selectedLevelIndex]);
+
+  const handleSelectStage = useCallback((stage: Stage) => {
+    const firstNode = stage.topics[0]?.children[0] || '';
+    syncNavigation('tree', stage, firstNode, 0);
+  }, [syncNavigation]);
+
+  const handleSelectNode = useCallback((node: string) => {
+    syncNavigation(currentLayer === 'universe' ? 'tree' : currentLayer, selectedStage, node, 0);
+  }, [syncNavigation, currentLayer, selectedStage]);
+
+  const handleSelectLevel = useCallback((level: number) => {
+    syncNavigation(currentLayer === 'universe' ? 'tree' : currentLayer, selectedStage, selectedNodeName, level);
+  }, [syncNavigation, currentLayer, selectedStage, selectedNodeName]);
+
+  const handleStartQuiz = useCallback(() => {
+    syncNavigation('quiz', selectedStage, selectedNodeName, selectedLevelIndex);
+  }, [syncNavigation, selectedStage, selectedNodeName, selectedLevelIndex]);
+
+  const handleBackToUniverse = useCallback(() => {
+    syncNavigation('universe', selectedStage, selectedNodeName, selectedLevelIndex);
+  }, [syncNavigation, selectedStage, selectedNodeName, selectedLevelIndex]);
+
   const [showNotesDrawer, setShowNotesDrawer] = useState<boolean>(false);
   const [showLeaderboardDrawer, setShowLeaderboardDrawer] = useState<boolean>(false);
   const [showAchievementsDrawer, setShowAchievementsDrawer] = useState<boolean>(false);
   const [showMyChallenges, setShowMyChallenges] = useState<boolean>(false);
-
-  // 选中的 Stage 与子节点知识点
-  const [selectedStage, setSelectedStage] = useState<Stage>(STAGES[3]); // 默认第四阶段-机器学习
-  const [selectedNodeName, setSelectedNodeName] = useState<string>("支持向量机 (SVM)");
-  const [selectedLevelIndex, setSelectedLevelIndex] = useState<number>(0);
 
   const [dbChallenges, setDbChallenges] = useState<any[]>([]);
 
@@ -79,27 +156,27 @@ export default function UniversePage() {
     loadChallenges();
   }, [currentLayer]); // 当切层时重新刷新进度（如做完题返回时）
 
+  // 判定关卡是否通过的统一函数，多重兼容前后端各类字段命名
+  const isChallengePassed = (c: any) => Boolean(
+    c?.completed === true ||
+    c?.record?.codePassed === true ||
+    c?.record?.isPassed === true ||
+    c?.userRecord?.codePassed === true ||
+    c?.userRecord?.isPassed === true
+  );
+
   // 动态计算成就指标
-  const passedChallengesCount = dbChallenges.filter(c => c.record?.isPassed).length;
+  const passedChallengesCount = dbChallenges.filter(isChallengePassed).length;
   
   // 计算通关阶段数量
   const allStages = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
   let completedStagesCount = 0;
   allStages.forEach(stageId => {
     const stageChallenges = dbChallenges.filter(c => c.stageId === stageId);
-    if (stageChallenges.length > 0 && stageChallenges.every(c => c.record?.isPassed)) {
+    if (stageChallenges.length > 0 && stageChallenges.every(isChallengePassed)) {
       completedStagesCount++;
     }
   });
-
-  const handleSelectStage = (stage: Stage) => {
-    setSelectedStage(stage);
-    // 默认优先选中该 Stage 下第一个 Topic 的第一个 Child
-    if (stage.topics.length > 0 && stage.topics[0].children.length > 0) {
-      setSelectedNodeName(stage.topics[0].children[0]);
-    }
-    setCurrentLayer('tree');
-  };
 
   return (
     // 去除 fixed inset-0 z-50，改用 relative w-full h-[calc(100vh-4.5rem)] 嵌入父页面流中
@@ -153,16 +230,21 @@ export default function UniversePage() {
               selectedStage={selectedStage}
               selectedNodeName={selectedNodeName}
               selectedLevelIndex={selectedLevelIndex}
-              onSelectNode={setSelectedNodeName}
-              onSelectLevel={setSelectedLevelIndex}
-              onBackToUniverse={() => setCurrentLayer('universe')}
-              onStartQuiz={() => setCurrentLayer('quiz')}
+              onSelectNode={handleSelectNode}
+              onSelectLevel={handleSelectLevel}
+              onBackToUniverse={handleBackToUniverse}
+              onStartQuiz={handleStartQuiz}
               dbChallenges={dbChallenges}
             />
           )}
 
           {currentLayer === 'quiz' && (
-            <QuizWorkspace selectedNodeName={selectedNodeName} initialLevelIndex={selectedLevelIndex} />
+            <QuizWorkspace
+              selectedNodeName={selectedNodeName}
+              initialLevelIndex={selectedLevelIndex}
+              onLevelChange={handleSelectLevel}
+              onChallengePassed={loadChallenges}
+            />
           )}
         </div>
       </div>
@@ -241,7 +323,7 @@ export default function UniversePage() {
           <LeaderboardDrawer onClose={() => setShowLeaderboardDrawer(false)} />
         )}
         {showAchievementsDrawer && (
-          <AchievementsDrawer onClose={() => setShowAchievementsDrawer(false)} />
+          <AchievementsDrawer onClose={() => setShowAchievementsDrawer(false)} dbChallenges={dbChallenges} />
         )}
         {showMyChallenges && (
           <MyChallengesDrawer onClose={() => setShowMyChallenges(false)} />

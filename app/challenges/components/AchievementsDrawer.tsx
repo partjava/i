@@ -6,6 +6,7 @@ import { X, Award, Lock, Check, Zap, FileText, Globe } from 'lucide-react';
 
 interface AchievementsDrawerProps {
   onClose: () => void;
+  dbChallenges?: any[];
 }
 
 interface Achievement {
@@ -28,18 +29,30 @@ interface StageMilestone {
   aiRole: string; // 在人工智能中的作用
 }
 
-export const AchievementsDrawer: React.FC<AchievementsDrawerProps> = ({ onClose }) => {
+export const AchievementsDrawer: React.FC<AchievementsDrawerProps> = ({ onClose, dbChallenges = [] }) => {
   const [selectedMilestoneIndex, setSelectedMilestoneIndex] = useState<number>(0);
 
+  const isChallengePassed = (c: any) => Boolean(
+    c?.completed === true ||
+    c?.record?.codePassed === true ||
+    c?.record?.isPassed === true ||
+    c?.userRecord?.codePassed === true
+  );
+
+  const isStageCompleted = (stageId: number) => {
+    if (!dbChallenges || dbChallenges.length === 0) return false;
+    const stageChallenges = dbChallenges.filter(c => c.stageId === stageId);
+    return stageChallenges.length > 0 && stageChallenges.every(isChallengePassed);
+  };
+
   // 11关卡里程碑定义及在AI中的作用
-  const milestones: StageMilestone[] = [
+  const RAW_MILESTONES = [
     { 
       id: 1, 
       name: '基础知识', 
       desc: '计算机体系、Linux命令行与Git代码协作',
       color: '#4FC3F7', 
       glowColor: 'rgba(79, 195, 247, 0.8)', 
-      completed: true, 
       aiRole: '为 AI 开发构建最坚实的底层系统环境支撑。通过 Linux 命令行掌握远程服务器上的 GPU 模型训练、数据挂载，利用 Git 开展模型代码的多人协作与流水线交付。' 
     },
     { 
@@ -48,7 +61,6 @@ export const AchievementsDrawer: React.FC<AchievementsDrawerProps> = ({ onClose 
       desc: '高阶数据结构、生成器与装饰器',
       color: '#81C784', 
       glowColor: 'rgba(129, 199, 132, 0.8)', 
-      completed: true, 
       aiRole: '人工智能领域的“普通话”。Python 是开发 PyTorch、TensorFlow 等深度学习框架和集成大模型 API 的绝对母语，也是编写数据清洗与模型微调脚本的核心工具。' 
     },
     { 
@@ -57,7 +69,6 @@ export const AchievementsDrawer: React.FC<AchievementsDrawerProps> = ({ onClose 
       desc: '线性代数、偏导数与凸优化根基',
       color: '#FFD54F', 
       glowColor: 'rgba(255, 213, 79, 0.8)', 
-      completed: true, 
       aiRole: 'AI 的底层引擎。线性代数定义了数据在高维向量空间中的 Embedding 变换；偏导数与凸优化构成了神经网络反向传播和损失函数更新参数（学习）的核心数学驱动。' 
     },
     { 
@@ -66,7 +77,6 @@ export const AchievementsDrawer: React.FC<AchievementsDrawerProps> = ({ onClose 
       desc: '传统监督与无监督机器学习算法',
       color: '#BA68C8', 
       glowColor: 'rgba(186, 104, 200, 0.8)', 
-      completed: false, 
       aiRole: '数据挖掘与预测智能的先河。通过回归、决策树和支持向量机（SVM）等经典算法，奠定了模式识别、特征工程和分类聚类等现代人工智能预测系统的通用算法基础。' 
     },
     { 
@@ -75,7 +85,6 @@ export const AchievementsDrawer: React.FC<AchievementsDrawerProps> = ({ onClose 
       desc: '激活函数、损失函数、MLP与反向传播',
       color: '#64B5F6', 
       glowColor: 'rgba(100, 181, 246, 0.8)', 
-      completed: false, 
       aiRole: '感知智能的跃迁。通过反向传播算法训练拥有海量权重的多层感知机（MLP），模拟人脑复杂的层级特征表达能力，是现代生成式 AI 和超大规模大语言模型（LLM）的底层骨架。' 
     },
     { 
@@ -84,7 +93,6 @@ export const AchievementsDrawer: React.FC<AchievementsDrawerProps> = ({ onClose 
       desc: '卷积神经网络CNN与YOLO目标检测',
       color: '#00B4D8', 
       glowColor: 'rgba(0, 180, 216, 0.8)', 
-      completed: false, 
       aiRole: '赋予机器“看懂世界”的感知力。利用卷积神经网络（CNN）与 YOLO 等算法，广泛应用于自动驾驶、缺陷检测、医疗影像识别及近年来流行的 SAM（分割万物）视觉基础大模型。' 
     },
     { 
@@ -93,7 +101,6 @@ export const AchievementsDrawer: React.FC<AchievementsDrawerProps> = ({ onClose 
       desc: '文本分词与Transformer自注意力机制',
       color: '#EC4899', 
       glowColor: 'rgba(236, 72, 153, 0.8)', 
-      completed: false, 
       aiRole: '攻克机器理解人类语言的终极难关。引入 Self-Attention（自注意力机制）和 Transformer 架构，颠覆了传统的序列建模，为现代千亿级参数的大预训练模型奠定了基石。' 
     },
     { 
@@ -102,7 +109,6 @@ export const AchievementsDrawer: React.FC<AchievementsDrawerProps> = ({ onClose 
       desc: 'Prompt工程、向量数据库RAG与智能体',
       color: '#FF8A65', 
       glowColor: 'rgba(255, 138, 101, 0.8)', 
-      completed: false, 
       aiRole: '通往通用人工智能（AGI）的核心钥匙。通过提示词工程、检索增强生成（RAG）让模型获取实时外部数据，并借助 Tool Use 使得大模型具备思考、规划与调用工具解决复杂任务的 Agent 决策能力。' 
     },
     { 
@@ -111,7 +117,6 @@ export const AchievementsDrawer: React.FC<AchievementsDrawerProps> = ({ onClose 
       desc: '马尔可夫决策过程(MDP)及DQN、PPO',
       color: '#A1887F', 
       glowColor: 'rgba(161, 136, 127, 0.8)', 
-      completed: false, 
       aiRole: 'AI 自主进化的终极引擎。依靠环境状态、行动与试错奖励，让 AI 在无人工标注数据下进行自我博弈。是 OpenAI o1 推理模型底层强化学习搜索、AlphaGo 战胜人类及自动驾驶控制的核心基石。' 
     },
     { 
@@ -120,7 +125,6 @@ export const AchievementsDrawer: React.FC<AchievementsDrawerProps> = ({ onClose 
       desc: '模型API开发、Docker封装与本地推理',
       color: '#90A4AE', 
       glowColor: 'rgba(144, 164, 174, 0.8)', 
-      completed: false, 
       aiRole: '将前沿 AI 技术真正落地商业的桥梁。将庞大的神经网络转换为高效的 FastAPI 接口，运用 Docker 容器实现多云部署，并利用 Ollama 和 vLLM 对推理速度进行硬件加速，落地千行百业。' 
     },
     { 
@@ -129,10 +133,14 @@ export const AchievementsDrawer: React.FC<AchievementsDrawerProps> = ({ onClose 
       desc: '开发多智能体系统与自进化AI工作流',
       color: '#F06292', 
       glowColor: 'rgba(240, 98, 146, 0.8)', 
-      completed: false, 
       aiRole: '工程能力的集大成者。通过设计多智能体协同工作流（Multi-Agent System）和自进化编程助手，把模型推理封装为能够解决现实工程问题的高可靠工业级应用。' 
     }
   ];
+
+  const milestones: StageMilestone[] = RAW_MILESTONES.map(m => ({
+    ...m,
+    completed: isStageCompleted(m.id)
+  }));
 
   // 3个简单的个人基础成就
   const simpleAchievements: Achievement[] = [

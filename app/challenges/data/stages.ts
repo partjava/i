@@ -103,14 +103,18 @@ export interface SubtopicDetail {
     expectedException?: string;
   }>;
   conceptualQuizzes: {
+    id?: string;
     question: string;
     options: string[];
-    answer: number;
+    answer?: number;
+    correctIndex?: number;
     explanation: string;
   }[];
   thinkingQuestion: string;
   aiPrompt: string;
   solutionCode?: string;
+  completed?: boolean;
+  record?: any;
   authorId?: number | null;
   isOfficial?: boolean;
   levelIndex?: number;
@@ -118,6 +122,8 @@ export interface SubtopicDetail {
   stageId?: number;
   userRecord?: {
     codePassed?: boolean;
+    isPassed?: boolean;
+    completed?: boolean;
     quizAnswers?: any;
     thinkingScore?: number;
     thinkingFeedback?: string;

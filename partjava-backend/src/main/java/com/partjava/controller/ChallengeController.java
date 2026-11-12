@@ -9,7 +9,9 @@ import com.partjava.dto.response.ChallengeProgressResp;
 import com.partjava.dto.response.ThinkingEvaluateResp;
 import com.partjava.entity.Challenge;
 import com.partjava.entity.ChallengeDraft;
+import com.partjava.entity.UserChallengeRecord;
 import com.partjava.repository.ChallengeMapper;
+import com.partjava.repository.UserChallengeRecordMapper;
 import com.partjava.service.ChallengeService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import org.springframework.web.bind.annotation.*;
@@ -26,10 +28,12 @@ public class ChallengeController {
 
     private final ChallengeService challengeService;
     private final ChallengeMapper challengeMapper;
+    private final UserChallengeRecordMapper userChallengeRecordMapper;
 
-    public ChallengeController(ChallengeService challengeService, ChallengeMapper challengeMapper) {
+    public ChallengeController(ChallengeService challengeService, ChallengeMapper challengeMapper, UserChallengeRecordMapper userChallengeRecordMapper) {
         this.challengeService = challengeService;
         this.challengeMapper = challengeMapper;
+        this.userChallengeRecordMapper = userChallengeRecordMapper;
     }
 
     private Integer getUserIdOrFallback(Integer userId) {
@@ -165,16 +169,63 @@ public class ChallengeController {
      * Legacy frontend star challenge overview (GET /api/star-challenges).
      */
     @GetMapping("/star-challenges")
-    public Map<String, Object> listStarChallenges() {
+    public Map<String, Object> listStarChallenges(
+            @RequestAttribute(value = "userId", required = false) Integer userId) {
         List<Challenge> challenges = challengeMapper.selectList(
                 new LambdaQueryWrapper<Challenge>()
                         .eq(Challenge::getStatus, "published")
                         .orderByAsc(Challenge::getStageId)
                         .orderByAsc(Challenge::getLevelIndex)
         );
+        Map<Integer, UserChallengeRecord> recordMap = new HashMap<>();
+        if (userId != null) {
+            List<UserChallengeRecord> records = userChallengeRecordMapper.selectList(
+                    new LambdaQueryWrapper<UserChallengeRecord>().eq(UserChallengeRecord::getUserId, userId)
+            );
+            for (UserChallengeRecord r : records) {
+                recordMap.put(r.getChallengeId(), r);
+            }
+        }
+
+        List<Map<String, Object>> resultList = new ArrayList<>();
+        for (Challenge c : challenges) {
+            Map<String, Object> map = new LinkedHashMap<>();
+            map.put("id", c.getId());
+            map.put("title", c.getTitle());
+            map.put("levelTitle", c.getTitle());
+            map.put("stageId", c.getStageId());
+            map.put("topicName", c.getTopicName());
+            map.put("subtopicName", c.getSubtopicName());
+            map.put("levelIndex", c.getLevelIndex());
+            map.put("accessLevel", c.getAccessLevel());
+            map.put("status", c.getStatus());
+            map.put("points", c.getPoints());
+            map.put("difficulty", c.getDifficulty());
+            map.put("slug", c.getSlug());
+            map.put("authorId", c.getAuthorId());
+            map.put("isPublic", c.getIsPublic());
+
+            UserChallengeRecord rec = recordMap.get(c.getId());
+            boolean isPassed = rec != null && Boolean.TRUE.equals(rec.getCompleted());
+            map.put("completed", isPassed);
+
+            Map<String, Object> userRecord = new LinkedHashMap<>();
+            userRecord.put("isPassed", isPassed);
+            userRecord.put("codePassed", isPassed);
+            userRecord.put("completed", isPassed);
+            if (rec != null) {
+                userRecord.put("thinkingScore", rec.getThinkingScore());
+                userRecord.put("thinkingFeedback", rec.getThinkingFeedback());
+                userRecord.put("quizAnswers", rec.getQuizAnswers());
+            }
+            map.put("record", userRecord);
+            map.put("userRecord", userRecord);
+            resultList.add(map);
+        }
+
         Map<String, Object> res = new HashMap<>();
         res.put("success", true);
-        res.put("challenges", challenges);
+        res.put("challenges", resultList);
         return res;
     }
 

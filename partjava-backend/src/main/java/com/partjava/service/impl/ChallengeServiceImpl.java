@@ -152,7 +152,9 @@ public class ChallengeServiceImpl implements ChallengeService {
                         q.getId().toString(),
                         q.getQuestion(),
                         q.getOptions(),
-                        q.getExplanation()
+                        q.getExplanation(),
+                        q.getCorrectIndex(),
+                        q.getCorrectIndex()
                 )
         ).collect(Collectors.toList());
 
@@ -182,13 +184,40 @@ public class ChallengeServiceImpl implements ChallengeService {
         ));
 
         if (record != null) {
-            resp.setCompleted(Boolean.TRUE.equals(record.getCompleted()));
+            boolean passed = Boolean.TRUE.equals(record.getCompleted());
+            resp.setCompleted(passed);
+            resp.setCodePassed(passed);
+            if (passed) {
+                resp.setSolutionCode(detail.getSolutionCode());
+            }
+            resp.setThinkingScore(record.getThinkingScore() != null ? record.getThinkingScore() : 0);
+            resp.setThinkingFeedback(record.getThinkingFeedback());
             resp.setQuizAnswers(record.getQuizAnswers() != null ? record.getQuizAnswers() : new HashMap<>());
             resp.setLastSavedCode(record.getBestCode() != null ? record.getBestCode() : detail.getStarterCode());
+
+            Map<String, Object> recMap = new HashMap<>();
+            recMap.put("codePassed", passed);
+            recMap.put("isPassed", passed);
+            recMap.put("completed", passed);
+            recMap.put("thinkingScore", record.getThinkingScore());
+            recMap.put("thinkingFeedback", record.getThinkingFeedback());
+            recMap.put("quizAnswers", record.getQuizAnswers());
+            resp.setRecord(recMap);
+            resp.setUserRecord(recMap);
         } else {
             resp.setCompleted(false);
+            resp.setCodePassed(false);
+            resp.setThinkingScore(0);
+            resp.setThinkingFeedback(null);
             resp.setQuizAnswers(new HashMap<>());
             resp.setLastSavedCode(detail.getStarterCode());
+            Map<String, Object> recMap = new HashMap<>();
+            recMap.put("codePassed", false);
+            recMap.put("isPassed", false);
+            recMap.put("completed", false);
+            recMap.put("thinkingScore", 0);
+            resp.setRecord(recMap);
+            resp.setUserRecord(recMap);
         }
 
         return resp;
@@ -389,8 +418,12 @@ public class ChallengeServiceImpl implements ChallengeService {
         }
 
         boolean allCorrect = true;
-        for (ChallengeQuiz quiz : quizzes) {
+        for (int i = 0; i < quizzes.size(); i++) {
+            ChallengeQuiz quiz = quizzes.get(i);
             Integer userAns = answers.get(quiz.getId().toString());
+            if (userAns == null) {
+                userAns = answers.get(String.valueOf(i));
+            }
             if (userAns == null || !userAns.equals(quiz.getCorrectIndex())) {
                 allCorrect = false;
                 break;

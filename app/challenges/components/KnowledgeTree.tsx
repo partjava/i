@@ -22,7 +22,11 @@ function SubtopicSection({ child, isSelected, onSelectNode, onSelectLevel, chall
     onSelectNode(child);
     onSelectLevel(idx);
   };
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(isSelected);
+  useEffect(() => {
+    if (isSelected) setExpanded(true);
+  }, [isSelected]);
+
   return (
     <div className="mb-1">
       <button
@@ -47,7 +51,7 @@ function SubtopicSection({ child, isSelected, onSelectNode, onSelectLevel, chall
       {expanded && (
         <div className="pl-4 mt-1 space-y-0.5 border-l border-slate-800 ml-2">
           {challenges.map((lv: any, lIdx: number) => {
-            const lvPassed = lv.record?.codePassed;
+            const lvPassed = Boolean(lv.completed || lv.record?.codePassed || lv.record?.isPassed || lv.userRecord?.codePassed);
             return (
               <button key={lIdx} onClick={() => handleLevelClick(lv.levelIndex - 1)}
                 className={`w-full text-left px-2.5 py-1.5 rounded-lg text-[11px] flex justify-between items-center transition ${isSelected ? 'bg-indigo-600/15 text-indigo-300' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/30'}`}
@@ -182,10 +186,11 @@ export const KnowledgeTree: React.FC<KnowledgeTreeProps> = ({
                 {/* 1. 官方题目（示例题 + 关卡列表） */}
                 {topic.children.map((child, cIdx) => {
                   const isSelected = selectedNodeName === child;
+                  const isPassedFn = (c: any) => Boolean(c?.completed === true || c?.record?.codePassed === true || c?.record?.isPassed === true || c?.userRecord?.codePassed === true);
                   const childChallenges = dbChallenges.filter(c => c.subtopicName === child && c.stageId === selectedStage.id)
                     .sort((a, b) => a.levelIndex - b.levelIndex);
                   const totalLevels = childChallenges.length;
-                  const passedLevels = childChallenges.filter(c => c.record?.codePassed).length;
+                  const passedLevels = childChallenges.filter(isPassedFn).length;
                   const allPassed = totalLevels > 0 && passedLevels === totalLevels;
                   return (
                     <SubtopicSection
@@ -213,7 +218,7 @@ export const KnowledgeTree: React.FC<KnowledgeTreeProps> = ({
                   })
                   .map((custom, cIdx) => {
                     const isSelected = selectedNodeName === custom.subtopicName;
-                    const isPassed = custom.record?.isPassed;
+                    const isPassed = Boolean(custom.completed || custom.record?.isPassed || custom.record?.codePassed || custom.userRecord?.codePassed);
                     return (
                       <button
                         key={`extra-${cIdx}`}
@@ -237,7 +242,7 @@ export const KnowledgeTree: React.FC<KnowledgeTreeProps> = ({
                   .filter(c => c.stageId === selectedStage.id && c.topicName === topic.name && c.isPublic !== false && c.authorId && c.authorId !== 1)
                   .map((custom, cIdx) => {
                     const isSelected = selectedNodeName === custom.subtopicName;
-                    const isPassed = custom.record?.isPassed;
+                    const isPassed = Boolean(custom.completed || custom.record?.isPassed || custom.record?.codePassed || custom.userRecord?.codePassed);
                     return (
                       <button
                         key={`custom-${cIdx}`}

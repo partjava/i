@@ -17,6 +17,7 @@ interface TheoryQuizPanelProps {
   selectedQuizAnswers: Record<number, number>;
   showQuizExplains: Record<number, boolean>;
   onSelectQuiz: (quizIdx: number, optionIdx: number) => void;
+  onToggleExplain?: (quizIdx: number) => void;
   thinkingAnswer: string;
   onThinkingChange: (val: string) => void;
   onSubmitThinking: () => void;
@@ -25,7 +26,7 @@ interface TheoryQuizPanelProps {
 
 export function TheoryQuizPanel({
   activeTab, onTabChange, detail, isAuthenticated,
-  selectedQuizAnswers, showQuizExplains, onSelectQuiz,
+  selectedQuizAnswers, showQuizExplains, onSelectQuiz, onToggleExplain,
   thinkingAnswer, onThinkingChange, onSubmitThinking, aiLoading
 }: TheoryQuizPanelProps) {
   if (!detail) return null;
@@ -110,16 +111,17 @@ export function TheoryQuizPanel({
               detail.conceptualQuizzes.map((quiz, qIdx) => {
                 const userSelection = selectedQuizAnswers[qIdx];
                 const showExplain = showQuizExplains[qIdx];
+                const correctAnswer = quiz.answer !== undefined ? quiz.answer : (quiz as any).correctIndex;
                 return (
                   <div key={qIdx} className="bg-slate-900/30 border border-slate-850 rounded-xl p-4 space-y-3">
                     <p className="text-xs font-semibold text-slate-200">{qIdx + 1}. {quiz.question}</p>
                     <div className="space-y-2">
                       {quiz.options.map((opt, oIdx) => {
                         const isSelected = userSelection === oIdx;
-                        const isCorrect = quiz.answer === oIdx;
+                        const isCorrect = correctAnswer === oIdx;
                         let clr = "border-slate-800 hover:bg-slate-900/50 text-slate-400";
                         if (userSelection !== undefined) {
-                          if (isCorrect) clr = "border-emerald-500/40 bg-emerald-950/20 text-emerald-400";
+                          if (isCorrect) clr = "border-emerald-500/40 bg-emerald-950/20 text-emerald-400 font-medium";
                           else if (isSelected) clr = "border-red-500/40 bg-red-950/20 text-red-400";
                         }
                         return (
@@ -130,11 +132,32 @@ export function TheoryQuizPanel({
                       })}
                     </div>
                     {showExplain && (
-                      <div className="mt-3 p-3 bg-indigo-950/15 border border-indigo-950/50 rounded-lg text-[11px] text-slate-400">
-                        <strong className="text-indigo-300 font-bold block mb-1">{userSelection === quiz.answer ? "🎉 回答正确！" : "❌ 回答错误。"}</strong>
-                        {quiz.explanation}
+                      <div className="mt-3 p-3 bg-indigo-950/20 border border-indigo-950/60 rounded-lg text-[11px] text-slate-300 space-y-1">
+                        {userSelection !== undefined && (
+                          <strong className="text-indigo-300 font-bold block mb-1">
+                            {userSelection === correctAnswer ? "🎉 回答正确！" : "❌ 回答错误。"}
+                          </strong>
+                        )}
+                        {correctAnswer !== undefined && (
+                          <div className="text-emerald-400 font-semibold mb-0.5">
+                            【正确答案】选项 {String.fromCharCode(65 + Number(correctAnswer))}
+                          </div>
+                        )}
+                        <div className="text-slate-400 leading-relaxed">{quiz.explanation || "暂无详细解析"}</div>
                       </div>
                     )}
+                    <div className="flex items-center justify-between pt-2 border-t border-slate-800/40 text-[11px]">
+                      <span className="text-slate-500">
+                        {userSelection !== undefined ? (userSelection === correctAnswer ? '✅ 判定正确' : '❌ 判定错误') : '请点击选项作答'}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => onToggleExplain ? onToggleExplain(qIdx) : onSelectQuiz(qIdx, userSelection ?? -1)}
+                        className="text-indigo-400 hover:text-indigo-300 text-[11px] underline underline-offset-2 transition"
+                      >
+                        {showExplain ? '收起题目解析' : '查看题目解析'}
+                      </button>
+                    </div>
                   </div>
                 );
               })

@@ -18,9 +18,16 @@ import { emitPetCompanionEvent } from '@shared/lib/pet-companion-bus';
 interface QuizWorkspaceProps {
   selectedNodeName: string;
   initialLevelIndex?: number;
+  onLevelChange?: (levelIndex: number) => void;
+  onChallengePassed?: () => void;
 }
 
-export const QuizWorkspace: React.FC<QuizWorkspaceProps> = ({ selectedNodeName, initialLevelIndex = 0 }) => {
+export const QuizWorkspace: React.FC<QuizWorkspaceProps> = ({
+  selectedNodeName,
+  initialLevelIndex = 0,
+  onLevelChange,
+  onChallengePassed
+}) => {
   const { data: session, status } = useAuth();
   const [activeTab, setActiveTab] = useState<'theory' | 'conceptual' | 'thinking'>('theory');
   const [levels, setLevels] = useState<SubtopicDetail[]>([]);
@@ -106,15 +113,32 @@ export const QuizWorkspace: React.FC<QuizWorkspaceProps> = ({ selectedNodeName, 
     setShowQuizExplains({});
     setThinkingAnswer("");
     setAiChatMessages([{ sender: 'ai', text: '你好！我是你的星际 AI 助教。请编写代码或尝试回答思考题，我会随时帮你提供优化思路或打分。' }]);
-    if (detail.userRecord) {
-      const r = detail.userRecord;
-      if (r.codePassed) setTestResults("历史记录：该关卡曾通过评测。当前编辑器代码尚未运行。");
+    const userRec = detail.userRecord || detail.record;
+    if (userRec || detail.completed) {
+      const r = userRec || {};
+      if (r.codePassed || r.isPassed || detail.completed) setTestResults("历史记录：该关卡曾通过评测。当前编辑器代码尚未运行。");
       if (r.quizAnswers) { setSelectedQuizAnswers(r.quizAnswers); const e: Record<number, boolean> = {}; Object.keys(r.quizAnswers).forEach((k: any) => { e[k] = true; }); setShowQuizExplains(e); }
-      if (r.thinkingFeedback) setAiChatMessages([{ sender: 'ai', text: '你好！我是你的星际 AI 助教。' }, { sender: 'ai', text: r.thinkingFeedback }]);
+      if (r.thinkingFeedback) setAiChatMessages([{ sender: 'ai', text: '你好！我是你的星际 AI 助教。' }, { sender: 'ai', text: `[历史评分: ${r.thinkingScore ?? 0}/10]\n${r.thinkingFeedback}` }]);
     }
     // Updating a run record must not reset the student's edited code or conversation.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedNodeName, detail?.id]);
+
+  // 当关卡已通关且本地尚无标答代码时，自动异步鉴权拉取标答
+  useEffect(() => {
+    if (!detail?.id) return;
+    const isPassed = Boolean(detail.completed || detail.userRecord?.codePassed || detail.record?.codePassed);
+    if (isPassed && !detail.solutionCode && status === 'authenticated') {
+      fetch(`/api/challenges/${detail.id}/solution`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.success && data.data?.solutionCode) {
+            setLevels(prev => prev.map(l => l.id === detail.id ? { ...l, solutionCode: data.data.solutionCode } : l));
+          }
+        })
+        .catch(() => {});
+    }
+  }, [detail?.id, detail?.completed, status]);
 
   // ── 运行代码 ──
   const handleCancelRun = () => {
@@ -158,7 +182,17 @@ export const QuizWorkspace: React.FC<QuizWorkspaceProps> = ({ selectedNodeName, 
         setTestResults(`[评测结果] ${challengeResultLabel(execution.mode, resultStatus)}\n耗时: ${result.runtimeMs ?? '未知'}ms\n${'-'.repeat(36)}\n${result.message || ''}`);
         if (status === 'authenticated' && shouldRecordChallengePass(execution.mode, resultStatus)) {
           setLevels(prev => prev.map(level => level.id === challengeId
-            ? { ...level, userRecord: { ...level.userRecord, codePassed: true } } : level));
+            ? { ...level, completed: true, userRecord: { ...level.userRecord, codePassed: true, isPassed: true } } : level));
+          onChallengePassed?.();
+          // 异步获取标答代码
+          fetch(`/api/challenges/${challengeId}/solution`)
+            .then(res => res.json())
+            .then(data => {
+              if (data.success && data.data?.solutionCode) {
+                setLevels(prev => prev.map(l => l.id === challengeId ? { ...l, solutionCode: data.data.solutionCode } : l));
+              }
+            })
+            .catch(() => {});
           emitPetCompanionEvent({
             type: 'celebrate',
             title: '关卡评测全部通过！',
@@ -200,13 +234,24 @@ export const QuizWorkspace: React.FC<QuizWorkspaceProps> = ({ selectedNodeName, 
     const newAns = { ...selectedQuizAnswers, [qIdx]: oIdx };
     setSelectedQuizAnswers(newAns);
     setShowQuizExplains(prev => ({ ...prev, [qIdx]: true }));
+    const quiz = detail.conceptualQuizzes?.[qIdx];
+    const quizId = quiz?.id || String(qIdx);
     if (status === 'authenticated') {
       try {
         await fetch('/api/star-challenges/submit-quiz', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ answers: newAns, challengeId: detail.id }),
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            answers: { ...newAns, [quizId]: oIdx, [String(qIdx)]: oIdx },
+            challengeId: detail.id
+          }),
         });
       } catch {}
     }
+  };
+
+  const handleToggleExplain = (qIdx: number) => {
+    setShowQuizExplains(prev => ({ ...prev, [qIdx]: !prev[qIdx] }));
   };
 
   // ── 思考题评分 ──
@@ -292,7 +337,7 @@ export const QuizWorkspace: React.FC<QuizWorkspaceProps> = ({ selectedNodeName, 
           <span className="text-sm font-extrabold text-white tracking-wider">当前的闯关进度：</span>
           <div className="flex items-center gap-2">
             {levels.map((lvl, i) => (
-              <button key={i} onClick={() => { if (i !== activeLevelIndex) { runRequests.current.cancel(); setIsRunning(false); setActiveLevelIndex(i); } }}
+              <button key={i} onClick={() => { if (i !== activeLevelIndex) { runRequests.current.cancel(); setIsRunning(false); setActiveLevelIndex(i); onLevelChange?.(i); } }}
                 className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold tracking-wide transition flex items-center gap-1.5 border ${i === activeLevelIndex ? "bg-indigo-500/20 border-indigo-400 text-indigo-300 shadow-[0_0_12px_rgba(99,102,241,0.2)]" : "bg-slate-900 border-slate-800 text-slate-300 hover:border-slate-700 hover:text-white"}`}>
                 ⭐ 第 {lvl.levelIndex} 关：{lvl.levelTitle}
               </button>
@@ -309,6 +354,7 @@ export const QuizWorkspace: React.FC<QuizWorkspaceProps> = ({ selectedNodeName, 
           isAuthenticated={status === 'authenticated'}
           selectedQuizAnswers={selectedQuizAnswers} showQuizExplains={showQuizExplains}
           onSelectQuiz={handleSelectQuiz}
+          onToggleExplain={handleToggleExplain}
           thinkingAnswer={thinkingAnswer} onThinkingChange={setThinkingAnswer}
           onSubmitThinking={handleSubmitThinking} aiLoading={aiLoading}
         />
