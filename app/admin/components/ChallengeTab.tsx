@@ -2,11 +2,28 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { Card, Table, Button, Modal, Form, Input, Row, Col, Select, Tag, Tabs, message, Spin, InputNumber } from 'antd';
-import { Edit3, Plus, Trash2, CheckCircle, XCircle, Clock, RotateCcw, Trash } from 'lucide-react';
+import { Edit3, Plus, Trash2, CheckCircle, XCircle, Clock, RotateCcw, Trash, History, Eye, Copy, RefreshCw } from 'lucide-react';
 import { Popconfirm } from 'antd';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
+
+interface AdminSubmission {
+  id: number;
+  userId: number;
+  username: string;
+  challengeId: number;
+  challengeTitle: string;
+  stageId?: number;
+  topicName?: string;
+  subtopicName?: string;
+  code: string;
+  language: string;
+  status: string;
+  executionTime?: number;
+  errorMessage?: string;
+  submittedAt: string;
+}
 
 interface ChallengeRecord {
   id: number; title: string; stageId: number; topicName: string;
@@ -50,6 +67,43 @@ export default function ChallengeTab({ challenges, drafts, users, onApproveDraft
   const [editTestCases, setEditTestCases] = useState<Array<{ input: string; expected: string }>>([]);
   const [editEvalCases, setEditEvalCases] = useState<Array<{ input: string; expected: string }>>([]);
   const [form] = Form.useForm();
+
+  // ===== 全站提交记录状态 =====
+  const [activeSection, setActiveSection] = useState<'challenges' | 'submissions'>('challenges');
+  const [submissions, setSubmissions] = useState<AdminSubmission[]>([]);
+  const [submissionsTotal, setSubmissionsTotal] = useState(0);
+  const [subLoading, setSubLoading] = useState(false);
+  const [subPage, setSubPage] = useState(1);
+  const [subPageSize, setSubPageSize] = useState(10);
+  const [filterStatus, setFilterStatus] = useState<string | undefined>(undefined);
+  const [filterChallengeId, setFilterChallengeId] = useState<number | undefined>(undefined);
+  const [filterUserId, setFilterUserId] = useState<number | undefined>(undefined);
+  const [inspectingSub, setInspectingSub] = useState<AdminSubmission | null>(null);
+
+  const loadSubmissions = async (
+    page = subPage,
+    status = filterStatus,
+    challengeId = filterChallengeId,
+    userId = filterUserId
+  ) => {
+    setSubLoading(true);
+    try {
+      const params = new URLSearchParams({ page: String(page), limit: String(subPageSize) });
+      if (status) params.append('status', status);
+      if (challengeId) params.append('challengeId', String(challengeId));
+      if (userId) params.append('userId', String(userId));
+      const res = await fetch(`/api/admin/submissions?${params.toString()}`);
+      const json = await res.json();
+      if (json.success && json.data) {
+        setSubmissions(json.data.records || []);
+        setSubmissionsTotal(json.data.total || 0);
+      }
+    } catch {
+      message.error('加载全站提交记录失败');
+    } finally {
+      setSubLoading(false);
+    }
+  };
 
   const filtered = useMemo(() => {
     if (!stageFilter) return challenges;
@@ -133,28 +187,235 @@ export default function ChallengeTab({ challenges, drafts, users, onApproveDraft
       title={<span className="text-slate-200 font-bold">🪐 宇宙大地图关卡与评测逻辑维护</span>}
       extra={
         <div className="flex items-center gap-2">
-          <Select placeholder="全部阶段" allowClear value={stageFilter}
-            onChange={(v) => setStageFilter(v || null)} size="small" style={{ width: 150 }}
-            options={STAGES.map((s, i) => i > 0 ? { value: i, label: `S${i} ${s}` } : null).filter(Boolean) as any} />
-          <Button size="small" type={showTrash ? 'primary' : 'default'} ghost={!showTrash}
-            icon={<Trash size={12} />}
-            onClick={async () => {
-              const next = !showTrash;
-              setShowTrash(next);
-              if (next) {
-                try {
-                  const r = await fetch('/api/admin/challenges/trash');
-                  const j = await r.json();
-                  setTrashChallenges(j.data || []);
-                } catch {}
-              }
-            }}>
-            回收站
-          </Button>
+          {/* 切换关卡管理 vs 全站提交记录 */}
+          <div className="bg-slate-950 p-0.5 rounded-lg border border-slate-800 flex items-center mr-2">
+            <button
+              onClick={() => setActiveSection('challenges')}
+              className={`px-3 py-1 rounded text-xs font-semibold transition ${
+                activeSection === 'challenges'
+                  ? 'bg-indigo-600 text-white shadow'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              关卡与草稿
+            </button>
+            <button
+              onClick={() => {
+                setActiveSection('submissions');
+                void loadSubmissions(1);
+              }}
+              className={`px-3 py-1 rounded text-xs font-semibold transition flex items-center gap-1.5 ${
+                activeSection === 'submissions'
+                  ? 'bg-indigo-600 text-white shadow'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              <History size={12} />
+              全站提交记录
+            </button>
+          </div>
+
+          {activeSection === 'challenges' && (
+            <>
+              <Select placeholder="全部阶段" allowClear value={stageFilter}
+                onChange={(v) => setStageFilter(v || null)} size="small" style={{ width: 150 }}
+                options={STAGES.map((s, i) => i > 0 ? { value: i, label: `S${i} ${s}` } : null).filter(Boolean) as any} />
+              <Button size="small" type={showTrash ? 'primary' : 'default'} ghost={!showTrash}
+                icon={<Trash size={12} />}
+                onClick={async () => {
+                  const next = !showTrash;
+                  setShowTrash(next);
+                  if (next) {
+                    try {
+                      const r = await fetch('/api/admin/challenges/trash');
+                      const j = await r.json();
+                      setTrashChallenges(j.data || []);
+                    } catch {}
+                  }
+                }}>
+                回收站
+              </Button>
+            </>
+          )}
         </div>
       }
       bordered={false} className="bg-slate-900 border border-slate-800"
     >
+      {activeSection === 'submissions' ? (
+        /* ===== 全站学员挑战提交记录看板 ===== */
+        <div>
+          {/* 筛选工具栏 */}
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3 bg-slate-950/60 p-3 rounded-lg border border-slate-800">
+            <div className="flex flex-wrap items-center gap-3">
+              <Select
+                placeholder="全部判题状态"
+                allowClear
+                value={filterStatus}
+                onChange={(val) => {
+                  setFilterStatus(val);
+                  void loadSubmissions(1, val, filterChallengeId, filterUserId);
+                }}
+                size="small"
+                style={{ width: 150 }}
+                options={[
+                  { value: 'ACCEPTED', label: '✅ 通过 (ACCEPTED)' },
+                  { value: 'WRONG_ANSWER', label: '❌ 答案错误 (WRONG_ANSWER)' },
+                  { value: 'RUNTIME_ERROR', label: '⚠️ 运行错误 (RUNTIME_ERROR)' },
+                  { value: 'TIME_LIMIT_EXCEEDED', label: '⏱️ 超时 (TLE)' },
+                  { value: 'COMPILE_ERROR', label: '⚙️ 编译错误' },
+                ]}
+              />
+
+              <Select
+                placeholder="按关卡筛选"
+                allowClear
+                showSearch
+                optionFilterProp="label"
+                value={filterChallengeId}
+                onChange={(val) => {
+                  setFilterChallengeId(val);
+                  void loadSubmissions(1, filterStatus, val, filterUserId);
+                }}
+                size="small"
+                style={{ width: 220 }}
+                options={challenges.map((c) => ({
+                  value: c.id,
+                  label: `#${c.id} ${c.title} (${c.subtopicName || ''})`,
+                }))}
+              />
+
+              <Select
+                placeholder="按学员筛选"
+                allowClear
+                showSearch
+                optionFilterProp="label"
+                value={filterUserId}
+                onChange={(val) => {
+                  setFilterUserId(val);
+                  void loadSubmissions(1, filterStatus, filterChallengeId, val);
+                }}
+                size="small"
+                style={{ width: 160 }}
+                options={(users || []).map((u) => ({
+                  value: u.id,
+                  label: `@${u.username} (UID-${u.id})`,
+                }))}
+              />
+            </div>
+
+            <Button
+              size="small"
+              icon={<RefreshCw size={12} className={subLoading ? 'animate-spin' : ''} />}
+              onClick={() => void loadSubmissions(subPage)}
+            >
+              刷新
+            </Button>
+          </div>
+
+          {/* 提交记录表格 */}
+          <Table
+            dataSource={submissions}
+            rowKey="id"
+            size="small"
+            loading={subLoading}
+            pagination={{
+              current: subPage,
+              pageSize: subPageSize,
+              total: submissionsTotal,
+              showTotal: (total) => `共 ${total} 条提交记录`,
+              onChange: (p, ps) => {
+                setSubPage(p);
+                setSubPageSize(ps);
+                void loadSubmissions(p);
+              },
+            }}
+            columns={[
+              {
+                title: 'ID',
+                dataIndex: 'id',
+                width: 60,
+                render: (v: number) => <span className="font-mono text-indigo-400 text-xs">#{v}</span>,
+              },
+              {
+                title: '学员',
+                dataIndex: 'username',
+                width: 120,
+                render: (name: string, r: AdminSubmission) => (
+                  <span className="font-semibold text-purple-300 text-xs">
+                    @{name || `UID-${r.userId}`}
+                  </span>
+                ),
+              },
+              {
+                title: '关卡题目',
+                key: 'challenge',
+                ellipsis: true,
+                render: (_: any, r: AdminSubmission) => (
+                  <div className="text-xs">
+                    <span className="font-semibold text-slate-100">{r.challengeTitle}</span>
+                    <span className="text-slate-500 ml-1.5 text-[11px]">
+                      ({r.topicName || ''} / {r.subtopicName || ''})
+                    </span>
+                  </div>
+                ),
+              },
+              {
+                title: '状态',
+                dataIndex: 'status',
+                width: 130,
+                render: (status: string) => {
+                  const isAccepted = status === 'ACCEPTED';
+                  const isFailed = status === 'WRONG_ANSWER' || status === 'RUNTIME_ERROR';
+                  return (
+                    <Tag color={isAccepted ? 'green' : isFailed ? 'red' : 'gold'} className="text-[10px]">
+                      {status || 'UNKNOWN'}
+                    </Tag>
+                  );
+                },
+              },
+              {
+                title: '执行耗时',
+                dataIndex: 'executionTime',
+                width: 80,
+                render: (v?: number) => (
+                  <span className="font-mono text-slate-400 text-xs">
+                    {v !== undefined && v !== null ? `${v}ms` : '—'}
+                  </span>
+                ),
+              },
+              {
+                title: '提交时间',
+                dataIndex: 'submittedAt',
+                width: 140,
+                render: (val: string) => (
+                  <span className="text-slate-400 text-xs">
+                    {val ? val.replace('T', ' ').substring(0, 19) : '—'}
+                  </span>
+                ),
+              },
+              {
+                title: '操作',
+                key: 'actions',
+                width: 90,
+                render: (_: any, record: AdminSubmission) => (
+                  <Button
+                    size="small"
+                    type="primary"
+                    ghost
+                    icon={<Eye size={12} />}
+                    className="text-[10px]"
+                    onClick={() => setInspectingSub(record)}
+                  >
+                    查看代码
+                  </Button>
+                ),
+              },
+            ]}
+          />
+        </div>
+      ) : (
+        /* ===== 原有：关卡与草稿区 ===== */
+        <>
       {/* ===== 草稿审核区 ===== */}
       {drafts && drafts.length > 0 && (
         <div className="mb-6">
@@ -229,11 +490,17 @@ export default function ChallengeTab({ challenges, drafts, users, onApproveDraft
           { title: '可见', dataIndex: 'isPublic', width: 60,
             render: (v: any) => <Tag color={v === false ? 'orange' : 'green'} className="text-[10px]">{v === false ? '🔒' : '🌐'}</Tag>
           },
-          { title: '操作', key: 'actions', width: 90,
+          { title: '操作', key: 'actions', width: 120,
             render: (_: any, record: ChallengeRecord) => (
               <div className="flex gap-1">
                 <Button type="primary" ghost size="small" icon={<Edit3 size={12} />} loading={editLoading && editing?.id === record.id}
                   onClick={() => openEdit(record)} />
+                <Button size="small" icon={<History size={12} />} title="查看此题提交记录"
+                  onClick={() => {
+                    setActiveSection('submissions');
+                    setFilterChallengeId(record.id);
+                    void loadSubmissions(1, filterStatus, record.id, filterUserId);
+                  }} />
                 <Popconfirm title="确定删除此关卡？" onConfirm={() => onDeleteChallenge?.(record.id)}>
                   <Button size="small" icon={<Trash2 size={12} />} danger />
                 </Popconfirm>
@@ -280,6 +547,8 @@ export default function ChallengeTab({ challenges, drafts, users, onApproveDraft
             ]}
           />
         </div>
+      )}
+      </>
       )}
 
       {/* 编辑弹窗 */}
@@ -435,6 +704,92 @@ export default function ChallengeTab({ challenges, drafts, users, onApproveDraft
             )},
           ]} />
         </Form>
+        )}
+      </Modal>
+
+      {/* 提交代码详情查看弹窗 */}
+      <Modal
+        title={
+          inspectingSub ? (
+            <div className="flex items-center gap-2">
+              <Eye size={16} className="text-cyan-400" />
+              <span>学员提交代码详情 - 记录 #{inspectingSub.id}</span>
+            </div>
+          ) : ''
+        }
+        open={inspectingSub !== null}
+        onCancel={() => setInspectingSub(null)}
+        footer={[
+          <Button
+            key="copy"
+            icon={<Copy size={12} />}
+            onClick={() => {
+              if (inspectingSub?.code) {
+                void navigator.clipboard.writeText(inspectingSub.code);
+                message.success('已复制提交代码到剪贴板！');
+              }
+            }}
+          >
+            复制代码
+          </Button>,
+          <Button key="close" type="primary" onClick={() => setInspectingSub(null)}>
+            关闭
+          </Button>,
+        ]}
+        width={750}
+      >
+        {inspectingSub && (
+          <div className="space-y-4 my-2">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-slate-950 p-3 rounded-lg border border-slate-800 text-xs">
+              <div>
+                <span className="text-slate-500 block">提交学员</span>
+                <span className="font-semibold text-purple-300">
+                  @{inspectingSub.username} (UID-{inspectingSub.userId})
+                </span>
+              </div>
+              <div>
+                <span className="text-slate-500 block">关卡题目</span>
+                <span className="font-semibold text-slate-200">
+                  #{inspectingSub.challengeId} {inspectingSub.challengeTitle}
+                </span>
+              </div>
+              <div>
+                <span className="text-slate-500 block">判题状态</span>
+                <Tag color={inspectingSub.status === 'ACCEPTED' ? 'green' : 'red'}>
+                  {inspectingSub.status}
+                </Tag>
+              </div>
+              <div>
+                <span className="text-slate-500 block">耗时 / 时间</span>
+                <span className="text-slate-300">
+                  {inspectingSub.executionTime !== undefined && inspectingSub.executionTime !== null
+                    ? `${inspectingSub.executionTime}ms`
+                    : '—'}{' '}
+                  ·{' '}
+                  {inspectingSub.submittedAt
+                    ? inspectingSub.submittedAt.replace('T', ' ').substring(0, 19)
+                    : ''}
+                </span>
+              </div>
+            </div>
+
+            {inspectingSub.errorMessage && (
+              <div className="p-3 rounded-lg bg-red-950/40 border border-red-800 text-red-300 text-xs font-mono whitespace-pre-wrap">
+                <span className="font-bold block mb-1">判题诊断 / 报错信息：</span>
+                {inspectingSub.errorMessage}
+              </div>
+            )}
+
+            <div>
+              <div className="text-xs text-slate-400 font-mono mb-1.5 flex justify-between">
+                <span>提交代码 ({inspectingSub.language || 'python'})：</span>
+                <span className="text-slate-500">{inspectingSub.code?.length || 0} 字符</span>
+              </div>
+              <pre className="bg-[#030308] border border-slate-800 text-emerald-400 p-4 rounded-lg font-mono text-xs overflow-x-auto whitespace-pre-wrap select-all max-h-[50vh] leading-relaxed">
+                {inspectingSub.code}
+              </pre>
+            </div>
+          </div>
         )}
       </Modal>
     </Card>
