@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 import java.sql.Date;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -191,12 +192,41 @@ public class UserController {
             );
             exportMap.put("studySessions", studySessions);
 
-            // (6) 数据统计汇总
+            // (6) 星图挑战通关记录
+            List<Map<String, Object>> challengeRecords = Collections.emptyList();
+            try {
+                challengeRecords = jdbcTemplate.queryForList(
+                        "SELECT challenge_id, code_passed, thinking_score, completed_at FROM star_challenge_records WHERE user_id = ? ORDER BY completed_at DESC",
+                        userId
+                );
+            } catch (Exception ex) {
+                log.debug("导出挑战记录跳过: {}", ex.getMessage());
+            }
+            exportMap.put("challengeRecords", challengeRecords);
+
+            // (7) 成就记录
+            List<Map<String, Object>> achievements = Collections.emptyList();
+            try {
+                achievements = jdbcTemplate.queryForList(
+                        "SELECT achievement_id, title, description, earned_at FROM user_achievements WHERE user_id = ? ORDER BY earned_at DESC",
+                        userId
+                );
+            } catch (Exception ex) {
+                log.debug("导出成就记录跳过: {}", ex.getMessage());
+            }
+            exportMap.put("achievements", achievements);
+
+            // (8) 数据统计汇总
+            long completedChallenges = challengeRecords.stream()
+                    .filter(r -> Boolean.TRUE.equals(r.get("code_passed")) || Integer.valueOf(1).equals(r.get("code_passed")))
+                    .count();
             Map<String, Object> summary = new HashMap<>();
             summary.put("totalNotes", notes.size());
             summary.put("publicNotes", notes.stream().filter(n -> Boolean.TRUE.equals(n.get("is_public")) || Integer.valueOf(1).equals(n.get("is_public"))).count());
             summary.put("privateNotes", notes.stream().filter(n -> Boolean.FALSE.equals(n.get("is_public")) || Integer.valueOf(0).equals(n.get("is_public"))).count());
             summary.put("totalStudySessions", studySessions.size());
+            summary.put("completedChallenges", completedChallenges);
+            summary.put("unlockedAchievements", achievements.size());
             exportMap.put("summary", summary);
 
             // 格式化输出为规范的 JSON 排版

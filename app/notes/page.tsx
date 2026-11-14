@@ -91,6 +91,56 @@ export default function NotesPage() {
     tags: '',
     isPublic: false,
   });
+  const [autoSaveEnabled, setAutoSaveEnabled] = useState(true);
+  const [createDraftSavedAt, setCreateDraftSavedAt] = useState<string | null>(null);
+  const [pendingCreateDraft, setPendingCreateDraft] = useState<(typeof newNote & { savedAt?: string }) | null>(null);
+
+  // 同步全局自动保存设置
+  useEffect(() => {
+    setAutoSaveEnabled(localStorage.getItem('autoSave') !== 'false');
+    const onSettingsChange = (event: Event) => {
+      const detail = (event as CustomEvent<Record<string, any>>).detail || {};
+      if (typeof detail.autoSave === 'boolean') {
+        setAutoSaveEnabled(detail.autoSave);
+      }
+    };
+    window.addEventListener('partjava-settings-change', onSettingsChange);
+    return () => window.removeEventListener('partjava-settings-change', onSettingsChange);
+  }, []);
+
+  // 打开新建弹窗时检测未保存草稿
+  useEffect(() => {
+    if (!showCreateForm) return;
+    try {
+      const raw = localStorage.getItem('note_draft_create');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && (parsed.title?.trim() || parsed.content?.trim())) {
+          setPendingCreateDraft(parsed);
+        } else {
+          setPendingCreateDraft(null);
+        }
+      } else {
+        setPendingCreateDraft(null);
+      }
+    } catch {
+      setPendingCreateDraft(null);
+    }
+  }, [showCreateForm]);
+
+  // 新建笔记自动防抖保存草稿（800ms）
+  useEffect(() => {
+    if (!showCreateForm || !autoSaveEnabled) return;
+    if (!newNote.title.trim() && !newNote.content.trim()) return;
+    const timer = setTimeout(() => {
+      try {
+        const savedAt = new Date().toLocaleTimeString('zh-CN', { hour12: false });
+        localStorage.setItem('note_draft_create', JSON.stringify({ ...newNote, savedAt }));
+        setCreateDraftSavedAt(savedAt);
+      } catch {}
+    }, 800);
+    return () => clearTimeout(timer);
+  }, [showCreateForm, autoSaveEnabled, newNote]);
 
   // 滚动恢复：优先锚点，降级 Y 坐标
   const doScrollRestore = (noteId: string | null, y: number) => {
@@ -458,6 +508,9 @@ export default function NotesPage() {
       if (response.ok) {
         const data = await response.json();
 
+        localStorage.removeItem('note_draft_create');
+        setCreateDraftSavedAt(null);
+        setPendingCreateDraft(null);
         setShowCreateForm(false);
         setNewNote({
           title: '',
@@ -852,7 +905,14 @@ export default function NotesPage() {
           <div className="bg-surface-raised rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex justify-between items-center mb-4">
-                <h2 className="text-2xl font-bold">创建新笔记</h2>
+                <div className="flex items-center gap-3">
+                  <h2 className="text-2xl font-bold">创建新笔记</h2>
+                  {autoSaveEnabled && createDraftSavedAt && (
+                    <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">
+                      ✓ 已自动保存草稿 {createDraftSavedAt}
+                    </span>
+                  )}
+                </div>
                 <button
                   onClick={() => setShowCreateForm(false)}
                   className="text-content-muted hover:text-content-primary"
@@ -860,6 +920,44 @@ export default function NotesPage() {
                   ✕
                 </button>
               </div>
+
+              {pendingCreateDraft && (
+                <div className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-amber-300/70 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-600/40 px-3 py-2 text-xs text-amber-800 dark:text-amber-200">
+                  <span>
+                    检测到上次未提交的本地草稿{pendingCreateDraft.savedAt ? `（${pendingCreateDraft.savedAt}）` : ''}，是否恢复？
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setNewNote({
+                          title: pendingCreateDraft.title || '',
+                          content: pendingCreateDraft.content || '',
+                          category: pendingCreateDraft.category || '',
+                          technology: pendingCreateDraft.technology || '',
+                          subcategory: pendingCreateDraft.subcategory || '',
+                          tags: pendingCreateDraft.tags || '',
+                          isPublic: Boolean(pendingCreateDraft.isPublic),
+                        });
+                        setPendingCreateDraft(null);
+                      }}
+                      className="px-2.5 py-1 rounded bg-amber-600 text-white hover:bg-amber-700 font-medium"
+                    >
+                      恢复草稿
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        localStorage.removeItem('note_draft_create');
+                        setPendingCreateDraft(null);
+                      }}
+                      className="px-2 py-1 rounded border border-amber-400/60 hover:bg-amber-100 dark:hover:bg-amber-900/40"
+                    >
+                      忽略
+                    </button>
+                  </div>
+                </div>
+              )}
 
               {/* 模板选择区域 */}
               <div className="mb-4">

@@ -82,4 +82,7 @@ public class User {
 
     @TableField("draft_count")
     private Integer draftCount; // 本月已出题数
+
+    @TableField("public_profile")
+    private Integer publicProfile; // 0=私密, 1=公开
 }

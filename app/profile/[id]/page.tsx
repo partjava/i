@@ -19,8 +19,9 @@ export default function UserProfilePage() {
       .then(async (res) => {
         if (!res.ok) throw new Error("用户不存在");
         const data = await res.json();
-        // API 返回 { success, user } 结构，这里只取 user 部分
-        setUser(data.user || data);
+        // 解包 ApiResponse<{ data }> 或 { user } 格式
+        const profileUser = data?.data ?? data?.user ?? (data?.id ? data : null);
+        setUser(profileUser);
       })
       .catch(() => {
         message.error("用户不存在或已注销");
@@ -62,8 +63,13 @@ export default function UserProfilePage() {
               />
             </div>
             <Title level={2} className="mb-2">
-              {user.name || user.username || "未设置用户名"}
+              {user.name || user.nickname || user.username || "未设置用户名"}
             </Title>
+            {user.publicProfile === 0 && (
+              <div className="max-w-md mx-auto my-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                🔒 该用户已开启隐私保护，仅展示基础名片
+              </div>
+            )}
             <Space direction="vertical" size="middle" className="mb-4">
               {user.email && (
                 <Tag icon={<MailOutlined />} color="blue">

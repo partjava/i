@@ -80,15 +80,15 @@ export default function DashboardTab({
     ]
   };
 
-  // ECharts Pie Option — 合理分布
-  const total = (stats?.challenges || 1);
+  // ECharts Pie Option — 优先使用真实关卡阶段分布
+  const stageDist = Array.isArray(stats?.stageDistribution) ? stats.stageDistribution : [];
   const pieOption = {
     backgroundColor: 'transparent',
     tooltip: { trigger: 'item', formatter: '{a} <br/>{b} : {c} ({d}%)' },
-    legend: { bottom: '0', left: 'center', textStyle: { color: '#94a3b8' } },
+    legend: { bottom: '0', left: 'center', textStyle: { color: '#94a3b8' }, type: 'scroll' },
     series: [
       {
-        name: '关卡技术栈分布',
+        name: '关卡阶段分布',
         type: 'pie',
         radius: ['45%', '70%'],
         avoidLabelOverlap: false,
@@ -96,13 +96,9 @@ export default function DashboardTab({
         label: { show: false, position: 'center' },
         emphasis: { label: { show: true, fontSize: 14, fontWeight: 'bold', color: '#fff' } },
         labelLine: { show: false },
-        data: [
-          { value: Math.max(1, Math.round(total * 0.3)), name: '基础概念' },
-          { value: Math.max(1, Math.round(total * 0.2)), name: 'Python编程' },
-          { value: Math.max(1, Math.round(total * 0.2)), name: '数据结构' },
-          { value: Math.max(1, Math.round(total * 0.15)), name: '算法' },
-          { value: Math.max(1, Math.round(total * 0.15)), name: '数据库' }
-        ]
+        data: stageDist.length > 0
+          ? stageDist.map((item: any) => ({ value: Number(item.value || 0), name: item.name || `阶段 ${item.stageId}` }))
+          : [{ value: stats?.challenges || 0, name: '暂无阶段分布数据' }]
       }
     ]
   };
@@ -138,7 +134,7 @@ export default function DashboardTab({
             <Statistic
               title={<span className="text-slate-400">沙箱评测容器</span>}
               value={containers.filter(c => c.status === 'RUNNING').length}
-              suffix="/ 10"
+              suffix={`/ ${containers.length || 3}`}
               prefix={<Cpu className="text-amber-400 mr-2" size={20} />}
               valueStyle={{ color: '#fff', fontWeight: 900 }}
             />
@@ -207,7 +203,7 @@ export default function DashboardTab({
         </Col>
         
         <Col xs={24} lg={12}>
-          <TerminalConsole users={users} onLogAdd={onLogAdd} sysInfo={sysInfo} />
+          <TerminalConsole users={users} onLogAdd={onLogAdd} sysInfo={sysInfo} stats={stats} logs={logs} containers={containers} />
         </Col>
       </Row>
 

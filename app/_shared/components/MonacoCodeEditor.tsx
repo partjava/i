@@ -395,9 +395,69 @@ const registerAtomOneThemes = (monaco: any) => {
         'editor.foreground': '#383a42',
       },
     });
+
+    monaco.editor.defineTheme('monokai', {
+      base: 'vs-dark',
+      inherit: true,
+      rules: [
+        { token: '', foreground: 'f8f8f2' },
+        { token: 'comment', foreground: '75715e', fontStyle: 'italic' },
+        { token: 'keyword', foreground: 'f92672' },
+        { token: 'storage', foreground: '66d9ef', fontStyle: 'italic' },
+        { token: 'storage.type', foreground: '66d9ef', fontStyle: 'italic' },
+        { token: 'string', foreground: 'e6db74' },
+        { token: 'number', foreground: 'ae81ff' },
+        { token: 'entity.name.function', foreground: 'a6e22e' },
+        { token: 'support.function', foreground: '66d9ef' },
+        { token: 'entity.name.type', foreground: 'a6e22e' },
+        { token: 'variable', foreground: 'f8f8f2' },
+        { token: 'operator', foreground: 'f92672' },
+      ],
+      colors: {
+        'editor.background': '#272822',
+        'editor.foreground': '#f8f8f2',
+        'editorCursor.foreground': '#f8f8f0',
+        'editor.selectionBackground': '#49483e',
+        'editorLineNumber.foreground': '#90908a',
+      },
+    });
+
+    monaco.editor.defineTheme('github', {
+      base: 'vs',
+      inherit: true,
+      rules: [
+        { token: '', foreground: '24292e' },
+        { token: 'comment', foreground: '6a737d', fontStyle: 'italic' },
+        { token: 'keyword', foreground: 'd73a49' },
+        { token: 'storage', foreground: 'd73a49' },
+        { token: 'storage.type', foreground: 'd73a49' },
+        { token: 'string', foreground: '032f62' },
+        { token: 'number', foreground: '005cc5' },
+        { token: 'entity.name.function', foreground: '6f42c1' },
+        { token: 'support.function', foreground: '005cc5' },
+        { token: 'entity.name.type', foreground: 'e36209' },
+        { token: 'variable', foreground: '24292e' },
+        { token: 'operator', foreground: 'd73a49' },
+      ],
+      colors: {
+        'editor.background': '#f6f8fa',
+        'editor.foreground': '#24292e',
+        'editorLineNumber.foreground': '#959da5',
+        'editor.selectionBackground': '#0366d625',
+      },
+    });
   } catch (e) {
     console.warn('registerAtomOneThemes warning:', e);
   }
+};
+
+type MonacoEditorTheme = 'atom-one-dark' | 'atom-one-light' | 'monokai' | 'github';
+
+const mapSettingCodeTheme = (val: string | null): MonacoEditorTheme => {
+  if (val === 'vs-light') return 'atom-one-light';
+  if (val === 'monokai') return 'monokai';
+  if (val === 'github') return 'github';
+  return 'atom-one-dark';
 };
 
 export default function MonacoCodeEditor({
@@ -427,7 +487,7 @@ export default function MonacoCodeEditor({
     }
   }, [externalCode, externalLanguage, externalVersion]);
   const [input, setInput] = useState<string>('');
-  const [theme, setTheme] = useState<'atom-one-dark' | 'atom-one-light'>('atom-one-dark');
+  const [theme, setTheme] = useState<MonacoEditorTheme>('atom-one-dark');
   const [rightTab, setRightTab] = useState<'console' | 'trace'>('console');
   const [tracePlaySignal, setTracePlaySignal] = useState<number>(0);
   const [isStdinOpen, setIsStdinOpen] = useState<boolean>(false);
@@ -442,7 +502,49 @@ export default function MonacoCodeEditor({
   const [showPatchModal, setShowPatchModal] = useState(false);
 
   const editorRef = useRef<any>(null);
+  const monacoRef = useRef<any>(null);
   const decorationsRef = useRef<any[]>([]);
+
+  // 初始化与监听全局设置中心的代码编辑器主题配置
+  useEffect(() => {
+    const syncTheme = (rawTheme: string | null) => {
+      const mapped = mapSettingCodeTheme(rawTheme);
+      setTheme(mapped);
+      try {
+        monacoRef.current?.editor?.setTheme(mapped);
+      } catch {}
+    };
+
+    syncTheme(localStorage.getItem('codeTheme'));
+
+    const onSettingsChange = (event: Event) => {
+      const detail = (event as CustomEvent<Record<string, any>>).detail || {};
+      if (typeof detail.codeTheme === 'string') {
+        syncTheme(detail.codeTheme);
+      }
+    };
+    const onStorageChange = (event: StorageEvent) => {
+      if (event.key === 'codeTheme') {
+        syncTheme(event.newValue);
+      }
+    };
+
+    window.addEventListener('partjava-settings-change', onSettingsChange);
+    window.addEventListener('storage', onStorageChange);
+    return () => {
+      window.removeEventListener('partjava-settings-change', onSettingsChange);
+      window.removeEventListener('storage', onStorageChange);
+    };
+  }, []);
+
+  // 从栈帧追踪切换回控制台时，清理残留行高亮装饰器
+  useEffect(() => {
+    if (rightTab === 'console' && editorRef.current && decorationsRef.current.length > 0) {
+      try {
+        decorationsRef.current = editorRef.current.deltaDecorations(decorationsRef.current, []);
+      } catch {}
+    }
+  }, [rightTab]);
 
   // 执行引擎
   const { output, setOutput, isRunning, runCode, cancelRun, stale } =
@@ -558,10 +660,13 @@ export default function MonacoCodeEditor({
   // 编辑器挂载
   const handleEditorDidMount = (editor: any, monaco: any) => {
     editorRef.current = editor;
+    monacoRef.current = monaco;
     setEditorLoaded(true);
 
     registerAtomOneThemes(monaco);
-    monaco.editor.setTheme(theme);
+    const activeTheme = mapSettingCodeTheme(localStorage.getItem('codeTheme'));
+    setTheme(activeTheme);
+    monaco.editor.setTheme(activeTheme);
 
     editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => {
       void runCodeRef.current();
@@ -950,13 +1055,22 @@ ${output ? `### 终端运行输出\n\`\`\`\n${output}\n\`\`\`\n` : ''}
             </Tooltip>
 
             {/* 主题切换 */}
-            <Tooltip title={theme === 'atom-one-dark' ? '切换浅色主题' : '切换深色主题'}>
+            <Tooltip title={theme === 'atom-one-dark' || theme === 'monokai' ? '切换浅色主题' : '切换深色主题'}>
               <button
                 type="button"
-                onClick={() => setTheme(theme === 'atom-one-dark' ? 'atom-one-light' : 'atom-one-dark')}
+                onClick={() => {
+                  const isDarkTheme = theme === 'atom-one-dark' || theme === 'monokai';
+                  const nextMonacoTheme: MonacoEditorTheme = isDarkTheme ? 'atom-one-light' : 'atom-one-dark';
+                  const nextSettingTheme = isDarkTheme ? 'vs-light' : 'vs-dark';
+                  setTheme(nextMonacoTheme);
+                  localStorage.setItem('codeTheme', nextSettingTheme);
+                  window.dispatchEvent(
+                    new CustomEvent('partjava-settings-change', { detail: { codeTheme: nextSettingTheme } })
+                  );
+                }}
                 className="p-1.5 sm:p-2 rounded-lg bg-white/5 hover:bg-white/10 hover:text-slate-100 text-slate-300 transition"
               >
-                {theme === 'atom-one-dark' ? (
+                {theme === 'atom-one-dark' || theme === 'monokai' ? (
                   <Sun className="w-4 h-4 text-amber-300" />
                 ) : (
                   <Moon className="w-4 h-4 text-indigo-300" />
@@ -1301,12 +1415,15 @@ ${output ? `### 终端运行输出\n\`\`\`\n${output}\n\`\`\`\n` : ''}
                 language={language}
                 playSignal={tracePlaySignal}
                 onLoadScenarioCode={(newCode, newLang) => {
+                  const targetLang = newLang || 'cpp';
                   setCode(newCode);
-                  setLanguage(newLang || 'cpp');
+                  setLanguage(targetLang);
                   if (editorRef.current && editorRef.current.getValue() !== newCode) {
                     editorRef.current.setValue(newCode);
                   }
-                  message.success('已载入 C++ 经典算法代码并启动栈帧回放');
+                  const langLabel =
+                    targetLang === 'python' ? 'Python' : targetLang === 'java' ? 'Java' : 'C++';
+                  message.success(`已载入 ${langLabel} 经典算法代码并启动栈帧回放`);
                 }}
                 onHighlightLine={handleHighlightLine}
               />

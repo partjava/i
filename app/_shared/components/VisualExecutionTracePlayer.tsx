@@ -18,6 +18,7 @@ import {
   TraceScenario,
   TraceStep,
   generateAdHocTraceFromCode,
+  getScenarioForLanguage,
 } from '@shared/lib/visual-trace-engine';
 
 interface VisualExecutionTracePlayerProps {
@@ -36,32 +37,40 @@ export default function VisualExecutionTracePlayer({
   onHighlightLine,
 }: VisualExecutionTracePlayerProps) {
   const [selectedScenarioId, setSelectedScenarioId] = useState<string>('binary-search');
-  const [activeScenario, setActiveScenario] = useState<TraceScenario>(CLASSIC_TRACE_SCENARIOS[0]);
+  const [activeScenario, setActiveScenario] = useState<TraceScenario>(() =>
+    getScenarioForLanguage('binary-search', language)
+  );
   const [stepIndex, setStepIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
-  const [speedMs, setSpeedMs] = useState(900); // 0.9秒/步
+  const [speedMs, setSpeedMs] = useState(900); // 1x = 0.9秒/步
 
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const didInitRef = useRef(false);
 
-  // 首次打开栈帧面板时，若左侧还是简短默认 Hello World 模板，自动载入当前 C++ 演示算法代码并开始播放
+  // 首次打开栈帧面板时，若左侧还是简短默认 Hello World 模板，自动载入匹配当前语言的演示算法代码并开始播放
   useEffect(() => {
     if (didInitRef.current) return;
     didInitRef.current = true;
     if (currentCode.includes('Hello, PartJava Cloud Studio') && onLoadScenarioCode) {
-      onLoadScenarioCode(CLASSIC_TRACE_SCENARIOS[0].code, CLASSIC_TRACE_SCENARIOS[0].language);
+      const scenario = getScenarioForLanguage('binary-search', language);
+      setActiveScenario(scenario);
+      onLoadScenarioCode(scenario.code, scenario.language);
     }
-  }, [currentCode, onLoadScenarioCode]);
+  }, [currentCode, language, onLoadScenarioCode]);
 
   // 响应顶部「运行代码」按钮触发：自动从头开始回放当前场景或当前代码
   useEffect(() => {
     if (!playSignal) return;
+    const trimmed = currentCode.trim();
     const matched = CLASSIC_TRACE_SCENARIOS.find(
-      s => s.code.trim() === currentCode.trim()
+      (s) =>
+        s.code.trim() === trimmed ||
+        Object.values(s.codeByLang || {}).some((c) => c.trim() === trimmed)
     );
     if (matched) {
+      const scenario = getScenarioForLanguage(matched.id, language);
       setSelectedScenarioId(matched.id);
-      setActiveScenario(matched);
+      setActiveScenario(scenario);
     } else {
       const steps = generateAdHocTraceFromCode(currentCode, language);
       setSelectedScenarioId('current-code');
@@ -79,7 +88,7 @@ export default function VisualExecutionTracePlayer({
     setIsPlaying(true);
   }, [playSignal]);
 
-  // 切换经典算法模板（载入代码并立即自动启动逐帧回放）
+  // 切换经典算法模板（保持用户当前语言并立即启动逐帧回放）
   const handleSelectScenario = (scenarioId: string) => {
     setSelectedScenarioId(scenarioId);
     if (scenarioId === 'current-code') {
@@ -96,15 +105,13 @@ export default function VisualExecutionTracePlayer({
       setStepIndex(0);
       setIsPlaying(true);
     } else {
-      const found = CLASSIC_TRACE_SCENARIOS.find(s => s.id === scenarioId);
-      if (found) {
-        setActiveScenario(found);
-        setStepIndex(0);
-        if (onLoadScenarioCode) {
-          onLoadScenarioCode(found.code, found.language);
-        }
-        setIsPlaying(true);
+      const scenario = getScenarioForLanguage(scenarioId, language);
+      setActiveScenario(scenario);
+      setStepIndex(0);
+      if (onLoadScenarioCode) {
+        onLoadScenarioCode(scenario.code, scenario.language);
       }
+      setIsPlaying(true);
     }
   };
 
@@ -130,6 +137,8 @@ export default function VisualExecutionTracePlayer({
 
   const currentStep: TraceStep =
     activeScenario.steps[stepIndex] || activeScenario.steps[0];
+  const prevStep: TraceStep | null =
+    stepIndex > 0 ? activeScenario.steps[stepIndex - 1] || null : null;
 
   // 同步高亮行
   useEffect(() => {
@@ -138,11 +147,27 @@ export default function VisualExecutionTracePlayer({
     }
   }, [currentStep?.line, onHighlightLine]);
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      setIsPlaying(false);
+      setStepIndex((prev) => Math.max(0, prev - 1));
+    } else if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      setIsPlaying(false);
+      setStepIndex((prev) => Math.min(activeScenario.steps.length - 1, prev + 1));
+    }
+  };
+
   const arrayNames = Object.keys(currentStep.arrays || {});
   const variableEntries = Object.entries(currentStep.variables || {});
 
   return (
-    <div className="flex flex-col h-full bg-[#080b14] text-slate-200 border-t border-slate-800/80 overflow-hidden font-sans">
+    <div
+      tabIndex={0}
+      onKeyDown={handleKeyDown}
+      className="flex flex-col h-full bg-[#080b14] text-slate-200 border-t border-slate-800/80 overflow-hidden font-sans outline-none"
+    >
       {/* 顶部场景选择胶囊 */}
       <div className="px-4 py-2.5 bg-slate-900/90 border-b border-slate-800 flex flex-wrap items-center justify-between gap-2 shrink-0">
         <div className="flex items-center gap-2">
@@ -260,8 +285,9 @@ export default function VisualExecutionTracePlayer({
           <span className="text-slate-500 mr-1">速度:</span>
           {[
             { label: '0.5x', ms: 1600 },
-            { label: '1x', ms: 1000 },
-            { label: '2x', ms: 500 },
+            { label: '1x', ms: 900 },
+            { label: '1.5x', ms: 650 },
+            { label: '2x', ms: 400 },
           ].map(s => (
             <button
               key={s.label}
@@ -275,6 +301,9 @@ export default function VisualExecutionTracePlayer({
               {s.label}
             </button>
           ))}
+          <span className="hidden xl:inline-block text-[10px] text-slate-500 ml-1.5">
+            ←/→单步
+          </span>
         </div>
       </div>
 
@@ -309,14 +338,18 @@ export default function VisualExecutionTracePlayer({
                 const activeSpec = currentStep.activeArrayIndices?.find(
                   a => a.arrayName === arrName
                 );
+                const maxAbsVal = Math.max(
+                  1,
+                  ...arr.map((item) => (typeof item === 'number' ? Math.abs(item) : 0))
+                );
                 return (
                   <div key={arrName} className="space-y-1.5">
                     <div className="text-xs font-mono text-slate-400">
                       <span className="text-emerald-400">{arrName}</span> [{arr.length}]
                     </div>
 
-                    {/* 数组格子横向排布：完全杜绝纵向滑动条与下方徽标遮挡问题 */}
-                    <div className="flex items-start gap-2 overflow-x-auto overflow-y-hidden pt-1 pb-3 custom-scrollbar">
+                    {/* 数组格子横向排布：上方迷你数值比例条 + 下方游标 */}
+                    <div className="flex items-end gap-2 overflow-x-auto overflow-y-hidden pt-1 pb-3 custom-scrollbar">
                       {arr.map((val, idx) => {
                         const isActive = activeSpec?.indices.includes(idx);
                         const status = activeSpec?.status;
@@ -327,6 +360,17 @@ export default function VisualExecutionTracePlayer({
                               ? 'bg-purple-950/80 border-purple-400 text-purple-200'
                               : 'bg-amber-950/80 border-amber-400 text-amber-200'
                           : 'bg-slate-950 border-slate-800 text-slate-200';
+                        const barColor = isActive
+                          ? status === 'found'
+                            ? 'bg-emerald-400'
+                            : status === 'swap'
+                              ? 'bg-purple-400'
+                              : 'bg-amber-400'
+                          : 'bg-indigo-500/70';
+                        const barHeightPx =
+                          typeof val === 'number'
+                            ? Math.max(4, Math.round((Math.abs(val) / maxAbsVal) * 22))
+                            : 6;
 
                         // 查找指向当前下标的游标指针
                         const matchedPointers = currentStep.pointers.filter(
@@ -335,6 +379,14 @@ export default function VisualExecutionTracePlayer({
 
                         return (
                           <div key={idx} className="flex flex-col items-center shrink-0">
+                            {/* 迷你数值比例柱状条 */}
+                            <div className="w-11 h-6 flex items-end justify-center mb-1 px-2">
+                              <div
+                                className={`w-full rounded-t transition-all duration-300 ${barColor}`}
+                                style={{ height: `${barHeightPx}px` }}
+                                title={`${arrName}[${idx}] = ${String(val)}`}
+                              />
+                            </div>
                             {/* 数组下标 */}
                             <span className="text-[10px] font-mono text-slate-500 mb-1">
                               [{idx}]
@@ -384,28 +436,31 @@ export default function VisualExecutionTracePlayer({
               {currentStep.callStack.map((frame, fIdx) => {
                 const isTop = fIdx === currentStep.callStack.length - 1;
                 return (
-                  <div
+                  <button
+                    type="button"
                     key={fIdx}
-                    className={`px-3 py-1.5 rounded-lg border text-xs font-mono flex items-center justify-between transition-all ${
+                    onClick={() => onHighlightLine && frame.line && onHighlightLine(frame.line)}
+                    title={`点击定位到第 ${frame.line} 行`}
+                    className={`w-full text-left px-3 py-1.5 rounded-lg border text-xs font-mono flex items-center justify-between transition-all cursor-pointer ${
                       isTop
-                        ? 'bg-sky-950/40 border-sky-500/40 text-sky-200 font-bold'
-                        : 'bg-slate-950/60 border-slate-800 text-slate-400'
+                        ? 'bg-sky-950/40 border-sky-500/40 text-sky-200 font-bold hover:border-sky-400'
+                        : 'bg-slate-950/60 border-slate-800 text-slate-400 hover:border-indigo-400/50 hover:text-slate-200'
                     }`}
                   >
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 truncate">
                       <span className="text-[10px] text-slate-500">[{fIdx}]</span>
-                      <span>{frame.name}</span>
+                      <span className="truncate">{frame.name}</span>
                     </div>
-                    <span className="text-[11px] text-slate-500">
-                      {isTop ? 'TOP' : `行 ${frame.line}`}
+                    <span className="text-[11px] text-slate-500 shrink-0 ml-2">
+                      {isTop ? `TOP · 行 ${frame.line}` : `行 ${frame.line}`}
                     </span>
-                  </div>
+                  </button>
                 );
               })}
             </div>
           </div>
 
-          {/* 局部变量表 */}
+          {/* 局部变量表（含与上一帧 Diff 变化高亮） */}
           <div className="p-3.5 bg-slate-900/50 border border-slate-800 rounded-xl">
             <div className="flex items-center gap-2 mb-2.5 text-xs font-bold text-slate-300">
               <Table className="w-3.5 h-3.5 text-emerald-400" />
@@ -414,17 +469,52 @@ export default function VisualExecutionTracePlayer({
 
             {variableEntries.length > 0 ? (
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-36 overflow-y-auto custom-scrollbar pr-1">
-                {variableEntries.map(([k, v]) => (
-                  <div
-                    key={k}
-                    className="p-2 rounded-lg bg-slate-950 border border-slate-800 flex flex-col justify-between"
-                  >
-                    <span className="text-[11px] font-mono text-slate-400">{k}</span>
-                    <span className="text-xs font-mono font-bold text-emerald-300 truncate">
-                      {String(v)}
-                    </span>
-                  </div>
-                ))}
+                {variableEntries.map(([k, v]) => {
+                  const prevVars = prevStep?.variables || {};
+                  const hadPrev = Object.prototype.hasOwnProperty.call(prevVars, k);
+                  const prevVal = prevVars[k];
+                  const isNew = Boolean(prevStep && !hadPrev);
+                  const isChanged = Boolean(prevStep && hadPrev && String(prevVal) !== String(v));
+
+                  return (
+                    <div
+                      key={k}
+                      className={`p-2 rounded-lg border flex flex-col justify-between transition-all ${
+                        isChanged
+                          ? 'bg-amber-950/35 border-amber-400/70 shadow-[0_0_10px_rgba(251,191,36,0.2)]'
+                          : isNew
+                            ? 'bg-emerald-950/35 border-emerald-400/60 shadow-[0_0_10px_rgba(16,185,129,0.2)]'
+                            : 'bg-slate-950 border-slate-800'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-1">
+                        <span className="text-[11px] font-mono text-slate-400 truncate">{k}</span>
+                        {isNew && (
+                          <span className="px-1 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-400/40 text-[9px] font-mono font-bold shrink-0">
+                            NEW
+                          </span>
+                        )}
+                      </div>
+                      {isChanged ? (
+                        <div className="text-xs font-mono font-bold text-amber-300 truncate mt-0.5" title={`${String(prevVal)} → ${String(v)}`}>
+                          <span className="text-slate-400 line-through mr-1 text-[10px]">
+                            {String(prevVal)}
+                          </span>
+                          <span className="text-amber-400 mr-1">→</span>
+                          <span>{String(v)}</span>
+                        </div>
+                      ) : (
+                        <span
+                          className={`text-xs font-mono font-bold truncate mt-0.5 ${
+                            isNew ? 'text-emerald-300' : 'text-emerald-300'
+                          }`}
+                        >
+                          {String(v)}
+                        </span>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             ) : (
               <div className="text-xs text-slate-500 py-6 text-center">当前暂无标量变量</div>

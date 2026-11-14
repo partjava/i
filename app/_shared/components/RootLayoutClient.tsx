@@ -36,6 +36,19 @@ export default function RootLayoutClient({ children }: RootLayoutClientProps) {
     };
     window.addEventListener('keydown', onKeyDown);
     
+    // 应用全站字号设置
+    const applyFontSizeSetting = (size: string | null) => {
+      const root = document.documentElement;
+      if (size === 'small') {
+        root.style.fontSize = '14px';
+      } else if (size === 'large') {
+        root.style.fontSize = '18px';
+      } else {
+        root.style.fontSize = '16px';
+      }
+    };
+    applyFontSizeSetting(localStorage.getItem('fontSize'));
+
     // 从 localStorage 读取主题设置
     const savedTheme = localStorage.getItem('theme');
     
@@ -53,6 +66,31 @@ export default function RootLayoutClient({ children }: RootLayoutClientProps) {
         localStorage.setItem('theme', 'light');
       }
     }
+
+    // 监听设置页实时变更广播与跨标签页 storage 同步
+    const handleSettingsChange = (event: Event) => {
+      const detail = (event as CustomEvent<Record<string, any>>).detail || {};
+      if (detail.theme === 'dark') {
+        document.body.classList.add('dark');
+      } else if (detail.theme === 'light') {
+        document.body.classList.remove('dark');
+      }
+      if (typeof detail.fontSize === 'string') {
+        applyFontSizeSetting(detail.fontSize);
+      }
+    };
+
+    const handleStorageChange = (event: StorageEvent) => {
+      if (event.key === 'theme') {
+        if (event.newValue === 'dark') document.body.classList.add('dark');
+        else document.body.classList.remove('dark');
+      } else if (event.key === 'fontSize') {
+        applyFontSizeSetting(event.newValue);
+      }
+    };
+
+    window.addEventListener('partjava-settings-change', handleSettingsChange);
+    window.addEventListener('storage', handleStorageChange);
     
     // 监听系统主题变化
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
@@ -72,6 +110,8 @@ export default function RootLayoutClient({ children }: RootLayoutClientProps) {
     return () => {
       mediaQuery.removeEventListener('change', handleChange);
       window.removeEventListener('keydown', onKeyDown);
+      window.removeEventListener('partjava-settings-change', handleSettingsChange);
+      window.removeEventListener('storage', handleStorageChange);
     };
   }, []);
 

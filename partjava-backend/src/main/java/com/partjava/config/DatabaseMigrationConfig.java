@@ -67,7 +67,8 @@ public class DatabaseMigrationConfig {
                     "ALTER TABLE users ADD COLUMN vip TINYINT(1) DEFAULT 0 COMMENT '是否为VIP: 0=否, 1=是';",
                     "ALTER TABLE users ADD COLUMN vip_level INT DEFAULT 0 COMMENT '会员等级';",
                     "ALTER TABLE users ADD COLUMN vip_expire_time TIMESTAMP NULL DEFAULT NULL COMMENT '会员到期时间';",
-                    "ALTER TABLE users ADD COLUMN draft_count INT DEFAULT 0 COMMENT '当月已出题数';"
+                    "ALTER TABLE users ADD COLUMN draft_count INT DEFAULT 0 COMMENT '当月已出题数';",
+                    "ALTER TABLE users ADD COLUMN public_profile TINYINT(1) DEFAULT 1 COMMENT '是否公开个人资料: 0=私密, 1=公开';"
             };
             for (String colSql : userColumns) {
                 try {
@@ -123,6 +124,21 @@ public class DatabaseMigrationConfig {
                 log.info("challenge_submissions_ibfk_1 外键约束移除成功");
             } catch (Exception e) {
                 log.debug("challenge_submissions_ibfk_1 可能已移除: {}", e.getMessage());
+            }
+
+            // 9. 补齐 star_challenge_records 与 challenge_submissions 字段
+            String[] extraDdls = {
+                    "ALTER TABLE star_challenge_records ADD COLUMN best_code LONGTEXT NULL COMMENT '最优代码备份';",
+                    "ALTER TABLE star_challenge_records ADD COLUMN last_code LONGTEXT NULL COMMENT '最后一次提交代码';",
+                    "ALTER TABLE challenge_submissions MODIFY COLUMN status VARCHAR(64) DEFAULT 'pending' COMMENT '评测状态';",
+                    "ALTER TABLE challenge_submissions ADD COLUMN error_message TEXT NULL COMMENT '评测错误信息';"
+            };
+            for (String ddl : extraDdls) {
+                try {
+                    jdbcTemplate.execute(ddl);
+                } catch (Exception e) {
+                    log.debug("挑战记录/提交表迁移跳过: {}", e.getMessage());
+                }
             }
 
             log.info("数据库 DDL 自动迁移成功！");

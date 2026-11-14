@@ -19,6 +19,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestAttribute;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -102,7 +103,8 @@ public class UserExtendedController {
 
     @GetMapping("/profile-by-id")
     public ApiResponse<User> getProfileById(@RequestParam(value = "id", required = false) Long id,
-                                            @RequestParam(value = "userId", required = false) Long queryUserId) {
+                                            @RequestParam(value = "userId", required = false) Long queryUserId,
+                                            @RequestAttribute(value = "userId", required = false) Integer requesterUserId) {
         Long targetId = id != null ? id : queryUserId;
         if (targetId == null) {
             throw new IllegalArgumentException("Missing user id");
@@ -110,8 +112,55 @@ public class UserExtendedController {
         User user = userMapper.selectById(targetId);
         if (user != null) {
             user.setPasswordHash(null);
+            boolean isPrivate = user.getPublicProfile() != null && user.getPublicProfile() == 0;
+            boolean isSelf = requesterUserId != null && Long.valueOf(requesterUserId.longValue()).equals(targetId);
+            if (isPrivate && !isSelf) {
+                user.setEmail(null);
+                user.setGithub(null);
+                user.setWebsite(null);
+                user.setLocation(null);
+                user.setBio("🔒 该用户已将个人资料设为私密");
+            }
         }
         return ApiResponse.success(user);
+    }
+
+    @GetMapping("/settings")
+    public ApiResponse<Map<String, Object>> getUserSettings(@RequestAttribute(value = "userId", required = false) Integer userId) {
+        if (userId == null) {
+            throw new IllegalArgumentException("未登录或登录已过期");
+        }
+        User user = userMapper.selectById(Long.valueOf(userId));
+        if (user == null) {
+            throw new IllegalArgumentException("用户不存在");
+        }
+        Map<String, Object> settings = new HashMap<>();
+        settings.put("publicProfile", user.getPublicProfile() == null || user.getPublicProfile() != 0);
+        settings.put("email", user.getEmail() != null ? user.getEmail() : "");
+        settings.put("emailVerified", false);
+        return ApiResponse.success(settings);
+    }
+
+    @PutMapping("/settings")
+    public ApiResponse<Map<String, Object>> updateUserSettings(@RequestAttribute(value = "userId", required = false) Integer userId,
+                                                               @RequestBody(required = false) SettingsReq req) {
+        if (userId == null) {
+            throw new IllegalArgumentException("未登录或登录已过期");
+        }
+        User user = userMapper.selectById(Long.valueOf(userId));
+        if (user == null) {
+            throw new IllegalArgumentException("用户不存在");
+        }
+        if (req != null && req.getPublicProfile() != null) {
+            user.setPublicProfile(Boolean.TRUE.equals(req.getPublicProfile()) ? 1 : 0);
+            user.setUpdatedAt(LocalDateTime.now());
+            userMapper.updateById(user);
+        }
+        Map<String, Object> settings = new HashMap<>();
+        settings.put("publicProfile", user.getPublicProfile() == null || user.getPublicProfile() != 0);
+        settings.put("email", user.getEmail() != null ? user.getEmail() : "");
+        settings.put("emailVerified", false);
+        return ApiResponse.success(settings);
     }
 
     @GetMapping("/stats")
@@ -345,5 +394,10 @@ public class UserExtendedController {
         private String avatar;
         private String image;
         private String url;
+    }
+
+    @Data
+    public static class SettingsReq {
+        private Boolean publicProfile;
     }
 }

@@ -59,11 +59,22 @@ public class AdminUserController {
             throw new IllegalArgumentException("对应的学员账号不存在");
         }
 
+        if ("OWNER".equalsIgnoreCase(user.getRole())) {
+            boolean downgradingRole = req.getRole() != null && !req.getRole().trim().isEmpty()
+                    && !"OWNER".equalsIgnoreCase(req.getRole().trim());
+            boolean banningOwner = req.getStatus() != null
+                    && "BANNED".equalsIgnoreCase(req.getStatus().trim());
+            if (downgradingRole || banningOwner) {
+                throw new IllegalArgumentException("站长(OWNER)账号受系统保护，不可降权或封禁");
+            }
+        }
+
         boolean updated = false;
 
         if (req.getRole() != null && !req.getRole().trim().isEmpty()) {
             String role = req.getRole().trim().toUpperCase();
-            if ("USER".equals(role) || "ADMIN".equals(role)) {
+            if ("USER".equals(role) || "ADMIN".equals(role)
+                    || ("OWNER".equals(role) && "OWNER".equalsIgnoreCase(user.getRole()))) {
                 user.setRole(role);
                 updated = true;
             } else {
@@ -81,9 +92,26 @@ public class AdminUserController {
             }
         }
 
+        if (req.getVipLevel() != null) {
+            int level = req.getVipLevel();
+            if (level < 0 || level > 3) {
+                throw new IllegalArgumentException("非法的 VIP 等级值 (仅支持 0-3)");
+            }
+            user.setVipLevel(level);
+            if (level == 0) {
+                user.setVip(0);
+                user.setVipExpireTime(null);
+            } else {
+                user.setVip(1);
+                user.setVipExpireTime(level == 3 ? null : java.time.LocalDateTime.now().plusDays(90));
+            }
+            updated = true;
+        }
+
         if (updated) {
             userMapper.updateById(user);
-            log.info("管理员更新了学员 {} 的身份状态为: role={}, status={}", userId, user.getRole(), user.getStatus());
+            log.info("管理员更新了学员 {} 的身份状态为: role={}, status={}, vipLevel={}",
+                    userId, user.getRole(), user.getStatus(), user.getVipLevel());
         }
 
         return ApiResponse.success(null);
@@ -93,5 +121,6 @@ public class AdminUserController {
     public static class UpdateUserRoleReq {
         private String role;
         private String status;
+        private Integer vipLevel;
     }
 }

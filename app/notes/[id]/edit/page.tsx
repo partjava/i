@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@shared/hooks/useAuth';
 import { useRouter, useParams } from 'next/navigation';
 import MarkdownEditor from '@shared/components/MarkdownEditor';
@@ -23,6 +23,24 @@ export default function EditNotePage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [autoSaveEnabled, setAutoSaveEnabled] = useState(true);
+  const [draftSavedAt, setDraftSavedAt] = useState<string | null>(null);
+  const [pendingDraft, setPendingDraft] = useState<(Partial<Note> & { savedAt?: string }) | null>(null);
+  const dirtyRef = useRef(false);
+
+  const draftStorageKey = params.id ? `note_draft_edit_${params.id}` : '';
+
+  useEffect(() => {
+    setAutoSaveEnabled(localStorage.getItem('autoSave') !== 'false');
+    const onSettingsChange = (event: Event) => {
+      const detail = (event as CustomEvent<Record<string, any>>).detail || {};
+      if (typeof detail.autoSave === 'boolean') {
+        setAutoSaveEnabled(detail.autoSave);
+      }
+    };
+    window.addEventListener('partjava-settings-change', onSettingsChange);
+    return () => window.removeEventListener('partjava-settings-change', onSettingsChange);
+  }, []);
 
   const rememberReturnToMyNotes = () => {
     try {
@@ -53,7 +71,23 @@ export default function EditNotePage() {
       });
       if (response.ok) {
         const noteData = await response.json();
-        setNote(noteData.data || noteData.note); // API返回的是{success: true, data: Note}格式
+        const loadedNote = noteData.data || noteData.note; // API返回的是{success: true, data: Note}格式
+        dirtyRef.current = false;
+        setNote(loadedNote);
+        if (loadedNote && params.id) {
+          try {
+            const rawDraft = localStorage.getItem(`note_draft_edit_${params.id}`);
+            if (rawDraft) {
+              const parsed = JSON.parse(rawDraft);
+              if (
+                parsed &&
+                (parsed.title !== loadedNote.title || parsed.content !== loadedNote.content)
+              ) {
+                setPendingDraft(parsed);
+              }
+            }
+          } catch {}
+        }
       } else {
         setError('笔记不存在或无权限访问');
       }
@@ -83,6 +117,11 @@ export default function EditNotePage() {
       });
 
       if (response.ok) {
+        if (draftStorageKey) {
+          localStorage.removeItem(draftStorageKey);
+        }
+        setDraftSavedAt(null);
+        dirtyRef.current = false;
         rememberReturnToMyNotes();
         router.push('/notes');
       } else {
@@ -99,8 +138,21 @@ export default function EditNotePage() {
 
   const updateNote = (field: keyof Note, value: any) => {
     if (!note) return;
+    dirtyRef.current = true;
     setNote({ ...note, [field]: value });
   };
+
+  useEffect(() => {
+    if (!note || !draftStorageKey || !autoSaveEnabled || !dirtyRef.current) return;
+    const timer = setTimeout(() => {
+      try {
+        const savedAt = new Date().toLocaleTimeString('zh-CN', { hour12: false });
+        localStorage.setItem(draftStorageKey, JSON.stringify({ ...note, savedAt }));
+        setDraftSavedAt(savedAt);
+      } catch {}
+    }, 800);
+    return () => clearTimeout(timer);
+  }, [note, draftStorageKey, autoSaveEnabled]);
 
   if (status === 'loading' || loading) {
     return (
@@ -145,7 +197,14 @@ export default function EditNotePage() {
     <div className="p-8">
       <div className="max-w-4xl mx-auto">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-3xl font-bold">编辑笔记</h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-3xl font-bold">编辑笔记</h1>
+            {autoSaveEnabled && draftSavedAt && (
+              <span className="text-xs text-emerald-600 font-medium">
+                ✓ 已自动保存草稿 {draftSavedAt}
+              </span>
+            )}
+          </div>
           <button
             onClick={() => {
               rememberReturnToMyNotes();
@@ -156,6 +215,53 @@ export default function EditNotePage() {
             返回列表
           </button>
         </div>
+
+        {pendingDraft && (
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-amber-300 bg-amber-50 px-4 py-2.5 text-sm text-amber-800">
+            <span>
+              检测到本地未提交草稿{pendingDraft.savedAt ? `（${pendingDraft.savedAt}）` : ''}，是否恢复？
+            </span>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  dirtyRef.current = true;
+                  setNote((prev) =>
+                    prev
+                      ? {
+                          ...prev,
+                          title: pendingDraft.title ?? prev.title,
+                          content: pendingDraft.content ?? prev.content,
+                          category: pendingDraft.category ?? prev.category,
+                          technology: pendingDraft.technology ?? prev.technology,
+                          subcategory: pendingDraft.subcategory ?? prev.subcategory,
+                          tags: Array.isArray(pendingDraft.tags) ? pendingDraft.tags : prev.tags,
+                          isPublic:
+                            typeof pendingDraft.isPublic === 'boolean'
+                              ? pendingDraft.isPublic
+                              : prev.isPublic,
+                        }
+                      : prev
+                  );
+                  setPendingDraft(null);
+                }}
+                className="px-3 py-1 rounded bg-amber-600 text-white hover:bg-amber-700 text-xs font-medium"
+              >
+                恢复草稿
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (draftStorageKey) localStorage.removeItem(draftStorageKey);
+                  setPendingDraft(null);
+                }}
+                className="px-2.5 py-1 rounded border border-amber-400 hover:bg-amber-100 text-xs"
+              >
+                忽略
+              </button>
+            </div>
+          </div>
+        )}
 
         {error && (
           <div className="mb-6 bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded">

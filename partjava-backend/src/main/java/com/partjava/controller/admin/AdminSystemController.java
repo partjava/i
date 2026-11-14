@@ -19,6 +19,9 @@ public class AdminSystemController {
 
     private final Random random = new Random();
 
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private org.springframework.jdbc.core.JdbcTemplate jdbcTemplate;
+
     /**
      * 获取当前物理主机的硬件遥测数据 (CPU、内存、磁盘、OS信息、JVM进程内存等)
      */
@@ -44,6 +47,10 @@ public class AdminSystemController {
             Runtime runtime = Runtime.getRuntime();
             long heapUsed = runtime.totalMemory() - runtime.freeMemory();
             resp.setProcessMemoryMB(Math.round(heapUsed / (1024.0 * 1024.0)));
+            long heapMax = runtime.maxMemory();
+            resp.setMaxProcessMemoryMB(heapMax > 0 && heapMax < Long.MAX_VALUE
+                    ? Math.round(heapMax / (1024.0 * 1024.0))
+                    : 512L);
 
             // ===== 5. CPU 与物理内存指标 =====
             java.lang.management.OperatingSystemMXBean osBean = ManagementFactory.getOperatingSystemMXBean();
@@ -81,7 +88,26 @@ public class AdminSystemController {
             resp.setMemory(Math.round(memUsage * 10.0) / 10.0);
 
             // ===== 6. CPU 硬件信息 =====
-            resp.setCpuModel(System.getProperty("os.arch")); // JVM 无法直接获取 CPU 型号，用 arch 兜底
+            String cpuModel = System.getProperty("os.arch");
+            try {
+                java.nio.file.Path cpuInfo = java.nio.file.Paths.get("/proc/cpuinfo");
+                if (java.nio.file.Files.isReadable(cpuInfo)) {
+                    for (String line : java.nio.file.Files.readAllLines(cpuInfo)) {
+                        if (line.startsWith("model name") || line.startsWith("Model")) {
+                            int idx = line.indexOf(':');
+                            if (idx > 0) {
+                                String parsed = line.substring(idx + 1).trim();
+                                if (!parsed.isEmpty()) {
+                                    cpuModel = parsed;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+            } catch (Exception ignored) {
+            }
+            resp.setCpuModel(cpuModel);
             resp.setCpuCores(Runtime.getRuntime().availableProcessors());
 
             // ===== 7. 物理内存 (GB) =====
@@ -107,6 +133,20 @@ public class AdminSystemController {
                 diskUsage = ((double) usedSpace / totalSpace) * 100;
             }
             resp.setDisk(Math.round(diskUsage * 10.0) / 10.0);
+            resp.setTotalDiskGB(Math.round(totalSpace / (1024.0 * 1024.0 * 1024.0) * 10.0) / 10.0);
+            resp.setUsedDiskGB(Math.round(usedSpace / (1024.0 * 1024.0 * 1024.0) * 10.0) / 10.0);
+
+            // ===== 9. 数据库连通性检查 =====
+            boolean dbConnected = false;
+            if (jdbcTemplate != null) {
+                try {
+                    Integer ping = jdbcTemplate.queryForObject("SELECT 1", Integer.class);
+                    dbConnected = (ping != null && ping == 1);
+                } catch (Exception ignored) {
+                    dbConnected = false;
+                }
+            }
+            resp.setDbConnected(dbConnected);
 
         } catch (Exception e) {
             log.error("物理机硬件数据遥测失败", e);
@@ -117,9 +157,13 @@ public class AdminSystemController {
             resp.setNodeVersion("21.0");
             resp.setUptimeHours(48.0);
             resp.setProcessMemoryMB(128L);
+            resp.setMaxProcessMemoryMB(512L);
             resp.setCpu(12.4);
             resp.setMemory(62.8);
             resp.setDisk(44.5);
+            resp.setUsedDiskGB(22.0);
+            resp.setTotalDiskGB(50.0);
+            resp.setDbConnected(false);
             resp.setCpuModel("x86_64");
             resp.setCpuCores(4);
             resp.setLoadAvg1Min(0.15);
@@ -142,6 +186,7 @@ public class AdminSystemController {
         private String nodeVersion;      // Java 版本 (前端字段名保持兼容)
         private Double uptimeHours;      // JVM 运行时长 (小时)
         private Long processMemoryMB;    // JVM 堆内存占用 (MB)
+        private Long maxProcessMemoryMB; // JVM 最大堆内存 (MB)
 
         // CPU
         private Double cpu;              // CPU 使用率 (%)
@@ -155,7 +200,10 @@ public class AdminSystemController {
         private Double totalMemoryGB;    // 总物理内存 (GB)
         private Double memoryUsagePercent; // 内存使用率 (%)
 
-        // 磁盘
+        // 磁盘与数据库
         private Double disk;             // 磁盘使用率 (%)
+        private Double usedDiskGB;       // 已用磁盘 (GB)
+        private Double totalDiskGB;      // 总磁盘 (GB)
+        private Boolean dbConnected;     // 数据库连通状态
     }
 }

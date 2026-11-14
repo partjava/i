@@ -21,19 +21,36 @@ export default function SimpleLearningTracker() {
     return `learning_${session?.user?.id}_${today}`;
   };
 
-  // 初始化 - 从 localStorage 恢复今日总时长
+  // 初始化 - 从 localStorage 恢复今日总时长，并执行每日首次学习打卡提醒
   useEffect(() => {
     if (!session?.user?.id) return;
 
     try {
       const saved = localStorage.getItem(getTodayKey());
+      const savedTotal = saved ? parseInt(saved, 10) || 0 : 0;
       if (saved) {
-        setTodayTotal(parseInt(saved) || 0);
+        setTodayTotal(savedTotal);
       }
 
       // 恢复最小化状态
       const minimized = localStorage.getItem('learning_tracker_minimized');
       setIsMinimized(minimized === 'true');
+
+      // 每日学习打卡提醒：已启用 studyReminder、今日未发送过、且今日累计学习时长为 0
+      const today = new Date().toISOString().split('T')[0];
+      const notifiedKey = `study_reminder_notified_${today}`;
+      const reminderEnabled = localStorage.getItem('studyReminder') !== 'false';
+      const alreadyNotified = localStorage.getItem(notifiedKey) === '1';
+
+      if (reminderEnabled && !alreadyNotified && savedTotal === 0) {
+        if ('Notification' in window && Notification.permission === 'granted') {
+          new Notification('今日学习打卡提醒 📚', {
+            body: '今天还没有学习记录，开始 10 分钟专注学习吧！',
+            icon: '/favicon.ico',
+          });
+          localStorage.setItem(notifiedKey, '1');
+        }
+      }
     } catch (error) {
       console.error('恢复数据失败:', error);
     }

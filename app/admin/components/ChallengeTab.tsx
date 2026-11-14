@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { Card, Table, Button, Modal, Form, Input, Row, Col, Select, Tag, Tabs, message, Spin, InputNumber } from 'antd';
-import { Edit3, Plus, Trash2, CheckCircle, XCircle, Clock, RotateCcw, Trash, History, Eye, Copy, RefreshCw } from 'lucide-react';
+import { Edit3, Plus, Trash2, CheckCircle, XCircle, Clock, RotateCcw, Trash, History, Eye, Copy, RefreshCw, Search } from 'lucide-react';
 import { Popconfirm } from 'antd';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -49,6 +49,192 @@ interface ChallengeTabProps {
 
 const STAGES = ['', '计算机基础', '编程入门', '数据结构', '机器学习', '深度学习', 'NLP', '计算机视觉', '强化学习', '生成式AI', 'MLOps', '量子计算'];
 
+interface CaseItem {
+  mode?: string;
+  function?: string;
+  args?: any;
+  kwargs?: any;
+  input?: string;
+  expected?: any;
+  expectedException?: string;
+  description?: string;
+}
+
+function getSubmissionTagColor(status: string): string {
+  const s = (status || '').toUpperCase();
+  if (s === 'ACCEPTED' || s === 'PASSED') return 'green';
+  if (s === 'SAMPLE_ACCEPTED') return 'cyan';
+  if (s === 'WRONG_ANSWER' || s === 'RUNTIME_ERROR' || s === 'TIME_LIMIT_EXCEEDED' || s === 'COMPILE_ERROR' || s === 'FAILED') {
+    return 'red';
+  }
+  return 'gold';
+}
+
+function formatCaseField(val: any): string {
+  if (val === undefined || val === null) return '';
+  if (typeof val === 'string') return val;
+  try {
+    return JSON.stringify(val);
+  } catch {
+    return String(val);
+  }
+}
+
+function parseJsonOrString(raw: string, fallbackToString = true): any {
+  const trimmed = raw.trim();
+  if (!trimmed) return fallbackToString ? '' : undefined;
+  try {
+    return JSON.parse(trimmed);
+  } catch {
+    return fallbackToString ? raw : raw;
+  }
+}
+
+function CaseJsonField({
+  value,
+  onCommit,
+  placeholder,
+  className,
+}: {
+  value: any;
+  onCommit: (nextVal: any) => void;
+  placeholder?: string;
+  className?: string;
+}) {
+  const [text, setText] = useState(() => formatCaseField(value));
+
+  useEffect(() => {
+    setText(formatCaseField(value));
+  }, [value]);
+
+  return (
+    <Input
+      size="small"
+      placeholder={placeholder}
+      value={text}
+      className={className}
+      onChange={e => setText(e.target.value)}
+      onBlur={() => onCommit(parseJsonOrString(text))}
+    />
+  );
+}
+
+function CaseEditorList({
+  cases,
+  onChange,
+  isEval,
+}: {
+  cases: CaseItem[];
+  onChange: React.Dispatch<React.SetStateAction<CaseItem[]>>;
+  isEval?: boolean;
+}) {
+  const borderCls = isEval ? 'border-amber-900/40' : 'border-slate-700';
+  const textCls = isEval ? 'text-amber-300' : '';
+  const prefix = isEval ? '隐藏' : '';
+
+  return (
+    <div className="space-y-2 max-h-[340px] overflow-y-auto pr-1">
+      {cases.map((c, idx) => {
+        const isCallMode = c.mode === 'call' || Boolean(c.function);
+        return (
+          <div key={idx} className={`p-2.5 rounded bg-slate-950 border ${borderCls} relative space-y-2`}>
+            {cases.length > 1 && (
+              <button
+                type="button"
+                onClick={() => onChange(prev => prev.filter((_, i) => i !== idx))}
+                className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-red-500 text-white text-[10px] flex items-center justify-center"
+              >
+                ×
+              </button>
+            )}
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-[11px] font-mono text-slate-400">#{idx + 1}</span>
+              <Select
+                size="small"
+                value={c.mode || (c.function ? 'call' : 'stdin')}
+                style={{ width: 120 }}
+                onChange={val => onChange(prev => prev.map((item, i) => i === idx ? { ...item, mode: val } : item))}
+                options={[
+                  { value: 'stdin', label: '标准输入 (stdin)' },
+                  { value: 'call', label: '函数调用 (call)' },
+                  { value: 'script', label: '脚本检查 (script)' },
+                ]}
+              />
+              <Input
+                size="small"
+                placeholder="用例说明 (description, 可选)"
+                value={c.description || ''}
+                className="flex-1 min-w-[160px]"
+                onChange={e => onChange(prev => prev.map((item, i) => i === idx ? { ...item, description: e.target.value } : item))}
+              />
+            </div>
+
+            {isCallMode ? (
+              <div className="grid grid-cols-2 gap-2">
+                <Input
+                  size="small"
+                  placeholder="函数名 (function)"
+                  value={c.function || ''}
+                  className={textCls}
+                  onChange={e => onChange(prev => prev.map((item, i) => i === idx ? { ...item, function: e.target.value } : item))}
+                />
+                <CaseJsonField
+                  placeholder="位置参数 args (JSON 数组)"
+                  value={c.args ?? []}
+                  className={textCls}
+                  onCommit={val => onChange(prev => prev.map((item, i) => i === idx ? { ...item, args: val } : item))}
+                />
+                <CaseJsonField
+                  placeholder="关键字参数 kwargs (JSON 对象)"
+                  value={c.kwargs ?? {}}
+                  className={textCls}
+                  onCommit={val => onChange(prev => prev.map((item, i) => i === idx ? { ...item, kwargs: val } : item))}
+                />
+                <CaseJsonField
+                  placeholder={`${prefix}期望返回值 (expected, JSON/文本)`}
+                  value={c.expected}
+                  className={textCls}
+                  onCommit={val => onChange(prev => prev.map((item, i) => i === idx ? { ...item, expected: val } : item))}
+                />
+                <Input
+                  size="small"
+                  placeholder="期望异常类型 (expectedException, 可选)"
+                  value={c.expectedException || ''}
+                  className={`col-span-2 ${textCls}`}
+                  onChange={e => onChange(prev => prev.map((item, i) => i === idx ? { ...item, expectedException: e.target.value } : item))}
+                />
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-2">
+                <Input
+                  size="small"
+                  placeholder={`${prefix}输入 #${idx + 1}`}
+                  value={c.input || ''}
+                  className={textCls}
+                  onChange={e => onChange(prev => prev.map((item, i) => i === idx ? { ...item, input: e.target.value } : item))}
+                />
+                <CaseJsonField
+                  placeholder={`${prefix}期望输出 #${idx + 1}`}
+                  value={c.expected}
+                  className={textCls}
+                  onCommit={val => onChange(prev => prev.map((item, i) => i === idx ? { ...item, expected: val } : item))}
+                />
+              </div>
+            )}
+          </div>
+        );
+      })}
+      <button
+        type="button"
+        onClick={() => onChange(prev => [...prev, { input: '', expected: '' }])}
+        className={`w-full py-1.5 rounded border border-dashed ${isEval ? 'border-amber-800 text-amber-500 hover:border-amber-500 hover:text-amber-400' : 'border-slate-600 text-slate-400 hover:border-cyan-500 hover:text-cyan-400'} text-xs flex items-center justify-center gap-1`}
+      >
+        <Plus className="w-3 h-3" /> {isEval ? '添加通过样例' : '添加测试样例'}
+      </button>
+    </div>
+  );
+}
+
 function getAuthorName(authorId: number | undefined, users?: Array<{ id: number; username: string }>) {
   if (!authorId) return '—'; if (!users) return `UID-${authorId}`;
   const u = users.find(u => u.id === authorId);
@@ -63,10 +249,11 @@ export default function ChallengeTab({ challenges, drafts, users, onApproveDraft
   const [editLoading, setEditLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [stageFilter, setStageFilter] = useState<number | null>(null);
+  const [challengeSearch, setChallengeSearch] = useState('');
   const [previewMd, setPreviewMd] = useState('');
   const [quizzes, setQuizzes] = useState<Array<{ id?: number; question: string; options: string[]; correctIndex: number; explanation: string }>>([]);
-  const [editTestCases, setEditTestCases] = useState<Array<{ input: string; expected: string }>>([]);
-  const [editEvalCases, setEditEvalCases] = useState<Array<{ input: string; expected: string }>>([]);
+  const [editTestCases, setEditTestCases] = useState<CaseItem[]>([]);
+  const [editEvalCases, setEditEvalCases] = useState<CaseItem[]>([]);
   const [form] = Form.useForm();
 
   // ===== 全站提交记录状态 =====
@@ -109,9 +296,19 @@ export default function ChallengeTab({ challenges, drafts, users, onApproveDraft
   };
 
   const filtered = useMemo(() => {
-    if (!stageFilter) return challenges;
-    return challenges.filter(c => c.stageId === stageFilter);
-  }, [challenges, stageFilter]);
+    let list = stageFilter ? challenges.filter(c => c.stageId === stageFilter) : challenges;
+    if (challengeSearch.trim()) {
+      const kw = challengeSearch.trim().toLowerCase();
+      list = list.filter(c =>
+        c.title?.toLowerCase().includes(kw) ||
+        c.topicName?.toLowerCase().includes(kw) ||
+        c.subtopicName?.toLowerCase().includes(kw) ||
+        c.slug?.toLowerCase().includes(kw) ||
+        String(c.id).includes(kw)
+      );
+    }
+    return list;
+  }, [challenges, stageFilter, challengeSearch]);
 
   // Modal 打开后，把加载好的数据填入表单
   useEffect(() => {
@@ -127,7 +324,9 @@ export default function ChallengeTab({ challenges, drafts, users, onApproveDraft
     setEditing(record); // 先开 Modal 显示 loading
     setEditData(null);
     try {
-      const res = await fetch(`/api/admin/challenges/${record.id}`);
+      const res = await fetch(`/api/admin/challenges/${record.id}`, {
+        headers: { ...getAuthHeaders() },
+      });
       const json = await res.json();
       if (json.success && json.data) {
         setEditData({
@@ -166,7 +365,7 @@ export default function ChallengeTab({ challenges, drafts, users, onApproveDraft
       setSaving(true);
       const res = await fetch(`/api/admin/challenges/${editing?.id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
         body: JSON.stringify({ ...values, quizzes, testCases: editTestCases, evaluationCases: editEvalCases }),
       });
       const json = await res.json();
@@ -220,6 +419,15 @@ export default function ChallengeTab({ challenges, drafts, users, onApproveDraft
 
           {activeSection === 'challenges' && (
             <>
+              <Input
+                prefix={<Search size={12} className="text-slate-400" />}
+                placeholder="搜索标题/主题/slug/ID..."
+                value={challengeSearch}
+                onChange={e => setChallengeSearch(e.target.value)}
+                allowClear
+                size="small"
+                style={{ width: 190 }}
+              />
               <Select placeholder="全部阶段" allowClear value={stageFilter}
                 onChange={(v) => setStageFilter(v || null)} size="small" style={{ width: 150 }}
                 options={STAGES.map((s, i) => i > 0 ? { value: i, label: `S${i} ${s}` } : null).filter(Boolean) as any} />
@@ -230,7 +438,9 @@ export default function ChallengeTab({ challenges, drafts, users, onApproveDraft
                   setShowTrash(next);
                   if (next) {
                     try {
-                      const r = await fetch('/api/admin/challenges/trash');
+                      const r = await fetch('/api/admin/challenges/trash', {
+                        headers: { ...getAuthHeaders() },
+                      });
                       const j = await r.json();
                       setTrashChallenges(j.data || []);
                     } catch {}
@@ -259,13 +469,16 @@ export default function ChallengeTab({ challenges, drafts, users, onApproveDraft
                   void loadSubmissions(1, val, filterChallengeId, filterUserId);
                 }}
                 size="small"
-                style={{ width: 150 }}
+                style={{ width: 185 }}
                 options={[
                   { value: 'ACCEPTED', label: '✅ 通过 (ACCEPTED)' },
+                  { value: 'SAMPLE_ACCEPTED', label: '🟡 仅公开样例通过 (SAMPLE_ACCEPTED)' },
                   { value: 'WRONG_ANSWER', label: '❌ 答案错误 (WRONG_ANSWER)' },
                   { value: 'RUNTIME_ERROR', label: '⚠️ 运行错误 (RUNTIME_ERROR)' },
                   { value: 'TIME_LIMIT_EXCEEDED', label: '⏱️ 超时 (TLE)' },
                   { value: 'COMPILE_ERROR', label: '⚙️ 编译错误' },
+                  { value: 'passed', label: '✅ 通过 (passed)' },
+                  { value: 'failed', label: '❌ 未通过 (failed)' },
                 ]}
               />
 
@@ -365,16 +578,12 @@ export default function ChallengeTab({ challenges, drafts, users, onApproveDraft
               {
                 title: '状态',
                 dataIndex: 'status',
-                width: 130,
-                render: (status: string) => {
-                  const isAccepted = status === 'ACCEPTED';
-                  const isFailed = status === 'WRONG_ANSWER' || status === 'RUNTIME_ERROR';
-                  return (
-                    <Tag color={isAccepted ? 'green' : isFailed ? 'red' : 'gold'} className="text-[10px]">
-                      {status || 'UNKNOWN'}
-                    </Tag>
-                  );
-                },
+                width: 140,
+                render: (status: string) => (
+                  <Tag color={getSubmissionTagColor(status)} className="text-[10px]">
+                    {status || 'UNKNOWN'}
+                  </Tag>
+                ),
               },
               {
                 title: '执行耗时',
@@ -537,7 +746,10 @@ export default function ChallengeTab({ challenges, drafts, users, onApproveDraft
                     icon={<RotateCcw size={12} />}
                     onClick={async () => {
                       try {
-                        await fetch(`/api/admin/challenges/${record.id}/restore`, { method: 'PUT' });
+                        await fetch(`/api/admin/challenges/${record.id}/restore`, {
+                          method: 'PUT',
+                          headers: { ...getAuthHeaders() },
+                        });
                         message.success('已恢复');
                         setTrashChallenges(prev => prev.filter(c => c.id !== record.id));
                         onRefresh?.();
@@ -583,7 +795,7 @@ export default function ChallengeTab({ challenges, drafts, users, onApproveDraft
               </Row>
               <Row gutter={16} className="mt-3">
                 <Col span={8}>
-                  <Form.Item name="isPublic" label="可见性" valuePropName="checked">
+                  <Form.Item name="isPublic" label="可见性">
                     <Select options={[{ value: true, label: '🌐 公开' }, { value: false, label: '🔒 私有' }]} />
                   </Form.Item>
                 </Col>
@@ -658,46 +870,10 @@ export default function ChallengeTab({ challenges, drafts, users, onApproveDraft
               </div>
             )},
             { key: 'testcases', label: `测试样例(${editTestCases.length})`, children: (
-              <div className="space-y-2">
-                {editTestCases.map((tc, idx) => (
-                  <div key={idx} className="grid grid-cols-2 gap-2 p-2 rounded bg-slate-950 border border-slate-700 relative">
-                    {editTestCases.length > 1 && (
-                      <button onClick={() => setEditTestCases(prev => prev.filter((_, i) => i !== idx))}
-                        className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-red-500 text-white text-[10px] flex items-center justify-center">×</button>
-                    )}
-                    <Input size="small" placeholder={`输入 #${idx + 1}`} value={tc.input}
-                      onChange={e => setEditTestCases(prev => prev.map((t, i) => i === idx ? { ...t, input: e.target.value } : t))} />
-                    <Input size="small" placeholder={`期望输出 #${idx + 1}`} value={tc.expected}
-                      onChange={e => setEditTestCases(prev => prev.map((t, i) => i === idx ? { ...t, expected: e.target.value } : t))} />
-                  </div>
-                ))}
-                <button onClick={() => setEditTestCases(prev => [...prev, { input: '', expected: '' }])}
-                  className="w-full py-1.5 rounded border border-dashed border-slate-600 text-slate-400 text-xs hover:border-cyan-500 hover:text-cyan-400 flex items-center justify-center gap-1">
-                  <Plus className="w-3 h-3" /> 添加测试样例
-                </button>
-              </div>
+              <CaseEditorList cases={editTestCases} onChange={setEditTestCases} />
             )},
             { key: 'evalcases', label: `通过样例(${editEvalCases.length}) 🔒`, children: (
-              <div className="space-y-2">
-                {editEvalCases.map((ec, idx) => (
-                  <div key={idx} className="grid grid-cols-2 gap-2 p-2 rounded bg-slate-950 border border-amber-900/40 relative">
-                    {editEvalCases.length > 1 && (
-                      <button onClick={() => setEditEvalCases(prev => prev.filter((_, i) => i !== idx))}
-                        className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-red-500 text-white text-[10px] flex items-center justify-center">×</button>
-                    )}
-                    <Input size="small" placeholder={`隐藏输入 #${idx + 1}`} value={ec.input}
-                      onChange={e => setEditEvalCases(prev => prev.map((t, i) => i === idx ? { ...t, input: e.target.value } : t))}
-                      className="text-amber-300" />
-                    <Input size="small" placeholder={`隐藏期望 #${idx + 1}`} value={ec.expected}
-                      onChange={e => setEditEvalCases(prev => prev.map((t, i) => i === idx ? { ...t, expected: e.target.value } : t))}
-                      className="text-amber-300" />
-                  </div>
-                ))}
-                <button onClick={() => setEditEvalCases(prev => [...prev, { input: '', expected: '' }])}
-                  className="w-full py-1.5 rounded border border-dashed border-amber-800 text-amber-500 text-xs hover:border-amber-500 hover:text-amber-400 flex items-center justify-center gap-1">
-                  <Plus className="w-3 h-3" /> 添加通过样例
-                </button>
-              </div>
+              <CaseEditorList cases={editEvalCases} onChange={setEditEvalCases} isEval />
             )},
             { key: 'extra', label: '思考题', children: (
               <>
@@ -758,7 +934,7 @@ export default function ChallengeTab({ challenges, drafts, users, onApproveDraft
               </div>
               <div>
                 <span className="text-slate-500 block">判题状态</span>
-                <Tag color={inspectingSub.status === 'ACCEPTED' ? 'green' : 'red'}>
+                <Tag color={getSubmissionTagColor(inspectingSub.status)}>
                   {inspectingSub.status}
                 </Tag>
               </div>

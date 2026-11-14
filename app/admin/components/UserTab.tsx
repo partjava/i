@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import { Card, Table, Tag, Button, Space, Input } from 'antd';
+import { Card, Table, Tag, Button, Space, Input, Select, Tooltip } from 'antd';
 import { SearchOutlined } from '@ant-design/icons';
 
 // 后端 users 表的实际字段
@@ -139,34 +139,48 @@ export default function UserTab({ users, onToggleUserStatus, onChangeRole, onGra
           {
             title: '管理操作',
             key: 'actions',
-            render: (_: any, record: UserRecord) => (
-              <Space size="small" wrap>
-                <Button
-                  type="primary"
-                  danger={record.status === 'ACTIVE'}
-                  ghost
-                  size="small"
-                  onClick={() => onToggleUserStatus(String(record.id), record.status)}
-                >
-                  {record.status === 'ACTIVE' ? '封禁' : '解封'}
-                </Button>
-                <Button
-                  size="small"
-                  onClick={() => onChangeRole(String(record.id), record.role)}
-                >
-                  切换角色
-                </Button>
-                {onGrantVip && (
-                  <Button
-                    size="small"
-                    style={{ color: '#facc15', borderColor: '#facc1580', background: 'rgba(250,204,21,0.08)' }}
-                    onClick={() => onGrantVip(String(record.id), (record.vipLevel || 0) < 3 ? (record.vipLevel || 0) + 1 : 3)}
-                  >
-                    👑 赠送会员
-                  </Button>
-                )}
-              </Space>
-            )
+            render: (_: any, record: UserRecord) => {
+              const isOwner = record.role === 'OWNER';
+              return (
+                <Space size="small" wrap>
+                  <Tooltip title={isOwner ? '站长账号受系统保护' : ''}>
+                    <Button
+                      type="primary"
+                      danger={record.status === 'ACTIVE'}
+                      ghost
+                      size="small"
+                      disabled={isOwner}
+                      onClick={() => onToggleUserStatus(String(record.id), record.status)}
+                    >
+                      {record.status === 'ACTIVE' ? '封禁' : '解封'}
+                    </Button>
+                  </Tooltip>
+                  <Tooltip title={isOwner ? '站长账号受系统保护' : ''}>
+                    <Button
+                      size="small"
+                      disabled={isOwner}
+                      onClick={() => onChangeRole(String(record.id), record.role)}
+                    >
+                      切换角色
+                    </Button>
+                  </Tooltip>
+                  {onGrantVip && (
+                    <Select
+                      size="small"
+                      value={record.vipLevel || 0}
+                      style={{ width: 120 }}
+                      onChange={(lvl: number) => onGrantVip(String(record.id), lvl)}
+                      options={[
+                        { value: 0, label: '取消会员 (0)' },
+                        { value: 1, label: '👑 体验 (90天)' },
+                        { value: 2, label: '🌟 进阶 (90天)' },
+                        { value: 3, label: '🔥 永久共创' },
+                      ]}
+                    />
+                  )}
+                </Space>
+              );
+            }
           }
         ]}
       />

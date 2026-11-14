@@ -89,6 +89,9 @@ public class AdminChallengeMetaController {
         return ApiResponse.success(resp);
     }
 
+    private static final com.fasterxml.jackson.databind.ObjectMapper CASE_MAPPER =
+            new com.fasterxml.jackson.databind.ObjectMapper();
+
     private List<CaseItem> convertCaseObjs(List<Object> objs) {
         if (objs == null || objs.isEmpty()) return new ArrayList<>();
         List<CaseItem> result = new ArrayList<>();
@@ -97,8 +100,21 @@ public class AdminChallengeMetaController {
             if (obj instanceof java.util.Map) {
                 @SuppressWarnings("unchecked")
                 java.util.Map<String, Object> map = (java.util.Map<String, Object>) obj;
-                item.setInput(String.valueOf(map.getOrDefault("input", "")));
-                item.setExpected(String.valueOf(map.getOrDefault("expected", "")));
+                if (map.get("mode") != null) item.setMode(String.valueOf(map.get("mode")));
+                if (map.get("function") != null) item.setFunction(String.valueOf(map.get("function")));
+                if (map.containsKey("args")) item.setArgs(map.get("args"));
+                if (map.containsKey("kwargs")) item.setKwargs(map.get("kwargs"));
+                if (map.get("input") != null) item.setInput(String.valueOf(map.get("input")));
+                if (map.containsKey("expected")) item.setExpected(map.get("expected"));
+                if (map.get("expectedException") != null) {
+                    item.setExpectedException(String.valueOf(map.get("expectedException")));
+                }
+                if (map.get("description") != null) item.setDescription(String.valueOf(map.get("description")));
+            } else if (obj != null) {
+                try {
+                    item = CASE_MAPPER.convertValue(obj, CaseItem.class);
+                } catch (IllegalArgumentException ignored) {
+                }
             }
             result.add(item);
         }
@@ -137,6 +153,8 @@ public class AdminChallengeMetaController {
             if (req.getThinkingQuestion() != null) detail.setThinkingQuestion(req.getThinkingQuestion());
             if (req.getAiPrompt() != null) detail.setAiPrompt(req.getAiPrompt());
             if (req.getLatexFormulas() != null) detail.setLatexFormulas(req.getLatexFormulas());
+            if (req.getTestCases() != null) detail.setTestCases(toCaseObjs(req.getTestCases()));
+            if (req.getEvaluationCases() != null) detail.setEvaluationCases(toCaseObjs(req.getEvaluationCases()));
             challengeDetailMapper.insert(detail);
         } else {
             if (req.getTheoryContent() != null) detail.setTheoryMarkdown(req.getTheoryContent());
@@ -207,9 +225,33 @@ public class AdminChallengeMetaController {
     private List<Object> toCaseObjs(List<CaseItem> items) {
         List<Object> objs = new ArrayList<>();
         for (CaseItem item : items) {
-            java.util.Map<String, String> map = new java.util.LinkedHashMap<>();
-            map.put("input", item.getInput() != null ? item.getInput() : "");
-            map.put("expected", item.getExpected() != null ? item.getExpected() : "");
+            java.util.Map<String, Object> map = new java.util.LinkedHashMap<>();
+            if (item.getMode() != null && !item.getMode().isEmpty()) {
+                map.put("mode", item.getMode());
+            }
+            if (item.getFunction() != null && !item.getFunction().isEmpty()) {
+                map.put("function", item.getFunction());
+            }
+            if (item.getArgs() != null) {
+                map.put("args", item.getArgs());
+            }
+            if (item.getKwargs() != null) {
+                map.put("kwargs", item.getKwargs());
+            }
+            if (item.getInput() != null || item.getMode() == null || "stdin".equalsIgnoreCase(item.getMode())) {
+                map.put("input", item.getInput() != null ? item.getInput() : "");
+            }
+            if (item.getExpected() != null) {
+                map.put("expected", item.getExpected());
+            } else if (item.getExpectedException() == null || item.getExpectedException().isEmpty()) {
+                map.put("expected", "");
+            }
+            if (item.getExpectedException() != null && !item.getExpectedException().isEmpty()) {
+                map.put("expectedException", item.getExpectedException());
+            }
+            if (item.getDescription() != null && !item.getDescription().isEmpty()) {
+                map.put("description", item.getDescription());
+            }
             objs.add(map);
         }
         return objs;
@@ -217,8 +259,14 @@ public class AdminChallengeMetaController {
 
     @Data
     public static class CaseItem {
+        private String mode;
+        private String function;
+        private Object args;
+        private Object kwargs;
         private String input;
-        private String expected;
+        private Object expected;
+        private String expectedException;
+        private String description;
     }
 
     @Data

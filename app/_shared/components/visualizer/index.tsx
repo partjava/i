@@ -81,6 +81,7 @@ export default function AlgorithmVisualizer({
   const [theaterZoom, setTheaterZoom] = useState(true);
   const [codeLang, setCodeLang] = useState<CodeLanguage>('cpp');
   const [showHudFormula, setShowHudFormula] = useState(true);
+  const [speedMultiplier, setSpeedMultiplier] = useState<number>(1);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const managerRef = useRef<SceneManager | null>(null);
@@ -146,11 +147,12 @@ export default function AlgorithmVisualizer({
       setIsPlaying(false);
       return;
     }
+    const delayMs = Math.max(80, Math.round(speed / speedMultiplier));
     const timer = setTimeout(() => {
       setCurrentStep((prev) => Math.min(steps.length - 1, prev + 1));
-    }, speed);
+    }, delayMs);
     return () => clearTimeout(timer);
-  }, [isPlaying, currentStep, steps.length, speed]);
+  }, [isPlaying, currentStep, steps.length, speed, speedMultiplier]);
 
   const activeStep = steps[currentStep];
   const progressPercent =
@@ -211,8 +213,26 @@ export default function AlgorithmVisualizer({
     return pick.map((v) => `${v.name}=${v.value}`).join(' · ');
   }, [codeTrace.variables]);
 
+  const handleVisualizerKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    const tag = (e.target as HTMLElement)?.tagName;
+    if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+    if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      setIsPlaying(false);
+      setCurrentStep((prev) => Math.max(0, prev - 1));
+    } else if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      setIsPlaying(false);
+      setCurrentStep((prev) => Math.min(Math.max(steps.length - 1, 0), prev + 1));
+    }
+  };
+
   return (
-    <div className="space-y-3">
+    <div
+      tabIndex={0}
+      onKeyDown={handleVisualizerKeyDown}
+      className="space-y-3 outline-none"
+    >
       {/* 顶部算法专属图例栏 + 视图切换 + 实时指标徽章 */}
       <div
         className="flex flex-wrap items-center justify-between gap-2.5 px-3.5 py-2.5 rounded-xl border text-xs"
@@ -467,10 +487,10 @@ export default function AlgorithmVisualizer({
               </div>
             </div>
 
-            {/* 中部：完整平铺源码视窗（零横向滚动条 + 智能悬挂折行 + 行尾内联实时变量） */}
+            {/* 中部：完整可滚动源码视窗（零横向滚动条 + 智能悬挂折行 + 顺畅居中高亮行） */}
             <div
               ref={codeContainerRef}
-              className="flex-1 flex flex-col justify-center font-mono text-[12px] sm:text-[12.5px] leading-[1.65] py-2.5 select-text overflow-x-hidden dark-code-studio"
+              className="flex-1 min-h-0 flex flex-col font-mono text-[12px] sm:text-[12.5px] leading-[1.65] py-2.5 select-text overflow-y-auto overflow-x-hidden custom-scrollbar dark-code-studio"
             >
               {codeTrace.lines.map((lineText, idx) => {
                 const lineNum = idx + 1;
@@ -689,9 +709,35 @@ export default function AlgorithmVisualizer({
             </button>
           </div>
 
-          <div className="text-[11px] text-slate-400 font-mono hidden md:block">
-            分类: <span className="text-slate-200">{meta.category}</span> · 难度:{' '}
-            <span className="text-sky-300">{meta.difficulty}</span>
+          <div className="flex flex-wrap items-center gap-3 text-[11px] text-slate-400 font-mono">
+            {/* 内联倍速切换 */}
+            <div className="inline-flex items-center gap-1 bg-slate-900/90 border border-white/10 rounded-lg px-2 py-1">
+              <span className="text-slate-500 mr-0.5">倍速:</span>
+              {[0.5, 1, 1.5, 2].map((mult) => (
+                <button
+                  key={mult}
+                  type="button"
+                  onClick={() => setSpeedMultiplier(mult)}
+                  className={`px-1.5 py-0.5 rounded text-[10.5px] transition-all ${
+                    speedMultiplier === mult
+                      ? 'bg-sky-500/25 text-sky-300 border border-sky-400/40 font-bold'
+                      : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  {mult}x
+                </button>
+              ))}
+            </div>
+
+            <span className="hidden xl:inline-block text-slate-400">
+              快捷键: <kbd className="px-1 py-0.5 rounded bg-slate-800 border border-slate-700 text-slate-300">←</kbd>{' '}
+              <kbd className="px-1 py-0.5 rounded bg-slate-800 border border-slate-700 text-slate-300">→</kbd> 单步推演
+            </span>
+
+            <span className="hidden md:inline-block">
+              分类: <span className="text-slate-200">{meta.category}</span> · 难度:{' '}
+              <span className="text-sky-300">{meta.difficulty}</span>
+            </span>
           </div>
         </div>
       </div>

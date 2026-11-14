@@ -31,6 +31,7 @@ function unwrap(r: any) { return r?.data ?? r; }
 export default function AdminDashboard() {
   const router = useRouter();
   const [authorized, setAuthorized] = useState(false);  // 权限校验
+  const [currentUser, setCurrentUser] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'challenges' | 'notes'>('dashboard');
   const [loading, setLoading] = useState(true);
 
@@ -41,6 +42,7 @@ export default function AdminDashboard() {
       router.replace('/auth/login?expired=true');
       return;
     }
+    setCurrentUser(user);
     setAuthorized(true);
   }, [router]);
 
@@ -100,7 +102,12 @@ export default function AdminDashboard() {
   // ---- 工具栏 ----
   const handleLogAdd = (msg: string, type: 'INFO' | 'WARN' | 'SUCCESS') => {
     const timeStr = new Date().toTimeString().split(' ')[0];
-    setLogs(prev => [{ time: timeStr, type, msg }, ...prev.slice(0, 15)]);
+    setLogs(prev => [{ time: timeStr, type, msg }, ...prev.slice(0, 29)]);
+    void fetch('/api/admin/logs', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+      body: JSON.stringify({ type, msg }),
+    }).catch(() => {});
   };
 
   // ---- 用户管理（使用真实字段 id, status, role, username）----
@@ -108,6 +115,10 @@ export default function AdminDashboard() {
     const uid = Number(key);
     const user = users.find(u => u.id === uid);
     if (!user) return;
+    if (user.role === 'OWNER') {
+      message.warning('站长账号受系统保护，不可封禁');
+      return;
+    }
     const nextStatus = currentStatus === 'ACTIVE' ? 'BANNED' : 'ACTIVE';
     try {
       await api(`/api/admin/users/${uid}/role`, {
@@ -124,6 +135,10 @@ export default function AdminDashboard() {
     const uid = Number(key);
     const user = users.find(u => u.id === uid);
     if (!user) return;
+    if (user.role === 'OWNER') {
+      message.warning('站长账号受系统保护，不可降权');
+      return;
+    }
     const nextRole = currentRole === 'ADMIN' ? 'USER' : 'ADMIN';
     try {
       await api(`/api/admin/users/${uid}/role`, {
@@ -134,6 +149,26 @@ export default function AdminDashboard() {
       message.success(`角色已改为 ${nextRole}`);
       handleLogAdd(`用户 ${user.username} 角色 -> ${nextRole}`, 'INFO');
     } catch { message.error('操作失败'); }
+  };
+
+  const handleGrantVip = async (key: string, level: number) => {
+    const uid = Number(key);
+    const user = users.find(u => u.id === uid);
+    if (!user) return;
+    try {
+      await api(`/api/admin/users/${uid}/role`, {
+        method: 'PUT',
+        body: JSON.stringify({ vipLevel: level }),
+      });
+      const expireIso = level === 0 || level === 3
+        ? null
+        : new Date(Date.now() + 90 * 24 * 3600 * 1000).toISOString();
+      setUsers(prev => prev.map(u => (u.id === uid)
+        ? { ...u, vip: level > 0 ? 1 : 0, vipLevel: level, vipExpireTime: expireIso }
+        : u));
+      message.success(level === 0 ? `已取消 ${user.username} 的会员资格` : `已将 ${user.username} 设为 VIP${level}`);
+      handleLogAdd(`更新用户 ${user.username} VIP 等级 -> ${level}`, 'SUCCESS');
+    } catch { message.error('调整会员等级失败'); }
   };
 
   // ---- 草稿审批 ----
@@ -211,8 +246,19 @@ export default function AdminDashboard() {
   };
 
   const handleToggleNotePublic = async (key: string, currentPublic: boolean) => {
-    setNotes(prev => prev.map(n => (String(n.id) === key) ? { ...n, isPublic: !currentPublic } : n));
-    message.info('笔记公开属性已修改');
+    const nextPublic = !currentPublic;
+    setNotes(prev => prev.map(n => (String(n.id) === key) ? { ...n, isPublic: nextPublic } : n));
+    try {
+      await api(`/api/admin/notes/${key}/visibility`, {
+        method: 'PUT',
+        body: JSON.stringify({ isPublic: nextPublic }),
+      });
+      message.success(`笔记已设为${nextPublic ? '公开共享' : '私人笔记'}`);
+      handleLogAdd(`切换笔记 #${key} 可见性 -> ${nextPublic ? '公开' : '私有'}`, 'INFO');
+    } catch {
+      setNotes(prev => prev.map(n => (String(n.id) === key) ? { ...n, isPublic: currentPublic } : n));
+      message.error('修改笔记可见性失败');
+    }
   };
 
   // ---- 容器重启 ----
@@ -279,15 +325,19 @@ export default function AdminDashboard() {
 
           <div className="flex items-center gap-6 text-sm text-slate-400">
             <div className="flex items-center gap-2 cursor-pointer hover:opacity-85" onClick={() => setIsHealthOpen(true)}>
-              <Badge status="processing" />
-              <span className="hover:text-indigo-400 transition-colors">沙箱节点: 3/3 正常 (体检)</span>
+              <Badge status={containers.some(c => c.status !== 'RUNNING') ? 'warning' : 'processing'} />
+              <span className="hover:text-indigo-400 transition-colors">
+                沙箱节点: {containers.filter(c => c.status === 'RUNNING').length}/{containers.length || 3} 正常 (体检)
+              </span>
             </div>
             <div className="flex items-center gap-2 cursor-pointer hover:opacity-85" onClick={() => setIsHealthOpen(true)}>
-              <Badge status="success" />
-              <span className="hover:text-indigo-400 transition-colors">MySQL/Redis: 连接中</span>
+              <Badge status={sysInfo?.dbConnected === false ? 'error' : 'success'} />
+              <span className="hover:text-indigo-400 transition-colors">
+                数据库: {sysInfo?.dbConnected === false ? '连接异常' : 'MySQL 正常'}
+              </span>
             </div>
             <div className="w-px h-4 bg-[#234272]/60" />
-            <span className="text-slate-300 font-medium">管理员: liming</span>
+            <span className="text-slate-300 font-medium">管理员: {currentUser?.username || 'Admin'}</span>
           </div>
         </header>
 
@@ -339,6 +389,7 @@ export default function AdminDashboard() {
                 users={users}
                 onToggleUserStatus={handleToggleUserStatus}
                 onChangeRole={handleChangeRole}
+                onGrantVip={handleGrantVip}
                 onRefresh={async () => {
                   try {
                     const res = await api('/api/admin/users?limit=100');
@@ -374,6 +425,12 @@ export default function AdminDashboard() {
                 users={users}
                 onDeleteNote={handleDeleteNote}
                 onToggleNotePublic={handleToggleNotePublic}
+                onRefresh={async () => {
+                  try {
+                    const res = await api('/api/admin/notes?limit=50');
+                    setNotes(unwrap(res)?.records || []);
+                  } catch { message.error('刷新失败'); }
+                }}
               />
             )}
           </main>
