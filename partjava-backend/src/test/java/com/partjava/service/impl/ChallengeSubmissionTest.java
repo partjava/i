@@ -34,12 +34,12 @@ class ChallengeSubmissionTest {
   assertEquals("ACCEPTED",service().submitCode(7,3,"def add(a,b): return a+b").getStatus());
   verify(records).insert(any(com.partjava.entity.UserChallengeRecord.class));verify(events).publishEvent(any(com.partjava.event.UserActionEvent.class));
  }
- @Test void sampleRunUsesOnlyFirstTwoPublicCasesAndNeverWritesProgress(){
+ @Test void sampleRunRunsAllPublicCasesAndExcludesHiddenAndNeverWritesProgress(){
   var publicCases=List.<Object>of(Map.of("args",List.of(1),"expected",1),Map.of("args",List.of(2),"expected",2),Map.of("args",List.of(3),"expected",3));
   when(details.selectById(3)).thenReturn(ChallengeDetail.builder().challengeId(3).testCases(publicCases).evaluationCases(List.of(Map.of("args",List.of("hidden-input"),"expected","hidden-output"))).build());
-  when(sandbox.evaluateCode(anyString(),anyString(),anyDouble())).thenReturn(new JudgementResult("ACCEPTED","2/2 passed",10));
+  when(sandbox.evaluateCode(anyString(),anyString(),anyDouble())).thenReturn(new JudgementResult("ACCEPTED","3/3 passed",10));
   var result=service().runSampleCode(7,3,"def solve(x):return x");assertEquals("ACCEPTED",result.getStatus());assertTrue(result.getMessage().contains("不记录通关"));
-  verify(sandbox).evaluateCode(anyString(),argThat(spec->{try{var cases=new com.fasterxml.jackson.databind.ObjectMapper().readTree(spec).path("cases");return cases.size()==2&&!spec.contains("hidden-input")&&!spec.contains("hidden-output")&&!cases.get(0).path("hidden").asBoolean();}catch(Exception e){return false;}}),anyDouble());
+  verify(sandbox).evaluateCode(anyString(),argThat(spec->{try{var cases=new com.fasterxml.jackson.databind.ObjectMapper().readTree(spec).path("cases");return cases.size()==3&&!spec.contains("hidden-input")&&!spec.contains("hidden-output")&&!cases.get(0).path("hidden").asBoolean()&&!cases.get(2).path("hidden").asBoolean();}catch(Exception e){return false;}}),anyDouble());
   verifyNoInteractions(records,events);
  }
  @Test void fullSubmissionIncludesPublicAndHiddenCases(){

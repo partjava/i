@@ -132,6 +132,17 @@
         ],
         "hidden": true,
         "expectedException": "ValueError"
+      },
+      {
+        "name": "str preserves raw value",
+        "mode": "function",
+        "function": "parse_config_value",
+        "args": [
+          "  raw text  ",
+          "str"
+        ],
+        "hidden": true,
+        "expected": "  raw text  "
       }
     ]
   },
@@ -280,6 +291,72 @@
         ],
         "hidden": true,
         "expectedException": "ValueError"
+      },
+      {
+        "name": "debug filter skips unknown level and sorts",
+        "mode": "function",
+        "function": "filter_logs",
+        "args": [
+          [
+            {
+              "timestamp": "10:00:02",
+              "level": "DEBUG",
+              "message": "d"
+            },
+            {
+              "timestamp": "10:00:01",
+              "level": "TRACE",
+              "message": "t"
+            },
+            {
+              "timestamp": "10:00:00",
+              "level": "INFO",
+              "message": "i"
+            }
+          ],
+          "DEBUG"
+        ],
+        "hidden": true,
+        "expected": [
+          {
+            "timestamp": "10:00:00",
+            "level": "INFO",
+            "message": "i"
+          },
+          {
+            "timestamp": "10:00:02",
+            "level": "DEBUG",
+            "message": "d"
+          }
+        ]
+      },
+      {
+        "name": "fatal threshold excludes error",
+        "mode": "function",
+        "function": "filter_logs",
+        "args": [
+          [
+            {
+              "timestamp": "01:00:00",
+              "level": "ERROR",
+              "message": "e"
+            },
+            {
+              "timestamp": "02:00:00",
+              "level": "FATAL",
+              "message": "f"
+            }
+          ],
+          "FATAL"
+        ],
+        "hidden": true,
+        "expected": [
+          {
+            "timestamp": "02:00:00",
+            "level": "FATAL",
+            "message": "f"
+          }
+        ]
       }
     ]
   },
@@ -445,6 +522,32 @@
           ],
           0,
           0
+        ],
+        "hidden": true,
+        "expectedException": "ValueError"
+      },
+      {
+        "name": "execute_task processes valid payload",
+        "mode": "function",
+        "function": "execute_task",
+        "args": [
+          {
+            "id": 1,
+            "payload": "job"
+          }
+        ],
+        "hidden": true,
+        "expected": "processed:job"
+      },
+      {
+        "name": "execute_task negative int raises ValueError",
+        "mode": "function",
+        "function": "execute_task",
+        "args": [
+          {
+            "id": 2,
+            "payload": -5
+          }
         ],
         "hidden": true,
         "expectedException": "ValueError"
@@ -647,6 +750,67 @@
         ],
         "hidden": true,
         "expectedException": "ValueError"
+      },
+      {
+        "name": "capacity one evicts immediately on new args",
+        "mode": "function",
+        "function": "eval_memoize",
+        "args": [
+          1,
+          [
+            [
+              1,
+              2
+            ],
+            [
+              1,
+              2
+            ],
+            [
+              3,
+              4
+            ],
+            [
+              1,
+              2
+            ]
+          ]
+        ],
+        "hidden": true,
+        "expected": [
+          {
+            "result": 3,
+            "cached": false
+          },
+          {
+            "result": 3,
+            "cached": true
+          },
+          {
+            "result": 7,
+            "cached": false
+          },
+          {
+            "result": 3,
+            "cached": false
+          }
+        ]
+      },
+      {
+        "name": "negative max_size raises ValueError",
+        "mode": "function",
+        "function": "eval_memoize",
+        "args": [
+          -1,
+          [
+            [
+              1,
+              2
+            ]
+          ]
+        ],
+        "hidden": true,
+        "expectedException": "ValueError"
       }
     ]
   },
@@ -809,6 +973,38 @@
         ],
         "hidden": true,
         "expectedException": "ValueError"
+      },
+      {
+        "name": "float inputs rounded to two decimals",
+        "mode": "function",
+        "function": "sliding_window_stats",
+        "args": [
+          [
+            1.5,
+            2.5,
+            3.0,
+            4.0
+          ],
+          2
+        ],
+        "hidden": true,
+        "expected": [
+          {
+            "avg": 2,
+            "max": 2.5,
+            "min": 1.5
+          },
+          {
+            "avg": 2.75,
+            "max": 3,
+            "min": 2.5
+          },
+          {
+            "avg": 3.5,
+            "max": 4,
+            "min": 3
+          }
+        ]
       }
     ]
   },
@@ -1016,6 +1212,72 @@
             "name": "A"
           }
         ]
+      },
+      {
+        "name": "empty input list",
+        "mode": "function",
+        "function": "multi_field_sort",
+        "args": [
+          [],
+          [
+            {
+              "field": "score",
+              "desc": true
+            }
+          ]
+        ],
+        "hidden": true,
+        "expected": []
+      },
+      {
+        "name": "all missing primary falls back to secondary rules",
+        "mode": "function",
+        "function": "multi_field_sort",
+        "args": [
+          [
+            {
+              "name": "B",
+              "age": 20
+            },
+            {
+              "name": "A",
+              "age": 20
+            },
+            {
+              "name": "C",
+              "age": 10
+            }
+          ],
+          [
+            {
+              "field": "score",
+              "desc": true
+            },
+            {
+              "field": "age",
+              "desc": false
+            },
+            {
+              "field": "name",
+              "desc": false
+            }
+          ]
+        ],
+        "hidden": true,
+        "expected": [
+          {
+            "name": "C",
+            "age": 10
+          },
+          {
+            "name": "A",
+            "age": 20
+          },
+          {
+            "name": "B",
+            "age": 20
+          }
+        ]
       }
     ]
   },
@@ -1162,6 +1424,62 @@
         ],
         "hidden": true,
         "expectedException": "ValueError"
+      },
+      {
+        "name": "merge strategy handles 3-level nested dicts",
+        "mode": "function",
+        "function": "deep_merge",
+        "args": [
+          {
+            "a": {
+              "b": {
+                "c": 1,
+                "d": 2
+              }
+            }
+          },
+          {
+            "a": {
+              "b": {
+                "c": 9,
+                "e": 3
+              }
+            }
+          },
+          "merge"
+        ],
+        "hidden": true,
+        "expected": {
+          "a": {
+            "b": {
+              "c": 9,
+              "d": 2,
+              "e": 3
+            }
+          }
+        }
+      },
+      {
+        "name": "ignore strategy keeps dict when override is scalar",
+        "mode": "function",
+        "function": "deep_merge",
+        "args": [
+          {
+            "a": {
+              "x": 1
+            }
+          },
+          {
+            "a": 42
+          },
+          "ignore"
+        ],
+        "hidden": true,
+        "expected": {
+          "a": {
+            "x": 1
+          }
+        }
       }
     ]
   },
@@ -1360,6 +1678,68 @@
           "users": {},
           "unused_permissions": []
         }
+      },
+      {
+        "name": "overlapping roles deduplicated without delete",
+        "mode": "function",
+        "function": "analyze_permissions",
+        "args": [
+          {
+            "r1": [
+              "read",
+              "write"
+            ],
+            "r2": [
+              "write",
+              "exec"
+            ]
+          },
+          {
+            "bob": [
+              "r1",
+              "r2"
+            ]
+          }
+        ],
+        "hidden": true,
+        "expected": {
+          "users": {
+            "bob": {
+              "permissions": [
+                "exec",
+                "read",
+                "write"
+              ],
+              "can_delete": false
+            }
+          },
+          "unused_permissions": []
+        }
+      },
+      {
+        "name": "no users marks all permissions unused",
+        "mode": "function",
+        "function": "analyze_permissions",
+        "args": [
+          {
+            "admin": [
+              "delete",
+              "read"
+            ],
+            "guest": [
+              "read"
+            ]
+          },
+          {}
+        ],
+        "hidden": true,
+        "expected": {
+          "users": {},
+          "unused_permissions": [
+            "delete",
+            "read"
+          ]
+        }
       }
     ]
   },
@@ -1518,6 +1898,58 @@
             "count": 0
           }
         ]
+      },
+      {
+        "name": "equal counts preserve original keyword order",
+        "mode": "function",
+        "function": "count_keywords",
+        "args": [
+          [
+            "alpha beta",
+            "gamma"
+          ],
+          [
+            "gamma",
+            "alpha",
+            "delta"
+          ]
+        ],
+        "hidden": true,
+        "expected": [
+          {
+            "keyword": "gamma",
+            "count": 1
+          },
+          {
+            "keyword": "alpha",
+            "count": 1
+          },
+          {
+            "keyword": "delta",
+            "count": 0
+          }
+        ]
+      },
+      {
+        "name": "repeated keyword on same line counts once",
+        "mode": "function",
+        "function": "count_keywords",
+        "args": [
+          [
+            "error error error",
+            "ok"
+          ],
+          [
+            "error"
+          ]
+        ],
+        "hidden": true,
+        "expected": [
+          {
+            "keyword": "error",
+            "count": 1
+          }
+        ]
       }
     ]
   },
@@ -1634,6 +2066,38 @@
         ],
         "hidden": true,
         "expected": "firstMiddleLastName"
+      },
+      {
+        "name": "nested dict drops blank and None fields",
+        "mode": "function",
+        "function": "clean_json_record",
+        "args": [
+          {
+            "outer_box": {
+              "inner_val": "  42  ",
+              "empty_str": "   ",
+              "nil_val": null
+            },
+            "flag_ok": "True"
+          }
+        ],
+        "hidden": true,
+        "expected": {
+          "outerBox": {
+            "innerVal": 42
+          },
+          "flagOk": true
+        }
+      },
+      {
+        "name": "snake_to_camel single word unchanged",
+        "mode": "function",
+        "function": "snake_to_camel",
+        "args": [
+          "username"
+        ],
+        "hidden": true,
+        "expected": "username"
       }
     ]
   },
@@ -1818,6 +2282,80 @@
         ],
         "hidden": true,
         "expectedException": "ValueError"
+      },
+      {
+        "name": "max aggregation treats None as zero",
+        "mode": "function",
+        "function": "group_aggregate",
+        "args": [
+          [
+            {
+              "team": "A",
+              "score": null
+            },
+            {
+              "team": "A",
+              "score": 5
+            },
+            {
+              "team": "B",
+              "score": 12
+            }
+          ],
+          "team",
+          "score",
+          "max"
+        ],
+        "hidden": true,
+        "expected": [
+          {
+            "team": "B",
+            "score": 12,
+            "count": 1
+          },
+          {
+            "team": "A",
+            "score": 5,
+            "count": 2
+          }
+        ]
+      },
+      {
+        "name": "count aggregation sorted descending",
+        "mode": "function",
+        "function": "group_aggregate",
+        "args": [
+          [
+            {
+              "k": "x",
+              "v": 1
+            },
+            {
+              "k": "x",
+              "v": 2
+            },
+            {
+              "k": "y",
+              "v": 3
+            }
+          ],
+          "k",
+          "v",
+          "count"
+        ],
+        "hidden": true,
+        "expected": [
+          {
+            "k": "x",
+            "v": 2,
+            "count": 2
+          },
+          {
+            "k": "y",
+            "v": 1,
+            "count": 1
+          }
+        ]
       }
     ]
   },
@@ -1977,6 +2515,57 @@
           null,
           "closed_error"
         ]
+      },
+      {
+        "name": "unknown release ignored and lifo reuse order",
+        "mode": "function",
+        "function": "eval_pool",
+        "args": [
+          2,
+          [
+            {
+              "op": "acquire"
+            },
+            {
+              "op": "acquire"
+            },
+            {
+              "op": "release",
+              "conn": 999
+            },
+            {
+              "op": "release",
+              "conn": 1
+            },
+            {
+              "op": "release",
+              "conn": 2
+            },
+            {
+              "op": "acquire"
+            }
+          ]
+        ],
+        "hidden": true,
+        "expected": [
+          1,
+          2,
+          null,
+          null,
+          null,
+          2
+        ]
+      },
+      {
+        "name": "zero max_size raises ValueError",
+        "mode": "function",
+        "function": "eval_pool",
+        "args": [
+          0,
+          []
+        ],
+        "hidden": true,
+        "expectedException": "ValueError"
       }
     ]
   },
@@ -2132,6 +2721,69 @@
           "discount": 0,
           "total": 0
         }
+      },
+      {
+        "name": "just under 5000 gets no discount and price updates",
+        "mode": "function",
+        "function": "eval_cart",
+        "args": [
+          [
+            {
+              "op": "add",
+              "name": "Monitor",
+              "price": 2000,
+              "qty": 1
+            },
+            {
+              "op": "add",
+              "name": "Monitor",
+              "price": 2499.5,
+              "qty": 1
+            }
+          ]
+        ],
+        "hidden": true,
+        "expected": {
+          "subtotal": 4999,
+          "discount": 0,
+          "total": 4999
+        }
+      },
+      {
+        "name": "remove existing item and update quantity",
+        "mode": "function",
+        "function": "eval_cart",
+        "args": [
+          [
+            {
+              "op": "add",
+              "name": "A",
+              "price": 3000,
+              "qty": 2
+            },
+            {
+              "op": "add",
+              "name": "B",
+              "price": 500,
+              "qty": 1
+            },
+            {
+              "op": "remove",
+              "name": "B"
+            },
+            {
+              "op": "update",
+              "name": "A",
+              "qty": 1
+            }
+          ]
+        ],
+        "hidden": true,
+        "expected": {
+          "subtotal": 3000,
+          "discount": 0,
+          "total": 3000
+        }
       }
     ]
   },
@@ -2271,6 +2923,54 @@
         ],
         "hidden": true,
         "expected": false
+      },
+      {
+        "name": "memory overwrite updates existing key",
+        "mode": "function",
+        "function": "eval_cache",
+        "args": [
+          "memory",
+          [
+            {
+              "op": "set",
+              "key": "a",
+              "value": 1
+            },
+            {
+              "op": "set",
+              "key": "a",
+              "value": 2
+            },
+            {
+              "op": "get",
+              "key": "a"
+            }
+          ]
+        ],
+        "hidden": true,
+        "expected": 2
+      },
+      {
+        "name": "redis exists true with positive ttl",
+        "mode": "function",
+        "function": "eval_cache",
+        "args": [
+          "redis",
+          [
+            {
+              "op": "set",
+              "key": "token",
+              "value": "abc",
+              "ttl": 60
+            },
+            {
+              "op": "exists",
+              "key": "token"
+            }
+          ]
+        ],
+        "hidden": true,
+        "expected": true
       }
     ]
   },
@@ -2378,6 +3078,32 @@
         ],
         "hidden": true,
         "expected": "{\"level\": \"DEBUG\", \"message\": \"ping\", \"source\": \"net.py\", \"timestamp\": \"2025-01-01 10:00:00\"}"
+      },
+      {
+        "name": "compact formatter ignores source",
+        "mode": "function",
+        "function": "eval_formatter",
+        "args": [
+          "INFO",
+          "ok",
+          "auth.py",
+          "compact"
+        ],
+        "hidden": true,
+        "expected": "INFO|ok"
+      },
+      {
+        "name": "json formatter with empty source",
+        "mode": "function",
+        "function": "eval_formatter",
+        "args": [
+          "ERROR",
+          "boom",
+          "",
+          "json"
+        ],
+        "hidden": true,
+        "expected": "{\"level\": \"ERROR\", \"message\": \"boom\", \"source\": \"\", \"timestamp\": \"2025-01-01 10:00:00\"}"
       }
     ]
   },
@@ -2517,6 +3243,52 @@
             2
           ]
         ]
+      },
+      {
+        "name": "page size one yields singletons",
+        "mode": "function",
+        "function": "eval_paginated",
+        "args": [
+          [
+            "a",
+            "b",
+            "c"
+          ],
+          1
+        ],
+        "hidden": true,
+        "expected": [
+          [
+            "a"
+          ],
+          [
+            "b"
+          ],
+          [
+            "c"
+          ]
+        ]
+      },
+      {
+        "name": "page size equal to length yields one page",
+        "mode": "function",
+        "function": "eval_paginated",
+        "args": [
+          [
+            1,
+            2,
+            3
+          ],
+          3
+        ],
+        "hidden": true,
+        "expected": [
+          [
+            1,
+            2,
+            3
+          ]
+        ]
       }
     ]
   },
@@ -2644,6 +3416,40 @@
         ],
         "hidden": true,
         "expected": []
+      },
+      {
+        "name": "skips lines with more than four pipe fields",
+        "mode": "function",
+        "function": "parse_log_lines",
+        "args": [
+          [
+            "INFO | 01:00 | mod | msg | extra",
+            "DEBUG | 02:00 | core | ok"
+          ]
+        ],
+        "hidden": true,
+        "expected": [
+          {
+            "level": "DEBUG",
+            "timestamp": "02:00",
+            "module": "core",
+            "message": "ok"
+          }
+        ]
+      },
+      {
+        "name": "only comments and whitespace returns empty",
+        "mode": "function",
+        "function": "parse_log_lines",
+        "args": [
+          [
+            "# header",
+            "   ",
+            "\t# another"
+          ]
+        ],
+        "hidden": true,
+        "expected": []
       }
     ]
   },
@@ -2743,6 +3549,28 @@
         ],
         "hidden": true,
         "expected": "success"
+      },
+      {
+        "name": "succeeds on 4th attempt after 3 transient failures",
+        "mode": "function",
+        "function": "eval_retry",
+        "args": [
+          4,
+          3
+        ],
+        "hidden": true,
+        "expected": "success"
+      },
+      {
+        "name": "zero max_attempts raises ValueError",
+        "mode": "function",
+        "function": "eval_retry",
+        "args": [
+          0,
+          0
+        ],
+        "hidden": true,
+        "expectedException": "ValueError"
       }
     ]
   },
@@ -2947,6 +3775,66 @@
             "score": 2
           }
         ]
+      },
+      {
+        "name": "multi rule name_length then age",
+        "mode": "function",
+        "function": "eval_sort_users",
+        "args": [
+          [
+            {
+              "name": "Amy",
+              "age": 30,
+              "score": 80
+            },
+            {
+              "name": "Bob",
+              "age": 20,
+              "score": 70
+            },
+            {
+              "name": "Alex",
+              "age": 18,
+              "score": 90
+            }
+          ],
+          [
+            "name_length",
+            "age"
+          ]
+        ],
+        "hidden": true,
+        "expected": [
+          {
+            "name": "Bob",
+            "age": 20,
+            "score": 70
+          },
+          {
+            "name": "Amy",
+            "age": 30,
+            "score": 80
+          },
+          {
+            "name": "Alex",
+            "age": 18,
+            "score": 90
+          }
+        ]
+      },
+      {
+        "name": "empty users list",
+        "mode": "function",
+        "function": "eval_sort_users",
+        "args": [
+          [],
+          [
+            "age",
+            "score_desc"
+          ]
+        ],
+        "hidden": true,
+        "expected": []
       }
     ]
   },
@@ -3068,6 +3956,26 @@
         ],
         "hidden": true,
         "expected": false
+      },
+      {
+        "name": "deeply nested mixed valid brackets",
+        "mode": "function",
+        "function": "is_valid",
+        "args": [
+          "{[()()]}"
+        ],
+        "hidden": true,
+        "expected": true
+      },
+      {
+        "name": "trailing unmatched closing bracket",
+        "mode": "function",
+        "function": "is_valid",
+        "args": [
+          "()[]{}}"
+        ],
+        "hidden": true,
+        "expected": false
       }
     ]
   },
@@ -3174,6 +4082,61 @@
         ],
         "hidden": true,
         "expected": []
+      },
+      {
+        "name": "n=3 ends with Fizz",
+        "mode": "function",
+        "function": "fizzbuzz",
+        "args": [
+          3
+        ],
+        "hidden": true,
+        "expected": [
+          "1",
+          "2",
+          "Fizz"
+        ]
+      },
+      {
+        "name": "n=30 contains two FizzBuzz entries",
+        "mode": "function",
+        "function": "fizzbuzz",
+        "args": [
+          30
+        ],
+        "hidden": true,
+        "expected": [
+          "1",
+          "2",
+          "Fizz",
+          "4",
+          "Buzz",
+          "Fizz",
+          "7",
+          "8",
+          "Fizz",
+          "Buzz",
+          "11",
+          "Fizz",
+          "13",
+          "14",
+          "FizzBuzz",
+          "16",
+          "17",
+          "Fizz",
+          "19",
+          "Buzz",
+          "Fizz",
+          "22",
+          "23",
+          "Fizz",
+          "Buzz",
+          "26",
+          "Fizz",
+          "28",
+          "29",
+          "FizzBuzz"
+        ]
       }
     ]
   },
@@ -3288,6 +4251,40 @@
           0,
           2
         ]
+      },
+      {
+        "name": "no matching pair returns empty",
+        "mode": "function",
+        "function": "two_sum",
+        "args": [
+          [
+            1,
+            2,
+            3
+          ],
+          10
+        ],
+        "hidden": true,
+        "expected": []
+      },
+      {
+        "name": "two zeros sum to zero",
+        "mode": "function",
+        "function": "two_sum",
+        "args": [
+          [
+            0,
+            4,
+            3,
+            0
+          ],
+          0
+        ],
+        "hidden": true,
+        "expected": [
+          0,
+          3
+        ]
       }
     ]
   },
@@ -3379,6 +4376,26 @@
         ],
         "hidden": true,
         "expected": false
+      },
+      {
+        "name": "punctuation only is palindrome",
+        "mode": "function",
+        "function": "is_palindrome",
+        "args": [
+          "!@#.,"
+        ],
+        "hidden": true,
+        "expected": true
+      },
+      {
+        "name": "mixed case palindrome",
+        "mode": "function",
+        "function": "is_palindrome",
+        "args": [
+          "RaceCar"
+        ],
+        "hidden": true,
+        "expected": true
       }
     ]
   },
@@ -3503,6 +4520,32 @@
           -100,
           3,
           99
+        ]
+      },
+      {
+        "name": "empty array unchanged",
+        "mode": "function",
+        "function": "rotate",
+        "args": [
+          [],
+          5
+        ],
+        "hidden": true,
+        "expected": []
+      },
+      {
+        "name": "single element array",
+        "mode": "function",
+        "function": "rotate",
+        "args": [
+          [
+            42
+          ],
+          7
+        ],
+        "hidden": true,
+        "expected": [
+          42
         ]
       }
     ]
@@ -3675,6 +4718,62 @@
             7
           ]
         ]
+      },
+      {
+        "name": "single interval",
+        "mode": "function",
+        "function": "merge_intervals",
+        "args": [
+          [
+            [
+              3,
+              9
+            ]
+          ]
+        ],
+        "hidden": true,
+        "expected": [
+          [
+            3,
+            9
+          ]
+        ]
+      },
+      {
+        "name": "negative bounds chained merge",
+        "mode": "function",
+        "function": "merge_intervals",
+        "args": [
+          [
+            [
+              -5,
+              -1
+            ],
+            [
+              -2,
+              3
+            ],
+            [
+              3,
+              6
+            ],
+            [
+              8,
+              10
+            ]
+          ]
+        ],
+        "hidden": true,
+        "expected": [
+          [
+            -5,
+            6
+          ],
+          [
+            8,
+            10
+          ]
+        ]
       }
     ]
   },
@@ -3787,6 +4886,37 @@
         ],
         "hidden": true,
         "expected": []
+      },
+      {
+        "name": "empty text returns empty",
+        "mode": "function",
+        "function": "top_k_frequent",
+        "args": [
+          "",
+          3
+        ],
+        "hidden": true,
+        "expected": []
+      },
+      {
+        "name": "k larger than unique words",
+        "mode": "function",
+        "function": "top_k_frequent",
+        "args": [
+          "one two two",
+          5
+        ],
+        "hidden": true,
+        "expected": [
+          [
+            "two",
+            2
+          ],
+          [
+            "one",
+            1
+          ]
+        ]
       }
     ]
   },
@@ -3916,6 +5046,56 @@
           "intersection": [],
           "difference": []
         }
+      },
+      {
+        "name": "empty second array",
+        "mode": "function",
+        "function": "set_operations",
+        "args": [
+          [
+            4,
+            2,
+            4
+          ],
+          []
+        ],
+        "hidden": true,
+        "expected": {
+          "intersection": [],
+          "difference": [
+            2,
+            4
+          ]
+        }
+      },
+      {
+        "name": "negative integers sorted output",
+        "mode": "function",
+        "function": "set_operations",
+        "args": [
+          [
+            -1,
+            3,
+            0,
+            -5
+          ],
+          [
+            0,
+            -5,
+            7
+          ]
+        ],
+        "hidden": true,
+        "expected": {
+          "intersection": [
+            -5,
+            0
+          ],
+          "difference": [
+            -1,
+            3
+          ]
+        }
       }
     ]
   },
@@ -4028,6 +5208,50 @@
         ],
         "hidden": true,
         "expected": []
+      },
+      {
+        "name": "missing content key searches path safely",
+        "mode": "function",
+        "function": "find_files",
+        "args": [
+          [
+            {
+              "path": "/var/log/app.log"
+            },
+            {
+              "path": "/etc/hosts",
+              "content": "localhost"
+            }
+          ],
+          "app.log"
+        ],
+        "hidden": true,
+        "expected": [
+          "/var/log/app.log"
+        ]
+      },
+      {
+        "name": "matches across both path and content",
+        "mode": "function",
+        "function": "find_files",
+        "args": [
+          [
+            {
+              "path": "/a/cache.py",
+              "content": ""
+            },
+            {
+              "path": "/b/db.py",
+              "content": "use CACHE here"
+            }
+          ],
+          "cache"
+        ],
+        "hidden": true,
+        "expected": [
+          "/a/cache.py",
+          "/b/db.py"
+        ]
       }
     ]
   },
@@ -4141,6 +5365,41 @@
           "x": true,
           "y": "ok"
         }
+      },
+      {
+        "name": "three-level nesting with null and zero",
+        "mode": "function",
+        "function": "flatten_json",
+        "args": [
+          {
+            "a": {
+              "b": {
+                "c": null,
+                "d": 0
+              }
+            }
+          }
+        ],
+        "hidden": true,
+        "expected": {
+          "a.b.c": null,
+          "a.b.d": 0
+        }
+      },
+      {
+        "name": "empty nested list produces no keys",
+        "mode": "function",
+        "function": "flatten_json",
+        "args": [
+          {
+            "items": [],
+            "count": 0
+          }
+        ],
+        "hidden": true,
+        "expected": {
+          "count": 0
+        }
       }
     ]
   },
@@ -4244,6 +5503,32 @@
         ],
         "hidden": true,
         "expected": []
+      },
+      {
+        "name": "empty csv string returns empty list",
+        "mode": "function",
+        "function": "parse_csv",
+        "args": [
+          ""
+        ],
+        "hidden": true,
+        "expected": []
+      },
+      {
+        "name": "trimmed headers and multiple quoted fields",
+        "mode": "function",
+        "function": "parse_csv",
+        "args": [
+          " id , full_name , note \n1,\"Doe, John\",\"ok, yes\""
+        ],
+        "hidden": true,
+        "expected": [
+          {
+            "id": "1",
+            "full_name": "Doe, John",
+            "note": "ok, yes"
+          }
+        ]
       }
     ]
   },
@@ -4326,6 +5611,26 @@
         ],
         "hidden": true,
         "expected": 2
+      },
+      {
+        "name": "single integer with spaces",
+        "mode": "function",
+        "function": "eval_calculate",
+        "args": [
+          "  42 "
+        ],
+        "hidden": true,
+        "expected": 42
+      },
+      {
+        "name": "leading negative division truncates toward zero",
+        "mode": "function",
+        "function": "eval_calculate",
+        "args": [
+          "-7/2 + 1"
+        ],
+        "hidden": true,
+        "expected": -2
       }
     ]
   },
@@ -4440,6 +5745,35 @@
         ],
         "hidden": true,
         "expectedException": "ValueError"
+      },
+      {
+        "name": "negative initial balance clamped to zero",
+        "mode": "function",
+        "function": "eval_bank",
+        "args": [
+          "Zero",
+          -500,
+          []
+        ],
+        "hidden": true,
+        "expected": 0
+      },
+      {
+        "name": "zero deposit raises ValueError",
+        "mode": "function",
+        "function": "eval_bank",
+        "args": [
+          "Zero",
+          100,
+          [
+            {
+              "op": "deposit",
+              "amount": 0
+            }
+          ]
+        ],
+        "hidden": true,
+        "expectedException": "ValueError"
       }
     ]
   },
@@ -4536,6 +5870,34 @@
         ],
         "hidden": true,
         "expected": 0
+      },
+      {
+        "name": "float rectangle dimensions",
+        "mode": "function",
+        "function": "eval_shape",
+        "args": [
+          "rectangle",
+          [
+            2.5,
+            4
+          ]
+        ],
+        "hidden": true,
+        "expected": 10
+      },
+      {
+        "name": "fractional triangle area",
+        "mode": "function",
+        "function": "eval_shape",
+        "args": [
+          "triangle",
+          [
+            3,
+            5
+          ]
+        ],
+        "hidden": true,
+        "expected": 7.5
       }
     ]
   },
@@ -4652,6 +6014,45 @@
         ],
         "hidden": true,
         "expected": []
+      },
+      {
+        "name": "console empty logs",
+        "mode": "function",
+        "function": "eval_logger",
+        "args": [
+          "console",
+          []
+        ],
+        "hidden": true,
+        "expected": []
+      },
+      {
+        "name": "file logger multiple levels",
+        "mode": "function",
+        "function": "eval_logger",
+        "args": [
+          "file",
+          [
+            [
+              "DEBUG",
+              "init"
+            ],
+            [
+              "WARN",
+              "retry"
+            ],
+            [
+              "FATAL",
+              "halt"
+            ]
+          ]
+        ],
+        "hidden": true,
+        "expected": [
+          "[DEBUG] init",
+          "[WARN] retry",
+          "[FATAL] halt"
+        ]
       }
     ]
   },
@@ -4780,6 +6181,39 @@
           0,
           1
         ]
+      },
+      {
+        "name": "negative multi-step countdown",
+        "mode": "function",
+        "function": "eval_range",
+        "args": [
+          [
+            10,
+            0,
+            -3
+          ]
+        ],
+        "hidden": true,
+        "expected": [
+          10,
+          7,
+          4,
+          1
+        ]
+      },
+      {
+        "name": "negative step with start below stop yields empty",
+        "mode": "function",
+        "function": "eval_range",
+        "args": [
+          [
+            1,
+            5,
+            -1
+          ]
+        ],
+        "hidden": true,
+        "expected": []
       }
     ]
   },
@@ -4879,6 +6313,40 @@
         ],
         "hidden": true,
         "expected": []
+      },
+      {
+        "name": "first 2 numbers",
+        "mode": "function",
+        "function": "eval_fib",
+        "args": [
+          2
+        ],
+        "hidden": true,
+        "expected": [
+          0,
+          1
+        ]
+      },
+      {
+        "name": "first 10 numbers",
+        "mode": "function",
+        "function": "eval_fib",
+        "args": [
+          10
+        ],
+        "hidden": true,
+        "expected": [
+          0,
+          1,
+          1,
+          2,
+          3,
+          5,
+          8,
+          13,
+          21,
+          34
+        ]
       }
     ]
   },
@@ -4968,6 +6436,30 @@
         ],
         "hidden": true,
         "expected": 1230
+      },
+      {
+        "name": "negative times negative returns positive",
+        "mode": "function",
+        "function": "eval_timer",
+        "args": [
+          "s",
+          -8,
+          -9
+        ],
+        "hidden": true,
+        "expected": 72
+      },
+      {
+        "name": "unknown unit fallback returns product",
+        "mode": "function",
+        "function": "eval_timer",
+        "args": [
+          "us",
+          11,
+          12
+        ],
+        "hidden": true,
+        "expected": 132
       }
     ]
   },
@@ -5083,6 +6575,46 @@
         ],
         "hidden": true,
         "expected": []
+      },
+      {
+        "name": "last_char handles empty string safely",
+        "mode": "function",
+        "function": "eval_sort_words",
+        "args": [
+          [
+            "b",
+            "",
+            "a"
+          ],
+          "last_char"
+        ],
+        "hidden": true,
+        "expected": [
+          "",
+          "a",
+          "b"
+        ]
+      },
+      {
+        "name": "length sort preserves stability on ties",
+        "mode": "function",
+        "function": "eval_sort_words",
+        "args": [
+          [
+            "cat",
+            "dog",
+            "ant",
+            "ox"
+          ],
+          "length"
+        ],
+        "hidden": true,
+        "expected": [
+          "ox",
+          "cat",
+          "dog",
+          "ant"
+        ]
       }
     ]
   }

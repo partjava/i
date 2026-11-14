@@ -218,6 +218,124 @@
             ]
           ]
         ]
+      },
+      {
+        "name": "softmax batch stability on large logits",
+        "mode": "function",
+        "function": "softmax",
+        "args": [
+          [
+            [
+              100.0,
+              100.0
+            ],
+            [
+              0.0,
+              0.0
+            ]
+          ]
+        ],
+        "hidden": true,
+        "expected": [
+          [
+            0.5,
+            0.5
+          ],
+          [
+            0.5,
+            0.5
+          ]
+        ]
+      },
+      {
+        "name": "mlp_forward 3-layer partial relu clipping",
+        "mode": "function",
+        "function": "mlp_forward",
+        "args": [
+          [
+            [
+              1,
+              1
+            ]
+          ],
+          [
+            [
+              [
+                [
+                  -1,
+                  1
+                ],
+                [
+                  -1,
+                  1
+                ]
+              ],
+              [
+                0,
+                0
+              ]
+            ],
+            [
+              [
+                [
+                  1,
+                  0
+                ],
+                [
+                  0,
+                  1
+                ]
+              ],
+              [
+                0,
+                0
+              ]
+            ],
+            [
+              [
+                [
+                  1,
+                  0
+                ],
+                [
+                  0,
+                  1
+                ]
+              ],
+              [
+                0,
+                0
+              ]
+            ]
+          ]
+        ],
+        "hidden": true,
+        "expected": [
+          [
+            [
+              1.0,
+              1.0
+            ]
+          ],
+          [
+            [
+              0.0,
+              2.0
+            ]
+          ],
+          [
+            [
+              0.0,
+              2.0
+            ]
+          ],
+          [
+            [
+              0.11920292202211755,
+              0.8807970779778823
+            ]
+          ]
+        ]
       }
     ]
   },
@@ -334,6 +452,39 @@
         "expected": [
           0.25
         ]
+      },
+      {
+        "name": "leaky_relu negative slope scaling",
+        "mode": "function",
+        "function": "leaky_relu",
+        "args": [
+          [
+            -10.0,
+            0.0,
+            5.0
+          ],
+          0.1
+        ],
+        "hidden": true,
+        "expected": [
+          -1.0,
+          0.0,
+          5.0
+        ]
+      },
+      {
+        "name": "max_gradient relu equals 1",
+        "mode": "function",
+        "function": "max_gradient",
+        "args": [
+          "relu",
+          [
+            -5,
+            5
+          ]
+        ],
+        "hidden": true,
+        "expected": 1.0
       }
     ]
   },
@@ -472,6 +623,41 @@
         ],
         "hidden": true,
         "expected": 1.3125
+      },
+      {
+        "name": "binary_cross_entropy clips extreme 0/1 safely",
+        "mode": "function",
+        "function": "binary_cross_entropy",
+        "args": [
+          [
+            0.0,
+            1.0
+          ],
+          [
+            1,
+            0
+          ]
+        ],
+        "hidden": true,
+        "expected": 23.025850888570275
+      },
+      {
+        "name": "huber_loss zero error returns zero",
+        "mode": "function",
+        "function": "huber_loss",
+        "args": [
+          [
+            2.0,
+            -3.0
+          ],
+          [
+            2.0,
+            -3.0
+          ],
+          0.5
+        ],
+        "hidden": true,
+        "expected": 0.0
       }
     ]
   },
@@ -671,6 +857,157 @@
           0.0,
           5.0
         ]
+      },
+      {
+        "name": "mlp_backward 2-layer grads list",
+        "mode": "function",
+        "function": "mlp_backward",
+        "args": [
+          [
+            [
+              1.0
+            ]
+          ],
+          [
+            [
+              [
+                1.0,
+                2.0
+              ]
+            ],
+            [
+              [
+                3.0,
+                4.0
+              ]
+            ],
+            [
+              [
+                5.0
+              ]
+            ]
+          ],
+          [
+            [
+              [
+                [
+                  1.0,
+                  0.0
+                ],
+                [
+                  0.0,
+                  1.0
+                ]
+              ],
+              [
+                0.0,
+                0.0
+              ]
+            ],
+            [
+              [
+                [
+                  1.0
+                ],
+                [
+                  1.0
+                ]
+              ],
+              [
+                0.0
+              ]
+            ]
+          ]
+        ],
+        "hidden": true,
+        "expected": [
+          [
+            [
+              [
+                1,
+                1
+              ],
+              [
+                2,
+                2
+              ]
+            ],
+            [
+              1,
+              1
+            ]
+          ],
+          [
+            [
+              [
+                3
+              ],
+              [
+                4
+              ]
+            ],
+            [
+              1
+            ]
+          ]
+        ]
+      },
+      {
+        "name": "linear_backward batch size 2 sums db",
+        "mode": "function",
+        "function": "linear_backward",
+        "args": [
+          [
+            [
+              1.0
+            ],
+            [
+              2.0
+            ]
+          ],
+          [
+            [
+              1.0,
+              0.0
+            ],
+            [
+              0.0,
+              1.0
+            ]
+          ],
+          [
+            [
+              2.0
+            ],
+            [
+              3.0
+            ]
+          ]
+        ],
+        "hidden": true,
+        "expected": [
+          [
+            [
+              1.0
+            ],
+            [
+              2.0
+            ]
+          ],
+          [
+            3.0
+          ],
+          [
+            [
+              2.0,
+              3.0
+            ],
+            [
+              4.0,
+              6.0
+            ]
+          ]
+        ]
       }
     ]
   },
@@ -829,6 +1166,53 @@
           9.0,
           -3.5
         ]
+      },
+      {
+        "name": "sgd zero gradients preserve params",
+        "mode": "function",
+        "function": "eval_optimizer",
+        "args": [
+          "sgd",
+          0.5,
+          [
+            1.0,
+            -2.0
+          ],
+          [
+            [
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0
+            ]
+          ]
+        ],
+        "hidden": true,
+        "expected": [
+          1.0,
+          -2.0
+        ]
+      },
+      {
+        "name": "unknown optimizer raises ValueError",
+        "mode": "function",
+        "function": "eval_optimizer",
+        "args": [
+          "rmsprop",
+          0.1,
+          [
+            1.0
+          ],
+          [
+            [
+              0.5
+            ]
+          ]
+        ],
+        "hidden": true,
+        "expectedException": "ValueError"
       }
     ]
   },
@@ -1111,6 +1495,115 @@
             0.9
           ]
         }
+      },
+      {
+        "name": "batchnorm_train momentum=0 resets running stats",
+        "mode": "function",
+        "function": "batchnorm_train",
+        "args": [
+          [
+            [
+              0,
+              4
+            ],
+            [
+              2,
+              8
+            ]
+          ],
+          [
+            1,
+            1
+          ],
+          [
+            0,
+            0
+          ],
+          [
+            99,
+            99
+          ],
+          [
+            99,
+            99
+          ],
+          0.0,
+          0.0
+        ],
+        "hidden": true,
+        "expected": {
+          "out": [
+            [
+              -1.0,
+              -1.0
+            ],
+            [
+              1.0,
+              1.0
+            ]
+          ],
+          "running_mean": [
+            1.0,
+            6.0
+          ],
+          "running_var": [
+            1.0,
+            4.0
+          ],
+          "cache": {
+            "x_hat": [
+              [
+                -1.0,
+                -1.0
+              ],
+              [
+                1.0,
+                1.0
+              ]
+            ],
+            "gamma": [
+              1.0,
+              1.0
+            ]
+          }
+        }
+      },
+      {
+        "name": "batchnorm_inference affine gamma and beta",
+        "mode": "function",
+        "function": "batchnorm_inference",
+        "args": [
+          [
+            [
+              3,
+              5
+            ]
+          ],
+          [
+            2,
+            -1
+          ],
+          [
+            1,
+            4
+          ],
+          [
+            1,
+            2
+          ],
+          [
+            4,
+            9
+          ],
+          0.0
+        ],
+        "hidden": true,
+        "expected": [
+          [
+            3.0,
+            3.0
+          ]
+        ]
       }
     ]
   },
@@ -1298,6 +1791,79 @@
           0.651411,
           0.633353,
           0.616076
+        ]
+      },
+      {
+        "name": "dropout_forward keep_prob=0 zeroes output and mask",
+        "mode": "function",
+        "function": "dropout_forward",
+        "args": [
+          [
+            [
+              1.0,
+              2.0
+            ],
+            [
+              3.0,
+              4.0
+            ]
+          ],
+          0.0,
+          true
+        ],
+        "hidden": true,
+        "expected": {
+          "out": [
+            [
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0
+            ]
+          ],
+          "mask": [
+            [
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0
+            ]
+          ]
+        }
+      },
+      {
+        "name": "train_with_dropout keep_prob=0.5 seeded",
+        "mode": "function",
+        "function": "train_with_dropout",
+        "args": [
+          [
+            [
+              1,
+              0
+            ],
+            [
+              0,
+              1
+            ]
+          ],
+          [
+            1,
+            0
+          ],
+          4,
+          0.5,
+          4
+        ],
+        "hidden": true,
+        "expected": [
+          0.525399,
+          0.499751,
+          0.484097,
+          0.479843
         ]
       }
     ]
@@ -1490,6 +2056,80 @@
             0.0
           ]
         ]
+      },
+      {
+        "name": "conv2d_forward stride 2 valid",
+        "mode": "function",
+        "function": "conv2d_forward",
+        "args": [
+          [
+            [
+              1,
+              2,
+              3,
+              4
+            ],
+            [
+              5,
+              6,
+              7,
+              8
+            ],
+            [
+              9,
+              10,
+              11,
+              12
+            ],
+            [
+              13,
+              14,
+              15,
+              16
+            ]
+          ],
+          [
+            [
+              1,
+              0
+            ],
+            [
+              0,
+              1
+            ]
+          ],
+          2,
+          0
+        ],
+        "hidden": true,
+        "expected": [
+          [
+            7.0,
+            11.0
+          ],
+          [
+            23.0,
+            27.0
+          ]
+        ]
+      },
+      {
+        "name": "compute_output_shape asymmetric rectangular",
+        "mode": "function",
+        "function": "compute_output_shape",
+        "args": [
+          10,
+          14,
+          3,
+          5,
+          2,
+          1
+        ],
+        "hidden": true,
+        "expected": [
+          5,
+          6
+        ]
       }
     ]
   },
@@ -1596,6 +2236,40 @@
         "hidden": true,
         "expected": [
           0.0
+        ]
+      },
+      {
+        "name": "elu negative value exponential",
+        "mode": "function",
+        "function": "elu",
+        "args": [
+          [
+            -1.0,
+            1.0
+          ],
+          2.0
+        ],
+        "hidden": true,
+        "expected": [
+          -1.2642411176571153,
+          1
+        ]
+      },
+      {
+        "name": "gradient elu at zero and positive",
+        "mode": "function",
+        "function": "gradient",
+        "args": [
+          "elu",
+          [
+            0.0,
+            2.0
+          ]
+        ],
+        "hidden": true,
+        "expected": [
+          1.0,
+          1.0
         ]
       }
     ]
@@ -1717,6 +2391,45 @@
         ],
         "hidden": true,
         "expected": 0.6931471805599453
+      },
+      {
+        "name": "focal_loss hard misclassified high loss",
+        "mode": "function",
+        "function": "focal_loss",
+        "args": [
+          [
+            0.01,
+            0.99
+          ],
+          [
+            1,
+            0
+          ],
+          2.0
+        ],
+        "hidden": true,
+        "expected": 4.5135272992869275
+      },
+      {
+        "name": "compare_losses monotonic ordering",
+        "mode": "function",
+        "function": "compare_losses",
+        "args": [
+          [
+            0.8,
+            0.2
+          ],
+          [
+            1,
+            0
+          ]
+        ],
+        "hidden": true,
+        "expected": {
+          "ce": 0.2231,
+          "fl_g1": 0.0446,
+          "fl_g2": 0.0089
+        }
       }
     ]
   },
@@ -1817,6 +2530,36 @@
           "da": 0,
           "db": 0,
           "out": 1
+        }
+      },
+      {
+        "name": "eval_autograd negative input a=-2 b=1",
+        "mode": "function",
+        "function": "eval_autograd",
+        "args": [
+          -2.0,
+          1.0
+        ],
+        "hidden": true,
+        "expected": {
+          "da": 0.035325,
+          "db": -0.035325,
+          "out": 0.017986
+        }
+      },
+      {
+        "name": "eval_autograd origin a=0 b=0",
+        "mode": "function",
+        "function": "eval_autograd",
+        "args": [
+          0.0,
+          0.0
+        ],
+        "hidden": true,
+        "expected": {
+          "out": 0.5,
+          "da": 0.25,
+          "db": 0.0
         }
       }
     ]
@@ -2038,6 +2781,51 @@
             ]
           ]
         }
+      },
+      {
+        "name": "sgd short trajectory from origin",
+        "mode": "function",
+        "function": "sgd",
+        "args": [
+          [
+            0.0,
+            0.0
+          ],
+          0.01,
+          2
+        ],
+        "hidden": true,
+        "expected": {
+          "final": [
+            0.039568,
+            0.0008
+          ],
+          "trajectory": [
+            [
+              0,
+              0
+            ],
+            [
+              0.02,
+              0
+            ],
+            [
+              0.039568,
+              0.0008
+            ]
+          ]
+        }
+      },
+      {
+        "name": "rosenbrock at origin equals 1",
+        "mode": "function",
+        "function": "rosenbrock",
+        "args": [
+          0.0,
+          0.0
+        ],
+        "hidden": true,
+        "expected": 1.0
       }
     ]
   },
@@ -2378,6 +3166,148 @@
             ]
           ]
         }
+      },
+      {
+        "name": "single feature column batchnorm",
+        "mode": "function",
+        "function": "eval_batchnorm",
+        "args": [
+          [
+            [
+              0.0
+            ],
+            [
+              2.0
+            ],
+            [
+              4.0
+            ]
+          ],
+          [
+            [
+              2.0
+            ]
+          ],
+          [
+            [
+              1.0
+            ],
+            [
+              0.0
+            ],
+            [
+              -1.0
+            ]
+          ],
+          0.5
+        ],
+        "hidden": true,
+        "expected": {
+          "dbeta": [
+            0
+          ],
+          "dgamma": [
+            -2.4494851500028276
+          ],
+          "dx": [
+            [
+              2.296383716737793e-06
+            ],
+            [
+              0
+            ],
+            [
+              -2.296383716737793e-06
+            ]
+          ],
+          "out_inf": [
+            [
+              0.7385469316598385
+            ]
+          ],
+          "out_train": [
+            [
+              -1.2247425750014138
+            ],
+            [
+              0
+            ],
+            [
+              1.2247425750014138
+            ]
+          ]
+        }
+      },
+      {
+        "name": "asymmetric dout non-zero dx",
+        "mode": "function",
+        "function": "eval_batchnorm",
+        "args": [
+          [
+            [
+              1.0,
+              0.0
+            ],
+            [
+              3.0,
+              4.0
+            ]
+          ],
+          [
+            [
+              2.0,
+              2.0
+            ]
+          ],
+          [
+            [
+              2.0,
+              1.0
+            ],
+            [
+              0.0,
+              -1.0
+            ]
+          ],
+          0.0
+        ],
+        "hidden": true,
+        "expected": {
+          "dbeta": [
+            2,
+            0
+          ],
+          "dgamma": [
+            -1.9999900000749995,
+            -1.9999975000046875
+          ],
+          "dx": [
+            [
+              9.999850002051502e-06,
+              1.2499953124245344e-06
+            ],
+            [
+              -9.999850002051502e-06,
+              -1.2499953124245344e-06
+            ]
+          ],
+          "out_inf": [
+            [
+              0,
+              0
+            ]
+          ],
+          "out_train": [
+            [
+              -0.9999950000374997,
+              -0.9999987500023437
+            ],
+            [
+              0.9999950000374997,
+              0.9999987500023437
+            ]
+          ]
+        }
       }
     ]
   },
@@ -2515,6 +3445,48 @@
         "expected": [
           10.0,
           20.0
+        ]
+      },
+      {
+        "name": "dropout negative keep_prob zeroes safely",
+        "mode": "function",
+        "function": "dropout",
+        "args": [
+          [
+            [
+              3.0,
+              -4.0
+            ]
+          ],
+          -0.5,
+          true
+        ],
+        "hidden": true,
+        "expected": [
+          [
+            0.0,
+            0.0
+          ]
+        ]
+      },
+      {
+        "name": "dropout keep_prob>1 preserves input",
+        "mode": "function",
+        "function": "dropout",
+        "args": [
+          [
+            2.0,
+            0.0,
+            -5.0
+          ],
+          1.5,
+          true
+        ],
+        "hidden": true,
+        "expected": [
+          2.0,
+          0.0,
+          -5.0
         ]
       }
     ]

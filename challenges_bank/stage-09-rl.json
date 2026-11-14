@@ -261,6 +261,103 @@
           5.0,
           3.0
         ]
+      },
+      {
+        "name": "value_iteration 1-state geometric reward sum",
+        "mode": "function",
+        "function": "value_iteration",
+        "args": [
+          1,
+          2,
+          [
+            [
+              [
+                1.0
+              ],
+              [
+                1.0
+              ]
+            ]
+          ],
+          [
+            [
+              [
+                1.0
+              ],
+              [
+                4.0
+              ]
+            ]
+          ],
+          0.5,
+          0.001
+        ],
+        "hidden": true,
+        "expected": [
+          7.999
+        ]
+      },
+      {
+        "name": "extract_policy picks transition to higher value state under zero rewards",
+        "mode": "function",
+        "function": "extract_policy",
+        "args": [
+          [
+            10.0,
+            0.0
+          ],
+          2,
+          2,
+          [
+            [
+              [
+                1,
+                0
+              ],
+              [
+                0,
+                1
+              ]
+            ],
+            [
+              [
+                1,
+                0
+              ],
+              [
+                0,
+                1
+              ]
+            ]
+          ],
+          [
+            [
+              [
+                0,
+                0
+              ],
+              [
+                0,
+                0
+              ]
+            ],
+            [
+              [
+                0,
+                0
+              ],
+              [
+                0,
+                0
+              ]
+            ]
+          ]
+        ],
+        "hidden": true,
+        "expected": [
+          0,
+          0
+        ]
       }
     ]
   },
@@ -468,6 +565,84 @@
         ],
         "hidden": true,
         "expected": 0
+      },
+      {
+        "name": "q_learning deterministic cycle updates Q and avg_return",
+        "mode": "function",
+        "function": "q_learning",
+        "args": [
+          {
+            "n_states": 2,
+            "n_actions": 1,
+            "trans": [
+              [
+                [
+                  0,
+                  1
+                ]
+              ],
+              [
+                [
+                  1,
+                  0
+                ]
+              ]
+            ],
+            "rewards": [
+              [
+                [
+                  0,
+                  2
+                ]
+              ],
+              [
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          },
+          1,
+          0.5,
+          0.9,
+          0.0
+        ],
+        "hidden": true,
+        "expected": {
+          "Q": [
+            [
+              8.6451
+            ],
+            [
+              7.6544
+            ]
+          ],
+          "avg_return": 50.0
+        }
+      },
+      {
+        "name": "epsilon_greedy non-zero state with negative Q values",
+        "mode": "function",
+        "function": "epsilon_greedy",
+        "args": [
+          [
+            [
+              -10.0,
+              -2.0,
+              -5.0
+            ],
+            [
+              -5.0,
+              -1.0,
+              -3.0
+            ]
+          ],
+          1,
+          0.0
+        ],
+        "hidden": true,
+        "expected": 1
       }
     ]
   },
@@ -678,6 +853,79 @@
         ],
         "hidden": true,
         "expected": 2
+      },
+      {
+        "name": "sarsa zero reward absorbing stays zero",
+        "mode": "function",
+        "function": "sarsa",
+        "args": [
+          {
+            "n_states": 2,
+            "n_actions": 1,
+            "trans": [
+              [
+                [
+                  0,
+                  1
+                ]
+              ],
+              [
+                [
+                  0,
+                  1
+                ]
+              ]
+            ],
+            "rewards": [
+              [
+                [
+                  0,
+                  0
+                ]
+              ],
+              [
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          },
+          3,
+          0.5,
+          0.9,
+          0.0
+        ],
+        "hidden": true,
+        "expected": {
+          "Q": [
+            [
+              0.0
+            ],
+            [
+              0.0
+            ]
+          ],
+          "avg_return": 0.0
+        }
+      },
+      {
+        "name": "epsilon_greedy negative tie breaks to first max index",
+        "mode": "function",
+        "function": "epsilon_greedy",
+        "args": [
+          [
+            [
+              -3.0,
+              -3.0,
+              -5.0
+            ]
+          ],
+          0,
+          0.0
+        ],
+        "hidden": true,
+        "expected": 0
       }
     ]
   },
@@ -897,6 +1145,67 @@
             ]
           ]
         }
+      },
+      {
+        "name": "eval_replay_buffer empty pushes stays empty",
+        "mode": "function",
+        "function": "eval_replay_buffer",
+        "args": [
+          3,
+          []
+        ],
+        "hidden": true,
+        "expected": {
+          "size": 0,
+          "pos": 0,
+          "buf": []
+        }
+      },
+      {
+        "name": "compute_td_loss mixed terminal and non-terminal batch",
+        "mode": "function",
+        "function": "compute_td_loss",
+        "args": [
+          [
+            [
+              0,
+              0,
+              1.0,
+              1,
+              false
+            ],
+            [
+              1,
+              1,
+              2.0,
+              0,
+              true
+            ]
+          ],
+          [
+            [
+              1.0,
+              2.0
+            ],
+            [
+              3.0,
+              2.0
+            ]
+          ],
+          [
+            [
+              0.0,
+              0.0
+            ],
+            [
+              4.0,
+              0.0
+            ]
+          ],
+          0.5
+        ],
+        "hidden": true,
+        "expected": 2.0
       }
     ]
   },
@@ -1014,6 +1323,32 @@
         ],
         "hidden": true,
         "expected": 1.6
+      },
+      {
+        "name": "compute_advantages empty trajectory returns empty",
+        "mode": "function",
+        "function": "compute_advantages",
+        "args": [
+          [],
+          [],
+          0.99,
+          0.95
+        ],
+        "hidden": true,
+        "expected": []
+      },
+      {
+        "name": "ppo_clip_surrogate ratio=1 unclipped equals -advantage",
+        "mode": "function",
+        "function": "ppo_clip_surrogate",
+        "args": [
+          0.0,
+          0.0,
+          3.0,
+          0.2
+        ],
+        "hidden": true,
+        "expected": -3.0
       }
     ]
   },
@@ -1147,6 +1482,51 @@
         ],
         "hidden": true,
         "expected": 0.0
+      },
+      {
+        "name": "actor_forward large logits remain numerically stable",
+        "mode": "function",
+        "function": "actor_forward",
+        "args": [
+          [
+            10,
+            0
+          ],
+          [
+            [
+              100,
+              -100
+            ],
+            [
+              0,
+              0
+            ]
+          ]
+        ],
+        "hidden": true,
+        "expected": [
+          1.0,
+          0.0
+        ]
+      },
+      {
+        "name": "critic_forward 3D mixed sign dot product",
+        "mode": "function",
+        "function": "critic_forward",
+        "args": [
+          [
+            -2,
+            3,
+            -1
+          ],
+          [
+            1.5,
+            2.0,
+            -4.0
+          ]
+        ],
+        "hidden": true,
+        "expected": 7.0
       }
     ]
   },
@@ -1416,6 +1796,112 @@
           5.0,
           5.0
         ]
+      },
+      {
+        "name": "bellman_expectation stochastic transitions",
+        "mode": "function",
+        "function": "bellman_expectation",
+        "args": [
+          [
+            4.0,
+            6.0
+          ],
+          [
+            [
+              [
+                0.5,
+                0.5
+              ]
+            ],
+            [
+              [
+                0.0,
+                1.0
+              ]
+            ]
+          ],
+          [
+            [
+              [
+                2.0,
+                0.0
+              ]
+            ],
+            [
+              [
+                0.0,
+                1.0
+              ]
+            ]
+          ],
+          0.5
+        ],
+        "hidden": true,
+        "expected": [
+          3.5,
+          4.0
+        ]
+      },
+      {
+        "name": "bellman_optimal gamma=0 ignores successor values",
+        "mode": "function",
+        "function": "bellman_optimal",
+        "args": [
+          [
+            2.0,
+            4.0
+          ],
+          [
+            [
+              [
+                1,
+                0
+              ],
+              [
+                0,
+                1
+              ]
+            ],
+            [
+              [
+                1,
+                0
+              ],
+              [
+                0,
+                1
+              ]
+            ]
+          ],
+          [
+            [
+              [
+                1,
+                0
+              ],
+              [
+                0,
+                2
+              ]
+            ],
+            [
+              [
+                3,
+                0
+              ],
+              [
+                0,
+                1
+              ]
+            ]
+          ],
+          0.0
+        ],
+        "hidden": true,
+        "expected": [
+          2.0,
+          3.0
+        ]
       }
     ]
   },
@@ -1543,6 +2029,42 @@
         ],
         "hidden": true,
         "expected": 1
+      },
+      {
+        "name": "decay_schedule steps=0 returns empty list",
+        "mode": "function",
+        "function": "decay_schedule",
+        "args": [
+          0.5,
+          0.1,
+          0.9,
+          0
+        ],
+        "hidden": true,
+        "expected": []
+      },
+      {
+        "name": "epsilon_greedy non-zero state tie-breaks to first index",
+        "mode": "function",
+        "function": "epsilon_greedy",
+        "args": [
+          [
+            [
+              1,
+              9,
+              0
+            ],
+            [
+              4,
+              4,
+              2
+            ]
+          ],
+          1,
+          0.0
+        ],
+        "hidden": true,
+        "expected": 0
       }
     ]
   },
@@ -1730,6 +2252,90 @@
         ],
         "hidden": true,
         "expected": [
+          []
+        ]
+      },
+      {
+        "name": "sarsa_lambda multi-episode accumulation with lam=1",
+        "mode": "function",
+        "function": "sarsa_lambda",
+        "args": [
+          {
+            "start": 0,
+            "transitions": [
+              [
+                [
+                  1,
+                  0,
+                  false
+                ]
+              ],
+              [
+                [
+                  2,
+                  1,
+                  true
+                ]
+              ],
+              []
+            ]
+          },
+          2,
+          0.5,
+          1.0,
+          0.0,
+          1.0
+        ],
+        "hidden": true,
+        "expected": [
+          [
+            0.75
+          ],
+          [
+            0.75
+          ],
+          []
+        ]
+      },
+      {
+        "name": "sarsa_lambda episodes=0 leaves Q all zeros",
+        "mode": "function",
+        "function": "sarsa_lambda",
+        "args": [
+          {
+            "start": 0,
+            "transitions": [
+              [
+                [
+                  1,
+                  0,
+                  false
+                ]
+              ],
+              [
+                [
+                  2,
+                  1,
+                  true
+                ]
+              ],
+              []
+            ]
+          },
+          0,
+          1.0,
+          0.9,
+          0.0,
+          0.5
+        ],
+        "hidden": true,
+        "expected": [
+          [
+            0.0
+          ],
+          [
+            0.0
+          ],
           []
         ]
       }
@@ -1920,6 +2526,91 @@
         ],
         "hidden": true,
         "expected": 4.0
+      },
+      {
+        "name": "double_dqn_update gamma=0 mixed batch",
+        "mode": "function",
+        "function": "double_dqn_update",
+        "args": [
+          [
+            [
+              1.0,
+              2.0
+            ],
+            [
+              3.0,
+              4.0
+            ]
+          ],
+          [
+            [
+              1.0,
+              2.0
+            ],
+            [
+              5.0,
+              6.0
+            ]
+          ],
+          [
+            [
+              0,
+              0,
+              1.0,
+              1,
+              false
+            ],
+            [
+              1,
+              1,
+              2.0,
+              0,
+              true
+            ]
+          ],
+          0.0
+        ],
+        "hidden": true,
+        "expected": 2.0
+      },
+      {
+        "name": "double_dqn_update online argmax tie breaks to index 0",
+        "mode": "function",
+        "function": "double_dqn_update",
+        "args": [
+          [
+            [
+              2.0,
+              0.0
+            ],
+            [
+              5.0,
+              5.0
+            ]
+          ],
+          [
+            [
+              0.0,
+              0.0
+            ],
+            [
+              4.0,
+              100.0
+            ]
+          ],
+          [
+            [
+              0,
+              0,
+              0.0,
+              1,
+              false
+            ]
+          ],
+          0.5
+        ],
+        "hidden": true,
+        "expected": 0.0
       }
     ]
   },
@@ -2051,6 +2742,42 @@
           0.0,
           0.0,
           0.0
+        ]
+      },
+      {
+        "name": "compute_gae empty trajectory returns empty",
+        "mode": "function",
+        "function": "compute_gae",
+        "args": [
+          [],
+          [],
+          0.99,
+          0.95
+        ],
+        "hidden": true,
+        "expected": []
+      },
+      {
+        "name": "compute_gae bootstraps extra terminal value when len(values) > len(rewards)",
+        "mode": "function",
+        "function": "compute_gae",
+        "args": [
+          [
+            1.0,
+            1.0
+          ],
+          [
+            0.0,
+            0.0,
+            10.0
+          ],
+          0.5,
+          1.0
+        ],
+        "hidden": true,
+        "expected": [
+          4.0,
+          6.0
         ]
       }
     ]
@@ -2194,6 +2921,77 @@
         ],
         "hidden": true,
         "expected": -1.4189385332046727
+      },
+      {
+        "name": "normal_log_prob handles vector inputs",
+        "mode": "function",
+        "function": "normal_log_prob",
+        "args": [
+          [
+            0.0,
+            1.0
+          ],
+          [
+            1.0,
+            2.0
+          ],
+          [
+            0.0,
+            1.0
+          ]
+        ],
+        "hidden": true,
+        "expected": [
+          -0.9189385332046727,
+          -1.612085713764618
+        ]
+      },
+      {
+        "name": "actor_critic_continuous zero state gives unit sigma",
+        "mode": "function",
+        "function": "actor_critic_continuous",
+        "args": [
+          [
+            0,
+            0
+          ],
+          [
+            [
+              1,
+              2
+            ],
+            [
+              3,
+              4
+            ]
+          ],
+          [
+            [
+              5,
+              6
+            ],
+            [
+              7,
+              8
+            ]
+          ],
+          [
+            9,
+            10
+          ]
+        ],
+        "hidden": true,
+        "expected": {
+          "mu": [
+            0.0,
+            0.0
+          ],
+          "sigma": [
+            1.0,
+            1.0
+          ],
+          "value": 0.0
+        }
       }
     ]
   }

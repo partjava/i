@@ -147,6 +147,64 @@
         ],
         "hidden": true,
         "expected": 2.5
+      },
+      {
+        "name": "fit_normal_equation 3d identity basis",
+        "mode": "function",
+        "function": "fit_normal_equation",
+        "args": [
+          [
+            [
+              1,
+              0,
+              0
+            ],
+            [
+              0,
+              1,
+              0
+            ],
+            [
+              0,
+              0,
+              1
+            ]
+          ],
+          [
+            2.0,
+            -3.0,
+            5.0
+          ]
+        ],
+        "hidden": true,
+        "expected": [
+          2.0,
+          -3.0,
+          5.0
+        ]
+      },
+      {
+        "name": "fit_normal_equation singular collinear raises LinAlgError",
+        "mode": "function",
+        "function": "fit_normal_equation",
+        "args": [
+          [
+            [
+              1,
+              2
+            ],
+            [
+              2,
+              4
+            ]
+          ],
+          [
+            3,
+            6
+          ]
+        ],
+        "hidden": true,
+        "expectedException": "LinAlgError"
       }
     ]
   },
@@ -306,6 +364,49 @@
         "expected": [
           0.5
         ]
+      },
+      {
+        "name": "sigmoid extreme values clip stably",
+        "mode": "function",
+        "function": "sigmoid",
+        "args": [
+          [
+            -200.0,
+            200.0
+          ]
+        ],
+        "hidden": true,
+        "expected": [
+          3.7200759760208356e-44,
+          1
+        ]
+      },
+      {
+        "name": "predict high threshold 0.8",
+        "mode": "function",
+        "function": "predict",
+        "args": [
+          [
+            0.0,
+            1.0
+          ],
+          [
+            [
+              1,
+              0.5
+            ],
+            [
+              1,
+              2.0
+            ]
+          ],
+          0.8
+        ],
+        "hidden": true,
+        "expected": [
+          0,
+          1
+        ]
       }
     ]
   },
@@ -446,6 +547,36 @@
           0.5450267429150603,
           0.27251337145753013
         ]
+      },
+      {
+        "name": "hinge_loss positive margin violations",
+        "mode": "function",
+        "function": "hinge_loss",
+        "args": [
+          [
+            1,
+            -1
+          ],
+          [
+            0.5,
+            1.0
+          ]
+        ],
+        "hidden": true,
+        "expected": 1.25
+      },
+      {
+        "name": "margin 3-4 weight vector",
+        "mode": "function",
+        "function": "margin",
+        "args": [
+          [
+            3.0,
+            4.0
+          ]
+        ],
+        "hidden": true,
+        "expected": 0.4
       }
     ]
   },
@@ -589,6 +720,43 @@
         ],
         "hidden": true,
         "expected": 0.9999999997114609
+      },
+      {
+        "name": "gini balanced binary equals 0.5",
+        "mode": "function",
+        "function": "gini",
+        "args": [
+          [
+            0,
+            1,
+            0,
+            1
+          ]
+        ],
+        "hidden": true,
+        "expected": 0.5
+      },
+      {
+        "name": "information_gain perfect split equals 1",
+        "mode": "function",
+        "function": "information_gain",
+        "args": [
+          [
+            1,
+            2,
+            10,
+            11
+          ],
+          [
+            0,
+            0,
+            1,
+            1
+          ],
+          2.0
+        ],
+        "hidden": true,
+        "expected": 0.9999999998557304
       }
     ]
   },
@@ -801,6 +969,95 @@
         "hidden": true,
         "expected": [
           1
+        ]
+      },
+      {
+        "name": "predict_forest multi-class majority vote",
+        "mode": "function",
+        "function": "predict_forest",
+        "args": [
+          [
+            {
+              "leaf": true,
+              "pred": 2
+            },
+            {
+              "leaf": true,
+              "pred": 2
+            },
+            {
+              "leaf": true,
+              "pred": 1
+            },
+            {
+              "leaf": true,
+              "pred": 0
+            }
+          ],
+          [
+            [
+              0.0
+            ],
+            [
+              1.0
+            ]
+          ]
+        ],
+        "hidden": true,
+        "expected": [
+          2,
+          2
+        ]
+      },
+      {
+        "name": "predict_forest nested 2-level tree",
+        "mode": "function",
+        "function": "predict_forest",
+        "args": [
+          [
+            {
+              "leaf": false,
+              "feature": 0,
+              "threshold": 0.0,
+              "left": {
+                "leaf": false,
+                "feature": 1,
+                "threshold": 0.0,
+                "left": {
+                  "leaf": true,
+                  "pred": 0
+                },
+                "right": {
+                  "leaf": true,
+                  "pred": 1
+                }
+              },
+              "right": {
+                "leaf": true,
+                "pred": 2
+              }
+            }
+          ],
+          [
+            [
+              -1.0,
+              -1.0
+            ],
+            [
+              -1.0,
+              1.0
+            ],
+            [
+              1.0,
+              -1.0
+            ]
+          ]
+        ],
+        "hidden": true,
+        "expected": [
+          0,
+          1,
+          2
         ]
       }
     ]
@@ -1098,6 +1355,67 @@
             "weight": 0.5
           }
         ]
+      },
+      {
+        "name": "predict_gbdt split stump negative and positive",
+        "mode": "function",
+        "function": "predict_gbdt",
+        "args": [
+          [
+            {
+              "tree": {
+                "feature": 0,
+                "threshold": 0.0,
+                "leaf": false,
+                "left": {
+                  "leaf": true,
+                  "pred": -2.0
+                },
+                "right": {
+                  "leaf": true,
+                  "pred": 4.0
+                }
+              },
+              "weight": 0.5
+            }
+          ],
+          [
+            [
+              -1.0
+            ],
+            [
+              1.0
+            ]
+          ]
+        ],
+        "hidden": true,
+        "expected": [
+          -1.0,
+          2.0
+        ]
+      },
+      {
+        "name": "fit_gbdt zero estimators returns empty model",
+        "mode": "function",
+        "function": "fit_gbdt",
+        "args": [
+          [
+            [
+              1
+            ],
+            [
+              2
+            ]
+          ],
+          [
+            3,
+            4
+          ],
+          0,
+          0.1
+        ],
+        "hidden": true,
+        "expected": []
       }
     ]
   },
@@ -1297,6 +1615,63 @@
         "expected": [
           0
         ]
+      },
+      {
+        "name": "fit_knn packages X and y",
+        "mode": "function",
+        "function": "fit_knn",
+        "args": [
+          [
+            [
+              1,
+              2
+            ],
+            [
+              3,
+              4
+            ]
+          ],
+          [
+            0,
+            1
+          ]
+        ],
+        "hidden": true,
+        "expected": {
+          "X": [
+            [
+              1.0,
+              2.0
+            ],
+            [
+              3.0,
+              4.0
+            ]
+          ],
+          "y": [
+            0,
+            1
+          ]
+        }
+      },
+      {
+        "name": "euclidean_distance identical 3d points zero",
+        "mode": "function",
+        "function": "euclidean_distance",
+        "args": [
+          [
+            2.5,
+            -1.5,
+            4.0
+          ],
+          [
+            2.5,
+            -1.5,
+            4.0
+          ]
+        ],
+        "hidden": true,
+        "expected": 0.0
       }
     ]
   },
@@ -1507,6 +1882,96 @@
             0.0
           ]
         ]
+      },
+      {
+        "name": "assign_clusters 3 centroids 3d",
+        "mode": "function",
+        "function": "assign_clusters",
+        "args": [
+          [
+            [
+              0,
+              0,
+              0
+            ],
+            [
+              5,
+              0,
+              0
+            ],
+            [
+              0,
+              5,
+              0
+            ]
+          ],
+          [
+            [
+              0,
+              5,
+              0
+            ],
+            [
+              0,
+              0,
+              0
+            ],
+            [
+              5,
+              0,
+              0
+            ]
+          ]
+        ],
+        "hidden": true,
+        "expected": [
+          1,
+          2,
+          0
+        ]
+      },
+      {
+        "name": "update_centroids negative coordinates",
+        "mode": "function",
+        "function": "update_centroids",
+        "args": [
+          [
+            [
+              -2.0,
+              4.0
+            ],
+            [
+              0.0,
+              2.0
+            ],
+            [
+              3.0,
+              -1.0
+            ],
+            [
+              5.0,
+              1.0
+            ]
+          ],
+          [
+            0,
+            0,
+            1,
+            1
+          ],
+          2
+        ],
+        "hidden": true,
+        "expected": [
+          [
+            -1.0,
+            3.0
+          ],
+          [
+            4.0,
+            0.0
+          ]
+        ]
       }
     ]
   },
@@ -1709,6 +2174,61 @@
           "n_clusters": 1,
           "noise": 0
         }
+      },
+      {
+        "name": "euclidean 3-4-5 negative offset",
+        "mode": "function",
+        "function": "euclidean",
+        "args": [
+          [
+            -1,
+            -2
+          ],
+          [
+            2,
+            2
+          ]
+        ],
+        "hidden": true,
+        "expected": 5.0
+      },
+      {
+        "name": "dbscan chain density reachability",
+        "mode": "function",
+        "function": "dbscan",
+        "args": [
+          [
+            [
+              0,
+              0
+            ],
+            [
+              1,
+              0
+            ],
+            [
+              2,
+              0
+            ],
+            [
+              3,
+              0
+            ]
+          ],
+          1.0,
+          2
+        ],
+        "hidden": true,
+        "expected": {
+          "labels": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "n_clusters": 1,
+          "noise": 0
+        }
       }
     ]
   },
@@ -1897,6 +2417,70 @@
           0,
           1,
           2
+        ]
+      },
+      {
+        "name": "cluster_distance single linkage minimum",
+        "mode": "function",
+        "function": "cluster_distance",
+        "args": [
+          [
+            [
+              0,
+              0
+            ],
+            [
+              1,
+              0
+            ]
+          ],
+          [
+            [
+              4,
+              0
+            ],
+            [
+              10,
+              0
+            ]
+          ],
+          "single"
+        ],
+        "hidden": true,
+        "expected": 3.0
+      },
+      {
+        "name": "agglomerative complete linkage 2 clusters",
+        "mode": "function",
+        "function": "agglomerative_clustering",
+        "args": [
+          [
+            [
+              0,
+              0
+            ],
+            [
+              2,
+              0
+            ],
+            [
+              5,
+              0
+            ],
+            [
+              6,
+              0
+            ]
+          ],
+          2,
+          "complete"
+        ],
+        "hidden": true,
+        "expected": [
+          0,
+          0,
+          1,
+          1
         ]
       }
     ]
@@ -2125,6 +2709,93 @@
             0
           ]
         }
+      },
+      {
+        "name": "pca_transform with non-zero mean",
+        "mode": "function",
+        "function": "pca_transform",
+        "args": [
+          {
+            "mean": [
+              2.0,
+              -1.0
+            ],
+            "components": [
+              [
+                1.0,
+                0.0
+              ],
+              [
+                0.0,
+                1.0
+              ]
+            ]
+          },
+          [
+            [
+              5.0,
+              3.0
+            ],
+            [
+              2.0,
+              -1.0
+            ]
+          ],
+          2
+        ],
+        "hidden": true,
+        "expected": [
+          [
+            3.0,
+            4.0
+          ],
+          [
+            0.0,
+            0.0
+          ]
+        ]
+      },
+      {
+        "name": "pca_inverse_transform 1d back to 2d",
+        "mode": "function",
+        "function": "pca_inverse_transform",
+        "args": [
+          {
+            "mean": [
+              1.0,
+              2.0
+            ],
+            "components": [
+              [
+                1.0,
+                0.0
+              ],
+              [
+                0.0,
+                1.0
+              ]
+            ]
+          },
+          [
+            [
+              3.0
+            ],
+            [
+              -1.0
+            ]
+          ]
+        ],
+        "hidden": true,
+        "expected": [
+          [
+            4.0,
+            2.0
+          ],
+          [
+            0.0,
+            2.0
+          ]
+        ]
       }
     ]
   },
@@ -2396,6 +3067,71 @@
             [
               5.0,
               2.0
+            ]
+          ]
+        }
+      },
+      {
+        "name": "unknown scaling method raises ValueError",
+        "mode": "function",
+        "function": "eval_feature_scaler",
+        "args": [
+          "unknown",
+          [
+            [
+              1,
+              2
+            ],
+            [
+              3,
+              4
+            ]
+          ],
+          [
+            [
+              1,
+              2
+            ]
+          ]
+        ],
+        "hidden": true,
+        "expectedException": "ValueError"
+      },
+      {
+        "name": "minmax constant column zero-range guard",
+        "mode": "function",
+        "function": "eval_feature_scaler",
+        "args": [
+          "minmax",
+          [
+            [
+              4,
+              0
+            ],
+            [
+              4,
+              2
+            ]
+          ],
+          [
+            [
+              4,
+              1
+            ]
+          ]
+        ],
+        "hidden": true,
+        "expected": {
+          "scaled": [
+            [
+              0.0,
+              0.5
+            ]
+          ],
+          "restored": [
+            [
+              4.0,
+              1.0
             ]
           ]
         }
@@ -2741,6 +3477,125 @@
             ]
           ]
         }
+      },
+      {
+        "name": "layer_norm_forward constant rows map to beta",
+        "mode": "function",
+        "function": "layer_norm_forward",
+        "args": [
+          [
+            [
+              3,
+              3
+            ],
+            [
+              5,
+              5
+            ]
+          ],
+          [
+            2,
+            3
+          ],
+          [
+            1,
+            -1
+          ]
+        ],
+        "hidden": true,
+        "expected": {
+          "out": [
+            [
+              1.0,
+              -1.0
+            ],
+            [
+              1.0,
+              -1.0
+            ]
+          ],
+          "cache": {
+            "x_hat": [
+              [
+                0.0,
+                0.0
+              ],
+              [
+                0.0,
+                0.0
+              ]
+            ],
+            "gamma": [
+              2.0,
+              3.0
+            ],
+            "beta": [
+              1.0,
+              -1.0
+            ]
+          }
+        }
+      },
+      {
+        "name": "batch_norm_forward single sample shifts to beta",
+        "mode": "function",
+        "function": "batch_norm_forward",
+        "args": [
+          [
+            [
+              4.0,
+              -2.0
+            ]
+          ],
+          [
+            3.0,
+            5.0
+          ],
+          [
+            7.0,
+            8.0
+          ]
+        ],
+        "hidden": true,
+        "expected": {
+          "out": [
+            [
+              7.0,
+              8.0
+            ]
+          ],
+          "cache": {
+            "X": [
+              [
+                4.0,
+                -2.0
+              ]
+            ],
+            "mu": [
+              4.0,
+              -2.0
+            ],
+            "var": [
+              0.0,
+              0.0
+            ],
+            "x_hat": [
+              [
+                0.0,
+                0.0
+              ]
+            ],
+            "gamma": [
+              3.0,
+              5.0
+            ],
+            "beta": [
+              7.0,
+              8.0
+            ],
+            "eps": 1e-05
+          }
+        }
       }
     ]
   },
@@ -2936,6 +3791,67 @@
           4.921568627450981,
           0.0392156862745098
         ]
+      },
+      {
+        "name": "fit_ridge stabilizes collinear feature column",
+        "mode": "function",
+        "function": "fit_ridge",
+        "args": [
+          [
+            [
+              1,
+              1
+            ],
+            [
+              1,
+              1
+            ]
+          ],
+          [
+            2,
+            2
+          ],
+          1.0
+        ],
+        "hidden": true,
+        "expected": [
+          2.0,
+          0.0
+        ]
+      },
+      {
+        "name": "compare_coefs single unpenalized lambda",
+        "mode": "function",
+        "function": "compare_coefs",
+        "args": [
+          [
+            [
+              1,
+              0
+            ],
+            [
+              1,
+              1
+            ]
+          ],
+          [
+            1,
+            3
+          ],
+          [
+            0
+          ]
+        ],
+        "hidden": true,
+        "expected": [
+          {
+            "lambda": 0,
+            "coefs": [
+              1.0,
+              2.0
+            ]
+          }
+        ]
       }
     ]
   },
@@ -3118,6 +4034,75 @@
           0,
           1
         ]
+      },
+      {
+        "name": "softmax large logits shift invariance",
+        "mode": "function",
+        "function": "softmax",
+        "args": [
+          [
+            [
+              1000.0,
+              1000.0
+            ],
+            [
+              -1000.0,
+              -1000.0
+            ]
+          ]
+        ],
+        "hidden": true,
+        "expected": [
+          [
+            0.5,
+            0.5
+          ],
+          [
+            0.5,
+            0.5
+          ]
+        ]
+      },
+      {
+        "name": "cross_entropy_loss uniform 4-class equals ln(4)",
+        "mode": "function",
+        "function": "cross_entropy_loss",
+        "args": [
+          [
+            0,
+            1,
+            2,
+            3
+          ],
+          [
+            [
+              0.25,
+              0.25,
+              0.25,
+              0.25
+            ],
+            [
+              0.25,
+              0.25,
+              0.25,
+              0.25
+            ],
+            [
+              0.25,
+              0.25,
+              0.25,
+              0.25
+            ],
+            [
+              0.25,
+              0.25,
+              0.25,
+              0.25
+            ]
+          ]
+        ],
+        "hidden": true,
+        "expected": 1.3862943607198905
       }
     ]
   },
@@ -3279,6 +4264,87 @@
         "expected": [
           1.0,
           -1.0
+        ]
+      },
+      {
+        "name": "eval_kernel_matrix linear rectangular",
+        "mode": "function",
+        "function": "eval_kernel_matrix",
+        "args": [
+          [
+            [
+              1,
+              2
+            ],
+            [
+              0,
+              -1
+            ]
+          ],
+          [
+            [
+              3,
+              4
+            ]
+          ],
+          "linear"
+        ],
+        "hidden": true,
+        "expected": [
+          [
+            11.0
+          ],
+          [
+            -4.0
+          ]
+        ]
+      },
+      {
+        "name": "eval_dual_predict rbf with positive bias",
+        "mode": "function",
+        "function": "eval_dual_predict",
+        "args": [
+          [
+            1.0,
+            1.0
+          ],
+          [
+            [
+              0,
+              0
+            ],
+            [
+              10,
+              10
+            ]
+          ],
+          [
+            1,
+            -1
+          ],
+          [
+            [
+              0,
+              0
+            ],
+            [
+              10,
+              10
+            ],
+            [
+              5,
+              5
+            ]
+          ],
+          "rbf",
+          0.5,
+          1.0
+        ],
+        "hidden": true,
+        "expected": [
+          1.0,
+          -1.0,
+          1.0
         ]
       }
     ]
@@ -3449,6 +4515,64 @@
           1.0,
           9.0
         ]
+      },
+      {
+        "name": "predict_tree 1d single sample",
+        "mode": "function",
+        "function": "predict_tree",
+        "args": [
+          {
+            "feature": 0,
+            "threshold": 5.0,
+            "left": {
+              "leaf": true,
+              "pred": 1.0
+            },
+            "right": {
+              "leaf": true,
+              "pred": 9.0
+            }
+          },
+          [
+            3.0
+          ]
+        ],
+        "hidden": true,
+        "expected": 1.0
+      },
+      {
+        "name": "build_tree stops immediately at max_depth=0",
+        "mode": "function",
+        "function": "build_tree",
+        "args": [
+          [
+            [
+              1
+            ],
+            [
+              2
+            ],
+            [
+              10
+            ],
+            [
+              11
+            ]
+          ],
+          [
+            1.0,
+            3.0,
+            7.0,
+            9.0
+          ],
+          0,
+          2
+        ],
+        "hidden": true,
+        "expected": {
+          "pred": 5.0,
+          "leaf": true
+        }
       }
     ]
   },
@@ -3637,6 +4761,80 @@
         ],
         "hidden": true,
         "expected": 0.0
+      },
+      {
+        "name": "oob_predict traverses feature split tree",
+        "mode": "function",
+        "function": "oob_predict",
+        "args": [
+          [
+            {
+              "leaf": false,
+              "feature": 0,
+              "threshold": 0.0,
+              "left": {
+                "leaf": true,
+                "pred": 0
+              },
+              "right": {
+                "leaf": true,
+                "pred": 1
+              }
+            }
+          ],
+          [
+            [
+              0,
+              1
+            ]
+          ],
+          [
+            [
+              -2.0
+            ],
+            [
+              3.0
+            ]
+          ]
+        ],
+        "hidden": true,
+        "expected": [
+          0,
+          1
+        ]
+      },
+      {
+        "name": "oob_score half accuracy",
+        "mode": "function",
+        "function": "oob_score",
+        "args": [
+          [
+            {
+              "leaf": true,
+              "pred": 1
+            }
+          ],
+          [
+            [
+              0,
+              1
+            ]
+          ],
+          [
+            [
+              1.0
+            ],
+            [
+              2.0
+            ]
+          ],
+          [
+            1,
+            0
+          ]
+        ],
+        "hidden": true,
+        "expected": 0.5
       }
     ]
   },
@@ -3885,6 +5083,55 @@
           3.0,
           3.0
         ]
+      },
+      {
+        "name": "gbdt_fit single sample creates leaf",
+        "mode": "function",
+        "function": "gbdt_fit",
+        "args": [
+          [
+            [
+              1.0
+            ]
+          ],
+          [
+            5.0
+          ],
+          1,
+          0.5,
+          2
+        ],
+        "hidden": true,
+        "expected": [
+          {
+            "tree": {
+              "pred": 5.0,
+              "leaf": true
+            },
+            "weight": 0.5
+          }
+        ]
+      },
+      {
+        "name": "gbdt_predict empty model returns zeros",
+        "mode": "function",
+        "function": "gbdt_predict",
+        "args": [
+          [],
+          [
+            [
+              0.0
+            ],
+            [
+              1.0
+            ]
+          ]
+        ],
+        "hidden": true,
+        "expected": [
+          0.0,
+          0.0
+        ]
       }
     ]
   },
@@ -4073,6 +5320,55 @@
         "expected": [
           3.0
         ]
+      },
+      {
+        "name": "weighted_knn_predict exact match dominates",
+        "mode": "function",
+        "function": "weighted_knn_predict",
+        "args": [
+          [
+            [
+              0,
+              0
+            ],
+            [
+              5,
+              5
+            ]
+          ],
+          [
+            42.0,
+            100.0
+          ],
+          [
+            [
+              0,
+              0
+            ]
+          ],
+          2
+        ],
+        "hidden": true,
+        "expected": [
+          42.00000000082024
+        ]
+      },
+      {
+        "name": "euclidean distance with negative coord",
+        "mode": "function",
+        "function": "euclidean",
+        "args": [
+          [
+            -3,
+            0
+          ],
+          [
+            0,
+            4
+          ]
+        ],
+        "hidden": true,
+        "expected": 5.0
       }
     ]
   },
@@ -4233,6 +5529,53 @@
         ],
         "hidden": true,
         "expected": 0.99
+      },
+      {
+        "name": "euclidean 3d distance",
+        "mode": "function",
+        "function": "euclidean",
+        "args": [
+          [
+            1,
+            2,
+            2
+          ],
+          [
+            0,
+            0,
+            0
+          ]
+        ],
+        "hidden": true,
+        "expected": 3.0
+      },
+      {
+        "name": "silhouette_score singleton cluster safe",
+        "mode": "function",
+        "function": "silhouette_score",
+        "args": [
+          [
+            [
+              0,
+              0
+            ],
+            [
+              10,
+              0
+            ],
+            [
+              10,
+              1
+            ]
+          ],
+          [
+            0,
+            1,
+            1
+          ]
+        ],
+        "hidden": true,
+        "expected": 0.9335
       }
     ]
   },
@@ -4426,6 +5769,50 @@
           "n_clusters": 2,
           "noise": 0
         }
+      },
+      {
+        "name": "k_distance_plot k=1 nearest neighbor",
+        "mode": "function",
+        "function": "k_distance_plot",
+        "args": [
+          [
+            [
+              0,
+              0
+            ],
+            [
+              1,
+              0
+            ],
+            [
+              4,
+              0
+            ]
+          ],
+          1
+        ],
+        "hidden": true,
+        "expected": [
+          3.0,
+          1.0,
+          1.0
+        ]
+      },
+      {
+        "name": "dbscan empty dataset",
+        "mode": "function",
+        "function": "dbscan",
+        "args": [
+          [],
+          1.0,
+          2
+        ],
+        "hidden": true,
+        "expected": {
+          "labels": [],
+          "n_clusters": 0,
+          "noise": 0
+        }
       }
     ]
   },
@@ -4585,6 +5972,52 @@
           0,
           0
         ]
+      },
+      {
+        "name": "cluster_dist average linkage",
+        "mode": "function",
+        "function": "cluster_dist",
+        "args": [
+          [
+            [
+              0,
+              0
+            ],
+            [
+              0,
+              2
+            ]
+          ],
+          [
+            [
+              3,
+              0
+            ],
+            [
+              3,
+              2
+            ]
+          ],
+          "average"
+        ],
+        "hidden": true,
+        "expected": 3.302775637731995
+      },
+      {
+        "name": "dendrogram_heights single point empty",
+        "mode": "function",
+        "function": "dendrogram_heights",
+        "args": [
+          [
+            [
+              5,
+              5
+            ]
+          ],
+          "single"
+        ],
+        "hidden": true,
+        "expected": []
       }
     ]
   },
@@ -4777,6 +6210,76 @@
         "expected": [
           [
             3.0
+          ]
+        ]
+      },
+      {
+        "name": "reconstruction_error half squared norm",
+        "mode": "function",
+        "function": "reconstruction_error",
+        "args": [
+          [
+            [
+              1,
+              0
+            ],
+            [
+              0,
+              1
+            ]
+          ],
+          [
+            [
+              1,
+              0
+            ],
+            [
+              0,
+              0
+            ]
+          ]
+        ],
+        "hidden": true,
+        "expected": 0.5
+      },
+      {
+        "name": "pca_whiten zero eigenvalue safe eps",
+        "mode": "function",
+        "function": "pca_whiten",
+        "args": [
+          {
+            "mean": [
+              0.0,
+              0.0
+            ],
+            "components": [
+              [
+                1.0,
+                0.0
+              ],
+              [
+                0.0,
+                1.0
+              ]
+            ],
+            "values": [
+              1.0,
+              0.0
+            ]
+          },
+          [
+            [
+              2.0,
+              0.0
+            ]
+          ],
+          2
+        ],
+        "hidden": true,
+        "expected": [
+          [
+            1.9999999999,
+            0
           ]
         ]
       }
@@ -5019,6 +6522,100 @@
             ]
           ]
         }
+      },
+      {
+        "name": "quantile clips out-of-range test points",
+        "mode": "function",
+        "function": "eval_scalers",
+        "args": [
+          "quantile",
+          [
+            [
+              0
+            ],
+            [
+              10
+            ],
+            [
+              20
+            ]
+          ],
+          [
+            [
+              -100
+            ],
+            [
+              100
+            ]
+          ],
+          "uniform"
+        ],
+        "hidden": true,
+        "expected": {
+          "transformed": [
+            [
+              0.0
+            ],
+            [
+              1.0
+            ]
+          ]
+        }
+      },
+      {
+        "name": "robust multi-column negative roundtrip",
+        "mode": "function",
+        "function": "eval_scalers",
+        "args": [
+          "robust",
+          [
+            [
+              -10,
+              0
+            ],
+            [
+              -6,
+              2
+            ],
+            [
+              -2,
+              4
+            ]
+          ],
+          [
+            [
+              -6,
+              2
+            ],
+            [
+              2,
+              6
+            ]
+          ]
+        ],
+        "hidden": true,
+        "expected": {
+          "transformed": [
+            [
+              0.0,
+              0.0
+            ],
+            [
+              2.0,
+              2.0
+            ]
+          ],
+          "restored": [
+            [
+              -6.0,
+              2.0
+            ],
+            [
+              2.0,
+              6.0
+            ]
+          ]
+        }
       }
     ]
   },
@@ -5253,6 +6850,93 @@
           "var": [
             1.0
           ]
+        }
+      },
+      {
+        "name": "batch_norm affine gamma beta shift",
+        "mode": "function",
+        "function": "batch_norm",
+        "args": [
+          [
+            [
+              0,
+              2
+            ],
+            [
+              2,
+              4
+            ]
+          ],
+          [
+            2,
+            0.5
+          ],
+          [
+            1,
+            -1
+          ],
+          0.0
+        ],
+        "hidden": true,
+        "expected": {
+          "out": [
+            [
+              -1.0,
+              -1.5
+            ],
+            [
+              3.0,
+              -0.5
+            ]
+          ],
+          "mu": [
+            1.0,
+            3.0
+          ],
+          "var": [
+            1.0,
+            1.0
+          ]
+        }
+      },
+      {
+        "name": "compare_gradients zero diff on symmetric matrix",
+        "mode": "function",
+        "function": "compare_gradients",
+        "args": [
+          [
+            [
+              1,
+              1
+            ],
+            [
+              1,
+              1
+            ]
+          ],
+          [
+            [
+              1,
+              2
+            ],
+            [
+              2,
+              1
+            ]
+          ],
+          [
+            1,
+            1
+          ],
+          [
+            0,
+            0
+          ]
+        ],
+        "hidden": true,
+        "expected": {
+          "max_diff": 0.0,
+          "same_shape": true
         }
       }
     ]

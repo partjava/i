@@ -244,7 +244,7 @@ public class ChallengeServiceImpl implements ChallengeService {
     private List<Map<String, Object>> publicSamples(ChallengeDetail detail) {
         if (detail.getTestCases() == null) return List.of();
         List<Map<String, Object>> samples = new ArrayList<>();
-        for (Object value : detail.getTestCases().stream().limit(2).toList()) {
+        for (Object value : detail.getTestCases()) {
             JsonNode test = objectMapper.valueToTree(value);
             if (test == null || !test.isObject() || test.path("hidden").asBoolean(false)) continue;
             Map<String, Object> sample = new java.util.LinkedHashMap<>();
@@ -358,9 +358,9 @@ public class ChallengeServiceImpl implements ChallengeService {
         try {
             List<Object> publicCases = detail.getTestCases() == null ? List.of() : detail.getTestCases();
             for (Object value : publicCases) {
-                if (samplesOnly && selected.size() >= 2) break;
                 JsonNode node = objectMapper.valueToTree(value);
                 if (!node.isObject()) throw new IllegalArgumentException("用例格式无效");
+                if (samplesOnly && node.path("hidden").asBoolean(false)) continue;
                 var copy = (com.fasterxml.jackson.databind.node.ObjectNode) node;
                 copy.put("hidden", false); selected.add(copy);
             }

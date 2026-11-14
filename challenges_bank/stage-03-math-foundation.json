@@ -134,6 +134,46 @@
         ],
         "hidden": true,
         "expectedException": "ValueError"
+      },
+      {
+        "name": "orthogonal raises ValueError on zero onto",
+        "mode": "function",
+        "function": "orthogonal",
+        "args": [
+          [
+            3,
+            4
+          ],
+          [
+            0,
+            0
+          ]
+        ],
+        "hidden": true,
+        "expectedException": "ValueError"
+      },
+      {
+        "name": "project negative 3d vector onto diagonal",
+        "mode": "function",
+        "function": "project",
+        "args": [
+          [
+            -2,
+            4,
+            2
+          ],
+          [
+            1,
+            1,
+            0
+          ]
+        ],
+        "hidden": true,
+        "expected": [
+          1.0,
+          1.0,
+          0.0
+        ]
       }
     ]
   },
@@ -284,6 +324,62 @@
         ],
         "hidden": true,
         "expected": 0.0
+      },
+      {
+        "name": "is_invertible detects non-square matrix",
+        "mode": "function",
+        "function": "is_invertible",
+        "args": [
+          [
+            [
+              1,
+              0,
+              0
+            ],
+            [
+              0,
+              1,
+              0
+            ]
+          ]
+        ],
+        "hidden": true,
+        "expected": false
+      },
+      {
+        "name": "solve_linear 3x3 diagonal negative",
+        "mode": "function",
+        "function": "solve_linear",
+        "args": [
+          [
+            [
+              2,
+              0,
+              0
+            ],
+            [
+              0,
+              -4,
+              0
+            ],
+            [
+              0,
+              0,
+              5
+            ]
+          ],
+          [
+            6,
+            8,
+            -15
+          ]
+        ],
+        "hidden": true,
+        "expected": [
+          3.0,
+          -2.0,
+          -3.0
+        ]
       }
     ]
   },
@@ -476,6 +572,68 @@
             ]
           ]
         }
+      },
+      {
+        "name": "svd_compress k=0 produces zero matrix",
+        "mode": "function",
+        "function": "svd_compress",
+        "args": [
+          [
+            [
+              1.0,
+              2.0
+            ],
+            [
+              3.0,
+              4.0
+            ]
+          ],
+          0
+        ],
+        "hidden": true,
+        "expected": [
+          [
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0
+          ]
+        ]
+      },
+      {
+        "name": "svd_compress rectangular full rank reconstructs",
+        "mode": "function",
+        "function": "svd_compress",
+        "args": [
+          [
+            [
+              3.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              2.0,
+              0.0
+            ]
+          ],
+          2
+        ],
+        "hidden": true,
+        "expected": [
+          [
+            3.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            2.0,
+            0.0
+          ]
+        ]
       }
     ]
   },
@@ -667,6 +825,81 @@
             0.3333
           ]
         ]
+      },
+      {
+        "name": "page_rank dangling node distributes uniformly",
+        "mode": "function",
+        "function": "page_rank",
+        "args": [
+          [
+            [
+              "A",
+              "B"
+            ]
+          ],
+          0.85,
+          50
+        ],
+        "hidden": true,
+        "expected": [
+          [
+            "B",
+            0.6491
+          ],
+          [
+            "A",
+            0.3509
+          ]
+        ]
+      },
+      {
+        "name": "eigen_decompose 3x3 identity",
+        "mode": "function",
+        "function": "eigen_decompose",
+        "args": [
+          [
+            [
+              1,
+              0,
+              0
+            ],
+            [
+              0,
+              1,
+              0
+            ],
+            [
+              0,
+              0,
+              1
+            ]
+          ]
+        ],
+        "hidden": true,
+        "expected": {
+          "values": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "vectors": [
+            [
+              1.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              1.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        }
       }
     ]
   },
@@ -890,6 +1123,85 @@
             }
           }
         }
+      },
+      {
+        "name": "predict directly from trained model dict",
+        "mode": "function",
+        "function": "predict",
+        "args": [
+          {
+            "priors": {
+              "spam": 0.8,
+              "ham": 0.2
+            },
+            "likelihoods": {
+              "spam": {
+                "0": 0.9,
+                "1": 0.1
+              },
+              "ham": {
+                "0": 0.1,
+                "1": 0.9
+              }
+            }
+          },
+          [
+            1,
+            0
+          ]
+        ],
+        "hidden": true,
+        "expected": "spam"
+      },
+      {
+        "name": "prior dominates when likelihoods tie",
+        "mode": "function",
+        "function": "eval_naive_bayes_predict",
+        "args": [
+          [
+            {
+              "features": [
+                1
+              ],
+              "label": "spam"
+            },
+            {
+              "features": [
+                0
+              ],
+              "label": "spam"
+            },
+            {
+              "features": [
+                1
+              ],
+              "label": "spam"
+            },
+            {
+              "features": [
+                0
+              ],
+              "label": "spam"
+            },
+            {
+              "features": [
+                1
+              ],
+              "label": "ham"
+            },
+            {
+              "features": [
+                0
+              ],
+              "label": "ham"
+            }
+          ],
+          [
+            1
+          ]
+        ],
+        "hidden": true,
+        "expected": "spam"
       }
     ]
   },
@@ -1025,6 +1337,47 @@
         ],
         "hidden": true,
         "expectedException": "ValueError"
+      },
+      {
+        "name": "all zeros bernoulli zero var",
+        "mode": "function",
+        "function": "compare_with_theory",
+        "args": [
+          [
+            0,
+            0,
+            0,
+            0
+          ],
+          "bernoulli"
+        ],
+        "hidden": true,
+        "expected": {
+          "sample_mean": 0.0,
+          "sample_var": 0.0,
+          "theoretical_mean": 0.0,
+          "theoretical_var": 0.0
+        }
+      },
+      {
+        "name": "symmetric gaussian sample zero mean",
+        "mode": "function",
+        "function": "compare_with_theory",
+        "args": [
+          [
+            -2.0,
+            0.0,
+            2.0
+          ],
+          "gaussian"
+        ],
+        "hidden": true,
+        "expected": {
+          "sample_mean": 0.0,
+          "sample_var": 2.6667,
+          "theoretical_mean": "mu",
+          "theoretical_var": "sigma^2"
+        }
       }
     ]
   },
@@ -1141,6 +1494,40 @@
           ],
           1.5,
           0.0
+        ],
+        "hidden": true,
+        "expected": null
+      },
+      {
+        "name": "gaussian_mle constant sample zero sigma",
+        "mode": "function",
+        "function": "gaussian_mle",
+        "args": [
+          [
+            5,
+            5,
+            5,
+            5
+          ]
+        ],
+        "hidden": true,
+        "expected": {
+          "mu": 5.0,
+          "sigma": 0.0
+        }
+      },
+      {
+        "name": "negative sigma returns None",
+        "mode": "function",
+        "function": "negative_log_likelihood",
+        "args": [
+          [
+            1,
+            2,
+            3
+          ],
+          2.0,
+          -1.0
         ],
         "hidden": true,
         "expected": null
@@ -1269,6 +1656,40 @@
         ],
         "hidden": true,
         "expected": 0.0
+      },
+      {
+        "name": "relative_error both zero vectors safe 0",
+        "mode": "function",
+        "function": "relative_error",
+        "args": [
+          [
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0
+          ]
+        ],
+        "hidden": true,
+        "expected": 0.0
+      },
+      {
+        "name": "square1 at zero gradient passes",
+        "mode": "function",
+        "function": "eval_gradient_check",
+        "args": [
+          "square1",
+          [
+            0.0
+          ],
+          false
+        ],
+        "hidden": true,
+        "expected": {
+          "max_relative_error": 0.0,
+          "pass": true
+        }
       }
     ]
   },
@@ -1451,6 +1872,40 @@
           3.0,
           3.0
         ]
+      },
+      {
+        "name": "momentum gd on shifted objective",
+        "mode": "function",
+        "function": "eval_gd_optimizer",
+        "args": [
+          "momentum",
+          "shifted",
+          0.0,
+          0.1,
+          3,
+          0.5
+        ],
+        "hidden": true,
+        "expected": [
+          0,
+          0.6,
+          1.38,
+          2.094
+        ]
+      },
+      {
+        "name": "unknown optimizer mode raises ValueError",
+        "mode": "function",
+        "function": "eval_gd_optimizer",
+        "args": [
+          "adam",
+          "square",
+          1.0,
+          0.1,
+          2
+        ],
+        "hidden": true,
+        "expectedException": "ValueError"
       }
     ]
   },
@@ -1551,6 +2006,35 @@
         ],
         "hidden": true,
         "expected": -0.479425533234127
+      },
+      {
+        "name": "taylor_expand quadratic around a=1",
+        "mode": "function",
+        "function": "taylor_expand",
+        "args": [
+          null,
+          [
+            1.0,
+            2.0,
+            2.0
+          ],
+          1.0,
+          3.0,
+          2
+        ],
+        "hidden": true,
+        "expected": 9.0
+      },
+      {
+        "name": "exp_approx negative x order 4",
+        "mode": "function",
+        "function": "exp_approx",
+        "args": [
+          -1.0,
+          4
+        ],
+        "hidden": true,
+        "expected": 0.37500000000000006
       }
     ]
   },
@@ -1677,6 +2161,52 @@
           "inequality_holds": true,
           "cos_theta": 1.0,
           "dot": 9.0
+        }
+      },
+      {
+        "name": "zero vector safe cos=1 and dot=0",
+        "mode": "function",
+        "function": "verify_cauchy_schwarz",
+        "args": [
+          [
+            0,
+            0
+          ],
+          [
+            3,
+            4
+          ]
+        ],
+        "hidden": true,
+        "expected": {
+          "inequality_holds": true,
+          "cos_theta": 1.0,
+          "dot": 0.0
+        }
+      },
+      {
+        "name": "4d opposite vectors cos=-1",
+        "mode": "function",
+        "function": "verify_cauchy_schwarz",
+        "args": [
+          [
+            1,
+            -1,
+            1,
+            -1
+          ],
+          [
+            -1,
+            1,
+            -1,
+            1
+          ]
+        ],
+        "hidden": true,
+        "expected": {
+          "inequality_holds": true,
+          "cos_theta": -1.0,
+          "dot": -4.0
         }
       }
     ]
@@ -1843,6 +2373,77 @@
           ],
           "verification": 0.0
         }
+      },
+      {
+        "name": "3x3 permutation matrix det=-1",
+        "mode": "function",
+        "function": "matrix_analysis",
+        "args": [
+          [
+            [
+              0,
+              1,
+              0
+            ],
+            [
+              1,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              1
+            ]
+          ]
+        ],
+        "hidden": true,
+        "expected": {
+          "det": -1.0,
+          "invertible": true,
+          "inverse": [
+            [
+              0.0,
+              1.0,
+              0.0
+            ],
+            [
+              1.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0,
+              1.0
+            ]
+          ],
+          "verification": 0.0
+        }
+      },
+      {
+        "name": "zero matrix singular",
+        "mode": "function",
+        "function": "matrix_analysis",
+        "args": [
+          [
+            [
+              0,
+              0
+            ],
+            [
+              0,
+              0
+            ]
+          ]
+        ],
+        "hidden": true,
+        "expected": {
+          "det": 0.0,
+          "invertible": false,
+          "inverse": null,
+          "verification": null
+        }
       }
     ]
   },
@@ -2004,6 +2605,60 @@
           "rank": 3,
           "condition_number": 1.0
         }
+      },
+      {
+        "name": "zero matrix rank 0 cond None",
+        "mode": "function",
+        "function": "svd_analysis",
+        "args": [
+          [
+            [
+              0,
+              0
+            ],
+            [
+              0,
+              0
+            ]
+          ]
+        ],
+        "hidden": true,
+        "expected": {
+          "singular_values": [
+            0.0,
+            0.0
+          ],
+          "rank": 0,
+          "condition_number": null
+        }
+      },
+      {
+        "name": "rectangular 2x3 full row rank",
+        "mode": "function",
+        "function": "svd_analysis",
+        "args": [
+          [
+            [
+              3,
+              0,
+              0
+            ],
+            [
+              0,
+              1,
+              0
+            ]
+          ]
+        ],
+        "hidden": true,
+        "expected": {
+          "singular_values": [
+            3.0,
+            1.0
+          ],
+          "rank": 2,
+          "condition_number": 3.0
+        }
       }
     ]
   },
@@ -2159,6 +2814,66 @@
           "trace_check": true,
           "det_check": true
         }
+      },
+      {
+        "name": "90 degree rotation matrix trace and det hold",
+        "mode": "function",
+        "function": "eigen_analysis",
+        "args": [
+          [
+            [
+              0,
+              -1
+            ],
+            [
+              1,
+              0
+            ]
+          ]
+        ],
+        "hidden": true,
+        "expected": {
+          "eigenvalues": [
+            0.0,
+            0.0
+          ],
+          "trace_check": true,
+          "det_check": true
+        }
+      },
+      {
+        "name": "3x3 identity eigenvalues all 1",
+        "mode": "function",
+        "function": "eigen_analysis",
+        "args": [
+          [
+            [
+              1,
+              0,
+              0
+            ],
+            [
+              0,
+              1,
+              0
+            ],
+            [
+              0,
+              0,
+              1
+            ]
+          ]
+        ],
+        "hidden": true,
+        "expected": {
+          "eigenvalues": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "trace_check": true,
+          "det_check": true
+        }
       }
     ]
   },
@@ -2248,6 +2963,30 @@
         ],
         "hidden": true,
         "expected": 0.5
+      },
+      {
+        "name": "zero prior yields zero posterior",
+        "mode": "function",
+        "function": "bayes_theorem",
+        "args": [
+          0.0,
+          0.9,
+          0.1
+        ],
+        "hidden": true,
+        "expected": 0.0
+      },
+      {
+        "name": "prior=1 yields posterior=1",
+        "mode": "function",
+        "function": "bayes_theorem",
+        "args": [
+          1.0,
+          0.3,
+          0.9
+        ],
+        "hidden": true,
+        "expected": 1.0
       }
     ]
   },
@@ -2351,6 +3090,38 @@
           "mean_of_means": 0.502,
           "theoretical_var": 0.0833,
           "var_of_means": 0.0848
+        }
+      },
+      {
+        "name": "clt n=5 m=100 seed=0",
+        "mode": "function",
+        "function": "clt_simulation",
+        "args": [
+          5,
+          100,
+          0
+        ],
+        "hidden": true,
+        "expected": {
+          "mean_of_means": 0.4966,
+          "theoretical_var": 0.0167,
+          "var_of_means": 0.022
+        }
+      },
+      {
+        "name": "clt m=1 single group zero empirical variance",
+        "mode": "function",
+        "function": "clt_simulation",
+        "args": [
+          10,
+          1,
+          42
+        ],
+        "hidden": true,
+        "expected": {
+          "mean_of_means": 0.5201,
+          "theoretical_var": 0.0083,
+          "var_of_means": 0
         }
       }
     ]
@@ -2464,6 +3235,38 @@
           "log_likelihood": -2.2493,
           "p_hat": 0.75
         }
+      },
+      {
+        "name": "all heads p_hat=1",
+        "mode": "function",
+        "function": "bernoulli_mle",
+        "args": [
+          [
+            1,
+            1,
+            1,
+            1
+          ]
+        ],
+        "hidden": true,
+        "expected": {
+          "p_hat": 1.0,
+          "log_likelihood": -0.0
+        }
+      },
+      {
+        "name": "log_likelihood at p=0.2",
+        "mode": "function",
+        "function": "log_likelihood",
+        "args": [
+          [
+            1,
+            0
+          ],
+          0.2
+        ],
+        "hidden": true,
+        "expected": -1.8326
       }
     ]
   },
@@ -2570,6 +3373,38 @@
         ],
         "hidden": true,
         "expected": 0.0
+      },
+      {
+        "name": "gradient at negative point (-2,-1)",
+        "mode": "function",
+        "function": "gradient_at",
+        "args": [
+          -2,
+          -1
+        ],
+        "hidden": true,
+        "expected": {
+          "grad": [
+            -5.0,
+            -6.0
+          ],
+          "magnitude": 7.8102
+        }
+      },
+      {
+        "name": "directional derivative unnormalized vector",
+        "mode": "function",
+        "function": "directional_derivative",
+        "args": [
+          1,
+          1,
+          [
+            3,
+            4
+          ]
+        ],
+        "hidden": true,
+        "expected": 5.8
       }
     ]
   },
@@ -2692,6 +3527,26 @@
           "final_fx": 0,
           "converged": false
         }
+      },
+      {
+        "name": "f evaluates polynomial at x=2",
+        "mode": "function",
+        "function": "f",
+        "args": [
+          2
+        ],
+        "hidden": true,
+        "expected": -6
+      },
+      {
+        "name": "df vanishes at local minimum x=2.25",
+        "mode": "function",
+        "function": "df",
+        "args": [
+          2.25
+        ],
+        "hidden": true,
+        "expected": 0.0
       }
     ]
   },
@@ -2785,6 +3640,32 @@
           "approx": 0.401042,
           "error": 0.004423,
           "exact": 0.405465
+        }
+      },
+      {
+        "name": "taylor_ln negative x=-0.5 order 3",
+        "mode": "function",
+        "function": "taylor_ln",
+        "args": [
+          -0.5,
+          3
+        ],
+        "hidden": true,
+        "expected": -0.666667
+      },
+      {
+        "name": "taylor_error negative x=-0.2 order 5",
+        "mode": "function",
+        "function": "taylor_error",
+        "args": [
+          -0.2,
+          5
+        ],
+        "hidden": true,
+        "expected": {
+          "approx": -0.223131,
+          "error": 1.3e-05,
+          "exact": -0.223144
         }
       }
     ]

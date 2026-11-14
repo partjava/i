@@ -130,6 +130,40 @@
             }
           }
         }
+      },
+      {
+        "name": "format_response rounds confidence to 4 decimals",
+        "mode": "function",
+        "function": "format_response",
+        "args": [
+          "positive",
+          0.912345
+        ],
+        "hidden": true,
+        "expected": {
+          "success": true,
+          "prediction": "positive",
+          "confidence": 0.9123,
+          "latency_ms": 0
+        }
+      },
+      {
+        "name": "validate_input rejects bool for int field",
+        "mode": "function",
+        "function": "validate_input",
+        "args": [
+          {
+            "count": true
+          },
+          {
+            "count": "int"
+          }
+        ],
+        "hidden": true,
+        "expected": [
+          false,
+          "count should be int"
+        ]
       }
     ]
   },
@@ -325,6 +359,53 @@
           "max_diff": 0.5,
           "pass": false
         }
+      },
+      {
+        "name": "compare_outputs boundary diff=1e-4 fails strict <1e-4",
+        "mode": "function",
+        "function": "compare_outputs",
+        "args": [
+          [
+            [
+              1.0,
+              2.0
+            ]
+          ],
+          [
+            [
+              1.0,
+              2.0001
+            ]
+          ]
+        ],
+        "hidden": true,
+        "expected": {
+          "max_diff": 0.0001,
+          "pass": false
+        }
+      },
+      {
+        "name": "onnx_inference defaults missing weight and bias",
+        "mode": "function",
+        "function": "onnx_inference",
+        "args": [
+          {
+            "graph": {
+              "initializers": {}
+            }
+          },
+          [
+            [
+              3.0
+            ]
+          ]
+        ],
+        "hidden": true,
+        "expected": [
+          [
+            3.0
+          ]
+        ]
       }
     ]
   },
@@ -450,6 +531,39 @@
             "args": "/app"
           }
         ]
+      },
+      {
+        "name": "parse_dockerfile handles lowercase ENV EXPOSE and no-arg CMD",
+        "mode": "function",
+        "function": "parse_dockerfile",
+        "args": [
+          "env A=1\nexpose 8080\n\n# comment\ncmd"
+        ],
+        "hidden": true,
+        "expected": [
+          {
+            "cmd": "ENV",
+            "args": "A=1"
+          },
+          {
+            "cmd": "EXPOSE",
+            "args": "8080"
+          },
+          {
+            "cmd": "CMD",
+            "args": ""
+          }
+        ]
+      },
+      {
+        "name": "calculate_image_size empty layers returns 0",
+        "mode": "function",
+        "function": "calculate_image_size",
+        "args": [
+          []
+        ],
+        "hidden": true,
+        "expected": 0
       }
     ]
   },
@@ -566,6 +680,37 @@
           "response": "[qwen2:7b 模拟回复] 收到: hi... (16 tokens)",
           "tokens_generated": 16,
           "done": true
+        }
+      },
+      {
+        "name": "ollama_generate truncates long prompt to 50 chars with default 128 tokens",
+        "mode": "function",
+        "function": "ollama_generate",
+        "args": [
+          "llama3:8b",
+          "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        ],
+        "hidden": true,
+        "expected": {
+          "model": "llama3:8b",
+          "response": "[llama3:8b 模拟回复] 收到: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa... (128 tokens)",
+          "tokens_generated": 128,
+          "done": true
+        }
+      },
+      {
+        "name": "estimate_ram_usage 70B large model",
+        "mode": "function",
+        "function": "estimate_ram_usage",
+        "args": [
+          70
+        ],
+        "hidden": true,
+        "expected": {
+          "model_size_billions": 70,
+          "fp16_ram_gb": 140.0,
+          "int8_ram_gb": 70.0,
+          "recommended_gb": 210
         }
       }
     ]
@@ -689,6 +834,58 @@
           "bytes": 1073741824,
           "gb": 1.0
         }
+      },
+      {
+        "name": "paged_attention sharp key dominates output",
+        "mode": "function",
+        "function": "paged_attention",
+        "args": [
+          [
+            10,
+            0
+          ],
+          [
+            [
+              10,
+              0
+            ],
+            [
+              0,
+              10
+            ]
+          ],
+          [
+            0,
+            1
+          ],
+          16
+        ],
+        "hidden": true,
+        "expected": {
+          "output": [
+            10,
+            1.953181856722173e-30
+          ],
+          "scores": [
+            70.71067811865474,
+            0
+          ]
+        }
+      },
+      {
+        "name": "compute_throughput rounds tokens_per_sec to 2 decimals",
+        "mode": "function",
+        "function": "compute_throughput",
+        "args": [
+          100,
+          3.0
+        ],
+        "hidden": true,
+        "expected": {
+          "tokens_per_sec": 33.33,
+          "total_tokens": 100,
+          "total_time": 3.0
+        }
       }
     ]
   },
@@ -788,6 +985,46 @@
         "hidden": true,
         "expected": [
           "timeout:"
+        ]
+      },
+      {
+        "name": "async_process timeout=0 triggers deterministic timeout for all",
+        "mode": "function",
+        "function": "async_process",
+        "args": [
+          [
+            "x",
+            "y"
+          ],
+          0.0
+        ],
+        "hidden": true,
+        "expected": [
+          "timeout:",
+          "timeout:"
+        ]
+      },
+      {
+        "name": "async_process 5 concurrent requests complete",
+        "mode": "function",
+        "function": "async_process",
+        "args": [
+          [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5"
+          ],
+          2
+        ],
+        "hidden": true,
+        "expected": [
+          "ok:1",
+          "ok:2",
+          "ok:3",
+          "ok:4",
+          "ok:5"
         ]
       }
     ]
@@ -983,6 +1220,44 @@
           ],
           "optimized": true
         }
+      },
+      {
+        "name": "constant_folding preserves graph structure",
+        "mode": "function",
+        "function": "constant_folding",
+        "args": [
+          {
+            "nodes": [
+              {
+                "op": "Add",
+                "input": "x",
+                "output": "y"
+              }
+            ]
+          }
+        ],
+        "hidden": true,
+        "expected": {
+          "nodes": [
+            {
+              "op": "Add",
+              "input": "x",
+              "output": "y"
+            }
+          ]
+        }
+      },
+      {
+        "name": "fuse_conv_bn empty graph returns empty nodes",
+        "mode": "function",
+        "function": "fuse_conv_bn",
+        "args": [
+          {}
+        ],
+        "hidden": true,
+        "expected": {
+          "nodes": []
+        }
       }
     ]
   },
@@ -1112,6 +1387,62 @@
           ],
           "total_size": 10
         }
+      },
+      {
+        "name": "parse_stages ignores lines before first FROM and supports empty stage",
+        "mode": "function",
+        "function": "parse_stages",
+        "args": [
+          "RUN orphan\nFROM alpine\n\nFROM scratch\nCOPY a b"
+        ],
+        "hidden": true,
+        "expected": [
+          {
+            "from": "alpine",
+            "cmds": []
+          },
+          {
+            "from": "scratch",
+            "cmds": [
+              "COPY a b"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "multi_stage_build 3 stages with empty final stage",
+        "mode": "function",
+        "function": "multi_stage_build",
+        "args": [
+          "FROM a\nRUN 1\nFROM b\nRUN 2\nFROM c"
+        ],
+        "hidden": true,
+        "expected": {
+          "stages": [
+            {
+              "stage": 0,
+              "base": "a",
+              "layers": 1,
+              "size_mb": 5,
+              "final": false
+            },
+            {
+              "stage": 1,
+              "base": "b",
+              "layers": 1,
+              "size_mb": 5,
+              "final": false
+            },
+            {
+              "stage": 2,
+              "base": "c",
+              "layers": 0,
+              "size_mb": 0,
+              "final": true
+            }
+          ],
+          "total_size": 10
+        }
       }
     ]
   },
@@ -1230,6 +1561,50 @@
             1.0,
             2.5
           ]
+        ],
+        "hidden": true,
+        "expected": {
+          "mse": 0.125,
+          "max_error": 0.5
+        }
+      },
+      {
+        "name": "quantize_int8 all-zero tensor uses safe scale 1.0",
+        "mode": "function",
+        "function": "quantize_int8",
+        "args": [
+          [
+            0.0,
+            0.0,
+            0.0
+          ]
+        ],
+        "hidden": true,
+        "expected": {
+          "quantized": [
+            0,
+            0,
+            0
+          ],
+          "scale": 1.0
+        }
+      },
+      {
+        "name": "quantization_error quantized dict computes non-zero mse and max_error",
+        "mode": "function",
+        "function": "quantization_error",
+        "args": [
+          [
+            0.5,
+            1.0
+          ],
+          {
+            "quantized": [
+              1,
+              3
+            ],
+            "scale": 2.0
+          }
         ],
         "hidden": true,
         "expected": {
@@ -1370,6 +1745,54 @@
           ],
           "steps": 3,
           "throughput": 0.6667
+        }
+      },
+      {
+        "name": "continuous_batching max_len=1 completes in ceiling(N/batch) steps",
+        "mode": "function",
+        "function": "continuous_batching",
+        "args": [
+          [
+            1,
+            2,
+            3
+          ],
+          2,
+          1
+        ],
+        "hidden": true,
+        "expected": {
+          "completed": [
+            1,
+            2,
+            3
+          ],
+          "steps": 2,
+          "throughput": 1.5
+        }
+      },
+      {
+        "name": "continuous_batching exact single batch size",
+        "mode": "function",
+        "function": "continuous_batching",
+        "args": [
+          [
+            1,
+            2,
+            3
+          ],
+          3,
+          3
+        ],
+        "hidden": true,
+        "expected": {
+          "completed": [
+            1,
+            2,
+            3
+          ],
+          "steps": 2,
+          "throughput": 1.5
         }
       }
     ]

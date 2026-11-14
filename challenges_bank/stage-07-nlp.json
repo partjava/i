@@ -138,6 +138,34 @@
           "和",
           "国"
         ]
+      },
+      {
+        "name": "fmm empty text returns empty list",
+        "mode": "function",
+        "function": "fmm_segment",
+        "args": [
+          "",
+          [
+            "今天",
+            "天气"
+          ],
+          5
+        ],
+        "hidden": true,
+        "expected": []
+      },
+      {
+        "name": "pos_tag empty tokens returns empty list",
+        "mode": "function",
+        "function": "pos_tag",
+        "args": [
+          [],
+          {
+            "今天": "NOUN"
+          }
+        ],
+        "hidden": true,
+        "expected": []
       }
     ]
   },
@@ -268,6 +296,59 @@
         ],
         "hidden": true,
         "expected": 0
+      },
+      {
+        "name": "tfidf computes rounded product for known term",
+        "mode": "function",
+        "function": "tfidf",
+        "args": [
+          "苹果",
+          [
+            "苹果",
+            "香蕉"
+          ],
+          [
+            [
+              "苹果",
+              "香蕉"
+            ],
+            [
+              "橙子",
+              "梨"
+            ]
+          ]
+        ],
+        "hidden": true,
+        "expected": 0.7027
+      },
+      {
+        "name": "search multi-word query top_k=1 selects best doc",
+        "mode": "function",
+        "function": "search",
+        "args": [
+          "ai ml",
+          [
+            [
+              "ai"
+            ],
+            [
+              "ai",
+              "ml"
+            ],
+            [
+              "ai",
+              "dl"
+            ]
+          ],
+          1
+        ],
+        "hidden": true,
+        "expected": [
+          [
+            1,
+            1.3466
+          ]
+        ]
       }
     ]
   },
@@ -389,6 +470,39 @@
         ],
         "hidden": true,
         "expected": 0.0
+      },
+      {
+        "name": "build_vocab ignores empty sentences and deduplicates",
+        "mode": "function",
+        "function": "build_vocab",
+        "args": [
+          [
+            [],
+            [
+              "b",
+              "a",
+              "b"
+            ]
+          ]
+        ],
+        "hidden": true,
+        "expected": {
+          "a": 0,
+          "b": 1
+        }
+      },
+      {
+        "name": "one_hot size 1 index 0",
+        "mode": "function",
+        "function": "one_hot",
+        "args": [
+          0,
+          1
+        ],
+        "hidden": true,
+        "expected": [
+          1.0
+        ]
       }
     ]
   },
@@ -534,6 +648,44 @@
         ],
         "hidden": true,
         "expected": 0.0
+      },
+      {
+        "name": "mask_tokens empty sequence returns empty lists",
+        "mode": "function",
+        "function": "mask_tokens",
+        "args": [
+          [],
+          99,
+          1.0
+        ],
+        "hidden": true,
+        "expected": {
+          "masked": [],
+          "labels": []
+        }
+      },
+      {
+        "name": "mlm_loss uniform logits equals ln(2)",
+        "mode": "function",
+        "function": "mlm_loss",
+        "args": [
+          [
+            [
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0
+            ]
+          ],
+          [
+            0,
+            1
+          ]
+        ],
+        "hidden": true,
+        "expected": 0.6931
       }
     ]
   },
@@ -848,6 +1000,40 @@
             0.6307970779778824
           ]
         ]
+      },
+      {
+        "name": "lstm_forward empty sequence returns empty list",
+        "mode": "function",
+        "function": "lstm_forward",
+        "args": [
+          [],
+          {
+            "Wf": [
+              [
+                0.1,
+                0.2
+              ]
+            ]
+          }
+        ],
+        "hidden": true,
+        "expected": []
+      },
+      {
+        "name": "sigmoid clips extreme values safely",
+        "mode": "function",
+        "function": "sigmoid",
+        "args": [
+          [
+            -1000.0,
+            1000.0
+          ]
+        ],
+        "hidden": true,
+        "expected": [
+          3.7200759760208356e-44,
+          1
+        ]
       }
     ]
   },
@@ -1148,6 +1334,99 @@
             [
               0.5,
               0.5
+            ]
+          ]
+        }
+      },
+      {
+        "name": "single query key-value pair gets weight 1.0",
+        "mode": "function",
+        "function": "scaled_dot_product_attention",
+        "args": [
+          [
+            [
+              1,
+              0,
+              0,
+              0
+            ]
+          ],
+          [
+            [
+              1,
+              0,
+              0,
+              0
+            ]
+          ],
+          [
+            [
+              5,
+              6
+            ]
+          ]
+        ],
+        "hidden": true,
+        "expected": {
+          "output": [
+            [
+              5.0,
+              6.0
+            ]
+          ],
+          "weights": [
+            [
+              1.0
+            ]
+          ]
+        }
+      },
+      {
+        "name": "non-square query and single key attends fully to V",
+        "mode": "function",
+        "function": "scaled_dot_product_attention",
+        "args": [
+          [
+            [
+              1,
+              2
+            ],
+            [
+              3,
+              4
+            ]
+          ],
+          [
+            [
+              1,
+              2
+            ]
+          ],
+          [
+            [
+              7,
+              8
+            ]
+          ]
+        ],
+        "hidden": true,
+        "expected": {
+          "output": [
+            [
+              7.0,
+              8.0
+            ],
+            [
+              7.0,
+              8.0
+            ]
+          ],
+          "weights": [
+            [
+              1.0
+            ],
+            [
+              1.0
             ]
           ]
         }
@@ -1509,6 +1788,207 @@
             ]
           ]
         ]
+      },
+      {
+        "name": "multi_head_attention single token 4 heads identity",
+        "mode": "function",
+        "function": "multi_head_attention",
+        "args": [
+          [
+            [
+              1,
+              2,
+              3,
+              4
+            ]
+          ],
+          {
+            "Wq": [
+              [
+                1,
+                0,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                0,
+                1,
+                0
+              ],
+              [
+                0,
+                0,
+                0,
+                1
+              ]
+            ],
+            "Wk": [
+              [
+                1,
+                0,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                0,
+                1,
+                0
+              ],
+              [
+                0,
+                0,
+                0,
+                1
+              ]
+            ],
+            "Wv": [
+              [
+                1,
+                0,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                0,
+                1,
+                0
+              ],
+              [
+                0,
+                0,
+                0,
+                1
+              ]
+            ],
+            "Wo": [
+              [
+                1,
+                0,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                0,
+                1,
+                0
+              ],
+              [
+                0,
+                0,
+                0,
+                1
+              ]
+            ]
+          },
+          4
+        ],
+        "hidden": true,
+        "expected": {
+          "output": [
+            [
+              1.0,
+              2.0,
+              3.0,
+              4.0
+            ]
+          ],
+          "heads": [
+            [
+              [
+                1.0
+              ]
+            ],
+            [
+              [
+                2.0
+              ]
+            ],
+            [
+              [
+                3.0
+              ]
+            ],
+            [
+              [
+                4.0
+              ]
+            ]
+          ]
+        }
+      },
+      {
+        "name": "concat_heads merges 3 heads of width 1",
+        "mode": "function",
+        "function": "concat_heads",
+        "args": [
+          [
+            [
+              [
+                1
+              ],
+              [
+                2
+              ]
+            ],
+            [
+              [
+                3
+              ],
+              [
+                4
+              ]
+            ],
+            [
+              [
+                5
+              ],
+              [
+                6
+              ]
+            ]
+          ]
+        ],
+        "hidden": true,
+        "expected": [
+          [
+            1.0,
+            3.0,
+            5.0
+          ],
+          [
+            2.0,
+            4.0,
+            6.0
+          ]
+        ]
       }
     ]
   },
@@ -1726,6 +2206,95 @@
           1,
           0
         ]
+      },
+      {
+        "name": "decoder_step produces updated hidden state and logits",
+        "mode": "function",
+        "function": "decoder_step",
+        "args": [
+          0,
+          [
+            0.0,
+            0.0
+          ],
+          [
+            [
+              1,
+              0
+            ],
+            [
+              0,
+              1
+            ]
+          ],
+          [
+            [
+              1,
+              0
+            ],
+            [
+              0,
+              1
+            ]
+          ],
+          [
+            [
+              2,
+              -1
+            ],
+            [
+              0,
+              3
+            ]
+          ]
+        ],
+        "hidden": true,
+        "expected": [
+          [
+            0.7615941559557649,
+            0
+          ],
+          [
+            1.5231883119115297,
+            -0.7615941559557649
+          ]
+        ]
+      },
+      {
+        "name": "greedy_decode max_len 0 returns empty list",
+        "mode": "function",
+        "function": "greedy_decode",
+        "args": [
+          [
+            0.0,
+            0.0
+          ],
+          0,
+          2,
+          0,
+          {
+            "W_emb": [
+              [
+                1,
+                0
+              ]
+            ],
+            "W_dec": [
+              [
+                1,
+                0
+              ]
+            ],
+            "W_out": [
+              [
+                1,
+                0
+              ]
+            ]
+          }
+        ],
+        "hidden": true,
+        "expected": []
       }
     ]
   },
@@ -1829,6 +2398,28 @@
           "ab",
           "ab"
         ]
+      },
+      {
+        "name": "get_stats empty vocab returns empty dict",
+        "mode": "function",
+        "function": "get_stats",
+        "args": [
+          {}
+        ],
+        "hidden": true,
+        "expected": {}
+      },
+      {
+        "name": "bpe_tokenize empty word returns empty list",
+        "mode": "function",
+        "function": "bpe_tokenize",
+        "args": [
+          "",
+          {},
+          3
+        ],
+        "hidden": true,
+        "expected": []
       }
     ]
   },
@@ -1984,6 +2575,56 @@
             0.2431
           ]
         ]
+      },
+      {
+        "name": "bm25 empty query gives zero scores",
+        "mode": "function",
+        "function": "bm25",
+        "args": [
+          "",
+          [
+            "hello world",
+            "foo"
+          ],
+          1.5,
+          0.75
+        ],
+        "hidden": true,
+        "expected": [
+          [
+            0,
+            0.0
+          ],
+          [
+            1,
+            0.0
+          ]
+        ]
+      },
+      {
+        "name": "bm25 b=0 disables length normalization penalty",
+        "mode": "function",
+        "function": "bm25",
+        "args": [
+          "ml",
+          [
+            "ml",
+            "ml a b c d"
+          ],
+          1.5,
+          0.0
+        ],
+        "hidden": true,
+        "expected": [
+          [
+            0,
+            0.1823
+          ],
+          [
+            1,
+            0.1823
+          ]
+        ]
       }
     ]
   },
@@ -2110,6 +2751,53 @@
           0.5,
           0.5
         ]
+      },
+      {
+        "name": "skipgram_forward selects center row and peaks at aligned target",
+        "mode": "function",
+        "function": "skipgram_forward",
+        "args": [
+          1,
+          [
+            [
+              0.0,
+              0.0
+            ],
+            [
+              10.0,
+              0.0
+            ]
+          ],
+          [
+            [
+              1.0,
+              0.0
+            ],
+            [
+              0.0,
+              1.0
+            ]
+          ]
+        ],
+        "hidden": true,
+        "expected": [
+          0.9999546021312976,
+          4.5397868702434395e-05
+        ]
+      },
+      {
+        "name": "skipgram_loss uniform prob 0.5 equals ln(2)",
+        "mode": "function",
+        "function": "skipgram_loss",
+        "args": [
+          [
+            0.5,
+            0.5
+          ],
+          1
+        ],
+        "hidden": true,
+        "expected": 0.6931471803599453
       }
     ]
   },
@@ -2250,6 +2938,59 @@
         ],
         "hidden": true,
         "expected": 0.6931
+      },
+      {
+        "name": "ce direct call on equal logits gives ln(2)",
+        "mode": "function",
+        "function": "ce",
+        "args": [
+          [
+            [
+              0.0,
+              0.0
+            ]
+          ],
+          [
+            0
+          ]
+        ],
+        "hidden": true,
+        "expected": [
+          0.6931471803599453
+        ]
+      },
+      {
+        "name": "mlm_loss multiple confident masked tokens ignores unmasked middle",
+        "mode": "function",
+        "function": "mlm_loss",
+        "args": [
+          [
+            [
+              10.0,
+              -10.0
+            ],
+            [
+              0.0,
+              0.0
+            ],
+            [
+              -10.0,
+              10.0
+            ]
+          ],
+          [
+            0,
+            0,
+            1
+          ],
+          [
+            1,
+            0,
+            1
+          ]
+        ],
+        "hidden": true,
+        "expected": 0.0
       }
     ]
   },
@@ -2607,6 +3348,118 @@
         ],
         "hidden": true,
         "expected": []
+      },
+      {
+        "name": "sigmoid handles zero and extreme bounds",
+        "mode": "function",
+        "function": "sigmoid",
+        "args": [
+          [
+            0.0,
+            -1000.0,
+            1000.0
+          ]
+        ],
+        "hidden": true,
+        "expected": [
+          0.5,
+          3.7200759760208356e-44,
+          1
+        ]
+      },
+      {
+        "name": "gru_cell near-zero update gate z=0 replaces h with candidate",
+        "mode": "function",
+        "function": "gru_cell",
+        "args": [
+          [
+            0.0,
+            0.0
+          ],
+          [
+            1.0,
+            1.0
+          ],
+          {
+            "Wz": [
+              [
+                0,
+                0
+              ],
+              [
+                0,
+                0
+              ]
+            ],
+            "Uz": [
+              [
+                0,
+                0
+              ],
+              [
+                0,
+                0
+              ]
+            ],
+            "bz": [
+              -50,
+              -50
+            ],
+            "Wr": [
+              [
+                0,
+                0
+              ],
+              [
+                0,
+                0
+              ]
+            ],
+            "Ur": [
+              [
+                0,
+                0
+              ],
+              [
+                0,
+                0
+              ]
+            ],
+            "br": [
+              0,
+              0
+            ],
+            "Wh": [
+              [
+                0,
+                0
+              ],
+              [
+                0,
+                0
+              ]
+            ],
+            "Uh": [
+              [
+                0,
+                0
+              ],
+              [
+                0,
+                0
+              ]
+            ],
+            "bh": [
+              0,
+              0
+            ]
+          }
+        ],
+        "hidden": true,
+        "expected": [
+          1.928749847963918e-22,
+          1.928749847963918e-22
+        ]
       }
     ]
   },
@@ -2853,6 +3706,82 @@
           [
             3.0,
             5.0
+          ]
+        ]
+      },
+      {
+        "name": "softmax 2d stability on large equal logits",
+        "mode": "function",
+        "function": "softmax",
+        "args": [
+          [
+            [
+              1000.0,
+              1000.0
+            ],
+            [
+              0.0,
+              0.0
+            ]
+          ]
+        ],
+        "hidden": true,
+        "expected": [
+          [
+            0.5,
+            0.5
+          ],
+          [
+            0.5,
+            0.5
+          ]
+        ]
+      },
+      {
+        "name": "cross_attention single encoder key broadcasts value to all queries",
+        "mode": "function",
+        "function": "cross_attention",
+        "args": [
+          [
+            [
+              1,
+              0
+            ],
+            [
+              0,
+              1
+            ],
+            [
+              1,
+              1
+            ]
+          ],
+          [
+            [
+              1,
+              0
+            ]
+          ],
+          [
+            [
+              3,
+              7
+            ]
+          ]
+        ],
+        "hidden": true,
+        "expected": [
+          [
+            3.0,
+            7.0
+          ],
+          [
+            3.0,
+            7.0
+          ],
+          [
+            3.0,
+            7.0
           ]
         ]
       }
@@ -3343,6 +4272,171 @@
             ]
           ]
         ]
+      },
+      {
+        "name": "softmax uniform over 4 elements",
+        "mode": "function",
+        "function": "softmax",
+        "args": [
+          [
+            [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          ]
+        ],
+        "hidden": true,
+        "expected": [
+          [
+            0.25,
+            0.25,
+            0.25,
+            0.25
+          ]
+        ]
+      },
+      {
+        "name": "multihead_attention 4 heads dk=1",
+        "mode": "function",
+        "function": "multihead_attention",
+        "args": [
+          [
+            [
+              1,
+              0,
+              1,
+              0
+            ],
+            [
+              0,
+              1,
+              0,
+              1
+            ]
+          ],
+          [
+            [
+              1,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              1,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              1,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              1
+            ]
+          ],
+          [
+            [
+              1,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              1,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              1,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              1
+            ]
+          ],
+          [
+            [
+              2,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              2,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              2,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              2
+            ]
+          ],
+          [
+            [
+              1,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              1,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              1,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              1
+            ]
+          ],
+          4
+        ],
+        "hidden": true,
+        "expected": [
+          [
+            1.4621171572600098,
+            1,
+            1.4621171572600098,
+            1
+          ],
+          [
+            1,
+            1.4621171572600098,
+            1,
+            1.4621171572600098
+          ]
+        ]
       }
     ]
   },
@@ -3462,6 +4556,51 @@
           1,
           1,
           2,
+          2
+        ],
+        "hidden": true,
+        "expected": [
+          0,
+          2
+        ]
+      },
+      {
+        "name": "eval_beam_search non-default end_id=0 stops after max_len",
+        "mode": "function",
+        "function": "eval_beam_search",
+        "args": [
+          [
+            -5.0,
+            5.0,
+            0.0
+          ],
+          2,
+          2,
+          5,
+          0
+        ],
+        "hidden": true,
+        "expected": [
+          1,
+          2,
+          2,
+          2,
+          0
+        ]
+      },
+      {
+        "name": "eval_beam_search stops early when preferred_token equals end_id",
+        "mode": "function",
+        "function": "eval_beam_search",
+        "args": [
+          [
+            5.0,
+            0.0,
+            -5.0
+          ],
+          2,
+          2,
+          4,
           2
         ],
         "hidden": true,

@@ -126,6 +126,39 @@
           "intent": null,
           "confidence": 0.0
         }
+      },
+      {
+        "name": "generate_response missing intent falls back to default message",
+        "mode": "function",
+        "function": "generate_response",
+        "args": [
+          "未知意图",
+          {
+            "order_ids": [],
+            "products": []
+          },
+          {
+            "退货": "退货"
+          }
+        ],
+        "hidden": true,
+        "expected": "感谢您的咨询，我们已收到您的请求。"
+      },
+      {
+        "name": "extract_entities multiple products without order IDs",
+        "mode": "function",
+        "function": "extract_entities",
+        "args": [
+          "没有订单只有电脑和键盘"
+        ],
+        "hidden": true,
+        "expected": {
+          "order_ids": [],
+          "products": [
+            "电脑",
+            "键盘"
+          ]
+        }
       }
     ]
   },
@@ -266,6 +299,111 @@
           "prev_line": "",
           "line_idx": 0
         }
+      },
+      {
+        "name": "suggest_completions caps output at top 5",
+        "mode": "function",
+        "function": "suggest_completions",
+        "args": [
+          {
+            "line": "x = 1"
+          },
+          [
+            {
+              "code": "s0",
+              "keywords": [
+                "x"
+              ]
+            },
+            {
+              "code": "s1",
+              "keywords": [
+                "x"
+              ]
+            },
+            {
+              "code": "s2",
+              "keywords": [
+                "x"
+              ]
+            },
+            {
+              "code": "s3",
+              "keywords": [
+                "x"
+              ]
+            },
+            {
+              "code": "s4",
+              "keywords": [
+                "x"
+              ]
+            },
+            {
+              "code": "s5",
+              "keywords": [
+                "x"
+              ]
+            },
+            {
+              "code": "s6",
+              "keywords": [
+                "x"
+              ]
+            }
+          ]
+        ],
+        "hidden": true,
+        "expected": [
+          {
+            "code": "s0",
+            "keywords": [
+              "x"
+            ]
+          },
+          {
+            "code": "s1",
+            "keywords": [
+              "x"
+            ]
+          },
+          {
+            "code": "s2",
+            "keywords": [
+              "x"
+            ]
+          },
+          {
+            "code": "s3",
+            "keywords": [
+              "x"
+            ]
+          },
+          {
+            "code": "s4",
+            "keywords": [
+              "x"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "calculate_relevance case-insensitive keyword matching",
+        "mode": "function",
+        "function": "calculate_relevance",
+        "args": [
+          {
+            "line": "RETURN value"
+          },
+          {
+            "keywords": [
+              "return",
+              "async"
+            ]
+          }
+        ],
+        "hidden": true,
+        "expected": 1
       }
     ]
   },
@@ -425,6 +563,53 @@
           },
           "notified": 3
         }
+      },
+      {
+        "name": "eval_meeting_orchestrator picks afternoon slot with 0 participants",
+        "mode": "function",
+        "function": "eval_meeting_orchestrator",
+        "args": [
+          {
+            "busy": [
+              "09:00",
+              "10:00",
+              "11:00"
+            ]
+          },
+          {
+            "participants": [],
+            "duration": "2h",
+            "date": "2025-07-01"
+          }
+        ],
+        "hidden": true,
+        "expected": {
+          "status": "success",
+          "meeting": {
+            "time": "14:00",
+            "date": "2025-07-01"
+          },
+          "notified": 0
+        }
+      },
+      {
+        "name": "ConflictResolverAgent picks consensus slot across schedules",
+        "mode": "function",
+        "function": "ConflictResolverAgent.resolve",
+        "args": [
+          [
+            [
+              "10:00",
+              "11:00"
+            ],
+            [
+              "11:00",
+              "14:00"
+            ]
+          ]
+        ],
+        "hidden": true,
+        "expected": "11:00"
       }
     ]
   },
@@ -559,6 +744,40 @@
           "type": "tabs",
           "tabs": [],
           "active": null
+        }
+      },
+      {
+        "name": "queue_request queue_size=0 processes zero items",
+        "mode": "function",
+        "function": "queue_request",
+        "args": [
+          "non_callable",
+          [],
+          0
+        ],
+        "hidden": true,
+        "expected": {
+          "processed": 0,
+          "status": "completed"
+        }
+      },
+      {
+        "name": "build_interface empty inputs and outputs",
+        "mode": "function",
+        "function": "build_interface",
+        "args": [
+          [],
+          [],
+          "fn",
+          "Empty"
+        ],
+        "hidden": true,
+        "expected": {
+          "title": "Empty",
+          "num_inputs": 0,
+          "num_outputs": 0,
+          "fn_name": "callable",
+          "status": "ready"
         }
       }
     ]
@@ -728,6 +947,52 @@
           "diff": 0.05,
           "threshold": 0.1
         }
+      },
+      {
+        "name": "compute_metrics all negative labels avoids zero division",
+        "mode": "function",
+        "function": "compute_metrics",
+        "args": [
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ]
+        ],
+        "hidden": true,
+        "expected": {
+          "accuracy": 1.0,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        }
+      },
+      {
+        "name": "detect_drift exact threshold is not flagged as drift",
+        "mode": "function",
+        "function": "detect_drift",
+        "args": [
+          [
+            10,
+            10
+          ],
+          [
+            11,
+            11
+          ],
+          0.1
+        ],
+        "hidden": true,
+        "expected": {
+          "drift_detected": false,
+          "diff": 0.1,
+          "threshold": 0.1
+        }
       }
     ]
   },
@@ -815,6 +1080,29 @@
         ],
         "hidden": true,
         "expected": "positive"
+      },
+      {
+        "name": "classify_sentiment neutral mid-ratio range",
+        "mode": "function",
+        "function": "classify_sentiment",
+        "args": [
+          {
+            "pos_count": 1,
+            "neg_count": 1
+          }
+        ],
+        "hidden": true,
+        "expected": "neutral"
+      },
+      {
+        "name": "route_by_sentiment unknown sentiment falls back to general_queue",
+        "mode": "function",
+        "function": "route_by_sentiment",
+        "args": [
+          "unknown_label"
+        ],
+        "hidden": true,
+        "expected": "general_queue"
       }
     ]
   },
@@ -901,6 +1189,28 @@
         "expected": [
           "Line 1: trailing space"
         ]
+      },
+      {
+        "name": "check_style flags lines longer than 80 characters",
+        "mode": "function",
+        "function": "check_style",
+        "args": [
+          "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        ],
+        "hidden": true,
+        "expected": [
+          "Line 1: too long (81 chars)"
+        ]
+      },
+      {
+        "name": "detect_bugs clean code returns empty list",
+        "mode": "function",
+        "function": "detect_bugs",
+        "args": [
+          "x = 1\ny = 2"
+        ],
+        "hidden": true,
+        "expected": []
       }
     ]
   },
@@ -1022,6 +1332,51 @@
         "hidden": true,
         "expected": {
           "deploy": "unassigned"
+        }
+      },
+      {
+        "name": "decompose_task handles summar and plot keywords",
+        "mode": "function",
+        "function": "decompose_task",
+        "args": [
+          "Summarize and plot metrics",
+          []
+        ],
+        "hidden": true,
+        "expected": [
+          "generate_report",
+          "visualize"
+        ]
+      },
+      {
+        "name": "assign_subtasks decrements workload after assignment",
+        "mode": "function",
+        "function": "assign_subtasks",
+        "args": [
+          [
+            "fetch_data",
+            "analyze"
+          ],
+          {
+            "a1": {
+              "can_do": [
+                "fetch_data",
+                "analyze"
+              ],
+              "workload": 2
+            },
+            "a2": {
+              "can_do": [
+                "analyze"
+              ],
+              "workload": 2
+            }
+          }
+        ],
+        "hidden": true,
+        "expected": {
+          "fetch_data": "a1",
+          "analyze": "a2"
         }
       }
     ]
@@ -1154,6 +1509,45 @@
           "prediction": 0.0,
           "confidence": 0.5
         }
+      },
+      {
+        "name": "update_plot non-zero dot product and sigmoid confidence",
+        "mode": "function",
+        "function": "update_plot",
+        "args": [
+          [
+            2.0,
+            -1.0
+          ],
+          [
+            1.5,
+            1.0
+          ]
+        ],
+        "hidden": true,
+        "expected": {
+          "prediction": 2.0,
+          "confidence": 0.881
+        }
+      },
+      {
+        "name": "build_demo empty model and schema",
+        "mode": "function",
+        "function": "build_demo",
+        "args": [
+          [],
+          []
+        ],
+        "hidden": true,
+        "expected": {
+          "model": [],
+          "inputs": [],
+          "outputs": [
+            "prediction",
+            "confidence"
+          ],
+          "live": true
+        }
       }
     ]
   },
@@ -1276,6 +1670,48 @@
           },
           "total_epochs": 2,
           "trend": "improving"
+        }
+      },
+      {
+        "name": "build_report val_acc=0.8 boundary gives needs_tuning",
+        "mode": "function",
+        "function": "build_report",
+        "args": [
+          {
+            "train_loss": [
+              0.5,
+              0.3
+            ],
+            "val_acc": [
+              0.7,
+              0.8
+            ]
+          }
+        ],
+        "hidden": true,
+        "expected": {
+          "latest_metrics": {
+            "train_loss": 0.3,
+            "val_acc": 0.8
+          },
+          "total_epochs": 2,
+          "trend": "needs_tuning"
+        }
+      },
+      {
+        "name": "detect_overfitting exact threshold gap == th returns ok",
+        "mode": "function",
+        "function": "detect_overfitting",
+        "args": [
+          0.25,
+          0.5,
+          0.25
+        ],
+        "hidden": true,
+        "expected": {
+          "overfitting": false,
+          "gap": 0.25,
+          "recommendation": "ok"
         }
       }
     ]

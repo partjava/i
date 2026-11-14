@@ -152,6 +152,31 @@
         ],
         "hidden": true,
         "expectedException": "ValueError"
+      },
+      {
+        "name": "high count small stall beats low count large stall",
+        "mode": "function",
+        "function": "profile_pipeline_workload",
+        "args": [
+          {
+            "alu": {
+              "count": 10000,
+              "base_cpi": 1,
+              "stall": 0.5
+            },
+            "mem": {
+              "count": 100,
+              "base_cpi": 2,
+              "stall": 5.0
+            }
+          },
+          1000000000
+        ],
+        "hidden": true,
+        "expected": {
+          "time_ms": 0.0157,
+          "bottleneck": "alu"
+        }
       }
     ]
   },
@@ -308,6 +333,28 @@
           "misses": 0,
           "hit_rate": 0
         }
+      },
+      {
+        "name": "capacity one consecutive hits and thrashing",
+        "mode": "function",
+        "function": "simulate_page_cache",
+        "args": [
+          [
+            1,
+            1,
+            2,
+            2,
+            3,
+            1
+          ],
+          1
+        ],
+        "hidden": true,
+        "expected": {
+          "hits": 2,
+          "misses": 4,
+          "hit_rate": 0.3333
+        }
       }
     ]
   },
@@ -453,6 +500,26 @@
         ],
         "hidden": true,
         "expected": "sub"
+      },
+      {
+        "name": "exact /32 host route overrides /24",
+        "mode": "function",
+        "function": "lookup_route",
+        "args": [
+          [
+            {
+              "cidr": "192.168.10.0/24",
+              "next_hop": "subnet"
+            },
+            {
+              "cidr": "192.168.10.42/32",
+              "next_hop": "host"
+            }
+          ],
+          "192.168.10.42"
+        ],
+        "hidden": true,
+        "expected": "host"
       }
     ]
   },
@@ -571,6 +638,19 @@
         "expected": {
           "status": "OK",
           "text": ""
+        }
+      },
+      {
+        "name": "uppercase spaced hex string decodes cleanly",
+        "mode": "function",
+        "function": "decode_log_payload",
+        "args": [
+          "48 45 4C 4C 4F"
+        ],
+        "hidden": true,
+        "expected": {
+          "status": "OK",
+          "text": "HELLO"
         }
       }
     ]
@@ -696,6 +776,22 @@
         ],
         "hidden": true,
         "expectedException": "ValueError"
+      },
+      {
+        "name": "spaces and shell metacharacters preserved",
+        "mode": "function",
+        "function": "build_grep_args",
+        "args": [
+          "ERR|WARN",
+          "my $(file).log"
+        ],
+        "hidden": true,
+        "expected": [
+          "grep",
+          "--",
+          "ERR|WARN",
+          "my $(file).log"
+        ]
       }
     ]
   },
@@ -833,6 +929,23 @@
           "fits": false,
           "bottleneck": "block"
         }
+      },
+      {
+        "name": "both exhausted reports inode bottleneck first",
+        "mode": "function",
+        "function": "plan_small_file_storage",
+        "args": [
+          20,
+          5000,
+          4096,
+          10,
+          10
+        ],
+        "hidden": true,
+        "expected": {
+          "fits": false,
+          "bottleneck": "inode"
+        }
       }
     ]
   },
@@ -950,6 +1063,20 @@
         ],
         "hidden": true,
         "expectedException": "ValueError"
+      },
+      {
+        "name": "world writable script with owner exec",
+        "mode": "function",
+        "function": "audit_permission",
+        "args": [
+          "777",
+          "script"
+        ],
+        "hidden": true,
+        "expected": [
+          "group_writable",
+          "others_writable"
+        ]
       }
     ]
   },
@@ -1115,6 +1242,59 @@
           "zombie_rate": 0.2,
           "alert": false
         }
+      },
+      {
+        "name": "exact rate boundary does not alert below count",
+        "mode": "function",
+        "function": "detect_process_anomaly",
+        "args": [
+          [
+            {
+              "pid": 1,
+              "state": "Z"
+            },
+            {
+              "pid": 2,
+              "state": "R"
+            }
+          ],
+          2,
+          0.5
+        ],
+        "hidden": true,
+        "expected": {
+          "zombies": 1,
+          "zombie_rate": 0.5,
+          "alert": false
+        }
+      },
+      {
+        "name": "rate above threshold alerts with missing state field",
+        "mode": "function",
+        "function": "detect_process_anomaly",
+        "args": [
+          [
+            {
+              "pid": 1,
+              "state": "Z"
+            },
+            {
+              "pid": 2
+            },
+            {
+              "pid": 3,
+              "state": "Z"
+            }
+          ],
+          5,
+          0.6
+        ],
+        "hidden": true,
+        "expected": {
+          "zombies": 2,
+          "zombie_rate": 0.6667,
+          "alert": true
+        }
       }
     ]
   },
@@ -1240,6 +1420,21 @@
         ],
         "hidden": true,
         "expected": 0
+      },
+      {
+        "name": "pipefail false returns last exit code",
+        "mode": "function",
+        "function": "evaluate_pipeline",
+        "args": [
+          [
+            1,
+            0,
+            2
+          ],
+          false
+        ],
+        "hidden": true,
+        "expected": 2
       }
     ]
   },
@@ -1373,6 +1568,44 @@
           "ready": false,
           "issues": [
             "detached_head"
+          ]
+        }
+      },
+      {
+        "name": "empty metadata flags all missing fields",
+        "mode": "function",
+        "function": "check_repo_ready",
+        "args": [
+          {}
+        ],
+        "hidden": true,
+        "expected": {
+          "ready": false,
+          "issues": [
+            "missing_git_dir",
+            "missing_origin",
+            "missing_default_branch"
+          ]
+        }
+      },
+      {
+        "name": "missing git dir and default branch",
+        "mode": "function",
+        "function": "check_repo_ready",
+        "args": [
+          {
+            "has_git_dir": false,
+            "origin_url": "git@x:y.git",
+            "default_branch": "",
+            "detached_head": false
+          }
+        ],
+        "hidden": true,
+        "expected": {
+          "ready": false,
+          "issues": [
+            "missing_git_dir",
+            "missing_default_branch"
           ]
         }
       }
@@ -1516,6 +1749,58 @@
           "code": [],
           "test": [],
           "docs": [],
+          "config": []
+        }
+      },
+      {
+        "name": "docs non-md and extra config files",
+        "mode": "function",
+        "function": "plan_commit_batches",
+        "args": [
+          [
+            "docs/arch.png",
+            ".eslintrc.json",
+            "next.config.js",
+            "src/utils/helper.py"
+          ]
+        ],
+        "hidden": true,
+        "expected": {
+          "code": [
+            "src/utils/helper.py"
+          ],
+          "test": [],
+          "docs": [
+            "docs/arch.png"
+          ],
+          "config": [
+            ".eslintrc.json",
+            "next.config.js"
+          ]
+        }
+      },
+      {
+        "name": "test rule takes precedence over docs and code",
+        "mode": "function",
+        "function": "plan_commit_batches",
+        "args": [
+          [
+            "docs/test/fixture.json",
+            "app/login.tsx",
+            "CHANGELOG.md"
+          ]
+        ],
+        "hidden": true,
+        "expected": {
+          "code": [
+            "app/login.tsx"
+          ],
+          "test": [
+            "docs/test/fixture.json"
+          ],
+          "docs": [
+            "CHANGELOG.md"
+          ],
           "config": []
         }
       }
@@ -1680,6 +1965,70 @@
           "risk": "low",
           "files": []
         }
+      },
+      {
+        "name": "multiple files deduplicated and sorted",
+        "mode": "function",
+        "function": "estimate_merge_conflicts",
+        "args": [
+          [
+            {
+              "file": "z.py",
+              "start": 1,
+              "end": 5
+            },
+            {
+              "file": "a.py",
+              "start": 10,
+              "end": 20
+            },
+            {
+              "file": "z.py",
+              "start": 20,
+              "end": 25
+            }
+          ],
+          [
+            {
+              "file": "z.py",
+              "start": 3,
+              "end": 22
+            },
+            {
+              "file": "a.py",
+              "start": 12,
+              "end": 12
+            }
+          ]
+        ],
+        "hidden": true,
+        "expected": {
+          "risk": "high",
+          "files": [
+            "a.py",
+            "z.py"
+          ]
+        }
+      },
+      {
+        "name": "empty branch_a has low risk",
+        "mode": "function",
+        "function": "estimate_merge_conflicts",
+        "args": [
+          [],
+          [
+            {
+              "file": "a.py",
+              "start": 1,
+              "end": 5
+            }
+          ]
+        ],
+        "hidden": true,
+        "expected": {
+          "risk": "low",
+          "files": []
+        }
       }
     ]
   },
@@ -1806,6 +2155,43 @@
           "main1",
           "rebased-feat1"
         ]
+      },
+      {
+        "name": "both base and feature empty",
+        "mode": "function",
+        "function": "simulate_rebase",
+        "args": [
+          [],
+          []
+        ],
+        "hidden": true,
+        "expected": []
+      },
+      {
+        "name": "preserves multi-commit order",
+        "mode": "function",
+        "function": "simulate_rebase",
+        "args": [
+          [
+            "c1",
+            "c2",
+            "c3"
+          ],
+          [
+            "f1",
+            "f2",
+            "f3"
+          ]
+        ],
+        "hidden": true,
+        "expected": [
+          "c1",
+          "c2",
+          "c3",
+          "rebased-f1",
+          "rebased-f2",
+          "rebased-f3"
+        ]
       }
     ]
   },
@@ -1926,6 +2312,42 @@
           "count": 0,
           "blocks": []
         }
+      },
+      {
+        "name": "empty ours block",
+        "mode": "function",
+        "function": "parse_conflict_blocks",
+        "args": [
+          "<<<<<<< HEAD\n=======\nadded line\n>>>>>>> feat"
+        ],
+        "hidden": true,
+        "expected": {
+          "count": 1,
+          "blocks": [
+            {
+              "ours": "",
+              "theirs": "added line"
+            }
+          ]
+        }
+      },
+      {
+        "name": "empty theirs block",
+        "mode": "function",
+        "function": "parse_conflict_blocks",
+        "args": [
+          "<<<<<<< HEAD\nremoved line\n=======\n>>>>>>> feat"
+        ],
+        "hidden": true,
+        "expected": {
+          "count": 1,
+          "blocks": [
+            {
+              "ours": "removed line",
+              "theirs": ""
+            }
+          ]
+        }
       }
     ]
   },
@@ -2045,6 +2467,17 @@
         ],
         "hidden": true,
         "expected": 0
+      },
+      {
+        "name": "fractional hit rate rounded to 4 decimals",
+        "mode": "function",
+        "function": "cache_hit_rate",
+        "args": [
+          2,
+          3
+        ],
+        "hidden": true,
+        "expected": 0.6667
       }
     ]
   },
@@ -2210,6 +2643,34 @@
           100,
           150
         ]
+      },
+      {
+        "name": "first fit skips small block picks first sufficient",
+        "mode": "function",
+        "function": "first_fit",
+        "args": [
+          [
+            [
+              0,
+              10
+            ],
+            [
+              20,
+              120
+            ],
+            [
+              200,
+              250
+            ]
+          ],
+          50
+        ],
+        "hidden": true,
+        "expected": [
+          1,
+          20,
+          70
+        ]
       }
     ]
   },
@@ -2315,6 +2776,38 @@
           "hosts_per_subnet": 0,
           "bits_borrowed": 2
         }
+      },
+      {
+        "name": "single subnet borrows zero bits",
+        "mode": "function",
+        "function": "subnet_calc",
+        "args": [
+          "10.0.0.0/16",
+          1
+        ],
+        "hidden": true,
+        "expected": {
+          "new_prefix": 16,
+          "subnets": 1,
+          "hosts_per_subnet": 65534,
+          "bits_borrowed": 0
+        }
+      },
+      {
+        "name": "/24 split into 2 subnets borrows 1 bit",
+        "mode": "function",
+        "function": "subnet_calc",
+        "args": [
+          "172.16.0.0/24",
+          2
+        ],
+        "hidden": true,
+        "expected": {
+          "new_prefix": 25,
+          "subnets": 2,
+          "hosts_per_subnet": 126,
+          "bits_borrowed": 1
+        }
       }
     ]
   },
@@ -2406,6 +2899,16 @@
         ],
         "hidden": true,
         "expected": ""
+      },
+      {
+        "name": "decode invalid utf8 replaces bad bytes",
+        "mode": "function",
+        "function": "decode_base64",
+        "args": [
+          "//5B"
+        ],
+        "hidden": true,
+        "expected": "��A"
       }
     ]
   },
@@ -2527,6 +3030,44 @@
           "f1",
           "f3"
         ]
+      },
+      {
+        "name": "character class glob matching",
+        "mode": "function",
+        "function": "search_by_name",
+        "args": [
+          [
+            "log1.txt",
+            "log2.txt",
+            "log10.txt",
+            "loga.txt"
+          ],
+          "log[0-9].txt"
+        ],
+        "hidden": true,
+        "expected": [
+          "log1.txt",
+          "log2.txt"
+        ]
+      },
+      {
+        "name": "missing content key handled safely",
+        "mode": "function",
+        "function": "search_by_content",
+        "args": [
+          [
+            {
+              "name": "empty.txt"
+            },
+            {
+              "name": "data.txt",
+              "content": "ok"
+            }
+          ],
+          "missing"
+        ],
+        "hidden": true,
+        "expected": []
       }
     ]
   },
@@ -2647,6 +3188,22 @@
           "usage": 100,
           "limit": 100
         }
+      },
+      {
+        "name": "equal soft and hard limit blocks",
+        "mode": "function",
+        "function": "check_quota",
+        "args": [
+          50,
+          50,
+          50
+        ],
+        "hidden": true,
+        "expected": {
+          "status": "blocked",
+          "usage": 50,
+          "limit": 50
+        }
       }
     ]
   },
@@ -2760,6 +3317,55 @@
         ],
         "hidden": true,
         "expected": []
+      },
+      {
+        "name": "ALL commands on restricted target with password is safe",
+        "mode": "function",
+        "function": "audit_sudoers",
+        "args": [
+          [
+            {
+              "user": "dev",
+              "commands": "ALL",
+              "target": "root",
+              "nopasswd": false
+            }
+          ]
+        ],
+        "hidden": true,
+        "expected": []
+      },
+      {
+        "name": "mixed safe nopasswd and full access entries",
+        "mode": "function",
+        "function": "audit_sudoers",
+        "args": [
+          [
+            {
+              "user": "u1",
+              "commands": "/bin/ls",
+              "target": "root",
+              "nopasswd": false
+            },
+            {
+              "user": "u2",
+              "commands": "/bin/cat",
+              "target": "root",
+              "nopasswd": true
+            },
+            {
+              "user": "u3",
+              "commands": "ALL",
+              "target": "ALL",
+              "nopasswd": false
+            }
+          ]
+        ],
+        "hidden": true,
+        "expected": [
+          "u2 - NOPASSWD",
+          "u3 - FULL ACCESS"
+        ]
       }
     ]
   },
@@ -2873,6 +3479,37 @@
         ],
         "hidden": true,
         "expected": 20
+      },
+      {
+        "name": "vruntime formula positive nice",
+        "mode": "function",
+        "function": "calculate_vruntime",
+        "args": [
+          1024,
+          2
+        ],
+        "hidden": true,
+        "expected": 1.56
+      },
+      {
+        "name": "schedule mixes explicit vruntime and dynamic calculation",
+        "mode": "function",
+        "function": "schedule_next",
+        "args": [
+          [
+            {
+              "pid": 1,
+              "vruntime": 0.05
+            },
+            {
+              "pid": 2,
+              "runtime": 100,
+              "nice": 0
+            }
+          ]
+        ],
+        "hidden": true,
+        "expected": 1
       }
     ]
   },
@@ -3000,6 +3637,62 @@
         ],
         "hidden": true,
         "expected": []
+      },
+      {
+        "name": "exact size and age boundaries do not trigger",
+        "mode": "function",
+        "function": "simulate_logrotate",
+        "args": [
+          [
+            {
+              "name": "edge.log",
+              "size_mb": 100,
+              "age_days": 7
+            }
+          ],
+          7,
+          100
+        ],
+        "hidden": true,
+        "expected": []
+      },
+      {
+        "name": "mixed rotate keep and delete actions",
+        "mode": "function",
+        "function": "simulate_logrotate",
+        "args": [
+          [
+            {
+              "name": "a.log",
+              "size_mb": 101,
+              "age_days": 1
+            },
+            {
+              "name": "b.log",
+              "size_mb": 10,
+              "age_days": 5
+            },
+            {
+              "name": "c.log",
+              "size_mb": 10,
+              "age_days": 8
+            }
+          ],
+          7,
+          100
+        ],
+        "hidden": true,
+        "expected": [
+          {
+            "original": "a.log",
+            "rotated": "a.log.1.gz",
+            "compressed_size": 20.2
+          },
+          {
+            "original": "c.log",
+            "action": "deleted"
+          }
+        ]
       }
     ]
   },
@@ -3124,6 +3817,46 @@
             "master"
           ],
           "master"
+        ],
+        "hidden": true,
+        "expected": {
+          "safe_to_delete": [],
+          "needs_review": []
+        }
+      },
+      {
+        "name": "ignores merged branches absent from local list",
+        "mode": "function",
+        "function": "cleanup_branches",
+        "args": [
+          [
+            "main",
+            "feat-a"
+          ],
+          [
+            "feat-a",
+            "deleted-remote"
+          ],
+          "main"
+        ],
+        "hidden": true,
+        "expected": {
+          "safe_to_delete": [
+            "feat-a"
+          ],
+          "needs_review": []
+        }
+      },
+      {
+        "name": "empty local branches",
+        "mode": "function",
+        "function": "cleanup_branches",
+        "args": [
+          [],
+          [
+            "feat-a"
+          ],
+          "main"
         ],
         "hidden": true,
         "expected": {
@@ -3291,6 +4024,80 @@
             "message": "x; y"
           }
         ]
+      },
+      {
+        "name": "equal count keeps commits unchanged",
+        "mode": "function",
+        "function": "simulate_squash",
+        "args": [
+          [
+            {
+              "id": "1",
+              "message": "a"
+            },
+            {
+              "id": "2",
+              "message": "b"
+            }
+          ],
+          2
+        ],
+        "hidden": true,
+        "expected": [
+          {
+            "id": "1",
+            "message": "a"
+          },
+          {
+            "id": "2",
+            "message": "b"
+          }
+        ]
+      },
+      {
+        "name": "squash 5 commits into 3 keeps last two",
+        "mode": "function",
+        "function": "simulate_squash",
+        "args": [
+          [
+            {
+              "id": "1",
+              "message": "m1"
+            },
+            {
+              "id": "2",
+              "message": "m2"
+            },
+            {
+              "id": "3",
+              "message": "m3"
+            },
+            {
+              "id": "4",
+              "message": "m4"
+            },
+            {
+              "id": "5",
+              "message": "m5"
+            }
+          ],
+          3
+        ],
+        "hidden": true,
+        "expected": [
+          {
+            "id": "1",
+            "message": "m1; m2; m3"
+          },
+          {
+            "id": "4",
+            "message": "m4"
+          },
+          {
+            "id": "5",
+            "message": "m5"
+          }
+        ]
       }
     ]
   },
@@ -3423,6 +4230,55 @@
         "expected": {
           "conflicts": 1,
           "auto_merged": 2,
+          "status": "conflict"
+        }
+      },
+      {
+        "name": "unchanged relative to base yields zero actions",
+        "mode": "function",
+        "function": "auto_merge",
+        "args": [
+          {
+            "1": "x",
+            "2": "y"
+          },
+          {
+            "1": "x"
+          },
+          {
+            "2": "y"
+          }
+        ],
+        "hidden": true,
+        "expected": {
+          "conflicts": 0,
+          "auto_merged": 0,
+          "status": "clean"
+        }
+      },
+      {
+        "name": "multiple simultaneous conflicts and one auto merge",
+        "mode": "function",
+        "function": "auto_merge",
+        "args": [
+          {
+            "1": "a",
+            "2": "b"
+          },
+          {
+            "1": "a1",
+            "2": "b1",
+            "3": "c1"
+          },
+          {
+            "1": "a2",
+            "2": "b2"
+          }
+        ],
+        "hidden": true,
+        "expected": {
+          "conflicts": 2,
+          "auto_merged": 1,
           "status": "conflict"
         }
       }
@@ -3594,6 +4450,62 @@
           "total_conflicts": 0,
           "recommendation": "rebase ok"
         }
+      },
+      {
+        "name": "empty feature commits",
+        "mode": "function",
+        "function": "predict_rebase_conflicts",
+        "args": [
+          [],
+          [
+            {
+              "file": "a.py",
+              "start": 1,
+              "end": 5
+            }
+          ]
+        ],
+        "hidden": true,
+        "expected": {
+          "total_conflicts": 0,
+          "recommendation": "rebase ok"
+        }
+      },
+      {
+        "name": "one feature commit overlapping three target commits",
+        "mode": "function",
+        "function": "predict_rebase_conflicts",
+        "args": [
+          [
+            {
+              "file": "app.py",
+              "start": 1,
+              "end": 20
+            }
+          ],
+          [
+            {
+              "file": "app.py",
+              "start": 1,
+              "end": 3
+            },
+            {
+              "file": "app.py",
+              "start": 5,
+              "end": 8
+            },
+            {
+              "file": "app.py",
+              "start": 10,
+              "end": 12
+            }
+          ]
+        ],
+        "hidden": true,
+        "expected": {
+          "total_conflicts": 3,
+          "recommendation": "merge instead"
+        }
       }
     ]
   },
@@ -3684,6 +4596,30 @@
         ],
         "hidden": true,
         "expected": "recursive"
+      },
+      {
+        "name": "standard strategy",
+        "mode": "function",
+        "function": "recommend_strategy",
+        "args": [
+          "feat",
+          "main",
+          "standard"
+        ],
+        "hidden": true,
+        "expected": "recursive (default)"
+      },
+      {
+        "name": "trivial fast-forward strategy",
+        "mode": "function",
+        "function": "recommend_strategy",
+        "args": [
+          "feat",
+          "main",
+          "trivial"
+        ],
+        "hidden": true,
+        "expected": "merge --ff-only (快进)"
       }
     ]
   }

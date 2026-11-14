@@ -235,7 +235,7 @@ export function CodeEditorPanel({
           </div>
         </div>
         <div className="flex-1 p-4 font-mono text-xs overflow-y-auto bg-[#04040a] text-slate-400 whitespace-pre-wrap leading-relaxed select-text">
-          <div className="text-slate-500 mb-2">运行样例仅检查前 1–2 个公开样例，不计通关；提交判题检查完整用例，登录后通过可记录通关。</div>
+          <div className="text-slate-500 mb-2">运行样例会检查当前全部公开样例，不计通关；提交判题检查全部公开与隐藏用例，登录后通过可记录通关。</div>
           {resultIsStale && <div className="text-amber-400 mb-2">代码已更改，以下结果属于上次提交，请重新运行。</div>}
           {testResults || "尚未运行代码。可先点击「运行样例」验证，再「提交判题」。"}
         </div>

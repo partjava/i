@@ -40,8 +40,16 @@ if SCRIPTS_DIR not in sys.path:
 import patches_s01_s02  # noqa: E402
 import patches_s03_s06  # noqa: E402
 import patches_s07_s11  # noqa: E402
+import patches_extra_s01_s02  # noqa: E402
+import patches_extra_s03_s06  # noqa: E402
+import patches_extra_s07_s11  # noqa: E402
 
 PATCH_MODULES = [patches_s01_s02, patches_s03_s06, patches_s07_s11]
+EXTRA_HIDDEN_MODULES = [
+    patches_extra_s01_s02,
+    patches_extra_s03_s06,
+    patches_extra_s07_s11,
+]
 CJK_RE = re.compile(r"[\u4e00-\u9fff]")
 
 
@@ -64,7 +72,23 @@ def merge_patch_dicts() -> tuple[dict, dict, dict, dict, dict]:
             overlap = set(dst) & set(src)
             if overlap:
                 raise RuntimeError(f"Duplicate slugs in {mod.__name__}.{name}: {sorted(overlap)}")
-            dst.update(src)
+            if name == "HIDDEN_CASES":
+                for slug, cases in src.items():
+                    dst[slug] = list(cases)
+            else:
+                dst.update(src)
+
+    seen_extra: set[str] = set()
+    for mod in EXTRA_HIDDEN_MODULES:
+        extra_src = getattr(mod, "EXTRA_HIDDEN_CASES", {})
+        overlap = seen_extra & set(extra_src)
+        if overlap:
+            raise RuntimeError(f"Duplicate slugs in {mod.__name__}.EXTRA_HIDDEN_CASES: {sorted(overlap)}")
+        seen_extra.update(extra_src)
+        for slug, extra_list in extra_src.items():
+            if slug not in hidden_cases:
+                raise RuntimeError(f"{mod.__name__}.EXTRA_HIDDEN_CASES references unknown slug: {slug}")
+            hidden_cases[slug].extend(extra_list)
 
     return starter_ov, solution_ov, comments, public_ov, hidden_cases
 
@@ -238,8 +262,8 @@ def verify_single_challenge(
     if len(pub_cases) < 2:
         errors.append(f"Need >=2 public testCases, got {len(pub_cases)}")
         return slug, updated, errors
-    if len(hid_cases) < 2:
-        errors.append(f"Need >=2 hidden evaluationCases, got {len(hid_cases)}")
+    if not (3 <= len(hid_cases) <= 5):
+        errors.append(f"Need 3-5 hidden evaluationCases, got {len(hid_cases)}")
         return slug, updated, errors
 
     # Check SandboxServiceImpl size limits

@@ -190,6 +190,38 @@
         ],
         "hidden": true,
         "expected": []
+      },
+      {
+        "name": "cosine_sim zero vector safe zero",
+        "mode": "function",
+        "function": "cosine_sim",
+        "args": [
+          [
+            0,
+            0
+          ],
+          [
+            1,
+            2
+          ]
+        ],
+        "hidden": true,
+        "expected": 0.0
+      },
+      {
+        "name": "select_examples empty examples returns empty list",
+        "mode": "function",
+        "function": "select_examples",
+        "args": [
+          [
+            1,
+            0
+          ],
+          [],
+          3
+        ],
+        "hidden": true,
+        "expected": []
       }
     ]
   },
@@ -294,6 +326,30 @@
             "answer": 10
           },
           12
+        ],
+        "hidden": true,
+        "expected": false
+      },
+      {
+        "name": "cot_reasoning non-addition expression yields empty steps and None",
+        "mode": "function",
+        "function": "cot_reasoning",
+        "args": [
+          "10 - 3"
+        ],
+        "hidden": true,
+        "expected": {
+          "steps": [],
+          "answer": null
+        }
+      },
+      {
+        "name": "verify_answer non-dict returns False",
+        "mode": "function",
+        "function": "verify_answer",
+        "args": [
+          "not a dict",
+          42
         ],
         "hidden": true,
         "expected": false
@@ -402,6 +458,34 @@
         ],
         "hidden": true,
         "expected": "unknown action: calc"
+      },
+      {
+        "name": "think empty steps starts with search",
+        "mode": "function",
+        "function": "think",
+        "args": [
+          {
+            "steps": []
+          },
+          {}
+        ],
+        "hidden": true,
+        "expected": "search"
+      },
+      {
+        "name": "eval_react_agent max_steps=0 hits limit immediately",
+        "mode": "function",
+        "function": "eval_react_agent",
+        "args": [
+          "task",
+          "ok",
+          0
+        ],
+        "hidden": true,
+        "expected": {
+          "answer": "max steps reached",
+          "steps": []
+        }
       }
     ]
   },
@@ -548,6 +632,28 @@
             4.0
           ]
         ]
+      },
+      {
+        "name": "count_trainable_params rank 0 returns 0",
+        "mode": "function",
+        "function": "count_trainable_params",
+        "args": [
+          256,
+          0
+        ],
+        "hidden": true,
+        "expected": 0
+      },
+      {
+        "name": "compression_ratio full rank equals 1.0",
+        "mode": "function",
+        "function": "compression_ratio",
+        "args": [
+          100,
+          50
+        ],
+        "hidden": true,
+        "expected": 1.0
       }
     ]
   },
@@ -653,6 +759,36 @@
         ],
         "hidden": true,
         "expected": -1.2
+      },
+      {
+        "name": "ppo_clip_loss zero old_prob safely returns 0",
+        "mode": "function",
+        "function": "ppo_clip_loss",
+        "args": [
+          1.0,
+          0.0,
+          2.0,
+          0.2
+        ],
+        "hidden": true,
+        "expected": 0.0
+      },
+      {
+        "name": "kl_divergence large mismatch yields positive KL",
+        "mode": "function",
+        "function": "kl_divergence",
+        "args": [
+          [
+            10.0,
+            0.0
+          ],
+          [
+            0.0,
+            10.0
+          ]
+        ],
+        "hidden": true,
+        "expected": 9.999092020600486
       }
     ]
   },
@@ -741,6 +877,27 @@
         ],
         "hidden": true,
         "expected": 2.0
+      },
+      {
+        "name": "estimate_tokens empty string returns 1",
+        "mode": "function",
+        "function": "estimate_tokens",
+        "args": [
+          ""
+        ],
+        "hidden": true,
+        "expected": 1
+      },
+      {
+        "name": "truncate_to_limit iteratively trims 100-char chunks",
+        "mode": "function",
+        "function": "truncate_to_limit",
+        "args": [
+          "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          20
+        ],
+        "hidden": true,
+        "expected": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
       }
     ]
   },
@@ -846,6 +1003,33 @@
         "hidden": true,
         "expected": [
           "短文"
+        ]
+      },
+      {
+        "name": "split_by_chars empty string returns empty list",
+        "mode": "function",
+        "function": "split_by_chars",
+        "args": [
+          "",
+          5,
+          2
+        ],
+        "hidden": true,
+        "expected": []
+      },
+      {
+        "name": "split_by_sentences handles newlines and trailing fragment",
+        "mode": "function",
+        "function": "split_by_sentences",
+        "args": [
+          "甲。\n乙！丙",
+          1
+        ],
+        "hidden": true,
+        "expected": [
+          "甲。",
+          "乙。",
+          "丙。"
         ]
       }
     ]
@@ -991,6 +1175,47 @@
           },
           {
             "text": "B",
+            "score": 0.0
+          }
+        ]
+      },
+      {
+        "name": "tokenize empty text returns empty list",
+        "mode": "function",
+        "function": "tokenize",
+        "args": [
+          "",
+          {
+            "a": 0
+          }
+        ],
+        "hidden": true,
+        "expected": []
+      },
+      {
+        "name": "similarity_search zero query vector avoids NaN",
+        "mode": "function",
+        "function": "similarity_search",
+        "args": [
+          [
+            0,
+            0
+          ],
+          [
+            [
+              1,
+              0
+            ]
+          ],
+          [
+            "only"
+          ],
+          1
+        ],
+        "hidden": true,
+        "expected": [
+          {
+            "text": "only",
             "score": 0.0
           }
         ]
@@ -1215,6 +1440,101 @@
             -2.0
           ]
         ]
+      },
+      {
+        "name": "ivf_search n_probe=1 restricts to single cluster even if top_k larger",
+        "mode": "function",
+        "function": "ivf_search",
+        "args": [
+          [
+            1,
+            0
+          ],
+          [
+            [
+              1,
+              0
+            ],
+            [
+              -1,
+              0
+            ]
+          ],
+          [
+            [
+              2,
+              0
+            ],
+            [
+              -5,
+              0
+            ],
+            [
+              -3,
+              0
+            ]
+          ],
+          [
+            10,
+            20,
+            30
+          ],
+          1,
+          5
+        ],
+        "hidden": true,
+        "expected": [
+          [
+            10,
+            2.0
+          ]
+        ]
+      },
+      {
+        "name": "brute_force_search top_k exceeding corpus size returns all sorted",
+        "mode": "function",
+        "function": "brute_force_search",
+        "args": [
+          [
+            1,
+            1
+          ],
+          [
+            [
+              1,
+              0
+            ],
+            [
+              0,
+              2
+            ],
+            [
+              2,
+              2
+            ]
+          ],
+          [
+            1,
+            2,
+            3
+          ],
+          5
+        ],
+        "hidden": true,
+        "expected": [
+          [
+            3,
+            4.0
+          ],
+          [
+            2,
+            2.0
+          ],
+          [
+            1,
+            1.0
+          ]
+        ]
       }
     ]
   },
@@ -1318,6 +1638,38 @@
             ]
           }
         }
+      },
+      {
+        "name": "register_tool packages metadata dict",
+        "mode": "function",
+        "function": "register_tool",
+        "args": [
+          "search",
+          "fn_ref",
+          {
+            "q": "str"
+          }
+        ],
+        "hidden": true,
+        "expected": {
+          "name": "search",
+          "func": "fn_ref",
+          "schema": {
+            "q": "str"
+          }
+        }
+      },
+      {
+        "name": "execute_tool empty tools list returns unknown message",
+        "mode": "function",
+        "function": "execute_tool",
+        "args": [
+          "calc",
+          {},
+          []
+        ],
+        "hidden": true,
+        "expected": "unknown tool: calc"
       }
     ]
   },
@@ -1441,6 +1793,61 @@
         ],
         "hidden": true,
         "expected": "unknown function: noop"
+      },
+      {
+        "name": "validate_arguments rejects int 1 for boolean field",
+        "mode": "function",
+        "function": "validate_arguments",
+        "args": [
+          {
+            "flag": 1
+          },
+          {
+            "properties": {
+              "flag": {
+                "type": "boolean"
+              }
+            }
+          }
+        ],
+        "hidden": true,
+        "expected": false
+      },
+      {
+        "name": "validate_arguments accepts array object integer boolean types",
+        "mode": "function",
+        "function": "validate_arguments",
+        "args": [
+          {
+            "tags": [
+              1,
+              2
+            ],
+            "meta": {
+              "a": 1
+            },
+            "count": 5,
+            "ok": true
+          },
+          {
+            "properties": {
+              "tags": {
+                "type": "array"
+              },
+              "meta": {
+                "type": "object"
+              },
+              "count": {
+                "type": "integer"
+              },
+              "ok": {
+                "type": "boolean"
+              }
+            }
+          }
+        ],
+        "hidden": true,
+        "expected": true
       }
     ]
   },
@@ -1563,6 +1970,42 @@
           "chain_out": "TEST",
           "agent_out": "Bot(助手)执行: 检查"
         }
+      },
+      {
+        "name": "eval_langchain 3-stage chain passes intermediate outputs",
+        "mode": "function",
+        "function": "eval_langchain",
+        "args": [
+          [
+            "step1:{a}-{b}",
+            "step2:{input}",
+            "step3:{input}"
+          ],
+          {
+            "a": "x",
+            "b": "y"
+          },
+          "完成"
+        ],
+        "hidden": true,
+        "expected": {
+          "chain_out": "STEP3:STEP2:STEP1:X-Y",
+          "agent_out": "Bot(助手)执行: 完成"
+        }
+      },
+      {
+        "name": "eval_langchain missing template key raises KeyError",
+        "mode": "function",
+        "function": "eval_langchain",
+        "args": [
+          [
+            "missing:{k}"
+          ],
+          {},
+          "test"
+        ],
+        "hidden": true,
+        "expectedException": "KeyError"
       }
     ]
   },
@@ -1665,6 +2108,41 @@
         ],
         "hidden": true,
         "expected": "Task:\n\nExamples:\nQ: 1\nA: 2\nQ: 3\nA: 4"
+      },
+      {
+        "name": "render_prompt replaces repeated and numeric placeholders",
+        "mode": "function",
+        "function": "render_prompt",
+        "args": [
+          "{{a}} + {{b}} = {{a}}",
+          {
+            "a": 1,
+            "b": 2
+          }
+        ],
+        "hidden": true,
+        "expected": "1 + 2 = 1"
+      },
+      {
+        "name": "inject_examples respects explicit custom separator",
+        "mode": "function",
+        "function": "inject_examples",
+        "args": [
+          "Prompt",
+          [
+            [
+              "q1",
+              "a1"
+            ],
+            [
+              "q2",
+              "a2"
+            ]
+          ],
+          "\n---\n"
+        ],
+        "hidden": true,
+        "expected": "Prompt\n\nExamples:\nQ: q1\nA: a1\n---\nQ: q2\nA: a2"
       }
     ]
   },
@@ -1775,6 +2253,46 @@
             ]
           ]
         }
+      },
+      {
+        "name": "verify_cot_steps flags multiple invalid steps and skips non-numeric",
+        "mode": "function",
+        "function": "verify_cot_steps",
+        "args": [
+          [
+            "a + b = c",
+            "1 + 2",
+            "1 + 2 = 4",
+            "3 + 5 = 9"
+          ]
+        ],
+        "hidden": true,
+        "expected": {
+          "valid": false,
+          "errors": [
+            [
+              2,
+              "addition error"
+            ],
+            [
+              3,
+              "addition error"
+            ]
+          ]
+        }
+      },
+      {
+        "name": "detect_step_error mismatch returns False",
+        "mode": "function",
+        "function": "detect_step_error",
+        "args": [
+          "42",
+          "43"
+        ],
+        "hidden": true,
+        "expected": {
+          "match": false
+        }
       }
     ]
   },
@@ -1878,6 +2396,37 @@
         "expected": {
           "observation": "ok",
           "thought": "Executed echo, got: ok"
+        }
+      },
+      {
+        "name": "react_step empty state handles missing action and args",
+        "mode": "function",
+        "function": "react_step",
+        "args": [
+          {},
+          {}
+        ],
+        "hidden": true,
+        "expected": {
+          "observation": "Error: unknown tool ",
+          "thought": "Executed , got: Error: unknown tool "
+        }
+      },
+      {
+        "name": "eval_tool_plan truncates long observation in thought to 50 chars",
+        "mode": "function",
+        "function": "eval_tool_plan",
+        "args": [
+          "echo",
+          {
+            "msg": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+          },
+          "truncate"
+        ],
+        "hidden": true,
+        "expected": {
+          "observation": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "thought": "Executed echo, got: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
         }
       }
     ]
@@ -1999,6 +2548,44 @@
           -1.5,
           -0.09999999999999998,
           1.5
+        ]
+      },
+      {
+        "name": "quantize_nf4 scales asymmetric values with absmax 4.0",
+        "mode": "function",
+        "function": "quantize_nf4",
+        "args": [
+          [
+            -4.0,
+            2.0
+          ]
+        ],
+        "hidden": true,
+        "expected": {
+          "indices": [
+            0,
+            11
+          ],
+          "absmax": 4.0
+        }
+      },
+      {
+        "name": "dequantize_nf4 zero absmax produces zero tensor",
+        "mode": "function",
+        "function": "dequantize_nf4",
+        "args": [
+          {
+            "indices": [
+              0,
+              15
+            ]
+          },
+          0.0
+        ],
+        "hidden": true,
+        "expected": [
+          0.0,
+          0.0
         ]
       }
     ]
@@ -2132,6 +2719,50 @@
         ],
         "hidden": true,
         "expected": 4.0181
+      },
+      {
+        "name": "sigmoid evaluates 0 and clipped extremes",
+        "mode": "function",
+        "function": "sigmoid",
+        "args": [
+          [
+            0.0,
+            -1000.0,
+            1000.0
+          ]
+        ],
+        "hidden": true,
+        "expected": [
+          0.5,
+          3.7200759760208356e-44,
+          1
+        ]
+      },
+      {
+        "name": "dpo_loss equal logp margin cancels to ln(2)",
+        "mode": "function",
+        "function": "dpo_loss",
+        "args": [
+          [
+            -1.0,
+            -1.0
+          ],
+          [
+            -1.0,
+            -1.0
+          ],
+          [
+            -2.0,
+            -2.0
+          ],
+          [
+            -2.0,
+            -2.0
+          ],
+          0.5
+        ],
+        "hidden": true,
+        "expected": 0.6931
       }
     ]
   },
@@ -2372,6 +3003,80 @@
             ]
           ]
         ]
+      },
+      {
+        "name": "update_kv_cache populates empty None cache",
+        "mode": "function",
+        "function": "update_kv_cache",
+        "args": [
+          {
+            "K": null,
+            "V": null
+          },
+          [
+            [
+              [
+                [
+                  1,
+                  2
+                ]
+              ]
+            ]
+          ],
+          [
+            [
+              [
+                [
+                  3,
+                  4
+                ]
+              ]
+            ]
+          ]
+        ],
+        "hidden": true,
+        "expected": {
+          "K": [
+            [
+              [
+                [
+                  1.0,
+                  2.0
+                ]
+              ]
+            ]
+          ],
+          "V": [
+            [
+              [
+                [
+                  3.0,
+                  4.0
+                ]
+              ]
+            ]
+          ]
+        }
+      },
+      {
+        "name": "softmax handles large equal logits without overflow",
+        "mode": "function",
+        "function": "softmax",
+        "args": [
+          [
+            [
+              100.0,
+              100.0
+            ]
+          ]
+        ],
+        "hidden": true,
+        "expected": [
+          [
+            0.5,
+            0.5
+          ]
+        ]
       }
     ]
   },
@@ -2473,6 +3178,33 @@
           "count": 0,
           "avg": 0
         }
+      },
+      {
+        "name": "smart_chunk empty text returns single empty chunk or list",
+        "mode": "function",
+        "function": "smart_chunk",
+        "args": [
+          "",
+          10,
+          2
+        ],
+        "hidden": true,
+        "expected": []
+      },
+      {
+        "name": "smart_chunk overlap on short prior chunk prepends available chars",
+        "mode": "function",
+        "function": "smart_chunk",
+        "args": [
+          "AA\n\nBBBBBBBB",
+          4,
+          1
+        ],
+        "hidden": true,
+        "expected": [
+          "AA",
+          "ABBBBBBBB"
+        ]
       }
     ]
   },
@@ -2623,6 +3355,60 @@
         ],
         "hidden": true,
         "expected": 0.0
+      },
+      {
+        "name": "compute_alignment single class has neg_sim 0",
+        "mode": "function",
+        "function": "compute_alignment",
+        "args": [
+          [
+            [
+              1,
+              0
+            ],
+            [
+              1,
+              0
+            ]
+          ],
+          [
+            0,
+            0
+          ]
+        ],
+        "hidden": true,
+        "expected": {
+          "alignment": 1.0,
+          "pos_sim": 1.0,
+          "neg_sim": 0.0
+        }
+      },
+      {
+        "name": "compute_alignment all distinct classes has pos_sim 0",
+        "mode": "function",
+        "function": "compute_alignment",
+        "args": [
+          [
+            [
+              1,
+              0
+            ],
+            [
+              0,
+              1
+            ]
+          ],
+          [
+            0,
+            1
+          ]
+        ],
+        "hidden": true,
+        "expected": {
+          "alignment": 0.0,
+          "pos_sim": 0.0,
+          "neg_sim": 0.0
+        }
       }
     ]
   },
@@ -2779,6 +3565,53 @@
         "hidden": true,
         "expected": [
           1
+        ]
+      },
+      {
+        "name": "euclidean identical vectors gives 0",
+        "mode": "function",
+        "function": "euclidean",
+        "args": [
+          [
+            1,
+            2,
+            3
+          ],
+          [
+            1,
+            2,
+            3
+          ]
+        ],
+        "hidden": true,
+        "expected": 0.0
+      },
+      {
+        "name": "hnsw_search top_k exceeding nodes returns all sorted",
+        "mode": "function",
+        "function": "hnsw_search",
+        "args": [
+          [
+            0,
+            0
+          ],
+          [
+            [
+              3,
+              4
+            ],
+            [
+              1,
+              1
+            ]
+          ],
+          2,
+          5
+        ],
+        "hidden": true,
+        "expected": [
+          1,
+          0
         ]
       }
     ]
@@ -2958,6 +3791,32 @@
         ],
         "hidden": true,
         "expected": 0.0
+      },
+      {
+        "name": "retrieve empty docs returns empty list",
+        "mode": "function",
+        "function": "retrieve",
+        "args": [
+          [
+            1,
+            0
+          ],
+          [],
+          2
+        ],
+        "hidden": true,
+        "expected": []
+      },
+      {
+        "name": "augment empty relevant list formats prompt cleanly",
+        "mode": "function",
+        "function": "augment",
+        "args": [
+          "How?",
+          []
+        ],
+        "hidden": true,
+        "expected": "Context:\n\n\nQuestion: How?\nAnswer:"
       }
     ]
   },
@@ -3053,6 +3912,36 @@
         "function": "is_complete_json",
         "args": [
           "{\"ok\": "
+        ],
+        "hidden": true,
+        "expected": false
+      },
+      {
+        "name": "parse_sse_stream ignores non-data lines and DONE marker",
+        "mode": "function",
+        "function": "parse_sse_stream",
+        "args": [
+          [
+            "event: ping\n",
+            "data: [1, 2]\n",
+            "ignore\n",
+            "data: [DONE]"
+          ]
+        ],
+        "hidden": true,
+        "expected": [
+          [
+            1,
+            2
+          ]
+        ]
+      },
+      {
+        "name": "is_complete_json empty string returns False",
+        "mode": "function",
+        "function": "is_complete_json",
+        "args": [
+          ""
         ],
         "hidden": true,
         "expected": false
@@ -3173,6 +4062,46 @@
         "expected": {
           "context": [],
           "summary": ""
+        }
+      },
+      {
+        "name": "window=0 keeps empty recent context and summarizes all",
+        "mode": "function",
+        "function": "eval_agent_memory",
+        "args": [
+          [
+            "a",
+            "b"
+          ],
+          0
+        ],
+        "hidden": true,
+        "expected": {
+          "context": [
+            "Summary: a\nb\n..."
+          ],
+          "summary": "a\nb\n"
+        }
+      },
+      {
+        "name": "long messages truncate per-message 50 chars and summary preview 100 chars",
+        "mode": "function",
+        "function": "eval_agent_memory",
+        "args": [
+          [
+            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "z"
+          ],
+          1
+        ],
+        "hidden": true,
+        "expected": {
+          "context": [
+            "Summary: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\nbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb...",
+            "z"
+          ],
+          "summary": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\nbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\n"
         }
       }
     ]
