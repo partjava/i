@@ -14,7 +14,7 @@
       "cpi",
       "performance"
     ],
-    "theoryContent": "### 编程挑战：流水线性能瓶颈分析器\n\n在真实后端服务中，性能下降不一定来自代码逻辑，也可能来自 CPU 流水线停顿、缓存未命中或分支预测失败。处理器性能常用 CPI、指令数和频率估算：\n\n$$CPUTime = \\frac{Instructions \\times CPI}{Frequency}$$\n\n本题要求实现一个简化的性能分析器。给定一批指令类型的执行数量、每类指令的基础 CPI，以及额外停顿周期，计算总执行时间，并找出贡献停顿最多的指令类型。\n\n你需要补全 `profile_pipeline_workload(instruction_stats, frequency_hz)`，返回包含总时间和瓶颈类型的字典。",
+    "theoryContent": "### 🎯 编程挑战：流水线性能瓶颈分析器\n\n> 💡 **场景类比与核心直觉**：把 CPU 流水线想象成高铁站的多道并联安检口：正常情况下每分钟稳定放行大量乘客，可一旦某个环节出现读取内存等待（Cache Miss）或路线猜错（分支预测失败），整条队伍就会被迫原地停顿（Stall）。\n\n在真实后端服务中，性能下降不一定来自代码逻辑，也可能来自 CPU 流水线停顿、缓存未命中或分支预测失败。处理器性能常用 CPI、指令数和频率估算：\n\n$$CPUTime = \\frac{Instructions \\times CPI}{Frequency}$$\n\n本题要求实现一个简化的性能分析器。给定一批指令类型的执行数量、每类指令的基础 CPI，以及额外停顿周期，计算总执行时间，并找出贡献停顿最多的指令类型。\n\n你需要补全 `profile_pipeline_workload(instruction_stats, frequency_hz)`，返回包含总时间和瓶颈类型的字典。\n\n#### 🔬 核心原理与机制拆解\n\n在动手写代码前，先理清『**流水线性能瓶颈分析器**』背后的数学建模与核心运行逻辑：很多线上服务 CPU 占用看似不高却延迟飙升，根因往往藏在海量指令的停顿周期累加，而非单条算术指令本身的耗时。\n\n$$\nCPUTime = \\frac{Instructions \\times CPI}{Frequency}\n$$\n\n$$\nCycles = \\sum_i count_i \\times (baseCpi_i + stall_i)\n$$\n\n- **核心要点**：CPU 时间由指令数、CPI 和主频共同决定，流水线停顿会提高实际 CPI。\n- **核心要点**：瓶颈类型由 count * stall 得到的停顿周期贡献决定。\n\n#### 🛠️ 实战任务与样例推演\n\n**解题总纲**：按指令类型汇总基础 CPI 与停顿周期，计算总耗时(ms)并定位最大停顿瓶颈。\n\n**需要实现的核心接口与结构**：\n- `profile_pipeline_workload(instruction_stats: dict, frequency_hz: int) -> dict` — 遍历各类指令统计周期总开销与最大停顿贡献项\n\n**输入输出推演**：以首个公开样例 `load stalls dominate` 为例：当调用 `profile_pipeline_workload({\"load\": ..., \"alu\": ...}, 2000000000)` 时，程序按上述步骤计算后应稳定返回 `{\"time_ms\": 0.0032, \"bottleneck\": \"load\"}`。\n\n#### 🚀 边界避坑与进阶思考\n\n- **非法输入主动拦截**：当遇到空集合、非正数参数或违反约束的数据时，务必按要求显式 `raise` `ValueError`，不要静默返回 `None` 或吞掉异常。\n- **数值类型与浮点舍入**：若结果涉及浮点数或小数保留，需与示例 `round` 位数及 `float` 精度对齐，避免直接拿字符串拼接或整数截断替代。\n- **零除与空输入守卫**：遇到空列表、空字典或零分母场景（如模长为 0、样本数为 0）时，必须预先加好判空/判零保护，严防 `ZeroDivisionError` 或 `NaN` 污染输出。\n\n> 💭 **延伸思考（写完代码后建议作答）**：如果真实系统中 load 指令停顿最多，你会从缓存局部性、数据布局和预取策略三个角度如何优化？",
     "latexFormulas": [
       "CPUTime = \\frac{Instructions \\times CPI}{Frequency}",
       "Cycles = \\sum_i count_i \\times (baseCpi_i + stall_i)"
@@ -170,7 +170,7 @@
       "lru",
       "page-cache"
     ],
-    "theoryContent": "### 编程挑战：内存页缓存压力模拟器\n\n操作系统通过页缓存减少磁盘 I/O。当缓存容量有限时，必须淘汰旧页面。LRU 会淘汰最近最少使用的页面。\n\n本题要求你模拟一个页面访问序列，统计缺页次数、命中次数和命中率。这个问题与数据库缓冲池、Redis 缓存和浏览器缓存都有相似思想。\n\n命中率定义为：\n\n$$HitRate = \\frac{Hits}{Hits + Misses}$$\n\n### 实现要求\n\n- 补全 `simulate_page_cache(page_requests, capacity)`。按顺序处理页面编号列表，`capacity` 是最多能缓存的页面数。\n- 命中时更新该页面的最近使用顺序。缺页时装入该页面，缓存满了就先淘汰最久未使用的页面。\n- 返回字典 `{\"hits\": ..., \"misses\": ..., \"hit_rate\": ...}`。命中率保留最多 4 位小数。空访问列表的命中率为 0；容量小于等于 0 时，每次访问都算缺页。",
+    "theoryContent": "### 🎯 编程挑战：内存页缓存压力模拟器\n\n> 💡 **场景类比与核心直觉**：操作系统的内存与缓存调度就像图书管理员整理热门书架：桌面位置有限，把刚翻阅过的书放在手边、把冷门书籍请回地下书库，才能把跑腿取书（磁盘 I/O）降到最低。\n\n操作系统通过页缓存减少磁盘 I/O。当缓存容量有限时，必须淘汰旧页面。LRU 会淘汰最近最少使用的页面。\n\n本题要求你模拟一个页面访问序列，统计缺页次数、命中次数和命中率。这个问题与数据库缓冲池、Redis 缓存和浏览器缓存都有相似思想。\n\n命中率定义为：\n\n$$HitRate = \\frac{Hits}{Hits + Misses}$$\n\n### 实现要求\n\n- 补全 `simulate_page_cache(page_requests, capacity)`。按顺序处理页面编号列表，`capacity` 是最多能缓存的页面数。\n- 命中时更新该页面的最近使用顺序。缺页时装入该页面，缓存满了就先淘汰最久未使用的页面。\n- 返回字典 `{\"hits\": ..., \"misses\": ..., \"hit_rate\": ...}`。命中率保留最多 4 位小数。空访问列表的命中率为 0；容量小于等于 0 时，每次访问都算缺页。\n\n#### 🔬 核心原理与机制拆解\n\n在动手写代码前，先理清『**内存页缓存压力模拟器**』背后的数学建模与核心运行逻辑：如果淘汰策略设计不当或碎片管理失控，高并发下会出现严重的抖动（Thrashing）和内存利用率暴跌。\n\n$$\nHitRate = \\frac{Hits}{Hits + Misses}\n$$\n\n- **核心要点**：LRU 的核心假设是最近没被访问的页面，未来再次访问概率较低。\n- **核心要点**：没有可用缓存空间时，无法保留任何页面，因此每次访问都是 miss。\n\n#### 🛠️ 实战任务与样例推演\n\n**解题总纲**：用列表尾部表示最近使用、头部表示最久未用，模拟页面置换并统计命中率。\n\n**需要实现的核心接口与结构**：\n- `simulate_page_cache(page_requests: list, capacity: int) -> dict` — 按页请求序列执行 LRU 命中提升与满容量头部淘汰\n\n**输入输出推演**：以首个公开样例 `basic lru pressure` 为例：当调用 `simulate_page_cache([1, 2, 3, 1, 4, 1, 2, 5], 3)` 时，程序按上述步骤计算后应稳定返回 `{\"hits\": 2, \"misses\": 6, \"hit_rate\": 0.25}`。\n\n#### 🚀 边界避坑与进阶思考\n\n- **数值类型与浮点舍入**：若结果涉及浮点数或小数保留，需与示例 `round` 位数及 `float` 精度对齐，避免直接拿字符串拼接或整数截断替代。\n- **零除与空输入守卫**：遇到空列表、空字典或零分母场景（如模长为 0、样本数为 0）时，必须预先加好判空/判零保护，严防 `ZeroDivisionError` 或 `NaN` 污染输出。\n- **真题隐藏评测覆盖**：完整判题除了 2 个公开样例外，还包含 3 组隐藏边界与压力测试用例；请务必立足通用逻辑与数据结构设计，切勿针对公开样例硬编码分支。\n\n> 💭 **延伸思考（写完代码后建议作答）**：为什么真实操作系统不一定使用纯 LRU？请从实现开销、并发访问和近似算法角度分析。",
     "latexFormulas": [
       "HitRate = \\frac{Hits}{Hits + Misses}"
     ],
@@ -326,7 +326,7 @@
       "routing",
       "algorithm"
     ],
-    "theoryContent": "### 编程挑战：路由表最长前缀匹配引擎\n\n真实路由器收到目标 IP 后，会在路由表中执行最长前缀匹配。如果多个网段都能匹配目标地址，应选择前缀最长的一条，因为它表示更具体的路由。\n\n例如 `10.1.2.33` 同时匹配 `10.0.0.0/8`、`10.1.0.0/16` 和 `10.1.2.0/24`，最终应选择 `/24` 对应的下一跳。\n\n核心匹配关系：\n\n$$targetIp \\& mask = networkIp \\& mask$$",
+    "theoryContent": "### 🎯 编程挑战：路由表最长前缀匹配引擎\n\n> 💡 **场景类比与核心直觉**：路由匹配就像全国快递分拣中心按「省—市—区—街道」逐级匹配目的地：地址写得越精细（前缀越长），分拣优先级就越高，从而避免包裹走错片区。\n\n真实路由器收到目标 IP 后，会在路由表中执行最长前缀匹配。如果多个网段都能匹配目标地址，应选择前缀最长的一条，因为它表示更具体的路由。\n\n例如 `10.1.2.33` 同时匹配 `10.0.0.0/8`、`10.1.0.0/16` 和 `10.1.2.0/24`，最终应选择 `/24` 对应的下一跳。\n\n核心匹配关系：\n\n$$targetIp \\& mask = networkIp \\& mask$$\n\n#### 🔬 核心原理与机制拆解\n\n在动手写代码前，先理清『**路由表最长前缀匹配引擎**』背后的数学建模与核心运行逻辑：子网划分借位或掩码边界算错 1 个比特，就会让整段内网流量黑洞化或与邻近网段发生路由重叠冲突。\n\n$$\ntargetIp \\& mask = networkIp \\& mask\n$$\n\n$$\nmask = 2^{32} - 2^{32-prefix}\n$$\n\n- **核心要点**：最长前缀表示匹配范围更小、更具体，是路由查找的基本规则。\n- **核心要点**：/24 表示 IPv4 地址前 24 位用于网络号，剩余 8 位用于主机。\n\n#### 🛠️ 实战任务与样例推演\n\n**解题总纲**：将 IPv4 地址转为 32 位整数掩码按位与匹配，选取前缀长度最大的路由下一跳。\n\n**需要实现的核心接口与结构**：\n- `ip_to_int(ip: str) -> int` — 将点分十进制 IP 转为无符号 32 位整数\n- `lookup_route(routes: list, target_ip: str) -> str` — 遍历路由表按前缀长度优先规则匹配下一跳\n\n**输入输出推演**：以首个公开样例 `longest prefix wins` 为例：当调用 `lookup_route([{\"cidr\": \"10.0.0.0/8\", \"next_hop\": \"eth0\"}, ...]（共 3 项）, \"10.1.2.33\")` 时，程序按上述步骤计算后应稳定返回 `\"eth2\"`。\n\n#### 🚀 边界避坑与进阶思考\n\n- **真题隐藏评测覆盖**：完整判题除了 2 个公开样例外，还包含 3 组隐藏边界与压力测试用例；请务必立足通用逻辑与数据结构设计，切勿针对公开样例硬编码分支。\n\n> 💭 **延伸思考（写完代码后建议作答）**：如果路由表规模从几十条增长到几十万条，逐条扫描会出现什么问题？真实路由器可能使用哪些结构优化最长前缀匹配？",
     "latexFormulas": [
       "targetIp \\& mask = networkIp \\& mask",
       "mask = 2^{32} - 2^{32-prefix}"
@@ -471,7 +471,7 @@
       "utf-8",
       "logs"
     ],
-    "theoryContent": "### 编程挑战：日志编码异常探测器\n\n线上系统常见问题之一是日志乱码。常见原因包括 UTF-8 字节被错误地按 Latin-1 解码，或混入非法字节。\n\n本题要求实现一个简化编码探测器：尝试把字节流按 UTF-8 解码；如果失败，返回 `INVALID_UTF8`；如果成功但包含替换字符 `�`，返回 `SUSPECT_REPLACEMENT`；否则返回正常文本。\n\n这类能力常用于日志采集、数据清洗和跨系统消息传输。",
+    "theoryContent": "### 🎯 编程挑战：日志编码异常探测器\n\n> 💡 **场景类比与核心直觉**：字符编码就像不同国家使用的密码本：发送端用 UTF-8 本子把汉字编成多字节密文，接收端若错拿 Latin-1（单字节）本子去对照，就会吐出一串令人头疼的『锟斤拷』乱码。\n\n线上系统常见问题之一是日志乱码。常见原因包括 UTF-8 字节被错误地按 Latin-1 解码，或混入非法字节。\n\n本题要求实现一个简化编码探测器：尝试把字节流按 UTF-8 解码；如果失败，返回 `INVALID_UTF8`；如果成功但包含替换字符 `�`，返回 `SUSPECT_REPLACEMENT`；否则返回正常文本。\n\n这类能力常用于日志采集、数据清洗和跨系统消息传输。\n\n#### 🔬 核心原理与机制拆解\n\n在动手写代码前，先理清『**日志编码异常探测器**』背后的数学建模与核心运行逻辑：更隐蔽的是截断或非法续字节混入日志流——如果直接粗暴解码，整个日志解析管道都会被异常中断。\n\n$$\nUnicode \\rightarrow CodePoint \\rightarrow UTF8Bytes\n$$\n\n- **核心要点**：ASCII 的 0-127 编码在 UTF-8 中保持单字节不变。\n- **核心要点**：字节流必须用正确字符集解码，否则会出现乱码或解码异常。\n\n#### 🛠️ 实战任务与样例推演\n\n**解题总纲**：安全解码字节日志：区分正常 UTF-8、含替换字符的可疑乱码与解码失败。\n\n**需要实现的核心接口与结构**：\n- `decode_log_payload(payload: bytes | str) -> dict` — 先兼容十六进制输入再按 UTF-8 解码并检测 U+FFFD\n\n**输入输出推演**：以首个公开样例 `valid utf8` 为例：当调用 `decode_log_payload(\"68656c6c6f\")` 时，程序按上述步骤计算后应稳定返回 `{\"status\": \"OK\", \"text\": \"hello\"}`。\n\n#### 🚀 边界避坑与进阶思考\n\n- **真题隐藏评测覆盖**：完整判题除了 2 个公开样例外，还包含 3 组隐藏边界与压力测试用例；请务必立足通用逻辑与数据结构设计，切勿针对公开样例硬编码分支。\n\n> 💭 **延伸思考（写完代码后建议作答）**：如果日志采集链路中同时存在 UTF-8、GBK 和 Latin-1 数据，你会如何设计编码识别、标记和降级策略？",
     "latexFormulas": [
       "Unicode \\rightarrow CodePoint \\rightarrow UTF8Bytes"
     ],
@@ -590,9 +590,9 @@
       "command",
       "safety"
     ],
-    "theoryContent": "### 编程挑战：安全批处理命令生成器\n\n运维脚本常需要批量处理文件，但直接拼接 shell 命令容易产生注入风险。例如文件名中包含空格、分号或引号时，命令可能被错误解析。\n\n本题要求实现一个安全的 grep 命令参数生成器。不要返回完整 shell 字符串，而是返回参数数组，供 `subprocess.run(args)` 这类 API 使用。\n\n安全原则：\n\n$$Command = Executable + Args[]$$\n\n不要把不可信输入拼成一整段 shell 文本。",
+    "theoryContent": "### 🎯 编程挑战：安全批处理命令生成器\n\n> 💡 **场景类比与核心直觉**：命令行管道好比车间里一环扣一环的传送带：上一个工具只专注把文件找出来，下一个工具只负责筛选字段或统计频次，组合起来便能秒级完成复杂运维任务。\n\n运维脚本常需要批量处理文件，但直接拼接 shell 命令容易产生注入风险。例如文件名中包含空格、分号或引号时，命令可能被错误解析。\n\n本题要求实现一个安全的 grep 命令参数生成器。不要返回完整 shell 字符串，而是返回参数数组，供 `subprocess.run(args)` 这类 API 使用。\n\n安全原则：\n\n$$Command = Executable + Args[]$$\n\n不要把不可信输入拼成一整段 shell 文本。\n\n#### 🔬 核心原理与机制拆解\n\n在动手写代码前，先理清『**安全批处理命令生成器**』背后的数学建模与核心运行逻辑：最危险的陷阱在于直接拼接用户输入去拼 shell 字符串——文件名里一个空格或分号就能引发命令注入风险。\n\n$$\n\\text{Command} = \\text{Executable} + \\text{Args}[]\n$$\n\n- **核心要点**：不经过 shell 解释时，分号、管道等字符只是普通参数的一部分。\n- **核心要点**：`--` 常用于阻止后续以短横线开头的参数被误认为命令选项。\n\n#### 🛠️ 实战任务与样例推演\n\n**解题总纲**：构造参数列表并在标志后追加 `--`，防止以连字符开头的危险文件名被误解析为选项。\n\n**需要实现的核心接口与结构**：\n- `build_grep_args(keyword: str, filename: str) -> list` — 校验非空参数后返回带 `--` 选项分隔符的参数列表\n\n**输入输出推演**：以首个公开样例 `normal grep args` 为例：当调用 `build_grep_args(\"error\", \"app.log\")` 时，程序按上述步骤计算后应稳定返回 `[\"grep\", \"--\", \"error\", \"app.log\"]`。\n\n#### 🚀 边界避坑与进阶思考\n\n- **非法输入主动拦截**：当遇到空集合、非正数参数或违反约束的数据时，务必按要求显式 `raise` `ValueError`，不要静默返回 `None` 或吞掉异常。\n- **真题隐藏评测覆盖**：完整判题除了 2 个公开样例外，还包含 3 组隐藏边界与压力测试用例；请务必立足通用逻辑与数据结构设计，切勿针对公开样例硬编码分支。\n\n> 💭 **延伸思考（写完代码后建议作答）**：如果你要允许用户在 Web 页面上提交日志搜索关键词，后端执行 grep，你会如何防止命令注入和资源耗尽？",
     "latexFormulas": [
-      "Command = Executable + Args[]"
+      "\\text{Command} = \\text{Executable} + \\text{Args}[]"
     ],
     "starterCode": "def build_grep_args(keyword: str, filename: str) -> list:\n    # 返回适合 subprocess.run(args) 使用的参数数组\n    pass",
     "solutionCode": "# 【算法思路】构造参数列表并在标志后追加 `--`，防止以连字符开头的危险文件名被误解析为选项。\n# 校验非空参数后返回带 `--` 选项分隔符的参数列表\ndef build_grep_args(keyword: str, filename: str) -> list:\n    if not keyword:\n        raise ValueError(\"keyword must not be empty\")\n    if not filename:\n        raise ValueError(\"filename must not be empty\")\n    return [\"grep\", \"--\", keyword, filename]\n",
@@ -714,7 +714,7 @@
       "inode",
       "capacity"
     ],
-    "theoryContent": "### 编程挑战：小文件存储容量规划器\n\n在日志、爬虫和图片缩略图系统中，磁盘空间可能还没用完，inode 却先耗尽。每个文件至少消耗一个 inode，小文件越多，inode 压力越明显。\n\n本题要求根据预计文件数量、平均文件大小、块大小和 inode 总量，判断瓶颈是磁盘容量还是 inode 数量。\n\n文件占用块数：\n\n$$Blocks = \\lceil \\frac{FileSize}{BlockSize} \\rceil$$",
+    "theoryContent": "### 🎯 编程挑战：小文件存储容量规划器\n\n> 💡 **场景类比与核心直觉**：如果把硬盘比作大型仓库，Inode 就像记录每箱货物大小和货架编号的『档案卡』，而目录项只是贴在门上的『货品名字条』；文件多到一定程度时，货架还没放满，档案卡却可能先用完了。\n\n在日志、爬虫和图片缩略图系统中，磁盘空间可能还没用完，inode 却先耗尽。每个文件至少消耗一个 inode，小文件越多，inode 压力越明显。\n\n本题要求根据预计文件数量、平均文件大小、块大小和 inode 总量，判断瓶颈是磁盘容量还是 inode 数量。\n\n文件占用块数：\n\n$$Blocks = \\lceil \\frac{FileSize}{BlockSize} \\rceil$$\n\n#### 🔬 核心原理与机制拆解\n\n在动手写代码前，先理清『**小文件存储容量规划器**』背后的数学建模与核心运行逻辑：日志碎片化产生海量小文件时，往往磁盘空间显示还有富余，新请求却因 Inode 耗尽而报错无法写入。\n\n$$\nBlocks = \\lceil \\frac{FileSize}{BlockSize} \\rceil\n$$\n\n$$\nTotalBlocks = FileCount \\times Blocks\n$$\n\n- **核心要点**：文件系统用 inode 保存文件元数据，文件数量越多 inode 消耗越大。\n- **核心要点**：`df -i` 可以查看 inode 是否耗尽。\n\n#### 🛠️ 实战任务与样例推演\n\n**解题总纲**：同时核算文件数(inode)与向上取整的数据块(block)消耗，识别率先耗尽的资源瓶颈。\n\n**需要实现的核心接口与结构**：\n- `plan_small_file_storage(file_count: int, avg_file_size: int, block_size: int, total_blocks: int, total_inodes: int) -> dict` — 分别计算所需 inode 与 block 并判定容量与瓶颈\n\n**输入输出推演**：以首个公开样例 `inode exhausted first` 为例：当调用 `plan_small_file_storage(1000000, 100, 4096, 2000000, 500000)` 时，程序按上述步骤计算后应稳定返回 `{\"fits\": false, \"bottleneck\": \"inode\"}`。\n\n#### 🚀 边界避坑与进阶思考\n\n- **非法输入主动拦截**：当遇到空集合、非正数参数或违反约束的数据时，务必按要求显式 `raise` `ValueError`，不要静默返回 `None` 或吞掉异常。\n- **零除与空输入守卫**：遇到空列表、空字典或零分母场景（如模长为 0、样本数为 0）时，必须预先加好判空/判零保护，严防 `ZeroDivisionError` 或 `NaN` 污染输出。\n- **真题隐藏评测覆盖**：完整判题除了 2 个公开样例外，还包含 3 组隐藏边界与压力测试用例；请务必立足通用逻辑与数据结构设计，切勿针对公开样例硬编码分支。\n\n> 💭 **延伸思考（写完代码后建议作答）**：面对海量小文件系统，你会选择直接落盘、打包归档、对象存储还是数据库？请比较它们的取舍。",
     "latexFormulas": [
       "Blocks = \\lceil \\frac{FileSize}{BlockSize} \\rceil",
       "TotalBlocks = FileCount \\times Blocks"
@@ -851,9 +851,9 @@
       "security",
       "audit"
     ],
-    "theoryContent": "### 编程挑战：权限策略审计器\n\n生产环境中，过宽的文件权限会带来安全风险。例如配置文件如果对 others 可写，攻击者可能篡改服务行为。\n\n本题要求实现一个权限审计函数，检查八进制权限是否违反策略：\n\n- 配置文件不能被 group 或 others 写入。\n- 可执行脚本允许 owner 执行，但不允许 others 写入。\n- 权限字符串使用 Linux 常见格式，如 `644`、`755`、`600`。\n\n权限位计算：\n\n$$r=4, w=2, x=1$$",
+    "theoryContent": "### 🎯 编程挑战：权限策略审计器\n\n> 💡 **场景类比与核心直觉**：Linux 权限与 sudo 规则就像数据中心的门禁分级制度：门卡上明确写了谁能进机房查看日志（r）、谁能调整配置（w）、谁能重启机器（x），严禁图省事发一张『万能通行卡』。\n\n生产环境中，过宽的文件权限会带来安全风险。例如配置文件如果对 others 可写，攻击者可能篡改服务行为。\n\n本题要求实现一个权限审计函数，检查八进制权限是否违反策略：\n\n- 配置文件不能被 group 或 others 写入。\n- 可执行脚本允许 owner 执行，但不允许 others 写入。\n- 权限字符串使用 Linux 常见格式，如 `644`、`755`、`600`。\n\n权限位计算：\n\n$$r=4, w=2, x=1$$\n\n#### 🔬 核心原理与机制拆解\n\n在动手写代码前，先理清『**权限策略审计器**』背后的数学建模与核心运行逻辑：过度开放 777 权限或滥用 NOPASSWD 通配命令，会让一次普通业务漏洞瞬间放大成整台主机失陷。\n\n$$\nr = 4,\\; w = 2,\\; x = 1 \\quad (\\text{权限码合计 } 0\\text{--}7)\n$$\n\n- **核心要点**：5 = 4 + 1，表示读和执行。\n- **核心要点**：配置文件被篡改可能导致服务被劫持、越权或泄露敏感信息。\n\n#### 🛠️ 实战任务与样例推演\n\n**解题总纲**：将三位八进制权限按位拆解，结合文件类型检测组/其他写权限与不当可执行位。\n\n**需要实现的核心接口与结构**：\n- `audit_permission(octal: str, file_type: str) -> list` — 解析 rwx 比特位并依据 config/script 类型输出风险标签\n\n**输入输出推演**：以首个公开样例 `dangerous config` 为例：当调用 `audit_permission(\"666\", \"config\")` 时，程序按上述步骤计算后应稳定返回 `[\"group_writable\", \"others_writable\"]`。\n\n#### 🚀 边界避坑与进阶思考\n\n- **非法输入主动拦截**：当遇到空集合、非正数参数或违反约束的数据时，务必按要求显式 `raise` `ValueError`，不要静默返回 `None` 或吞掉异常。\n- **真题隐藏评测覆盖**：完整判题除了 2 个公开样例外，还包含 3 组隐藏边界与压力测试用例；请务必立足通用逻辑与数据结构设计，切勿针对公开样例硬编码分支。\n\n> 💭 **延伸思考（写完代码后建议作答）**：为什么生产环境中仅靠 chmod 不够？还需要从用户、用户组、sudo、ACL 和密钥管理哪些方面做权限治理？",
     "latexFormulas": [
-      "r=4, w=2, x=1"
+      "r = 4,\\; w = 2,\\; x = 1 \\quad (\\text{权限码合计 } 0\\text{--}7)"
     ],
     "starterCode": "def audit_permission(octal: str, file_type: str) -> list:\n    # file_type: \"config\" 或 \"script\"\n    # 返回风险列表，例如 [\"group_writable\", \"others_writable\"]\n    pass",
     "solutionCode": "# 【算法思路】将三位八进制权限按位拆解，结合文件类型检测组/其他写权限与不当可执行位。\n# 解析 rwx 比特位并依据 config/script 类型输出风险标签\ndef audit_permission(octal: str, file_type: str) -> list:\n    if len(octal) != 3 or not octal.isdigit():\n        raise ValueError(\"octal permission must look like 644\")\n\n    owner, group, others = [int(ch) for ch in octal]\n    risks = []\n\n    if group & 2:\n        risks.append(\"group_writable\")\n    if others & 2:\n        risks.append(\"others_writable\")\n\n    if file_type == \"config\" and owner & 1:\n        risks.append(\"config_executable\")\n    if file_type == \"script\" and not (owner & 1):\n        risks.append(\"owner_not_executable\")\n\n    return risks\n",
@@ -968,7 +968,7 @@
       "zombie",
       "monitoring"
     ],
-    "theoryContent": "### 编程挑战：进程状态异常探测器\n\nLinux 进程可能处于运行、睡眠、僵尸等状态。僵尸进程已经退出，但父进程尚未回收其退出状态。如果大量僵尸进程堆积，可能耗尽 PID 或暴露父进程逻辑问题。\n\n本题要求分析 `ps` 采样结果，统计异常进程并给出是否需要告警。\n\n告警规则：\n\n$$ZombieRate = \\frac{ZombieCount}{TotalProcessCount}$$\n\n当僵尸进程数大于等于阈值，或僵尸比例超过阈值时触发告警。",
+    "theoryContent": "### 🎯 编程挑战：进程状态异常探测器\n\n> 💡 **场景类比与核心直觉**：进程调度器如同多核厨房里的主厨：必须盯着每个灶台（进程）的火候与虚拟运行时间（vruntime），在阻塞、就绪与运行之间快速切换，避免僵死进程白白占着灶位。\n\nLinux 进程可能处于运行、睡眠、僵尸等状态。僵尸进程已经退出，但父进程尚未回收其退出状态。如果大量僵尸进程堆积，可能耗尽 PID 或暴露父进程逻辑问题。\n\n本题要求分析 `ps` 采样结果，统计异常进程并给出是否需要告警。\n\n告警规则：\n\n$$ZombieRate = \\frac{ZombieCount}{TotalProcessCount}$$\n\n当僵尸进程数大于等于阈值，或僵尸比例超过阈值时触发告警。\n\n#### 🔬 核心原理与机制拆解\n\n在动手写代码前，先理清『**进程状态异常探测器**』背后的数学建模与核心运行逻辑：如果父进程忘了及时回收退出子进程或优先级权重失衡，孤儿/僵尸积累与饥饿现象会悄悄拖垮系统吞吐。\n\n$$\nZombieRate = \\frac{ZombieCount}{TotalProcessCount}\n$$\n\n- **核心要点**：僵尸进程保留进程表项，等待父进程通过 wait 回收。\n- **核心要点**：父进程没有 wait 子进程退出状态时，僵尸进程会堆积。\n\n#### 🛠️ 实战任务与样例推演\n\n**解题总纲**：统计僵尸进程(state=='Z')数量与占比，满足任一阈值即触发运维告警。\n\n**需要实现的核心接口与结构**：\n- `detect_process_anomaly(processes: list, zombie_count_threshold: int, zombie_rate_threshold: float) -> dict` — 汇总僵尸态数量、占比及是否超出阈值的布尔标志\n\n**输入输出推演**：以首个公开样例 `alert by zombie rate` 为例：当调用 `detect_process_anomaly([{\"pid\": 1, \"state\": \"S\"}, ...]（共 4 项）, 5, 0.2)` 时，程序按上述步骤计算后应稳定返回 `{\"zombies\": 2, \"zombie_rate\": 0.5, \"alert\": true}`。\n\n#### 🚀 边界避坑与进阶思考\n\n- **数值类型与浮点舍入**：若结果涉及浮点数或小数保留，需与示例 `round` 位数及 `float` 精度对齐，避免直接拿字符串拼接或整数截断替代。\n- **零除与空输入守卫**：遇到空列表、空字典或零分母场景（如模长为 0、样本数为 0）时，必须预先加好判空/判零保护，严防 `ZeroDivisionError` 或 `NaN` 污染输出。\n- **真题隐藏评测覆盖**：完整判题除了 2 个公开样例外，还包含 2 组隐藏边界与压力测试用例；请务必立足通用逻辑与数据结构设计，切勿针对公开样例硬编码分支。\n\n> 💭 **延伸思考（写完代码后建议作答）**：如果线上服务持续产生僵尸进程，你会如何定位父进程、修复回收逻辑，并设置监控告警？",
     "latexFormulas": [
       "ZombieRate = \\frac{ZombieCount}{TotalProcessCount}"
     ],
@@ -1133,7 +1133,7 @@
       "pipefail",
       "reliability"
     ],
-    "theoryContent": "### 编程挑战：Shell 管道失败保护器\n\n生产脚本中常见错误是管道前半段失败，但最后一个命令成功，导致整体退出码看起来成功。例如：\n\n```bash\ncat missing.log | grep ERROR | wc -l\n```\n\n如果没有 `set -o pipefail`，脚本可能掩盖前序错误。\n\n本题要求根据脚本步骤退出码模拟 Bash 管道的最终状态：普通模式只看最后一步；pipefail 模式下，只要任意一步非零，就返回最右侧的非零退出码。",
+    "theoryContent": "### 🎯 编程挑战：Shell 管道失败保护器\n\n> 💡 **场景类比与核心直觉**：自动化运维脚本相当于值班机器人的标准操作手册（SOP）：从日志轮转压缩、安全清理过期归档到异常告警，每一步都必须可重复、可审计、能扛住边界异常。\n\n生产脚本中常见错误是管道前半段失败，但最后一个命令成功，导致整体退出码看起来成功。例如：\n\n```bash\ncat missing.log | grep ERROR | wc -l\n```\n\n如果没有 `set -o pipefail`，脚本可能掩盖前序错误。\n\n本题要求根据脚本步骤退出码模拟 Bash 管道的最终状态：普通模式只看最后一步；pipefail 模式下，只要任意一步非零，就返回最右侧的非零退出码。\n\n#### 🔬 核心原理与机制拆解\n\n在动手写代码前，先理清『**Shell 管道失败保护器**』背后的数学建模与核心运行逻辑：生产事故常常发生在『昨天跑得好好的脚本今天突然删错目录或漏压缩』——根源通常在于缺少严格的状态校验与安全防护。\n\n$$\nExitCode = 0 \\Rightarrow Success\n$$\n\n- **核心要点**：pipefail 让管道整体退出码反映管道中失败命令，而不是只看最后一个命令。\n- **核心要点**：Unix/Linux 程序约定退出码 0 表示成功，非 0 表示异常。\n\n#### 🛠️ 实战任务与样例推演\n\n**解题总纲**：模拟 bash pipefail 行为：关闭时仅看末命令退出码，开启时从右向左返回首个非零码。\n\n**需要实现的核心接口与结构**：\n- `evaluate_pipeline(exit_codes: list, pipefail: bool) -> int` — 依据 pipefail 开关从管道退出码列表中提取最终状态码\n\n**输入输出推演**：以首个公开样例 `pipefail catches earlier failure` 为例：当调用 `evaluate_pipeline([1, 0, 0], true)` 时，程序按上述步骤计算后应稳定返回 `1`。\n\n#### 🚀 边界避坑与进阶思考\n\n- **零除与空输入守卫**：遇到空列表、空字典或零分母场景（如模长为 0、样本数为 0）时，必须预先加好判空/判零保护，严防 `ZeroDivisionError` 或 `NaN` 污染输出。\n- **真题隐藏评测覆盖**：完整判题除了 2 个公开样例外，还包含 3 组隐藏边界与压力测试用例；请务必立足通用逻辑与数据结构设计，切勿针对公开样例硬编码分支。\n\n> 💭 **延伸思考（写完代码后建议作答）**：一个生产备份脚本应该如何组合 `set -e`、`set -u`、`pipefail`、日志和回滚策略？",
     "latexFormulas": [
       "ExitCode = 0 \\Rightarrow Success"
     ],
@@ -1258,7 +1258,7 @@
       "init",
       "clone"
     ],
-    "theoryContent": "### 编程挑战：仓库初始化健康检查器\n\n团队项目中，新成员经常因为仓库初始化不完整、remote 缺失或默认分支错误而无法协作。\n\n本题要求根据仓库元信息判断一个 Git 仓库是否具备最小协作条件：\n\n- 必须存在 `.git`。\n- 必须配置 origin remote。\n- 必须有默认分支。\n- 工作区不能处于 detached HEAD 状态。\n\n这类检查可以用于脚手架、CI 预检和开发环境诊断。",
+    "theoryContent": "### 🎯 编程挑战：仓库初始化健康检查器\n\n> 💡 **场景类比与核心直觉**：初始化与克隆仓库就像为一栋大楼建立施工总档案库：从拉取历史蓝图、配置 `.gitignore` 屏蔽临时垃圾，到设定远端同步坐标，决定了团队协作的起跑线是否整洁。\n\n团队项目中，新成员经常因为仓库初始化不完整、remote 缺失或默认分支错误而无法协作。\n\n本题要求根据仓库元信息判断一个 Git 仓库是否具备最小协作条件：\n\n- 必须存在 `.git`。\n- 必须配置 origin remote。\n- 必须有默认分支。\n- 工作区不能处于 detached HEAD 状态。\n\n这类检查可以用于脚手架、CI 预检和开发环境诊断。\n\n#### 🔬 核心原理与机制拆解\n\n在动手写代码前，先理清『**仓库初始化健康检查器**』背后的数学建模与核心运行逻辑：一旦在初始提交里误把密钥或上百 MB 的编译缓存推上去，后续每个协作者克隆仓库时都要背负沉重负担。\n\n$$\nRepoReady = GitDir \\land Origin \\land Branch \\land \\neg DetachedHEAD\n$$\n\n- **核心要点**：`git init` 初始化本地仓库，`git clone` 会复制远端仓库并配置 remote。\n- **核心要点**：detached HEAD 下提交不挂在普通分支上，容易造成提交丢失或难以追踪。\n\n#### 🛠️ 实战任务与样例推演\n\n**解题总纲**：检查仓库元数据关键字段(.git 目录、远端 origin、默认分支与游离头状态)是否就绪。\n\n**需要实现的核心接口与结构**：\n- `check_repo_ready(repo: dict) -> dict` — 逐项校验仓库就绪条件并收集缺失问题列表\n\n**输入输出推演**：以首个公开样例 `missing origin` 为例：当调用 `check_repo_ready({\"has_git_dir\": true, \"origin_url\": \"\", \"default_branch\": \"main\", \"detached_head\": false})` 时，程序按上述步骤计算后应稳定返回 `{\"ready\": false, \"issues\": [\"missing_origin\"]}`。\n\n#### 🚀 边界避坑与进阶思考\n\n- **真题隐藏评测覆盖**：完整判题除了 2 个公开样例外，还包含 2 组隐藏边界与压力测试用例；请务必立足通用逻辑与数据结构设计，切勿针对公开样例硬编码分支。\n\n> 💭 **延伸思考（写完代码后建议作答）**：你会如何设计一个团队脚手架，在开发者首次拉取项目时自动检查 Git、Node、环境变量和数据库连接？",
     "latexFormulas": [
       "RepoReady = GitDir \\land Origin \\land Branch \\land \\neg DetachedHEAD"
     ],
@@ -1393,9 +1393,9 @@
       "staging",
       "workflow"
     ],
-    "theoryContent": "### 编程挑战：提交批次规划器\n\n高质量提交应该聚焦单一意图。把修 bug、改样式、重构和配置变更混在一个 commit 中，会增加 Code Review 和回滚成本。\n\n本题要求根据文件变更列表，把变更按类型分组，生成建议的提交批次。\n\n分类规则：\n\n- `test` 路径或 `.test` 文件归为 `test`。\n- `docs/` 或 `.md` 归为 `docs`。\n- `package.json`、配置文件归为 `config`。\n- 其他归为 `code`。",
+    "theoryContent": "### 🎯 编程挑战：提交批次规划器\n\n> 💡 **场景类比与核心直觉**：精准暂存与原子提交就像外科医生按步骤缝合并写病历：把关联改动打包成一个语义内聚的提交（Cohesive Commit），未来排查问题或回滚时才能一目了然。\n\n高质量提交应该聚焦单一意图。把修 bug、改样式、重构和配置变更混在一个 commit 中，会增加 Code Review 和回滚成本。\n\n本题要求根据文件变更列表，把变更按类型分组，生成建议的提交批次。\n\n分类规则：\n\n- `test` 路径或 `.test` 文件归为 `test`。\n- `docs/` 或 `.md` 归为 `docs`。\n- `package.json`、配置文件归为 `config`。\n- 其他归为 `code`。\n\n#### 🔬 核心原理与机制拆解\n\n在动手写代码前，先理清『**提交批次规划器**』背后的数学建模与核心运行逻辑：如果把十几个不相关的功能与调试代码一股脑全塞进一个 commit，出故障后 `git bisect` 与 `revert` 都会变得痛苦不堪。\n\n$$\n\\text{Commit} = \\text{Cohesive}(\\text{ChangeSet})\n$$\n\n- **核心要点**：聚焦提交便于审查、定位问题和回滚。\n- **核心要点**：`git add` 将工作区改动加入暂存区，供下一次 commit 使用。\n\n#### 🛠️ 实战任务与样例推演\n\n**解题总纲**：根据路径后缀与目录规则把改动文件自动归类至代码、测试、文档、配置四个提交批次。\n\n**需要实现的核心接口与结构**：\n- `plan_commit_batches(files: list) -> dict` — 遍历文件路径按规则分桶，生成逻辑清晰的提交批次\n\n**输入输出推演**：以首个公开样例 `mixed changes` 为例：当调用 `plan_commit_batches([\"app/page.tsx\", \"app/page.test.ts\", \"docs/api.md\", \"package.json\"])` 时，程序按上述步骤计算后应稳定返回 `{\"code\": [\"app/page.tsx\"], \"test\": [\"app/page.test.ts\"], \"docs\": [\"docs/api.md\"], \"config\": [\"package.json\"]}`。\n\n#### 🚀 边界避坑与进阶思考\n\n- **零除与空输入守卫**：遇到空列表、空字典或零分母场景（如模长为 0、样本数为 0）时，必须预先加好判空/判零保护，严防 `ZeroDivisionError` 或 `NaN` 污染输出。\n- **真题隐藏评测覆盖**：完整判题除了 2 个公开样例外，还包含 2 组隐藏边界与压力测试用例；请务必立足通用逻辑与数据结构设计，切勿针对公开样例硬编码分支。\n\n> 💭 **延伸思考（写完代码后建议作答）**：如果一个需求同时包含重构和行为变更，你会如何拆分 commit，让审查者更容易确认风险？",
     "latexFormulas": [
-      "Commit = Cohesive(ChangeSet)"
+      "\\text{Commit} = \\text{Cohesive}(\\text{ChangeSet})"
     ],
     "starterCode": "def plan_commit_batches(files: list) -> dict:\n    # 返回 {\"code\": [...], \"test\": [...], \"docs\": [...], \"config\": [...]}\n    pass",
     "solutionCode": "# 【算法思路】根据路径后缀与目录规则把改动文件自动归类至代码、测试、文档、配置四个提交批次。\n# 遍历文件路径按规则分桶，生成逻辑清晰的提交批次\ndef plan_commit_batches(files: list) -> dict:\n    batches = {\"code\": [], \"test\": [], \"docs\": [], \"config\": []}\n    config_names = {\"package.json\", \"package-lock.json\", \"tsconfig.json\", \"next.config.js\", \".eslintrc.json\"}\n\n    for path in files:\n        name = path.split('/')[-1]\n        if '/test/' in path or '.test.' in path or '.spec.' in path:\n            batches[\"test\"].append(path)\n        elif path.startswith('docs/') or path.endswith('.md'):\n            batches[\"docs\"].append(path)\n        elif name in config_names or path.startswith('.github/'):\n            batches[\"config\"].append(path)\n        else:\n            batches[\"code\"].append(path)\n    return batches\n",
@@ -1536,7 +1536,7 @@
       "merge",
       "conflict"
     ],
-    "theoryContent": "### 编程挑战：分支合并冲突风险评估器\n\n多人协作中，分支存在时间越长、修改文件重叠越多，合并冲突风险越高。本题要求根据两个分支的变更文件和变更行范围，估算冲突风险。\n\n如果两个分支修改同一文件，并且行范围有重叠，则认为存在高风险冲突。\n\n区间重叠关系：\n\n$$overlap = max(startA, startB) \\le min(endA, endB)$$",
+    "theoryContent": "### 🎯 编程挑战：分支合并冲突风险评估器\n\n> 💡 **场景类比与核心直觉**：分支模型好比影视后期剪辑的多条平行轨道：新功能在独立支线试验互不打扰，验收合格后再与主干轨道（main）汇合。\n\n多人协作中，分支存在时间越长、修改文件重叠越多，合并冲突风险越高。本题要求根据两个分支的变更文件和变更行范围，估算冲突风险。\n\n如果两个分支修改同一文件，并且行范围有重叠，则认为存在高风险冲突。\n\n区间重叠关系：\n\n$$overlap = max(startA, startB) \\le min(endA, endB)$$\n\n#### 🔬 核心原理与机制拆解\n\n在动手写代码前，先理清『**分支合并冲突风险评估器**』背后的数学建模与核心运行逻辑：若分支长期游离不合并又不定期清理陈旧分支，仓库里很快会堆满真假难辨的僵尸分支与合并灾难。\n\n$$\noverlap = max(startA, startB) \\le min(endA, endB)\n$$\n\n- **核心要点**：分支允许不同功能、修复和实验并行推进。\n- **核心要点**：当 Git 无法自动判断应保留哪一侧修改时，会产生冲突。\n\n#### 🛠️ 实战任务与样例推演\n\n**解题总纲**：检测两分支在同文件上的行号闭区间是否相交，估算合并冲突风险与涉及文件。\n\n**需要实现的核心接口与结构**：\n- `estimate_merge_conflicts(branch_a: list, branch_b: list) -> dict` — 双层遍历比对同文件修改区间重叠情况\n\n**输入输出推演**：以首个公开样例 `overlapping same file` 为例：当调用 `estimate_merge_conflicts([{\"file\": \"app.ts\", \"start\": 10, \"end\": 20}], [{\"file\": \"app.ts\", \"start\": 15, \"end\": 30}])` 时，程序按上述步骤计算后应稳定返回 `{\"risk\": \"high\", \"files\": [\"app.ts\"]}`。\n\n#### 🚀 边界避坑与进阶思考\n\n- **真题隐藏评测覆盖**：完整判题除了 2 个公开样例外，还包含 2 组隐藏边界与压力测试用例；请务必立足通用逻辑与数据结构设计，切勿针对公开样例硬编码分支。\n\n> 💭 **延伸思考（写完代码后建议作答）**：团队如何通过短生命周期分支、频繁同步主干和小 PR 来降低合并冲突风险？",
     "latexFormulas": [
       "overlap = max(startA, startB) \\le min(endA, endB)"
     ],
@@ -1698,9 +1698,9 @@
       "history",
       "workflow"
     ],
-    "theoryContent": "### 编程挑战：提交历史重放模拟器\n\n`git rebase` 会把当前分支的一组提交复制到新的基底之后，使历史更线性。它不会移动原提交，而是创建新的提交对象，因此提交哈希会变化。\n\n本题要求模拟 rebase 后的提交历史。给定 base 分支提交、feature 分支独有提交，返回重放后的线性历史，并为重放提交生成新 ID。\n\n简化规则：新提交 ID 用 `rebased-原ID` 表示。",
+    "theoryContent": "### 🎯 编程挑战：提交历史重放模拟器\n\n> 💡 **场景类比与核心直觉**：Git Rebase（变基）像把支线故事重新抄写到最新主线剧情的结尾：让提交历史变成一条干净流畅的直线，免去满屏无意义的 Merge 提交节点。\n\n`git rebase` 会把当前分支的一组提交复制到新的基底之后，使历史更线性。它不会移动原提交，而是创建新的提交对象，因此提交哈希会变化。\n\n本题要求模拟 rebase 后的提交历史。给定 base 分支提交、feature 分支独有提交，返回重放后的线性历史，并为重放提交生成新 ID。\n\n简化规则：新提交 ID 用 `rebased-原ID` 表示。\n\n#### 🔬 核心原理与机制拆解\n\n在动手写代码前，先理清『**提交历史重放模拟器**』背后的数学建模与核心运行逻辑：但如果在多人共享的公共分支上执行 Rebase 改写历史，别人本地的提交树会与远端彻底分叉，引发严重的同步冲突。\n\n$$\n\\text{Rebase}(feature, newBase) = newBase + \\text{replay}(featureCommits)\n$$\n\n- **核心要点**：提交哈希与内容、作者、时间和父提交等信息有关，父提交变化会产生新提交对象。\n- **核心要点**：公共历史被重写后，其他协作者的本地历史可能与远端分叉。\n\n#### 🛠️ 实战任务与样例推演\n\n**解题总纲**：将特性分支提交依次追加到目标基线分支之后并生成新的变基提交标识。\n\n**需要实现的核心接口与结构**：\n- `simulate_rebase(base_commits: list, feature_commits: list) -> list` — 复制基线提交并在末尾按顺序重放特性提交\n\n**输入输出推演**：以首个公开样例 `basic rebase` 为例：当调用 `simulate_rebase([\"A\", \"B\"], [\"C\", \"D\"])` 时，程序按上述步骤计算后应稳定返回 `[\"A\", \"B\", \"rebased-C\", \"rebased-D\"]`。\n\n#### 🚀 边界避坑与进阶思考\n\n- **零除与空输入守卫**：遇到空列表、空字典或零分母场景（如模长为 0、样本数为 0）时，必须预先加好判空/判零保护，严防 `ZeroDivisionError` 或 `NaN` 污染输出。\n- **真题隐藏评测覆盖**：完整判题除了 2 个公开样例外，还包含 2 组隐藏边界与压力测试用例；请务必立足通用逻辑与数据结构设计，切勿针对公开样例硬编码分支。\n\n> 💭 **延伸思考（写完代码后建议作答）**：什么时候适合 rebase，什么时候应该 merge？请从个人分支整理、公共历史稳定性和审查可读性角度分析。",
     "latexFormulas": [
-      "Rebase(feature, newBase) = newBase + replay(featureCommits)"
+      "\\text{Rebase}(feature, newBase) = newBase + \\text{replay}(featureCommits)"
     ],
     "starterCode": "def simulate_rebase(base_commits: list, feature_commits: list) -> list:\n    # 返回 rebase 后的线性提交 ID 列表\n    pass",
     "solutionCode": "# 【算法思路】将特性分支提交依次追加到目标基线分支之后并生成新的变基提交标识。\n# 复制基线提交并在末尾按顺序重放特性提交\ndef simulate_rebase(base_commits: list, feature_commits: list) -> list:\n    rebased = list(base_commits)\n    for commit in feature_commits:\n        rebased.append(\"rebased-\" + commit)\n    return rebased\n",
@@ -1824,9 +1824,9 @@
       "merge",
       "parser"
     ],
-    "theoryContent": "### 编程挑战：冲突标记解析器\n\nGit 合并冲突时，文件中会出现冲突标记：\n\n```txt\n<<<<<<< HEAD\n当前分支内容\n=======\n传入分支内容\n>>>>>>> feature\n```\n\n本题要求解析包含冲突标记的文本，提取每个冲突块中的 ours 和 theirs 内容，并统计冲突数量。\n\n这个能力可用于 CI 检查、编辑器插件和代码审查辅助工具。",
+    "theoryContent": "### 🎯 编程挑战：冲突标记解析器\n\n> 💡 **场景类比与核心直觉**：合并冲突就像两位作者同时修改了书稿的同一段落：Git 会忠实标出 `<<<<<<<`、`=======`、`>>>>>>>` 边界，把最终保留哪一版或如何融合的裁决权交给工程师。\n\nGit 合并冲突时，文件中会出现冲突标记：\n\n```txt\n<<<<<<< HEAD\n当前分支内容\n=======\n传入分支内容\n>>>>>>> feature\n```\n\n本题要求解析包含冲突标记的文本，提取每个冲突块中的 ours 和 theirs 内容，并统计冲突数量。\n\n这个能力可用于 CI 检查、编辑器插件和代码审查辅助工具。\n\n#### 🔬 核心原理与机制拆解\n\n在动手写代码前，先理清『**冲突标记解析器**』背后的数学建模与核心运行逻辑：机械地全局选 ours 或 theirs 最容易在不知不觉中『覆盖掉队友昨晚刚修好的线上 Bug』。\n\n$$\n\\text{ConflictBlock} = \\text{Ours} \\oplus \\text{Theirs}\n$$\n\n- **核心要点**：`HEAD` 一侧通常表示当前检出的分支内容。\n- **核心要点**：冲突标记只是 Git 插入的人工处理提示，最终文件中不应保留。\n\n#### 🛠️ 实战任务与样例推演\n\n**解题总纲**：状态机解析 Git 冲突标记段(`<<<<<<<` / `=======` / `>>>>>>>`)，提取双边代码块。\n\n**需要实现的核心接口与结构**：\n- `parse_conflict_blocks(text: str) -> dict` — 逐行扫描冲突起止标记并收集每处冲突的 ours 与 theirs 内容\n\n**输入输出推演**：以首个公开样例 `single conflict` 为例：当调用 `parse_conflict_blocks(\"<<<<<<< HEAD\\nold\\n=======\\nnew\\n>>>>>>> feature\")` 时，程序按上述步骤计算后应稳定返回 `{\"count\": 1, \"blocks\": [{\"ours\": \"old\", \"theirs\": \"new\"}]}`。\n\n#### 🚀 边界避坑与进阶思考\n\n- **真题隐藏评测覆盖**：完整判题除了 2 个公开样例外，还包含 2 组隐藏边界与压力测试用例；请务必立足通用逻辑与数据结构设计，切勿针对公开样例硬编码分支。\n\n> 💭 **延伸思考（写完代码后建议作答）**：解决冲突时，为什么不能机械选择 ours 或 theirs？你会如何结合测试、业务语义和提交历史做判断？",
     "latexFormulas": [
-      "ConflictBlock = Ours + Theirs"
+      "\\text{ConflictBlock} = \\text{Ours} \\oplus \\text{Theirs}"
     ],
     "starterCode": "def parse_conflict_blocks(text: str) -> dict:\n    # 返回 {\"count\": 0, \"blocks\": [{\"ours\": \"...\", \"theirs\": \"...\"}]}\n    pass",
     "solutionCode": "# 【算法思路】状态机解析 Git 冲突标记段(`<<<<<<<` / `=======` / `>>>>>>>`)，提取双边代码块。\n# 逐行扫描冲突起止标记并收集每处冲突的 ours 与 theirs 内容\ndef parse_conflict_blocks(text: str) -> dict:\n    lines = text.splitlines()\n    blocks = []\n    i = 0\n    while i < len(lines):\n        if lines[i].startswith('<<<<<<<'):\n            i += 1\n            ours = []\n            while i < len(lines) and not lines[i].startswith('======='):\n                ours.append(lines[i])\n                i += 1\n            i += 1\n            theirs = []\n            while i < len(lines) and not lines[i].startswith('>>>>>>>'):\n                theirs.append(lines[i])\n                i += 1\n            blocks.append({\"ours\": \"\\n\".join(ours), \"theirs\": \"\\n\".join(theirs)})\n        i += 1\n    return {\"count\": len(blocks), \"blocks\": blocks}\n",
@@ -1941,10 +1941,10 @@
     "tags": [
       "计算机组成原理"
     ],
-    "theoryContent": "### 编程挑战：缓存命中率分析器\n\nCPU 缓存通过缓存行存储最近访问的数据。当程序访问连续内存时缓存命中率高，随机访问则容易缓存未命中。\n\n实现：\n- `simulate_cache(accesses, cache_lines, line_size)`: 模拟缓存，返回命中次数\n- `cache_hit_rate(hits, total)`: 命中率\n- `compare_strategies(accesses, cache_lines, line_size)`: 比较顺序 vs 随机访问",
+    "theoryContent": "### 🎯 编程挑战：缓存命中率分析器\n\n> ⚡ **进阶实战与工程深水区**：把 CPU 流水线想象成高铁站的多道并联安检口：正常情况下每分钟稳定放行大量乘客，可一旦某个环节出现读取内存等待（Cache Miss）或路线猜错（分支预测失败），整条队伍就会被迫原地停顿（Stall）。 在高并发或复杂真实场景中，很多线上服务 CPU 占用看似不高却延迟飙升，根因往往藏在海量指令的停顿周期累加，而非单条算术指令本身的耗时。\n\nCPU 缓存通过缓存行存储最近访问的数据。当程序访问连续内存时缓存命中率高，随机访问则容易缓存未命中。\n\n实现：\n- `simulate_cache(accesses, cache_lines, line_size)`: 模拟缓存，返回命中次数\n- `cache_hit_rate(hits, total)`: 命中率\n- `compare_strategies(accesses, cache_lines, line_size)`: 比较顺序 vs 随机访问\n\n#### 🔬 核心原理与机制拆解\n\n相比基础原型，本关更聚焦『**缓存命中率分析器**』在工程落地时的精度、效率与边界稳定性要求，涉及以下关键数学关系与规则：\n\n$$\n\\text{HitRate} = \\frac{\\text{Hits}}{\\text{Total}}\n$$\n\n$$\n\\text{缓存块号} = \\lfloor \\text{address} / \\text{line\\_size} \\rfloor\n$$\n\n- **核心要点**：空间局部性：最近访问地址附近的数据也可能被访问。\n\n#### 🛠️ 实战任务与样例推演\n\n**解题总纲**：将内存地址整除块大小映射为缓存行号，按 FIFO 策略统计缓存命中次数与命中率。\n\n**需要实现的核心接口与结构**：\n- `simulate_cache(accesses, cache_lines, line_size)` — 维护固定容量缓存行队列模拟访问命中与队首淘汰\n- `cache_hit_rate(hits, total)` — 计算命中率并保留四位小数\n\n**输入输出推演**：以首个公开样例 `sequential misses and hits` 为例：当调用 `simulate_cache([0, 4, 8, 12, 16, 20, 24, 28], 4, 8)` 时，程序按上述步骤计算后应稳定返回 `4`。\n\n#### 🚀 边界避坑与进阶思考\n\n- **数值类型与浮点舍入**：若结果涉及浮点数或小数保留，需与示例 `round` 位数及 `float` 精度对齐，避免直接拿字符串拼接或整数截断替代。\n- **零除与空输入守卫**：遇到空列表、空字典或零分母场景（如模长为 0、样本数为 0）时，必须预先加好判空/判零保护，严防 `ZeroDivisionError` 或 `NaN` 污染输出。\n- **真题隐藏评测覆盖**：完整判题除了 2 个公开样例外，还包含 3 组隐藏边界与压力测试用例；请务必立足通用逻辑与数据结构设计，切勿针对公开样例硬编码分支。\n\n> 💭 **延伸思考（写完代码后建议作答）**：缓存行大小对命中率有什么影响？行越大越好还是越小越好？为什么？",
     "latexFormulas": [
-      "HitRate = Hits / Total",
-      "缓存行 = floor(address / line_size)"
+      "\\text{HitRate} = \\frac{\\text{Hits}}{\\text{Total}}",
+      "\\text{缓存块号} = \\lfloor \\text{address} / \\text{line\\_size} \\rfloor"
     ],
     "starterCode": "def simulate_cache(accesses: list[int], cache_lines: int, line_size: int) -> int:\n    \"\"\"模拟 FIFO 缓存替换并返回命中次数\"\"\"\n    pass\n\ndef cache_hit_rate(hits: int, total: int) -> float:\n    \"\"\"计算缓存命中率并保留 4 位小数\"\"\"\n    pass\n",
     "solutionCode": "# 【算法思路】将内存地址整除块大小映射为缓存行号，按 FIFO 策略统计缓存命中次数与命中率。\n# 维护固定容量缓存行队列模拟访问命中与队首淘汰\ndef simulate_cache(accesses, cache_lines, line_size):\n    cache = [-1]*cache_lines\n    hits = 0\n    for addr in accesses:\n        line = addr // line_size\n        if line in cache:\n            hits += 1\n        else:\n            if len(cache) >= cache_lines:\n                cache.pop(0)\n            cache.append(line)\n    return hits\n# 计算命中率并保留四位小数\ndef cache_hit_rate(hits, total):\n    return round(hits/total,4) if total else 0\n",
@@ -2060,10 +2060,10 @@
     "tags": [
       "操作系统"
     ],
-    "theoryContent": "### 编程挑战：内存分配器模拟\n\n操作系统内核管理物理内存分配。首次适应（First-Fit）和最佳适应（Best-Fit）是两种经典策略。\n\n实现：\n- `first_fit(free_list, size)`: 首次适应分配\n- `best_fit(free_list, size)`: 最佳适应分配\n- `free_memory(free_list, block)`: 释放内存块（合并相邻空闲块）",
+    "theoryContent": "### 🎯 编程挑战：内存分配器模拟\n\n> ⚡ **进阶实战与工程深水区**：操作系统的内存与缓存调度就像图书管理员整理热门书架：桌面位置有限，把刚翻阅过的书放在手边、把冷门书籍请回地下书库，才能把跑腿取书（磁盘 I/O）降到最低。 在高并发或复杂真实场景中，如果淘汰策略设计不当或碎片管理失控，高并发下会出现严重的抖动（Thrashing）和内存利用率暴跌。\n\n操作系统内核管理物理内存分配。首次适应（First-Fit）和最佳适应（Best-Fit）是两种经典策略。\n\n实现：\n- `first_fit(free_list, size)`: 首次适应分配\n- `best_fit(free_list, size)`: 最佳适应分配\n- `free_memory(free_list, block)`: 释放内存块（合并相邻空闲块）\n\n#### 🔬 核心原理与机制拆解\n\n相比基础原型，本关更聚焦『**内存分配器模拟**』在工程落地时的精度、效率与边界稳定性要求，涉及以下关键数学关系与规则：\n\n$$\n\\text{First-Fit: 选择首个大小} \\ge \\text{需求量的空闲块}\n$$\n\n$$\n\\text{Best-Fit: 选择满足要求且容量最小的空闲块}\n$$\n\n- **核心要点**：首次适应更快但外部碎片可能更多，最佳适应找最小合适块。\n\n#### 🛠️ 实战任务与样例推演\n\n**解题总纲**：实现连续内存分配的首次适应(First Fit)与最小剩余块最佳适应(Best Fit)策略。\n\n**需要实现的核心接口与结构**：\n- `first_fit(free_list, size)` — 返回首个满足所需大小的空闲分区切片信息\n- `best_fit(free_list, size)` — 筛选满足大小且碎片最小的空闲分区\n\n**输入输出推演**：以首个公开样例 `first fit basic` 为例：当调用 `first_fit([[0, 100], [200, 300], [400, 600]], 50)` 时，程序按上述步骤计算后应稳定返回 `[0, 0, 50]`。\n\n#### 🚀 边界避坑与进阶思考\n\n- **真题隐藏评测覆盖**：完整判题除了 2 个公开样例外，还包含 3 组隐藏边界与压力测试用例；请务必立足通用逻辑与数据结构设计，切勿针对公开样例硬编码分支。\n\n> 💭 **延伸思考（写完代码后建议作答）**：外部碎片和内部碎片的区别是什么？伙伴系统（Buddy System）如何减少碎片？",
     "latexFormulas": [
-      "First-Fit: 选第一个够用的空闲块",
-      "Best-Fit: 选最小的够用空闲块"
+      "\\text{First-Fit: 选择首个大小} \\ge \\text{需求量的空闲块}",
+      "\\text{Best-Fit: 选择满足要求且容量最小的空闲块}"
     ],
     "starterCode": "def first_fit(free_list: list[list[int]], size: int) -> tuple:\n    \"\"\"首次适应算法，返回 (块索引, 起始地址, 结束地址)，失败返回 (-1, 0, 0)\"\"\"\n    pass\n\ndef best_fit(free_list: list[list[int]], size: int) -> tuple:\n    \"\"\"最佳适应算法，返回最紧凑空闲块的 (块索引, 起始地址, 结束地址)\"\"\"\n    pass\n",
     "solutionCode": "# 【算法思路】实现连续内存分配的首次适应(First Fit)与最小剩余块最佳适应(Best Fit)策略。\n# 返回首个满足所需大小的空闲分区切片信息\ndef first_fit(free_list, size):\n    for i, (start, end) in enumerate(free_list):\n        if end-start >= size:\n            return i, start, start+size\n    return -1,0,0\n# 筛选满足大小且碎片最小的空闲分区\ndef best_fit(free_list, size):\n    best_i, best_sz = -1, float('inf')\n    for i, (start, end) in enumerate(free_list):\n        sz = end-start\n        if sz >= size and sz < best_sz:\n            best_i, best_sz = i, sz\n    if best_i>=0: return best_i, free_list[best_i][0], free_list[best_i][0]+size\n    return -1,0,0\n",
@@ -2225,10 +2225,10 @@
     "tags": [
       "计算机网络"
     ],
-    "theoryContent": "### 编程挑战：子网划分计算器\n\n子网划分将 IP 网络分成更小的子网。给定一个 CIDR 地址和需要的子网数，计算每个子网的网络地址、广播地址和可用主机范围。",
+    "theoryContent": "### 🎯 编程挑战：子网划分计算器\n\n> ⚡ **进阶实战与工程深水区**：路由匹配就像全国快递分拣中心按「省—市—区—街道」逐级匹配目的地：地址写得越精细（前缀越长），分拣优先级就越高，从而避免包裹走错片区。 在高并发或复杂真实场景中，子网划分借位或掩码边界算错 1 个比特，就会让整段内网流量黑洞化或与邻近网段发生路由重叠冲突。\n\n子网划分将 IP 网络分成更小的子网。给定一个 CIDR 地址和需要的子网数，计算每个子网的网络地址、广播地址和可用主机范围。\n\n#### 🔬 核心原理与机制拆解\n\n相比基础原型，本关更聚焦『**子网划分计算器**』在工程落地时的精度、效率与边界稳定性要求，涉及以下关键数学关系与规则：\n\n$$\n\\text{子网数} = 2^{\\text{借位数}}\n$$\n\n$$\n\\text{可用主机数} = 2^{32 - \\text{前缀}} - 2\n$$\n\n- **核心要点**：255.255.255.0 前 24 位为网络位，即 /24。\n\n#### 🛠️ 实战任务与样例推演\n\n**解题总纲**：计算划分目标子网数所需借用的主机比特位、新前缀长度及每个子网可用主机数。\n\n**需要实现的核心接口与结构**：\n- `subnet_calc(network_cidr, num_subnets)` — 按 2^k >= num_subnets 求借位数并换算可用主机数 2^(32-p)-2\n\n**输入输出推演**：以首个公开样例 `/24 to 8 subnets` 为例：当调用 `subnet_calc(\"192.168.0.0/24\", 8)` 时，程序按上述步骤计算后应稳定返回 `{\"new_prefix\": 27, \"subnets\": 8, \"hosts_per_subnet\": 30, \"bits_borrowed\": 3}`。\n\n#### 🚀 边界避坑与进阶思考\n\n- **真题隐藏评测覆盖**：完整判题除了 2 个公开样例外，还包含 2 组隐藏边界与压力测试用例；请务必立足通用逻辑与数据结构设计，切勿针对公开样例硬编码分支。\n\n> 💭 **延伸思考（写完代码后建议作答）**：VLSM（可变长子网掩码）相比等长子网划分的优势是什么？",
     "latexFormulas": [
-      "子网数 = 2^借位数",
-      "可用主机数 = 2^(32-前缀) - 2"
+      "\\text{子网数} = 2^{\\text{借位数}}",
+      "\\text{可用主机数} = 2^{32 - \\text{前缀}} - 2"
     ],
     "starterCode": "def subnet_calc(network_cidr: str, num_subnets: int) -> dict:\n    \"\"\"计算子网划分结果：new_prefix, subnets, hosts_per_subnet, bits_borrowed\"\"\"\n    pass\n",
     "solutionCode": "# 【算法思路】计算划分目标子网数所需借用的主机比特位、新前缀长度及每个子网可用主机数。\n# 按 2^k >= num_subnets 求借位数并换算可用主机数 2^(32-p)-2\ndef subnet_calc(network_cidr, num_subnets):\n    ip, prefix = network_cidr.split('/')\n    prefix = int(prefix)\n    bits_needed = 0\n    while (1<<bits_needed) < num_subnets:\n        bits_needed += 1\n    new_prefix = prefix + bits_needed\n    hosts_per_subnet = (1 << (32 - new_prefix)) - 2\n    return {'new_prefix': new_prefix, 'subnets': num_subnets, 'hosts_per_subnet': max(0,hosts_per_subnet), 'bits_borrowed': bits_needed}\n",
@@ -2330,10 +2330,10 @@
     "tags": [
       "编码系统"
     ],
-    "theoryContent": "### 编程挑战：Base64 编码解码器\n\nBase64 将二进制数据编码为 64 个可打印字符，常用于在文本协议中传输二进制数据（如邮件附件、JSON 中的图片）。",
+    "theoryContent": "### 🎯 编程挑战：Base64 编码解码器\n\n> ⚡ **进阶实战与工程深水区**：字符编码就像不同国家使用的密码本：发送端用 UTF-8 本子把汉字编成多字节密文，接收端若错拿 Latin-1（单字节）本子去对照，就会吐出一串令人头疼的『锟斤拷』乱码。 在高并发或复杂真实场景中，更隐蔽的是截断或非法续字节混入日志流——如果直接粗暴解码，整个日志解析管道都会被异常中断。\n\nBase64 将二进制数据编码为 64 个可打印字符，常用于在文本协议中传输二进制数据（如邮件附件、JSON 中的图片）。\n\n#### 🔬 核心原理与机制拆解\n\n相比基础原型，本关更聚焦『**Base64 编码解码器**』在工程落地时的精度、效率与边界稳定性要求，涉及以下关键数学关系与规则：\n\n$$\n\\text{Base64: } 3\\text{ 字节} \\longrightarrow 4\\text{ 字符}\n$$\n\n$$\n\\text{使用 }\\texttt{=}\\text{ 填充使输出长度为 } 4 \\text{ 的倍数}\n$$\n\n- **核心要点**：输入字节数不是3的倍数时，用 = 填充到4的倍数。\n\n#### 🛠️ 实战任务与样例推演\n\n**解题总纲**：使用标准库 base64 模块实现 UTF-8 文本与 Base64 编码字符串之间的安全双向转换。\n\n**需要实现的核心接口与结构**：\n- `encode_base64(data)` — 支持字节与字符串输入的 Base64 编码\n- `decode_base64(encoded)` — 解码 Base64 并采用容错 UTF-8 还原文本\n\n**输入输出推演**：以首个公开样例 `encode hello` 为例：当调用 `encode_base64(\"Hello\")` 时，程序按上述步骤计算后应稳定返回 `\"SGVsbG8=\"`。\n\n#### 🚀 边界避坑与进阶思考\n\n- **真题隐藏评测覆盖**：完整判题除了 2 个公开样例外，还包含 3 组隐藏边界与压力测试用例；请务必立足通用逻辑与数据结构设计，切勿针对公开样例硬编码分支。\n\n> 💭 **延伸思考（写完代码后建议作答）**：Base64 编码后数据膨胀约 33%。在什么场景下这种膨胀是可以接受的？什么场景下不合适？",
     "latexFormulas": [
-      "Base64: 3字节 -> 4字符",
-      "= 填充使输出长度为 4 的倍数"
+      "\\text{Base64: } 3\\text{ 字节} \\longrightarrow 4\\text{ 字符}",
+      "\\text{使用 }\\texttt{=}\\text{ 填充使输出长度为 } 4 \\text{ 的倍数}"
     ],
     "starterCode": "import base64\n\ndef encode_base64(data: bytes | str) -> str:\n    \"\"\"将字节或 UTF-8 字符串编码为 Base64 字符串\"\"\"\n    pass\n\ndef decode_base64(encoded: str) -> str:\n    \"\"\"将 Base64 字符串解码为 UTF-8 文本\"\"\"\n    pass\n",
     "solutionCode": "# 【算法思路】使用标准库 base64 模块实现 UTF-8 文本与 Base64 编码字符串之间的安全双向转换。\nimport base64\n\n# 支持字节与字符串输入的 Base64 编码\ndef encode_base64(data):\n    # 兼容字符串输入，统一转为 UTF-8 字节后执行 Base64 编码\n    if isinstance(data, str):\n        data = data.encode('utf-8')\n    return base64.b64encode(data).decode('ascii')\n\n# 解码 Base64 并采用容错 UTF-8 还原文本\ndef decode_base64(encoded):\n    # 解码 Base64 字节并以 UTF-8 文本返回（非法字节用替换符兜底）\n    return base64.b64decode(encoded).decode('utf-8', errors='replace')\n",
@@ -2421,9 +2421,9 @@
     "tags": [
       "常用命令"
     ],
-    "theoryContent": "### 编程挑战：批量文件搜索工具\n\nLinux 中 find 和 grep 是最常用的搜索命令。本题模拟一个批量文件搜索器，在文件列表中按文件名模式或内容关键词搜索。",
+    "theoryContent": "### 🎯 编程挑战：批量文件搜索工具\n\n> ⚡ **进阶实战与工程深水区**：命令行管道好比车间里一环扣一环的传送带：上一个工具只专注把文件找出来，下一个工具只负责筛选字段或统计频次，组合起来便能秒级完成复杂运维任务。 在高并发或复杂真实场景中，最危险的陷阱在于直接拼接用户输入去拼 shell 字符串——文件名里一个空格或分号就能引发命令注入风险。\n\nLinux 中 find 和 grep 是最常用的搜索命令。本题模拟一个批量文件搜索器，在文件列表中按文件名模式或内容关键词搜索。\n\n#### 🔬 核心原理与机制拆解\n\n相比基础原型，本关更聚焦『**批量文件搜索工具**』在工程落地时的精度、效率与边界稳定性要求，涉及以下关键数学关系与规则：\n\n$$\n\\text{glob 匹配: }\\texttt{*.txt} \\iff \\text{endsWith}(\\texttt{'.txt'})\n$$\n\n- **核心要点**：grep -r 递归搜索目录中匹配内容的文件。\n\n#### 🛠️ 实战任务与样例推演\n\n**解题总纲**：结合 fnmatch 通配符匹配文件名与子串过滤文件内容，模拟 find+grep 联合检索。\n\n**需要实现的核心接口与结构**：\n- `search_by_name(files, pattern)` — 使用 shell 通配符筛选文件名\n- `search_by_content(files, keyword)` — 扫描文件内容字典并提取命中文件名\n\n**输入输出推演**：以首个公开样例 `glob matching` 为例：当调用 `search_by_name([\"readme.md\", \"main.py\", \"test.py\", \"notes.txt\"], \"*.md\")` 时，程序按上述步骤计算后应稳定返回 `[\"readme.md\"]`。\n\n#### 🚀 边界避坑与进阶思考\n\n- **真题隐藏评测覆盖**：完整判题除了 2 个公开样例外，还包含 2 组隐藏边界与压力测试用例；请务必立足通用逻辑与数据结构设计，切勿针对公开样例硬编码分支。\n\n> 💭 **延伸思考（写完代码后建议作答）**：find 和 grep 组合使用（find ... | xargs grep ...）比单独 grep -r 有什么优势？",
     "latexFormulas": [
-      "glob匹配: *.txt 等价于 endsWith('.txt')"
+      "\\text{glob 匹配: }\\texttt{*.txt} \\iff \\text{endsWith}(\\texttt{'.txt'})"
     ],
     "starterCode": "import fnmatch\n\ndef search_by_name(files: list[str], pattern: str) -> list[str]:\n    \"\"\"按通配符模式匹配文件名列表\"\"\"\n    pass\n\ndef search_by_content(files: list[dict], keyword: str) -> list[str]:\n    \"\"\"在文件字典列表中搜索包含关键词的文件名\"\"\"\n    pass\n",
     "solutionCode": "# 【算法思路】结合 fnmatch 通配符匹配文件名与子串过滤文件内容，模拟 find+grep 联合检索。\nimport fnmatch\n# 使用 shell 通配符筛选文件名\ndef search_by_name(files, pattern):\n    return [f for f in files if fnmatch.fnmatch(f, pattern)]\n# 扫描文件内容字典并提取命中文件名\ndef search_by_content(files, keyword):\n    return [f['name'] for f in files if keyword in f.get('content','')]\n",
@@ -2542,10 +2542,10 @@
     "tags": [
       "文件系统"
     ],
-    "theoryContent": "### 编程挑战：磁盘配额分析器\n\n大型系统中不同用户的磁盘使用量需要监控。当用户超过软限制时发出警告，超过硬限制时阻止写入。",
+    "theoryContent": "### 🎯 编程挑战：磁盘配额分析器\n\n> ⚡ **进阶实战与工程深水区**：如果把硬盘比作大型仓库，Inode 就像记录每箱货物大小和货架编号的『档案卡』，而目录项只是贴在门上的『货品名字条』；文件多到一定程度时，货架还没放满，档案卡却可能先用完了。 在高并发或复杂真实场景中，日志碎片化产生海量小文件时，往往磁盘空间显示还有富余，新请求却因 Inode 耗尽而报错无法写入。\n\n大型系统中不同用户的磁盘使用量需要监控。当用户超过软限制时发出警告，超过硬限制时阻止写入。\n\n#### 🔬 核心原理与机制拆解\n\n相比基础原型，本关更聚焦『**磁盘配额分析器**』在工程落地时的精度、效率与边界稳定性要求，涉及以下关键数学关系与规则：\n\n$$\n\\text{软限制: 超出后启动宽限计时，超时则升级为硬限制}\n$$\n\n$$\n\\text{硬限制: 不可突破的绝对资源上限}\n$$\n\n- **核心要点**：硬限制是绝对上限，超过时系统通常会阻止进一步写入。\n\n#### 🛠️ 实战任务与样例推演\n\n**解题总纲**：对比用户已用空间与硬/软配额阈值，输出 blocked、warning 或 ok 限额状态。\n\n**需要实现的核心接口与结构**：\n- `check_quota(usage, soft_limit, hard_limit)` — 优先判断是否触达硬限制，其次判断软限制并返回状态详情\n\n**输入输出推演**：以首个公开样例 `over soft limit` 为例：当调用 `check_quota(85, 80, 100)` 时，程序按上述步骤计算后应稳定返回 `{\"status\": \"warning\", \"usage\": 85, \"limit\": 80}`。\n\n#### 🚀 边界避坑与进阶思考\n\n- **真题隐藏评测覆盖**：完整判题除了 2 个公开样例外，还包含 3 组隐藏边界与压力测试用例；请务必立足通用逻辑与数据结构设计，切勿针对公开样例硬编码分支。\n\n> 💭 **延伸思考（写完代码后建议作答）**：Soft limit 和 hard limit 分开设置的设计目的是什么？",
     "latexFormulas": [
-      "软限制: 超过后开始计时, 超时后视为硬限制",
-      "硬限制: 不可超过的绝对上限"
+      "\\text{软限制: 超出后启动宽限计时，超时则升级为硬限制}",
+      "\\text{硬限制: 不可突破的绝对资源上限}"
     ],
     "starterCode": "def check_quota(usage: int, soft_limit: int, hard_limit: int) -> dict:\n    \"\"\"根据硬限制与软限制返回配额状态字典\"\"\"\n    pass\n",
     "solutionCode": "# 【算法思路】对比用户已用空间与硬/软配额阈值，输出 blocked、warning 或 ok 限额状态。\n# 优先判断是否触达硬限制，其次判断软限制并返回状态详情\ndef check_quota(usage, soft_limit, hard_limit):\n    if usage >= hard_limit:\n        return {'status':'blocked','usage':usage,'limit':hard_limit}\n    if usage >= soft_limit:\n        return {'status':'warning','usage':usage,'limit':soft_limit}\n    return {'status':'ok','usage':usage}\n",
@@ -2662,10 +2662,10 @@
     "tags": [
       "权限管理"
     ],
-    "theoryContent": "### 编程挑战：sudo 权限审计器\n\nsudo 允许用户以超级用户权限执行命令。安全审计需要检查哪些用户可以执行 sudo、以及他们能执行什么命令。",
+    "theoryContent": "### 🎯 编程挑战：sudo 权限审计器\n\n> ⚡ **进阶实战与工程深水区**：Linux 权限与 sudo 规则就像数据中心的门禁分级制度：门卡上明确写了谁能进机房查看日志（r）、谁能调整配置（w）、谁能重启机器（x），严禁图省事发一张『万能通行卡』。 在高并发或复杂真实场景中，过度开放 777 权限或滥用 NOPASSWD 通配命令，会让一次普通业务漏洞瞬间放大成整台主机失陷。\n\nsudo 允许用户以超级用户权限执行命令。安全审计需要检查哪些用户可以执行 sudo、以及他们能执行什么命令。\n\n#### 🔬 核心原理与机制拆解\n\n相比基础原型，本关更聚焦『**sudo 权限审计器**』在工程落地时的精度、效率与边界稳定性要求，涉及以下关键数学关系与规则：\n\n$$\n\\texttt{sudo}: \\text{user} \\longrightarrow \\text{以特权身份执行命令}\n$$\n\n$$\n\\texttt{\\%group ALL=(ALL) ALL}\n$$\n\n- **核心要点**：NOPASSWD 让用户在 sudo 时不需要输入密码，一旦终端被攻击者可随意 sudo。\n\n#### 🛠️ 实战任务与样例推演\n\n**解题总纲**：审查 sudoers 规则列表，识别 ALL=(ALL) 全权限授予与 NOPASSWD 免密高危配置。\n\n**需要实现的核心接口与结构**：\n- `audit_sudoers(entries)` — 遍历授权条目并标记全权限或免密风险字符串\n\n**输入输出推演**：以首个公开样例 `detect full access` 为例：当调用 `audit_sudoers([{\"user\": \"alice\", \"commands\": \"ALL\", \"target\": \"ALL\", \"nopasswd\": false}, ...]（共 2 项）)` 时，程序按上述步骤计算后应稳定返回 `[\"alice - FULL ACCESS\", \"bob - NOPASSWD\"]`。\n\n#### 🚀 边界避坑与进阶思考\n\n- **零除与空输入守卫**：遇到空列表、空字典或零分母场景（如模长为 0、样本数为 0）时，必须预先加好判空/判零保护，严防 `ZeroDivisionError` 或 `NaN` 污染输出。\n- **真题隐藏评测覆盖**：完整判题除了 2 个公开样例外，还包含 2 组隐藏边界与压力测试用例；请务必立足通用逻辑与数据结构设计，切勿针对公开样例硬编码分支。\n\n> 💭 **延伸思考（写完代码后建议作答）**：最小权限原则在 sudo 配置中如何体现？为什么应该限制命令而不是直接给 ALL？",
     "latexFormulas": [
-      "sudo: user -> command as root",
-      "%group ALL=(ALL) ALL"
+      "\\texttt{sudo}: \\text{user} \\longrightarrow \\text{以特权身份执行命令}",
+      "\\texttt{\\%group ALL=(ALL) ALL}"
     ],
     "starterCode": "def audit_sudoers(entries: list[dict]) -> list[str]:\n    \"\"\"审计 sudoers 配置中的高危权限条目\"\"\"\n    pass\n",
     "solutionCode": "# 【算法思路】审查 sudoers 规则列表，识别 ALL=(ALL) 全权限授予与 NOPASSWD 免密高危配置。\n# 遍历授权条目并标记全权限或免密风险字符串\ndef audit_sudoers(entries):\n    risks = []\n    for e in entries:\n        if e.get('commands')=='ALL' and e.get('target')=='ALL':\n            risks.append(f\"{e['user']} - FULL ACCESS\")\n        elif e.get('nopasswd'):\n            risks.append(f\"{e['user']} - NOPASSWD\")\n    return risks\n",
@@ -2775,10 +2775,10 @@
     "tags": [
       "进程管理"
     ],
-    "theoryContent": "### 编程挑战：进程优先级调度器\n\nLinux 使用 nice 值（-20 到 19）调整进程优先级。值越小优先级越高。CFS（完全公平调度器）用虚拟运行时间来实现公平调度。",
+    "theoryContent": "### 🎯 编程挑战：进程优先级调度器\n\n> ⚡ **进阶实战与工程深水区**：进程调度器如同多核厨房里的主厨：必须盯着每个灶台（进程）的火候与虚拟运行时间（vruntime），在阻塞、就绪与运行之间快速切换，避免僵死进程白白占着灶位。 在高并发或复杂真实场景中，如果父进程忘了及时回收退出子进程或优先级权重失衡，孤儿/僵尸积累与饥饿现象会悄悄拖垮系统吞吐。\n\nLinux 使用 nice 值（-20 到 19）调整进程优先级。值越小优先级越高。CFS（完全公平调度器）用虚拟运行时间来实现公平调度。\n\n#### 🔬 核心原理与机制拆解\n\n相比基础原型，本关更聚焦『**进程优先级调度器**』在工程落地时的精度、效率与边界稳定性要求，涉及以下关键数学关系与规则：\n\n$$\n\\text{Nice 优先级范围: } [-20\\text{（最高）},\\; 19\\text{（最低）}]\n$$\n\n$$\n\\text{vruntime} = \\frac{\\text{实际运行时间}}{\\text{weight}}\n$$\n\n- **核心要点**：设置负 nice 值（更高优先级）需要 root 权限。\n\n#### 🛠️ 实战任务与样例推演\n\n**解题总纲**：依据 Linux CFS 调度器的 nice 权重指数衰减公式计算虚拟运行时间并择小调度。\n\n**需要实现的核心接口与结构**：\n- `calculate_vruntime(runtime, nice)` — 按 nice 值换算权重并得出虚拟运行时间\n- `schedule_next(processes)` — 选取当前 vruntime 最小的进程 PID\n\n**输入输出推演**：以首个公开样例 `lower nice = higher priority` 为例：当调用 `schedule_next([{\"pid\": 1, \"runtime\": 10, \"nice\": 0}, {\"pid\": 2, \"runtime\": 10, \"nice\": 5}])` 时，程序按上述步骤计算后应稳定返回 `1`。\n\n#### 🚀 边界避坑与进阶思考\n\n- **数值类型与浮点舍入**：若结果涉及浮点数或小数保留，需与示例 `round` 位数及 `float` 精度对齐，避免直接拿字符串拼接或整数截断替代。\n- **零除与空输入守卫**：遇到空列表、空字典或零分母场景（如模长为 0、样本数为 0）时，必须预先加好判空/判零保护，严防 `ZeroDivisionError` 或 `NaN` 污染输出。\n- **真题隐藏评测覆盖**：完整判题除了 2 个公开样例外，还包含 2 组隐藏边界与压力测试用例；请务必立足通用逻辑与数据结构设计，切勿针对公开样例硬编码分支。\n\n> 💭 **延伸思考（写完代码后建议作答）**：完全公平调度器（CFS）与传统的 O(1) 调度器相比，主要改进是什么？",
     "latexFormulas": [
-      "Nice值: -20(最高) ~ 19(最低)",
-      "vruntime = 实际运行时间 / weight"
+      "\\text{Nice 优先级范围: } [-20\\text{（最高）},\\; 19\\text{（最低）}]",
+      "\\text{vruntime} = \\frac{\\text{实际运行时间}}{\\text{weight}}"
     ],
     "starterCode": "def calculate_vruntime(runtime: float, nice: int) -> float:\n    \"\"\"按 CFS 权重公式计算虚拟运行时间\"\"\"\n    pass\n\ndef schedule_next(processes: list[dict]) -> int:\n    \"\"\"选择下一个应调度的进程 PID\"\"\"\n    pass\n",
     "solutionCode": "# 【算法思路】依据 Linux CFS 调度器的 nice 权重指数衰减公式计算虚拟运行时间并择小调度。\n# 按 nice 值换算权重并得出虚拟运行时间\ndef calculate_vruntime(runtime, nice):\n    # CFS 调度器中权重按 1.25^(-nice) 缩放\n    weight = 1024 / (1.25 ** nice)\n    return round(runtime / weight, 2)\n\n# 选取当前 vruntime 最小的进程 PID\ndef schedule_next(processes):\n    # 若进程条目尚未携带 vruntime 字段，则动态依据 runtime 与 nice 计算\n    return min(\n        processes,\n        key=lambda p: p['vruntime'] if 'vruntime' in p else calculate_vruntime(p['runtime'], p['nice'])\n    )['pid']\n",
@@ -2888,9 +2888,9 @@
     "tags": [
       "Shell脚本"
     ],
-    "theoryContent": "### 编程挑战：日志轮转脚本模拟器\n\n日志文件会持续增长，填满磁盘。logrotate 定期压缩、归档和清理旧日志。",
+    "theoryContent": "### 🎯 编程挑战：日志轮转脚本模拟器\n\n> ⚡ **进阶实战与工程深水区**：自动化运维脚本相当于值班机器人的标准操作手册（SOP）：从日志轮转压缩、安全清理过期归档到异常告警，每一步都必须可重复、可审计、能扛住边界异常。 在高并发或复杂真实场景中，生产事故常常发生在『昨天跑得好好的脚本今天突然删错目录或漏压缩』——根源通常在于缺少严格的状态校验与安全防护。\n\n日志文件会持续增长，填满磁盘。logrotate 定期压缩、归档和清理旧日志。\n\n#### 🔬 核心原理与机制拆解\n\n相比基础原型，本关更聚焦『**日志轮转脚本模拟器**』在工程落地时的精度、效率与边界稳定性要求，涉及以下关键数学关系与规则：\n\n$$\n\\text{logrotate}: \\text{compress} \\to \\text{rotate} \\to \\text{delete old}\n$$\n\n- **核心要点**：压缩归档既节省空间又保留历史日志，符合审计和排查需求。\n\n#### 🛠️ 实战任务与样例推演\n\n**解题总纲**：按文件体积上限执行压缩归档并清零体积，对超时陈旧日志标记删除以模拟 logrotate。\n\n**需要实现的核心接口与结构**：\n- `simulate_logrotate(log_files, max_age_days, max_size_mb)` — 遍历日志列表根据 max_size_mb 与 max_age_days 生成轮转操作\n\n**输入输出推演**：以首个公开样例 `rotate large file and delete old` 为例：当调用 `simulate_logrotate([...共 2 项], 7, 100)` 时，程序按上述步骤计算后应稳定返回 `[{\"original\": \"app.log\", \"rotated\": \"app.log.1.gz\", \"compressed_size\": 30}, ...]（共 2 项）`。\n\n#### 🚀 边界避坑与进阶思考\n\n- **数值类型与浮点舍入**：若结果涉及浮点数或小数保留，需与示例 `round` 位数及 `float` 精度对齐，避免直接拿字符串拼接或整数截断替代。\n- **零除与空输入守卫**：遇到空列表、空字典或零分母场景（如模长为 0、样本数为 0）时，必须预先加好判空/判零保护，严防 `ZeroDivisionError` 或 `NaN` 污染输出。\n- **真题隐藏评测覆盖**：完整判题除了 2 个公开样例外，还包含 2 组隐藏边界与压力测试用例；请务必立足通用逻辑与数据结构设计，切勿针对公开样例硬编码分支。\n\n> 💭 **延伸思考（写完代码后建议作答）**：如果日志写入速度超过轮转速度（写 100MB/小时，但轮转每天一次），会有什么问题？怎么解决？",
     "latexFormulas": [
-      "logrotate: compress -> rotate -> delete old"
+      "\\text{logrotate}: \\text{compress} \\to \\text{rotate} \\to \\text{delete old}"
     ],
     "starterCode": "def simulate_logrotate(log_files: list[dict], max_age_days: int, max_size_mb: int) -> list[dict]:\n    \"\"\"模拟日志轮转与过期清理动作\"\"\"\n    pass\n",
     "solutionCode": "# 【算法思路】按文件体积上限执行压缩归档并清零体积，对超时陈旧日志标记删除以模拟 logrotate。\n# 遍历日志列表根据 max_size_mb 与 max_age_days 生成轮转操作\ndef simulate_logrotate(log_files, max_age_days, max_size_mb):\n    rotated = []\n    for f in log_files:\n        if f['size_mb'] > max_size_mb:\n            rotated.append({'original':f['name'],'rotated':f['name']+'.1.gz','compressed_size':round(f['size_mb']*0.2,1)})\n            f['size_mb'] = 0\n        elif f['age_days'] > max_age_days:\n            rotated.append({'original':f['name'],'action':'deleted'})\n    return rotated\n",
@@ -3015,10 +3015,10 @@
     "tags": [
       "init/clone"
     ],
-    "theoryContent": "### 编程挑战：分支清理工具\n\n协作仓库中常累积大量已合并的过时分支。定期清理有助于保持仓库整洁。",
+    "theoryContent": "### 🎯 编程挑战：分支清理工具\n\n> ⚡ **进阶实战与工程深水区**：初始化与克隆仓库就像为一栋大楼建立施工总档案库：从拉取历史蓝图、配置 `.gitignore` 屏蔽临时垃圾，到设定远端同步坐标，决定了团队协作的起跑线是否整洁。 在高并发或复杂真实场景中，一旦在初始提交里误把密钥或上百 MB 的编译缓存推上去，后续每个协作者克隆仓库时都要背负沉重负担。\n\n协作仓库中常累积大量已合并的过时分支。定期清理有助于保持仓库整洁。\n\n#### 🔬 核心原理与机制拆解\n\n相比基础原型，本关更聚焦『**分支清理工具**』在工程落地时的精度、效率与边界稳定性要求，涉及以下关键数学关系与规则：\n\n$$\n\\texttt{git branch -d <branch>} \\text{（安全删除已合并分支）}\n$$\n\n$$\n\\texttt{git branch -D <branch>} \\text{（强制删除未合并分支）}\n$$\n\n- **核心要点**：Git 不允许删除当前 HEAD 指向的分支，需要先切到其他分支再删除。\n\n#### 🛠️ 实战任务与样例推演\n\n**解题总纲**：结合已合并分支清单与受保护默认分支，区分可安全删除分支与待人工确认分支。\n\n**需要实现的核心接口与结构**：\n- `cleanup_branches(branches, merged_branches, default_branch)` — 将非默认分支按是否已合并划分至 safe_to_delete 与 needs_review\n\n**输入输出推演**：以首个公开样例 `safe branches` 为例：当调用 `cleanup_branches([\"main\", \"feature-old\", \"feature-wip\"], [\"feature-old\"], \"main\")` 时，程序按上述步骤计算后应稳定返回 `{\"safe_to_delete\": [\"feature-old\"], \"needs_review\": [\"feature-wip\"]}`。\n\n#### 🚀 边界避坑与进阶思考\n\n- **零除与空输入守卫**：遇到空列表、空字典或零分母场景（如模长为 0、样本数为 0）时，必须预先加好判空/判零保护，严防 `ZeroDivisionError` 或 `NaN` 污染输出。\n- **真题隐藏评测覆盖**：完整判题除了 2 个公开样例外，还包含 2 组隐藏边界与压力测试用例；请务必立足通用逻辑与数据结构设计，切勿针对公开样例硬编码分支。\n\n> 💭 **延伸思考（写完代码后建议作答）**：删除远程分支（git push -d origin branch）和本地分支的区别是什么？如何同步清理？",
     "latexFormulas": [
-      "git branch -d branch_name: 删除已合并分支",
-      "git branch -D: 强制删除未合并分支"
+      "\\texttt{git branch -d <branch>} \\text{（安全删除已合并分支）}",
+      "\\texttt{git branch -D <branch>} \\text{（强制删除未合并分支）}"
     ],
     "starterCode": "def cleanup_branches(branches: list[str], merged_branches: list[str], default_branch: str) -> dict:\n    \"\"\"区分可安全删除的已合并分支与需审查的未合并分支\"\"\"\n    pass\n",
     "solutionCode": "# 【算法思路】结合已合并分支清单与受保护默认分支，区分可安全删除分支与待人工确认分支。\n# 将非默认分支按是否已合并划分至 safe_to_delete 与 needs_review\ndef cleanup_branches(branches, merged_branches, default_branch):\n    safe = [b for b in branches if b in merged_branches and b != default_branch]\n    unsafe = [b for b in branches if b not in merged_branches and b != default_branch]\n    return {'safe_to_delete': safe, 'needs_review': unsafe}\n",
@@ -3145,10 +3145,10 @@
     "tags": [
       "add/commit/push"
     ],
-    "theoryContent": "### 编程挑战：提交压缩整理器\n\n开发中会有一堆 WIP（Work In Progress）提交。合并 PR 前需要用 rebase -i 或 reset 将这些提交压缩成有意义的提交。",
+    "theoryContent": "### 🎯 编程挑战：提交压缩整理器\n\n> ⚡ **进阶实战与工程深水区**：精准暂存与原子提交就像外科医生按步骤缝合并写病历：把关联改动打包成一个语义内聚的提交（Cohesive Commit），未来排查问题或回滚时才能一目了然。 在高并发或复杂真实场景中，如果把十几个不相关的功能与调试代码一股脑全塞进一个 commit，出故障后 `git bisect` 与 `revert` 都会变得痛苦不堪。\n\n开发中会有一堆 WIP（Work In Progress）提交。合并 PR 前需要用 rebase -i 或 reset 将这些提交压缩成有意义的提交。\n\n#### 🔬 核心原理与机制拆解\n\n相比基础原型，本关更聚焦『**提交压缩整理器**』在工程落地时的精度、效率与边界稳定性要求，涉及以下关键数学关系与规则：\n\n$$\n\\texttt{git rebase -i HEAD\\textasciitilde N} \\text{（交互式变基重整提交）}\n$$\n\n$$\n\\text{操作指令: }\\texttt{pick} / \\texttt{squash} / \\texttt{fixup} / \\texttt{reword}\n$$\n\n- **核心要点**：squash 合并时保留该提交的日志信息，fixup 则丢弃。\n\n#### 🛠️ 实战任务与样例推演\n\n**解题总纲**：模拟交互式 squash，将最前端连续提交消息合并为单条提交以保留目标提交总数。\n\n**需要实现的核心接口与结构**：\n- `simulate_squash(commits, target_count)` — 将头部多余提交并入首条记录并保留末尾 target_count-1 条提交\n\n**输入输出推演**：以首个公开样例 `squash 3 to 2` 为例：当调用 `simulate_squash([{\"id\": \"a\", \"message\": \"WIP 1\"}, ...]（共 3 项）, 2)` 时，程序按上述步骤计算后应稳定返回 `[{\"id\": \"a\", \"message\": \"WIP 1; WIP 2\"}, {\"id\": \"c\", \"message\": \"final\"}]`。\n\n#### 🚀 边界避坑与进阶思考\n\n- **真题隐藏评测覆盖**：完整判题除了 2 个公开样例外，还包含 2 组隐藏边界与压力测试用例；请务必立足通用逻辑与数据结构设计，切勿针对公开样例硬编码分支。\n\n> 💭 **延伸思考（写完代码后建议作答）**：rebase 和 merge 在合并分支时对提交历史的组织方式有什么本质区别？",
     "latexFormulas": [
-      "git rebase -i HEAD~N: 交互式变基",
-      "pick/squash/fixup/reword"
+      "\\texttt{git rebase -i HEAD\\textasciitilde N} \\text{（交互式变基重整提交）}",
+      "\\text{操作指令: }\\texttt{pick} / \\texttt{squash} / \\texttt{fixup} / \\texttt{reword}"
     ],
     "starterCode": "def simulate_squash(commits: list[dict], target_count: int) -> list[dict]:\n    \"\"\"将早期多余提交压缩合并，使最终提交数不超过 target_count\"\"\"\n    pass\n",
     "solutionCode": "# 【算法思路】模拟交互式 squash，将最前端连续提交消息合并为单条提交以保留目标提交总数。\n# 将头部多余提交并入首条记录并保留末尾 target_count-1 条提交\ndef simulate_squash(commits, target_count):\n    if len(commits) <= target_count:\n        return commits\n    result = []\n    for i, c in enumerate(commits):\n        if i == 0:\n            result.append(c)\n        elif i < len(commits) - (target_count-1):\n            result[-1]['message'] += '; ' + c['message']\n        else:\n            result.append(c)\n    return result\n",
@@ -3306,10 +3306,10 @@
     "tags": [
       "branch/merge"
     ],
-    "theoryContent": "### 编程挑战：合并冲突自动解决器\n\n当合并两个分支修改了同一文件的不同区域时，Git 可能自动合并成功。当修改了相同区域时产生冲突，需要人工解决。",
+    "theoryContent": "### 🎯 编程挑战：合并冲突自动解决器\n\n> ⚡ **进阶实战与工程深水区**：分支模型好比影视后期剪辑的多条平行轨道：新功能在独立支线试验互不打扰，验收合格后再与主干轨道（main）汇合。 在高并发或复杂真实场景中，若分支长期游离不合并又不定期清理陈旧分支，仓库里很快会堆满真假难辨的僵尸分支与合并灾难。\n\n当合并两个分支修改了同一文件的不同区域时，Git 可能自动合并成功。当修改了相同区域时产生冲突，需要人工解决。\n\n#### 🔬 核心原理与机制拆解\n\n相比基础原型，本关更聚焦『**合并冲突自动解决器**』在工程落地时的精度、效率与边界稳定性要求，涉及以下关键数学关系与规则：\n\n$$\n\\text{Auto-merge: 修改不同行} \\longrightarrow \\text{自动三路合并}\n$$\n\n$$\n\\text{Conflict: 同区域修改冲突} \\longrightarrow \\text{标记并交由人工裁决}\n$$\n\n- **核心要点**：<<<<<<< HEAD 到 ======= 之间是当前分支的内容。\n\n#### 🛠️ 实战任务与样例推演\n\n**解题总纲**：对比基线版本与双分支修改集合，分离可自动合入的非重叠变更与实质内容冲突。\n\n**需要实现的核心接口与结构**：\n- `auto_merge(base, a_changes, b_changes)` — 提取相对 base 的真实改动行并计算冲突数与自动合并数\n\n**输入输出推演**：以首个公开样例 `no conflict` 为例：当调用 `auto_merge({\"10\": \"a\"}, {\"10\": \"a\", \"15\": \"new\"}, {\"10\": \"a\", \"20\": \"new2\"})` 时，程序按上述步骤计算后应稳定返回 `{\"conflicts\": 0, \"auto_merged\": 2, \"status\": \"clean\"}`。\n\n#### 🚀 边界避坑与进阶思考\n\n- **真题隐藏评测覆盖**：完整判题除了 2 个公开样例外，还包含 2 组隐藏边界与压力测试用例；请务必立足通用逻辑与数据结构设计，切勿针对公开样例硬编码分支。\n\n> 💭 **延伸思考（写完代码后建议作答）**：三路合并（Three-way merge）相比两路合并的优势是什么？",
     "latexFormulas": [
-      "Auto-merge: 不同行修改 -> 自动合并",
-      "Conflict: 同区域修改 -> 人工处理"
+      "\\text{Auto-merge: 修改不同行} \\longrightarrow \\text{自动三路合并}",
+      "\\text{Conflict: 同区域修改冲突} \\longrightarrow \\text{标记并交由人工裁决}"
     ],
     "starterCode": "def auto_merge(base: dict, a_changes: dict, b_changes: dict) -> dict:\n    \"\"\"对比基线统计自动合并行数与冲突行数\"\"\"\n    pass\n",
     "solutionCode": "# 【算法思路】对比基线版本与双分支修改集合，分离可自动合入的非重叠变更与实质内容冲突。\n# 提取相对 base 的真实改动行并计算冲突数与自动合并数\ndef auto_merge(base, a_changes, b_changes):\n    # 仅统计相对于基线真正发生改动的行\n    a_diff = {line for line, val in a_changes.items() if base.get(line) != val}\n    b_diff = {line for line, val in b_changes.items() if base.get(line) != val}\n    # 双方都修改且内容不同则判定为冲突行\n    conflicts = [line for line in (a_diff & b_diff) if a_changes[line] != b_changes[line]]\n    # 无冲突的唯一改动行均可自动合并\n    auto_merged = len((a_diff | b_diff) - set(conflicts))\n    return {\n        'conflicts': len(conflicts),\n        'auto_merged': auto_merged,\n        'status': 'conflict' if conflicts else 'clean',\n    }\n",
@@ -3440,10 +3440,10 @@
     "tags": [
       "rebase"
     ],
-    "theoryContent": "### 编程挑战：Rebase 冲突预测器\n\nRebase 将当前分支的提交在目标分支上重放。如果目标分支也在相同区域有修改，每次重放都可能产生冲突。",
+    "theoryContent": "### 🎯 编程挑战：Rebase 冲突预测器\n\n> ⚡ **进阶实战与工程深水区**：Git Rebase（变基）像把支线故事重新抄写到最新主线剧情的结尾：让提交历史变成一条干净流畅的直线，免去满屏无意义的 Merge 提交节点。 在高并发或复杂真实场景中，但如果在多人共享的公共分支上执行 Rebase 改写历史，别人本地的提交树会与远端彻底分叉，引发严重的同步冲突。\n\nRebase 将当前分支的提交在目标分支上重放。如果目标分支也在相同区域有修改，每次重放都可能产生冲突。\n\n#### 🔬 核心原理与机制拆解\n\n相比基础原型，本关更聚焦『**Rebase 冲突预测器**』在工程落地时的精度、效率与边界稳定性要求，涉及以下关键数学关系与规则：\n\n$$\n\\text{Rebase} = \\text{在目标分支 HEAD 上逐一重放待变基提交}\n$$\n\n$$\n\\text{总冲突数} = \\sum_{k} \\text{Conflicts}(commit_k)\n$$\n\n- **核心要点**：公共分支上 rebase 会重写历史，导致协作者历史分叉，应使用 merge。\n\n#### 🛠️ 实战任务与样例推演\n\n**解题总纲**：逐对检查特性分支与目标分支的文件行区间重叠次数，低于阈值建议 rebase 否则建议 merge。\n\n**需要实现的核心接口与结构**：\n- `predict_rebase_conflicts(feature_commits, target_commits)` — 统计重叠改动区块数并生成合并策略建议\n\n**输入输出推演**：以首个公开样例 `low conflict` 为例：当调用 `predict_rebase_conflicts([{\"file\": \"a.py\", \"start\": 1, \"end\": 5}], [{\"file\": \"a.py\", \"start\": 10, \"end\": 15}])` 时，程序按上述步骤计算后应稳定返回 `{\"total_conflicts\": 0, \"recommendation\": \"rebase ok\"}`。\n\n#### 🚀 边界避坑与进阶思考\n\n- **零除与空输入守卫**：遇到空列表、空字典或零分母场景（如模长为 0、样本数为 0）时，必须预先加好判空/判零保护，严防 `ZeroDivisionError` 或 `NaN` 污染输出。\n- **真题隐藏评测覆盖**：完整判题除了 2 个公开样例外，还包含 2 组隐藏边界与压力测试用例；请务必立足通用逻辑与数据结构设计，切勿针对公开样例硬编码分支。\n\n> 💭 **延伸思考（写完代码后建议作答）**：git pull --rebase 和 git pull 的区别是什么？为什么推荐用 --rebase？",
     "latexFormulas": [
-      "Rebase = 在目标分支的 HEAD 上逐个应用提交",
-      "冲突数 = 累积计算"
+      "\\text{Rebase} = \\text{在目标分支 HEAD 上逐一重放待变基提交}",
+      "\\text{总冲突数} = \\sum_{k} \\text{Conflicts}(commit_k)"
     ],
     "starterCode": "def predict_rebase_conflicts(feature_commits: list[dict], target_commits: list[dict]) -> dict:\n    \"\"\"预测变基区间重叠冲突数并给出建议\"\"\"\n    pass\n",
     "solutionCode": "# 【算法思路】逐对检查特性分支与目标分支的文件行区间重叠次数，低于阈值建议 rebase 否则建议 merge。\n# 统计重叠改动区块数并生成合并策略建议\ndef predict_rebase_conflicts(feature_commits, target_commits):\n    total = 0\n    for fc in feature_commits:\n        for tc in target_commits:\n            if fc['file'] == tc['file']:\n                if max(fc['start'],tc['start']) <= min(fc['end'],tc['end']):\n                    total += 1\n    return {'total_conflicts': total, 'recommendation': 'merge instead' if total > 2 else 'rebase ok'}\n",
@@ -3609,11 +3609,11 @@
     "tags": [
       "conflict解决"
     ],
-    "theoryContent": "### 编程挑战：合并策略选择器\n\nGit 提供多种合并策略：recursive（默认）、ours、theirs、octopus 等。不同场景需要不同策略。",
+    "theoryContent": "### 🎯 编程挑战：合并策略选择器\n\n> ⚡ **进阶实战与工程深水区**：合并冲突就像两位作者同时修改了书稿的同一段落：Git 会忠实标出 `<<<<<<<`、`=======`、`>>>>>>>` 边界，把最终保留哪一版或如何融合的裁决权交给工程师。 在高并发或复杂真实场景中，机械地全局选 ours 或 theirs 最容易在不知不觉中『覆盖掉队友昨晚刚修好的线上 Bug』。\n\nGit 提供多种合并策略：recursive（默认）、ours、theirs、octopus 等。不同场景需要不同策略。\n\n#### 🔬 核心原理与机制拆解\n\n相比基础原型，本关更聚焦『**合并策略选择器**』在工程落地时的精度、效率与边界稳定性要求，涉及以下关键数学关系与规则：\n\n$$\n\\texttt{recursive}: \\text{ 默认三路合并策略}\n$$\n\n$$\n\\texttt{ours}: \\text{ 冲突处保留当前分支版本}\n$$\n\n$$\n\\texttt{theirs}: \\text{ 冲突处采纳传入分支版本}\n$$\n\n- **核心要点**：--no-ff 强制创建一个 merge commit，即使可以快进也保留分支历史。\n\n#### 🛠️ 实战任务与样例推演\n\n**解题总纲**：基于团队协作模式（长期分支/实验分支/多人协同/快进）映射最优 Git 合并策略。\n\n**需要实现的核心接口与结构**：\n- `recommend_strategy(branch_a, branch_b, situation)` — 查表返回与场景匹配的 Git 合并参数及说明\n\n**输入输出推演**：以首个公开样例 `collaborative project` 为例：当调用 `recommend_strategy(\"feature\", \"main\", \"collaborative\")` 时，程序按上述步骤计算后应稳定返回 `\"merge --no-ff (保留分支痕迹)\"`。\n\n#### 🚀 边界避坑与进阶思考\n\n- **真题隐藏评测覆盖**：完整判题除了 2 个公开样例外，还包含 2 组隐藏边界与压力测试用例；请务必立足通用逻辑与数据结构设计，切勿针对公开样例硬编码分支。\n\n> 💭 **延伸思考（写完代码后建议作答）**：Squash merge 和普通 merge 对提交历史的影响有什么不同？分别适合什么场景？",
     "latexFormulas": [
-      "recursive: 默认三路合并",
-      "ours: 完全保留当前分支",
-      "theirs: 完全接受传入分支"
+      "\\texttt{recursive}: \\text{ 默认三路合并策略}",
+      "\\texttt{ours}: \\text{ 冲突处保留当前分支版本}",
+      "\\texttt{theirs}: \\text{ 冲突处采纳传入分支版本}"
     ],
     "starterCode": "def recommend_strategy(branch_a: str, branch_b: str, situation: str) -> str:\n    \"\"\"根据分支协作场景推荐 Git 合并策略\"\"\"\n    pass\n",
     "solutionCode": "# 【算法思路】基于团队协作模式（长期分支/实验分支/多人协同/快进）映射最优 Git 合并策略。\n# 查表返回与场景匹配的 Git 合并参数及说明\ndef recommend_strategy(branch_a, branch_b, situation):\n    strategies = {\n        'standard': 'recursive (default)',\n        'long-lived': 'merge --squash (压缩为1个提交)',\n        'experimental': 'rebase (保持历史线性)',\n        'collaborative': 'merge --no-ff (保留分支痕迹)',\n        'trivial': 'merge --ff-only (快进)'\n    }\n    return strategies.get(situation, 'recursive')\n",

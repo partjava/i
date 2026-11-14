@@ -14,7 +14,7 @@
       "config",
       "parsing"
     ],
-    "theoryContent": "### 编程挑战：带类型校验的配置值解析器\n\n配置文件中的值都是字符串，但业务代码需要正确的类型。比如环境变量 `MAX_CONNECTIONS=100` 应该是整数，`ENABLE_CACHE=true` 应该是布尔值。\n\n本题要求实现一个解析器，根据声明的类型描述，把字符串值转换为对应的 Python 类型，并在转换失败时提供清晰的错误信息。\n\n需要支持的类型：`int`、`float`、`bool`、`str`、`list[int]`（逗号分隔的字符串转整数列表）。",
+    "theoryContent": "### 🎯 编程挑战：带类型校验的配置值解析器\n\n> 💡 **场景类比与核心直觉**：类型解析与校验就像快递站入口的电子秤与安检仪：不管上游配置还是表单传来的全是一串文本，入站第一关必须准确拆箱变成整数、浮点、布尔或整数列表，不合格当场报错拦截。\n\n配置文件中的值都是字符串，但业务代码需要正确的类型。比如环境变量 `MAX_CONNECTIONS=100` 应该是整数，`ENABLE_CACHE=true` 应该是布尔值。\n\n本题要求实现一个解析器，根据声明的类型描述，把字符串值转换为对应的 Python 类型，并在转换失败时提供清晰的错误信息。\n\n需要支持的类型：`int`、`float`、`bool`、`str`、`list[int]`（逗号分隔的字符串转整数列表）。\n\n#### 🔬 核心原理与机制拆解\n\n在动手写代码前，先理清『**带类型校验的配置值解析器**』背后的数学建模与核心运行逻辑：真实线上最怕『隐式错误容忍』——比如把 `'true'` 误当非空字符串直接 `bool('false') == True`，导致开关逻辑彻底反向。\n\n$$\nbool(val) \\in \\{True, False\\}\n$$\n\n$$\nlist[int] = [int(x) \\mid x \\in value.split(',')]\n$$\n\n- **核心要点**：非空字符串在 Python 中总是 True，'false' 也是非空字符串。\n- **核心要点**：int() 默认 base=10，但字符串前缀 0x 会触发自动识别进制。\n\n#### 🛠️ 实战任务与样例推演\n\n**解题总纲**：将配置字符串安全解析为 int/float/bool/str/list[int] 类型，非法字面量抛出 ValueError。\n\n**需要实现的核心接口与结构**：\n- `parse_config_value(value: str, target_type: str)` — 按目标类型分发转换逻辑，严格校验布尔与列表格式\n\n**输入输出推演**：以首个公开样例 `parses integer` 为例：当调用 `parse_config_value(\"100\", \"int\")` 时，程序按上述步骤计算后应稳定返回 `100`。\n\n#### 🚀 边界避坑与进阶思考\n\n- **非法输入主动拦截**：当遇到空集合、非正数参数或违反约束的数据时，务必按要求显式 `raise` `ValueError`，不要静默返回 `None` 或吞掉异常。\n- **真题隐藏评测覆盖**：完整判题除了 4 个公开样例外，还包含 3 组隐藏边界与压力测试用例；请务必立足通用逻辑与数据结构设计，切勿针对公开样例硬编码分支。\n\n> 💭 **延伸思考（写完代码后建议作答）**：如果你要支持嵌套类型如 `list[dict[str,int]]`，解析器设计应该如何分层？",
     "latexFormulas": [
       "bool(val) \\in \\{True, False\\}",
       "list[int] = [int(x) \\mid x \\in value.split(',')]"
@@ -150,9 +150,9 @@
       "logging",
       "filter"
     ],
-    "theoryContent": "### 编程挑战：日志级别过滤器\n\n日志系统中，每条日志有级别（DEBUG < INFO < WARN < ERROR < FATAL）。当配置的日志级别为 WARN 时，低于 WARN 的日志（DEBUG、INFO）应该被过滤掉。\n\n本题要求实现一个日志过滤函数，给定一组日志条目和最低级别，返回过滤后保留的条目，并按时间戳排序。\n\n日志条目格式：`{\"timestamp\": \"2025-01-01 10:00:00\", \"level\": \"INFO\", \"message\": \"...\"}`",
+    "theoryContent": "### 🎯 编程挑战：日志级别过滤器\n\n> 💡 **场景类比与核心直觉**：条件分支就像繁忙十字路口的智能信号灯配时规则：不仅要把常规高低峰值分流清楚，还要提前防范逻辑顺序颠倒导致某个分支永远进不去（死分支）。\n\n日志系统中，每条日志有级别（DEBUG < INFO < WARN < ERROR < FATAL）。当配置的日志级别为 WARN 时，低于 WARN 的日志（DEBUG、INFO）应该被过滤掉。\n\n本题要求实现一个日志过滤函数，给定一组日志条目和最低级别，返回过滤后保留的条目，并按时间戳排序。\n\n日志条目格式：`{\"timestamp\": \"2025-01-01 10:00:00\", \"level\": \"INFO\", \"message\": \"...\"}`\n\n#### 🔬 核心原理与机制拆解\n\n在动手写代码前，先理清『**日志级别过滤器**』背后的数学建模与核心运行逻辑：多层嵌套与边界开闭区间（`<` vs `<=`）一不留神错写 1 位数，就会让边界样本落入错误等级。\n\n$$\n\\mathrm{DEBUG} < \\mathrm{INFO} < \\mathrm{WARN} < \\mathrm{ERROR} < \\mathrm{FATAL}\n$$\n\n$$\nFilter(log) = level(log) \\ge min\\_level\n$$\n\n- **核心要点**：字符串比较是按字典序，'ERROR'(69) 和 'WARN'(87) 能比较但语义不对。\n- **核心要点**：日志级别过滤是责任链的典型应用，每级决定是否处理或传给下一级。\n\n#### 🛠️ 实战任务与样例推演\n\n**解题总纲**：按日志严重等级权重过滤掉低于最低阈值的日志，并按时间戳升序输出。\n\n**需要实现的核心接口与结构**：\n- `filter_logs(logs: list[dict], min_level: str) -> list[dict]` — 校验等级名称合法性、过滤并按时间戳排序日志列表\n\n**输入输出推演**：以首个公开样例 `filters below warn` 为例：当调用 `filter_logs([...共 3 项], \"WARN\")` 时，程序按上述步骤计算后应稳定返回 `[{\"timestamp\": \"10:00:02\", \"level\": \"WARN\", \"message\": \"disk usage 85%\"}]`。\n\n#### 🚀 边界避坑与进阶思考\n\n- **非法输入主动拦截**：当遇到空集合、非正数参数或违反约束的数据时，务必按要求显式 `raise` `ValueError`，不要静默返回 `None` 或吞掉异常。\n- **零除与空输入守卫**：遇到空列表、空字典或零分母场景（如模长为 0、样本数为 0）时，必须预先加好判空/判零保护，严防 `ZeroDivisionError` 或 `NaN` 污染输出。\n- **真题隐藏评测覆盖**：完整判题除了 2 个公开样例外，还包含 2 组隐藏边界与压力测试用例；请务必立足通用逻辑与数据结构设计，切勿针对公开样例硬编码分支。\n\n> 💭 **延伸思考（写完代码后建议作答）**：如果需要支持动态自定义级别（如 TRACE、AUDIT），目前的字典映射方式有什么优缺点？",
     "latexFormulas": [
-      "DEBUG < INFO < WARN < ERROR < FATAL",
+      "\\mathrm{DEBUG} < \\mathrm{INFO} < \\mathrm{WARN} < \\mathrm{ERROR} < \\mathrm{FATAL}",
       "Filter(log) = level(log) \\ge min\\_level"
     ],
     "starterCode": "def filter_logs(logs: list[dict], min_level: str) -> list[dict]:\n    \"\"\"\n    根据 min_level 过滤日志条目，返回按 timestamp 升序排列的结果。\n    级别大小: DEBUG=0, INFO=1, WARN=2, ERROR=3, FATAL=4\n    如果 min_level 不在支持列表中，抛出 ValueError。\n    \"\"\"\n    pass",
@@ -298,7 +298,7 @@
       "batch",
       "scheduler"
     ],
-    "theoryContent": "### 编程挑战：分批任务调度器\n\n批量处理大量任务时（如发送通知、处理图片），不能一次性全部执行，需要分批处理。每批处理完后要暂停一段时间，避免压垮下游系统。\n\n本题要求实现一个分批调度函数，给定任务列表、每批大小、批间隔秒数，模拟分批执行，返回每批的处理结果。\n\n每批中如果某个任务抛出异常，该任务标记为 failed，不影响该批其他任务的执行。",
+    "theoryContent": "### 🎯 编程挑战：分批任务调度器\n\n> 💡 **场景类比与核心直觉**：循环与批处理调度就像网约车派单或机场摆渡车发车表：既要在单趟容量装满后计算执行时长，还要妥善处理『最后一趟未满载但仍需按批次发车』及批次间冷却间隔。\n\n批量处理大量任务时（如发送通知、处理图片），不能一次性全部执行，需要分批处理。每批处理完后要暂停一段时间，避免压垮下游系统。\n\n本题要求实现一个分批调度函数，给定任务列表、每批大小、批间隔秒数，模拟分批执行，返回每批的处理结果。\n\n每批中如果某个任务抛出异常，该任务标记为 failed，不影响该批其他任务的执行。\n\n#### 🔬 核心原理与机制拆解\n\n在动手写代码前，先理清『**分批任务调度器**』背后的数学建模与核心运行逻辑：写循环任务最常见的翻车点是首尾边界多算或少算一次间隔（Off-by-one Error）。\n\n$$\nBatches = \\lceil \\frac{N}{batchSize} \\rceil\n$$\n\n$$\nTime = batches \\times batchSize \\times execTime + (batches-1) \\times interval\n$$\n\n- **核心要点**：两者在固定步长下等价，while 更灵活但 for 更简洁。\n- **核心要点**：批间间隔是为了流量整形（rate limiting），防止下游被突发请求打垮。\n\n#### 🛠️ 实战任务与样例推演\n\n**解题总纲**：按固定批大小切分任务并逐个捕获异常，同时在批次之间保留可配置等待间隔。\n\n**需要实现的核心接口与结构**：\n- `execute_task(task: dict) -> str` — 执行单任务并对负数载荷模拟抛出 ValueError\n- `run_batches(tasks: list[dict], batch_size: int, interval: float) -> list[dict]` — 分批执行任务、收集成功/失败状态并在批间睡眠\n\n**输入输出推演**：以首个公开样例 `two batches with error` 为例：当调用 `run_batches([{\"id\": 1, \"payload\": \"ok\"}, ...]（共 3 项）, 2, 0)` 时，程序按上述步骤计算后应稳定返回 `[...共 2 项]`。\n\n#### 🚀 边界避坑与进阶思考\n\n- **非法输入主动拦截**：当遇到空集合、非正数参数或违反约束的数据时，务必按要求显式 `raise` `ValueError`，不要静默返回 `None` 或吞掉异常。\n- **零除与空输入守卫**：遇到空列表、空字典或零分母场景（如模长为 0、样本数为 0）时，必须预先加好判空/判零保护，严防 `ZeroDivisionError` 或 `NaN` 污染输出。\n- **真题隐藏评测覆盖**：完整判题除了 2 个公开样例外，还包含 2 组隐藏边界与压力测试用例；请务必立足通用逻辑与数据结构设计，切勿针对公开样例硬编码分支。\n\n> 💭 **延伸思考（写完代码后建议作答）**：如果某个任务一直卡住（hang），目前的 try/except 能处理吗？你会如何增加超时机制？",
     "latexFormulas": [
       "Batches = \\lceil \\frac{N}{batchSize} \\rceil",
       "Time = batches \\times batchSize \\times execTime + (batches-1) \\times interval"
@@ -467,7 +467,7 @@
       "memoize",
       "lru"
     ],
-    "theoryContent": "### 编程挑战：最近 N 次缓存装饰器\n\n某些计算函数开销较大（如查询数据库、调用 API），但短时间内可能被重复调用相同参数。缓存最近的结果可以显著提升性能。\n\n本题要求实现一个函数包装器，缓存函数的最近 N 次调用结果。当缓存满时，淘汰最旧的结果。\n\n这是一个简化版 LRU 缓存，只针对函数调用——要求用函数式方式实现（不使用 class），返回一个新函数。",
+    "theoryContent": "### 🎯 编程挑战：最近 N 次缓存装饰器\n\n> 💡 **场景类比与核心直觉**：良好设计的函数就像工业标准化模块接头：输入签名明确、职责单一、返回值结构契约稳定，才能既自己跑得稳，又让下游调用方放心组合嵌套。\n\n某些计算函数开销较大（如查询数据库、调用 API），但短时间内可能被重复调用相同参数。缓存最近的结果可以显著提升性能。\n\n本题要求实现一个函数包装器，缓存函数的最近 N 次调用结果。当缓存满时，淘汰最旧的结果。\n\n这是一个简化版 LRU 缓存，只针对函数调用——要求用函数式方式实现（不使用 class），返回一个新函数。\n\n#### 🔬 核心原理与机制拆解\n\n在动手写代码前，先理清『**最近 N 次缓存装饰器**』背后的数学建模与核心运行逻辑：尤其要警惕 Python 可变默认参数与状态污染问题——每次调用都应保持清晰可预测的输入输出映射。\n\n$$\nCacheLookup = \\begin{cases} O(1) & \\text{if } key \\in cache \\\\ O(n) & \\text{on eviction} \\end{cases}\n$$\n\n$$\n|cache| \\le maxSize\n$$\n\n- **核心要点**：wraps 把原函数的元信息复制到包装函数，避免装饰后丢失函数信息。\n- **核心要点**：用 order 列表记录访问顺序，淘汰时 O(1) 找到最旧的，而扫描整个 cache 需要 O(n)。\n\n#### 🛠️ 实战任务与样例推演\n\n**解题总纲**：利用闭包字典与访问顺序列表实现容量受限的 LRU 函数结果缓存装饰器。\n\n**需要实现的核心接口与结构**：\n- `memoize_n(max_size: int)` — 构建缓存装饰器维护最近 max_size 次调用键与命中统计\n- `eval_memoize(max_size: int, calls: list[list[int]]) -> list[dict]` — 评测入口（请勿修改）\n\n**输入输出推演**：以首个公开样例 `second call returns cached` 为例：当调用 `eval_memoize(3, [[2, 3], [2, 3]])` 时，程序按上述步骤计算后应稳定返回 `[{\"result\": 5, \"cached\": false}, {\"result\": 5, \"cached\": true}]`。\n\n#### 🚀 边界避坑与进阶思考\n\n- **非法输入主动拦截**：当遇到空集合、非正数参数或违反约束的数据时，务必按要求显式 `raise` `ValueError`，不要静默返回 `None` 或吞掉异常。\n- **零除与空输入守卫**：遇到空列表、空字典或零分母场景（如模长为 0、样本数为 0）时，必须预先加好判空/判零保护，严防 `ZeroDivisionError` 或 `NaN` 污染输出。\n- **真题隐藏评测覆盖**：完整判题除了 2 个公开样例外，还包含 2 组隐藏边界与压力测试用例；请务必立足通用逻辑与数据结构设计，切勿针对公开样例硬编码分支。\n\n> 💭 **延伸思考（写完代码后建议作答）**：这个实现中 order.remove(key) 是 O(n) 操作。如果用 collections.OrderedDict 或 lru_cache，性能会怎样改进？",
     "latexFormulas": [
       "CacheLookup = \\begin{cases} O(1) & \\text{if } key \\in cache \\\\ O(n) & \\text{on eviction} \\end{cases}",
       "|cache| \\le maxSize"
@@ -665,7 +665,7 @@
       "sliding-window",
       "statistics"
     ],
-    "theoryContent": "### 编程挑战：滑动窗口统计分析器\n\n在时序监控中，经常需要对最近的 N 个数据点计算统计值。滑动窗口可以在数据流到达时增量更新，避免每次重新计算全部数据。\n\n本题要求实现一个函数，对给定的数值列表计算所有长度为 window_size 的滑动窗口的移动平均值、最大值和最小值。\n\n窗口从索引 0 开始滑动到最后，窗口不满时不输出结果。",
+    "theoryContent": "### 🎯 编程挑战：滑动窗口统计分析器\n\n> 💡 **场景类比与核心直觉**：动态列表（List）相当于一排带编号的可伸缩储物柜：既能按顺序记录事件轨迹，也能用切片、双指针或区间合并把零碎时间段整理成连续区间。\n\n在时序监控中，经常需要对最近的 N 个数据点计算统计值。滑动窗口可以在数据流到达时增量更新，避免每次重新计算全部数据。\n\n本题要求实现一个函数，对给定的数值列表计算所有长度为 window_size 的滑动窗口的移动平均值、最大值和最小值。\n\n窗口从索引 0 开始滑动到最后，窗口不满时不输出结果。\n\n#### 🔬 核心原理与机制拆解\n\n在动手写代码前，先理清『**滑动窗口统计分析器**』背后的数学建模与核心运行逻辑：区间归并时如果忘了先按起点排序，或直接边遍历列表边增删元素，下标瞬间就会乱套。\n\n$$\nMA_t = \\frac{1}{k} \\sum_{i=0}^{k-1} x_{t-i}\n$$\n\n$$\nWindows = n - k + 1 \\quad (n \\ge k)\n$$\n\n- **核心要点**：当前实现每个窗口单独计算 sum/max/min，复杂度为 O(n*k)。\n- **核心要点**：移动平均值可用前缀和 O(1) 计算，最大值可用单调双端队列 O(1) 维护。\n\n#### 🛠️ 实战任务与样例推演\n\n**解题总纲**：以固定长度窗口在数值序列上右移切片，逐窗口输出均值、最大值与最小值。\n\n**需要实现的核心接口与结构**：\n- `sliding_window_stats(numbers: list[float], window_size: int) -> list[dict]` — 校验窗口尺寸并切片计算每个窗口的三项统计量\n\n**输入输出推演**：以首个公开样例 `basic sliding windows` 为例：当调用 `sliding_window_stats([1, 2, 3, 4], 3)` 时，程序按上述步骤计算后应稳定返回 `[{\"avg\": 2, \"max\": 3, \"min\": 1}, {\"avg\": 3, \"max\": 4, \"min\": 2}]`。\n\n#### 🚀 边界避坑与进阶思考\n\n- **非法输入主动拦截**：当遇到空集合、非正数参数或违反约束的数据时，务必按要求显式 `raise` `ValueError`，不要静默返回 `None` 或吞掉异常。\n- **数值类型与浮点舍入**：若结果涉及浮点数或小数保留，需与示例 `round` 位数及 `float` 精度对齐，避免直接拿字符串拼接或整数截断替代。\n- **零除与空输入守卫**：遇到空列表、空字典或零分母场景（如模长为 0、样本数为 0）时，必须预先加好判空/判零保护，严防 `ZeroDivisionError` 或 `NaN` 污染输出。\n\n> 💭 **延伸思考（写完代码后建议作答）**：如果数据流无限（如实时监控指标），无法把所有数据存在列表里，你会怎么设计窗口计算？",
     "latexFormulas": [
       "MA_t = \\frac{1}{k} \\sum_{i=0}^{k-1} x_{t-i}",
       "Windows = n - k + 1 \\quad (n \\ge k)"
@@ -827,7 +827,7 @@
       "sort",
       "multi-key"
     ],
-    "theoryContent": "### 编程挑战：多字段排序引擎\n\n真实数据排序常常需要按多个字段排序。例如学生先按总分降序，分数相同再按语文成绩降序。\n\n本题要求实现一个通用的多字段排序函数。每个排序规则指定字段名和排序方向（升序/降序）。\n\n利用 Python 元组的比较特性：(a1, b1) < (a2, b2) 会先比较 a，再比较 b。",
+    "theoryContent": "### 🎯 编程挑战：多字段排序引擎\n\n> 💡 **场景类比与核心直觉**：不可变元组（Tuple）犹如贴了防篡改封条的坐标标签或只读契约：适合用来固定表示点位坐标、版本元组，还能安全充当字典键值做快速索引。\n\n真实数据排序常常需要按多个字段排序。例如学生先按总分降序，分数相同再按语文成绩降序。\n\n本题要求实现一个通用的多字段排序函数。每个排序规则指定字段名和排序方向（升序/降序）。\n\n利用 Python 元组的比较特性：(a1, b1) < (a2, b2) 会先比较 a，再比较 b。\n\n#### 🔬 核心原理与机制拆解\n\n在动手写代码前，先理清『**多字段排序引擎**』背后的数学建模与核心运行逻辑：许多初学者容易忽视单元素元组末尾必须加逗号 `(x,)` 的语法细节，以及命名解包带来的可读性红利。\n\n$$\nSortKey(item) = (f_1(item), f_2(item), \\ldots, f_k(item))\n$$\n\n$$\n(a_1, b_1) < (a_2, b_2) \\iff a_1 < a_2 \\lor (a_1 = a_2 \\land b_1 < b_2)\n$$\n\n- **核心要点**：Python 3 中不同类型比较会抛出 TypeError，所以需要特殊处理 None。\n- **核心要点**：Python sort 是稳定的，但反直觉——多次 sort 时最后执行的 sort 对应的字段优先级最高。\n\n#### 🛠️ 实战任务与样例推演\n\n**解题总纲**：从次高优先级到最高优先级逆序稳定排序，并始终将字段缺失记录置于末尾。\n\n**需要实现的核心接口与结构**：\n- `multi_field_sort(data: list[dict], rules: list[dict]) -> list[dict]` — 对每条排序规则拆出非空记录与缺失记录后再按升降序重排\n\n**输入输出推演**：以首个公开样例 `sort by score desc` 为例：当调用 `multi_field_sort([{\"name\": \"A\", \"score\": 85}, {\"name\": \"B\", \"score\": 90}], [{\"field\": \"score\", \"desc\": true}])` 时，程序按上述步骤计算后应稳定返回 `[{\"name\": \"B\", \"score\": 90}, {\"name\": \"A\", \"score\": 85}]`。\n\n#### 🚀 边界避坑与进阶思考\n\n- **真题隐藏评测覆盖**：完整判题除了 2 个公开样例外，还包含 2 组隐藏边界与压力测试用例；请务必立足通用逻辑与数据结构设计，切勿针对公开样例硬编码分支。\n\n> 💭 **延伸思考（写完代码后建议作答）**：如果排序字段的值是一个嵌套字段（如 user.address.city），你的 key 函数需要怎么改造？",
     "latexFormulas": [
       "SortKey(item) = (f_1(item), f_2(item), \\ldots, f_k(item))",
       "(a_1, b_1) < (a_2, b_2) \\iff a_1 < a_2 \\lor (a_1 = a_2 \\land b_1 < b_2)"
@@ -1034,7 +1034,7 @@
       "merge",
       "recursion"
     ],
-    "theoryContent": "### 编程挑战：嵌套字典深度合并器\n\n配置合并、多语言翻译文件合并、API 响应合并等场景都需要深度合并字典。简单的 dict.update() 只能合并一层，嵌套部分会被替换而非合并。\n\n本题要求实现深度合并函数，支持以下冲突策略：\n- overwrite：后面的值覆盖前面的\n- ignore：保留前面的值\n- merge：递归合并（仅对两个都是 dict 时有效，否则 overwrite）",
+    "theoryContent": "### 🎯 编程挑战：嵌套字典深度合并器\n\n> 💡 **场景类比与核心直觉**：字典（Dict）是底层哈希表驱动的『秒查通讯录』：无论数据规模扩到多大，通过键精确查找平均只需常数时间 $O(1)$，是高频计数与多层配置合并的绝对主力。\n\n配置合并、多语言翻译文件合并、API 响应合并等场景都需要深度合并字典。简单的 dict.update() 只能合并一层，嵌套部分会被替换而非合并。\n\n本题要求实现深度合并函数，支持以下冲突策略：\n- overwrite：后面的值覆盖前面的\n- ignore：保留前面的值\n- merge：递归合并（仅对两个都是 dict 时有效，否则 overwrite）\n\n#### 🔬 核心原理与机制拆解\n\n在动手写代码前，先理清『**嵌套字典深度合并器**』背后的数学建模与核心运行逻辑：深度递归合并嵌套字典时，必须严格区分『同名键对应两边都是字典（继续深合并）』与『非字典直接覆盖』两种情况。\n\n$$\nMerge(a, b) = \\begin{cases} Merge(a_i, b_i) & a_i, b_i \\in Dict \\\\ b_i & \\text{otherwise} \\end{cases}\n$$\n\n$$\nTime = O(n) \\quad n = |keys(override)|\n$$\n\n- **核心要点**：dict.copy() 只复制最外层，嵌套对象仍然是引用——这也是为什么需要递归合并。\n- **核心要点**：JSON 序列化会丢失 set、tuple、datetime 等类型信息，直接递归合并更通用。\n\n#### 🛠️ 实战任务与样例推演\n\n**解题总纲**：递归深合并两个嵌套字典：子字典继续向下合并，标量按 overwrite/ignore/merge 策略处理。\n\n**需要实现的核心接口与结构**：\n- `deep_merge(base: dict, override: dict, conflict: str) -> dict` — 克隆基础字典并按冲突策略递归合并覆盖键值\n\n**输入输出推演**：以首个公开样例 `deep merge nested` 为例：当调用 `deep_merge({\"a\": 1, \"b\": {\"x\": 10}}, {\"b\": {\"y\": 20}}, \"overwrite\")` 时，程序按上述步骤计算后应稳定返回 `{\"a\": 1, \"b\": {\"x\": 10, \"y\": 20}}`。\n\n#### 🚀 边界避坑与进阶思考\n\n- **非法输入主动拦截**：当遇到空集合、非正数参数或违反约束的数据时，务必按要求显式 `raise` `ValueError`，不要静默返回 `None` 或吞掉异常。\n- **真题隐藏评测覆盖**：完整判题除了 2 个公开样例外，还包含 2 组隐藏边界与压力测试用例；请务必立足通用逻辑与数据结构设计，切勿针对公开样例硬编码分支。\n\n> 💭 **延伸思考（写完代码后建议作答）**：如果合并时遇到相同 key 且两个值都是列表，你希望如何处理？合并列表、取并集还是报错？",
     "latexFormulas": [
       "Merge(a, b) = \\begin{cases} Merge(a_i, b_i) & a_i, b_i \\in Dict \\\\ b_i & \\text{otherwise} \\end{cases}",
       "Time = O(n) \\quad n = |keys(override)|"
@@ -1181,7 +1181,7 @@
       "security",
       "intersection"
     ],
-    "theoryContent": "### 编程挑战：权限交集与越权检测器\n\n权限管理是系统的核心安全功能。每个角色有一组权限，用户可能同时属于多个角色。用户的实际权限是所有角色权限的并集。\n\n本题要求实现权限分析函数：\n1. 计算用户的有效权限（所有角色权限的并集）\n2. 检查用户是否有权执行某个操作\n3. 找出未被任何用户拥有的权限",
+    "theoryContent": "### 🎯 编程挑战：权限交集与越权检测器\n\n> 💡 **场景类比与核心直觉**：集合（Set）好比一场按徽章去重的权限审查会：天然消除重复条目，并用极快的交集（`&` / $\\cap$）、并集（`|` / $\\cup$）、差集（`-` / $\\setminus$）代数运算秒算用户权限重叠与黑白名单差。\n\n权限管理是系统的核心安全功能。每个角色有一组权限，用户可能同时属于多个角色。用户的实际权限是所有角色权限的并集。\n\n本题要求实现权限分析函数：\n1. 计算用户的有效权限（所有角色权限的并集）\n2. 检查用户是否有权执行某个操作\n3. 找出未被任何用户拥有的权限\n\n#### 🔬 核心原理与机制拆解\n\n在动手写代码前，先理清『**权限交集与越权检测器**』背后的数学建模与核心运行逻辑：若用普通列表两重嵌套循环做交差集对比，时间复杂度会瞬间退化成 $O(n^2)$。\n\n$$\nP_{user} = \\bigcup_{role \\in roles_{user}} P_{role}\n$$\n\n$$\nP_{unused} = P_{all} \\setminus P_{granted}\n$$\n\n- **核心要点**：`|` 是集合的并集运算，返回两个集合中所有元素的集合。\n- **核心要点**：差集找出在 all_perms 但不在 all_granted 中的元素，即未被分配的权限。\n\n#### 🛠️ 实战任务与样例推演\n\n**解题总纲**：汇总用户多角色对应的权限集合并判断 delete 权限，同时识别从未被分配的权限项。\n\n**需要实现的核心接口与结构**：\n- `analyze_permissions(role_permissions: dict, user_roles: dict) -> dict` — 聚合各用户角色权限与全局权限总集，计算差集得到未使用权限\n\n**输入输出推演**：以首个公开样例 `basic analysis` 为例：当调用 `analyze_permissions({\"admin\": ..., \"viewer\": ...}, {\"alice\": [\"admin\"], \"bob\": [\"viewer\"]})` 时，程序按上述步骤计算后应稳定返回 `{\"users\": ..., \"unused_permissions\": ...}`。\n\n#### 🚀 边界避坑与进阶思考\n\n- **零除与空输入守卫**：遇到空列表、空字典或零分母场景（如模长为 0、样本数为 0）时，必须预先加好判空/判零保护，严防 `ZeroDivisionError` 或 `NaN` 污染输出。\n- **真题隐藏评测覆盖**：完整判题除了 2 个公开样例外，还包含 2 组隐藏边界与压力测试用例；请务必立足通用逻辑与数据结构设计，切勿针对公开样例硬编码分支。\n\n> 💭 **延伸思考（写完代码后建议作答）**：当角色数量很大（上千个）且权限层级复杂时，基于集合的权限模型和基于 RBAC/ABAC 的数据库模型各有什么优劣？",
     "latexFormulas": [
       "P_{user} = \\bigcup_{role \\in roles_{user}} P_{role}",
       "P_{unused} = P_{all} \\setminus P_{granted}"
@@ -1378,7 +1378,7 @@
       "io",
       "word-frequency"
     ],
-    "theoryContent": "### 编程挑战：日志关键词频率统计器\n\n运维中经常需要分析日志文件中某些关键词的出现频率。本题模拟从日志文件中读取内容，统计指定关键词的出现次数，按频率降序输出。\n\n文件内容以字符串列表形式模拟（每一行是一条日志），你需要逐行读取、提取关键词、统计频次。\n\n提示：关键词匹配不区分大小写，但输出时保留原始大小写。",
+    "theoryContent": "### 🎯 编程挑战：日志关键词频率统计器\n\n> 💡 **场景类比与核心直觉**：文件读写就像流式盘点档案室里的成百上千份日志：不能动不动把几个 GB 的文件整个搬进内存，而应逐行扫描过滤并精确统计关键字命中频率。\n\n运维中经常需要分析日志文件中某些关键词的出现频率。本题模拟从日志文件中读取内容，统计指定关键词的出现次数，按频率降序输出。\n\n文件内容以字符串列表形式模拟（每一行是一条日志），你需要逐行读取、提取关键词、统计频次。\n\n提示：关键词匹配不区分大小写，但输出时保留原始大小写。\n\n#### 🔬 核心原理与机制拆解\n\n在动手写代码前，先理清『**日志关键词频率统计器**』背后的数学建模与核心运行逻辑：同时要关注大小写、空白裁剪与上下文资源安全释放，防止句柄泄漏。\n\n$$\nfreq(kw) = \\sum_{line \\in logs} \\begin{cases} 1 & kw \\in line \\\\ 0 & \\text{otherwise} \\end{cases}\n$$\n\n$$\nTime = O(L \\times K) \\quad L = |logs|, K = |keywords|\n$$\n\n- **核心要点**：真实大文件应该用 `for line in file:` 迭代器逐行读，避免一次加载整个文件到内存。\n- **核心要点**：+= 要求 key 已存在（否则 KeyError），get 方法可以给默认值。\n\n#### 🛠️ 实战任务与样例推演\n\n**解题总纲**：忽略大小写统计每个关键词在日志行中的匹配次数，并按频次降序（同频保持原序）排列。\n\n**需要实现的核心接口与结构**：\n- `count_keywords(log_lines: list[str], keywords: list[str]) -> list[dict]` — 遍历日志行累加关键词匹配行频次并稳定排序\n\n**输入输出推演**：以首个公开样例 `counts keywords` 为例：当调用 `count_keywords([\"Error: connection failed\", ...]（共 5 项）, [\"error\", \"warn\"])` 时，程序按上述步骤计算后应稳定返回 `[{\"keyword\": \"error\", \"count\": 3}, {\"keyword\": \"warn\", \"count\": 1}]`。\n\n#### 🚀 边界避坑与进阶思考\n\n- **零除与空输入守卫**：遇到空列表、空字典或零分母场景（如模长为 0、样本数为 0）时，必须预先加好判空/判零保护，严防 `ZeroDivisionError` 或 `NaN` 污染输出。\n- **真题隐藏评测覆盖**：完整判题除了 2 个公开样例外，还包含 2 组隐藏边界与压力测试用例；请务必立足通用逻辑与数据结构设计，切勿针对公开样例硬编码分支。\n\n> 💭 **延伸思考（写完代码后建议作答）**：如果关键词有上百个，日志文件有上 GB，逐行逐词检查的性能会怎样？你会如何用更高效的算法（如 AC 自动机）来优化？",
     "latexFormulas": [
       "freq(kw) = \\sum_{line \\in logs} \\begin{cases} 1 & kw \\in line \\\\ 0 & \\text{otherwise} \\end{cases}",
       "Time = O(L \\times K) \\quad L = |logs|, K = |keywords|"
@@ -1536,7 +1536,7 @@
       "data-cleaning",
       "pipeline"
     ],
-    "theoryContent": "### 编程挑战：JSON 数据清洗管道\n\n从外部 API 获取的数据往往字段名风格不统一（如 user_name vs userName），字段值类型也可能不对。需要做标准化处理。\n\n本题要求实现一个数据清洗函数：\n1. 将字段从 snake_case 转为 camelCase\n2. 将字符串数字转为实际数字（如 '123' -> 123）\n3. 去除字符串值前后的空白\n4. 移除值为 None 的字段",
+    "theoryContent": "### 🎯 编程挑战：JSON 数据清洗管道\n\n> 💡 **场景类比与核心直觉**：JSON 数据清洗管道如同把五花八门的异构包裹统一贴标入库：接口传来的年龄可能是 `'18'`，状态可能是 `'true'`，甚至掺杂空值与嵌套列表，必须在管道层先规范化类型再喂给业务或模型。\n\n从外部 API 获取的数据往往字段名风格不统一（如 user_name vs userName），字段值类型也可能不对。需要做标准化处理。\n\n本题要求实现一个数据清洗函数：\n1. 将字段从 snake_case 转为 camelCase\n2. 将字符串数字转为实际数字（如 '123' -> 123）\n3. 去除字符串值前后的空白\n4. 移除值为 None 的字段\n\n#### 🔬 核心原理与机制拆解\n\n在动手写代码前，先理清『**JSON 数据清洗管道**』背后的数学建模与核心运行逻辑：解析器如果不考虑嵌套结构与异常字段兜底，遇到脏数据就会导致整条 ETL 流水线崩溃。\n\n$$\ncamelCase(s) = s_1 + \\sum_{i=2}^{k} capitalize(s_i) \\quad s = s_1\\_s_2\\_\\ldots\\_s_k\n$$\n\n$$\nType(val) = \\begin{cases} int(val) & val \\in \\mathbb{Z} \\\\ float(val) & val \\in \\mathbb{R} \\\\ bool(val) & val \\in \\{true, false\\} \\end{cases}\n$$\n\n- **核心要点**：int() 只能将整数字符串（如 '123'）转换为整数，浮点数字符串需要用 float() 处理。\n- **核心要点**：如果 name='user'，split 后 ['user']，parts[1:] 是 []，join 后为空。\n\n#### 🛠️ 实战任务与样例推演\n\n**解题总纲**：完成下划线命名到小驼峰的键名标准化，同时清洗布尔/数字字符串并剔除 null 值字段。\n\n**需要实现的核心接口与结构**：\n- `snake_to_camel(name: str) -> str` — 将下划线风格字段名转为小驼峰\n- `clean_json_record(record: dict) -> dict` — 遍历字典递归清洗键值类型并过滤空值\n\n**输入输出推演**：以首个公开样例 `clean basic record` 为例：当调用 `clean_json_record({\"user_name\": \"alice\", \"user_age\": \"30\"})` 时，程序按上述步骤计算后应稳定返回 `{\"userName\": \"alice\", \"userAge\": 30}`。\n\n#### 🚀 边界避坑与进阶思考\n\n- **真题隐藏评测覆盖**：完整判题除了 2 个公开样例外，还包含 2 组隐藏边界与压力测试用例；请务必立足通用逻辑与数据结构设计，切勿针对公开样例硬编码分支。\n\n> 💭 **延伸思考（写完代码后建议作答）**：如果 JSON 嵌套深度达到 10 层以上，递归实现的 clean_json_record 有栈溢出风险。你会如何改为迭代实现？",
     "latexFormulas": [
       "camelCase(s) = s_1 + \\sum_{i=2}^{k} capitalize(s_i) \\quad s = s_1\\_s_2\\_\\ldots\\_s_k",
       "Type(val) = \\begin{cases} int(val) & val \\in \\mathbb{Z} \\\\ float(val) & val \\in \\mathbb{R} \\\\ bool(val) & val \\in \\{true, false\\} \\end{cases}"
@@ -1652,7 +1652,7 @@
       "group-by",
       "aggregation"
     ],
-    "theoryContent": "### 编程挑战：CSV 分组聚合计算器\n\n数据分析中常用 GROUP BY 做聚合计算。本题模拟 CSV 数据，给定行列表和分组字段、聚合字段和聚合函数，计算分组统计结果。\n\n支持聚合函数：sum、avg（保留两位小数）、count、max、min。",
+    "theoryContent": "### 🎯 编程挑战：CSV 分组聚合计算器\n\n> 💡 **场景类比与核心直觉**：处理 CSV 表格数据好比把散落的财务流水账按部门分组汇总（Group-By + Aggregation）：一次遍历把属于同一分组的数值归拢，再分别算出求和、均值、极值与计数。\n\n数据分析中常用 GROUP BY 做聚合计算。本题模拟 CSV 数据，给定行列表和分组字段、聚合字段和聚合函数，计算分组统计结果。\n\n支持聚合函数：sum、avg（保留两位小数）、count、max、min。\n\n#### 🔬 核心原理与机制拆解\n\n在动手写代码前，先理清『**CSV 分组聚合计算器**』背后的数学建模与核心运行逻辑：面对空值字符串、除零风险或大小写混杂的聚合指令，健壮的类型转换与防错处理至关重要。\n\n$$\nAgg_{group} = \\begin{cases} \\sum x_i & func = sum \\\\ \\frac{1}{n}\\sum x_i & func = avg \\\\ |x_i| & func = count \\\\ \\max x_i & func = max \\\\ \\min x_i & func = min \\end{cases}\n$$\n\n$$\nTime = O(N \\log M) \\quad N = |rows|, M = |groups|\n$$\n\n- **核心要点**：SQL 中使用 GROUP BY 对数据进行分组，配合聚合函数（SUM、AVG、COUNT 等）使用。\n- **核心要点**：sum/max/min 等操作要求数值类型，非数字会导致 TypeError。\n\n#### 🛠️ 实战任务与样例推演\n\n**解题总纲**：按指定分组字段聚合记录并支持 sum/avg/count/max/min 五种聚合算子，结果降序排列。\n\n**需要实现的核心接口与结构**：\n- `group_aggregate(data: list[dict], group_by: str, agg_field: str, agg_func: str) -> list[dict]` — 分桶收集数值后按聚合函数计算指标并按结果降序排列\n\n**输入输出推演**：以首个公开样例 `group sum` 为例：当调用 `group_aggregate([...共 3 项], \"department\", \"salary\", \"sum\")` 时，程序按上述步骤计算后应稳定返回 `[{\"department\": \"Engineering\", \"salary\": 25000, \"count\": 2}, ...]（共 2 项）`。\n\n#### 🚀 边界避坑与进阶思考\n\n- **非法输入主动拦截**：当遇到空集合、非正数参数或违反约束的数据时，务必按要求显式 `raise` `ValueError`，不要静默返回 `None` 或吞掉异常。\n- **数值类型与浮点舍入**：若结果涉及浮点数或小数保留，需与示例 `round` 位数及 `float` 精度对齐，避免直接拿字符串拼接或整数截断替代。\n- **零除与空输入守卫**：遇到空列表、空字典或零分母场景（如模长为 0、样本数为 0）时，必须预先加好判空/判零保护，严防 `ZeroDivisionError` 或 `NaN` 污染输出。\n\n> 💭 **延伸思考（写完代码后建议作答）**：如果数据量很大（百万行），内存放不下所有数据，你会如何设计流式分组聚合？",
     "latexFormulas": [
       "Agg_{group} = \\begin{cases} \\sum x_i & func = sum \\\\ \\frac{1}{n}\\sum x_i & func = avg \\\\ |x_i| & func = count \\\\ \\max x_i & func = max \\\\ \\min x_i & func = min \\end{cases}",
       "Time = O(N \\log M) \\quad N = |rows|, M = |groups|"
@@ -1836,10 +1836,10 @@
       "connection-pool",
       "resource-management"
     ],
-    "theoryContent": "### 编程挑战：简易数据库连接池\n\n数据库连接是昂贵资源，创建和销毁开销大。连接池预先创建一批连接，业务代码从池中借用，用完归还，避免反复创建。\n\n本题要求实现 ConnectionPool 类：\n- 初始化时创建 max_size 个连接（用整数 ID 模拟）\n- acquire(timeout)：获取一个连接，超时抛出 TimeoutError\n- release(conn)：归还连接\n- close_all()：关闭所有连接",
+    "theoryContent": "### 🎯 编程挑战：简易数据库连接池\n\n> 💡 **场景类比与核心直觉**：类与对象是给真实业务实体画『蓝图与工装模具』：以连接池为例，用类把可用队列、繁忙句柄、最大上限和借还锁逻辑封在一起，外部只需调用 `acquire/release` 即可。\n\n数据库连接是昂贵资源，创建和销毁开销大。连接池预先创建一批连接，业务代码从池中借用，用完归还，避免反复创建。\n\n本题要求实现 ConnectionPool 类：\n- 初始化时创建 max_size 个连接（用整数 ID 模拟）\n- acquire(timeout)：获取一个连接，超时抛出 TimeoutError\n- release(conn)：归还连接\n- close_all()：关闭所有连接\n\n#### 🔬 核心原理与机制拆解\n\n在动手写代码前，先理清『**简易数据库连接池**』背后的数学建模与核心运行逻辑：面向对象的核心价值在于管理复杂内部生命周期与不变量约束——比如确保繁忙连接数加空闲连接数永不超过上限。\n\n$$\nAcquire(\\text{timeout}) = \\begin{cases} conn & \\exists idle \\land deadline > now \\\\ TimeoutError & \\text{otherwise} \\end{cases}\n$$\n\n$$\n|\\text{idle}| + |\\text{busy}| \\le \\text{maxSize}\n$$\n\n- **核心要点**：如果不从 _busy 移除，归还后的连接还在 _busy 中，连接数会越来越少。\n- **核心要点**：短暂 sleep 可以避免空转消耗 CPU，是轮询等待的常用做法。\n\n#### 🛠️ 实战任务与样例推演\n\n**解题总纲**：利用空闲队列与占用集合模拟连接池的获取、归还、超时等待及关闭状态隔离。\n\n**需要实现的核心接口与结构**：\n- `class ConnectionPool（含方法 __init__, acquire, release, close_all）` — 管理空闲与活跃连接 ID 集合并提供超时等待获取逻辑\n- `eval_pool(max_size: int, actions: list[dict]) -> list` — 评测入口（请勿修改）\n\n**输入输出推演**：以首个公开样例 `acquire and release` 为例：当调用 `eval_pool(3, [{\"op\": \"acquire\"}, ...]（共 3 项）)` 时，程序按上述步骤计算后应稳定返回 `[1, null, 1]`。\n\n#### 🚀 边界避坑与进阶思考\n\n- **非法输入主动拦截**：当遇到空集合、非正数参数或违反约束的数据时，务必按要求显式 `raise` `ValueError`，不要静默返回 `None` 或吞掉异常。\n- **真题隐藏评测覆盖**：完整判题除了 2 个公开样例外，还包含 2 组隐藏边界与压力测试用例；请务必立足通用逻辑与数据结构设计，切勿针对公开样例硬编码分支。\n\n> 💭 **延伸思考（写完代码后建议作答）**：这个实现在多线程环境下安全吗？_idle 和 _busy 的操作需要加锁吗？你会如何用 threading.Lock 改造？",
     "latexFormulas": [
       "Acquire(\\text{timeout}) = \\begin{cases} conn & \\exists idle \\land deadline > now \\\\ TimeoutError & \\text{otherwise} \\end{cases}",
-      "|idle| + |busy| = maxSize"
+      "|\\text{idle}| + |\\text{busy}| \\le \\text{maxSize}"
     ],
     "starterCode": "import time\n\nclass ConnectionPool:\n    \"\"\"简易连接池\"\"\"\n    def __init__(self, max_size: int):\n        \"\"\"创建 max_size 个连接（用整数 ID 1..max_size 模拟）\"\"\"\n        pass\n\n    def acquire(self, timeout: float = 5.0) -> int:\n        \"\"\"获取连接，超时抛出 TimeoutError。timeout=0 不等待。\"\"\"\n        pass\n\n    def release(self, conn: int) -> None:\n        \"\"\"归还连接\"\"\"\n        pass\n\n    def close_all(self) -> None:\n        \"\"\"关闭所有连接\"\"\"\n        pass\n\n# 评测入口（请勿修改）\ndef eval_pool(max_size: int, actions: list[dict]) -> list:\n    pool = ConnectionPool(max_size)\n    out = []\n    for act in actions:\n        op = act.get(\"op\")\n        if op == \"acquire\":\n            try:\n                out.append(pool.acquire(act.get(\"timeout\", 5.0)))\n            except TimeoutError:\n                out.append(\"timeout_error\")\n            except RuntimeError:\n                out.append(\"closed_error\")\n        elif op == \"release\":\n            pool.release(act[\"conn\"])\n            out.append(None)\n        elif op == \"close_all\":\n            pool.close_all()\n            out.append(None)\n    return out\n",
     "solutionCode": "# 【算法思路】利用空闲队列与占用集合模拟连接池的获取、归还、超时等待及关闭状态隔离。\nimport time\n\n# 管理空闲与活跃连接 ID 集合并提供超时等待获取逻辑\nclass ConnectionPool:\n    \"\"\"基于空闲栈与占用集合的简易数据库连接池\"\"\"\n    def __init__(self, max_size: int):\n        if max_size <= 0:\n            raise ValueError('max_size must be positive')\n        # 使用 pop() 从尾部分配，初始化倒序使首个 acquire 返回连接 1\n        self._idle = list(range(max_size, 0, -1))\n        self._busy = set()\n        self._closed = False\n\n    def acquire(self, timeout: float = 5.0) -> int:\n        if self._closed:\n            raise RuntimeError('pool is closed')\n        if self._idle:\n            conn = self._idle.pop()\n            self._busy.add(conn)\n            return conn\n        if timeout <= 0:\n            raise TimeoutError('no available connection')\n        deadline = time.monotonic() + timeout\n        while time.monotonic() < deadline:\n            if self._closed:\n                raise RuntimeError('pool is closed')\n            if self._idle:\n                conn = self._idle.pop()\n                self._busy.add(conn)\n                return conn\n            time.sleep(0.01)\n        raise TimeoutError('acquire timed out')\n\n    def release(self, conn: int) -> None:\n        if conn in self._busy:\n            self._busy.remove(conn)\n            self._idle.append(conn)\n\n    def close_all(self) -> None:\n        self._closed = True\n        self._idle.clear()\n        self._busy.clear()\n\n# 评测入口（请勿修改）\ndef eval_pool(max_size: int, actions: list[dict]) -> list:\n    pool = ConnectionPool(max_size)\n    out = []\n    for act in actions:\n        op = act.get(\"op\")\n        if op == \"acquire\":\n            try:\n                out.append(pool.acquire(act.get(\"timeout\", 5.0)))\n            except TimeoutError:\n                out.append(\"timeout_error\")\n            except RuntimeError:\n                out.append(\"closed_error\")\n        elif op == \"release\":\n            pool.release(act[\"conn\"])\n            out.append(None)\n        elif op == \"close_all\":\n            pool.close_all()\n            out.append(None)\n    return out\n",
@@ -1995,7 +1995,7 @@
       "shopping-cart",
       "oop"
     ],
-    "theoryContent": "### 编程挑战：购物车与价格计算器\n\n封装是 OOP 的核心原则之一——把数据和操作数据的方法绑定在一起，对外隐藏内部实现。\n\n本题要求实现一个 ShoppingCart 类，封装商品添加、更新数量、计算总价和折扣的逻辑。\n\n要求：\n- 商品用字典表示：{\"name\": \"...\", \"price\": 5999, \"quantity\": 1}\n- 添加相同名称的商品时累加数量\n- 满减优惠：满 10000 减 500，满 5000 减 200\n- 封装内部 _items 列表，不对外暴露直接修改",
+    "theoryContent": "### 🎯 编程挑战：购物车与价格计算器\n\n> 💡 **场景类比与核心直觉**：封装就好比给精密仪表加上玻璃外壳和合法旋钮：外界想往购物车加减商品或存取账户余额，只能走规范校验方法，绝不允许外部代码随手把库存或余额改成负数。\n\n封装是 OOP 的核心原则之一——把数据和操作数据的方法绑定在一起，对外隐藏内部实现。\n\n本题要求实现一个 ShoppingCart 类，封装商品添加、更新数量、计算总价和折扣的逻辑。\n\n要求：\n- 商品用字典表示：{\"name\": \"...\", \"price\": 5999, \"quantity\": 1}\n- 添加相同名称的商品时累加数量\n- 满减优惠：满 10000 减 500，满 5000 减 200\n- 封装内部 _items 列表，不对外暴露直接修改\n\n#### 🔬 核心原理与机制拆解\n\n在动手写代码前，先理清『**购物车与价格计算器**』背后的数学建模与核心运行逻辑：属性校验缺失往往是状态错乱、折扣超发或非法扣款 Bug 的温床。\n\n$$\nSubtotal = \\sum_{item} price_i \\times quantity_i\n$$\n\n$$\nDiscount(Subtotal) = \\begin{cases} 500 & Subtotal \\ge 10000 \\\\ 200 & Subtotal \\ge 5000 \\\\ 0 & \\text{otherwise} \\end{cases}\n$$\n\n$$\nTotal = \\max(0, Subtotal - Discount)\n$$\n\n- **核心要点**：Python 没有真正的私有属性，单下划线是约定——表示这是内部实现细节。\n- **核心要点**：生成器表达式惰性求值，sum 逐个消费，比列表推导式更省内存。\n\n#### 🛠️ 实战任务与样例推演\n\n**解题总纲**：维护购物车商品列表的增删改数量逻辑，并实现满 5000 减 200 / 满 10000 减 500 的阶梯折扣。\n\n**需要实现的核心接口与结构**：\n- `class ShoppingCart（含方法 __init__, add_item, remove_item, update_quantity）` — 封装商品行维护、原价小计与阶梯满减计算方法\n- `eval_cart(actions: list[dict]) -> dict` — 评测入口（请勿修改）\n\n**输入输出推演**：以首个公开样例 `discount >= 10000` 为例：当调用 `eval_cart([{\"op\": \"add\", \"name\": \"iPhone\", \"price\": 5999, \"qty\": 2}])` 时，程序按上述步骤计算后应稳定返回 `{\"subtotal\": 11998, \"discount\": 500, \"total\": 11498}`。\n\n#### 🚀 边界避坑与进阶思考\n\n- **真题隐藏评测覆盖**：完整判题除了 2 个公开样例外，还包含 2 组隐藏边界与压力测试用例；请务必立足通用逻辑与数据结构设计，切勿针对公开样例硬编码分支。\n\n> 💭 **延伸思考（写完代码后建议作答）**：如果后续需要支持多种优惠策略（满减、折扣券、会员价），目前的 get_discount 硬编码规则的方式有什么问题？你会如何用策略模式重构？",
     "latexFormulas": [
       "Subtotal = \\sum_{item} price_i \\times quantity_i",
       "Discount(Subtotal) = \\begin{cases} 500 & Subtotal \\ge 10000 \\\\ 200 & Subtotal \\ge 5000 \\\\ 0 & \\text{otherwise} \\end{cases}",
@@ -2151,7 +2151,7 @@
       "abstract",
       "cache"
     ],
-    "theoryContent": "### 编程挑战：缓存后端抽象与继承\n\n优秀的代码会面向抽象编程，而非具体实现。本题通过缓存后端的抽象来练习继承。\n\n要求实现一个抽象基类 CacheBackend，以及两个具体子类：\n- MemoryCache：将数据存储在内存字典中\n- RedisCacheMock：模拟 Redis，用字典存储，但 key 加上 \"redis:\" 前缀\n\n抽象基类定义接口：get(key)、set(key, value, ttl)、delete(key)、exists(key)",
+    "theoryContent": "### 🎯 编程挑战：缓存后端抽象与继承\n\n> 💡 **场景类比与核心直觉**：继承就像是建立技术体系的『公共父类基座』：把所有缓存后端或几何图形共享的基础属性和协议放在基类里，让内存缓存、磁盘缓存等子类只专注各自差异化存储逻辑。\n\n优秀的代码会面向抽象编程，而非具体实现。本题通过缓存后端的抽象来练习继承。\n\n要求实现一个抽象基类 CacheBackend，以及两个具体子类：\n- MemoryCache：将数据存储在内存字典中\n- RedisCacheMock：模拟 Redis，用字典存储，但 key 加上 \"redis:\" 前缀\n\n抽象基类定义接口：get(key)、set(key, value, ttl)、delete(key)、exists(key)\n\n#### 🔬 核心原理与机制拆解\n\n在动手写代码前，先理清『**缓存后端抽象与继承**』背后的数学建模与核心运行逻辑：优秀的继承体系必须严格遵守里氏替换原则——子类扩展行为时不能破坏父类对外承诺的方法契约。\n\n$$\nis\\_expired(key) = now > created(key) + TTL(key)\n$$\n\n$$\nCacheInterface: \\{get, set, delete, exists\\}\n$$\n\n- **核心要点**：ABC 定义接口，子类不实现抽象方法会在实例化时抛出 TypeError。\n- **核心要点**：OO 中通过复写（override）父类方法来扩展或修改行为，是继承的常见用途。\n\n#### 🛠️ 实战任务与样例推演\n\n**解题总纲**：通过 ABC 抽象基类约束统一缓存接口，分别实现本地内存缓存与带前缀隔离的模拟 Redis 缓存。\n\n**需要实现的核心接口与结构**：\n- `class CacheBackend（含方法 get, set, delete, exists）` — 声明 get/set/delete/exists 抽象方法契约\n- `class MemoryCache（含方法 __init__, _is_expired, get, set）` — 内存字典与 TTL 过期时间戳维护\n- `class RedisCacheMock（含方法 __init__, _prefix, _is_expired, get）` — 自动添加 redis: 前缀的后端实现\n- `eval_cache(cache_type: str, actions: list[dict])` — 评测入口（请勿修改）\n\n**输入输出推演**：以首个公开样例 `memory cache set/get` 为例：当调用 `eval_cache(\"memory\", [...共 2 项])` 时，程序按上述步骤计算后应稳定返回 `\"hello\"`。\n\n#### 🚀 边界避坑与进阶思考\n\n- **真题隐藏评测覆盖**：完整判题除了 2 个公开样例外，还包含 2 组隐藏边界与压力测试用例；请务必立足通用逻辑与数据结构设计，切勿针对公开样例硬编码分支。\n\n> 💭 **延伸思考（写完代码后建议作答）**：这个缓存实现在并发环境下有问题吗？_store 和 _expiry 的操作不是原子的。你会如何加锁来保证线程安全？",
     "latexFormulas": [
       "is\\_expired(key) = now > created(key) + TTL(key)",
       "CacheInterface: \\{get, set, delete, exists\\}"
@@ -2289,9 +2289,9 @@
       "polymorphism",
       "logging"
     ],
-    "theoryContent": "### 编程挑战：多态日志格式化器\n\n多态是指不同类的对象可以通过统一接口调用，各自执行自己的实现。在日志系统中，不同环境需要不同格式：开发环境用可读文本，生产环境用 JSON，监控系统用紧凑格式。\n\n本题要求实现一个 LogFormatter 基类和多个子类，并在 LogService 中通过多态调用格式化器。",
+    "theoryContent": "### 🎯 编程挑战：多态日志格式化器\n\n> 💡 **场景类比与核心直觉**：多态让调度系统拥有『同一句指令、不同执行者各自精彩演出』的能力：业务层只管调用 `formatter.format(record)`，无论是转成纯文本日志、JSON 还是结构化表格都无缝切换。\n\n多态是指不同类的对象可以通过统一接口调用，各自执行自己的实现。在日志系统中，不同环境需要不同格式：开发环境用可读文本，生产环境用 JSON，监控系统用紧凑格式。\n\n本题要求实现一个 LogFormatter 基类和多个子类，并在 LogService 中通过多态调用格式化器。\n\n#### 🔬 核心原理与机制拆解\n\n在动手写代码前，先理清『**多态日志格式化器**』背后的数学建模与核心运行逻辑：利用好鸭子类型与统一接口抽象，就能彻底告别臃肿难维护的 `if/elif/else` 类型分支。\n\n$$\n\\text{format}(record, formatter) = formatter.\\text{format}(record)\n$$\n\n$$\nO(1) \\text{ dispatch via virtual method call}\n$$\n\n- **核心要点**：多态是指通过统一接口调用不同实现，同样的调用得到不同行为。\n- **核心要点**：ABC 在子类实例化时检查抽象方法是否实现，未实现则抛出 TypeError。\n\n#### 🛠️ 实战任务与样例推演\n\n**解题总纲**：利用抽象基类与统一调度函数 format_log 实现纯文本、JSON 与紧凑三种日志格式的多态扩展。\n\n**需要实现的核心接口与结构**：\n- `class LogRecord（含方法 __init__）` — 封装日志级别、正文、来源与固定时间戳\n- `class LogFormatter（含方法 format）` — 日志格式化抽象基类\n- `class PlainTextFormatter（含方法 format）` — 纯文本格式器\n- `class JsonFormatter（含方法 format）` — 结构化 JSON 格式器\n- `class CompactFormatter（含方法 format）` — 竖线分隔紧凑格式器\n- `format_log(record: LogRecord, formatter: LogFormatter) -> str` — 统一通过多态接口调用具体格式器\n- `eval_formatter(level: str, message: str, source: str, formatter_type: str) -> str` — 评测入口（请勿修改）\n\n**输入输出推演**：以首个公开样例 `plain text formatter` 为例：当调用 `eval_formatter(\"INFO\", \"server started\", \"main.py\", \"plain\")` 时，程序按上述步骤计算后应稳定返回 `\"[INFO] server started (main.py)\"`。\n\n#### 🚀 边界避坑与进阶思考\n\n- **真题隐藏评测覆盖**：完整判题除了 2 个公开样例外，还包含 2 组隐藏边界与压力测试用例；请务必立足通用逻辑与数据结构设计，切勿针对公开样例硬编码分支。\n\n> 💭 **延伸思考（写完代码后建议作答）**：如果后续需要添加 XML 格式或 YAML 格式，目前的类结构需要修改哪些代码？这种设计遵循了什么设计原则？",
     "latexFormulas": [
-      "format(record, formatter) = formatter.format(record)",
+      "\\text{format}(record, formatter) = formatter.\\text{format}(record)",
       "O(1) \\text{ dispatch via virtual method call}"
     ],
     "starterCode": "from abc import ABC, abstractmethod\nimport json\n\nclass LogRecord:\n    \"\"\"日志记录\"\"\"\n    def __init__(self, level: str, message: str, source: str = ''):\n        self.level = level\n        self.message = message\n        self.source = source\n        self.timestamp = '2025-01-01 10:00:00'\n\nclass LogFormatter(ABC):\n    \"\"\"日志格式化器抽象基类\"\"\"\n    @abstractmethod\n    def format(self, record: LogRecord) -> str:\n        pass\n\nclass PlainTextFormatter(LogFormatter):\n    \"\"\"纯文本格式: [LEVEL] message (source)\"\"\"\n    def format(self, record: LogRecord) -> str:\n        pass\n\nclass JsonFormatter(LogFormatter):\n    \"\"\"JSON 格式: {\"level\": \"...\", \"message\": \"...\", ...}\"\"\"\n    def format(self, record: LogRecord) -> str:\n        pass\n\nclass CompactFormatter(LogFormatter):\n    \"\"\"紧凑格式: LEVEL|message\"\"\"\n    def format(self, record: LogRecord) -> str:\n        pass\n\ndef format_log(record: LogRecord, formatter: LogFormatter) -> str:\n    \"\"\"多态调用：不管传什么 formatter，统一调 format\"\"\"\n    pass\n\n# 评测入口（请勿修改）\ndef eval_formatter(level: str, message: str, source: str, formatter_type: str) -> str:\n    record = LogRecord(level, message, source)\n    mapping = {\n        \"plain\": PlainTextFormatter(),\n        \"json\": JsonFormatter(),\n        \"compact\": CompactFormatter(),\n    }\n    return format_log(record, mapping[formatter_type])\n",
@@ -2396,7 +2396,7 @@
       "pagination",
       "protocol"
     ],
-    "theoryContent": "### 编程挑战：分页迭代器\n\nAPI 分页查询时，每次请求只返回一页数据。如果要遍历所有页，需要手动维护页码。本题要求实现一个分页迭代器，每次迭代返回一页数据，自动请求下一页直到没有更多数据。\n\n实现 `__iter__` 和 `__next__` 方法，让 PaginatedIterator 成为可迭代对象。\n\n用模拟数据简化：内部维护一个大数据列表，每次迭代返回 `page_size` 条数据。",
+    "theoryContent": "### 🎯 编程挑战：分页迭代器\n\n> 💡 **场景类比与核心直觉**：分页迭代器就像按页装订的实体翻页画册：不需要一次性印刷全套一万页，每翻一页时只现算、现切当前页窗口 `[i*size : (i+1)*size]`，读到末尾礼貌抛出 `StopIteration`。\n\nAPI 分页查询时，每次请求只返回一页数据。如果要遍历所有页，需要手动维护页码。本题要求实现一个分页迭代器，每次迭代返回一页数据，自动请求下一页直到没有更多数据。\n\n实现 `__iter__` 和 `__next__` 方法，让 PaginatedIterator 成为可迭代对象。\n\n用模拟数据简化：内部维护一个大数据列表，每次迭代返回 `page_size` 条数据。\n\n#### 🔬 核心原理与机制拆解\n\n在动手写代码前，先理清『**分页迭代器**』背后的数学建模与核心运行逻辑：实现 `__iter__` 与 `__next__` 协议后，自定义容器即可直接融入 Python 原生 `for` 循环与解包生态。\n\n$$\nPages = \\lceil \\frac{N}{pageSize} \\rceil\n$$\n\n$$\nPage_i = data[i \\times pageSize : (i+1) \\times pageSize]\n$$\n\n- **核心要点**：for 循环内部会捕获 StopIteration 并正常退出。\n- **核心要点**：返回 self 是迭代器模式（一次性），返回新对象是 iterable 模式（可多次遍历）。\n\n#### 🛠️ 实战任务与样例推演\n\n**解题总纲**：实现 __iter__ 与 __next__ 迭代器协议，每次按页大小切分列表直到越界抛出 StopIteration。\n\n**需要实现的核心接口与结构**：\n- `class PaginatedIterator（含方法 __init__, __next__）` — 维护游标 _index 逐页截取数据\n- `eval_paginated(all_data: list, page_size: int) -> list[list]` — 评测入口（请勿修改）\n\n**输入输出推演**：以首个公开样例 `iterate pages` 为例：当调用 `eval_paginated([1, 2, 3, 4, 5], 2)` 时，程序按上述步骤计算后应稳定返回 `[[1, 2], [3, 4], [5]]`。\n\n#### 🚀 边界避坑与进阶思考\n\n- **非法输入主动拦截**：当遇到空集合、非正数参数或违反约束的数据时，务必按要求显式 `raise` `ValueError`，不要静默返回 `None` 或吞掉异常。\n- **零除与空输入守卫**：遇到空列表、空字典或零分母场景（如模长为 0、样本数为 0）时，必须预先加好判空/判零保护，严防 `ZeroDivisionError` 或 `NaN` 污染输出。\n- **真题隐藏评测覆盖**：完整判题除了 2 个公开样例外，还包含 2 组隐藏边界与压力测试用例；请务必立足通用逻辑与数据结构设计，切勿针对公开样例硬编码分支。\n\n> 💭 **延伸思考（写完代码后建议作答）**：这个实现只能迭代一次。如果要支持多次独立遍历，__iter__ 应该返回什么？",
     "latexFormulas": [
       "Pages = \\lceil \\frac{N}{pageSize} \\rceil",
       "Page_i = data[i \\times pageSize : (i+1) \\times pageSize]"
@@ -2535,7 +2535,7 @@
       "yield",
       "log-parsing"
     ],
-    "theoryContent": "### 编程挑战：日志行解析生成器\n\n生成器是 Python 处理大数据流的利器——它惰性求值，每次只生产一个值，内存友好。\n\n本题要求实现一个日志解析生成器，逐行接收日志（模拟大文件），yield 出解析后的结构化字典。过滤掉空行和注释行（以 # 开头）。\n\n日志格式：每行 `级别 | 时间 | 模块 | 消息`\n示例：`INFO | 10:00:00 | server | started`",
+    "theoryContent": "### 🎯 编程挑战：日志行解析生成器\n\n> 💡 **场景类比与核心直觉**：生成器（Generator）是懂得『按需懒汉现做』的高级面点师：借助 `yield` 暂停并记住上次执行的现场状态，哪怕要吐出百万级斐波那契流或分页流，内存占用依然接近零。\n\n生成器是 Python 处理大数据流的利器——它惰性求值，每次只生产一个值，内存友好。\n\n本题要求实现一个日志解析生成器，逐行接收日志（模拟大文件），yield 出解析后的结构化字典。过滤掉空行和注释行（以 # 开头）。\n\n日志格式：每行 `级别 | 时间 | 模块 | 消息`\n示例：`INFO | 10:00:00 | server | started`\n\n#### 🔬 核心原理与机制拆解\n\n在动手写代码前，先理清『**日志行解析生成器**』背后的数学建模与核心运行逻辑：一旦理解了惰性求值与状态挂起/恢复，许多看似吃内存的大数据流处理代码都能缩减为十行以内。\n\n$$\nGenerator \\rightarrow \\text{Lazy Evaluation: } O(1) \\text{ memory}\n$$\n\n$$\nRecord = \\{level, timestamp, module, message\\}\n$$\n\n- **核心要点**：yield 会挂起函数保持执行状态，下次继续；return 在生成器中表示 StopIteration。\n- **核心要点**：生成器每次只生产一个值，不会把所有数据加载到内存。\n\n#### 🛠️ 实战任务与样例推演\n\n**解题总纲**：使用内部生成器按竖线拆分日志行，自动跳过空行、注释行与字段不全的畸形日志。\n\n**需要实现的核心接口与结构**：\n- `parse_log_lines(log_lines: list[str]) -> list[dict]` — 生成器过滤无效行并拆出四字段日志字典列表\n\n**输入输出推演**：以首个公开样例 `parses valid lines` 为例：当调用 `parse_log_lines([\"INFO | 10:00:00 | server | started\", \"# this is a comment\", \"\", \"ERROR | 10:00:05 | db | timeout\"])` 时，程序按上述步骤计算后应稳定返回 `[{\"level\": \"INFO\", \"timestamp\": \"10:00:00\", \"module\": \"server\", \"message\": \"started\"}, ...]（共 2 项）`。\n\n#### 🚀 边界避坑与进阶思考\n\n- **零除与空输入守卫**：遇到空列表、空字典或零分母场景（如模长为 0、样本数为 0）时，必须预先加好判空/判零保护，严防 `ZeroDivisionError` 或 `NaN` 污染输出。\n- **真题隐藏评测覆盖**：完整判题除了 2 个公开样例外，还包含 2 组隐藏边界与压力测试用例；请务必立足通用逻辑与数据结构设计，切勿针对公开样例硬编码分支。\n\n> 💭 **延伸思考（写完代码后建议作答）**：如果把所有解析结果用 list() 收集，生成器的惰性优势就没了。如果需要流式处理（边解析边写入），你会怎么设计？",
     "latexFormulas": [
       "Generator \\rightarrow \\text{Lazy Evaluation: } O(1) \\text{ memory}",
       "Record = \\{level, timestamp, module, message\\}"
@@ -2662,7 +2662,7 @@
       "retry",
       "resilience"
     ],
-    "theoryContent": "### 编程挑战：自动重试装饰器\n\n网络请求、数据库操作等可能因临时故障失败。自动重试是提高系统鲁棒性的常用手段。\n\n本题要求实现一个 @retry 装饰器：\n- 支持指定最大重试次数（默认 3 次）\n- 支持指定重试间隔（默认 0 秒）\n- 只有指定类型的异常才触发重试（默认所有 Exception）\n- 超过最大重试次数后抛出最后一次的异常\n- 保留原函数的元信息",
+    "theoryContent": "### 🎯 编程挑战：自动重试装饰器\n\n> 💡 **场景类比与核心直觉**：装饰器就像给既有函数无缝加装的『可插拔外挂中间件』：无需修改核心业务源码一字一句，就能从外部透明织入缓存记忆化、耗时审计或指数/固定退避自动重试。\n\n网络请求、数据库操作等可能因临时故障失败。自动重试是提高系统鲁棒性的常用手段。\n\n本题要求实现一个 @retry 装饰器：\n- 支持指定最大重试次数（默认 3 次）\n- 支持指定重试间隔（默认 0 秒）\n- 只有指定类型的异常才触发重试（默认所有 Exception）\n- 超过最大重试次数后抛出最后一次的异常\n- 保留原函数的元信息\n\n#### 🔬 核心原理与机制拆解\n\n在动手写代码前，先理清『**自动重试装饰器**』背后的数学建模与核心运行逻辑：切记配合 `functools.wraps` 保护原函数元信息，并在设计 `@retry` 时妥善区分成功早停与最终重试耗尽抛错。\n\n$$\nattempts \\le maxAttempts\n$$\n\n$$\n\\Delta t_{retry} = delay \\times (attempt - 1) \\quad \\text{(constant interval)}\n$$\n\n- **核心要点**：@decorator(args) 等价于 func = decorator(args)(func)，先调工厂再调装饰器。\n- **核心要点**：业务逻辑异常（如参数错误、校验失败）重试多少次都一样结果，只应重试临时性异常。\n\n#### 🛠️ 实战任务与样例推演\n\n**解题总纲**：捕获指定异常类型进行有限次重试，并可选等待延迟后在最终失败时重抛末次异常。\n\n**需要实现的核心接口与结构**：\n- `retry(max_attempts: int, delay: float, exceptions: tuple)` — 构建异常过滤与重试循环装饰器\n- `eval_retry(max_attempts: int, fail_times: int) -> str` — 评测入口（请勿修改）\n\n**输入输出推演**：以首个公开样例 `succeeds on first try` 为例：当调用 `eval_retry(3, 0)` 时，程序按上述步骤计算后应稳定返回 `\"success\"`。\n\n#### 🚀 边界避坑与进阶思考\n\n- **非法输入主动拦截**：当遇到空集合、非正数参数或违反约束的数据时，务必按要求显式 `raise` `ValueError`，不要静默返回 `None` 或吞掉异常。\n- **零除与空输入守卫**：遇到空列表、空字典或零分母场景（如模长为 0、样本数为 0）时，必须预先加好判空/判零保护，严防 `ZeroDivisionError` 或 `NaN` 污染输出。\n- **真题隐藏评测覆盖**：完整判题除了 2 个公开样例外，还包含 2 组隐藏边界与压力测试用例；请务必立足通用逻辑与数据结构设计，切勿针对公开样例硬编码分支。\n\n> 💭 **延伸思考（写完代码后建议作答）**：如果重试时遇到系统退出信号（SIGTERM），应该继续重试吗？你会如何让装饰器支持可中断的退出？",
     "latexFormulas": [
       "attempts \\le maxAttempts",
       "\\Delta t_{retry} = delay \\times (attempt - 1) \\quad \\text{(constant interval)}"
@@ -2761,7 +2761,7 @@
       "sort",
       "functional"
     ],
-    "theoryContent": "### 编程挑战：多维度数据排序工具\n\nLambda 表达式是 Python 中的匿名函数，常用于需要简单函数的场景，如排序、过滤、映射。本题要求使用 lambda 表达式实现一个灵活的数据排序工具。\n\n给定一个用户列表，支持通过 lambda 表达式指定排序维度，按指定顺序排序。\n\n这题需要你编写多个 lambda 表达式作为排序 key，以及一个工具函数来组合多个排序条件。",
+    "theoryContent": "### 🎯 编程挑战：多维度数据排序工具\n\n> 💡 **场景类比与核心直觉**：Lambda 匿名表达式就像现场即兴递出的『一次性排序标尺』：排序规则如果只需要写一行短函数（比如先按优先级降序、再按时间戳升序），用 `lambda` 就地描述最清爽利落。\n\nLambda 表达式是 Python 中的匿名函数，常用于需要简单函数的场景，如排序、过滤、映射。本题要求使用 lambda 表达式实现一个灵活的数据排序工具。\n\n给定一个用户列表，支持通过 lambda 表达式指定排序维度，按指定顺序排序。\n\n这题需要你编写多个 lambda 表达式作为排序 key，以及一个工具函数来组合多个排序条件。\n\n#### 🔬 核心原理与机制拆解\n\n在动手写代码前，先理清『**多维度数据排序工具**』背后的数学建模与核心运行逻辑：掌握多字段元组键技巧（例如负号实现数值降序、结合原字段升序），几乎可以一网打尽所有业务多维排序需求。\n\n$$\nSortKey(x) = (\\lambda_1(x), \\lambda_2(x), \\ldots, \\lambda_k(x))\n$$\n\n$$\n\\lambda(x) \\rightarrow expression \\quad \\text{(single-expression closure)}\n$$\n\n- **核心要点**：lambda 只是匿名函数的语法糖，lambda u: u['age'] 等价于 def f(u): return u['age']。\n- **核心要点**：lambda 只能包含一个表达式，不能有赋值、循环等语句，复杂逻辑仍需用 def。\n\n#### 🛠️ 实战任务与样例推演\n\n**解题总纲**：支持任意个 lambda 提取函数组合多维排序键，实现年龄、降序分数与姓名长度组合排序。\n\n**需要实现的核心接口与结构**：\n- `sort_users(users: list[dict], *key_funcs) -> list[dict]` — 将多个键函数组合为排序元组并返回新列表\n- `eval_sort_users(users: list[dict], rule_names: list[str]) -> list[dict]` — 评测入口（请勿修改）\n\n**输入输出推演**：以首个公开样例 `sort by age` 为例：当调用 `eval_sort_users([{\"name\": \"Alice\", \"age\": 30, \"score\": 85}, ...]（共 2 项）, [\"age\"])` 时，程序按上述步骤计算后应稳定返回 `[{\"name\": \"Bob\", \"age\": 25, \"score\": 90}, {\"name\": \"Alice\", \"age\": 30, \"score\": 85}]`。\n\n#### 🚀 边界避坑与进阶思考\n\n- **零除与空输入守卫**：遇到空列表、空字典或零分母场景（如模长为 0、样本数为 0）时，必须预先加好判空/判零保护，严防 `ZeroDivisionError` 或 `NaN` 污染输出。\n- **真题隐藏评测覆盖**：完整判题除了 2 个公开样例外，还包含 2 组隐藏边界与压力测试用例；请务必立足通用逻辑与数据结构设计，切勿针对公开样例硬编码分支。\n\n> 💭 **延伸思考（写完代码后建议作答）**：`by_score_desc = lambda u: -u['score']` 用负数来模拟降序，但如果 score 不是数字（如日期字符串），就不能用负数了。你会如何支持非数字字段的降序？",
     "latexFormulas": [
       "SortKey(x) = (\\lambda_1(x), \\lambda_2(x), \\ldots, \\lambda_k(x))",
       "\\lambda(x) \\rightarrow expression \\quad \\text{(single-expression closure)}"
@@ -2962,10 +2962,10 @@
     "tags": [
       "变量与数据类型"
     ],
-    "theoryContent": "### 题目：括号匹配校验器\n\n给定一个只包含 '(', ')', '{', '}', '[', ']' 的字符串，判断括号是否匹配闭合。\n\n规则：\n1. 左括号必须用相同类型右括号闭合\n2. 左括号必须以正确顺序闭合\n3. 空字符串视为有效\n\n示例：\n- \"()\" → True\n- \"()[]{}\" → True\n- \"(]\" → False\n- \"([)]\" → False\n- \"{[]}\" → True",
+    "theoryContent": "### 🎯 编程挑战：括号匹配校验器\n\n> ⚡ **进阶实战与工程深水区**：类型解析与校验就像快递站入口的电子秤与安检仪：不管上游配置还是表单传来的全是一串文本，入站第一关必须准确拆箱变成整数、浮点、布尔或整数列表，不合格当场报错拦截。 在高并发或复杂真实场景中，真实线上最怕『隐式错误容忍』——比如把 `'true'` 误当非空字符串直接 `bool('false') == True`，导致开关逻辑彻底反向。\n\n### 题目：括号匹配校验器\n\n给定一个只包含 '(', ')', '{', '}', '[', ']' 的字符串，判断括号是否匹配闭合。\n\n规则：\n1. 左括号必须用相同类型右括号闭合\n2. 左括号必须以正确顺序闭合\n3. 空字符串视为有效\n\n示例：\n- \"()\" → True\n- \"()[]{}\" → True\n- \"(]\" → False\n- \"([)]\" → False\n- \"{[]}\" → True\n\n#### 🔬 核心原理与机制拆解\n\n相比基础原型，本关更聚焦『**括号匹配校验器**』在工程落地时的精度、效率与边界稳定性要求，涉及以下关键数学关系与规则：\n\n$$\n\\text{Stack: 后进先出（LIFO）}\n$$\n\n$$\n\\text{match}(ch) \\iff \\text{stack}[-1] = \\text{pairs}[ch]\n$$\n\n- **核心要点**：遇到左括号入栈，遇到右括号时检查栈顶是否匹配。\n\n#### 🛠️ 实战任务与样例推演\n\n**解题总纲**：经典括号栈匹配：遇左括号入栈，遇右括号检查栈顶是否为对应开括号。\n\n**需要实现的核心接口与结构**：\n- `is_valid(s: str) -> bool` — 用栈校验圆括号、方括号与花括号的嵌套配对完整性\n\n**输入输出推演**：以首个公开样例 `simple` 为例：当调用 `is_valid(\"()\")` 时，程序按上述步骤计算后应稳定返回 `true`。\n\n#### 🚀 边界避坑与进阶思考\n\n- **真题隐藏评测覆盖**：完整判题除了 6 个公开样例外，还包含 2 组隐藏边界与压力测试用例；请务必立足通用逻辑与数据结构设计，切勿针对公开样例硬编码分支。\n\n> 💭 **延伸思考（写完代码后建议作答）**：如果输入包含中文全角括号，如何处理？能否设计一个通用的括号匹配器？",
     "latexFormulas": [
-      "Stack: LIFO",
-      "match(ch) = stack[-1] == pairs[ch]"
+      "\\text{Stack: 后进先出（LIFO）}",
+      "\\text{match}(ch) \\iff \\text{stack}[-1] = \\text{pairs}[ch]"
     ],
     "starterCode": "def is_valid(s: str) -> bool:\n    pass",
     "solutionCode": "# 【算法思路】经典括号栈匹配：遇左括号入栈，遇右括号检查栈顶是否为对应开括号。\n# 用栈校验圆括号、方括号与花括号的嵌套配对完整性\ndef is_valid(s: str) -> bool:\n    pairs = {\")\": \"(\", \"]\": \"[\", \"}\": \"{\"}\n    stack = []\n    for ch in s:\n        if ch in \"([{\":\n            stack.append(ch)\n        elif not stack or stack.pop() != pairs[ch]:\n            return False\n    return len(stack) == 0\n",
@@ -3083,11 +3083,11 @@
     "tags": [
       "条件语句"
     ],
-    "theoryContent": "### 题目：FizzBuzz\n\n写一个函数，输入 n，返回 1 到 n 的字符串列表：\n- 3 的倍数 → \"Fizz\"\n- 5 的倍数 → \"Buzz\"\n- 同时是 3 和 5 的倍数 → \"FizzBuzz\"\n- 否则转为字符串\n\n示例：n=15 时第 15 个为 \"FizzBuzz\"",
+    "theoryContent": "### 🎯 编程挑战：FizzBuzz\n\n> ⚡ **进阶实战与工程深水区**：条件分支就像繁忙十字路口的智能信号灯配时规则：不仅要把常规高低峰值分流清楚，还要提前防范逻辑顺序颠倒导致某个分支永远进不去（死分支）。 在高并发或复杂真实场景中，多层嵌套与边界开闭区间（`<` vs `<=`）一不留神错写 1 位数，就会让边界样本落入错误等级。\n\n### 题目：FizzBuzz\n\n写一个函数，输入 n，返回 1 到 n 的字符串列表：\n- 3 的倍数 → \"Fizz\"\n- 5 的倍数 → \"Buzz\"\n- 同时是 3 和 5 的倍数 → \"FizzBuzz\"\n- 否则转为字符串\n\n示例：n=15 时第 15 个为 \"FizzBuzz\"\n\n#### 🔬 核心原理与机制拆解\n\n相比基础原型，本关更聚焦『**FizzBuzz**』在工程落地时的精度、效率与边界稳定性要求，涉及以下关键数学关系与规则：\n\n$$\ni \\% 3 = 0 \\rightarrow Fizz\n$$\n\n$$\ni \\% 5 = 0 \\rightarrow Buzz\n$$\n\n$$\ni \\% 15 = 0 \\rightarrow FizzBuzz\n$$\n\n- **核心要点**：如果先判断 i%3==0，15 会输出 Fizz 而不是 FizzBuzz。\n\n#### 🛠️ 实战任务与样例推演\n\n**解题总纲**：按 1..n 顺序检查能否被 15、3、5 整除并生成相应字符串序列。\n\n**需要实现的核心接口与结构**：\n- `fizzbuzz(n: int) -> list` — 优先判断 15 的倍数以免被单一整除分支掩盖\n\n**输入输出推演**：以首个公开样例 `n=5` 为例：当调用 `fizzbuzz(5)` 时，程序按上述步骤计算后应稳定返回 `[\"1\", \"2\", \"Fizz\", \"4\", \"Buzz\"]`。\n\n#### 🚀 边界避坑与进阶思考\n\n- **零除与空输入守卫**：遇到空列表、空字典或零分母场景（如模长为 0、样本数为 0）时，必须预先加好判空/判零保护，严防 `ZeroDivisionError` 或 `NaN` 污染输出。\n- **真题隐藏评测覆盖**：完整判题除了 2 个公开样例外，还包含 2 组隐藏边界与压力测试用例；请务必立足通用逻辑与数据结构设计，切勿针对公开样例硬编码分支。\n\n> 💭 **延伸思考（写完代码后建议作答）**：如果再加一条规则：7 的倍数输出 \"Bazz\"，同时满足多个条件时拼接，代码如何改造？",
     "latexFormulas": [
-      "i % 3 = 0 \\rightarrow Fizz",
-      "i % 5 = 0 \\rightarrow Buzz",
-      "i % 15 = 0 \\rightarrow FizzBuzz"
+      "i \\% 3 = 0 \\rightarrow Fizz",
+      "i \\% 5 = 0 \\rightarrow Buzz",
+      "i \\% 15 = 0 \\rightarrow FizzBuzz"
     ],
     "starterCode": "def fizzbuzz(n: int) -> list:\n    pass",
     "solutionCode": "# 【算法思路】按 1..n 顺序检查能否被 15、3、5 整除并生成相应字符串序列。\n# 优先判断 15 的倍数以免被单一整除分支掩盖\ndef fizzbuzz(n: int) -> list:\n    result = []\n    for i in range(1, n+1):\n        if i % 15 == 0: result.append(\"FizzBuzz\")\n        elif i % 3 == 0: result.append(\"Fizz\")\n        elif i % 5 == 0: result.append(\"Buzz\")\n        else: result.append(str(i))\n    return result\n",
@@ -3189,10 +3189,10 @@
     "tags": [
       "循环"
     ],
-    "theoryContent": "### 题目：两数之和\n\n给定整数数组 nums 和目标值 target，找出和等于 target 的两个数的索引。\n\n假设只有一组答案，不能重复用同一个元素。要求 O(n) 时间。\n\n示例：nums=[2,7,11,15], target=9 → [0,1]",
+    "theoryContent": "### 🎯 编程挑战：两数之和\n\n> ⚡ **进阶实战与工程深水区**：循环与批处理调度就像网约车派单或机场摆渡车发车表：既要在单趟容量装满后计算执行时长，还要妥善处理『最后一趟未满载但仍需按批次发车』及批次间冷却间隔。 在高并发或复杂真实场景中，写循环任务最常见的翻车点是首尾边界多算或少算一次间隔（Off-by-one Error）。\n\n### 题目：两数之和\n\n给定整数数组 nums 和目标值 target，找出和等于 target 的两个数的索引。\n\n假设只有一组答案，不能重复用同一个元素。要求 O(n) 时间。\n\n示例：nums=[2,7,11,15], target=9 → [0,1]\n\n#### 🔬 核心原理与机制拆解\n\n相比基础原型，本关更聚焦『**两数之和**』在工程落地时的精度、效率与边界稳定性要求，涉及以下关键数学关系与规则：\n\n$$\n\\text{target} = \\text{nums}[i] + \\text{nums}[j]\n$$\n\n$$\n\\text{complement} = \\text{target} - \\text{nums}[i]\n$$\n\n- **核心要点**：哈希表查找平均 O(1)，总复杂度 O(n)。\n\n#### 🛠️ 实战任务与样例推演\n\n**解题总纲**：利用哈希表在单遍扫描中记录已遍历数值索引，快速查找与当前数互补的目标索引。\n\n**需要实现的核心接口与结构**：\n- `two_sum(nums: list, target: int) -> list` — O(n) 时间一遍哈希查找两数之和下标对\n\n**输入输出推演**：以首个公开样例 `example 1` 为例：当调用 `two_sum([2, 7, 11, 15], 9)` 时，程序按上述步骤计算后应稳定返回 `[0, 1]`。\n\n#### 🚀 边界避坑与进阶思考\n\n- **零除与空输入守卫**：遇到空列表、空字典或零分母场景（如模长为 0、样本数为 0）时，必须预先加好判空/判零保护，严防 `ZeroDivisionError` 或 `NaN` 污染输出。\n- **真题隐藏评测覆盖**：完整判题除了 2 个公开样例外，还包含 2 组隐藏边界与压力测试用例；请务必立足通用逻辑与数据结构设计，切勿针对公开样例硬编码分支。\n\n> 💭 **延伸思考（写完代码后建议作答）**：如果数组已排序，如何用双指针实现空间 O(1) 的解法？",
     "latexFormulas": [
-      "target = nums[i] + nums[j]",
-      "complement = target - nums[i]"
+      "\\text{target} = \\text{nums}[i] + \\text{nums}[j]",
+      "\\text{complement} = \\text{target} - \\text{nums}[i]"
     ],
     "starterCode": "def two_sum(nums: list, target: int) -> list:\n    pass",
     "solutionCode": "# 【算法思路】利用哈希表在单遍扫描中记录已遍历数值索引，快速查找与当前数互补的目标索引。\n# O(n) 时间一遍哈希查找两数之和下标对\ndef two_sum(nums: list, target: int) -> list:\n    seen = {}\n    for i, num in enumerate(nums):\n        complement = target - num\n        if complement in seen:\n            return [seen[complement], i]\n        seen[num] = i\n    return []\n",
@@ -3303,10 +3303,10 @@
     "tags": [
       "函数"
     ],
-    "theoryContent": "### 题目：回文检测器\n\n回文是正反读都一样的字符串，忽略大小写和非字母数字字符。\n\n示例：\n- \"A man, a plan, a canal: Panama\" → True\n- \"race a car\" → False\n- \" \" → True",
+    "theoryContent": "### 🎯 编程挑战：回文检测器\n\n> ⚡ **进阶实战与工程深水区**：良好设计的函数就像工业标准化模块接头：输入签名明确、职责单一、返回值结构契约稳定，才能既自己跑得稳，又让下游调用方放心组合嵌套。 在高并发或复杂真实场景中，尤其要警惕 Python 可变默认参数与状态污染问题——每次调用都应保持清晰可预测的输入输出映射。\n\n### 题目：回文检测器\n\n回文是正反读都一样的字符串，忽略大小写和非字母数字字符。\n\n示例：\n- \"A man, a plan, a canal: Panama\" → True\n- \"race a car\" → False\n- \" \" → True\n\n#### 🔬 核心原理与机制拆解\n\n相比基础原型，本关更聚焦『**回文检测器**』在工程落地时的精度、效率与边界稳定性要求，涉及以下关键数学关系与规则：\n\n$$\ns = reverse(s) \\iff palindrome\n$$\n\n$$\n\\text{切片反转 } s[::-1] \\implies \\text{时间复杂度 } O(n)\n$$\n\n- **核心要点**：切片创建新字符串，O(n) 时间。\n\n#### 🛠️ 实战任务与样例推演\n\n**解题总纲**：清洗掉非字母数字字符并统一小写后对比正序与反转切片是否完全相等。\n\n**需要实现的核心接口与结构**：\n- `is_palindrome(s: str) -> bool` — 过滤符号大小写归一化并检测回文对称性\n\n**输入输出推演**：以首个公开样例 `classic` 为例：当调用 `is_palindrome(\"A man, a plan, a canal: Panama\")` 时，程序按上述步骤计算后应稳定返回 `true`。\n\n#### 🚀 边界避坑与进阶思考\n\n- **真题隐藏评测覆盖**：完整判题除了 3 个公开样例外，还包含 2 组隐藏边界与压力测试用例；请务必立足通用逻辑与数据结构设计，切勿针对公开样例硬编码分支。\n\n> 💭 **延伸思考（写完代码后建议作答）**：不用切片反转，如何用双指针 O(1) 空间检测回文？",
     "latexFormulas": [
       "s = reverse(s) \\iff palindrome",
-      "s[::-1] = O(n)"
+      "\\text{切片反转 } s[::-1] \\implies \\text{时间复杂度 } O(n)"
     ],
     "starterCode": "def is_palindrome(s: str) -> bool:\n    pass",
     "solutionCode": "# 【算法思路】清洗掉非字母数字字符并统一小写后对比正序与反转切片是否完全相等。\n# 过滤符号大小写归一化并检测回文对称性\ndef is_palindrome(s: str) -> bool:\n    clean = \"\".join(c.lower() for c in s if c.isalnum())\n    return clean == clean[::-1]\n",
@@ -3394,7 +3394,7 @@
     "tags": [
       "List 列表"
     ],
-    "theoryContent": "### 题目：数组旋转\n\n将数组向右旋转 k 步，要求空间 O(1)。\n\n示例：nums=[1,2,3,4,5,6,7], k=3 → [5,6,7,1,2,3,4]\n\n提示：三步反转法",
+    "theoryContent": "### 🎯 编程挑战：数组旋转\n\n> ⚡ **进阶实战与工程深水区**：动态列表（List）相当于一排带编号的可伸缩储物柜：既能按顺序记录事件轨迹，也能用切片、双指针或区间合并把零碎时间段整理成连续区间。 在高并发或复杂真实场景中，区间归并时如果忘了先按起点排序，或直接边遍历列表边增删元素，下标瞬间就会乱套。\n\n### 题目：数组旋转\n\n将数组向右旋转 k 步，要求空间 O(1)。\n\n示例：nums=[1,2,3,4,5,6,7], k=3 → [5,6,7,1,2,3,4]\n\n提示：三步反转法\n\n#### 🔬 核心原理与机制拆解\n\n相比基础原型，本关更聚焦『**数组旋转**』在工程落地时的精度、效率与边界稳定性要求，涉及以下关键数学关系与规则：\n\n$$\nrotate(0, n-1) \\rightarrow rotate(0, k-1) \\rightarrow rotate(k, n-1)\n$$\n\n$$\nk = k \\bmod n\n$$\n\n- **核心要点**：k 可能大于 n，取模去掉完整圈的无效旋转。\n\n#### 🛠️ 实战任务与样例推演\n\n**解题总纲**：利用三次局部反转（整体反转+前k反转+后n-k反转）实现 O(1) 额外空间的原地数组右旋。\n\n**需要实现的核心接口与结构**：\n- `rotate(nums: list, k: int) -> list` — 对 k 取模后分三段反转数组并原地返回\n\n**输入输出推演**：以首个公开样例 `rotate 3` 为例：当调用 `rotate([1, 2, 3, 4, 5, 6, 7], 3)` 时，程序按上述步骤计算后应稳定返回 `[5, 6, 7, 1, 2, 3, 4]`。\n\n#### 🚀 边界避坑与进阶思考\n\n- **零除与空输入守卫**：遇到空列表、空字典或零分母场景（如模长为 0、样本数为 0）时，必须预先加好判空/判零保护，严防 `ZeroDivisionError` 或 `NaN` 污染输出。\n- **真题隐藏评测覆盖**：完整判题除了 2 个公开样例外，还包含 2 组隐藏边界与压力测试用例；请务必立足通用逻辑与数据结构设计，切勿针对公开样例硬编码分支。\n\n> 💭 **延伸思考（写完代码后建议作答）**：要求返回新数组而非原地修改，代码会简单多少？空间复杂度多少？",
     "latexFormulas": [
       "rotate(0, n-1) \\rightarrow rotate(0, k-1) \\rightarrow rotate(k, n-1)",
       "k = k \\bmod n"
@@ -3519,10 +3519,10 @@
     "tags": [
       "Tuple 元组"
     ],
-    "theoryContent": "### 题目：区间合并\n\n给定一组 [start, end] 区间，合并重叠区间。\n\n示例：[[1,3],[2,6],[8,10],[15,18]] → [[1,6],[8,10],[15,18]]",
+    "theoryContent": "### 🎯 编程挑战：区间合并\n\n> ⚡ **进阶实战与工程深水区**：不可变元组（Tuple）犹如贴了防篡改封条的坐标标签或只读契约：适合用来固定表示点位坐标、版本元组，还能安全充当字典键值做快速索引。 在高并发或复杂真实场景中，许多初学者容易忽视单元素元组末尾必须加逗号 `(x,)` 的语法细节，以及命名解包带来的可读性红利。\n\n### 题目：区间合并\n\n给定一组 [start, end] 区间，合并重叠区间。\n\n示例：[[1,3],[2,6],[8,10],[15,18]] → [[1,6],[8,10],[15,18]]\n\n#### 🔬 核心原理与机制拆解\n\n相比基础原型，本关更聚焦『**区间合并**』在工程落地时的精度、效率与边界稳定性要求，涉及以下关键数学关系与规则：\n\n$$\n[s_i, e_i] \\cup [s_j, e_j] \\iff s_j \\le e_i\n$$\n\n$$\n\\text{merged}[-1][1] = \\max(\\text{merged}[-1][1], e_i)\n$$\n\n- **核心要点**：排序后只需遍历一次，检查当前区间能否合并到 merged 最后一个。\n\n#### 🛠️ 实战任务与样例推演\n\n**解题总纲**：按区间起点升序排序后线性扫描，若当前区间起点不大于末尾区间终点则合并扩展右边界。\n\n**需要实现的核心接口与结构**：\n- `merge_intervals(intervals: list) -> list` — 先排序后贪心合并重叠或相邻区间\n\n**输入输出推演**：以首个公开样例 `overlapping` 为例：当调用 `merge_intervals([[1, 3], [2, 6], [8, 10], [15, 18]])` 时，程序按上述步骤计算后应稳定返回 `[[1, 6], [8, 10], [15, 18]]`。\n\n#### 🚀 边界避坑与进阶思考\n\n- **零除与空输入守卫**：遇到空列表、空字典或零分母场景（如模长为 0、样本数为 0）时，必须预先加好判空/判零保护，严防 `ZeroDivisionError` 或 `NaN` 污染输出。\n- **真题隐藏评测覆盖**：完整判题除了 3 个公开样例外，还包含 2 组隐藏边界与压力测试用例；请务必立足通用逻辑与数据结构设计，切勿针对公开样例硬编码分支。\n\n> 💭 **延伸思考（写完代码后建议作答）**：如果区间用元组 (start,end) 列表表示（不可变），怎么调整？",
     "latexFormulas": [
       "[s_i, e_i] \\cup [s_j, e_j] \\iff s_j \\le e_i",
-      "merged[-1][1] = max(merged[-1][1], e_i)"
+      "\\text{merged}[-1][1] = \\max(\\text{merged}[-1][1], e_i)"
     ],
     "starterCode": "def merge_intervals(intervals: list) -> list:\n    pass",
     "solutionCode": "# 【算法思路】按区间起点升序排序后线性扫描，若当前区间起点不大于末尾区间终点则合并扩展右边界。\n# 先排序后贪心合并重叠或相邻区间\ndef merge_intervals(intervals: list) -> list:\n    if not intervals: return []\n    intervals.sort(key=lambda x: x[0])\n    merged = [list(intervals[0])]\n    for s, e in intervals[1:]:\n        if s <= merged[-1][1]:\n            merged[-1][1] = max(merged[-1][1], e)\n        else:\n            merged.append([s, e])\n    return merged\n",
@@ -3690,10 +3690,10 @@
     "tags": [
       "Dict 字典"
     ],
-    "theoryContent": "### 题目：单词频率统计\n\n统计英文句子中单词出现次数，返回频率最高的 k 个。忽略大小写、标点。频率相同的按字母序升序。\n\n示例：\"i love coding and i love python\", k=2 → [[\"i\",2],[\"love\",2]]",
+    "theoryContent": "### 🎯 编程挑战：单词频率统计 Top-K\n\n> ⚡ **进阶实战与工程深水区**：字典（Dict）是底层哈希表驱动的『秒查通讯录』：无论数据规模扩到多大，通过键精确查找平均只需常数时间 $O(1)$，是高频计数与多层配置合并的绝对主力。 在高并发或复杂真实场景中，深度递归合并嵌套字典时，必须严格区分『同名键对应两边都是字典（继续深合并）』与『非字典直接覆盖』两种情况。\n\n### 题目：单词频率统计\n\n统计英文句子中单词出现次数，返回频率最高的 k 个。忽略大小写、标点。频率相同的按字母序升序。\n\n示例：\"i love coding and i love python\", k=2 → [[\"i\",2],[\"love\",2]]\n\n#### 🔬 核心原理与机制拆解\n\n相比基础原型，本关更聚焦『**单词频率统计 Top-K**』在工程落地时的精度、效率与边界稳定性要求，涉及以下关键数学关系与规则：\n\n$$\n\\text{freq}(w) = |\\{i : \\text{word}_i = w\\}|\n$$\n\n$$\n\\text{Top-}K = \\text{sorted}(\\text{freq}, \\text{key}=-count)[:k]\n$$\n\n- **核心要点**：freq[w] 如果 w 不存在会 KeyError，get 返回默认值 0。\n\n#### 🛠️ 实战任务与样例推演\n\n**解题总纲**：使用正则提取纯单词词频统计后按频次降序、字典序升序选出 Top-K 单词元组。\n\n**需要实现的核心接口与结构**：\n- `top_k_frequent(text: str, k: int) -> list` — 统计词频哈希表并通过复合排序键提取前 k 高频词\n\n**输入输出推演**：以首个公开样例 `top 2` 为例：当调用 `top_k_frequent(\"i love coding and i love python\", 2)` 时，程序按上述步骤计算后应稳定返回 `[[\"i\", 2], [\"love\", 2]]`。\n\n#### 🚀 边界避坑与进阶思考\n\n- **零除与空输入守卫**：遇到空列表、空字典或零分母场景（如模长为 0、样本数为 0）时，必须预先加好判空/判零保护，严防 `ZeroDivisionError` 或 `NaN` 污染输出。\n- **真题隐藏评测覆盖**：完整判题除了 2 个公开样例外，还包含 2 组隐藏边界与压力测试用例；请务必立足通用逻辑与数据结构设计，切勿针对公开样例硬编码分支。\n\n> 💭 **延伸思考（写完代码后建议作答）**：如果文本有上亿词放不下内存，如何设计流式 Top-K？",
     "latexFormulas": [
-      "freq(w) = |{i: word_i = w}|",
-      "Top-K = sorted(freq, key=-count)[:k]"
+      "\\text{freq}(w) = |\\{i : \\text{word}_i = w\\}|",
+      "\\text{Top-}K = \\text{sorted}(\\text{freq}, \\text{key}=-count)[:k]"
     ],
     "starterCode": "def top_k_frequent(text: str, k: int) -> list:\n    pass",
     "solutionCode": "# 【算法思路】使用正则提取纯单词词频统计后按频次降序、字典序升序选出 Top-K 单词元组。\nimport re\n# 统计词频哈希表并通过复合排序键提取前 k 高频词\ndef top_k_frequent(text: str, k: int) -> list:\n    words = re.findall(r\"\\w+\", text.lower())\n    freq = {}\n    for w in words:\n        freq[w] = freq.get(w, 0) + 1\n    return sorted(freq.items(), key=lambda x: (-x[1], x[0]))[:k]\n",
@@ -3802,7 +3802,7 @@
     "tags": [
       "Set 集合"
     ],
-    "theoryContent": "### 题目：集合运算\n\n给定两个整数数组，计算交集和差集（nums1 有而 nums2 没有）。结果去重且升序。\n\n示例：nums1=[1,2,2,1], nums2=[2,2] → 交集[2], 差集[1]",
+    "theoryContent": "### 🎯 编程挑战：集合运算\n\n> ⚡ **进阶实战与工程深水区**：集合（Set）好比一场按徽章去重的权限审查会：天然消除重复条目，并用极快的交集（`&` / $\\cap$）、并集（`|` / $\\cup$）、差集（`-` / $\\setminus$）代数运算秒算用户权限重叠与黑白名单差。 在高并发或复杂真实场景中，若用普通列表两重嵌套循环做交差集对比，时间复杂度会瞬间退化成 $O(n^2)$。\n\n### 题目：集合运算\n\n给定两个整数数组，计算交集和差集（nums1 有而 nums2 没有）。结果去重且升序。\n\n示例：nums1=[1,2,2,1], nums2=[2,2] → 交集[2], 差集[1]\n\n#### 🔬 核心原理与机制拆解\n\n相比基础原型，本关更聚焦『**集合运算**』在工程落地时的精度、效率与边界稳定性要求，涉及以下关键数学关系与规则：\n\n$$\nA \\cap B = \\{x: x \\in A \\land x \\in B\\}\n$$\n\n$$\nA \\setminus B = \\{x: x \\in A \\land x \\notin B\\}\n$$\n\n- **核心要点**：& 是集合交集，返回共有元素。\n\n#### 🛠️ 实战任务与样例推演\n\n**解题总纲**：利用 Python 集合交集(`&`)与差集(`-`)运算符求有序去重交集与仅在首数组中出现的元素。\n\n**需要实现的核心接口与结构**：\n- `set_operations(nums1: list, nums2: list) -> dict` — 将列表转为集合并返回排序后的 intersection 与 difference\n\n**输入输出推演**：以首个公开样例 `basic` 为例：当调用 `set_operations([1, 2, 2, 1], [2, 2])` 时，程序按上述步骤计算后应稳定返回 `{\"intersection\": [2], \"difference\": [1]}`。\n\n#### 🚀 边界避坑与进阶思考\n\n- **零除与空输入守卫**：遇到空列表、空字典或零分母场景（如模长为 0、样本数为 0）时，必须预先加好判空/判零保护，严防 `ZeroDivisionError` 或 `NaN` 污染输出。\n- **真题隐藏评测覆盖**：完整判题除了 2 个公开样例外，还包含 2 组隐藏边界与压力测试用例；请务必立足通用逻辑与数据结构设计，切勿针对公开样例硬编码分支。\n\n> 💭 **延伸思考（写完代码后建议作答）**：什么是对称差集？什么工程场景下有用？",
     "latexFormulas": [
       "A \\cap B = \\{x: x \\in A \\land x \\in B\\}",
       "A \\setminus B = \\{x: x \\in A \\land x \\notin B\\}"
@@ -3931,7 +3931,7 @@
     "tags": [
       "文件读写"
     ],
-    "theoryContent": "### 题目：文件查找器\n\n在文件列表中搜索包含关键词的文件，返回路径列表。匹配文件名或内容，不区分大小写。\n\nfiles = [{path, content}, ...]; search(\"hello\") → [\"/a.txt\", ...]",
+    "theoryContent": "### 🎯 编程挑战：文件查找器\n\n> ⚡ **进阶实战与工程深水区**：文件读写就像流式盘点档案室里的成百上千份日志：不能动不动把几个 GB 的文件整个搬进内存，而应逐行扫描过滤并精确统计关键字命中频率。 在高并发或复杂真实场景中，同时要关注大小写、空白裁剪与上下文资源安全释放，防止句柄泄漏。\n\n### 题目：文件查找器\n\n在文件列表中搜索包含关键词的文件，返回路径列表。匹配文件名或内容，不区分大小写。\n\nfiles = [{path, content}, ...]; search(\"hello\") → [\"/a.txt\", ...]\n\n#### 🔬 核心原理与机制拆解\n\n相比基础原型，本关更聚焦『**文件查找器**』在工程落地时的精度、效率与边界稳定性要求，涉及以下关键数学关系与规则：\n\n$$\nMatch = kw \\in path \\lor kw \\in content\n$$\n\n$$\nO(N) \\text{ scan}\n$$\n\n- **核心要点**：逐文件扫描是 I/O 密集操作，应提前建立全文索引。\n\n#### 🛠️ 实战任务与样例推演\n\n**解题总纲**：忽略大小写同时检索文件路径与内容中的关键词，返回全部命中路径。\n\n**需要实现的核心接口与结构**：\n- `find_files(files: list, keyword: str) -> list` — 列表推导按大小写无关子串过滤符合条件的文件路径\n\n**输入输出推演**：以首个公开样例 `found` 为例：当调用 `find_files([{\"path\": \"/a.txt\", \"content\": \"hello world\"}, ...]（共 2 项）, \"hello\")` 时，程序按上述步骤计算后应稳定返回 `[\"/a.txt\"]`。\n\n#### 🚀 边界避坑与进阶思考\n\n- **零除与空输入守卫**：遇到空列表、空字典或零分母场景（如模长为 0、样本数为 0）时，必须预先加好判空/判零保护，严防 `ZeroDivisionError` 或 `NaN` 污染输出。\n- **真题隐藏评测覆盖**：完整判题除了 2 个公开样例外，还包含 2 组隐藏边界与压力测试用例；请务必立足通用逻辑与数据结构设计，切勿针对公开样例硬编码分支。\n\n> 💭 **延伸思考（写完代码后建议作答）**：如果要支持通配符（如 *.log），如何设计匹配逻辑？",
     "latexFormulas": [
       "Match = kw \\in path \\lor kw \\in content",
       "O(N) \\text{ scan}"
@@ -4043,7 +4043,7 @@
     "tags": [
       "JSON解析"
     ],
-    "theoryContent": "### 题目：JSON 扁平化器\n\n将嵌套 JSON 扁平化为单层，用点号分隔嵌套路径。\n\n示例：{\"a\":1, \"b\":{\"c\":2, \"d\":[3,4]}} → {\"a\":1, \"b.c\":2, \"b.d.0\":3, \"b.d.1\":4}",
+    "theoryContent": "### 🎯 编程挑战：JSON 扁平化器\n\n> ⚡ **进阶实战与工程深水区**：JSON 数据清洗管道如同把五花八门的异构包裹统一贴标入库：接口传来的年龄可能是 `'18'`，状态可能是 `'true'`，甚至掺杂空值与嵌套列表，必须在管道层先规范化类型再喂给业务或模型。 在高并发或复杂真实场景中，解析器如果不考虑嵌套结构与异常字段兜底，遇到脏数据就会导致整条 ETL 流水线崩溃。\n\n### 题目：JSON 扁平化器\n\n将嵌套 JSON 扁平化为单层，用点号分隔嵌套路径。\n\n示例：{\"a\":1, \"b\":{\"c\":2, \"d\":[3,4]}} → {\"a\":1, \"b.c\":2, \"b.d.0\":3, \"b.d.1\":4}\n\n#### 🔬 核心原理与机制拆解\n\n相比基础原型，本关更聚焦『**JSON 扁平化器**』在工程落地时的精度、效率与边界稳定性要求，涉及以下关键数学关系与规则：\n\n$$\npath = key_1.key_2.\\ldots.key_n\n$$\n\n$$\nflatten(v) = \\begin{cases} dict & recursive \\\\ list & enumerate \\\\ scalar & leaf \\end{cases}\n$$\n\n- **核心要点**：Python recursionlimit 默认约 1000，嵌套过深会 RecursionError。\n\n#### 🛠️ 实战任务与样例推演\n\n**解题总纲**：递归展开嵌套字典与列表，使用点号 `.` 拼接层级键名与数组下标扁平化输出。\n\n**需要实现的核心接口与结构**：\n- `flatten_json(obj, parent_key)` — 递归处理 dict 与 list 节点生成单层点分键值字典\n\n**输入输出推演**：以首个公开样例 `nested` 为例：当调用 `flatten_json({\"a\": 1, \"b\": {\"c\": 2, \"d\": [3, 4]}})` 时，程序按上述步骤计算后应稳定返回 `{\"a\": 1, \"b.c\": 2, \"b.d.0\": 3, \"b.d.1\": 4}`。\n\n#### 🚀 边界避坑与进阶思考\n\n- **零除与空输入守卫**：遇到空列表、空字典或零分母场景（如模长为 0、样本数为 0）时，必须预先加好判空/判零保护，严防 `ZeroDivisionError` 或 `NaN` 污染输出。\n- **真题隐藏评测覆盖**：完整判题除了 2 个公开样例外，还包含 2 组隐藏边界与压力测试用例；请务必立足通用逻辑与数据结构设计，切勿针对公开样例硬编码分支。\n\n> 💭 **延伸思考（写完代码后建议作答）**：如何实现反扁平化（将扁平 JSON 恢复为嵌套结构）？",
     "latexFormulas": [
       "path = key_1.key_2.\\ldots.key_n",
       "flatten(v) = \\begin{cases} dict & recursive \\\\ list & enumerate \\\\ scalar & leaf \\end{cases}"
@@ -4156,7 +4156,7 @@
     "tags": [
       "CSV数据分析"
     ],
-    "theoryContent": "### 题目：CSV 解析器\n\n将 CSV 字符串解析为字典列表。支持逗号分隔、双引号包裹字段（内部可含逗号）。",
+    "theoryContent": "### 🎯 编程挑战：CSV 解析器\n\n> ⚡ **进阶实战与工程深水区**：处理 CSV 表格数据好比把散落的财务流水账按部门分组汇总（Group-By + Aggregation）：一次遍历把属于同一分组的数值归拢，再分别算出求和、均值、极值与计数。 在高并发或复杂真实场景中，面对空值字符串、除零风险或大小写混杂的聚合指令，健壮的类型转换与防错处理至关重要。\n\n### 题目：CSV 解析器\n\n将 CSV 字符串解析为字典列表。支持逗号分隔、双引号包裹字段（内部可含逗号）。\n\n#### 🔬 核心原理与机制拆解\n\n相比基础原型，本关更聚焦『**CSV 解析器**』在工程落地时的精度、效率与边界稳定性要求，涉及以下关键数学关系与规则：\n\n$$\nfield = \\begin{cases} \\text{quoted} & \\text{ignore commas} \\\\ \\text{unquoted} & \\text{split by comma} \\end{cases}\n$$\n\n- **核心要点**：CSV 规范中字段内的双引号用两个连续双引号转义。\n\n#### 🛠️ 实战任务与样例推演\n\n**解题总纲**：逐字符状态机追踪双引号包围状态，确保引号内的逗号不会被错误切分为新列。\n\n**需要实现的核心接口与结构**：\n- `parse_csv(text: str) -> list` — 解析首行表头后按引号状态机切分每行字段组装字典列表\n\n**输入输出推演**：以首个公开样例 `simple` 为例：当调用 `parse_csv(\"name,age\\nAlice,30\\nBob,25\")` 时，程序按上述步骤计算后应稳定返回 `[{\"name\": \"Alice\", \"age\": \"30\"}, {\"name\": \"Bob\", \"age\": \"25\"}]`。\n\n#### 🚀 边界避坑与进阶思考\n\n- **真题隐藏评测覆盖**：完整判题除了 2 个公开样例外，还包含 2 组隐藏边界与压力测试用例；请务必立足通用逻辑与数据结构设计，切勿针对公开样例硬编码分支。\n\n> 💭 **延伸思考（写完代码后建议作答）**：如果 CSV 文件有 GB 级，如何流式逐行解析避免 OOM？",
     "latexFormulas": [
       "field = \\begin{cases} \\text{quoted} & \\text{ignore commas} \\\\ \\text{unquoted} & \\text{split by comma} \\end{cases}"
     ],
@@ -4259,7 +4259,7 @@
     "tags": [
       "Class类"
     ],
-    "theoryContent": "### 题目：栈计算器\n\n用类实现加减乘除表达式计算，遵循先乘除后加减。不含括号。\n\n示例：\"3+2*2\" → 7",
+    "theoryContent": "### 🎯 编程挑战：栈计算器\n\n> ⚡ **进阶实战与工程深水区**：类与对象是给真实业务实体画『蓝图与工装模具』：以连接池为例，用类把可用队列、繁忙句柄、最大上限和借还锁逻辑封在一起，外部只需调用 `acquire/release` 即可。 在高并发或复杂真实场景中，面向对象的核心价值在于管理复杂内部生命周期与不变量约束——比如确保繁忙连接数加空闲连接数永不超过上限。\n\n### 题目：栈计算器\n\n用类实现加减乘除表达式计算，遵循先乘除后加减。不含括号。\n\n示例：\"3+2*2\" → 7\n\n#### 🔬 核心原理与机制拆解\n\n相比基础原型，本关更聚焦『**栈计算器**』在工程落地时的精度、效率与边界稳定性要求，涉及以下关键数学关系与规则：\n\n$$\nE = Term_1 + Term_2 + \\ldots\n$$\n\n$$\nTerm = Factor_1 * Factor_2 \\ldots\n$$\n\n$$\nnum \\rightarrow \\begin{cases} + & push(num) \\\\ - & push(-num) \\\\ * & pop \\times num \\end{cases}\n$$\n\n- **核心要点**：加减号入栈，乘除号与栈顶立即运算再入栈，最后统一求和。\n\n#### 🛠️ 实战任务与样例推演\n\n**解题总纲**：单栈实现四则运算表达式求值：乘除法立即与栈顶归并，加减法连带符号入栈最终求和。\n\n**需要实现的核心接口与结构**：\n- `class Calculator（含方法 calculate）` — 用单栈处理运算符优先级，除法向零取整\n- `eval_calculate(s: str) -> int` — 评测入口（请勿修改）\n\n**输入输出推演**：以首个公开样例 `basic precedence` 为例：当调用 `eval_calculate(\"3+2*2\")` 时，程序按上述步骤计算后应稳定返回 `7`。\n\n#### 🚀 边界避坑与进阶思考\n\n- **零除与空输入守卫**：遇到空列表、空字典或零分母场景（如模长为 0、样本数为 0）时，必须预先加好判空/判零保护，严防 `ZeroDivisionError` 或 `NaN` 污染输出。\n- **真题隐藏评测覆盖**：完整判题除了 2 个公开样例外，还包含 2 组隐藏边界与压力测试用例；请务必立足通用逻辑与数据结构设计，切勿针对公开样例硬编码分支。\n\n> 💭 **延伸思考（写完代码后建议作答）**：如果要支持括号（如 \"2*(3+4)\"），怎么改？",
     "latexFormulas": [
       "E = Term_1 + Term_2 + \\ldots",
       "Term = Factor_1 * Factor_2 \\ldots",
@@ -4341,7 +4341,7 @@
     "tags": [
       "封装"
     ],
-    "theoryContent": "### 题目：银行账户类\n\n封装余额管理，支持存款、取款、转账。余额不足时抛出异常。\n\n不允许外部直接修改 _balance。",
+    "theoryContent": "### 🎯 编程挑战：银行账户类\n\n> ⚡ **进阶实战与工程深水区**：封装就好比给精密仪表加上玻璃外壳和合法旋钮：外界想往购物车加减商品或存取账户余额，只能走规范校验方法，绝不允许外部代码随手把库存或余额改成负数。 在高并发或复杂真实场景中，属性校验缺失往往是状态错乱、折扣超发或非法扣款 Bug 的温床。\n\n### 题目：银行账户类\n\n封装余额管理，支持存款、取款、转账。余额不足时抛出异常。\n\n不允许外部直接修改 _balance。\n\n#### 🔬 核心原理与机制拆解\n\n相比基础原型，本关更聚焦『**银行账户类**』在工程落地时的精度、效率与边界稳定性要求，涉及以下关键数学关系与规则：\n\n$$\nbalance \\ge amount \\rightarrow withdraw\n$$\n\n$$\nbalance < amount \\rightarrow Exception\n$$\n\n- **核心要点**：Python 无真正私有属性，单下划线是内部实现细节的约定。\n\n#### 🛠️ 实战任务与样例推演\n\n**解题总纲**：实现账户存/取/转账额度合法性检验并记录流水，确保余额不为负。\n\n**需要实现的核心接口与结构**：\n- `class BankAccount（含方法 __init__, deposit, withdraw, transfer）` — 封装账户余额保护与账户间转账逻辑\n- `eval_bank(owner: str, initial: float, actions: list[dict]) -> float` — 评测入口（请勿修改）\n\n**输入输出推演**：以首个公开样例 `withdraw` 为例：当调用 `eval_bank(\"Alice\", 1000, [{\"op\": \"withdraw\", \"amount\": 100}])` 时，程序按上述步骤计算后应稳定返回 `900`。\n\n#### 🚀 边界避坑与进阶思考\n\n- **非法输入主动拦截**：当遇到空集合、非正数参数或违反约束的数据时，务必按要求显式 `raise` `ValueError`，不要静默返回 `None` 或吞掉异常。\n- **零除与空输入守卫**：遇到空列表、空字典或零分母场景（如模长为 0、样本数为 0）时，必须预先加好判空/判零保护，严防 `ZeroDivisionError` 或 `NaN` 污染输出。\n- **真题隐藏评测覆盖**：完整判题除了 2 个公开样例外，还包含 2 组隐藏边界与压力测试用例；请务必立足通用逻辑与数据结构设计，切勿针对公开样例硬编码分支。\n\n> 💭 **延伸思考（写完代码后建议作答）**：如果要记录交易明细，如何设计 _txns 列表？",
     "latexFormulas": [
       "balance \\ge amount \\rightarrow withdraw",
       "balance < amount \\rightarrow Exception"
@@ -4455,7 +4455,7 @@
     "tags": [
       "继承"
     ],
-    "theoryContent": "### 题目：形状面积计算\n\n用继承实现：基类 Shape（抽象 area() 方法），子类 Circle(r)、Rectangle(w,h)、Triangle(b,h)。",
+    "theoryContent": "### 🎯 编程挑战：形状面积计算\n\n> ⚡ **进阶实战与工程深水区**：继承就像是建立技术体系的『公共父类基座』：把所有缓存后端或几何图形共享的基础属性和协议放在基类里，让内存缓存、磁盘缓存等子类只专注各自差异化存储逻辑。 在高并发或复杂真实场景中，优秀的继承体系必须严格遵守里氏替换原则——子类扩展行为时不能破坏父类对外承诺的方法契约。\n\n### 题目：形状面积计算\n\n用继承实现：基类 Shape（抽象 area() 方法），子类 Circle(r)、Rectangle(w,h)、Triangle(b,h)。\n\n#### 🔬 核心原理与机制拆解\n\n相比基础原型，本关更聚焦『**形状面积计算**』在工程落地时的精度、效率与边界稳定性要求，涉及以下关键数学关系与规则：\n\n$$\nA_{circle} = \\pi r^2\n$$\n\n$$\nA_{rect} = w \\times h\n$$\n\n$$\nA_{tri} = \\frac{1}{2}bh\n$$\n\n- **核心要点**：ABC 定义接口，子类未实现抽象方法则无法实例化。\n\n#### 🛠️ 实战任务与样例推演\n\n**解题总纲**：基于抽象基类 Shape 统一面积接口，分别为圆、矩形与三角形实现多态 area 计算。\n\n**需要实现的核心接口与结构**：\n- `class Shape（含方法 area）` — 几何图形抽象基类\n- `class Circle（含方法 __init__, area）` — 按 πr^2 保留两位小数算圆面积\n- `class Rectangle（含方法 __init__, area）` — 按宽乘高算矩形面积\n- `class Triangle（含方法 __init__, area）` — 按底乘高除以 2 算三角形面积\n- `eval_shape(shape: str, args: list) -> float` — 评测入口（请勿修改）\n\n**输入输出推演**：以首个公开样例 `circle area` 为例：当调用 `eval_shape(\"circle\", [5])` 时，程序按上述步骤计算后应稳定返回 `78.54`。\n\n#### 🚀 边界避坑与进阶思考\n\n- **数值类型与浮点舍入**：若结果涉及浮点数或小数保留，需与示例 `round` 位数及 `float` 精度对齐，避免直接拿字符串拼接或整数截断替代。\n- **真题隐藏评测覆盖**：完整判题除了 2 个公开样例外，还包含 2 组隐藏边界与压力测试用例；请务必立足通用逻辑与数据结构设计，切勿针对公开样例硬编码分支。\n\n> 💭 **延伸思考（写完代码后建议作答）**：Square 和 Rectangle 是什么关系？应该继承还是单独实现？",
     "latexFormulas": [
       "A_{circle} = \\pi r^2",
       "A_{rect} = w \\times h",
@@ -4551,10 +4551,10 @@
     "tags": [
       "多态"
     ],
-    "theoryContent": "### 题目：日志写入器\n\n用多态实现不同的日志输出：FileLogger（写入列表）、ConsoleLogger（收集到列表）。都有 log(level, message) 方法。",
+    "theoryContent": "### 🎯 编程挑战：日志写入器\n\n> ⚡ **进阶实战与工程深水区**：多态让调度系统拥有『同一句指令、不同执行者各自精彩演出』的能力：业务层只管调用 `formatter.format(record)`，无论是转成纯文本日志、JSON 还是结构化表格都无缝切换。 在高并发或复杂真实场景中，利用好鸭子类型与统一接口抽象，就能彻底告别臃肿难维护的 `if/elif/else` 类型分支。\n\n### 题目：日志写入器\n\n用多态实现不同的日志输出：FileLogger（写入列表）、ConsoleLogger（收集到列表）。都有 log(level, message) 方法。\n\n#### 🔬 核心原理与机制拆解\n\n相比基础原型，本关更聚焦『**日志写入器**』在工程落地时的精度、效率与边界稳定性要求，涉及以下关键数学关系与规则：\n\n$$\nlog(level, msg) \\rightarrow format \\rightarrow output\n$$\n\n$$\n\\text{多态原则: 统一调用接口，各子类差异实现}\n$$\n\n- **核心要点**：调用方不需关心具体实现类，统一调 log() 方法即可。\n\n#### 🛠️ 实战任务与样例推演\n\n**解题总纲**：面向抽象 Logger 接口编程，使业务写入函数 write_logs 无需关心文件与控制台实现差异。\n\n**需要实现的核心接口与结构**：\n- `class Logger（含方法 log）` — 日志抽象基类\n- `class FileLogger（含方法 __init__, log）` — 将日志行追加写入 lines 列表\n- `class ConsoleLogger（含方法 __init__, log）` — 生成带 [CONSOLE] 前缀的输出列表\n- `write_logs(logger: Logger, logs: list)` — 多态接收日志列表并写入指定记录器\n- `eval_logger(logger_type: str, logs: list) -> list[str]` — 评测入口（请勿修改）\n\n**输入输出推演**：以首个公开样例 `file logger` 为例：当调用 `eval_logger(\"file\", [[\"ERROR\", \"disk full\"], [\"INFO\", \"started\"]])` 时，程序按上述步骤计算后应稳定返回 `[\"[ERROR] disk full\", \"[INFO] started\"]`。\n\n#### 🚀 边界避坑与进阶思考\n\n- **零除与空输入守卫**：遇到空列表、空字典或零分母场景（如模长为 0、样本数为 0）时，必须预先加好判空/判零保护，严防 `ZeroDivisionError` 或 `NaN` 污染输出。\n- **真题隐藏评测覆盖**：完整判题除了 2 个公开样例外，还包含 2 组隐藏边界与压力测试用例；请务必立足通用逻辑与数据结构设计，切勿针对公开样例硬编码分支。\n\n> 💭 **延伸思考（写完代码后建议作答）**：增加 JsonLogger 最少改哪些代码？",
     "latexFormulas": [
       "log(level, msg) \\rightarrow format \\rightarrow output",
-      "Polymorphism: same interface, different impl"
+      "\\text{多态原则: 统一调用接口，各子类差异实现}"
     ],
     "starterCode": "from abc import ABC, abstractmethod\n\nclass Logger(ABC):\n    @abstractmethod\n    def log(self, level, message): pass\n\nclass FileLogger(Logger):\n    def __init__(self): self.lines = []\n    def log(self, level, message): pass\n\nclass ConsoleLogger(Logger):\n    def __init__(self): self.output = []\n    def log(self, level, message): pass\n\ndef write_logs(logger: Logger, logs: list):\n    pass\n\n# 评测入口（请勿修改）\ndef eval_logger(logger_type: str, logs: list) -> list[str]:\n    logger = FileLogger() if logger_type == \"file\" else ConsoleLogger()\n    write_logs(logger, logs)\n    return logger.lines if logger_type == \"file\" else logger.output\n",
     "solutionCode": "# 【算法思路】面向抽象 Logger 接口编程，使业务写入函数 write_logs 无需关心文件与控制台实现差异。\nfrom abc import ABC, abstractmethod\n\n# 日志抽象基类\nclass Logger(ABC):\n    @abstractmethod\n    def log(self, level, message): pass\n\n# 将日志行追加写入 lines 列表\nclass FileLogger(Logger):\n    def __init__(self): self.lines = []\n    def log(self, level, message): self.lines.append(f\"[{level}] {message}\")\n\n# 生成带 [CONSOLE] 前缀的输出列表\nclass ConsoleLogger(Logger):\n    def __init__(self): self.output = []\n    def log(self, level, message): self.output.append(f\"[CONSOLE][{level}] {message}\")\n\n# 多态接收日志列表并写入指定记录器\ndef write_logs(logger: Logger, logs: list):\n    # 多态遍历日志二元组列表并写入对应记录器\n    for level, msg in logs:\n        logger.log(level, msg)\n\n# 评测入口（请勿修改）\ndef eval_logger(logger_type: str, logs: list) -> list[str]:\n    logger = FileLogger() if logger_type == \"file\" else ConsoleLogger()\n    write_logs(logger, logs)\n    return logger.lines if logger_type == \"file\" else logger.output\n",
@@ -4667,9 +4667,9 @@
     "tags": [
       "迭代器"
     ],
-    "theoryContent": "### 题目：范围迭代器\n\n实现 RangeIterator 模拟 range() 行为，支持 start、stop、step。实现 __iter__ 和 __next__。",
+    "theoryContent": "### 🎯 编程挑战：范围迭代器\n\n> ⚡ **进阶实战与工程深水区**：分页迭代器就像按页装订的实体翻页画册：不需要一次性印刷全套一万页，每翻一页时只现算、现切当前页窗口 `[i*size : (i+1)*size]`，读到末尾礼貌抛出 `StopIteration`。 在高并发或复杂真实场景中，实现 `__iter__` 与 `__next__` 协议后，自定义容器即可直接融入 Python 原生 `for` 循环与解包生态。\n\n### 题目：范围迭代器\n\n实现 RangeIterator 模拟 range() 行为，支持 start、stop、step。实现 __iter__ 和 __next__。\n\n#### 🔬 核心原理与机制拆解\n\n相比基础原型，本关更聚焦『**范围迭代器**』在工程落地时的精度、效率与边界稳定性要求，涉及以下关键数学关系与规则：\n\n$$\n\\text{next} = \\text{current} + \\text{step}\n$$\n\n$$\nStopIteration \\iff current \\ge stop\n$$\n\n- **核心要点**：StopIteration 是迭代器协议的一部分，for 自动捕获并结束循环。\n\n#### 🛠️ 实战任务与样例推演\n\n**解题总纲**：兼容 1/2/3 参数签名的自定义步长整数范围迭代器，并支持负步长倒序终止判断。\n\n**需要实现的核心接口与结构**：\n- `class RangeIterator（含方法 __init__, __next__）` — 解析 start/stop/step 并在越界时触发 StopIteration\n- `eval_range(args: list[int]) -> list[int]` — 评测入口（请勿修改）\n\n**输入输出推演**：以首个公开样例 `single arg` 为例：当调用 `eval_range([5])` 时，程序按上述步骤计算后应稳定返回 `[0, 1, 2, 3, 4]`。\n\n#### 🚀 边界避坑与进阶思考\n\n- **非法输入主动拦截**：当遇到空集合、非正数参数或违反约束的数据时，务必按要求显式 `raise` `ValueError`，不要静默返回 `None` 或吞掉异常。\n- **真题隐藏评测覆盖**：完整判题除了 3 个公开样例外，还包含 2 组隐藏边界与压力测试用例；请务必立足通用逻辑与数据结构设计，切勿针对公开样例硬编码分支。\n\n> 💭 **延伸思考（写完代码后建议作答）**：Python range() 是惰性的，你的实现也是吗？",
     "latexFormulas": [
-      "next = current + step",
+      "\\text{next} = \\text{current} + \\text{step}",
       "StopIteration \\iff current \\ge stop"
     ],
     "starterCode": "class RangeIterator:\n    def __init__(self, *args): pass\n    def __iter__(self): pass\n    def __next__(self): pass\n\n# 评测入口（请勿修改）\ndef eval_range(args: list[int]) -> list[int]:\n    return list(RangeIterator(*args))\n",
@@ -4795,7 +4795,7 @@
     "tags": [
       "生成器"
     ],
-    "theoryContent": "### 题目：斐波那契生成器\n\n用生成器实现斐波那契数列（0,1,1,2,3,5,8,...），每次 yield 下一个数。实现 first_n(g, n) 取前 n 个。",
+    "theoryContent": "### 🎯 编程挑战：斐波那契生成器\n\n> ⚡ **进阶实战与工程深水区**：生成器（Generator）是懂得『按需懒汉现做』的高级面点师：借助 `yield` 暂停并记住上次执行的现场状态，哪怕要吐出百万级斐波那契流或分页流，内存占用依然接近零。 在高并发或复杂真实场景中，一旦理解了惰性求值与状态挂起/恢复，许多看似吃内存的大数据流处理代码都能缩减为十行以内。\n\n### 题目：斐波那契生成器\n\n用生成器实现斐波那契数列（0,1,1,2,3,5,8,...），每次 yield 下一个数。实现 first_n(g, n) 取前 n 个。\n\n#### 🔬 核心原理与机制拆解\n\n相比基础原型，本关更聚焦『**斐波那契生成器**』在工程落地时的精度、效率与边界稳定性要求，涉及以下关键数学关系与规则：\n\n$$\nF_n = F_{n-1} + F_{n-2}\n$$\n\n$$\nF_0 = 0, F_1 = 1\n$$\n\n- **核心要点**：yield 暂停并保持状态，下次继续执行。\n\n#### 🛠️ 实战任务与样例推演\n\n**解题总纲**：用 yield 构建无限惰性斐波那契数列生成器，并按需拉取前 n 项。\n\n**需要实现的核心接口与结构**：\n- `fibonacci()` — 持续递推生成 a, b 无限斐波那契项\n- `first_n(g, n)` — 借助 next() 从生成器提取指定个数元素\n- `eval_fib(n: int) -> list[int]` — 评测入口（请勿修改）\n\n**输入输出推演**：以首个公开样例 `first 6` 为例：当调用 `eval_fib(6)` 时，程序按上述步骤计算后应稳定返回 `[0, 1, 1, 2, 3, 5]`。\n\n#### 🚀 边界避坑与进阶思考\n\n- **零除与空输入守卫**：遇到空列表、空字典或零分母场景（如模长为 0、样本数为 0）时，必须预先加好判空/判零保护，严防 `ZeroDivisionError` 或 `NaN` 污染输出。\n- **真题隐藏评测覆盖**：完整判题除了 2 个公开样例外，还包含 2 组隐藏边界与压力测试用例；请务必立足通用逻辑与数据结构设计，切勿针对公开样例硬编码分支。\n\n> 💭 **延伸思考（写完代码后建议作答）**：第 100 个斐波那契数用生成器 vs 递归各有什么问题？",
     "latexFormulas": [
       "F_n = F_{n-1} + F_{n-2}",
       "F_0 = 0, F_1 = 1"
@@ -4894,7 +4894,7 @@
     "tags": [
       "装饰器"
     ],
-    "theoryContent": "### 题目：函数计时装饰器\n\n实现 @timer 装饰器，记录函数执行时间，支持 unit=\"s\"（秒）或 \"ms\"（毫秒）。用 functools.wraps 保留原函数信息。",
+    "theoryContent": "### 🎯 编程挑战：函数计时装饰器\n\n> ⚡ **进阶实战与工程深水区**：装饰器就像给既有函数无缝加装的『可插拔外挂中间件』：无需修改核心业务源码一字一句，就能从外部透明织入缓存记忆化、耗时审计或指数/固定退避自动重试。 在高并发或复杂真实场景中，切记配合 `functools.wraps` 保护原函数元信息，并在设计 `@retry` 时妥善区分成功早停与最终重试耗尽抛错。\n\n### 题目：函数计时装饰器\n\n实现 @timer 装饰器，记录函数执行时间，支持 unit=\"s\"（秒）或 \"ms\"（毫秒）。用 functools.wraps 保留原函数信息。\n\n#### 🔬 核心原理与机制拆解\n\n相比基础原型，本关更聚焦『**函数计时装饰器**』在工程落地时的精度、效率与边界稳定性要求，涉及以下关键数学关系与规则：\n\n$$\nt = t_{end} - t_{start}\n$$\n\n$$\n\\text{decorator: } f \\rightarrow wrapper\n$$\n\n- **核心要点**：@timer 将 timer 本身作为装饰器，@timer() 先调用返回装饰器。\n\n#### 🛠️ 实战任务与样例推演\n\n**解题总纲**：外层带 unit 参数的三层装饰器，利用 perf_counter 记录高精度函数运行耗时并透传返回值。\n\n**需要实现的核心接口与结构**：\n- `timer(unit)` — 按秒或毫秒格式化打印被装饰函数运行耗时\n- `eval_timer(unit: str, a: int, b: int) -> int` — 评测入口（请勿修改）\n\n**输入输出推演**：以首个公开样例 `timer seconds returns value` 为例：当调用 `eval_timer(\"s\", 6, 7)` 时，程序按上述步骤计算后应稳定返回 `42`。\n\n#### 🚀 边界避坑与进阶思考\n\n- **零除与空输入守卫**：遇到空列表、空字典或零分母场景（如模长为 0、样本数为 0）时，必须预先加好判空/判零保护，严防 `ZeroDivisionError` 或 `NaN` 污染输出。\n- **真题隐藏评测覆盖**：完整判题除了 2 个公开样例外，还包含 2 组隐藏边界与压力测试用例；请务必立足通用逻辑与数据结构设计，切勿针对公开样例硬编码分支。\n\n> 💭 **延伸思考（写完代码后建议作答）**：如何同时支持 @timer 和 @timer(unit=\"ms\") 两种用法？",
     "latexFormulas": [
       "t = t_{end} - t_{start}",
       "\\text{decorator: } f \\rightarrow wrapper"
@@ -4983,9 +4983,9 @@
     "tags": [
       "Lambda表达式"
     ],
-    "theoryContent": "### 题目：自定义排序\n\n用 lambda 实现多种排序规则：按长度、按最后一个字符、按 \"a\" 出现次数。",
+    "theoryContent": "### 🎯 编程挑战：自定义排序\n\n> ⚡ **进阶实战与工程深水区**：Lambda 匿名表达式就像现场即兴递出的『一次性排序标尺』：排序规则如果只需要写一行短函数（比如先按优先级降序、再按时间戳升序），用 `lambda` 就地描述最清爽利落。 在高并发或复杂真实场景中，掌握多字段元组键技巧（例如负号实现数值降序、结合原字段升序），几乎可以一网打尽所有业务多维排序需求。\n\n### 题目：自定义排序\n\n用 lambda 实现多种排序规则：按长度、按最后一个字符、按 \"a\" 出现次数。\n\n#### 🔬 核心原理与机制拆解\n\n相比基础原型，本关更聚焦『**自定义排序**』在工程落地时的精度、效率与边界稳定性要求，涉及以下关键数学关系与规则：\n\n$$\n\\texttt{sorted(items, key=lambda x: ...)}\n$$\n\n$$\n\\lambda(x) \\rightarrow single\\_expression\n$$\n\n- **核心要点**：lambda 只能包含单个表达式，不能有赋值/循环等语句。\n\n#### 🛠️ 实战任务与样例推演\n\n**解题总纲**：通过高阶函数接收不同 lambda 排序策略，实现按长度、末字符或字母 'a' 次数排序。\n\n**需要实现的核心接口与结构**：\n- `sort_words(words, key_func)` — 使用 key_func 排序单词列表\n- `eval_sort_words(words: list[str], key_name: str) -> list[str]` — 评测入口（请勿修改）\n\n**输入输出推演**：以首个公开样例 `by length` 为例：当调用 `eval_sort_words([\"apple\", \"banana\", \"cherry\", \"date\"], \"length\")` 时，程序按上述步骤计算后应稳定返回 `[\"date\", \"apple\", \"banana\", \"cherry\"]`。\n\n#### 🚀 边界避坑与进阶思考\n\n- **零除与空输入守卫**：遇到空列表、空字典或零分母场景（如模长为 0、样本数为 0）时，必须预先加好判空/判零保护，严防 `ZeroDivisionError` 或 `NaN` 污染输出。\n- **真题隐藏评测覆盖**：完整判题除了 2 个公开样例外，还包含 2 组隐藏边界与压力测试用例；请务必立足通用逻辑与数据结构设计，切勿针对公开样例硬编码分支。\n\n> 💭 **延伸思考（写完代码后建议作答）**：sorted() 的 key 参数传入 lambda 时，是逐元素调用还是先处理完？对性能的影响？",
     "latexFormulas": [
-      "sorted(items, key=\\lambda)",
+      "\\texttt{sorted(items, key=lambda x: ...)}",
       "\\lambda(x) \\rightarrow single\\_expression"
     ],
     "starterCode": "def sort_words(words: list[str], key_func) -> list[str]:\n    \"\"\"按传入键函数对单词列表排序并返回\"\"\"\n    pass\n\nby_length = None\nby_last_char = None\nby_count_a = None\n\n# 评测入口（请勿修改）\ndef eval_sort_words(words: list[str], key_name: str) -> list[str]:\n    mapping = {\n        \"length\": by_length,\n        \"last_char\": by_last_char,\n        \"count_a\": by_count_a,\n    }\n    return sort_words(words, mapping[key_name])\n",
