@@ -111,7 +111,7 @@ export default function CodeEditorPage() {
           </div>
 
           <p className="text-xs sm:text-base text-slate-600 dark:text-slate-300 max-w-2xl mx-auto font-normal">
-            轻量级在线云 IDE · 毫秒级多语言 Docker 隔离沙箱 · 31 种 3D 算法空间推演 · JVM 逐帧变量回放
+            轻量级在线云 IDE · 毫秒级多语言 Docker 隔离沙箱 · {ALGORITHM_REGISTRY.length} 种 3D 算法空间推演 · JVM 逐帧变量回放
           </p>
 
           {/* 核心特性标签行（浅/深色卡片化呈现） */}
@@ -134,7 +134,7 @@ export default function CodeEditorPage() {
             </span>
             <span className="px-2.5 py-1 rounded-xl bg-white dark:bg-slate-900/90 border border-slate-200/90 dark:border-slate-700/80 shadow-sm flex items-center gap-1.5">
               <Compass className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
-              <span>31 种 3D 算法流形 + 同步代码动画</span>
+              <span>{ALGORITHM_REGISTRY.length} 种 3D 算法流形 + 同步代码动画</span>
             </span>
             <Link
               href="/knowledge-graph"
@@ -177,7 +177,7 @@ export default function CodeEditorPage() {
               <Box className="w-4 h-4 text-purple-200" />
               <span>🌌 3D 算法演进矩阵</span>
               <span className="hidden sm:inline-block text-[11px] font-mono px-2 py-0.5 rounded-full bg-black/20 text-purple-100">
-                31 种算法
+                {ALGORITHM_REGISTRY.length} 种算法
               </span>
             </button>
           </div>

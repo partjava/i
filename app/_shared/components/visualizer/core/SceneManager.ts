@@ -31,6 +31,11 @@ export class SceneManager {
 
   private pointLight1: THREE.PointLight;
   private pointLight2: THREE.PointLight;
+  private starField: THREE.Points | null = null;
+  private stageRingOuter: THREE.Mesh | null = null;
+  private stageRingInner: THREE.Mesh | null = null;
+  private stepEnterTime = 0;
+  private stepTransitionDone = true;
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
@@ -54,6 +59,8 @@ export class SceneManager {
     this.renderer.setSize(w, h, false);
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    this.renderer.toneMappingExposure = 1.15;
 
     // Studio lighting
     const ambient = new THREE.AmbientLight(0xdbeafe, 0.72);
@@ -86,6 +93,67 @@ export class SceneManager {
       gridMat.opacity = 0.55;
     }
     this.scene.add(grid);
+
+    // Dual counter-rotating holographic rings beneath the stage
+    const outerGeo = new THREE.RingGeometry(11.8, 12.12, 72);
+    const outerMat = new THREE.MeshBasicMaterial({
+      color: 0x38bdf8,
+      side: THREE.DoubleSide,
+      transparent: true,
+      opacity: 0.22,
+    });
+    this.stageRingOuter = new THREE.Mesh(outerGeo, outerMat);
+    this.stageRingOuter.rotation.x = -Math.PI / 2;
+    this.stageRingOuter.position.y = -0.04;
+    this.scene.add(this.stageRingOuter);
+
+    const innerGeo = new THREE.RingGeometry(8.2, 8.42, 64);
+    const innerMat = new THREE.MeshBasicMaterial({
+      color: 0x818cf8,
+      side: THREE.DoubleSide,
+      transparent: true,
+      opacity: 0.24,
+    });
+    this.stageRingInner = new THREE.Mesh(innerGeo, innerMat);
+    this.stageRingInner.rotation.x = -Math.PI / 2;
+    this.stageRingInner.position.y = -0.035;
+    this.scene.add(this.stageRingInner);
+
+    // Ambient volumetric starfield around the holographic stage
+    const starCount = 160;
+    const starPos = new Float32Array(starCount * 3);
+    const starCol = new Float32Array(starCount * 3);
+    const palette = [
+      new THREE.Color(0x38bdf8),
+      new THREE.Color(0x818cf8),
+      new THREE.Color(0xa855f7),
+      new THREE.Color(0x34d399),
+    ];
+    for (let i = 0; i < starCount; i++) {
+      const seed = i + 1;
+      const angle = ((seed * 137.5) % 360) * (Math.PI / 180);
+      const radius = 16 + ((seed * 19.3) % 24);
+      const y = -1.5 + ((seed * 7.7) % 22);
+      starPos[i * 3] = Math.cos(angle) * radius;
+      starPos[i * 3 + 1] = y;
+      starPos[i * 3 + 2] = Math.sin(angle) * radius;
+      const c = palette[i % palette.length];
+      starCol[i * 3] = c.r;
+      starCol[i * 3 + 1] = c.g;
+      starCol[i * 3 + 2] = c.b;
+    }
+    const starGeo = new THREE.BufferGeometry();
+    starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
+    starGeo.setAttribute('color', new THREE.BufferAttribute(starCol, 3));
+    const starMat = new THREE.PointsMaterial({
+      size: 0.16,
+      vertexColors: true,
+      transparent: true,
+      opacity: 0.68,
+      depthWrite: false,
+    });
+    this.starField = new THREE.Points(starGeo, starMat);
+    this.scene.add(this.starField);
 
     // Dedicated group for algorithm content
     this.contentGroup = new THREE.Group();
@@ -246,6 +314,21 @@ export class SceneManager {
     window.addEventListener('resize', this.handleResize);
   }
 
+  public triggerStepTransition() {
+    this.contentGroup.children.forEach((child) => {
+      if (child.userData.baseY === undefined) {
+        child.userData.baseY = child.position.y;
+      }
+      if (!child.userData.baseScale) {
+        child.userData.baseScale = child.scale.clone();
+      }
+      child.scale.copy(child.userData.baseScale).multiplyScalar(0.88);
+      child.position.y = child.userData.baseY - 0.16;
+    });
+    this.stepEnterTime = performance.now();
+    this.stepTransitionDone = false;
+  }
+
   private startLoop() {
     let time = 0;
     const animate = () => {
@@ -266,6 +349,58 @@ export class SceneManager {
       this.target.lerp(this.desiredTarget, 0.12);
 
       this.updateCameraFromSpherical();
+
+      // Smooth 320ms cubic-out entrance transition on step change
+      if (!this.stepTransitionDone && this.stepEnterTime > 0) {
+        const elapsed = performance.now() - this.stepEnterTime;
+        const t = Math.min(1, elapsed / 320);
+        const ease = 1 - Math.pow(1 - t, 3);
+        const scaleFactor = 0.88 + 0.12 * ease;
+        const yOffset = -0.16 * (1 - ease);
+        this.contentGroup.children.forEach((child) => {
+          const baseScale = child.userData.baseScale as THREE.Vector3 | undefined;
+          const baseY = child.userData.baseY as number | undefined;
+          if (baseScale) {
+            child.scale.copy(baseScale).multiplyScalar(scaleFactor);
+          }
+          if (typeof baseY === 'number') {
+            child.position.y = baseY + yOffset;
+          }
+        });
+        if (t >= 1) {
+          this.stepTransitionDone = true;
+        }
+      }
+
+      // Ambient holographic rings & volumetric starfield rotation
+      if (this.starField) {
+        this.starField.rotation.y += 0.0005;
+      }
+      if (this.stageRingOuter) {
+        this.stageRingOuter.rotation.z += 0.0012;
+      }
+      if (this.stageRingInner) {
+        this.stageRingInner.rotation.z -= 0.0018;
+      }
+
+      // Traveling energy photons & active glow modulation
+      this.contentGroup.traverse((node: any) => {
+        if (node.userData?.orbitCurve) {
+          const curve = node.userData.orbitCurve as THREE.Curve<THREE.Vector3>;
+          const u =
+            (((time * (node.userData.orbitSpeed || 0.75) * 3.2 +
+              (node.userData.orbitOffset || 0)) %
+              1) +
+              1) %
+            1;
+          curve.getPointAt(u, node.position);
+        }
+        if (node.userData?.pulseGlow && node.material?.emissiveIntensity !== undefined) {
+          const base = node.userData.baseEmissive ?? 0.8;
+          const phase = node.userData.phaseOffset ?? 0;
+          node.material.emissiveIntensity = base * (0.78 + 0.35 * Math.sin(time * 18 + phase));
+        }
+      });
 
       // Dynamic lights
       this.pointLight1.position.x = Math.sin(time) * 12;
@@ -289,6 +424,21 @@ export class SceneManager {
     this.canvas.removeEventListener('wheel', this.onWheel);
     this.canvas.removeEventListener('contextmenu', this.onContextMenu);
     this.clearContent();
+    if (this.starField) {
+      this.scene.remove(this.starField);
+      this.disposeObject(this.starField);
+      this.starField = null;
+    }
+    if (this.stageRingOuter) {
+      this.scene.remove(this.stageRingOuter);
+      this.disposeObject(this.stageRingOuter);
+      this.stageRingOuter = null;
+    }
+    if (this.stageRingInner) {
+      this.scene.remove(this.stageRingInner);
+      this.disposeObject(this.stageRingInner);
+      this.stageRingInner = null;
+    }
     this.renderer.dispose();
   }
 }

@@ -65,6 +65,7 @@ function renderStepToGroup(
     default:
       renderSortingAndSearching(sceneManager.contentGroup, step);
   }
+  sceneManager.triggerStepTransition();
 }
 
 export default function AlgorithmVisualizer({

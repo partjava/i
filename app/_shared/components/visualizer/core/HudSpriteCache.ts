@@ -147,7 +147,23 @@ export function createEnergyArc(
     transparent: opacity < 1,
     opacity,
   });
-  return new THREE.Mesh(geometry, material);
+  const arcMesh = new THREE.Mesh(geometry, material);
+
+  // Attach traveling energy photons along the Bezier curve
+  const photonRadius = Math.max(radius * 1.9, 0.09);
+  [0, 0.5].forEach((offset) => {
+    const photon = new THREE.Mesh(
+      new THREE.SphereGeometry(photonRadius, 12, 12),
+      new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.92 })
+    );
+    curve.getPointAt(offset, photon.position);
+    photon.userData.orbitCurve = curve;
+    photon.userData.orbitSpeed = 0.75;
+    photon.userData.orbitOffset = offset;
+    arcMesh.add(photon);
+  });
+
+  return arcMesh;
 }
 
 /**
@@ -171,5 +187,19 @@ export function createGlowingBeam(
     transparent: opacity < 1,
     opacity,
   });
-  return new THREE.Mesh(geometry, material);
+  const beamMesh = new THREE.Mesh(geometry, material);
+
+  if (radius >= 0.03) {
+    const photon = new THREE.Mesh(
+      new THREE.SphereGeometry(Math.max(radius * 1.85, 0.08), 10, 10),
+      new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.88 })
+    );
+    curve.getPointAt(0.25, photon.position);
+    photon.userData.orbitCurve = curve;
+    photon.userData.orbitSpeed = 0.65;
+    photon.userData.orbitOffset = 0.25;
+    beamMesh.add(photon);
+  }
+
+  return beamMesh;
 }

@@ -305,6 +305,60 @@ export const ALGORITHM_LATEX_MAP: Record<string, AlgorithmFormulaDetail> = {
       { sym: '\\alpha_{ij}', desc: 'Token i 对 Token j 的归一化自注意力语义权重' },
     ],
   },
+  cnn: {
+    latex: String.raw`Y(i,j) = \text{ReLU}\!\left(\sum_{m=0}^{K-1}\sum_{n=0}^{K-1} X(i+m, j+n)\,W(m,n) + b\right)`,
+    secondaryLatex: String.raw`\text{MaxPool}_{2\times 2}(F)_{u,v} = \max_{(p,q)\in [0,1]^2} F(2u+p, 2v+q)`,
+    symbols: [
+      { sym: 'W(m, n)', desc: '3×3 空间共享卷积核权重参数矩阵' },
+      { sym: '\\text{ReLU}(z)', desc: '修正线性单元激活函数 max(0, z)' },
+      { sym: '\\text{MaxPool}', desc: '2×2 最大池化降采样，提供局部平移不变性' },
+    ],
+  },
+  'q-learning': {
+    latex: String.raw`Q(s_t, a_t) \leftarrow Q(s_t, a_t) + \alpha \Big[ r_{t+1} + \gamma \max_{a'} Q(s_{t+1}, a') - Q(s_t, a_t) \Big]`,
+    secondaryLatex: String.raw`\pi^*(s) = \arg\max_{a \in \mathcal{A}} Q^*(s, a), \qquad \delta_t = r_{t+1} + \gamma \max_{a'} Q(s_{t+1}, a') - Q(s_t, a_t)`,
+    symbols: [
+      { sym: '\\alpha, \\gamma', desc: '学习步长 α 与未来奖励折扣因子 γ ∈ [0,1)' },
+      { sym: '\\delta_t', desc: '时序差分误差 (TD Error) 驱动贝尔曼更新' },
+      { sym: '\\pi^*(s)', desc: '收敛后的全局最优贪心决策策略' },
+    ],
+  },
+  diffusion: {
+    latex: String.raw`q(\mathbf{x}_t \mid \mathbf{x}_0) = \mathcal{N}\!\big(\mathbf{x}_t;\, \sqrt{\bar{\alpha}_t}\mathbf{x}_0,\, (1 - \bar{\alpha}_t)\mathbf{I}\big)`,
+    secondaryLatex: String.raw`\mathbf{x}_{t-1} = \frac{1}{\sqrt{\alpha_t}}\!\left(\mathbf{x}_t - \frac{1 - \alpha_t}{\sqrt{1 - \bar{\alpha}_t}}\boldsymbol{\epsilon}_\theta(\mathbf{x}_t, t)\right) + \sigma_t \mathbf{z}`,
+    symbols: [
+      { sym: '\\bar{\\alpha}_t', desc: '时间步 t 保留原始信号比例的累计噪声调度系数' },
+      { sym: '\\boldsymbol{\\epsilon}_\\theta(\\mathbf{x}_t, t)', desc: 'U-Net / DiT 估计的潜空间随机噪声与得分场梯度' },
+      { sym: '\\sigma_t \\mathbf{z}', desc: '逆向随机微分采样的受控高斯扰动项' },
+    ],
+  },
+  rag: {
+    latex: String.raw`\text{sim}(\mathbf{q}, \mathbf{d}_i) = \frac{\mathbf{q} \cdot \mathbf{d}_i}{\|\mathbf{q}\|_2 \|\mathbf{d}_i\|_2}, \qquad \mathcal{D}_K = \arg\max_{\mathbf{d} \in \mathcal{D}}^{(K)} \text{sim}(\mathbf{q}, \mathbf{d})`,
+    secondaryLatex: String.raw`P(y \mid x) \approx \sum_{\mathbf{d} \in \mathcal{D}_K} P(\mathbf{d} \mid x)\, P(y \mid x, \mathbf{d})`,
+    symbols: [
+      { sym: '\\mathbf{q}, \\mathbf{d}_i', desc: '用户查询与向量库文档切片的高维语义嵌入' },
+      { sym: '\\mathcal{D}_K', desc: '经 HNSW 多层图 O(log N) 召回的 Top-K 证据切片' },
+      { sym: 'P(y \\mid x, \\mathbf{d})', desc: '融合外部知识证据后的大模型有据生成概率' },
+    ],
+  },
+  moe: {
+    latex: String.raw`\mathbf{y} = \sum_{i \in \mathcal{T}_K} G_i(\mathbf{x}) \cdot E_i(\mathbf{x}), \qquad G(\mathbf{x}) = \text{Softmax}\!\big(\text{TopK}(\mathbf{x}\mathbf{W}_g, K)\big)`,
+    secondaryLatex: String.raw`\text{TopK}(\mathbf{v}, K)_i = \begin{cases} v_i & \text{if } v_i \text{ 在前 } K \text{ 大} \\ -\infty & \text{otherwise} \end{cases}`,
+    symbols: [
+      { sym: 'G_i(\\mathbf{x})', desc: '门控路由网络分配给第 i 位专家的条件概率权重' },
+      { sym: 'E_i(\\mathbf{x})', desc: '8 位独立前馈专家子网络中的第 i 个专家' },
+      { sym: '\\mathcal{T}_K', desc: '仅被稀疏唤醒执行的 Top-2 专家索引集合' },
+    ],
+  },
+  lstm: {
+    latex: String.raw`\mathbf{C}_t = \mathbf{f}_t \odot \mathbf{C}_{t-1} + \mathbf{i}_t \odot \tilde{\mathbf{C}}_t, \qquad \mathbf{h}_t = \mathbf{o}_t \odot \tanh(\mathbf{C}_t)`,
+    secondaryLatex: String.raw`\mathbf{f}_t = \sigma(\mathbf{W}_f[\mathbf{h}_{t-1}, \mathbf{x}_t]),\;\; \mathbf{i}_t = \sigma(\mathbf{W}_i[\mathbf{h}_{t-1}, \mathbf{x}_t]),\;\; \mathbf{o}_t = \sigma(\mathbf{W}_o[\mathbf{h}_{t-1}, \mathbf{x}_t])`,
+    symbols: [
+      { sym: '\\mathbf{C}_t', desc: '贯穿时间步的加法记忆细胞高速路（缓解梯度消失）' },
+      { sym: '\\mathbf{f}_t, \\mathbf{i}_t', desc: '遗忘门与输入门共同掌控旧记忆保留与新信息写入' },
+      { sym: '\\mathbf{o}_t, \\mathbf{h}_t', desc: '输出门筛选细胞状态并生成对外输出的隐藏表征' },
+    ],
+  },
 };
 
 interface CodeTemplate {
@@ -1020,6 +1074,203 @@ const CODE_TEMPLATES: Record<string, CodeTemplate> = {
     ],
     lineMap: { init: [5, 2, 2], compare: [7, 4, 3], act: [8, 7, 4], done: [9, 9, 5] },
   },
+  cnn: {
+    java: [
+      'public class Main {',
+      '  // CNN 卷积特征提取 -> ReLU -> 2x2 MaxPooling -> Softmax',
+      '  public static void main(String[] args) {',
+      '    // 1. 初始化 5x5 输入像素矩阵 X 与 3x3 边缘卷积核 W_conv',
+      '    // 2. 滑动卷积核计算局部感受野点积: F[r][c] = ReLU(∑ X * W + b)',
+      '    // 3. 执行 2x2 最大池化降采样 MaxPool(F) 保留显著特征峰值',
+      '    // 4. 展平 Flatten 并经 Softmax 输出目标分类置信度',
+      '    System.out.println("CNN Forward Inference Complete!");',
+      '  }',
+      '}',
+    ],
+    python: [
+      'def cnn_forward(X: np.ndarray, kernel: np.ndarray):',
+      '    # 1. 初始化特征图张量，准备 3x3 滑动窗口扫描',
+      '    F = np.zeros((3, 3))',
+      '    for r in range(3):',
+      '        for c in range(3):',
+      '            # 2. 卷积点积 + ReLU 非线性激活',
+      '            F[r, c] = max(0.0, float(np.sum(X[r:r+3, c:c+3] * kernel)))',
+      '    # 3. 执行 2x2 最大池化降采样提取局部最显著特征',
+      '    pooled = max_pool_2x2(F)',
+      '    return softmax(linear_head(pooled.flatten()))',
+    ],
+    cpp: [
+      'Tensor cnnForward(const Matrix& X, const Matrix& K) {',
+      '  Matrix F = reluConv2D(X, K); // 1. 3x3 local receptive field + ReLU',
+      '  Matrix P = maxPool2x2(F);    // 2. 2x2 spatial downsampling',
+      '  return softmax(flatten(P) * W_fc);',
+      '}',
+    ],
+    lineMap: { init: [4, 3, 2], compare: [5, 7, 2], act: [6, 9, 3], done: [7, 10, 4] },
+  },
+  'q-learning': {
+    java: [
+      'public class Main {',
+      '  // Q-Learning 贝尔曼时序差分更新: Q(s,a) += α [r + γ max Q(s\',a\') - Q(s,a)]',
+      '  public static void main(String[] args) {',
+      '    // 1. 初始化 4x4 网格环境与 Q-Table 状态动作价值矩阵',
+      '    // 2. 采用 ε-Greedy 策略选择动作并观察奖励 r 与下一状态 s\'',
+      '    // 3. 计算 TD 误差并执行贝尔曼回溯更新提升最优路径价值坡度',
+      '    // 4. Q*(s,a) 收敛，抽出最优确定性导航策略 π*(s) = argmax Q(s,a)',
+      '    System.out.println("Q-Learning Policy Converged!");',
+      '  }',
+      '}',
+    ],
+    python: [
+      'def q_learning_step(Q, s, a, r, s_next, alpha=0.2, gamma=0.9):',
+      '    # 1. ε-Greedy 探索环境转移 (s, a) -> (r, s_next)',
+      '    best_next = np.max(Q[s_next])',
+      '    # 2. 计算时序差分误差 δ = r + γ max Q(s\',a\') - Q(s,a)',
+      '    td_error = r + gamma * best_next - Q[s, a]',
+      '    # 3. 贝尔曼价值更新回传奖励信号',
+      '    Q[s, a] += alpha * td_error',
+      '    return np.argmax(Q, axis=1)  # 收敛后提取最优策略 π*',
+    ],
+    cpp: [
+      'void bellmanUpdate(QTable& Q, int s, int a, double r, int sNext) {',
+      '  double target = r + 0.9 * maxRow(Q[sNext]);',
+      '  Q[s][a] += 0.2 * (target - Q[s][a]); // TD Bellman update',
+      '}',
+    ],
+    lineMap: { init: [4, 2, 1], compare: [5, 5, 2], act: [6, 7, 3], done: [7, 8, 3] },
+  },
+  diffusion: {
+    java: [
+      'public class Main {',
+      '  // DDPM 逆向扩散去噪采样: 从高斯白噪声逐步雕刻出目标流形',
+      '  public static void main(String[] args) {',
+      '    // 1. 从标准正态分布采样纯噪声潜变量 x_T ~ N(0, I)',
+      '    for (int t = 1000; t > 0; t -= 200) {',
+      '      // 2. U-Net 网络评估当前位置噪声方向 Score Field ε_θ(x_t, t)',
+      '      // 3. 沿 -ε_θ 方向执行去噪收缩，消除高频高斯随机扰动',
+      '    }',
+      '    // 4. t=0 去噪采样收敛，恢复清晰的 3D 目标双环数据流形 x_0',
+      '    System.out.println("Diffusion Denoising Complete!");',
+      '  }',
+      '}',
+    ],
+    python: [
+      'def ddpm_reverse_sample(unet, shape, T=1000):',
+      '    # 1. 初始化纯高斯白噪声 x_T ~ N(0, I)',
+      '    x_t = np.random.randn(*shape)',
+      '    for t in range(T, 0, -200):',
+      '        # 2. 预测潜空间噪声分数场 eps_pred = ε_θ(x_t, t)',
+      '        eps_pred = unet(x_t, t)',
+      '        # 3. 逆向去噪一步更新: 向清洁流形靠近',
+      '        x_t = (x_t - beta_t / sqrt_one_minus_alpha * eps_pred) / sqrt_alpha_t',
+      '    return x_t  # t=0 收敛生成清晰目标结构',
+    ],
+    cpp: [
+      'Tensor reverseDenoiseStep(Tensor x_t, int t, const UNet& epsTheta) {',
+      '  Tensor score = epsTheta.predict(x_t, t); // Predict noise ε_θ(x_t, t)',
+      '  return denoiseUpdate(x_t, score, t);     // Step towards clean manifold',
+      '}',
+    ],
+    lineMap: { init: [4, 3, 1], compare: [6, 6, 2], act: [7, 8, 3], done: [9, 9, 3] },
+  },
+  rag: {
+    java: [
+      'public class Main {',
+      '  // RAG 检索增强生成: Embedding -> HNSW 分层检索 -> Context Augment -> LLM',
+      '  public static void main(String[] args) {',
+      '    // 1. 将用户 Query 映射为稠密语义向量 q ∈ R^d',
+      '    // 2. 在 HNSW 多层小世界图中自顶向下执行余弦近邻检索 Layer 2 → 0',
+      '    // 3. 召回 Top-K 高置信文档切片并与原提问拼装为增强 Prompt',
+      '    // 4. 大语言模型基于检索证据生成带精准溯源的回答',
+      '    System.out.println("RAG Grounded Answer Ready!");',
+      '  }',
+      '}',
+    ],
+    python: [
+      'def rag_pipeline(query: str, hnsw_index, llm, top_k: int = 3):',
+      '    # 1. 编码查询向量 q = embed(query)',
+      '    q_vec = embed(query)',
+      '    # 2. HNSW 自 Layer 2 -> Layer 0 检索 Top-K 相似知识切片',
+      '    chunks = hnsw_index.search(q_vec, k=top_k)',
+      '    # 3. 注入检索上下文构建抗幻觉 Prompt',
+      '    prompt = format_context_prompt(query, chunks)',
+      '    return llm.generate(prompt)  # 4. 完成有据生成',
+    ],
+    cpp: [
+      'string ragAnswer(const string& query, const HNSW& idx, const LLM& llm) {',
+      '  Vec q = embed(query);',
+      '  auto chunks = idx.searchTopK(q, 3); // Layer 2 -> 0 ANN retrieval',
+      '  return llm.generateGrounded(query, chunks);',
+      '}',
+    ],
+    lineMap: { init: [4, 3, 2], compare: [5, 5, 3], act: [6, 7, 3], done: [7, 8, 4] },
+  },
+  moe: {
+    java: [
+      'public class Main {',
+      '  // MoE 混合专家稀疏门控路由: y = ∑ TopK(G(x))_i * E_i(x)',
+      '  public static void main(String[] args) {',
+      '    // 1. 输入 Token 表征向量进入轻量级 Gating Router 路由器',
+      '    // 2. 计算 8 位专家的路由打分并通过 Top-K (K=2) 稀疏剪枝路由',
+      '    // 3. 仅唤醒被选中的 2 个 FFN 专家子网络执行条件前向计算 (25% FLOPs)',
+      '    // 4. 按 Softmax 路由权重加权求和完成输出表征合成',
+      '    System.out.println("MoE Sparse Routing Complete!");',
+      '  }',
+      '}',
+    ],
+    python: [
+      'def moe_forward(x: np.ndarray, W_gate: np.ndarray, experts: list, k: int = 2):',
+      '    # 1. Router 计算每个专家的亲和度 logits',
+      '    logits = x @ W_gate',
+      '    # 2. 筛选 Top-2 激活专家索引并执行 Softmax 权重归一化',
+      '    top_idx = np.argsort(logits)[-k:]',
+      '    weights = softmax(logits[top_idx])',
+      '    # 3. 仅路由执行 Top-2 专家子网络并加权聚合输出',
+      '    return sum(w * experts[i](x) for w, i in zip(weights, top_idx))',
+    ],
+    cpp: [
+      'Tensor moeForward(const Tensor& x, const Router& r, vector<FFN>& experts) {',
+      '  auto [idx, w] = r.topK(x, 2); // Select Top-2 experts out of 8',
+      '  return w[0] * experts[idx[0]](x) + w[1] * experts[idx[1]](x);',
+      '}',
+    ],
+    lineMap: { init: [4, 3, 1], compare: [5, 5, 2], act: [6, 6, 2], done: [7, 8, 3] },
+  },
+  lstm: {
+    java: [
+      'public class Main {',
+      '  // LSTM 三门控协同与 Cell State 无损记忆高速路',
+      '  public static void main(String[] args) {',
+      '    // 1. 初始化细胞状态高速路 C_{t-1} 与隐藏状态 h_{t-1}',
+      '    // 2. 计算遗忘门 f_t、输入门 i_t 与输出门 o_t 的 Sigmoid 门控开启率',
+      '    // 3. 加法刷新细胞记忆 C_t = f_t ⊙ C_{t-1} + i_t ⊙ tanh(W_c[h, x])',
+      '    // 4. 输出门筛选产生对外表征 h_t = o_t ⊙ tanh(C_t)，序列推演完成',
+      '    System.out.println("LSTM Sequence Cell Complete!");',
+      '  }',
+      '}',
+    ],
+    python: [
+      'def lstm_cell(x_t, h_prev, c_prev, W_f, W_i, W_c, W_o):',
+      '    hx = np.concatenate([h_prev, x_t])',
+      '    # 1. 门控计算：遗忘门 f_t、输入门 i_t、候选记忆 c_tilde',
+      '    f_t = sigmoid(W_f @ hx)',
+      '    i_t = sigmoid(W_i @ hx)',
+      '    c_tilde = np.tanh(W_c @ hx)',
+      '    # 2. 沿着细胞状态高速路执行门控加法更新 C_t',
+      '    c_t = f_t * c_prev + i_t * c_tilde',
+      '    o_t = sigmoid(W_o @ hx)',
+      '    return o_t * np.tanh(c_t), c_t  # 输出 h_t',
+    ],
+    cpp: [
+      'pair<Vec, Vec> lstmStep(Vec x, Vec h, Vec c, const LstmWeights& w) {',
+      '  Vec ft = sigmoid(w.f * concat(h, x)), it = sigmoid(w.i * concat(h, x));',
+      '  Vec ct = hadamard(ft, c) + hadamard(it, tanh(w.c * concat(h, x)));',
+      '  Vec ht = hadamard(sigmoid(w.o * concat(h, x)), tanh(ct));',
+      '  return {ht, ct};',
+      '}',
+    ],
+    lineMap: { init: [4, 2, 1], compare: [5, 5, 2], act: [6, 8, 3], done: [7, 10, 4] },
+  },
 };
 
 function getGenericTemplate(algorithm: string): CodeTemplate {
@@ -1191,6 +1442,12 @@ export function resolveStepCodeTrace(
     desc.includes('顶起') ||
     desc.includes('升维') ||
     desc.includes('投影压缩') ||
+    desc.includes('去噪') ||
+    desc.includes('路由') ||
+    desc.includes('池化') ||
+    desc.includes('贝尔曼') ||
+    desc.includes('门控') ||
+    desc.includes('检索') ||
     desc.includes('更新')
   ) {
     phaseKey = 'act';

@@ -837,6 +837,11 @@ export function renderSortingAndSearching(
     bar.position.set(x, height / 2, 0);
     bar.castShadow = true;
     bar.receiveShadow = true;
+    if (isComparing || isSwapping) {
+      bar.userData.pulseGlow = true;
+      bar.userData.baseEmissive = emissiveIntensity;
+      bar.userData.phaseOffset = idx * 0.7;
+    }
     group.add(bar);
 
     // Glowing top cap disc
