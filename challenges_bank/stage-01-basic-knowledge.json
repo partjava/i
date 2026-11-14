@@ -20,7 +20,7 @@
       "Cycles = \\sum_i count_i \\times (baseCpi_i + stall_i)"
     ],
     "starterCode": "def profile_pipeline_workload(instruction_stats: dict, frequency_hz: int) -> dict:\n    # instruction_stats 示例:\n    # {\n    #   \"load\": {\"count\": 1000, \"base_cpi\": 1.0, \"stall\": 2.0},\n    #   \"alu\": {\"count\": 3000, \"base_cpi\": 1.0, \"stall\": 0.1}\n    # }\n    # 请返回 {\"time_ms\": 0.0, \"bottleneck\": \"load\"}\n    pass",
-    "solutionCode": "def profile_pipeline_workload(instruction_stats: dict, frequency_hz: int) -> dict:\n    if frequency_hz <= 0:\n        raise ValueError(\"frequency_hz must be positive\")\n\n    total_cycles = 0.0\n    worst_type = None\n    worst_stall_cycles = -1.0\n\n    for inst_type, stat in instruction_stats.items():\n        count = stat.get(\"count\", 0)\n        base_cpi = stat.get(\"base_cpi\", 0.0)\n        stall = stat.get(\"stall\", 0.0)\n        total_cycles += count * (base_cpi + stall)\n        stall_cycles = count * stall\n        if stall_cycles > worst_stall_cycles:\n            worst_stall_cycles = stall_cycles\n            worst_type = inst_type\n\n    time_ms = total_cycles / frequency_hz * 1000\n    return {\"time_ms\": round(time_ms, 4), \"bottleneck\": worst_type}",
+    "solutionCode": "# 【算法思路】按指令类型汇总基础 CPI 与停顿周期，计算总耗时(ms)并定位最大停顿瓶颈。\n# 遍历各类指令统计周期总开销与最大停顿贡献项\ndef profile_pipeline_workload(instruction_stats: dict, frequency_hz: int) -> dict:\n    if frequency_hz <= 0:\n        raise ValueError(\"frequency_hz must be positive\")\n\n    total_cycles = 0.0\n    worst_type = None\n    worst_stall_cycles = -1.0\n\n    for inst_type, stat in instruction_stats.items():\n        count = stat.get(\"count\", 0)\n        base_cpi = stat.get(\"base_cpi\", 0.0)\n        stall = stat.get(\"stall\", 0.0)\n        total_cycles += count * (base_cpi + stall)\n        stall_cycles = count * stall\n        if stall_cycles > worst_stall_cycles:\n            worst_stall_cycles = stall_cycles\n            worst_type = inst_type\n\n    time_ms = total_cycles / frequency_hz * 1000\n    return {\"time_ms\": round(time_ms, 4), \"bottleneck\": worst_type}\n",
     "expectedOutput": "{\"time_ms\": 0.0033, \"bottleneck\": \"load\"}",
     "testCases": [
       {
@@ -45,7 +45,8 @@
         "expected": {
           "time_ms": 0.0032,
           "bottleneck": "load"
-        }
+        },
+        "hidden": false
       },
       {
         "name": "branch stalls dominate",
@@ -69,7 +70,8 @@
         "expected": {
           "time_ms": 0.0044,
           "bottleneck": "branch"
-        }
+        },
+        "hidden": false
       }
     ],
     "quizzes": [
@@ -98,7 +100,60 @@
     ],
     "thinkingQuestion": "如果真实系统中 load 指令停顿最多，你会从缓存局部性、数据布局和预取策略三个角度如何优化？",
     "aiPrompt": "评估学生是否理解 CPI、流水线停顿、缓存局部性、数据布局和性能瓶颈定位。按 0-10 分打分。",
-    "status": "published"
+    "status": "published",
+    "evaluationCases": [
+      {
+        "name": "single instruction type zero stall",
+        "mode": "function",
+        "function": "profile_pipeline_workload",
+        "args": [
+          {
+            "alu": {
+              "count": 500,
+              "base_cpi": 2,
+              "stall": 0
+            }
+          },
+          1000000000
+        ],
+        "hidden": true,
+        "expected": {
+          "time_ms": 0.001,
+          "bottleneck": "alu"
+        }
+      },
+      {
+        "name": "empty workload",
+        "mode": "function",
+        "function": "profile_pipeline_workload",
+        "args": [
+          {},
+          2000000000
+        ],
+        "hidden": true,
+        "expected": {
+          "time_ms": 0,
+          "bottleneck": null
+        }
+      },
+      {
+        "name": "invalid zero frequency raises",
+        "mode": "function",
+        "function": "profile_pipeline_workload",
+        "args": [
+          {
+            "alu": {
+              "count": 10,
+              "base_cpi": 1,
+              "stall": 0
+            }
+          },
+          0
+        ],
+        "hidden": true,
+        "expectedException": "ValueError"
+      }
+    ]
   },
   {
     "slug": "operating-system-lru-cache-pressure-simulator",
@@ -120,7 +175,7 @@
       "HitRate = \\frac{Hits}{Hits + Misses}"
     ],
     "starterCode": "def simulate_page_cache(page_requests: list, capacity: int) -> dict:\n    # 返回 {\"hits\": 0, \"misses\": 0, \"hit_rate\": 0.0}\n    pass",
-    "solutionCode": "def simulate_page_cache(page_requests: list, capacity: int) -> dict:\n    if capacity <= 0:\n        return {\"hits\": 0, \"misses\": len(page_requests), \"hit_rate\": 0.0}\n\n    cache = []\n    hits = 0\n    misses = 0\n\n    for page in page_requests:\n        if page in cache:\n            hits += 1\n            cache.remove(page)\n            cache.append(page)\n        else:\n            misses += 1\n            if len(cache) >= capacity:\n                cache.pop(0)\n            cache.append(page)\n\n    total = hits + misses\n    return {\"hits\": hits, \"misses\": misses, \"hit_rate\": round(hits / total, 4) if total else 0.0}",
+    "solutionCode": "# 【算法思路】用列表尾部表示最近使用、头部表示最久未用，模拟页面置换并统计命中率。\n# 按页请求序列执行 LRU 命中提升与满容量头部淘汰\ndef simulate_page_cache(page_requests: list, capacity: int) -> dict:\n    if capacity <= 0:\n        return {\"hits\": 0, \"misses\": len(page_requests), \"hit_rate\": 0.0}\n\n    cache = []\n    hits = 0\n    misses = 0\n\n    for page in page_requests:\n        if page in cache:\n            hits += 1\n            cache.remove(page)\n            cache.append(page)\n        else:\n            misses += 1\n            if len(cache) >= capacity:\n                cache.pop(0)\n            cache.append(page)\n\n    total = hits + misses\n    return {\"hits\": hits, \"misses\": misses, \"hit_rate\": round(hits / total, 4) if total else 0.0}\n",
     "expectedOutput": "{\"hits\": 2, \"misses\": 6, \"hit_rate\": 0.25}",
     "testCases": [
       {
@@ -144,7 +199,8 @@
           "hits": 2,
           "misses": 6,
           "hit_rate": 0.25
-        }
+        },
+        "hidden": false
       },
       {
         "name": "zero capacity",
@@ -162,7 +218,8 @@
           "hits": 0,
           "misses": 3,
           "hit_rate": 0
-        }
+        },
+        "hidden": false
       }
     ],
     "quizzes": [
@@ -191,7 +248,68 @@
     ],
     "thinkingQuestion": "为什么真实操作系统不一定使用纯 LRU？请从实现开销、并发访问和近似算法角度分析。",
     "aiPrompt": "评估学生是否理解 LRU、缺页、缓存命中率，以及 Clock 等近似 LRU 算法的工程取舍。按 0-10 分打分。",
-    "status": "published"
+    "status": "published",
+    "evaluationCases": [
+      {
+        "name": "all hits after warmup",
+        "mode": "function",
+        "function": "simulate_page_cache",
+        "args": [
+          [
+            1,
+            2,
+            1,
+            2,
+            1,
+            2
+          ],
+          2
+        ],
+        "hidden": true,
+        "expected": {
+          "hits": 4,
+          "misses": 2,
+          "hit_rate": 0.6667
+        }
+      },
+      {
+        "name": "lru eviction order check",
+        "mode": "function",
+        "function": "simulate_page_cache",
+        "args": [
+          [
+            1,
+            2,
+            1,
+            3,
+            2,
+            1
+          ],
+          2
+        ],
+        "hidden": true,
+        "expected": {
+          "hits": 1,
+          "misses": 5,
+          "hit_rate": 0.1667
+        }
+      },
+      {
+        "name": "empty requests",
+        "mode": "function",
+        "function": "simulate_page_cache",
+        "args": [
+          [],
+          4
+        ],
+        "hidden": true,
+        "expected": {
+          "hits": 0,
+          "misses": 0,
+          "hit_rate": 0
+        }
+      }
+    ]
   },
   {
     "slug": "network-longest-prefix-match-engine",
@@ -214,7 +332,7 @@
       "mask = 2^{32} - 2^{32-prefix}"
     ],
     "starterCode": "def ip_to_int(ip: str) -> int:\n    # TODO: 将 IPv4 字符串转换为 32 位整数\n    pass\n\ndef lookup_route(routes: list, target_ip: str) -> str:\n    # TODO: 实现最长前缀匹配，没有匹配则返回 \"DROP\"\n    pass",
-    "solutionCode": "def ip_to_int(ip: str) -> int:\n    value = 0\n    for part in ip.split('.'):\n        value = value * 256 + int(part)\n    return value\n\ndef lookup_route(routes: list, target_ip: str) -> str:\n    target = ip_to_int(target_ip)\n    best_prefix = -1\n    best_next_hop = \"DROP\"\n\n    for route in routes:\n        network, prefix_text = route[\"cidr\"].split('/')\n        prefix = int(prefix_text)\n        network_int = ip_to_int(network)\n        mask = ((0xFFFFFFFF << (32 - prefix)) & 0xFFFFFFFF) if prefix > 0 else 0\n        if (target & mask) == (network_int & mask) and prefix > best_prefix:\n            best_prefix = prefix\n            best_next_hop = route[\"next_hop\"]\n\n    return best_next_hop",
+    "solutionCode": "# 【算法思路】将 IPv4 地址转为 32 位整数掩码按位与匹配，选取前缀长度最大的路由下一跳。\n# 将点分十进制 IP 转为无符号 32 位整数\ndef ip_to_int(ip: str) -> int:\n    value = 0\n    for part in ip.split('.'):\n        value = value * 256 + int(part)\n    return value\n\n# 遍历路由表按前缀长度优先规则匹配下一跳\ndef lookup_route(routes: list, target_ip: str) -> str:\n    target = ip_to_int(target_ip)\n    best_prefix = -1\n    best_next_hop = \"DROP\"\n\n    for route in routes:\n        network, prefix_text = route[\"cidr\"].split('/')\n        prefix = int(prefix_text)\n        network_int = ip_to_int(network)\n        mask = ((0xFFFFFFFF << (32 - prefix)) & 0xFFFFFFFF) if prefix > 0 else 0\n        if (target & mask) == (network_int & mask) and prefix > best_prefix:\n            best_prefix = prefix\n            best_next_hop = route[\"next_hop\"]\n\n    return best_next_hop\n",
     "expectedOutput": "eth2",
     "testCases": [
       {
@@ -238,7 +356,8 @@
           ],
           "10.1.2.33"
         ],
-        "expected": "eth2"
+        "expected": "eth2",
+        "hidden": false
       },
       {
         "name": "no route drops",
@@ -253,7 +372,8 @@
           ],
           "8.8.8.8"
         ],
-        "expected": "DROP"
+        "expected": "DROP",
+        "hidden": false
       }
     ],
     "quizzes": [
@@ -282,7 +402,59 @@
     ],
     "thinkingQuestion": "如果路由表规模从几十条增长到几十万条，逐条扫描会出现什么问题？真实路由器可能使用哪些结构优化最长前缀匹配？",
     "aiPrompt": "评估学生是否理解 CIDR、最长前缀匹配、线性扫描复杂度，以及 Trie、Patricia Trie、TCAM 等工程优化方向。按 0-10 分打分。",
-    "status": "published"
+    "status": "published",
+    "evaluationCases": [
+      {
+        "name": "default route /0 fallback",
+        "mode": "function",
+        "function": "lookup_route",
+        "args": [
+          [
+            {
+              "cidr": "0.0.0.0/0",
+              "next_hop": "gw"
+            },
+            {
+              "cidr": "192.168.1.0/24",
+              "next_hop": "lan"
+            }
+          ],
+          "8.8.8.8"
+        ],
+        "hidden": true,
+        "expected": "gw"
+      },
+      {
+        "name": "ip_to_int boundary",
+        "mode": "function",
+        "function": "ip_to_int",
+        "args": [
+          "192.168.1.1"
+        ],
+        "hidden": true,
+        "expected": 3232235777
+      },
+      {
+        "name": "unsorted table picks longest prefix",
+        "mode": "function",
+        "function": "lookup_route",
+        "args": [
+          [
+            {
+              "cidr": "172.16.0.0/20",
+              "next_hop": "sub"
+            },
+            {
+              "cidr": "172.16.0.0/12",
+              "next_hop": "root"
+            }
+          ],
+          "172.16.5.9"
+        ],
+        "hidden": true,
+        "expected": "sub"
+      }
+    ]
   },
   {
     "slug": "encoding-system-log-charset-detector",
@@ -303,15 +475,18 @@
     "latexFormulas": [
       "Unicode \\rightarrow CodePoint \\rightarrow UTF8Bytes"
     ],
-    "starterCode": "def decode_log_payload(payload: bytes) -> dict:\n    # 返回 {\"status\": \"OK\", \"text\": \"...\"}\n    pass",
-    "solutionCode": "def decode_log_payload(payload: bytes) -> dict:\n    try:\n        text = payload.decode('utf-8')\n    except UnicodeDecodeError:\n        return {\"status\": \"INVALID_UTF8\", \"text\": \"\"}\n\n    if '\\ufffd' in text:\n        return {\"status\": \"SUSPECT_REPLACEMENT\", \"text\": text}\n    return {\"status\": \"OK\", \"text\": text}",
+    "starterCode": "def decode_log_payload(payload: bytes | str) -> dict:\n    # payload 支持 bytes 或十六进制字符串，返回 {\"status\": \"OK\"|\"SUSPECT_REPLACEMENT\"|\"INVALID_UTF8\", \"text\": \"...\"}\n    pass\n",
+    "solutionCode": "# 【算法思路】安全解码字节日志：区分正常 UTF-8、含替换字符的可疑乱码与解码失败。\n# 先兼容十六进制输入再按 UTF-8 解码并检测 U+FFFD\ndef decode_log_payload(payload: bytes | str) -> dict:\n    # 若传入十六进制字符串，则先转换为字节序列\n    if isinstance(payload, str):\n        payload = bytes.fromhex(payload)\n    try:\n        # 严格按 UTF-8 解码，遇到非法字节序列抛出异常\n        text = payload.decode('utf-8')\n    except UnicodeDecodeError:\n        return {\"status\": \"INVALID_UTF8\", \"text\": \"\"}\n\n    # 检测到 U+FFFD 替换符说明存在潜在乱码或前期损毁替换\n    if '\\ufffd' in text:\n        return {\"status\": \"SUSPECT_REPLACEMENT\", \"text\": text}\n    return {\"status\": \"OK\", \"text\": text}\n",
     "expectedOutput": "{\"status\": \"OK\", \"text\": \"hello\"}",
     "testCases": [
       {
         "name": "valid utf8",
-        "input": {
-          "payloadHex": "68656c6c6f"
-        },
+        "mode": "function",
+        "function": "decode_log_payload",
+        "args": [
+          "68656c6c6f"
+        ],
+        "hidden": false,
         "expected": {
           "status": "OK",
           "text": "hello"
@@ -319,9 +494,12 @@
       },
       {
         "name": "invalid utf8",
-        "input": {
-          "payloadHex": "fffe6869"
-        },
+        "mode": "function",
+        "function": "decode_log_payload",
+        "args": [
+          "fffe6869"
+        ],
+        "hidden": false,
         "expected": {
           "status": "INVALID_UTF8",
           "text": ""
@@ -354,7 +532,48 @@
     ],
     "thinkingQuestion": "如果日志采集链路中同时存在 UTF-8、GBK 和 Latin-1 数据，你会如何设计编码识别、标记和降级策略？",
     "aiPrompt": "评估学生是否理解 Unicode、UTF-8、解码异常、替换字符和日志清洗链路的工程设计。按 0-10 分打分。",
-    "status": "published"
+    "status": "published",
+    "evaluationCases": [
+      {
+        "name": "utf8 chinese text",
+        "mode": "function",
+        "function": "decode_log_payload",
+        "args": [
+          "e4b8ade69687"
+        ],
+        "hidden": true,
+        "expected": {
+          "status": "OK",
+          "text": "中文"
+        }
+      },
+      {
+        "name": "suspect replacement U+FFFD",
+        "mode": "function",
+        "function": "decode_log_payload",
+        "args": [
+          "efbfbd61"
+        ],
+        "hidden": true,
+        "expected": {
+          "status": "SUSPECT_REPLACEMENT",
+          "text": "�a"
+        }
+      },
+      {
+        "name": "empty payload",
+        "mode": "function",
+        "function": "decode_log_payload",
+        "args": [
+          ""
+        ],
+        "hidden": true,
+        "expected": {
+          "status": "OK",
+          "text": ""
+        }
+      }
+    ]
   },
   {
     "slug": "linux-command-safe-batch-runner",
@@ -376,7 +595,7 @@
       "Command = Executable + Args[]"
     ],
     "starterCode": "def build_grep_args(keyword: str, filename: str) -> list:\n    # 返回适合 subprocess.run(args) 使用的参数数组\n    pass",
-    "solutionCode": "def build_grep_args(keyword: str, filename: str) -> list:\n    if not keyword:\n        raise ValueError(\"keyword must not be empty\")\n    if not filename:\n        raise ValueError(\"filename must not be empty\")\n    return [\"grep\", \"--\", keyword, filename]",
+    "solutionCode": "# 【算法思路】构造参数列表并在标志后追加 `--`，防止以连字符开头的危险文件名被误解析为选项。\n# 校验非空参数后返回带 `--` 选项分隔符的参数列表\ndef build_grep_args(keyword: str, filename: str) -> list:\n    if not keyword:\n        raise ValueError(\"keyword must not be empty\")\n    if not filename:\n        raise ValueError(\"filename must not be empty\")\n    return [\"grep\", \"--\", keyword, filename]\n",
     "expectedOutput": "[\"grep\", \"--\", \"error\", \"app.log\"]",
     "testCases": [
       {
@@ -392,7 +611,8 @@
           "--",
           "error",
           "app.log"
-        ]
+        ],
+        "hidden": false
       },
       {
         "name": "dangerous filename stays argument",
@@ -407,7 +627,8 @@
           "--",
           "error",
           "app.log; rm -rf /"
-        ]
+        ],
+        "hidden": false
       }
     ],
     "quizzes": [
@@ -436,7 +657,47 @@
     ],
     "thinkingQuestion": "如果你要允许用户在 Web 页面上提交日志搜索关键词，后端执行 grep，你会如何防止命令注入和资源耗尽？",
     "aiPrompt": "评估学生是否理解 shell 注入、参数数组、输入校验、超时控制和资源限制。按 0-10 分打分。",
-    "status": "published"
+    "status": "published",
+    "evaluationCases": [
+      {
+        "name": "dash-prefixed pattern kept safe",
+        "mode": "function",
+        "function": "build_grep_args",
+        "args": [
+          "-v",
+          "-rf"
+        ],
+        "hidden": true,
+        "expected": [
+          "grep",
+          "--",
+          "-v",
+          "-rf"
+        ]
+      },
+      {
+        "name": "empty keyword raises",
+        "mode": "function",
+        "function": "build_grep_args",
+        "args": [
+          "",
+          "a.log"
+        ],
+        "hidden": true,
+        "expectedException": "ValueError"
+      },
+      {
+        "name": "empty filename raises",
+        "mode": "function",
+        "function": "build_grep_args",
+        "args": [
+          "err",
+          ""
+        ],
+        "hidden": true,
+        "expectedException": "ValueError"
+      }
+    ]
   },
   {
     "slug": "linux-filesystem-inode-capacity-planner",
@@ -459,7 +720,7 @@
       "TotalBlocks = FileCount \\times Blocks"
     ],
     "starterCode": "def plan_small_file_storage(file_count: int, avg_file_size: int, block_size: int, total_blocks: int, total_inodes: int) -> dict:\n    # 返回 {\"fits\": True, \"bottleneck\": \"none\"}\n    pass",
-    "solutionCode": "import math\n\ndef plan_small_file_storage(file_count: int, avg_file_size: int, block_size: int, total_blocks: int, total_inodes: int) -> dict:\n    if block_size <= 0:\n        raise ValueError(\"block_size must be positive\")\n    needed_blocks = file_count * math.ceil(avg_file_size / block_size)\n    needed_inodes = file_count\n\n    if needed_inodes > total_inodes:\n        return {\"fits\": False, \"bottleneck\": \"inode\"}\n    if needed_blocks > total_blocks:\n        return {\"fits\": False, \"bottleneck\": \"block\"}\n    return {\"fits\": True, \"bottleneck\": \"none\"}",
+    "solutionCode": "# 【算法思路】同时核算文件数(inode)与向上取整的数据块(block)消耗，识别率先耗尽的资源瓶颈。\nimport math\n\n# 分别计算所需 inode 与 block 并判定容量与瓶颈\ndef plan_small_file_storage(file_count: int, avg_file_size: int, block_size: int, total_blocks: int, total_inodes: int) -> dict:\n    if block_size <= 0:\n        raise ValueError(\"block_size must be positive\")\n    needed_blocks = file_count * math.ceil(avg_file_size / block_size)\n    needed_inodes = file_count\n\n    if needed_inodes > total_inodes:\n        return {\"fits\": False, \"bottleneck\": \"inode\"}\n    if needed_blocks > total_blocks:\n        return {\"fits\": False, \"bottleneck\": \"block\"}\n    return {\"fits\": True, \"bottleneck\": \"none\"}\n",
     "expectedOutput": "{\"fits\": false, \"bottleneck\": \"inode\"}",
     "testCases": [
       {
@@ -476,7 +737,8 @@
         "expected": {
           "fits": false,
           "bottleneck": "inode"
-        }
+        },
+        "hidden": false
       },
       {
         "name": "block exhausted first",
@@ -492,7 +754,8 @@
         "expected": {
           "fits": false,
           "bottleneck": "block"
-        }
+        },
+        "hidden": false
       }
     ],
     "quizzes": [
@@ -521,7 +784,57 @@
     ],
     "thinkingQuestion": "面对海量小文件系统，你会选择直接落盘、打包归档、对象存储还是数据库？请比较它们的取舍。",
     "aiPrompt": "评估学生是否理解 inode、小文件问题、块浪费、对象存储和归档策略。按 0-10 分打分。",
-    "status": "published"
+    "status": "published",
+    "evaluationCases": [
+      {
+        "name": "exact fit succeeds",
+        "mode": "function",
+        "function": "plan_small_file_storage",
+        "args": [
+          100,
+          4096,
+          4096,
+          100,
+          100
+        ],
+        "hidden": true,
+        "expected": {
+          "fits": true,
+          "bottleneck": "none"
+        }
+      },
+      {
+        "name": "zero block_size raises",
+        "mode": "function",
+        "function": "plan_small_file_storage",
+        "args": [
+          10,
+          100,
+          0,
+          100,
+          100
+        ],
+        "hidden": true,
+        "expectedException": "ValueError"
+      },
+      {
+        "name": "non-multiple avg size rounds up blocks",
+        "mode": "function",
+        "function": "plan_small_file_storage",
+        "args": [
+          3,
+          4097,
+          4096,
+          5,
+          10
+        ],
+        "hidden": true,
+        "expected": {
+          "fits": false,
+          "bottleneck": "block"
+        }
+      }
+    ]
   },
   {
     "slug": "linux-permission-policy-auditor",
@@ -543,7 +856,7 @@
       "r=4, w=2, x=1"
     ],
     "starterCode": "def audit_permission(octal: str, file_type: str) -> list:\n    # file_type: \"config\" 或 \"script\"\n    # 返回风险列表，例如 [\"group_writable\", \"others_writable\"]\n    pass",
-    "solutionCode": "def audit_permission(octal: str, file_type: str) -> list:\n    if len(octal) != 3 or not octal.isdigit():\n        raise ValueError(\"octal permission must look like 644\")\n\n    owner, group, others = [int(ch) for ch in octal]\n    risks = []\n\n    if group & 2:\n        risks.append(\"group_writable\")\n    if others & 2:\n        risks.append(\"others_writable\")\n\n    if file_type == \"config\" and owner & 1:\n        risks.append(\"config_executable\")\n    if file_type == \"script\" and not (owner & 1):\n        risks.append(\"owner_not_executable\")\n\n    return risks",
+    "solutionCode": "# 【算法思路】将三位八进制权限按位拆解，结合文件类型检测组/其他写权限与不当可执行位。\n# 解析 rwx 比特位并依据 config/script 类型输出风险标签\ndef audit_permission(octal: str, file_type: str) -> list:\n    if len(octal) != 3 or not octal.isdigit():\n        raise ValueError(\"octal permission must look like 644\")\n\n    owner, group, others = [int(ch) for ch in octal]\n    risks = []\n\n    if group & 2:\n        risks.append(\"group_writable\")\n    if others & 2:\n        risks.append(\"others_writable\")\n\n    if file_type == \"config\" and owner & 1:\n        risks.append(\"config_executable\")\n    if file_type == \"script\" and not (owner & 1):\n        risks.append(\"owner_not_executable\")\n\n    return risks\n",
     "expectedOutput": "[\"group_writable\", \"others_writable\"]",
     "testCases": [
       {
@@ -557,7 +870,8 @@
         "expected": [
           "group_writable",
           "others_writable"
-        ]
+        ],
+        "hidden": false
       },
       {
         "name": "safe script",
@@ -567,7 +881,8 @@
           "750",
           "script"
         ],
-        "expected": []
+        "expected": [],
+        "hidden": false
       }
     ],
     "quizzes": [
@@ -596,7 +911,47 @@
     ],
     "thinkingQuestion": "为什么生产环境中仅靠 chmod 不够？还需要从用户、用户组、sudo、ACL 和密钥管理哪些方面做权限治理？",
     "aiPrompt": "评估学生是否理解 rwx、最小权限原则、配置文件安全、ACL 和生产权限治理。按 0-10 分打分。",
-    "status": "published"
+    "status": "published",
+    "evaluationCases": [
+      {
+        "name": "executable config and world writable",
+        "mode": "function",
+        "function": "audit_permission",
+        "args": [
+          "742",
+          "config"
+        ],
+        "hidden": true,
+        "expected": [
+          "others_writable",
+          "config_executable"
+        ]
+      },
+      {
+        "name": "script missing owner exec",
+        "mode": "function",
+        "function": "audit_permission",
+        "args": [
+          "644",
+          "script"
+        ],
+        "hidden": true,
+        "expected": [
+          "owner_not_executable"
+        ]
+      },
+      {
+        "name": "malformed octal raises",
+        "mode": "function",
+        "function": "audit_permission",
+        "args": [
+          "99a",
+          "file"
+        ],
+        "hidden": true,
+        "expectedException": "ValueError"
+      }
+    ]
   },
   {
     "slug": "linux-process-zombie-detector",
@@ -618,7 +973,7 @@
       "ZombieRate = \\frac{ZombieCount}{TotalProcessCount}"
     ],
     "starterCode": "def detect_process_anomaly(processes: list, zombie_count_threshold: int, zombie_rate_threshold: float) -> dict:\n    # processes 示例: [{\"pid\": 1, \"state\": \"S\"}, {\"pid\": 2, \"state\": \"Z\"}]\n    pass",
-    "solutionCode": "def detect_process_anomaly(processes: list, zombie_count_threshold: int, zombie_rate_threshold: float) -> dict:\n    total = len(processes)\n    zombie_count = sum(1 for p in processes if p.get(\"state\") == \"Z\")\n    zombie_rate = zombie_count / total if total else 0.0\n    alert = zombie_count >= zombie_count_threshold or zombie_rate > zombie_rate_threshold\n    return {\"zombies\": zombie_count, \"zombie_rate\": round(zombie_rate, 4), \"alert\": alert}",
+    "solutionCode": "# 【算法思路】统计僵尸进程(state=='Z')数量与占比，满足任一阈值即触发运维告警。\n# 汇总僵尸态数量、占比及是否超出阈值的布尔标志\ndef detect_process_anomaly(processes: list, zombie_count_threshold: int, zombie_rate_threshold: float) -> dict:\n    total = len(processes)\n    zombie_count = sum(1 for p in processes if p.get(\"state\") == \"Z\")\n    zombie_rate = zombie_count / total if total else 0.0\n    alert = zombie_count >= zombie_count_threshold or zombie_rate > zombie_rate_threshold\n    return {\"zombies\": zombie_count, \"zombie_rate\": round(zombie_rate, 4), \"alert\": alert}\n",
     "expectedOutput": "{\"zombies\": 2, \"zombie_rate\": 0.5, \"alert\": true}",
     "testCases": [
       {
@@ -651,7 +1006,8 @@
           "zombies": 2,
           "zombie_rate": 0.5,
           "alert": true
-        }
+        },
+        "hidden": false
       },
       {
         "name": "empty process list",
@@ -666,7 +1022,8 @@
           "zombies": 0,
           "zombie_rate": 0,
           "alert": false
-        }
+        },
+        "hidden": false
       }
     ],
     "quizzes": [
@@ -695,7 +1052,71 @@
     ],
     "thinkingQuestion": "如果线上服务持续产生僵尸进程，你会如何定位父进程、修复回收逻辑，并设置监控告警？",
     "aiPrompt": "评估学生是否理解进程状态、僵尸进程、wait/waitpid、监控指标和告警策略。按 0-10 分打分。",
-    "status": "published"
+    "status": "published",
+    "evaluationCases": [
+      {
+        "name": "exact count threshold triggers",
+        "mode": "function",
+        "function": "detect_process_anomaly",
+        "args": [
+          [
+            {
+              "pid": 1,
+              "state": "Z"
+            },
+            {
+              "pid": 2,
+              "state": "S"
+            }
+          ],
+          1,
+          0.9
+        ],
+        "hidden": true,
+        "expected": {
+          "zombies": 1,
+          "zombie_rate": 0.5,
+          "alert": true
+        }
+      },
+      {
+        "name": "healthy cluster no alert",
+        "mode": "function",
+        "function": "detect_process_anomaly",
+        "args": [
+          [
+            {
+              "pid": 1,
+              "state": "R"
+            },
+            {
+              "pid": 2,
+              "state": "S"
+            },
+            {
+              "pid": 3,
+              "state": "Z"
+            },
+            {
+              "pid": 4,
+              "state": "R"
+            },
+            {
+              "pid": 5,
+              "state": "R"
+            }
+          ],
+          2,
+          0.25
+        ],
+        "hidden": true,
+        "expected": {
+          "zombies": 1,
+          "zombie_rate": 0.2,
+          "alert": false
+        }
+      }
+    ]
   },
   {
     "slug": "shell-script-pipeline-failure-guard",
@@ -717,7 +1138,7 @@
       "ExitCode = 0 \\Rightarrow Success"
     ],
     "starterCode": "def evaluate_pipeline(exit_codes: list, pipefail: bool) -> int:\n    # exit_codes 示例: [1, 0, 0]\n    pass",
-    "solutionCode": "def evaluate_pipeline(exit_codes: list, pipefail: bool) -> int:\n    if not exit_codes:\n        return 0\n    if not pipefail:\n        return exit_codes[-1]\n    for code in reversed(exit_codes):\n        if code != 0:\n            return code\n    return 0",
+    "solutionCode": "# 【算法思路】模拟 bash pipefail 行为：关闭时仅看末命令退出码，开启时从右向左返回首个非零码。\n# 依据 pipefail 开关从管道退出码列表中提取最终状态码\ndef evaluate_pipeline(exit_codes: list, pipefail: bool) -> int:\n    if not exit_codes:\n        return 0\n    if not pipefail:\n        return exit_codes[-1]\n    for code in reversed(exit_codes):\n        if code != 0:\n            return code\n    return 0\n",
     "expectedOutput": "1",
     "testCases": [
       {
@@ -732,7 +1153,8 @@
           ],
           true
         ],
-        "expected": 1
+        "expected": 1,
+        "hidden": false
       },
       {
         "name": "normal mode hides earlier failure",
@@ -746,7 +1168,8 @@
           ],
           false
         ],
-        "expected": 0
+        "expected": 0,
+        "hidden": false
       }
     ],
     "quizzes": [
@@ -775,7 +1198,50 @@
     ],
     "thinkingQuestion": "一个生产备份脚本应该如何组合 `set -e`、`set -u`、`pipefail`、日志和回滚策略？",
     "aiPrompt": "评估学生是否理解 Shell 退出码、pipefail、脚本可靠性、日志和失败回滚。按 0-10 分打分。",
-    "status": "published"
+    "status": "published",
+    "evaluationCases": [
+      {
+        "name": "empty exit codes returns 0",
+        "mode": "function",
+        "function": "evaluate_pipeline",
+        "args": [
+          [],
+          true
+        ],
+        "hidden": true,
+        "expected": 0
+      },
+      {
+        "name": "rightmost nonzero under pipefail",
+        "mode": "function",
+        "function": "evaluate_pipeline",
+        "args": [
+          [
+            2,
+            127,
+            0
+          ],
+          true
+        ],
+        "hidden": true,
+        "expected": 127
+      },
+      {
+        "name": "all zero succeeds",
+        "mode": "function",
+        "function": "evaluate_pipeline",
+        "args": [
+          [
+            0,
+            0,
+            0
+          ],
+          true
+        ],
+        "hidden": true,
+        "expected": 0
+      }
+    ]
   },
   {
     "slug": "git-init-clone-repo-health-checker",
@@ -797,7 +1263,7 @@
       "RepoReady = GitDir \\land Origin \\land Branch \\land \\neg DetachedHEAD"
     ],
     "starterCode": "def check_repo_ready(repo: dict) -> dict:\n    # 返回 {\"ready\": True, \"issues\": []}\n    pass",
-    "solutionCode": "def check_repo_ready(repo: dict) -> dict:\n    issues = []\n    if not repo.get(\"has_git_dir\"):\n        issues.append(\"missing_git_dir\")\n    if not repo.get(\"origin_url\"):\n        issues.append(\"missing_origin\")\n    if not repo.get(\"default_branch\"):\n        issues.append(\"missing_default_branch\")\n    if repo.get(\"detached_head\"):\n        issues.append(\"detached_head\")\n    return {\"ready\": len(issues) == 0, \"issues\": issues}",
+    "solutionCode": "# 【算法思路】检查仓库元数据关键字段(.git 目录、远端 origin、默认分支与游离头状态)是否就绪。\n# 逐项校验仓库就绪条件并收集缺失问题列表\ndef check_repo_ready(repo: dict) -> dict:\n    issues = []\n    if not repo.get(\"has_git_dir\"):\n        issues.append(\"missing_git_dir\")\n    if not repo.get(\"origin_url\"):\n        issues.append(\"missing_origin\")\n    if not repo.get(\"default_branch\"):\n        issues.append(\"missing_default_branch\")\n    if repo.get(\"detached_head\"):\n        issues.append(\"detached_head\")\n    return {\"ready\": len(issues) == 0, \"issues\": issues}\n",
     "expectedOutput": "{\"ready\": false, \"issues\": [\"missing_origin\"]}",
     "testCases": [
       {
@@ -817,7 +1283,8 @@
           "issues": [
             "missing_origin"
           ]
-        }
+        },
+        "hidden": false
       },
       {
         "name": "healthy repo",
@@ -834,7 +1301,8 @@
         "expected": {
           "ready": true,
           "issues": []
-        }
+        },
+        "hidden": false
       }
     ],
     "quizzes": [
@@ -863,7 +1331,52 @@
     ],
     "thinkingQuestion": "你会如何设计一个团队脚手架，在开发者首次拉取项目时自动检查 Git、Node、环境变量和数据库连接？",
     "aiPrompt": "评估学生是否理解 Git 初始化、clone、remote、默认分支、detached HEAD 和项目预检脚本设计。按 0-10 分打分。",
-    "status": "published"
+    "status": "published",
+    "evaluationCases": [
+      {
+        "name": "multiple issues collected",
+        "mode": "function",
+        "function": "check_repo_ready",
+        "args": [
+          {
+            "has_git_dir": false,
+            "origin_url": "",
+            "default_branch": "",
+            "detached_head": true
+          }
+        ],
+        "hidden": true,
+        "expected": {
+          "ready": false,
+          "issues": [
+            "missing_git_dir",
+            "missing_origin",
+            "missing_default_branch",
+            "detached_head"
+          ]
+        }
+      },
+      {
+        "name": "only detached head fails",
+        "mode": "function",
+        "function": "check_repo_ready",
+        "args": [
+          {
+            "has_git_dir": true,
+            "origin_url": "https://a/b.git",
+            "default_branch": "main",
+            "detached_head": true
+          }
+        ],
+        "hidden": true,
+        "expected": {
+          "ready": false,
+          "issues": [
+            "detached_head"
+          ]
+        }
+      }
+    ]
   },
   {
     "slug": "git-add-commit-push-change-batch-planner",
@@ -885,7 +1398,7 @@
       "Commit = Cohesive(ChangeSet)"
     ],
     "starterCode": "def plan_commit_batches(files: list) -> dict:\n    # 返回 {\"code\": [...], \"test\": [...], \"docs\": [...], \"config\": [...]}\n    pass",
-    "solutionCode": "def plan_commit_batches(files: list) -> dict:\n    batches = {\"code\": [], \"test\": [], \"docs\": [], \"config\": []}\n    config_names = {\"package.json\", \"package-lock.json\", \"tsconfig.json\", \"next.config.js\", \".eslintrc.json\"}\n\n    for path in files:\n        name = path.split('/')[-1]\n        if '/test/' in path or '.test.' in path or '.spec.' in path:\n            batches[\"test\"].append(path)\n        elif path.startswith('docs/') or path.endswith('.md'):\n            batches[\"docs\"].append(path)\n        elif name in config_names or path.startswith('.github/'):\n            batches[\"config\"].append(path)\n        else:\n            batches[\"code\"].append(path)\n    return batches",
+    "solutionCode": "# 【算法思路】根据路径后缀与目录规则把改动文件自动归类至代码、测试、文档、配置四个提交批次。\n# 遍历文件路径按规则分桶，生成逻辑清晰的提交批次\ndef plan_commit_batches(files: list) -> dict:\n    batches = {\"code\": [], \"test\": [], \"docs\": [], \"config\": []}\n    config_names = {\"package.json\", \"package-lock.json\", \"tsconfig.json\", \"next.config.js\", \".eslintrc.json\"}\n\n    for path in files:\n        name = path.split('/')[-1]\n        if '/test/' in path or '.test.' in path or '.spec.' in path:\n            batches[\"test\"].append(path)\n        elif path.startswith('docs/') or path.endswith('.md'):\n            batches[\"docs\"].append(path)\n        elif name in config_names or path.startswith('.github/'):\n            batches[\"config\"].append(path)\n        else:\n            batches[\"code\"].append(path)\n    return batches\n",
     "expectedOutput": "{\"code\": [\"app/page.tsx\"], \"test\": [\"app/page.test.ts\"], \"docs\": [\"docs/api.md\"], \"config\": [\"package.json\"]}",
     "testCases": [
       {
@@ -913,7 +1426,8 @@
           "config": [
             "package.json"
           ]
-        }
+        },
+        "hidden": false
       },
       {
         "name": "github workflow is config",
@@ -931,7 +1445,8 @@
           "config": [
             ".github/workflows/ci.yml"
           ]
-        }
+        },
+        "hidden": false
       }
     ],
     "quizzes": [
@@ -960,7 +1475,51 @@
     ],
     "thinkingQuestion": "如果一个需求同时包含重构和行为变更，你会如何拆分 commit，让审查者更容易确认风险？",
     "aiPrompt": "评估学生是否理解暂存区、提交粒度、review 友好性和回滚策略。按 0-10 分打分。",
-    "status": "published"
+    "status": "published",
+    "evaluationCases": [
+      {
+        "name": "spec and test dir detection",
+        "mode": "function",
+        "function": "plan_commit_batches",
+        "args": [
+          [
+            "src/test/foo.py",
+            "ui/btn.spec.ts",
+            "README.md",
+            "tsconfig.json"
+          ]
+        ],
+        "hidden": true,
+        "expected": {
+          "code": [],
+          "test": [
+            "src/test/foo.py",
+            "ui/btn.spec.ts"
+          ],
+          "docs": [
+            "README.md"
+          ],
+          "config": [
+            "tsconfig.json"
+          ]
+        }
+      },
+      {
+        "name": "empty changes list",
+        "mode": "function",
+        "function": "plan_commit_batches",
+        "args": [
+          []
+        ],
+        "hidden": true,
+        "expected": {
+          "code": [],
+          "test": [],
+          "docs": [],
+          "config": []
+        }
+      }
+    ]
   },
   {
     "slug": "git-branch-merge-conflict-risk-estimator",
@@ -982,7 +1541,7 @@
       "overlap = max(startA, startB) \\le min(endA, endB)"
     ],
     "starterCode": "def estimate_merge_conflicts(branch_a: list, branch_b: list) -> dict:\n    # 每项格式: {\"file\": \"app.ts\", \"start\": 10, \"end\": 20}\n    pass",
-    "solutionCode": "def estimate_merge_conflicts(branch_a: list, branch_b: list) -> dict:\n    conflicts = []\n    for a in branch_a:\n        for b in branch_b:\n            if a[\"file\"] != b[\"file\"]:\n                continue\n            if max(a[\"start\"], b[\"start\"]) <= min(a[\"end\"], b[\"end\"]):\n                conflicts.append(a[\"file\"])\n    unique = sorted(set(conflicts))\n    return {\"risk\": \"high\" if unique else \"low\", \"files\": unique}",
+    "solutionCode": "# 【算法思路】检测两分支在同文件上的行号闭区间是否相交，估算合并冲突风险与涉及文件。\n# 双层遍历比对同文件修改区间重叠情况\ndef estimate_merge_conflicts(branch_a: list, branch_b: list) -> dict:\n    conflicts = []\n    for a in branch_a:\n        for b in branch_b:\n            if a[\"file\"] != b[\"file\"]:\n                continue\n            if max(a[\"start\"], b[\"start\"]) <= min(a[\"end\"], b[\"end\"]):\n                conflicts.append(a[\"file\"])\n    unique = sorted(set(conflicts))\n    return {\"risk\": \"high\" if unique else \"low\", \"files\": unique}\n",
     "expectedOutput": "{\"risk\": \"high\", \"files\": [\"app.ts\"]}",
     "testCases": [
       {
@@ -1010,7 +1569,8 @@
           "files": [
             "app.ts"
           ]
-        }
+        },
+        "hidden": false
       },
       {
         "name": "same file no overlap",
@@ -1035,7 +1595,8 @@
         "expected": {
           "risk": "low",
           "files": []
-        }
+        },
+        "hidden": false
       }
     ],
     "quizzes": [
@@ -1064,7 +1625,63 @@
     ],
     "thinkingQuestion": "团队如何通过短生命周期分支、频繁同步主干和小 PR 来降低合并冲突风险？",
     "aiPrompt": "评估学生是否理解分支隔离、merge、冲突风险、短分支和团队协作策略。按 0-10 分打分。",
-    "status": "published"
+    "status": "published",
+    "evaluationCases": [
+      {
+        "name": "touching boundary line conflicts",
+        "mode": "function",
+        "function": "estimate_merge_conflicts",
+        "args": [
+          [
+            {
+              "file": "main.py",
+              "start": 10,
+              "end": 15
+            }
+          ],
+          [
+            {
+              "file": "main.py",
+              "start": 15,
+              "end": 20
+            }
+          ]
+        ],
+        "hidden": true,
+        "expected": {
+          "risk": "high",
+          "files": [
+            "main.py"
+          ]
+        }
+      },
+      {
+        "name": "different files no conflict",
+        "mode": "function",
+        "function": "estimate_merge_conflicts",
+        "args": [
+          [
+            {
+              "file": "a.py",
+              "start": 1,
+              "end": 10
+            }
+          ],
+          [
+            {
+              "file": "b.py",
+              "start": 1,
+              "end": 10
+            }
+          ]
+        ],
+        "hidden": true,
+        "expected": {
+          "risk": "low",
+          "files": []
+        }
+      }
+    ]
   },
   {
     "slug": "git-rebase-commit-history-rewriter",
@@ -1086,7 +1703,7 @@
       "Rebase(feature, newBase) = newBase + replay(featureCommits)"
     ],
     "starterCode": "def simulate_rebase(base_commits: list, feature_commits: list) -> list:\n    # 返回 rebase 后的线性提交 ID 列表\n    pass",
-    "solutionCode": "def simulate_rebase(base_commits: list, feature_commits: list) -> list:\n    rebased = list(base_commits)\n    for commit in feature_commits:\n        rebased.append(\"rebased-\" + commit)\n    return rebased",
+    "solutionCode": "# 【算法思路】将特性分支提交依次追加到目标基线分支之后并生成新的变基提交标识。\n# 复制基线提交并在末尾按顺序重放特性提交\ndef simulate_rebase(base_commits: list, feature_commits: list) -> list:\n    rebased = list(base_commits)\n    for commit in feature_commits:\n        rebased.append(\"rebased-\" + commit)\n    return rebased\n",
     "expectedOutput": "[\"A\", \"B\", \"rebased-C\", \"rebased-D\"]",
     "testCases": [
       {
@@ -1108,7 +1725,8 @@
           "B",
           "rebased-C",
           "rebased-D"
-        ]
+        ],
+        "hidden": false
       },
       {
         "name": "no feature commits",
@@ -1122,7 +1740,8 @@
         ],
         "expected": [
           "A"
-        ]
+        ],
+        "hidden": false
       }
     ],
     "quizzes": [
@@ -1151,7 +1770,44 @@
     ],
     "thinkingQuestion": "什么时候适合 rebase，什么时候应该 merge？请从个人分支整理、公共历史稳定性和审查可读性角度分析。",
     "aiPrompt": "评估学生是否理解 rebase 重写历史、提交哈希变化、公共分支风险和工作流选择。按 0-10 分打分。",
-    "status": "published"
+    "status": "published",
+    "evaluationCases": [
+      {
+        "name": "empty base with features",
+        "mode": "function",
+        "function": "simulate_rebase",
+        "args": [
+          [],
+          [
+            "X",
+            "Y"
+          ]
+        ],
+        "hidden": true,
+        "expected": [
+          "rebased-X",
+          "rebased-Y"
+        ]
+      },
+      {
+        "name": "single base single feature",
+        "mode": "function",
+        "function": "simulate_rebase",
+        "args": [
+          [
+            "main1"
+          ],
+          [
+            "feat1"
+          ]
+        ],
+        "hidden": true,
+        "expected": [
+          "main1",
+          "rebased-feat1"
+        ]
+      }
+    ]
   },
   {
     "slug": "git-conflict-resolution-marker-parser",
@@ -1173,7 +1829,7 @@
       "ConflictBlock = Ours + Theirs"
     ],
     "starterCode": "def parse_conflict_blocks(text: str) -> dict:\n    # 返回 {\"count\": 0, \"blocks\": [{\"ours\": \"...\", \"theirs\": \"...\"}]}\n    pass",
-    "solutionCode": "def parse_conflict_blocks(text: str) -> dict:\n    lines = text.splitlines()\n    blocks = []\n    i = 0\n    while i < len(lines):\n        if lines[i].startswith('<<<<<<<'):\n            i += 1\n            ours = []\n            while i < len(lines) and not lines[i].startswith('======='):\n                ours.append(lines[i])\n                i += 1\n            i += 1\n            theirs = []\n            while i < len(lines) and not lines[i].startswith('>>>>>>>'):\n                theirs.append(lines[i])\n                i += 1\n            blocks.append({\"ours\": \"\\n\".join(ours), \"theirs\": \"\\n\".join(theirs)})\n        i += 1\n    return {\"count\": len(blocks), \"blocks\": blocks}",
+    "solutionCode": "# 【算法思路】状态机解析 Git 冲突标记段(`<<<<<<<` / `=======` / `>>>>>>>`)，提取双边代码块。\n# 逐行扫描冲突起止标记并收集每处冲突的 ours 与 theirs 内容\ndef parse_conflict_blocks(text: str) -> dict:\n    lines = text.splitlines()\n    blocks = []\n    i = 0\n    while i < len(lines):\n        if lines[i].startswith('<<<<<<<'):\n            i += 1\n            ours = []\n            while i < len(lines) and not lines[i].startswith('======='):\n                ours.append(lines[i])\n                i += 1\n            i += 1\n            theirs = []\n            while i < len(lines) and not lines[i].startswith('>>>>>>>'):\n                theirs.append(lines[i])\n                i += 1\n            blocks.append({\"ours\": \"\\n\".join(ours), \"theirs\": \"\\n\".join(theirs)})\n        i += 1\n    return {\"count\": len(blocks), \"blocks\": blocks}\n",
     "expectedOutput": "{\"count\": 1, \"blocks\": [{\"ours\": \"old\", \"theirs\": \"new\"}]}",
     "testCases": [
       {
@@ -1191,7 +1847,8 @@
               "theirs": "new"
             }
           ]
-        }
+        },
+        "hidden": false
       },
       {
         "name": "no conflict",
@@ -1203,7 +1860,8 @@
         "expected": {
           "count": 0,
           "blocks": []
-        }
+        },
+        "hidden": false
       }
     ],
     "quizzes": [
@@ -1232,7 +1890,44 @@
     ],
     "thinkingQuestion": "解决冲突时，为什么不能机械选择 ours 或 theirs？你会如何结合测试、业务语义和提交历史做判断？",
     "aiPrompt": "评估学生是否理解 Git 冲突标记、ours/theirs、语义合并、测试验证和代码审查。按 0-10 分打分。",
-    "status": "published"
+    "status": "published",
+    "evaluationCases": [
+      {
+        "name": "two multiline conflicts",
+        "mode": "function",
+        "function": "parse_conflict_blocks",
+        "args": [
+          "top\n<<<<<<< A\na1\na2\n=======\nb1\n>>>>>>> B\nmid\n<<<<<<< A\nx\n=======\ny\n>>>>>>> B"
+        ],
+        "hidden": true,
+        "expected": {
+          "count": 2,
+          "blocks": [
+            {
+              "ours": "a1\na2",
+              "theirs": "b1"
+            },
+            {
+              "ours": "x",
+              "theirs": "y"
+            }
+          ]
+        }
+      },
+      {
+        "name": "empty string clean",
+        "mode": "function",
+        "function": "parse_conflict_blocks",
+        "args": [
+          ""
+        ],
+        "hidden": true,
+        "expected": {
+          "count": 0,
+          "blocks": []
+        }
+      }
+    ]
   },
   {
     "slug": "cpu-cache-simulator-l2",
@@ -1251,12 +1946,12 @@
       "HitRate = Hits / Total",
       "缓存行 = floor(address / line_size)"
     ],
-    "starterCode": "def simulate_cache(accesses, cache_lines, line_size):\n    cache = [-1]*cache_lines\n    hits = 0\n    for addr in accesses:\n        line = addr // line_size\n        if line in cache:\n            hits += 1\n        else:\n            if len(cache) >= cache_lines:\n                cache.pop(0)\n            cache.append(line)\n    return hits",
-    "solutionCode": "def simulate_cache(accesses, cache_lines, line_size):\n    cache = [-1]*cache_lines\n    hits = 0\n    for addr in accesses:\n        line = addr // line_size\n        if line in cache:\n            hits += 1\n        else:\n            if len(cache) >= cache_lines:\n                cache.pop(0)\n            cache.append(line)\n    return hits\ndef cache_hit_rate(hits, total):\n    return round(hits/total,4) if total else 0",
+    "starterCode": "def simulate_cache(accesses: list[int], cache_lines: int, line_size: int) -> int:\n    \"\"\"模拟 FIFO 缓存替换并返回命中次数\"\"\"\n    pass\n\ndef cache_hit_rate(hits: int, total: int) -> float:\n    \"\"\"计算缓存命中率并保留 4 位小数\"\"\"\n    pass\n",
+    "solutionCode": "# 【算法思路】将内存地址整除块大小映射为缓存行号，按 FIFO 策略统计缓存命中次数与命中率。\n# 维护固定容量缓存行队列模拟访问命中与队首淘汰\ndef simulate_cache(accesses, cache_lines, line_size):\n    cache = [-1]*cache_lines\n    hits = 0\n    for addr in accesses:\n        line = addr // line_size\n        if line in cache:\n            hits += 1\n        else:\n            if len(cache) >= cache_lines:\n                cache.pop(0)\n            cache.append(line)\n    return hits\n# 计算命中率并保留四位小数\ndef cache_hit_rate(hits, total):\n    return round(hits/total,4) if total else 0\n",
     "expectedOutput": "3",
     "testCases": [
       {
-        "name": "sequential high hit",
+        "name": "sequential misses and hits",
         "mode": "function",
         "function": "simulate_cache",
         "args": [
@@ -1273,7 +1968,19 @@
           4,
           8
         ],
-        "expected": 7
+        "hidden": false,
+        "expected": 4
+      },
+      {
+        "name": "hit rate calculation",
+        "mode": "function",
+        "function": "cache_hit_rate",
+        "args": [
+          4,
+          8
+        ],
+        "hidden": false,
+        "expected": 0.5
       }
     ],
     "quizzes": [
@@ -1291,7 +1998,55 @@
     ],
     "thinkingQuestion": "缓存行大小对命中率有什么影响？行越大越好还是越小越好？为什么？",
     "aiPrompt": "评估学生对 CPU 缓存、空间局部性、命中率的理解。按 0-10 分打分。",
-    "status": "published"
+    "status": "published",
+    "evaluationCases": [
+      {
+        "name": "fifo eviction miss loop",
+        "mode": "function",
+        "function": "simulate_cache",
+        "args": [
+          [
+            0,
+            8,
+            16,
+            0,
+            8
+          ],
+          2,
+          8
+        ],
+        "hidden": true,
+        "expected": 0
+      },
+      {
+        "name": "repeated same block hits",
+        "mode": "function",
+        "function": "simulate_cache",
+        "args": [
+          [
+            1,
+            2,
+            3,
+            4
+          ],
+          1,
+          8
+        ],
+        "hidden": true,
+        "expected": 3
+      },
+      {
+        "name": "zero total hit rate",
+        "mode": "function",
+        "function": "cache_hit_rate",
+        "args": [
+          0,
+          0
+        ],
+        "hidden": true,
+        "expected": 0
+      }
+    ]
   },
   {
     "slug": "os-memory-allocator-l2",
@@ -1310,8 +2065,8 @@
       "First-Fit: 选第一个够用的空闲块",
       "Best-Fit: 选最小的够用空闲块"
     ],
-    "starterCode": "def first_fit(free_list, size):\n    for i, (start, end) in enumerate(free_list):\n        if end-start >= size:\n            return i, start, start+size\n    return -1,0,0",
-    "solutionCode": "def first_fit(free_list, size):\n    for i, (start, end) in enumerate(free_list):\n        if end-start >= size:\n            return i, start, start+size\n    return -1,0,0\ndef best_fit(free_list, size):\n    best_i, best_sz = -1, float('inf')\n    for i, (start, end) in enumerate(free_list):\n        sz = end-start\n        if sz >= size and sz < best_sz:\n            best_i, best_sz = i, sz\n    if best_i>=0: return best_i, free_list[best_i][0], free_list[best_i][0]+size\n    return -1,0,0",
+    "starterCode": "def first_fit(free_list: list[list[int]], size: int) -> tuple:\n    \"\"\"首次适应算法，返回 (块索引, 起始地址, 结束地址)，失败返回 (-1, 0, 0)\"\"\"\n    pass\n\ndef best_fit(free_list: list[list[int]], size: int) -> tuple:\n    \"\"\"最佳适应算法，返回最紧凑空闲块的 (块索引, 起始地址, 结束地址)\"\"\"\n    pass\n",
+    "solutionCode": "# 【算法思路】实现连续内存分配的首次适应(First Fit)与最小剩余块最佳适应(Best Fit)策略。\n# 返回首个满足所需大小的空闲分区切片信息\ndef first_fit(free_list, size):\n    for i, (start, end) in enumerate(free_list):\n        if end-start >= size:\n            return i, start, start+size\n    return -1,0,0\n# 筛选满足大小且碎片最小的空闲分区\ndef best_fit(free_list, size):\n    best_i, best_sz = -1, float('inf')\n    for i, (start, end) in enumerate(free_list):\n        sz = end-start\n        if sz >= size and sz < best_sz:\n            best_i, best_sz = i, sz\n    if best_i>=0: return best_i, free_list[best_i][0], free_list[best_i][0]+size\n    return -1,0,0\n",
     "expectedOutput": "0",
     "testCases": [
       {
@@ -1335,7 +2090,40 @@
           ],
           50
         ],
-        "expected": 0
+        "hidden": false,
+        "expected": [
+          0,
+          0,
+          50
+        ]
+      },
+      {
+        "name": "best fit tightest block",
+        "mode": "function",
+        "function": "best_fit",
+        "args": [
+          [
+            [
+              0,
+              100
+            ],
+            [
+              200,
+              260
+            ],
+            [
+              400,
+              600
+            ]
+          ],
+          50
+        ],
+        "hidden": false,
+        "expected": [
+          1,
+          200,
+          250
+        ]
       }
     ],
     "quizzes": [
@@ -1353,7 +2141,77 @@
     ],
     "thinkingQuestion": "外部碎片和内部碎片的区别是什么？伙伴系统（Buddy System）如何减少碎片？",
     "aiPrompt": "评估学生对内存分配、碎片、First-Fit/Best-Fit 的理解。按 0-10 分打分。",
-    "status": "published"
+    "status": "published",
+    "evaluationCases": [
+      {
+        "name": "first fit failure returns -1",
+        "mode": "function",
+        "function": "first_fit",
+        "args": [
+          [
+            [
+              0,
+              20
+            ],
+            [
+              30,
+              40
+            ]
+          ],
+          50
+        ],
+        "hidden": true,
+        "expected": [
+          -1,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "best fit failure returns -1",
+        "mode": "function",
+        "function": "best_fit",
+        "args": [
+          [
+            [
+              0,
+              30
+            ]
+          ],
+          40
+        ],
+        "hidden": true,
+        "expected": [
+          -1,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "best fit exact fit preferred",
+        "mode": "function",
+        "function": "best_fit",
+        "args": [
+          [
+            [
+              0,
+              100
+            ],
+            [
+              100,
+              150
+            ]
+          ],
+          50
+        ],
+        "hidden": true,
+        "expected": [
+          1,
+          100,
+          150
+        ]
+      }
+    ]
   },
   {
     "slug": "network-subnet-calculator-l2",
@@ -1372,8 +2230,8 @@
       "子网数 = 2^借位数",
       "可用主机数 = 2^(32-前缀) - 2"
     ],
-    "starterCode": "def subnet_calc(network_cidr, num_subnets):\n    ip, prefix = network_cidr.split('/')\n    prefix = int(prefix)\n    bits_needed = 0\n    while (1<<bits_needed) < num_subnets:\n        bits_needed += 1\n    return bits_needed",
-    "solutionCode": "def subnet_calc(network_cidr, num_subnets):\n    ip, prefix = network_cidr.split('/')\n    prefix = int(prefix)\n    bits_needed = 0\n    while (1<<bits_needed) < num_subnets:\n        bits_needed += 1\n    new_prefix = prefix + bits_needed\n    hosts_per_subnet = (1 << (32 - new_prefix)) - 2\n    return {'new_prefix': new_prefix, 'subnets': num_subnets, 'hosts_per_subnet': max(0,hosts_per_subnet), 'bits_borrowed': bits_needed}",
+    "starterCode": "def subnet_calc(network_cidr: str, num_subnets: int) -> dict:\n    \"\"\"计算子网划分结果：new_prefix, subnets, hosts_per_subnet, bits_borrowed\"\"\"\n    pass\n",
+    "solutionCode": "# 【算法思路】计算划分目标子网数所需借用的主机比特位、新前缀长度及每个子网可用主机数。\n# 按 2^k >= num_subnets 求借位数并换算可用主机数 2^(32-p)-2\ndef subnet_calc(network_cidr, num_subnets):\n    ip, prefix = network_cidr.split('/')\n    prefix = int(prefix)\n    bits_needed = 0\n    while (1<<bits_needed) < num_subnets:\n        bits_needed += 1\n    new_prefix = prefix + bits_needed\n    hosts_per_subnet = (1 << (32 - new_prefix)) - 2\n    return {'new_prefix': new_prefix, 'subnets': num_subnets, 'hosts_per_subnet': max(0,hosts_per_subnet), 'bits_borrowed': bits_needed}\n",
     "expectedOutput": "3",
     "testCases": [
       {
@@ -1384,11 +2242,28 @@
           "192.168.0.0/24",
           8
         ],
+        "hidden": false,
         "expected": {
           "new_prefix": 27,
           "subnets": 8,
           "hosts_per_subnet": 30,
           "bits_borrowed": 3
+        }
+      },
+      {
+        "name": "/24 to 4 subnets",
+        "mode": "function",
+        "function": "subnet_calc",
+        "args": [
+          "10.0.0.0/24",
+          4
+        ],
+        "hidden": false,
+        "expected": {
+          "new_prefix": 26,
+          "subnets": 4,
+          "hosts_per_subnet": 62,
+          "bits_borrowed": 2
         }
       }
     ],
@@ -1407,7 +2282,41 @@
     ],
     "thinkingQuestion": "VLSM（可变长子网掩码）相比等长子网划分的优势是什么？",
     "aiPrompt": "评估学生对 CIDR、子网划分、主机数的理解。按 0-10 分打分。",
-    "status": "published"
+    "status": "published",
+    "evaluationCases": [
+      {
+        "name": "/24 to 6 non-power-of-2 rounds up bits",
+        "mode": "function",
+        "function": "subnet_calc",
+        "args": [
+          "192.168.1.0/24",
+          6
+        ],
+        "hidden": true,
+        "expected": {
+          "new_prefix": 27,
+          "subnets": 6,
+          "hosts_per_subnet": 30,
+          "bits_borrowed": 3
+        }
+      },
+      {
+        "name": "/30 with 4 subnets yields 0 hosts",
+        "mode": "function",
+        "function": "subnet_calc",
+        "args": [
+          "10.0.0.0/30",
+          4
+        ],
+        "hidden": true,
+        "expected": {
+          "new_prefix": 32,
+          "subnets": 4,
+          "hosts_per_subnet": 0,
+          "bits_borrowed": 2
+        }
+      }
+    ]
   },
   {
     "slug": "encoding-base64-tool-l2",
@@ -1426,8 +2335,8 @@
       "Base64: 3字节 -> 4字符",
       "= 填充使输出长度为 4 的倍数"
     ],
-    "starterCode": "import base64\ndef encode_base64(data):\n    return base64.b64encode(data).decode()\ndef decode_base64(encoded):\n    return base64.b64decode(encoded)",
-    "solutionCode": "import base64\ndef encode_base64(data):\n    return base64.b64encode(data).decode()\ndef decode_base64(encoded):\n    return base64.b64decode(encoded).decode('utf-8',errors='replace')",
+    "starterCode": "import base64\n\ndef encode_base64(data: bytes | str) -> str:\n    \"\"\"将字节或 UTF-8 字符串编码为 Base64 字符串\"\"\"\n    pass\n\ndef decode_base64(encoded: str) -> str:\n    \"\"\"将 Base64 字符串解码为 UTF-8 文本\"\"\"\n    pass\n",
+    "solutionCode": "# 【算法思路】使用标准库 base64 模块实现 UTF-8 文本与 Base64 编码字符串之间的安全双向转换。\nimport base64\n\n# 支持字节与字符串输入的 Base64 编码\ndef encode_base64(data):\n    # 兼容字符串输入，统一转为 UTF-8 字节后执行 Base64 编码\n    if isinstance(data, str):\n        data = data.encode('utf-8')\n    return base64.b64encode(data).decode('ascii')\n\n# 解码 Base64 并采用容错 UTF-8 还原文本\ndef decode_base64(encoded):\n    # 解码 Base64 字节并以 UTF-8 文本返回（非法字节用替换符兜底）\n    return base64.b64decode(encoded).decode('utf-8', errors='replace')\n",
     "expectedOutput": "SGVsbG8=",
     "testCases": [
       {
@@ -1437,7 +2346,18 @@
         "args": [
           "Hello"
         ],
+        "hidden": false,
         "expected": "SGVsbG8="
+      },
+      {
+        "name": "decode hello",
+        "mode": "function",
+        "function": "decode_base64",
+        "args": [
+          "SGVsbG8="
+        ],
+        "hidden": false,
+        "expected": "Hello"
       }
     ],
     "quizzes": [
@@ -1455,7 +2375,39 @@
     ],
     "thinkingQuestion": "Base64 编码后数据膨胀约 33%。在什么场景下这种膨胀是可以接受的？什么场景下不合适？",
     "aiPrompt": "评估学生对 Base64、编码原理的理解。按 0-10 分打分。",
-    "status": "published"
+    "status": "published",
+    "evaluationCases": [
+      {
+        "name": "unicode roundtrip encode",
+        "mode": "function",
+        "function": "encode_base64",
+        "args": [
+          "你好AI"
+        ],
+        "hidden": true,
+        "expected": "5L2g5aW9QUk="
+      },
+      {
+        "name": "unicode decode",
+        "mode": "function",
+        "function": "decode_base64",
+        "args": [
+          "5L2g5aW9QUk="
+        ],
+        "hidden": true,
+        "expected": "你好AI"
+      },
+      {
+        "name": "empty string encode",
+        "mode": "function",
+        "function": "encode_base64",
+        "args": [
+          ""
+        ],
+        "hidden": true,
+        "expected": ""
+      }
+    ]
   },
   {
     "slug": "linux-find-grep-tool-l2",
@@ -1473,8 +2425,8 @@
     "latexFormulas": [
       "glob匹配: *.txt 等价于 endsWith('.txt')"
     ],
-    "starterCode": "import fnmatch\ndef search_by_name(files, pattern):\n    return [f for f in files if fnmatch.fnmatch(f, pattern)]\ndef search_by_content(files, keyword):\n    return [f for f in files if keyword in f['content']]",
-    "solutionCode": "import fnmatch\ndef search_by_name(files, pattern):\n    return [f for f in files if fnmatch.fnmatch(f, pattern)]\ndef search_by_content(files, keyword):\n    return [f['name'] for f in files if keyword in f.get('content','')]",
+    "starterCode": "import fnmatch\n\ndef search_by_name(files: list[str], pattern: str) -> list[str]:\n    \"\"\"按通配符模式匹配文件名列表\"\"\"\n    pass\n\ndef search_by_content(files: list[dict], keyword: str) -> list[str]:\n    \"\"\"在文件字典列表中搜索包含关键词的文件名\"\"\"\n    pass\n",
+    "solutionCode": "# 【算法思路】结合 fnmatch 通配符匹配文件名与子串过滤文件内容，模拟 find+grep 联合检索。\nimport fnmatch\n# 使用 shell 通配符筛选文件名\ndef search_by_name(files, pattern):\n    return [f for f in files if fnmatch.fnmatch(f, pattern)]\n# 扫描文件内容字典并提取命中文件名\ndef search_by_content(files, keyword):\n    return [f['name'] for f in files if keyword in f.get('content','')]\n",
     "expectedOutput": "[\"readme.md\"]",
     "testCases": [
       {
@@ -1490,8 +2442,31 @@
           ],
           "*.md"
         ],
+        "hidden": false,
         "expected": [
           "readme.md"
+        ]
+      },
+      {
+        "name": "content search",
+        "mode": "function",
+        "function": "search_by_content",
+        "args": [
+          [
+            {
+              "name": "a.py",
+              "content": "def foo(): pass"
+            },
+            {
+              "name": "b.py",
+              "content": "print(1)"
+            }
+          ],
+          "def"
+        ],
+        "hidden": false,
+        "expected": [
+          "a.py"
         ]
       }
     ],
@@ -1510,7 +2485,50 @@
     ],
     "thinkingQuestion": "find 和 grep 组合使用（find ... | xargs grep ...）比单独 grep -r 有什么优势？",
     "aiPrompt": "评估学生对文件搜索、glob 匹配的理解。按 0-10 分打分。",
-    "status": "published"
+    "status": "published",
+    "evaluationCases": [
+      {
+        "name": "no files matched by name",
+        "mode": "function",
+        "function": "search_by_name",
+        "args": [
+          [
+            "a.txt",
+            "b.log"
+          ],
+          "*.py"
+        ],
+        "hidden": true,
+        "expected": []
+      },
+      {
+        "name": "multiple content matches",
+        "mode": "function",
+        "function": "search_by_content",
+        "args": [
+          [
+            {
+              "name": "f1",
+              "content": "ERROR: db"
+            },
+            {
+              "name": "f2",
+              "content": "ok"
+            },
+            {
+              "name": "f3",
+              "content": "ERROR: net"
+            }
+          ],
+          "ERROR"
+        ],
+        "hidden": true,
+        "expected": [
+          "f1",
+          "f3"
+        ]
+      }
+    ]
   },
   {
     "slug": "linux-disk-quota-analyzer-l2",
@@ -1529,8 +2547,8 @@
       "软限制: 超过后开始计时, 超时后视为硬限制",
       "硬限制: 不可超过的绝对上限"
     ],
-    "starterCode": "def check_quota(usage, soft_limit, hard_limit):\n    if usage >= hard_limit: return 'blocked'\n    if usage >= soft_limit: return 'warning'\n    return 'ok'",
-    "solutionCode": "def check_quota(usage, soft_limit, hard_limit):\n    if usage >= hard_limit:\n        return {'status':'blocked','usage':usage,'limit':hard_limit}\n    if usage >= soft_limit:\n        return {'status':'warning','usage':usage,'limit':soft_limit}\n    return {'status':'ok','usage':usage}",
+    "starterCode": "def check_quota(usage: int, soft_limit: int, hard_limit: int) -> dict:\n    \"\"\"根据硬限制与软限制返回配额状态字典\"\"\"\n    pass\n",
+    "solutionCode": "# 【算法思路】对比用户已用空间与硬/软配额阈值，输出 blocked、warning 或 ok 限额状态。\n# 优先判断是否触达硬限制，其次判断软限制并返回状态详情\ndef check_quota(usage, soft_limit, hard_limit):\n    if usage >= hard_limit:\n        return {'status':'blocked','usage':usage,'limit':hard_limit}\n    if usage >= soft_limit:\n        return {'status':'warning','usage':usage,'limit':soft_limit}\n    return {'status':'ok','usage':usage}\n",
     "expectedOutput": "warning",
     "testCases": [
       {
@@ -1542,10 +2560,27 @@
           80,
           100
         ],
+        "hidden": false,
         "expected": {
           "status": "warning",
           "usage": 85,
           "limit": 80
+        }
+      },
+      {
+        "name": "over hard limit",
+        "mode": "function",
+        "function": "check_quota",
+        "args": [
+          105,
+          80,
+          100
+        ],
+        "hidden": false,
+        "expected": {
+          "status": "blocked",
+          "usage": 105,
+          "limit": 100
         }
       }
     ],
@@ -1564,7 +2599,56 @@
     ],
     "thinkingQuestion": "Soft limit 和 hard limit 分开设置的设计目的是什么？",
     "aiPrompt": "评估学生对磁盘配额、软硬限制的理解。按 0-10 分打分。",
-    "status": "published"
+    "status": "published",
+    "evaluationCases": [
+      {
+        "name": "healthy usage",
+        "mode": "function",
+        "function": "check_quota",
+        "args": [
+          50,
+          80,
+          100
+        ],
+        "hidden": true,
+        "expected": {
+          "status": "ok",
+          "usage": 50
+        }
+      },
+      {
+        "name": "exact soft threshold warns",
+        "mode": "function",
+        "function": "check_quota",
+        "args": [
+          80,
+          80,
+          100
+        ],
+        "hidden": true,
+        "expected": {
+          "status": "warning",
+          "usage": 80,
+          "limit": 80
+        }
+      },
+      {
+        "name": "exact hard threshold blocks",
+        "mode": "function",
+        "function": "check_quota",
+        "args": [
+          100,
+          80,
+          100
+        ],
+        "hidden": true,
+        "expected": {
+          "status": "blocked",
+          "usage": 100,
+          "limit": 100
+        }
+      }
+    ]
   },
   {
     "slug": "linux-sudo-auditor-l2",
@@ -1583,8 +2667,8 @@
       "sudo: user -> command as root",
       "%group ALL=(ALL) ALL"
     ],
-    "starterCode": "def audit_sudoers(entries):\n    risks = []\n    for e in entries:\n        if e.get('commands')=='ALL' and e.get('target')=='ALL':\n            risks.append(e['user'])\n    return risks",
-    "solutionCode": "def audit_sudoers(entries):\n    risks = []\n    for e in entries:\n        if e.get('commands')=='ALL' and e.get('target')=='ALL':\n            risks.append(f\"{e['user']} - FULL ACCESS\")\n        elif e.get('nopasswd'):\n            risks.append(f\"{e['user']} - NOPASSWD\")\n    return risks",
+    "starterCode": "def audit_sudoers(entries: list[dict]) -> list[str]:\n    \"\"\"审计 sudoers 配置中的高危权限条目\"\"\"\n    pass\n",
+    "solutionCode": "# 【算法思路】审查 sudoers 规则列表，识别 ALL=(ALL) 全权限授予与 NOPASSWD 免密高危配置。\n# 遍历授权条目并标记全权限或免密风险字符串\ndef audit_sudoers(entries):\n    risks = []\n    for e in entries:\n        if e.get('commands')=='ALL' and e.get('target')=='ALL':\n            risks.append(f\"{e['user']} - FULL ACCESS\")\n        elif e.get('nopasswd'):\n            risks.append(f\"{e['user']} - NOPASSWD\")\n    return risks\n",
     "expectedOutput": "[\"alice - FULL ACCESS\"]",
     "testCases": [
       {
@@ -1607,10 +2691,28 @@
             }
           ]
         ],
+        "hidden": false,
         "expected": [
           "alice - FULL ACCESS",
           "bob - NOPASSWD"
         ]
+      },
+      {
+        "name": "clean sudoers list",
+        "mode": "function",
+        "function": "audit_sudoers",
+        "args": [
+          [
+            {
+              "user": "ops",
+              "commands": "/bin/systemctl",
+              "target": "root",
+              "nopasswd": false
+            }
+          ]
+        ],
+        "hidden": false,
+        "expected": []
       }
     ],
     "quizzes": [
@@ -1628,7 +2730,38 @@
     ],
     "thinkingQuestion": "最小权限原则在 sudo 配置中如何体现？为什么应该限制命令而不是直接给 ALL？",
     "aiPrompt": "评估学生对 sudo 安全、权限配置的理解。按 0-10 分打分。",
-    "status": "published"
+    "status": "published",
+    "evaluationCases": [
+      {
+        "name": "full access prioritized over nopasswd",
+        "mode": "function",
+        "function": "audit_sudoers",
+        "args": [
+          [
+            {
+              "user": "root2",
+              "commands": "ALL",
+              "target": "ALL",
+              "nopasswd": true
+            }
+          ]
+        ],
+        "hidden": true,
+        "expected": [
+          "root2 - FULL ACCESS"
+        ]
+      },
+      {
+        "name": "empty entries",
+        "mode": "function",
+        "function": "audit_sudoers",
+        "args": [
+          []
+        ],
+        "hidden": true,
+        "expected": []
+      }
+    ]
   },
   {
     "slug": "linux-process-priority-l2",
@@ -1647,8 +2780,8 @@
       "Nice值: -20(最高) ~ 19(最低)",
       "vruntime = 实际运行时间 / weight"
     ],
-    "starterCode": "def calculate_vruntime(runtime, nice):\n    weight = 1024 / (1.25 ** nice)\n    return runtime / weight",
-    "solutionCode": "def calculate_vruntime(runtime, nice):\n    weight = 1024 / (1.25 ** nice)\n    return round(runtime / weight, 2)\ndef schedule_next(processes):\n    return min(processes, key=lambda p: p['vruntime'])['pid']",
+    "starterCode": "def calculate_vruntime(runtime: float, nice: int) -> float:\n    \"\"\"按 CFS 权重公式计算虚拟运行时间\"\"\"\n    pass\n\ndef schedule_next(processes: list[dict]) -> int:\n    \"\"\"选择下一个应调度的进程 PID\"\"\"\n    pass\n",
+    "solutionCode": "# 【算法思路】依据 Linux CFS 调度器的 nice 权重指数衰减公式计算虚拟运行时间并择小调度。\n# 按 nice 值换算权重并得出虚拟运行时间\ndef calculate_vruntime(runtime, nice):\n    # CFS 调度器中权重按 1.25^(-nice) 缩放\n    weight = 1024 / (1.25 ** nice)\n    return round(runtime / weight, 2)\n\n# 选取当前 vruntime 最小的进程 PID\ndef schedule_next(processes):\n    # 若进程条目尚未携带 vruntime 字段，则动态依据 runtime 与 nice 计算\n    return min(\n        processes,\n        key=lambda p: p['vruntime'] if 'vruntime' in p else calculate_vruntime(p['runtime'], p['nice'])\n    )['pid']\n",
     "expectedOutput": "1",
     "testCases": [
       {
@@ -1669,7 +2802,27 @@
             }
           ]
         ],
+        "hidden": false,
         "expected": 1
+      },
+      {
+        "name": "explicit vruntime selects lowest",
+        "mode": "function",
+        "function": "schedule_next",
+        "args": [
+          [
+            {
+              "pid": 7,
+              "vruntime": 25
+            },
+            {
+              "pid": 3,
+              "vruntime": 12
+            }
+          ]
+        ],
+        "hidden": false,
+        "expected": 3
       }
     ],
     "quizzes": [
@@ -1687,7 +2840,41 @@
     ],
     "thinkingQuestion": "完全公平调度器（CFS）与传统的 O(1) 调度器相比，主要改进是什么？",
     "aiPrompt": "评估学生对进程优先级、nice 值、CFS 的理解。按 0-10 分打分。",
-    "status": "published"
+    "status": "published",
+    "evaluationCases": [
+      {
+        "name": "vruntime formula negative nice",
+        "mode": "function",
+        "function": "calculate_vruntime",
+        "args": [
+          1024,
+          -1
+        ],
+        "hidden": true,
+        "expected": 0.8
+      },
+      {
+        "name": "schedule chooses smaller dynamic vruntime",
+        "mode": "function",
+        "function": "schedule_next",
+        "args": [
+          [
+            {
+              "pid": 10,
+              "runtime": 20,
+              "nice": 0
+            },
+            {
+              "pid": 20,
+              "runtime": 20,
+              "nice": -2
+            }
+          ]
+        ],
+        "hidden": true,
+        "expected": 20
+      }
+    ]
   },
   {
     "slug": "shell-log-rotate-l2",
@@ -1705,12 +2892,12 @@
     "latexFormulas": [
       "logrotate: compress -> rotate -> delete old"
     ],
-    "starterCode": "def simulate_logrotate(log_files, max_age_days, max_size_mb):\n    rotated = []\n    for f in log_files:\n        if f['size_mb'] > max_size_mb:\n            rotated.append(f['name']+'.1.gz')\n            f['size_mb'] = 0\n    return rotated",
-    "solutionCode": "def simulate_logrotate(log_files, max_age_days, max_size_mb):\n    rotated = []\n    for f in log_files:\n        if f['size_mb'] > max_size_mb:\n            rotated.append({'original':f['name'],'rotated':f['name']+'.1.gz','compressed_size':round(f['size_mb']*0.2,1)})\n            f['size_mb'] = 0\n        elif f['age_days'] > max_age_days:\n            rotated.append({'original':f['name'],'action':'deleted'})\n    return rotated",
+    "starterCode": "def simulate_logrotate(log_files: list[dict], max_age_days: int, max_size_mb: int) -> list[dict]:\n    \"\"\"模拟日志轮转与过期清理动作\"\"\"\n    pass\n",
+    "solutionCode": "# 【算法思路】按文件体积上限执行压缩归档并清零体积，对超时陈旧日志标记删除以模拟 logrotate。\n# 遍历日志列表根据 max_size_mb 与 max_age_days 生成轮转操作\ndef simulate_logrotate(log_files, max_age_days, max_size_mb):\n    rotated = []\n    for f in log_files:\n        if f['size_mb'] > max_size_mb:\n            rotated.append({'original':f['name'],'rotated':f['name']+'.1.gz','compressed_size':round(f['size_mb']*0.2,1)})\n            f['size_mb'] = 0\n        elif f['age_days'] > max_age_days:\n            rotated.append({'original':f['name'],'action':'deleted'})\n    return rotated\n",
     "expectedOutput": "1",
     "testCases": [
       {
-        "name": "rotate large file",
+        "name": "rotate large file and delete old",
         "mode": "function",
         "function": "simulate_logrotate",
         "args": [
@@ -1729,7 +2916,36 @@
           7,
           100
         ],
-        "expected": 1
+        "hidden": false,
+        "expected": [
+          {
+            "original": "app.log",
+            "rotated": "app.log.1.gz",
+            "compressed_size": 30
+          },
+          {
+            "original": "debug.log",
+            "action": "deleted"
+          }
+        ]
+      },
+      {
+        "name": "within limits no action",
+        "mode": "function",
+        "function": "simulate_logrotate",
+        "args": [
+          [
+            {
+              "name": "sys.log",
+              "size_mb": 20,
+              "age_days": 2
+            }
+          ],
+          7,
+          100
+        ],
+        "hidden": false,
+        "expected": []
       }
     ],
     "quizzes": [
@@ -1747,7 +2963,45 @@
     ],
     "thinkingQuestion": "如果日志写入速度超过轮转速度（写 100MB/小时，但轮转每天一次），会有什么问题？怎么解决？",
     "aiPrompt": "评估学生对日志管理、轮转策略的理解。按 0-10 分打分。",
-    "status": "published"
+    "status": "published",
+    "evaluationCases": [
+      {
+        "name": "oversize takes priority over age",
+        "mode": "function",
+        "function": "simulate_logrotate",
+        "args": [
+          [
+            {
+              "name": "big.log",
+              "size_mb": 200,
+              "age_days": 50
+            }
+          ],
+          7,
+          100
+        ],
+        "hidden": true,
+        "expected": [
+          {
+            "original": "big.log",
+            "rotated": "big.log.1.gz",
+            "compressed_size": 40
+          }
+        ]
+      },
+      {
+        "name": "empty file list",
+        "mode": "function",
+        "function": "simulate_logrotate",
+        "args": [
+          [],
+          7,
+          100
+        ],
+        "hidden": true,
+        "expected": []
+      }
+    ]
   },
   {
     "slug": "git-branch-cleaner-l2",
@@ -1766,8 +3020,8 @@
       "git branch -d branch_name: 删除已合并分支",
       "git branch -D: 强制删除未合并分支"
     ],
-    "starterCode": "def cleanup_branches(branches, merged_branches, default_branch):\n    safe_to_delete = [b for b in branches if b in merged_branches and b != default_branch]\n    return safe_to_delete",
-    "solutionCode": "def cleanup_branches(branches, merged_branches, default_branch):\n    safe = [b for b in branches if b in merged_branches and b != default_branch]\n    unsafe = [b for b in branches if b not in merged_branches and b != default_branch]\n    return {'safe_to_delete': safe, 'needs_review': unsafe}",
+    "starterCode": "def cleanup_branches(branches: list[str], merged_branches: list[str], default_branch: str) -> dict:\n    \"\"\"区分可安全删除的已合并分支与需审查的未合并分支\"\"\"\n    pass\n",
+    "solutionCode": "# 【算法思路】结合已合并分支清单与受保护默认分支，区分可安全删除分支与待人工确认分支。\n# 将非默认分支按是否已合并划分至 safe_to_delete 与 needs_review\ndef cleanup_branches(branches, merged_branches, default_branch):\n    safe = [b for b in branches if b in merged_branches and b != default_branch]\n    unsafe = [b for b in branches if b not in merged_branches and b != default_branch]\n    return {'safe_to_delete': safe, 'needs_review': unsafe}\n",
     "expectedOutput": "[\"feature-old\"]",
     "testCases": [
       {
@@ -1785,6 +3039,7 @@
           ],
           "main"
         ],
+        "hidden": false,
         "expected": {
           "safe_to_delete": [
             "feature-old"
@@ -1792,6 +3047,29 @@
           "needs_review": [
             "feature-wip"
           ]
+        }
+      },
+      {
+        "name": "protect default even if merged",
+        "mode": "function",
+        "function": "cleanup_branches",
+        "args": [
+          [
+            "main",
+            "dev"
+          ],
+          [
+            "main",
+            "dev"
+          ],
+          "main"
+        ],
+        "hidden": false,
+        "expected": {
+          "safe_to_delete": [
+            "dev"
+          ],
+          "needs_review": []
         }
       }
     ],
@@ -1810,7 +3088,50 @@
     ],
     "thinkingQuestion": "删除远程分支（git push -d origin branch）和本地分支的区别是什么？如何同步清理？",
     "aiPrompt": "评估学生对分支管理、清理策略的理解。按 0-10 分打分。",
-    "status": "published"
+    "status": "published",
+    "evaluationCases": [
+      {
+        "name": "all unmerged branches kept for review",
+        "mode": "function",
+        "function": "cleanup_branches",
+        "args": [
+          [
+            "main",
+            "feat1",
+            "feat2"
+          ],
+          [],
+          "main"
+        ],
+        "hidden": true,
+        "expected": {
+          "safe_to_delete": [],
+          "needs_review": [
+            "feat1",
+            "feat2"
+          ]
+        }
+      },
+      {
+        "name": "only default branch",
+        "mode": "function",
+        "function": "cleanup_branches",
+        "args": [
+          [
+            "master"
+          ],
+          [
+            "master"
+          ],
+          "master"
+        ],
+        "hidden": true,
+        "expected": {
+          "safe_to_delete": [],
+          "needs_review": []
+        }
+      }
+    ]
   },
   {
     "slug": "git-commit-squasher-l2",
@@ -1829,8 +3150,8 @@
       "git rebase -i HEAD~N: 交互式变基",
       "pick/squash/fixup/reword"
     ],
-    "starterCode": "def simulate_squash(commits, target_count):\n    if len(commits) <= target_count: return commits\n    result = []\n    for i, c in enumerate(commits):\n        if i == 0: result.append(c)\n        elif i < len(commits) - (target_count-1):\n            result[-1]['message'] += '; '+c['message']\n        else: result.append(c)\n    return result",
-    "solutionCode": "def simulate_squash(commits, target_count):\n    if len(commits) <= target_count:\n        return commits\n    result = []\n    for i, c in enumerate(commits):\n        if i == 0:\n            result.append(c)\n        elif i < len(commits) - (target_count-1):\n            result[-1]['message'] += '; ' + c['message']\n        else:\n            result.append(c)\n    return result",
+    "starterCode": "def simulate_squash(commits: list[dict], target_count: int) -> list[dict]:\n    \"\"\"将早期多余提交压缩合并，使最终提交数不超过 target_count\"\"\"\n    pass\n",
+    "solutionCode": "# 【算法思路】模拟交互式 squash，将最前端连续提交消息合并为单条提交以保留目标提交总数。\n# 将头部多余提交并入首条记录并保留末尾 target_count-1 条提交\ndef simulate_squash(commits, target_count):\n    if len(commits) <= target_count:\n        return commits\n    result = []\n    for i, c in enumerate(commits):\n        if i == 0:\n            result.append(c)\n        elif i < len(commits) - (target_count-1):\n            result[-1]['message'] += '; ' + c['message']\n        else:\n            result.append(c)\n    return result\n",
     "expectedOutput": "2",
     "testCases": [
       {
@@ -1854,7 +3175,38 @@
           ],
           2
         ],
-        "expected": 2
+        "hidden": false,
+        "expected": [
+          {
+            "id": "a",
+            "message": "WIP 1; WIP 2"
+          },
+          {
+            "id": "c",
+            "message": "final"
+          }
+        ]
+      },
+      {
+        "name": "already within target",
+        "mode": "function",
+        "function": "simulate_squash",
+        "args": [
+          [
+            {
+              "id": "a",
+              "message": "init"
+            }
+          ],
+          2
+        ],
+        "hidden": false,
+        "expected": [
+          {
+            "id": "a",
+            "message": "init"
+          }
+        ]
       }
     ],
     "quizzes": [
@@ -1872,7 +3224,75 @@
     ],
     "thinkingQuestion": "rebase 和 merge 在合并分支时对提交历史的组织方式有什么本质区别？",
     "aiPrompt": "评估学生对 commit 整理、squash、rebase 的理解。按 0-10 分打分。",
-    "status": "published"
+    "status": "published",
+    "evaluationCases": [
+      {
+        "name": "squash 5 commits into 2",
+        "mode": "function",
+        "function": "simulate_squash",
+        "args": [
+          [
+            {
+              "id": "1",
+              "message": "a"
+            },
+            {
+              "id": "2",
+              "message": "b"
+            },
+            {
+              "id": "3",
+              "message": "c"
+            },
+            {
+              "id": "4",
+              "message": "d"
+            },
+            {
+              "id": "5",
+              "message": "e"
+            }
+          ],
+          2
+        ],
+        "hidden": true,
+        "expected": [
+          {
+            "id": "1",
+            "message": "a; b; c; d"
+          },
+          {
+            "id": "5",
+            "message": "e"
+          }
+        ]
+      },
+      {
+        "name": "squash to 1 commit keeps only first",
+        "mode": "function",
+        "function": "simulate_squash",
+        "args": [
+          [
+            {
+              "id": "1",
+              "message": "x"
+            },
+            {
+              "id": "2",
+              "message": "y"
+            }
+          ],
+          1
+        ],
+        "hidden": true,
+        "expected": [
+          {
+            "id": "1",
+            "message": "x; y"
+          }
+        ]
+      }
+    ]
   },
   {
     "slug": "git-conflict-auto-resolver-l2",
@@ -1891,8 +3311,8 @@
       "Auto-merge: 不同行修改 -> 自动合并",
       "Conflict: 同区域修改 -> 人工处理"
     ],
-    "starterCode": "def auto_merge(base, a_changes, b_changes):\n    conflicts = []\n    for line in set(a_changes) & set(b_changes):\n        if a_changes[line] != b_changes[line]:\n            conflicts.append(line)\n    return len(conflicts)",
-    "solutionCode": "def auto_merge(base, a_changes, b_changes):\n    conflicts = []\n    for line in set(a_changes) & set(b_changes):\n        if a_changes[line] != b_changes[line]:\n            conflicts.append(line)\n    return {'conflicts': len(conflicts), 'auto_merged': len(a_changes)+len(b_changes)-len(conflicts), 'status': 'conflict' if conflicts else 'clean'}",
+    "starterCode": "def auto_merge(base: dict, a_changes: dict, b_changes: dict) -> dict:\n    \"\"\"对比基线统计自动合并行数与冲突行数\"\"\"\n    pass\n",
+    "solutionCode": "# 【算法思路】对比基线版本与双分支修改集合，分离可自动合入的非重叠变更与实质内容冲突。\n# 提取相对 base 的真实改动行并计算冲突数与自动合并数\ndef auto_merge(base, a_changes, b_changes):\n    # 仅统计相对于基线真正发生改动的行\n    a_diff = {line for line, val in a_changes.items() if base.get(line) != val}\n    b_diff = {line for line, val in b_changes.items() if base.get(line) != val}\n    # 双方都修改且内容不同则判定为冲突行\n    conflicts = [line for line in (a_diff & b_diff) if a_changes[line] != b_changes[line]]\n    # 无冲突的唯一改动行均可自动合并\n    auto_merged = len((a_diff | b_diff) - set(conflicts))\n    return {\n        'conflicts': len(conflicts),\n        'auto_merged': auto_merged,\n        'status': 'conflict' if conflicts else 'clean',\n    }\n",
     "expectedOutput": "clean",
     "testCases": [
       {
@@ -1912,10 +3332,33 @@
             "20": "new2"
           }
         ],
+        "hidden": false,
         "expected": {
           "conflicts": 0,
           "auto_merged": 2,
           "status": "clean"
+        }
+      },
+      {
+        "name": "same line conflict",
+        "mode": "function",
+        "function": "auto_merge",
+        "args": [
+          {
+            "5": "old"
+          },
+          {
+            "5": "v1"
+          },
+          {
+            "5": "v2"
+          }
+        ],
+        "hidden": false,
+        "expected": {
+          "conflicts": 1,
+          "auto_merged": 0,
+          "status": "conflict"
         }
       }
     ],
@@ -1934,7 +3377,56 @@
     ],
     "thinkingQuestion": "三路合并（Three-way merge）相比两路合并的优势是什么？",
     "aiPrompt": "评估学生对 Git 合并、冲突解决的理解。按 0-10 分打分。",
-    "status": "published"
+    "status": "published",
+    "evaluationCases": [
+      {
+        "name": "both branches make identical edit cleanly",
+        "mode": "function",
+        "function": "auto_merge",
+        "args": [
+          {
+            "1": "init"
+          },
+          {
+            "1": "fixed",
+            "2": "extra"
+          },
+          {
+            "1": "fixed"
+          }
+        ],
+        "hidden": true,
+        "expected": {
+          "conflicts": 0,
+          "auto_merged": 2,
+          "status": "clean"
+        }
+      },
+      {
+        "name": "mixed conflict and clean edits",
+        "mode": "function",
+        "function": "auto_merge",
+        "args": [
+          {
+            "1": "a"
+          },
+          {
+            "1": "b",
+            "2": "x"
+          },
+          {
+            "1": "c",
+            "3": "y"
+          }
+        ],
+        "hidden": true,
+        "expected": {
+          "conflicts": 1,
+          "auto_merged": 2,
+          "status": "conflict"
+        }
+      }
+    ]
   },
   {
     "slug": "git-rebase-detector-l2",
@@ -1953,8 +3445,8 @@
       "Rebase = 在目标分支的 HEAD 上逐个应用提交",
       "冲突数 = 累积计算"
     ],
-    "starterCode": "def predict_rebase_conflicts(feature_commits, target_commits):\n    total_conflicts = 0\n    for fc in feature_commits:\n        for tc in target_commits:\n            if fc['file'] == tc['file']:\n                if max(fc['start'],tc['start']) <= min(fc['end'],tc['end']):\n                    total_conflicts += 1\n    return total_conflicts",
-    "solutionCode": "def predict_rebase_conflicts(feature_commits, target_commits):\n    total = 0\n    for fc in feature_commits:\n        for tc in target_commits:\n            if fc['file'] == tc['file']:\n                if max(fc['start'],tc['start']) <= min(fc['end'],tc['end']):\n                    total += 1\n    return {'total_conflicts': total, 'recommendation': 'merge instead' if total > 2 else 'rebase ok'}",
+    "starterCode": "def predict_rebase_conflicts(feature_commits: list[dict], target_commits: list[dict]) -> dict:\n    \"\"\"预测变基区间重叠冲突数并给出建议\"\"\"\n    pass\n",
+    "solutionCode": "# 【算法思路】逐对检查特性分支与目标分支的文件行区间重叠次数，低于阈值建议 rebase 否则建议 merge。\n# 统计重叠改动区块数并生成合并策略建议\ndef predict_rebase_conflicts(feature_commits, target_commits):\n    total = 0\n    for fc in feature_commits:\n        for tc in target_commits:\n            if fc['file'] == tc['file']:\n                if max(fc['start'],tc['start']) <= min(fc['end'],tc['end']):\n                    total += 1\n    return {'total_conflicts': total, 'recommendation': 'merge instead' if total > 2 else 'rebase ok'}\n",
     "expectedOutput": "rebase ok",
     "testCases": [
       {
@@ -1977,9 +3469,56 @@
             }
           ]
         ],
+        "hidden": false,
         "expected": {
           "total_conflicts": 0,
           "recommendation": "rebase ok"
+        }
+      },
+      {
+        "name": "high conflict recommends merge",
+        "mode": "function",
+        "function": "predict_rebase_conflicts",
+        "args": [
+          [
+            {
+              "file": "a.py",
+              "start": 1,
+              "end": 10
+            },
+            {
+              "file": "b.py",
+              "start": 1,
+              "end": 5
+            },
+            {
+              "file": "c.py",
+              "start": 2,
+              "end": 8
+            }
+          ],
+          [
+            {
+              "file": "a.py",
+              "start": 5,
+              "end": 12
+            },
+            {
+              "file": "b.py",
+              "start": 3,
+              "end": 7
+            },
+            {
+              "file": "c.py",
+              "start": 4,
+              "end": 6
+            }
+          ]
+        ],
+        "hidden": false,
+        "expected": {
+          "total_conflicts": 3,
+          "recommendation": "merge instead"
         }
       }
     ],
@@ -1998,7 +3537,65 @@
     ],
     "thinkingQuestion": "git pull --rebase 和 git pull 的区别是什么？为什么推荐用 --rebase？",
     "aiPrompt": "评估学生对 rebase、冲突预测、工作流选择的理解。按 0-10 分打分。",
-    "status": "published"
+    "status": "published",
+    "evaluationCases": [
+      {
+        "name": "borderline 2 conflicts still rebase ok",
+        "mode": "function",
+        "function": "predict_rebase_conflicts",
+        "args": [
+          [
+            {
+              "file": "a.py",
+              "start": 1,
+              "end": 3
+            },
+            {
+              "file": "b.py",
+              "start": 5,
+              "end": 8
+            }
+          ],
+          [
+            {
+              "file": "a.py",
+              "start": 3,
+              "end": 6
+            },
+            {
+              "file": "b.py",
+              "start": 8,
+              "end": 9
+            }
+          ]
+        ],
+        "hidden": true,
+        "expected": {
+          "total_conflicts": 2,
+          "recommendation": "rebase ok"
+        }
+      },
+      {
+        "name": "empty target commits",
+        "mode": "function",
+        "function": "predict_rebase_conflicts",
+        "args": [
+          [
+            {
+              "file": "a.py",
+              "start": 1,
+              "end": 5
+            }
+          ],
+          []
+        ],
+        "hidden": true,
+        "expected": {
+          "total_conflicts": 0,
+          "recommendation": "rebase ok"
+        }
+      }
+    ]
   },
   {
     "slug": "git-conflict-resolution-strategies-l2",
@@ -2018,8 +3615,8 @@
       "ours: 完全保留当前分支",
       "theirs: 完全接受传入分支"
     ],
-    "starterCode": "def recommend_strategy(branch_a, branch_b, situation):\n    if situation == 'long-lived': return 'merge --squash'\n    if situation == 'experimental': return 'rebase'\n    return 'recursive'",
-    "solutionCode": "def recommend_strategy(branch_a, branch_b, situation):\n    strategies = {\n        'standard': 'recursive (default)',\n        'long-lived': 'merge --squash (压缩为1个提交)',\n        'experimental': 'rebase (保持历史线性)',\n        'collaborative': 'merge --no-ff (保留分支痕迹)',\n        'trivial': 'merge --ff-only (快进)'\n    }\n    return strategies.get(situation, 'recursive')",
+    "starterCode": "def recommend_strategy(branch_a: str, branch_b: str, situation: str) -> str:\n    \"\"\"根据分支协作场景推荐 Git 合并策略\"\"\"\n    pass\n",
+    "solutionCode": "# 【算法思路】基于团队协作模式（长期分支/实验分支/多人协同/快进）映射最优 Git 合并策略。\n# 查表返回与场景匹配的 Git 合并参数及说明\ndef recommend_strategy(branch_a, branch_b, situation):\n    strategies = {\n        'standard': 'recursive (default)',\n        'long-lived': 'merge --squash (压缩为1个提交)',\n        'experimental': 'rebase (保持历史线性)',\n        'collaborative': 'merge --no-ff (保留分支痕迹)',\n        'trivial': 'merge --ff-only (快进)'\n    }\n    return strategies.get(situation, 'recursive')\n",
     "expectedOutput": "merge --no-ff",
     "testCases": [
       {
@@ -2031,7 +3628,20 @@
           "main",
           "collaborative"
         ],
+        "hidden": false,
         "expected": "merge --no-ff (保留分支痕迹)"
+      },
+      {
+        "name": "experimental branch",
+        "mode": "function",
+        "function": "recommend_strategy",
+        "args": [
+          "exp",
+          "main",
+          "experimental"
+        ],
+        "hidden": false,
+        "expected": "rebase (保持历史线性)"
       }
     ],
     "quizzes": [
@@ -2049,6 +3659,32 @@
     ],
     "thinkingQuestion": "Squash merge 和普通 merge 对提交历史的影响有什么不同？分别适合什么场景？",
     "aiPrompt": "评估学生对合并策略、工作流选择的理解。按 0-10 分打分。",
-    "status": "published"
+    "status": "published",
+    "evaluationCases": [
+      {
+        "name": "long-lived squash",
+        "mode": "function",
+        "function": "recommend_strategy",
+        "args": [
+          "feat",
+          "main",
+          "long-lived"
+        ],
+        "hidden": true,
+        "expected": "merge --squash (压缩为1个提交)"
+      },
+      {
+        "name": "unknown situation falls back",
+        "mode": "function",
+        "function": "recommend_strategy",
+        "args": [
+          "feat",
+          "main",
+          "hotfix"
+        ],
+        "hidden": true,
+        "expected": "recursive"
+      }
+    ]
   }
 ]

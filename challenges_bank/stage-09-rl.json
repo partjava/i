@@ -20,11 +20,11 @@
       "pi^*(s) = argmax_a sum_{s'} P(s'|s,a)[R + gamma V^*(s')]"
     ],
     "starterCode": "import numpy as np\ndef value_iteration(states, actions, trans, rewards, gamma, theta): pass\ndef extract_policy(V, states, actions, trans, rewards): pass",
-    "solutionCode": "import numpy as np\ndef value_iteration(states, actions, trans, rewards, gamma=0.9, theta=0.01):\n    V = np.zeros(len(states))\n    while True:\n        delta = 0\n        for s in range(len(states)):\n            v = V[s]\n            V[s] = max(sum(trans[s][a][s_next] * (rewards[s][a][s_next] + gamma*V[s_next]) for s_next in range(len(states))) for a in range(len(actions)))\n            delta = max(delta, abs(v - V[s]))\n        if delta < theta: break\n    return V\ndef extract_policy(V, states, actions, trans, rewards):\n    policy = []\n    for s in range(len(states)):\n        best_a = np.argmax([sum(trans[s][a][s_next] * (rewards[s][a][s_next] + 0.9*V[s_next]) for s_next in range(len(states))) for a in range(len(actions))])\n        policy.append(best_a)\n    return policy",
+    "solutionCode": "# 【算法思路】通过贝尔曼最优期望迭代求状态价值收敛不动点，并贪心抽取每个状态下的最优确定性策略。\nimport numpy as np\n\n# 反复应用贝尔曼最优更新直至状态价值最大变化量小于阈值\ndef value_iteration(states, actions, trans, rewards, gamma=0.9, theta=0.01):\n    n_s = states if isinstance(states, int) else len(states)\n    n_a = actions if isinstance(actions, int) else len(actions)\n    V = np.zeros(n_s, dtype=float)\n    while True:\n        delta = 0.0\n        for s in range(n_s):\n            v = V[s]\n            V[s] = max(\n                sum(trans[s][a][sn] * (rewards[s][a][sn] + gamma * V[sn]) for sn in range(n_s))\n                for a in range(n_a)\n            )\n            delta = max(delta, abs(v - V[s]))\n        if delta < theta:\n            break\n    return np.round(V, 4)\n\n# 遍历所有状态选出单步回报加折现未来价值最大化的动作\ndef extract_policy(V, states, actions, trans, rewards):\n    n_s = states if isinstance(states, int) else len(states)\n    n_a = actions if isinstance(actions, int) else len(actions)\n    policy = []\n    for s in range(n_s):\n        best_a = int(np.argmax([\n            sum(trans[s][a][sn] * (rewards[s][a][sn] + 0.9 * V[sn]) for sn in range(n_s))\n            for a in range(n_a)\n        ]))\n        policy.append(best_a)\n    return policy\n",
     "expectedOutput": "True",
     "testCases": [
       {
-        "name": "simple 2-state mdp",
+        "name": "simple 2-state mdp converges",
         "mode": "function",
         "function": "value_iteration",
         "args": [
@@ -75,9 +75,81 @@
             ]
           ],
           0.9,
-          0.1
+          0.01
         ],
-        "expected": true
+        "hidden": false,
+        "expected": [
+          9.2466,
+          10.2077
+        ]
+      },
+      {
+        "name": "extract_policy chooses higher immediate reward action",
+        "mode": "function",
+        "function": "extract_policy",
+        "args": [
+          [
+            0.0,
+            0.0
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            [
+              [
+                1,
+                0
+              ],
+              [
+                0,
+                1
+              ]
+            ],
+            [
+              [
+                1,
+                0
+              ],
+              [
+                0,
+                1
+              ]
+            ]
+          ],
+          [
+            [
+              [
+                0,
+                0
+              ],
+              [
+                0,
+                5
+              ]
+            ],
+            [
+              [
+                1,
+                0
+              ],
+              [
+                0,
+                0
+              ]
+            ]
+          ]
+        ],
+        "hidden": false,
+        "expected": [
+          1,
+          0
+        ]
       }
     ],
     "quizzes": [
@@ -95,7 +167,102 @@
     ],
     "thinkingQuestion": "策略迭代和价值迭代的区别是什么？什么场景下策略迭代更高效？",
     "aiPrompt": "评估学生对 MDP、价值迭代、Bellman 方程的理解。按 0-10 分打分。",
-    "status": "published"
+    "status": "published",
+    "evaluationCases": [
+      {
+        "name": "list states/actions zero rewards gives zero values",
+        "mode": "function",
+        "function": "value_iteration",
+        "args": [
+          [
+            0,
+            1
+          ],
+          [
+            0
+          ],
+          [
+            [
+              [
+                1,
+                0
+              ]
+            ],
+            [
+              [
+                0,
+                1
+              ]
+            ]
+          ],
+          [
+            [
+              [
+                0,
+                0
+              ]
+            ],
+            [
+              [
+                0,
+                0
+              ]
+            ]
+          ],
+          0.9,
+          0.01
+        ],
+        "hidden": true,
+        "expected": [
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "name": "gamma=0 evaluates immediate expected reward only",
+        "mode": "function",
+        "function": "value_iteration",
+        "args": [
+          2,
+          1,
+          [
+            [
+              [
+                1,
+                0
+              ]
+            ],
+            [
+              [
+                0,
+                1
+              ]
+            ]
+          ],
+          [
+            [
+              [
+                5,
+                0
+              ]
+            ],
+            [
+              [
+                0,
+                3
+              ]
+            ]
+          ],
+          0.0,
+          0.0001
+        ],
+        "hidden": true,
+        "expected": [
+          5.0,
+          3.0
+        ]
+      }
+    ]
   },
   {
     "slug": "rl-qlearning",
@@ -117,42 +284,24 @@
       "Q(s,a) <- Q(s,a) + alpha[r + gamma max_a' Q(s',a') - Q(s,a)]"
     ],
     "starterCode": "import numpy as np\ndef epsilon_greedy(Q, state, epsilon): pass\ndef q_learning(env, episodes, alpha, gamma, epsilon): pass\ndef q_update(Q, s, a, r, s_next, alpha, gamma): pass",
-    "solutionCode": "import numpy as np\ndef epsilon_greedy(Q, state, epsilon):\n    if np.random.random() < epsilon:\n        return np.random.randint(Q.shape[1])\n    return int(np.argmax(Q[state]))\ndef q_update(Q, s, a, r, s_next, alpha=0.1, gamma=0.9):\n    Q[s,a] += alpha * (r + gamma * np.max(Q[s_next]) - Q[s,a])\ndef q_learning(env, episodes=100, alpha=0.1, gamma=0.9, epsilon=0.1):\n    Q = np.zeros((env['n_states'], env['n_actions']))\n    rewards = []\n    for _ in range(episodes):\n        s = 0; total = 0\n        for _ in range(50):\n            a = epsilon_greedy(Q, s, epsilon)\n            s_next = int(np.random.choice(env['n_states'], p=env['trans'][s][a]))\n            r = env['rewards'][s][a][s_next]\n            q_update(Q, s, a, r, s_next, alpha, gamma)\n            s = s_next; total += r\n        rewards.append(total)\n    return {'Q': Q, 'avg_return': round(sum(rewards[-20:])/20, 2)}",
+    "solutionCode": "# 【算法思路】实现 epsilon-贪心探索策略、单步离线异策时序差分 TD 目标 Q 更新以及多回合表格型训练。\nimport numpy as np\n\n# 依概率随机探索，贪心模式下总选最大 Q 值动作索引\ndef epsilon_greedy(Q, state, epsilon):\n    Q = np.asarray(Q, dtype=float)\n    if epsilon > 0 and np.random.random() < epsilon:\n        return int(np.random.randint(Q.shape[1]))\n    return int(np.argmax(Q[state]))\n\n# 依据下个状态最大 Q 值原地更新当前动作价值\ndef q_update(Q, s, a, r, s_next, alpha=0.1, gamma=0.9):\n    Q[s, a] += alpha * (r + gamma * np.max(Q[s_next]) - Q[s, a])\n\n# 按转换矩阵迭代多回合记录平均累计回报\ndef q_learning(env, episodes=100, alpha=0.1, gamma=0.9, epsilon=0.1):\n    Q = np.zeros((env[\"n_states\"], env[\"n_actions\"]), dtype=float)\n    rewards = []\n    for _ in range(episodes):\n        s, total = 0, 0.0\n        for _ in range(50):\n            a = epsilon_greedy(Q, s, epsilon)\n            probs = env[\"trans\"][s][a]\n            s_next = probs.index(1) if 1 in probs and epsilon == 0 else int(np.random.choice(env[\"n_states\"], p=probs))\n            r = env[\"rewards\"][s][a][s_next]\n            q_update(Q, s, a, r, s_next, alpha, gamma)\n            s = s_next\n            total += r\n        rewards.append(total)\n    w = min(20, len(rewards))\n    return {\"Q\": np.round(Q, 4), \"avg_return\": round(sum(rewards[-w:]) / w, 2)}\n",
     "expectedOutput": "True",
     "testCases": [
       {
-        "name": "q learning trains",
+        "name": "q_learning deterministic greedy learns terminal reward",
         "mode": "function",
         "function": "q_learning",
         "args": [
           {
-            "n_states": 4,
+            "n_states": 2,
             "n_actions": 2,
             "trans": [
               [
                 [
-                  0,
-                  1,
-                  0,
-                  0
-                ],
-                [
-                  0,
-                  0,
-                  1,
-                  0
-                ]
-              ],
-              [
-                [
-                  0,
-                  0,
                   1,
                   0
                 ],
                 [
-                  0,
-                  0,
                   0,
                   1
                 ]
@@ -160,27 +309,9 @@
               [
                 [
                   0,
-                  0,
-                  0,
                   1
                 ],
                 [
-                  1,
-                  0,
-                  0,
-                  0
-                ]
-              ],
-              [
-                [
-                  0,
-                  0,
-                  0,
-                  1
-                ],
-                [
-                  0,
-                  0,
                   0,
                   1
                 ]
@@ -190,27 +321,9 @@
               [
                 [
                   0,
-                  -1,
-                  0,
                   0
                 ],
                 [
-                  0,
-                  0,
-                  -1,
-                  0
-                ]
-              ],
-              [
-                [
-                  0,
-                  0,
-                  -1,
-                  0
-                ],
-                [
-                  0,
-                  0,
                   0,
                   10
                 ]
@@ -218,39 +331,52 @@
               [
                 [
                   0,
-                  0,
-                  0,
-                  10
-                ],
-                [
-                  -1,
-                  0,
-                  0,
-                  0
-                ]
-              ],
-              [
-                [
-                  0,
-                  0,
-                  0,
                   0
                 ],
                 [
-                  0,
-                  0,
                   0,
                   0
                 ]
               ]
             ]
           },
-          50,
-          0.1,
+          2,
+          0.5,
           0.9,
-          0.3
+          0.0
         ],
-        "expected": true
+        "hidden": false,
+        "expected": {
+          "Q": [
+            [
+              0,
+              0
+            ],
+            [
+              0,
+              0
+            ]
+          ],
+          "avg_return": 0
+        }
+      },
+      {
+        "name": "epsilon_greedy eps=0 selects highest Q action",
+        "mode": "function",
+        "function": "epsilon_greedy",
+        "args": [
+          [
+            [
+              1.0,
+              5.0,
+              2.0
+            ]
+          ],
+          0,
+          0.0
+        ],
+        "hidden": false,
+        "expected": 1
       }
     ],
     "quizzes": [
@@ -268,7 +394,82 @@
     ],
     "thinkingQuestion": "Q-Learning 和 SARSA 的核心区别是什么？在什么场景下 SARSA 更安全？",
     "aiPrompt": "评估学生对 Q-Learning、off-policy、epsilon 贪心的理解。按 0-10 分打分。",
-    "status": "published"
+    "status": "published",
+    "evaluationCases": [
+      {
+        "name": "absorbing zero rewards stay zero",
+        "mode": "function",
+        "function": "q_learning",
+        "args": [
+          {
+            "n_states": 2,
+            "n_actions": 1,
+            "trans": [
+              [
+                [
+                  0,
+                  1
+                ]
+              ],
+              [
+                [
+                  0,
+                  1
+                ]
+              ]
+            ],
+            "rewards": [
+              [
+                [
+                  0,
+                  0
+                ]
+              ],
+              [
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          },
+          3,
+          0.5,
+          0.9,
+          0.0
+        ],
+        "hidden": true,
+        "expected": {
+          "Q": [
+            [
+              0.0
+            ],
+            [
+              0.0
+            ]
+          ],
+          "avg_return": 0.0
+        }
+      },
+      {
+        "name": "epsilon_greedy tie breaks to first max index 0",
+        "mode": "function",
+        "function": "epsilon_greedy",
+        "args": [
+          [
+            [
+              2.0,
+              2.0,
+              1.0
+            ]
+          ],
+          0,
+          0.0
+        ],
+        "hidden": true,
+        "expected": 0
+      }
+    ]
   },
   {
     "slug": "rl-sarsa",
@@ -290,50 +491,34 @@
       "Q(s,a) <- Q(s,a) + alpha[r + gamma Q(s',a') - Q(s,a)]"
     ],
     "starterCode": "import numpy as np\ndef sarsa_update(Q, s, a, r, s_next, a_next, alpha, gamma): pass\ndef sarsa(env, episodes, alpha, gamma, epsilon): pass",
-    "solutionCode": "import numpy as np\ndef sarsa_update(Q, s, a, r, s_next, a_next, alpha=0.1, gamma=0.9):\n    Q[s,a] += alpha * (r + gamma * Q[s_next,a_next] - Q[s,a])\ndef epsilon_greedy(Q, state, epsilon):\n    if np.random.random() < epsilon:\n        return np.random.randint(Q.shape[1])\n    return int(np.argmax(Q[state]))\ndef sarsa(env, episodes=100, alpha=0.1, gamma=0.9, epsilon=0.1):\n    Q = np.zeros((env['n_states'], env['n_actions']))\n    rewards = []\n    for _ in range(episodes):\n        s = 0; a = epsilon_greedy(Q, s, epsilon); total = 0\n        for _ in range(50):\n            s_next = int(np.random.choice(env['n_states'], p=env['trans'][s][a]))\n            r = env['rewards'][s][a][s_next]\n            a_next = epsilon_greedy(Q, s_next, epsilon)\n            sarsa_update(Q, s, a, r, s_next, a_next, alpha, gamma)\n            s, a = s_next, a_next; total += r\n        rewards.append(total)\n    return {'Q': Q, 'avg_return': round(sum(rewards[-20:])/20, 2)}",
+    "solutionCode": "# 【算法思路】在同策 SARSA 控制中同步使用下一步实际选取动作的 Q 值完成在策略时序差分学习。\nimport numpy as np\n\n# 用 (s', a') 实际估值而非 max 计算 TD 目标更新 Q 表\ndef sarsa_update(Q, s, a, r, s_next, a_next, alpha=0.1, gamma=0.9):\n    Q[s, a] += alpha * (r + gamma * Q[s_next, a_next] - Q[s, a])\n\n# 执行策略采样\ndef epsilon_greedy(Q, state, epsilon):\n    Q = np.asarray(Q, dtype=float)\n    if epsilon > 0 and np.random.random() < epsilon:\n        return int(np.random.randint(Q.shape[1]))\n    return int(np.argmax(Q[state]))\n\n# 维护动作-状态转移流在同策探索下更新收敛\ndef sarsa(env, episodes=100, alpha=0.1, gamma=0.9, epsilon=0.1):\n    Q = np.zeros((env[\"n_states\"], env[\"n_actions\"]), dtype=float)\n    rewards = []\n    for _ in range(episodes):\n        s = 0\n        a = epsilon_greedy(Q, s, epsilon)\n        total = 0.0\n        for _ in range(50):\n            probs = env[\"trans\"][s][a]\n            s_next = probs.index(1) if 1 in probs and epsilon == 0 else int(np.random.choice(env[\"n_states\"], p=probs))\n            r = env[\"rewards\"][s][a][s_next]\n            a_next = epsilon_greedy(Q, s_next, epsilon)\n            sarsa_update(Q, s, a, r, s_next, a_next, alpha, gamma)\n            s, a = s_next, a_next\n            total += r\n        rewards.append(total)\n    w = min(20, len(rewards))\n    return {\"Q\": np.round(Q, 4), \"avg_return\": round(sum(rewards[-w:]) / w, 2)}\n",
     "expectedOutput": "True",
     "testCases": [
       {
-        "name": "sarsa basic",
+        "name": "sarsa deterministic greedy traversal",
         "mode": "function",
         "function": "sarsa",
         "args": [
           {
-            "n_states": 3,
+            "n_states": 2,
             "n_actions": 2,
             "trans": [
               [
                 [
                   0,
-                  1,
-                  0
-                ],
-                [
-                  0,
-                  0,
-                  1
-                ]
-              ],
-              [
-                [
-                  0,
-                  0,
                   1
                 ],
                 [
                   1,
-                  0,
                   0
                 ]
               ],
               [
                 [
                   0,
-                  0,
                   1
                 ],
                 [
-                  0,
                   0,
                   1
                 ]
@@ -343,23 +528,9 @@
               [
                 [
                   0,
-                  0,
-                  0
-                ],
-                [
-                  0,
-                  0,
-                  1
-                ]
-              ],
-              [
-                [
-                  0,
-                  0,
                   1
                 ],
                 [
-                  0,
                   0,
                   0
                 ]
@@ -367,23 +538,55 @@
               [
                 [
                   0,
-                  0,
                   0
                 ],
                 [
-                  0,
                   0,
                   0
                 ]
               ]
             ]
           },
-          30,
-          0.1,
+          1,
+          0.5,
           0.9,
-          0.3
+          0.0
         ],
-        "expected": true
+        "hidden": false,
+        "expected": {
+          "Q": [
+            [
+              0.5,
+              0
+            ],
+            [
+              0,
+              0
+            ]
+          ],
+          "avg_return": 1
+        }
+      },
+      {
+        "name": "epsilon_greedy eps=0 picks max column",
+        "mode": "function",
+        "function": "epsilon_greedy",
+        "args": [
+          [
+            [
+              3.0,
+              1.0
+            ],
+            [
+              2.0,
+              8.0
+            ]
+          ],
+          1,
+          0.0
+        ],
+        "hidden": false,
+        "expected": 1
       }
     ],
     "quizzes": [
@@ -401,7 +604,82 @@
     ],
     "thinkingQuestion": "SARSA 在悬崖行走（Cliff Walking）环境中通常比 Q-Learning 学到的策略更保守，为什么？",
     "aiPrompt": "评估学生对 SARSA、on-policy、TD 学习的理解。按 0-10 分打分。",
-    "status": "published"
+    "status": "published",
+    "evaluationCases": [
+      {
+        "name": "sarsa multi episode reward accumulation",
+        "mode": "function",
+        "function": "sarsa",
+        "args": [
+          {
+            "n_states": 2,
+            "n_actions": 1,
+            "trans": [
+              [
+                [
+                  1,
+                  0
+                ]
+              ],
+              [
+                [
+                  0,
+                  1
+                ]
+              ]
+            ],
+            "rewards": [
+              [
+                [
+                  2,
+                  0
+                ]
+              ],
+              [
+                [
+                  0,
+                  0
+                ]
+              ]
+            ]
+          },
+          2,
+          0.1,
+          0.9,
+          0.0
+        ],
+        "hidden": true,
+        "expected": {
+          "Q": [
+            [
+              12.6794
+            ],
+            [
+              0
+            ]
+          ],
+          "avg_return": 100
+        }
+      },
+      {
+        "name": "epsilon_greedy greedy last column",
+        "mode": "function",
+        "function": "epsilon_greedy",
+        "args": [
+          [
+            [
+              0.0,
+              0.0,
+              9.0
+            ]
+          ],
+          0,
+          0.0
+        ],
+        "hidden": true,
+        "expected": 2
+      }
+    ]
   },
   {
     "slug": "rl-dqn",
@@ -423,18 +701,100 @@
       "L = E[(r + gamma max_{a'} Q_{target}(s',a') - Q_{online}(s,a))^2]",
       "theta_target <- tau * theta_online + (1-tau) * theta_target"
     ],
-    "starterCode": "import numpy as np\nclass ReplayBuffer:\n    def __init__(self, capacity): pass\n    def push(self, s, a, r, s_next, done): pass\n    def sample(self, batch_size): pass\ndef compute_td_loss(batch, online, target, gamma): pass",
-    "solutionCode": "import numpy as np\nclass ReplayBuffer:\n    def __init__(self, cap): self.buf=[];self.cap=cap;self.pos=0\n    def push(self, s, a, r, s2, d):\n        if len(self.buf)<self.cap: self.buf.append((s,a,r,s2,d))\n        else: self.buf[self.pos]=(s,a,r,s2,d)\n        self.pos=(self.pos+1)%self.cap\n    def sample(self,n):\n        idx=np.random.choice(len(self.buf),n)\n        return [self.buf[i] for i in idx]\ndef compute_td_loss(batch, online, target, gamma=0.9):\n    loss = 0\n    for s, a, r, s2, d in batch:\n        q_target = r if d else r + gamma * np.max(target[s2])\n        q_current = online[s][a]\n        loss += (q_current - q_target) ** 2\n    return loss / len(batch)",
+    "starterCode": "import numpy as np\n\nclass ReplayBuffer:\n    def __init__(self, capacity): pass\n    def push(self, s, a, r, s_next, done): pass\n    def sample(self, batch_size): pass\n\ndef compute_td_loss(batch, online, target, gamma): pass\n\ndef eval_replay_buffer(capacity: int, pushes: list) -> dict:\n    \"\"\"向循环经验回放缓冲区写入经验并返回容量、指针位置及缓冲内容\"\"\"\n    rb = ReplayBuffer(capacity)\n    for s, a, r, s2, d in pushes:\n        rb.push(s, a, r, s2, d)\n    return {\"size\": len(rb.buf), \"pos\": rb.pos, \"buf\": [list(item) for item in rb.buf]}\n",
+    "solutionCode": "# 【算法思路】用环形覆写数组封装经验回放池，并基于在线网络 Q 值与目标网络最大未来值计算均方 TD 误差。\nimport numpy as np\n\n# 固定容量环形覆盖写入与随机小批量抽样\nclass ReplayBuffer:\n    def __init__(self, cap):\n        self.buf = []\n        self.cap = cap\n        self.pos = 0\n\n    def push(self, s, a, r, s2, d):\n        if len(self.buf) < self.cap:\n            self.buf.append((s, a, r, s2, d))\n        else:\n            self.buf[self.pos] = (s, a, r, s2, d)\n        self.pos = (self.pos + 1) % self.cap\n\n    def sample(self, n):\n        idx = np.random.choice(len(self.buf), n)\n        return [self.buf[i] for i in idx]\n\n# 依据终止标记区分单步目标值计算批次均方 TD 损失\ndef compute_td_loss(batch, online, target, gamma=0.9):\n    online, target = np.asarray(online, dtype=float), np.asarray(target, dtype=float)\n    loss = 0.0\n    for s, a, r, s2, d in batch:\n        q_target = r if d else r + gamma * float(np.max(target[s2]))\n        loss += (float(online[s][a]) - q_target) ** 2\n    return float(loss / len(batch))\n\n# 验证环形覆写位置与存储元素长度\ndef eval_replay_buffer(capacity: int, pushes: list) -> dict:\n    rb = ReplayBuffer(capacity)\n    for s, a, r, s2, d in pushes:\n        rb.push(s, a, r, s2, d)\n    return {\"size\": len(rb.buf), \"pos\": rb.pos, \"buf\": [list(item) for item in rb.buf]}\n",
     "expectedOutput": "True",
     "testCases": [
       {
-        "name": "replay buffer push and sample",
-        "input": {
-          "capacity": 10,
-          "pushes": null,
-          "sampleSize": 3
-        },
-        "expected": true
+        "name": "replay buffer push wraps circularly at capacity",
+        "mode": "function",
+        "function": "eval_replay_buffer",
+        "args": [
+          2,
+          [
+            [
+              0,
+              1,
+              1.0,
+              1,
+              false
+            ],
+            [
+              1,
+              0,
+              0.5,
+              2,
+              false
+            ],
+            [
+              2,
+              1,
+              2.0,
+              0,
+              true
+            ]
+          ]
+        ],
+        "hidden": false,
+        "expected": {
+          "size": 2,
+          "pos": 1,
+          "buf": [
+            [
+              2,
+              1,
+              2.0,
+              0,
+              true
+            ],
+            [
+              1,
+              0,
+              0.5,
+              2,
+              false
+            ]
+          ]
+        }
+      },
+      {
+        "name": "compute_td_loss terminal ignores target max",
+        "mode": "function",
+        "function": "compute_td_loss",
+        "args": [
+          [
+            [
+              0,
+              1,
+              3.0,
+              1,
+              true
+            ]
+          ],
+          [
+            [
+              1.0,
+              2.0
+            ],
+            [
+              5.0,
+              5.0
+            ]
+          ],
+          [
+            [
+              9.0,
+              9.0
+            ],
+            [
+              10.0,
+              10.0
+            ]
+          ],
+          0.9
+        ],
+        "hidden": false,
+        "expected": 1.0
       }
     ],
     "quizzes": [
@@ -452,7 +812,93 @@
     ],
     "thinkingQuestion": "目标网络（Target Network）为什么可以稳定 DQN 训练？不加目标网络会怎样？",
     "aiPrompt": "评估学生对 DQN、经验回放、目标网络的理解。按 0-10 分打分。",
-    "status": "published"
+    "status": "published",
+    "evaluationCases": [
+      {
+        "name": "compute_td_loss non-terminal backs up gamma max target",
+        "mode": "function",
+        "function": "compute_td_loss",
+        "args": [
+          [
+            [
+              0,
+              0,
+              1.0,
+              1,
+              false
+            ]
+          ],
+          [
+            [
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              0.0
+            ]
+          ],
+          [
+            [
+              0.0,
+              0.0
+            ],
+            [
+              2.0,
+              4.0
+            ]
+          ],
+          0.5
+        ],
+        "hidden": true,
+        "expected": 9.0
+      },
+      {
+        "name": "replay buffer within capacity preserves all",
+        "mode": "function",
+        "function": "eval_replay_buffer",
+        "args": [
+          5,
+          [
+            [
+              0,
+              0,
+              1.0,
+              0,
+              true
+            ],
+            [
+              1,
+              1,
+              2.0,
+              1,
+              false
+            ]
+          ]
+        ],
+        "hidden": true,
+        "expected": {
+          "size": 2,
+          "pos": 2,
+          "buf": [
+            [
+              0,
+              0,
+              1.0,
+              0,
+              true
+            ],
+            [
+              1,
+              1,
+              2.0,
+              1,
+              false
+            ]
+          ]
+        }
+      }
+    ]
   },
   {
     "slug": "rl-ppo",
@@ -475,11 +921,11 @@
       "r_t(theta) = pi_theta(a_t|s_t) / pi_{theta_old}(a_t|s_t)"
     ],
     "starterCode": "import numpy as np\ndef compute_advantages(rewards, values, gamma, lam): pass\ndef ppo_clip_surrogate(old_logp, new_logp, adv, eps): pass",
-    "solutionCode": "import numpy as np\ndef compute_advantages(rewards, values, gamma=0.99, lam=0.95):\n    advantages = []\n    gae = 0\n    for t in reversed(range(len(rewards))):\n        delta = rewards[t] + gamma * (values[t+1] if t+1<len(values) else 0) - values[t]\n        gae = delta + gamma * lam * gae\n        advantages.insert(0, gae)\n    return np.array(advantages, dtype=float)\ndef ppo_clip_surrogate(old_logp, new_logp, adv, eps=0.2):\n    ratio = np.exp(new_logp - old_logp)\n    clipped = np.clip(ratio, 1-eps, 1+eps)\n    return -min(ratio * adv, clipped * adv)",
+    "solutionCode": "# 【算法思路】反向递推计算广义优势估计 (GAE) 平衡偏差方差，并构造 PPO 近端策略截断替代目标。\nimport numpy as np\n# 从后往前按 gamma 与 lambda 累积时序差分优势值\ndef compute_advantages(rewards, values, gamma=0.99, lam=0.95):\n    advantages = []\n    gae = 0\n    for t in reversed(range(len(rewards))):\n        delta = rewards[t] + gamma * (values[t+1] if t+1<len(values) else 0) - values[t]\n        gae = delta + gamma * lam * gae\n        advantages.insert(0, gae)\n    return np.array(advantages, dtype=float)\n# 比较未裁剪与截断后策略重要性比值乘积目标\ndef ppo_clip_surrogate(old_logp, new_logp, adv, eps=0.2):\n    ratio = np.exp(new_logp - old_logp)\n    clipped = np.clip(ratio, 1-eps, 1+eps)\n    return -min(ratio * adv, clipped * adv)\n",
     "expectedOutput": "True",
     "testCases": [
       {
-        "name": "gae advantages",
+        "name": "gae advantages matches GAE formula",
         "mode": "function",
         "function": "compute_advantages",
         "args": [
@@ -496,7 +942,25 @@
           0.9,
           0.95
         ],
-        "expected": true
+        "hidden": false,
+        "expected": [
+          0.2888050000000001,
+          0.29100000000000004,
+          0.19999999999999996
+        ]
+      },
+      {
+        "name": "ppo_clip_surrogate clips excessive positive advantage ratio",
+        "mode": "function",
+        "function": "ppo_clip_surrogate",
+        "args": [
+          0.0,
+          1.0,
+          2.0,
+          0.2
+        ],
+        "hidden": false,
+        "expected": -2.4
       }
     ],
     "quizzes": [
@@ -514,7 +978,44 @@
     ],
     "thinkingQuestion": "PPO 和 TRPO 的核心区别是什么？为什么 PPO 在工程上更受欢迎？",
     "aiPrompt": "评估学生对 PPO、策略梯度、GAE 的理解。按 0-10 分打分。",
-    "status": "published"
+    "status": "published",
+    "evaluationCases": [
+      {
+        "name": "lambda=0 turns GAE into 1-step TD error",
+        "mode": "function",
+        "function": "compute_advantages",
+        "args": [
+          [
+            1.0,
+            2.0
+          ],
+          [
+            0.0,
+            1.0
+          ],
+          0.9,
+          0.0
+        ],
+        "hidden": true,
+        "expected": [
+          1.9,
+          1.0
+        ]
+      },
+      {
+        "name": "ppo_clip_surrogate negative advantage clips below",
+        "mode": "function",
+        "function": "ppo_clip_surrogate",
+        "args": [
+          0.0,
+          -1.0,
+          -2.0,
+          0.2
+        ],
+        "hidden": true,
+        "expected": 1.6
+      }
+    ]
   },
   {
     "slug": "rl-actor-critic",
@@ -537,7 +1038,7 @@
       "A(s,a) = r + gamma V(s') - V(s) (TD error)"
     ],
     "starterCode": "import numpy as np\ndef actor_forward(state, theta): pass\ndef critic_forward(state, w): pass\ndef actor_critic_train(env, episodes, lr_actor, lr_critic, gamma): pass",
-    "solutionCode": "import numpy as np\ndef actor_forward(state, theta):\n    logits = state @ theta\n    exp = np.exp(logits - np.max(logits))\n    return exp / np.sum(exp)\ndef critic_forward(state, w):\n    return state @ w\ndef actor_critic_train(env, episodes=100, lr_a=0.01, lr_c=0.01, gamma=0.9):\n    n_s = env['n_states']; n_a = env['n_actions']\n    theta = np.zeros((n_s, n_a)); w = np.zeros(n_s)\n    returns = []\n    for _ in range(episodes):\n        s_idx = 0; total = 0\n        for _ in range(50):\n            s = np.eye(n_s)[s_idx]\n            probs = actor_forward(s, theta)\n            a = np.random.choice(n_a, p=probs)\n            s_next = int(np.random.choice(n_s, p=env['trans'][s_idx][a]))\n            r = env['rewards'][s_idx][a][s_next]\n            s_next_onehot = np.eye(n_s)[s_next]\n            v = critic_forward(s, w); v_next = critic_forward(s_next_onehot, w)\n            td = r + gamma * v_next - v\n            theta += lr_a * np.outer(s, (td * (np.eye(n_a)[a] - probs)))\n            w += lr_c * td * s\n            s_idx = s_next; total += r\n        returns.append(total)\n    return {'avg_return': round(sum(returns[-20:])/20, 2)}",
+    "solutionCode": "# 【算法思路】线性参数化 Softmax 策略演员与状态值函数评论家，结合 TD 误差同时更新两个组件。\nimport numpy as np\n\n# 线性特征计算动作对数几率并通过 Softmax 输出概率\ndef actor_forward(state, theta):\n    state, theta = np.asarray(state, dtype=float), np.asarray(theta, dtype=float)\n    logits = state @ theta\n    exp = np.exp(logits - np.max(logits))\n    return exp / np.sum(exp)\n\n# 点积估计状态基线标量价值\ndef critic_forward(state, w):\n    state, w = np.asarray(state, dtype=float), np.asarray(w, dtype=float)\n    return float(state @ w)\n\n# 按 TD 误差作为优势权重同步更新演员策略梯度与评论家权重\ndef actor_critic_train(env, episodes=100, lr_a=0.01, lr_c=0.01, gamma=0.9):\n    n_s, n_a = env[\"n_states\"], env[\"n_actions\"]\n    theta = np.zeros((n_s, n_a))\n    w = np.zeros(n_s)\n    returns = []\n    for _ in range(episodes):\n        s_idx, total = 0, 0.0\n        for _ in range(50):\n            s = np.eye(n_s)[s_idx]\n            probs = actor_forward(s, theta)\n            a = int(np.random.choice(n_a, p=probs))\n            s_next = int(np.random.choice(n_s, p=env[\"trans\"][s_idx][a]))\n            r = env[\"rewards\"][s_idx][a][s_next]\n            td = r + gamma * critic_forward(np.eye(n_s)[s_next], w) - critic_forward(s, w)\n            theta += lr_a * np.outer(s, td * (np.eye(n_a)[a] - probs))\n            w += lr_c * td * s\n            s_idx = s_next\n            total += r\n        returns.append(total)\n    return {\"avg_return\": round(sum(returns[-20:]) / 20, 2)}\n",
     "expectedOutput": "True",
     "testCases": [
       {
@@ -547,25 +1048,41 @@
         "args": [
           [
             1,
-            0,
             0
           ],
           [
             [
-              0.1,
-              0.3
+              0,
+              1
             ],
             [
-              0.2,
-              0.4
-            ],
-            [
-              0.3,
-              0.5
+              2,
+              3
             ]
           ]
         ],
-        "expected": true
+        "hidden": false,
+        "expected": [
+          0.2689414213699951,
+          0.7310585786300049
+        ]
+      },
+      {
+        "name": "critic forward linear baseline",
+        "mode": "function",
+        "function": "critic_forward",
+        "args": [
+          [
+            2,
+            -1
+          ],
+          [
+            3,
+            4
+          ]
+        ],
+        "hidden": false,
+        "expected": 2.0
       }
     ],
     "quizzes": [
@@ -583,7 +1100,55 @@
     ],
     "thinkingQuestion": "A2C（同步 Advantage Actor-Critic）和 A3C（异步）的核心区别是什么？",
     "aiPrompt": "评估学生对 Actor-Critic、策略梯度、TD error 的理解。按 0-10 分打分。",
-    "status": "published"
+    "status": "published",
+    "evaluationCases": [
+      {
+        "name": "zero theta gives uniform probabilities",
+        "mode": "function",
+        "function": "actor_forward",
+        "args": [
+          [
+            1,
+            2
+          ],
+          [
+            [
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0
+            ]
+          ]
+        ],
+        "hidden": true,
+        "expected": [
+          0.3333333333333333,
+          0.3333333333333333,
+          0.3333333333333333
+        ]
+      },
+      {
+        "name": "critic zero state zero baseline",
+        "mode": "function",
+        "function": "critic_forward",
+        "args": [
+          [
+            0,
+            0
+          ],
+          [
+            10,
+            -20
+          ]
+        ],
+        "hidden": true,
+        "expected": 0.0
+      }
+    ]
   },
   {
     "slug": "rl-bellman-l2",
@@ -603,11 +1168,11 @@
       "Q(s,a) = sum P(s'|s,a)[R+gamma*max_a'Q(s',a')]"
     ],
     "starterCode": "import numpy as np\ndef bellman_expectation(V, P, R, gamma): pass\ndef bellman_optimal(V, P, R, gamma): pass",
-    "solutionCode": "import numpy as np\ndef bellman_expectation(V,P,R,gamma=0.9):\n    n=len(V);newV=np.zeros(n)\n    for s in range(n):\n        q_vals=[]\n        for a in range(len(P[s])):\n            q=sum(P[s][a][s2]*(R[s][a][s2]+gamma*V[s2])for s2 in range(n))\n            q_vals.append(q)\n        newV[s]=np.mean(q_vals)\n    return newV\ndef bellman_optimal(V,P,R,gamma=0.9):\n    n=len(V);newV=np.zeros(n)\n    for s in range(n):\n        q_vals=[]\n        for a in range(len(P[s])):\n            q=sum(P[s][a][s2]*(R[s][a][s2]+gamma*V[s2])for s2 in range(n))\n            q_vals.append(q)\n        newV[s]=max(q_vals)\n    return newV",
+    "solutionCode": "# 【算法思路】分别实现等概率随机策略下状态价值的贝尔曼期望算子与贪心最大化的贝尔曼最优算子。\nimport numpy as np\n# 对各动作期望回报取平均更新状态值向量\ndef bellman_expectation(V,P,R,gamma=0.9):\n    n=len(V);newV=np.zeros(n)\n    for s in range(n):\n        q_vals=[]\n        for a in range(len(P[s])):\n            q=sum(P[s][a][s2]*(R[s][a][s2]+gamma*V[s2])for s2 in range(n))\n            q_vals.append(q)\n        newV[s]=np.mean(q_vals)\n    return newV\n# 取所有动作期望回报最大值实施最优值备份\ndef bellman_optimal(V,P,R,gamma=0.9):\n    n=len(V);newV=np.zeros(n)\n    for s in range(n):\n        q_vals=[]\n        for a in range(len(P[s])):\n            q=sum(P[s][a][s2]*(R[s][a][s2]+gamma*V[s2])for s2 in range(n))\n            q_vals.append(q)\n        newV[s]=max(q_vals)\n    return newV\n",
     "expectedOutput": "True",
     "testCases": [
       {
-        "name": "bellman",
+        "name": "bellman expectation 2 states uniform actions",
         "mode": "function",
         "function": "bellman_expectation",
         "args": [
@@ -618,24 +1183,63 @@
           [
             [
               [
-                0.5,
-                0.5
+                1,
+                0
               ],
               [
-                0.8,
-                0.2
+                0,
+                1
               ]
             ],
             [
               [
-                0.3,
-                0.7
+                1,
+                0
               ],
               [
-                0.9,
-                0.1
+                0,
+                1
               ]
             ]
+          ],
+          [
+            [
+              [
+                2,
+                0
+              ],
+              [
+                0,
+                4
+              ]
+            ],
+            [
+              [
+                6,
+                0
+              ],
+              [
+                0,
+                2
+              ]
+            ]
+          ],
+          0.9
+        ],
+        "hidden": false,
+        "expected": [
+          3.0,
+          4.0
+        ]
+      },
+      {
+        "name": "bellman optimal picks best action per state",
+        "mode": "function",
+        "function": "bellman_optimal",
+        "args": [
+          [
+            0,
+            0
           ],
           [
             [
@@ -645,23 +1249,49 @@
               ],
               [
                 0,
-                2
+                1
               ]
             ],
             [
               [
+                1,
+                0
+              ],
+              [
                 0,
                 1
-              ],
+              ]
+            ]
+          ],
+          [
+            [
               [
                 2,
                 0
+              ],
+              [
+                0,
+                4
+              ]
+            ],
+            [
+              [
+                6,
+                0
+              ],
+              [
+                0,
+                2
               ]
             ]
           ],
           0.9
         ],
-        "expected": true
+        "hidden": false,
+        "expected": [
+          4.0,
+          6.0
+        ]
       }
     ],
     "quizzes": [
@@ -679,7 +1309,115 @@
     ],
     "thinkingQuestion": "策略迭代和价值迭代的区别？哪种收敛更快？",
     "aiPrompt": "评估学生对 Bellman 方程、MDP 的理解。按 0-10 分打分。",
-    "status": "published"
+    "status": "published",
+    "evaluationCases": [
+      {
+        "name": "gamma scales successor value",
+        "mode": "function",
+        "function": "bellman_expectation",
+        "args": [
+          [
+            10.0,
+            0.0
+          ],
+          [
+            [
+              [
+                1,
+                0
+              ]
+            ],
+            [
+              [
+                1,
+                0
+              ]
+            ]
+          ],
+          [
+            [
+              [
+                0,
+                0
+              ]
+            ],
+            [
+              [
+                0,
+                0
+              ]
+            ]
+          ],
+          0.8
+        ],
+        "hidden": true,
+        "expected": [
+          8.0,
+          8.0
+        ]
+      },
+      {
+        "name": "bellman_optimal with terminal zero",
+        "mode": "function",
+        "function": "bellman_optimal",
+        "args": [
+          [
+            0.0,
+            10.0
+          ],
+          [
+            [
+              [
+                0,
+                1
+              ],
+              [
+                1,
+                0
+              ]
+            ],
+            [
+              [
+                0,
+                1
+              ],
+              [
+                0,
+                1
+              ]
+            ]
+          ],
+          [
+            [
+              [
+                1,
+                0
+              ],
+              [
+                0,
+                0
+              ]
+            ],
+            [
+              [
+                0,
+                0
+              ],
+              [
+                0,
+                0
+              ]
+            ]
+          ],
+          0.5
+        ],
+        "hidden": true,
+        "expected": [
+          5.0,
+          5.0
+        ]
+      }
+    ]
   },
   {
     "slug": "rl-epsilon-decay-l2",
@@ -698,7 +1436,7 @@
       "\\epsilon_t=\\max(\\epsilon_{end},\\epsilon_{start}\\cdot decay^t)"
     ],
     "starterCode": "def epsilon_greedy(Q, state, epsilon):\n    pass\n\ndef decay_schedule(eps_start, eps_end, decay, steps):\n    pass",
-    "solutionCode": "import random\n\ndef epsilon_greedy(Q, state, epsilon):\n    values = Q[state]\n    if random.random() < epsilon:\n        return random.randrange(len(values))\n    return max(range(len(values)), key=values.__getitem__)\n\ndef decay_schedule(eps_start, eps_end, decay, steps):\n    return [max(eps_end, eps_start * decay ** step) for step in range(steps)]",
+    "solutionCode": "# 【算法思路】生成带下界保底的指数衰减探索率曲线并实现 epsilon-贪心动作选择器。\nimport random\n\n# 随机探索或按当前状态价值表挑出最高分动作\ndef epsilon_greedy(Q, state, epsilon):\n    values = Q[state]\n    if random.random() < epsilon:\n        return random.randrange(len(values))\n    return max(range(len(values)), key=values.__getitem__)\n\n# 按指数比率衰减但始终不低于下界 eps_end\ndef decay_schedule(eps_start, eps_end, decay, steps):\n    return [max(eps_end, eps_start * decay ** step) for step in range(steps)]\n",
     "expectedOutput": "[1.0, 0.5, 0.25, 0.2, 0.2]",
     "testCases": [
       {
@@ -717,7 +1455,8 @@
           0.25,
           0.2,
           0.2
-        ]
+        ],
+        "hidden": false
       },
       {
         "name": "greedy action",
@@ -739,7 +1478,8 @@
           0,
           0
         ],
-        "expected": 1
+        "expected": 1,
+        "hidden": false
       }
     ],
     "quizzes": [
@@ -767,7 +1507,44 @@
       }
     ],
     "aiPrompt": "epsilon 衰减速度对 Q-Learning 性能的影响？太快要太慢各有什么问题？",
-    "status": "published"
+    "status": "published",
+    "evaluationCases": [
+      {
+        "name": "decay with zero rate jumps to floor",
+        "mode": "function",
+        "function": "decay_schedule",
+        "args": [
+          1.0,
+          0.1,
+          0.0,
+          3
+        ],
+        "hidden": true,
+        "expected": [
+          1.0,
+          0.1,
+          0.1
+        ]
+      },
+      {
+        "name": "greedy chooses negative max closest to zero",
+        "mode": "function",
+        "function": "epsilon_greedy",
+        "args": [
+          [
+            [
+              -5.0,
+              -1.0,
+              -9.0
+            ]
+          ],
+          0,
+          0.0
+        ],
+        "hidden": true,
+        "expected": 1
+      }
+    ]
   },
   {
     "slug": "rl-sarsa-lambda-l2",
@@ -787,7 +1564,7 @@
       "Q\\leftarrow Q+\\alpha\\delta E"
     ],
     "starterCode": "def sarsa_lambda(env, episodes, alpha, gamma, epsilon, lam):\n    pass",
-    "solutionCode": "import random\n\ndef sarsa_lambda(env, episodes, alpha, gamma, epsilon, lam):\n    transitions = env[\"transitions\"]\n    q = [[0.0] * len(actions) for actions in transitions]\n\n    def choose(state):\n        actions = q[state]\n        if random.random() < epsilon:\n            return random.randrange(len(actions))\n        return max(range(len(actions)), key=actions.__getitem__)\n\n    for _ in range(episodes):\n        traces = [[0.0] * len(actions) for actions in transitions]\n        state = env[\"start\"]\n        if not q[state]:\n            continue\n        action = choose(state)\n        while True:\n            next_state, reward, done = transitions[state][action]\n            next_action = None if done else choose(next_state)\n            next_value = 0.0 if done else q[next_state][next_action]\n            delta = reward + gamma * next_value - q[state][action]\n            traces[state][action] += 1.0\n            for s, actions in enumerate(q):\n                for a in range(len(actions)):\n                    actions[a] += alpha * delta * traces[s][a]\n                    traces[s][a] *= gamma * lam\n            if done:\n                break\n            state, action = next_state, next_action\n    return q",
+    "solutionCode": "# 【算法思路】在同策 SARSA 框架下引入累加资格迹 (Eligibility Traces) 把末端延迟奖赏回传给既往状态动作对。\nimport random\n\n# 每步计算 TD 误差并按累加资格迹同时回溯更新全状态空间 Q 表\ndef sarsa_lambda(env, episodes, alpha, gamma, epsilon, lam):\n    transitions = env[\"transitions\"]\n    q = [[0.0] * len(actions) for actions in transitions]\n\n    def choose(state):\n        actions = q[state]\n        if random.random() < epsilon:\n            return random.randrange(len(actions))\n        return max(range(len(actions)), key=actions.__getitem__)\n\n    for _ in range(episodes):\n        traces = [[0.0] * len(actions) for actions in transitions]\n        state = env[\"start\"]\n        if not q[state]:\n            continue\n        action = choose(state)\n        while True:\n            next_state, reward, done = transitions[state][action]\n            next_action = None if done else choose(next_state)\n            next_value = 0.0 if done else q[next_state][next_action]\n            delta = reward + gamma * next_value - q[state][action]\n            traces[state][action] += 1.0\n            for s, actions in enumerate(q):\n                for a in range(len(actions)):\n                    actions[a] += alpha * delta * traces[s][a]\n                    traces[s][a] *= gamma * lam\n            if done:\n                break\n            state, action = next_state, next_action\n    return q\n",
     "expectedOutput": "[[0.5], [1.0], []]",
     "testCases": [
       {
@@ -829,7 +1606,8 @@
             1.0
           ],
           []
-        ]
+        ],
+        "hidden": false
       },
       {
         "name": "lambda zero updates only current action",
@@ -870,7 +1648,8 @@
             1.0
           ],
           []
-        ]
+        ],
+        "hidden": false
       }
     ],
     "quizzes": [
@@ -898,7 +1677,63 @@
       }
     ],
     "aiPrompt": "lambda=0 和 lambda=1 分别等价于什么算法？",
-    "status": "published"
+    "status": "published",
+    "evaluationCases": [
+      {
+        "name": "zero alpha leaves Q zero",
+        "mode": "function",
+        "function": "sarsa_lambda",
+        "args": [
+          {
+            "start": 0,
+            "transitions": [
+              [
+                [
+                  1,
+                  5,
+                  true
+                ]
+              ],
+              []
+            ]
+          },
+          2,
+          0.0,
+          0.9,
+          0.0,
+          0.9
+        ],
+        "hidden": true,
+        "expected": [
+          [
+            0.0
+          ],
+          []
+        ]
+      },
+      {
+        "name": "empty action state safely skipped",
+        "mode": "function",
+        "function": "sarsa_lambda",
+        "args": [
+          {
+            "start": 0,
+            "transitions": [
+              []
+            ]
+          },
+          1,
+          0.5,
+          0.9,
+          0.0,
+          0.5
+        ],
+        "hidden": true,
+        "expected": [
+          []
+        ]
+      }
+    ]
   },
   {
     "slug": "rl-double-dqn-l2",
@@ -917,11 +1752,11 @@
       "q_target = r + gamma*Q_target(s', argmax Q_online(s', a))"
     ],
     "starterCode": "import numpy as np\ndef double_dqn_update(online, target, batch, gamma): pass",
-    "solutionCode": "import numpy as np\ndef double_dqn_update(online,target,batch,gamma=0.9):\n    loss=0\n    for s,a,r,s2,d in batch:\n        best_a=int(np.argmax(online[s2]))\n        q_target=r if d else r+gamma*target[s2][best_a]\n        loss+=(online[s][a]-q_target)**2\n    return loss/len(batch)",
+    "solutionCode": "# 【算法思路】通过在线网络挑选最佳下一动作再交由目标网络评估其 Q 值，缓解传统 DQN 最大化高估偏差。\nimport numpy as np\n\n# 解耦动作选择 (argmax online) 与价值评估 (target) 计算批次均方 TD 损失\ndef double_dqn_update(online, target, batch, gamma=0.9):\n    online, target = np.asarray(online, dtype=float), np.asarray(target, dtype=float)\n    loss = 0.0\n    for s, a, r, s2, d in batch:\n        best_a = int(np.argmax(online[s2]))\n        q_target = r if d else r + gamma * float(target[s2][best_a])\n        loss += (float(online[s][a]) - q_target) ** 2\n    return float(loss / len(batch))\n",
     "expectedOutput": "True",
     "testCases": [
       {
-        "name": "double dqn",
+        "name": "double dqn non-terminal update",
         "mode": "function",
         "function": "double_dqn_update",
         "args": [
@@ -929,14 +1764,6 @@
             [
               0.1,
               0.2
-            ],
-            [
-              0.3,
-              0.4
-            ],
-            [
-              0.5,
-              0.6
             ],
             [
               0.7,
@@ -949,24 +1776,62 @@
               0.25
             ],
             [
-              0.35,
-              0.45
-            ],
-            [
-              0.55,
-              0.65
-            ],
-            [
               0.75,
               0.85
             ]
           ],
           [
-            false
+            [
+              0,
+              1,
+              1.0,
+              1,
+              false
+            ]
           ],
           0.9
         ],
-        "expected": true
+        "hidden": false,
+        "expected": 2.4492250000000007
+      },
+      {
+        "name": "double dqn terminal transition uses immediate reward",
+        "mode": "function",
+        "function": "double_dqn_update",
+        "args": [
+          [
+            [
+              1.0,
+              2.0
+            ],
+            [
+              5.0,
+              6.0
+            ]
+          ],
+          [
+            [
+              10.0,
+              20.0
+            ],
+            [
+              50.0,
+              60.0
+            ]
+          ],
+          [
+            [
+              0,
+              1,
+              2.0,
+              1,
+              true
+            ]
+          ],
+          0.9
+        ],
+        "hidden": false,
+        "expected": 0.0
       }
     ],
     "quizzes": [
@@ -984,7 +1849,79 @@
     ],
     "thinkingQuestion": "Dueling DQN 将 Q 值分解为 V(s)+A(s,a)，这对学习有什么帮助？",
     "aiPrompt": "评估学生对 DQN、Double DQN 的理解。按 0-10 分打分。",
-    "status": "published"
+    "status": "published",
+    "evaluationCases": [
+      {
+        "name": "double dqn terminal zero loss when exact",
+        "mode": "function",
+        "function": "double_dqn_update",
+        "args": [
+          [
+            [
+              3.0,
+              1.0
+            ]
+          ],
+          [
+            [
+              9.0,
+              9.0
+            ]
+          ],
+          [
+            [
+              0,
+              0,
+              3.0,
+              0,
+              true
+            ]
+          ],
+          0.9
+        ],
+        "hidden": true,
+        "expected": 0.0
+      },
+      {
+        "name": "double dqn decouples online argmax from target eval",
+        "mode": "function",
+        "function": "double_dqn_update",
+        "args": [
+          [
+            [
+              0.0,
+              0.0
+            ],
+            [
+              10.0,
+              1.0
+            ]
+          ],
+          [
+            [
+              0.0,
+              0.0
+            ],
+            [
+              2.0,
+              99.0
+            ]
+          ],
+          [
+            [
+              0,
+              0,
+              1.0,
+              1,
+              false
+            ]
+          ],
+          0.5
+        ],
+        "hidden": true,
+        "expected": 4.0
+      }
+    ]
   },
   {
     "slug": "rl-gae-l2",
@@ -1004,11 +1941,11 @@
       "delta_t = r_t + gamma*V(s_{t+1}) - V(s_t)"
     ],
     "starterCode": "import numpy as np\ndef compute_gae(rewards, values, gamma, lam): pass",
-    "solutionCode": "import numpy as np\ndef compute_gae(rewards,values,gamma=0.99,lam=0.95):\n    T=len(rewards);adv=np.zeros(T)\n    gae=0\n    for t in reversed(range(T)):\n        delta=rewards[t]+gamma*(values[t+1]if t+1<len(values)else 0)-values[t]\n        gae=delta+gamma*lam*gae\n        adv[t]=gae\n    return adv",
+    "solutionCode": "# 【算法思路】实现指数加权多步 TD 误差的广义优势估计函数 compute_gae，兼容不同终止边界长度。\nimport numpy as np\n# 逆序累加 delta + gamma*lam*gae 生成优势数组\ndef compute_gae(rewards,values,gamma=0.99,lam=0.95):\n    T=len(rewards);adv=np.zeros(T)\n    gae=0\n    for t in reversed(range(T)):\n        delta=rewards[t]+gamma*(values[t+1]if t+1<len(values)else 0)-values[t]\n        gae=delta+gamma*lam*gae\n        adv[t]=gae\n    return adv\n",
     "expectedOutput": "True",
     "testCases": [
       {
-        "name": "gae",
+        "name": "gae 3-step trajectory",
         "mode": "function",
         "function": "compute_gae",
         "args": [
@@ -1025,7 +1962,34 @@
           0.9,
           0.95
         ],
-        "expected": true
+        "hidden": false,
+        "expected": [
+          0.2888050000000001,
+          0.29100000000000004,
+          0.19999999999999996
+        ]
+      },
+      {
+        "name": "gae lam=0 equals one-step td error",
+        "mode": "function",
+        "function": "compute_gae",
+        "args": [
+          [
+            1.0,
+            2.0
+          ],
+          [
+            0.5,
+            1.0
+          ],
+          0.9,
+          0.0
+        ],
+        "hidden": false,
+        "expected": [
+          1.4,
+          1.0
+        ]
       }
     ],
     "quizzes": [
@@ -1043,7 +2007,53 @@
     ],
     "thinkingQuestion": "GAE 的 lambda 参数如何控制偏差-方差权衡？",
     "aiPrompt": "评估学生对 PPO、GAE 的理解。按 0-10 分打分。",
-    "status": "published"
+    "status": "published",
+    "evaluationCases": [
+      {
+        "name": "single terminal step GAE",
+        "mode": "function",
+        "function": "compute_gae",
+        "args": [
+          [
+            2.0
+          ],
+          [
+            0.5
+          ],
+          0.9,
+          0.95
+        ],
+        "hidden": true,
+        "expected": [
+          1.5
+        ]
+      },
+      {
+        "name": "zero rewards and zero values zero advantage",
+        "mode": "function",
+        "function": "compute_gae",
+        "args": [
+          [
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0
+          ],
+          0.99,
+          0.95
+        ],
+        "hidden": true,
+        "expected": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    ]
   },
   {
     "slug": "rl-actor-critic-continuous-l2",
@@ -1064,17 +2074,19 @@
       "A = r+V(s')-V(s)"
     ],
     "starterCode": "import numpy as np\ndef normal_log_prob(mu, sigma, action): pass\ndef actor_critic_continuous(state, mu_head, sigma_head, critic_w): pass",
-    "solutionCode": "import numpy as np\ndef normal_log_prob(mu,sigma,action):\n    return -0.5*(((action-mu)/sigma)**2+np.log(2*np.pi*sigma**2))\ndef actor_critic_cont(state,mu_h,sigma_h,critic_w):\n    mu=state@mu_h\n    sigma=np.exp(state@sigma_h)\n    val=state@critic_w\n    return {\"mu\":float(mu),\"sigma\":float(sigma),\"value\":float(val)}",
+    "solutionCode": "# 【算法思路】构建面向连续动作空间的高斯策略分布参数输出头，并实现对应正态对数密度函数求值。\nimport numpy as np\n\n# 根据高斯均值与标准差求解连续动作点的对数概率密度\ndef normal_log_prob(mu, sigma, action):\n    mu, sigma, action = np.asarray(mu, dtype=float), np.asarray(sigma, dtype=float), np.asarray(action, dtype=float)\n    res = -0.5 * (((action - mu) / sigma) ** 2 + np.log(2 * np.pi * sigma ** 2))\n    return res.tolist() if res.ndim > 0 else float(res)\n\n# 用线性均值头、指数正标准差头与评论家权向量输出连续策略参数及估值\ndef actor_critic_continuous(state, mu_head, sigma_head, critic_w):\n    state = np.asarray(state, dtype=float)\n    mu_arr = state @ np.asarray(mu_head, dtype=float)\n    sigma_arr = np.exp(state @ np.asarray(sigma_head, dtype=float))\n    val = float(state @ np.asarray(critic_w, dtype=float))\n    return {\n        \"mu\": [round(float(x), 6) for x in mu_arr] if np.ndim(mu_arr) > 0 else round(float(mu_arr), 6),\n        \"sigma\": [round(float(x), 6) for x in sigma_arr] if np.ndim(sigma_arr) > 0 else round(float(sigma_arr), 6),\n        \"value\": round(val, 6),\n    }\n",
     "expectedOutput": "True",
     "testCases": [
       {
-        "name": "continuous ac",
-        "input": {
-          "state": [
+        "name": "continuous ac matrix head outputs",
+        "mode": "function",
+        "function": "actor_critic_continuous",
+        "args": [
+          [
             1,
             0
           ],
-          "muHead": [
+          [
             [
               0.1,
               0.2
@@ -1084,7 +2096,7 @@
               0.4
             ]
           ],
-          "sigmaHead": [
+          [
             [
               -0.1,
               -0.2
@@ -1094,12 +2106,35 @@
               -0.4
             ]
           ],
-          "criticW": [
+          [
             0.1,
             0.2
           ]
-        },
-        "expected": true
+        ],
+        "hidden": false,
+        "expected": {
+          "mu": [
+            0.1,
+            0.2
+          ],
+          "sigma": [
+            0.904837,
+            0.818731
+          ],
+          "value": 0.1
+        }
+      },
+      {
+        "name": "normal_log_prob at mean peak",
+        "mode": "function",
+        "function": "normal_log_prob",
+        "args": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "hidden": false,
+        "expected": -0.9189385332046727
       }
     ],
     "quizzes": [
@@ -1117,6 +2152,49 @@
     ],
     "thinkingQuestion": "PPO 在连续动作空间中如何实现？为什么需要 clip 操作？",
     "aiPrompt": "评估学生对 Actor-Critic、连续控制的理解。按 0-10 分打分。",
-    "status": "published"
+    "status": "published",
+    "evaluationCases": [
+      {
+        "name": "1D head scalar outputs",
+        "mode": "function",
+        "function": "actor_critic_continuous",
+        "args": [
+          [
+            1,
+            2
+          ],
+          [
+            0.5,
+            0.5
+          ],
+          [
+            0.0,
+            0.0
+          ],
+          [
+            1.0,
+            -0.5
+          ]
+        ],
+        "hidden": true,
+        "expected": {
+          "mu": 1.5,
+          "sigma": 1.0,
+          "value": 0.0
+        }
+      },
+      {
+        "name": "normal_log_prob symmetric around mu",
+        "mode": "function",
+        "function": "normal_log_prob",
+        "args": [
+          2.0,
+          1.0,
+          3.0
+        ],
+        "hidden": true,
+        "expected": -1.4189385332046727
+      }
+    ]
   }
 ]

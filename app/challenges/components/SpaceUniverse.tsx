@@ -8,7 +8,15 @@ import StarBackground from "./StarBackground";
 
 interface Props {
   onSelectStage: (stage: Stage) => void;
+  dbChallenges?: any[];
 }
+
+const isChallengePassed = (c: any) => Boolean(
+  c?.completed === true ||
+  c?.record?.codePassed === true ||
+  c?.record?.isPassed === true ||
+  c?.userRecord?.codePassed === true
+);
 
 // 关联 Stage 的魔幻森林动物头像映射
 const STAGE_ANIMAL_IMAGES: Record<number, string> = {
@@ -32,7 +40,16 @@ interface DragNode extends Stage {
   ry: number;
 }
 
-export default function SpaceUniverse({ onSelectStage }: Props) {
+export default function SpaceUniverse({ onSelectStage, dbChallenges = [] }: Props) {
+  const getStageStats = (stage: Stage) => {
+    const stageChallenges = dbChallenges.filter((c) => c.stageId === stage.id);
+    if (stageChallenges.length === 0) {
+      return { completed: false, pct: 0 };
+    }
+    const passedCount = stageChallenges.filter(isChallengePassed).length;
+    const pct = Math.min(100, Math.round((passedCount / stageChallenges.length) * 100));
+    return { completed: passedCount === stageChallenges.length, pct };
+  };
   const containerRef = useRef<HTMLDivElement>(null);
   const [nodes, setNodes] = useState<DragNode[]>([]);
   const [mouse, setMouse] = useState({ x: 0, y: 0 });
@@ -314,6 +331,7 @@ export default function SpaceUniverse({ onSelectStage }: Props) {
       {nodes.map((stage) => {
         const isHovered = hovered === stage.id;
         const isDragging = activeDragId === stage.id;
+        const { completed: isStageCompleted, pct: stagePct } = getStageStats(stage);
 
         return (
           <div
@@ -378,7 +396,7 @@ export default function SpaceUniverse({ onSelectStage }: Props) {
                 </div>
 
                 {/* 🪐 已通关关卡外部 3D 环绕星环 (Saturn outer ring) - 放置在外部以防被 overflow-hidden 裁剪 */}
-                {[1, 2, 3].includes(stage.id) && (
+                {isStageCompleted && (
                   <div
                     className="absolute w-26 h-26 md:w-30 md:h-30 rounded-full pointer-events-none animate-[spin_15s_linear_infinite]"
                     style={{
@@ -401,7 +419,7 @@ export default function SpaceUniverse({ onSelectStage }: Props) {
                   }}
                 >
                   {/* 🪐 已通关关卡的内部发光特效 */}
-                  {[1, 2, 3].includes(stage.id) && (
+                  {isStageCompleted && (
                     <div
                       className="absolute inset-0 rounded-full pointer-events-none"
                       style={{
@@ -430,7 +448,7 @@ export default function SpaceUniverse({ onSelectStage }: Props) {
 
                   {/* 阶段代号标签 */}
                   <span className="absolute bottom-1 bg-slate-950/85 px-1.5 py-0.5 rounded text-[8px] text-slate-300 font-mono scale-90 border border-white/10 pointer-events-none select-none">
-                    ST-0{stage.id}
+                    ST-{String(stage.id).padStart(2, '0')}
                   </span>
                 </div>
 
@@ -457,19 +475,19 @@ export default function SpaceUniverse({ onSelectStage }: Props) {
                       exit={{ opacity: 0, y: 10 }}
                       className="absolute top-30 w-64 bg-slate-950/90 border border-purple-500/20 rounded-xl p-3.5 backdrop-blur-md shadow-2xl z-50 text-left pointer-events-none select-none"
                     >
-                      <span className="text-[9px] uppercase text-indigo-400 font-mono font-bold">Stage 0{stage.id}</span>
+                      <span className="text-[9px] uppercase text-indigo-400 font-mono font-bold">Stage {String(stage.id).padStart(2, '0')}</span>
                       <h3 className="text-xs font-bold text-white mb-1.5 mt-0.5">{stage.name}</h3>
                       <p className="text-[11px] text-slate-400 leading-relaxed mb-3">{stage.desc}</p>
 
                       <div className="space-y-1.5">
                         <div className="flex justify-between text-[9px] text-slate-500">
                           <span>掌握进度</span>
-                          <span className="text-indigo-400 font-semibold">{stage.id * 10 + 20}%</span>
+                          <span className="text-indigo-400 font-semibold">{stagePct}%</span>
                         </div>
                         <div className="w-full h-1 bg-slate-900 rounded-full overflow-hidden">
                           <div
                             className="h-full bg-gradient-to-r from-blue-500 to-indigo-500"
-                            style={{ width: `${stage.id * 10 + 20}%` }}
+                            style={{ width: `${stagePct}%` }}
                           />
                         </div>
                       </div>

@@ -1,130 +1,235 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Sparkles } from 'lucide-react';
+import {
+  VisualizerFrame,
+  InteractiveVectorCanvas,
+  InteractiveCurveCanvas,
+} from '../shared/VisualizerEngine';
+
+// 标准化二维点集 (便于真实计算 Hinge Loss 与 Margin)
+const POS_SAMPLES: Array<[number, number]> = [
+  [1.2, 2.2],
+  [2.3, 2.8],
+  [2.9, 1.5],
+  [3.4, 3.1],
+];
+const NEG_SAMPLES: Array<[number, number]> = [
+  [-2.6, -1.8],
+  [-1.9, -2.6],
+  [-1.1, -0.7],
+  [-0.3, -2.1],
+];
 
 export const SvmHingeVisualizer: React.FC = () => {
-  const [b, setB] = useState<number>(-75); // 截距
-  const [margin, setMargin] = useState<number>(28); // 间隔
+  const [slope, setSlope] = useState<number>(-0.9);
+  const [bias, setBias] = useState<number>(0.2);
+  const [marginHalfWidth, setMarginHalfWidth] = useState<number>(1.0); // 1 / ||w||
 
-  // 正样本点 (Class +1)
-  const posPoints = [
-    { x: 130, y: 70 },
-    { x: 170, y: 55 },
-    { x: 210, y: 95 },
-    { x: 225, y: 35 }
+  // 法向量 w 使得直线斜率为 slope: slope*x - y + bias/scale = 0 => 归一化法向量
+  // 我们把超平面表示为 w_x * x + w_y * y + b = 0, 其中 w_y = -1, w_x = slope
+  const rawNorm = Math.hypot(slope, -1);
+  const scale = 1 / (marginHalfWidth * rawNorm);
+  const wx = slope * scale;
+  const wy = -1 * scale;
+  const bNorm = bias * scale;
+
+  const evalScore = (x: number, y: number) => wx * x + wy * y + bNorm;
+  const hinge = (x: number, y: number, label: 1 | -1) => Math.max(0, 1 - label * evalScore(x, y));
+
+  // 超平面与边界点计算: y = slope * x + bias +/- offsetY
+  const offsetY = marginHalfWidth * rawNorm;
+  const xMin = -4.2;
+  const xMax = 4.2;
+
+  const allPoints = [
+    ...POS_SAMPLES.map(([x, y], i) => {
+      const h = hinge(x, y, 1);
+      const isSV = Math.abs(evalScore(x, y) - 1) < 0.35 || h > 0;
+      return {
+        x,
+        y,
+        label: h > 0.05 ? `ξ=${h.toFixed(1)}` : i === 0 ? '+1' : undefined,
+        tone: (h > 0.05 ? 'amber' : 'cyan') as 'amber' | 'cyan',
+        ring: isSV,
+        radius: 5.5,
+      };
+    }),
+    ...NEG_SAMPLES.map(([x, y], i) => {
+      const h = hinge(x, y, -1);
+      const isSV = Math.abs(evalScore(x, y) + 1) < 0.35 || h > 0;
+      return {
+        x,
+        y,
+        label: h > 0.05 ? `ξ=${h.toFixed(1)}` : i === 0 ? '-1' : undefined,
+        tone: (h > 0.05 ? 'amber' : 'rose') as 'amber' | 'rose',
+        ring: isSV,
+        radius: 5.5,
+      };
+    }),
   ];
 
-  // 负样本点 (Class -1)
-  const negPoints = [
-    { x: 65, y: 175 },
-    { x: 85, y: 215 },
-    { x: 105, y: 145 },
-    { x: 145, y: 220 }
-  ];
+  const totalHinge =
+    POS_SAMPLES.reduce((acc, [x, y]) => acc + hinge(x, y, 1), 0) +
+    NEG_SAMPLES.reduce((acc, [x, y]) => acc + hinge(x, y, -1), 0);
+
+  const svCount = allPoints.filter((p) => p.ring).length;
 
   return (
-    <div className="bg-slate-900/40 border border-blue-900/30 rounded-2xl p-6 backdrop-blur-md flex flex-col items-center min-w-0 w-full">
-      <div className="flex items-center gap-2 mb-3">
-        <Sparkles className="w-4 h-4 text-cyan-400 animate-pulse" />
-        <span className="text-sm font-semibold text-cyan-300">交互演示：线性分类边界与间隔</span>
-      </div>
-      
-      <svg viewBox="0 0 280 220" role="img" aria-label="两类样本、分类边界和间隔" className="w-full bg-[#030308] border border-blue-950/60 rounded-xl filter drop-shadow-[0_0_10px_rgba(59,130,246,0.15)]">
-        {/* 网络细格线 */}
-        <line x1="0" y1="110" x2="280" y2="110" stroke="rgba(255,255,255,0.03)" />
-        <line x1="140" y1="0" x2="140" y2="220" stroke="rgba(255,255,255,0.03)" />
-
-        {/* 间隔边缘虚线 Margin Boundaries */}
-        {/* y = 0.8x + b + 110 +/- margin */}
-        <line x1="0" y1={b + 110 - margin * Math.hypot(1, 0.8)} x2="280" y2={0.8 * 280 + b + 110 - margin * Math.hypot(1, 0.8)} stroke="rgba(6, 182, 212, 0.25)" strokeDasharray="3" strokeWidth="1.5" />
-        <line x1="0" y1={b + 110 + margin * Math.hypot(1, 0.8)} x2="280" y2={0.8 * 280 + b + 110 + margin * Math.hypot(1, 0.8)} stroke="rgba(236, 72, 153, 0.25)" strokeDasharray="3" strokeWidth="1.5" />
-
-        {/* 分类超平面 Hyperplane */}
-        <line x1="0" y1={b + 110} x2="280" y2={0.8 * 280 + b + 110} stroke="#4f46e5" strokeWidth="2.5" className="filter drop-shadow-[0_0_6px_rgba(79,70,229,0.6)]" />
-
-        {/* 正类样本圈 (蓝) */}
-        {posPoints.map((pt, i) => (
-          <circle key={`pos-${i}`} cx={pt.x} cy={pt.y} r="6" fill="#06b6d4" className="filter drop-shadow-[0_0_5px_#06b6d4]" />
-        ))}
-
-        {/* 负类样本圈 (红/粉) */}
-        {negPoints.map((pt, i) => (
-          <circle key={`neg-${i}`} cx={pt.x} cy={pt.y} r="6" fill="#ec4899" className="filter drop-shadow-[0_0_5px_#ec4899]" />
-        ))}
-      </svg>
-
-      <p className="mt-3 text-xs text-slate-300">青点为正类，粉点为负类，紫线为分类边界，虚线标出两侧的间隔。</p>
-      <div className="w-full mt-5 space-y-3">
-        <div className="flex flex-col gap-1 text-xs">
-          <div className="flex justify-between text-gray-400 font-mono">
-            <span>超平面截距 (Bias b)</span>
-            <span className="text-cyan-400">{b}</span>
-          </div>
-          <input 
-            aria-label="超平面截距" type="range" 
-            min="-100" 
-            max="10" 
-            value={b} 
-            onChange={(e) => setB(Number(e.target.value))} 
-            className="w-full h-1 bg-slate-950 rounded-lg appearance-none cursor-pointer accent-indigo-500" 
-          />
-        </div>
-        
-        <div className="flex flex-col gap-1 text-xs">
-          <div className="flex justify-between text-gray-400 font-mono">
-            <span>几何间隔 (Margin)</span>
-            <span className="text-pink-400">{margin}</span>
-          </div>
-          <input 
-            aria-label="几何间隔" type="range" 
-            min="10" 
-            max="50" 
-            value={margin} 
-            onChange={(e) => setMargin(Number(e.target.value))} 
-            className="w-full h-1 bg-slate-950 rounded-lg appearance-none cursor-pointer accent-indigo-500" 
-          />
-        </div>
-      </div>
-    </div>
+    <VisualizerFrame
+      title="线性 SVM 超平面、间隔与 Hinge Loss"
+      subtitle="调节斜率、截距与间隔宽度，观察支持向量（虚线外环）与越界松弛惩罚 ξ = max(0, 1 - y(w·x+b))。"
+      badge="2D 几何坐标系"
+      sliders={[
+        {
+          label: '超平面斜率 (Slope)',
+          value: slope,
+          min: -2.0,
+          max: 0.2,
+          step: 0.1,
+          displayValue: slope.toFixed(1),
+          onChange: setSlope,
+        },
+        {
+          label: '偏置截距 (Bias b)',
+          value: bias,
+          min: -1.6,
+          max: 1.6,
+          step: 0.1,
+          displayValue: bias.toFixed(1),
+          onChange: setBias,
+        },
+        {
+          label: '几何半间隔 (1 / ||w||)',
+          value: marginHalfWidth,
+          min: 0.4,
+          max: 2.0,
+          step: 0.1,
+          displayValue: marginHalfWidth.toFixed(1),
+          onChange: setMarginHalfWidth,
+        },
+      ]}
+      metrics={[
+        { label: '总 Hinge Loss', value: totalHinge.toFixed(2), tone: totalHinge === 0 ? 'emerald' : 'amber' },
+        { label: '正则项 ½||w||²', value: (0.5 * (wx * wx + wy * wy)).toFixed(2), tone: 'indigo' },
+        { label: '边界/越界样本', value: `${svCount} 个`, tone: 'cyan' },
+      ]}
+      caption={
+        totalHinge === 0
+          ? '所有样本均位于各自间隔边界外侧（Hinge Loss = 0），达到完美线性可分！'
+          : '带有黄色标注的点侵犯了安全间隔或被错分，正在产生非零松弛惩罚 ξ。'
+      }
+    >
+      <InteractiveVectorCanvas
+        domainX={[-4, 4]}
+        domainY={[-3.5, 3.5]}
+        xLabel="x₁"
+        yLabel="x₂"
+        segments={[
+          {
+            x1: xMin,
+            y1: slope * xMin + bias,
+            x2: xMax,
+            y2: slope * xMax + bias,
+            tone: 'indigo',
+            width: 2.4,
+            label: 'w·x+b=0',
+          },
+          {
+            x1: xMin,
+            y1: slope * xMin + bias + offsetY,
+            x2: xMax,
+            y2: slope * xMax + bias + offsetY,
+            tone: 'cyan',
+            dashed: true,
+          },
+          {
+            x1: xMin,
+            y1: slope * xMin + bias - offsetY,
+            x2: xMax,
+            y2: slope * xMax + bias - offsetY,
+            tone: 'rose',
+            dashed: true,
+          },
+        ]}
+        points={allPoints}
+      />
+    </VisualizerFrame>
   );
 };
 
 export function SvmKernelVisualizer() {
   const [gamma, setGamma] = useState(0.8);
-  const [position, setPosition] = useState(0.5);
-  const left = Math.exp(-gamma * (position + 1) ** 2);
-  const right = Math.exp(-gamma * (position - 1) ** 2);
-  const score = right - left;
+  const [position, setPosition] = useState(0.35);
+
+  const negCenter = -1.2;
+  const posCenter = 1.2;
+
+  const negSim = Math.exp(-gamma * (position - negCenter) ** 2);
+  const posSim = Math.exp(-gamma * (position - posCenter) ** 2);
+  const dualScore = posSim - negSim;
+
+  const xs = Array.from({ length: 81 }, (_, i) => -3 + i * 0.075);
+  const posCurve: Array<[number, number]> = xs.map((x) => [x, Math.exp(-gamma * (x - posCenter) ** 2)]);
+  const negCurve: Array<[number, number]> = xs.map((x) => [x, -Math.exp(-gamma * (x - negCenter) ** 2)]);
+  const decisionCurve: Array<[number, number]> = xs.map((x) => [
+    x,
+    Math.exp(-gamma * (x - posCenter) ** 2) - Math.exp(-gamma * (x - negCenter) ** 2),
+  ]);
 
   return (
-    <section className="min-w-0 rounded-2xl border border-blue-900/30 bg-slate-900/40 p-5">
-      <h3 className="text-sm font-semibold text-cyan-300">RBF 核与对偶预测</h3>
-      <p className="my-3 text-xs leading-relaxed text-slate-300">
-        移动待分类点，观察它与两个训练样本的相似度。这里两个样本的对偶系数均为 1，偏置为 0。
-      </p>
-      <svg viewBox="0 0 320 100" className="w-full rounded-xl bg-slate-950" role="img" aria-label="两个训练样本和一个待分类点">
-        <line x1="30" x2="290" y1="52" y2="52" stroke="#475569" />
-        <circle cx="95" cy="52" r="6" fill="#f472b6" />
-        <circle cx="225" cy="52" r="6" fill="#22d3ee" />
-        <circle cx={160 + 65 * position} cy="52" r="11" fill="none" stroke="#a78bfa" strokeWidth="2" />
-        <text x="95" y="78" textAnchor="middle" fill="#f9a8d4" fontSize="12">−1 类</text>
-        <text x="225" y="78" textAnchor="middle" fill="#67e8f9" fontSize="12">+1 类</text>
-        <text x={160 + 65 * position} y="28" textAnchor="middle" fill="#c4b5fd" fontSize="12">待分类点</text>
-      </svg>
-      <div className="mt-4 space-y-3 text-xs text-slate-300">
-        <label className="block">待分类点位置 {position.toFixed(2)}
-          <input className="block w-full accent-violet-500" type="range" min="-2" max="2" step="0.05" value={position} onChange={event => setPosition(Number(event.target.value))} />
-        </label>
-        <label className="block">核参数 γ {gamma.toFixed(1)}
-          <input className="block w-full accent-violet-500" type="range" min="0.1" max="3" step="0.1" value={gamma} onChange={event => setGamma(Number(event.target.value))} />
-        </label>
-        <dl className="grid grid-cols-2 gap-2 rounded-lg bg-slate-950 p-3">
-          <dt>与负类的相似度</dt><dd className="text-right text-pink-300">{left.toFixed(3)}</dd>
-          <dt>与正类的相似度</dt><dd className="text-right text-cyan-300">{right.toFixed(3)}</dd>
-          <dt>对偶得分与预测</dt><dd className="text-right text-violet-300">{score.toFixed(3)} · {score === 0 ? '分类边界' : score > 0 ? '+1 类' : '−1 类'}</dd>
-        </dl>
-      </div>
-    </section>
+    <VisualizerFrame
+      title="RBF 核函数高斯响应与对偶得分"
+      subtitle="移动待测点 x* 并调节核宽度 γ，观察高斯相似度曲线如何叠加形成非线性决策边界。"
+      badge="RBF 高斯核响应"
+      sliders={[
+        {
+          label: '待分类点位置 x*',
+          value: position,
+          min: -2.6,
+          max: 2.6,
+          step: 0.05,
+          displayValue: position.toFixed(2),
+          onChange: setPosition,
+        },
+        {
+          label: '核带宽参数 γ',
+          value: gamma,
+          min: 0.2,
+          max: 3.0,
+          step: 0.1,
+          displayValue: gamma.toFixed(1),
+          onChange: setGamma,
+        },
+      ]}
+      metrics={[
+        { label: '正支持向量核相似度', value: posSim.toFixed(3), tone: 'cyan' },
+        { label: '负支持向量核相似度', value: negSim.toFixed(3), tone: 'rose' },
+        {
+          label: '对偶判别得分 f(x*)',
+          value: `${dualScore.toFixed(3)} (${dualScore >= 0 ? '+1 类' : '-1 类'})`,
+          tone: dualScore >= 0 ? 'emerald' : 'amber',
+        },
+      ]}
+      caption="γ 越大，每个支持向量的高斯钟形影响范围越窄；当 γ 过小时影响过于平坦，过大时则容易过拟合局部点。"
+    >
+      <InteractiveCurveCanvas
+        domainX={[-3, 3]}
+        domainY={[-1.15, 1.15]}
+        xLabel="x"
+        yLabel="f(x)"
+        vLines={[{ x: position, label: `x*=${position.toFixed(2)}`, tone: 'amber' }]}
+        curves={[
+          { id: 'pos', points: posCurve, label: '+1 核贡献', tone: 'cyan', dashed: true, width: 1.5 },
+          { id: 'neg', points: negCurve, label: '-1 核贡献', tone: 'rose', dashed: true, width: 1.5 },
+          { id: 'sum', points: decisionCurve, label: '合成决策函数 f(x)', tone: 'indigo', fillArea: true, width: 2.5 },
+        ]}
+        markers={[
+          { x: posCenter, y: 0, label: 'SV(+1)', tone: 'cyan', radius: 4.5 },
+          { x: negCenter, y: 0, label: 'SV(-1)', tone: 'rose', radius: 4.5 },
+          { x: position, y: dualScore, label: 'f(x*)', tone: 'amber', radius: 5.5 },
+        ]}
+      />
+    </VisualizerFrame>
   );
 }

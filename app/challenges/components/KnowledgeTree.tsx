@@ -4,8 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { BookOpen, Settings, ChevronRight, ArrowLeft, Sparkles, Loader } from 'lucide-react';
 import { Stage } from './data';
-import { SvmHingeVisualizer, SvmKernelVisualizer } from './visualizers/machine-learning/SvmVisualizers';
-import { findBasicKnowledgeVisualizer } from './visualizers/basic-knowledge';
+import { findChallengeVisualizer } from './visualizers';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
@@ -14,8 +13,8 @@ import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
 
 // 小节折叠组件（独立管理展开/收起状态）
-function SubtopicSection({ child, isSelected, onSelectNode, challenges, totalLevels, passedLevels, allPassed }: {
-  child: string; isSelected: boolean; onSelectNode: (n: string, levelIndex?: number) => void;
+function SubtopicSection({ child, isSelected, selectedLevelIndex = 0, onSelectNode, challenges, totalLevels, passedLevels, allPassed }: {
+  child: string; isSelected: boolean; selectedLevelIndex?: number; onSelectNode: (n: string, levelIndex?: number) => void;
   challenges: any[]; totalLevels: number; passedLevels: number; allPassed: boolean;
 }) {
   const [expanded, setExpanded] = useState(isSelected);
@@ -50,7 +49,7 @@ function SubtopicSection({ child, isSelected, onSelectNode, challenges, totalLev
             const lvPassed = Boolean(lv.completed || lv.record?.codePassed || lv.record?.isPassed || lv.userRecord?.codePassed);
             return (
               <button key={lIdx} onClick={() => onSelectNode(child, lIdx)}
-                className={`w-full text-left px-2.5 py-1.5 rounded-lg text-[11px] flex justify-between items-center transition ${isSelected ? 'bg-indigo-600/15 text-indigo-300' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/30'}`}
+                className={`w-full text-left px-2.5 py-1.5 rounded-lg text-[11px] flex justify-between items-center transition ${isSelected && selectedLevelIndex === lIdx ? 'bg-indigo-600/15 text-indigo-300' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/30'}`}
               >
                 <div className="flex items-center gap-1.5 min-w-0 w-[85%]">
                   <span className="text-[9px] text-cyan-500/60 font-mono shrink-0">{lv.authorId ? `partjava-${lv.levelIndex || '?'}` : '官方'}</span>
@@ -94,13 +93,12 @@ export const KnowledgeTree: React.FC<KnowledgeTreeProps> = ({
   const [loading, setLoading] = useState<boolean>(true);
 
   const detail = allLevels[previewIdx] || null;
-  const svmLevel = selectedNodeName === '支持向量机 (SVM)' ? detail?.levelTitle : null;
-  const SvmVisualizer = svmLevel === 'SVM 铰链损失分类器'
-    ? SvmHingeVisualizer
-    : svmLevel === 'SVM 核函数与对偶' ? SvmKernelVisualizer : null;
-  const Visualizer = selectedStage.id === 1
-    ? findBasicKnowledgeVisualizer(selectedNodeName, detail?.levelTitle)
-    : SvmVisualizer;
+  const Visualizer = findChallengeVisualizer(
+    selectedStage.id,
+    selectedNodeName,
+    detail?.levelTitle,
+    detail?.levelIndex ?? (previewIdx + 1)
+  );
 
   // 动态加载子话题所有关卡
   useEffect(() => {
@@ -134,10 +132,19 @@ export const KnowledgeTree: React.FC<KnowledgeTreeProps> = ({
 
     fetchDetail();
     return () => request.abort();
-  }, [selectedNodeName, selectedLevelIndex]);
+  }, [selectedNodeName]);
+
+  // 切换关卡序号时直接同步预览索引，避免重复请求闪烁
+  useEffect(() => {
+    if (allLevels.length > 0) {
+      setPreviewIdx(Math.min(selectedLevelIndex || 0, allLevels.length - 1));
+    } else {
+      setPreviewIdx(selectedLevelIndex || 0);
+    }
+  }, [selectedLevelIndex, allLevels.length]);
 
   // 当用户在侧边栏点击关卡时切换预览
-  const handleLevelClick = (child: string, levelIdx: number) => {
+  const handleLevelClick = (child: string, levelIdx: number = 0) => {
     onSelectNode(child, levelIdx);
     setPreviewIdx(levelIdx);
   };
@@ -184,19 +191,21 @@ export const KnowledgeTree: React.FC<KnowledgeTreeProps> = ({
                   const isPassedFn = (c: any) => Boolean(c?.completed === true || c?.record?.codePassed === true || c?.record?.isPassed === true || c?.userRecord?.codePassed === true);
                   const childChallenges = dbChallenges.filter(c => c.subtopicName === child && c.stageId === selectedStage.id)
                     .sort((a, b) => a.levelIndex - b.levelIndex);
-                  const totalLevels = childChallenges.length;
-                  const passedLevels = childChallenges.filter(isPassedFn).length;
-                  const allPassed = totalLevels > 0 && passedLevels === totalLevels;
+                  const resolvedChallenges = isSelected && childChallenges.length === 0 ? allLevels : childChallenges;
+                  const resolvedTotalLevels = resolvedChallenges.length;
+                  const resolvedPassedLevels = resolvedChallenges.filter(isPassedFn).length;
+                  const resolvedAllPassed = resolvedTotalLevels > 0 && resolvedPassedLevels === resolvedTotalLevels;
                   return (
                     <SubtopicSection
                       key={`official-${cIdx}`}
                       child={child}
                       isSelected={isSelected}
-                      onSelectNode={onSelectNode}
-                      challenges={childChallenges}
-                      totalLevels={totalLevels}
-                      passedLevels={passedLevels}
-                      allPassed={allPassed}
+                      selectedLevelIndex={previewIdx}
+                      onSelectNode={handleLevelClick}
+                      challenges={resolvedChallenges}
+                      totalLevels={resolvedTotalLevels}
+                      passedLevels={resolvedPassedLevels}
+                      allPassed={resolvedAllPassed}
                     />
                   );
                 })}
@@ -308,6 +317,33 @@ export const KnowledgeTree: React.FC<KnowledgeTreeProps> = ({
                 </button>
               </div>
             </div>
+
+            {allLevels.length > 1 && (
+              <div className="flex flex-wrap items-center gap-2">
+                {allLevels.map((lv: any, idx: number) => {
+                  const active = idx === previewIdx;
+                  const passed = Boolean(lv.completed || lv.record?.codePassed || lv.record?.isPassed || lv.userRecord?.codePassed);
+                  return (
+                    <button
+                      key={lv.id ?? idx}
+                      type="button"
+                      onClick={() => {
+                        setPreviewIdx(idx);
+                        onSelectLevel(idx);
+                      }}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-medium border transition flex items-center gap-1.5 ${
+                        active
+                          ? 'border-indigo-400/50 bg-indigo-500/20 text-indigo-200 shadow-sm'
+                          : 'border-slate-800 bg-slate-900/60 text-slate-400 hover:border-slate-700 hover:text-slate-200'
+                      }`}
+                    >
+                      <span>⭐ 第 {lv.levelIndex || idx + 1} 关：{lv.levelTitle || lv.title || `Level ${idx + 1}`}</span>
+                      {passed && <span className="text-emerald-400 text-[10px]">✓</span>}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
 
             {/* 看板文字简介区（如果有后台数据库内容就用数据库的，否则使用动态生成的模版以防写死成 SVM） */}
             <div className="grid items-start gap-6 [grid-template-columns:repeat(auto-fit,minmax(min(100%,22rem),1fr))]">

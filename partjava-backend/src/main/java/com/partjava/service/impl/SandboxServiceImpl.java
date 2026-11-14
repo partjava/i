@@ -176,6 +176,7 @@ public class SandboxServiceImpl implements SandboxService {
                         try { JsonNode parsed = mapper.readTree(value.asText()); if (parsed != null) value = parsed; } catch (IOException ignored) { }
                     }
                     args.add(value);
+                    input.put("legacy_input", true);
                 }
                 JsonNode kwargs = test.has("kwargs") ? test.get("kwargs") : mapper.createObjectNode();
                 if (!kwargs.isObject()) throw new IllegalArgumentException("kwargs 必须为对象");

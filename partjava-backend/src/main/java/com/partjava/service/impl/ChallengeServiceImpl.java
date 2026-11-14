@@ -37,6 +37,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -280,15 +281,22 @@ public class ChallengeServiceImpl implements ChallengeService {
                 }
             }
 
-            // 2. 更新最新代码，若 ACCEPTED 则更新最优代码与通关状态
-            if (userId != null) {
+            // 2. 仅当拿到明确评测结论（通过/答案错误/编译或运行异常/超时/超输出）时，才更新用户代码进度；
+            //    无测试用例(EXECUTED)或服务/系统异常(SERVICE_UNAVAILABLE/SYSTEM_ERROR/SYSTEM_BUSY)时不写入进度记录
+            String status = result != null ? result.getStatus() : null;
+            boolean isValidVerdict = status != null && Set.of(
+                    "ACCEPTED", "WRONG_ANSWER", "COMPILE_ERROR",
+                    "RUNTIME_ERROR", "TIME_LIMIT_EXCEEDED", "OUTPUT_LIMIT_EXCEEDED"
+            ).contains(status);
+
+            if (isValidVerdict) {
                 try {
                     UserChallengeRecord record = recordMapper.selectOne(new LambdaQueryWrapper<UserChallengeRecord>()
                             .eq(UserChallengeRecord::getUserId, userId).eq(UserChallengeRecord::getChallengeId, challengeId));
                     boolean isNew = record == null;
                     if (isNew) record = UserChallengeRecord.builder().userId(userId).challengeId(challengeId).completed(false).build();
                     record.setLastCode(code);
-                    if ("ACCEPTED".equals(result.getStatus())) {
+                    if ("ACCEPTED".equals(status)) {
                         boolean firstCompletion = !Boolean.TRUE.equals(record.getCompleted());
                         record.setCompleted(true);
                         record.setBestCode(code);
@@ -319,7 +327,7 @@ public class ChallengeServiceImpl implements ChallengeService {
     @Override
     public JudgementResult runSampleCode(Integer userId, Integer challengeId, String code) {
         JudgementResult result = evaluateChallenge(challengeId, code, true);
-        if (result != null && userId != null) {
+        if (result != null && userId != null && submissionMapper != null) {
             try {
                 String subStatus = "ACCEPTED".equals(result.getStatus()) ? "SAMPLE_ACCEPTED" : ("[样例] " + result.getStatus());
                 ChallengeSubmission submission = ChallengeSubmission.builder()

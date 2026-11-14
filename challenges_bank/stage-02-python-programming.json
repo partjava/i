@@ -20,7 +20,7 @@
       "list[int] = [int(x) \\mid x \\in value.split(',')]"
     ],
     "starterCode": "def parse_config_value(value: str, target_type: str):\n    \"\"\"\n    将字符串 value 转换为 target_type 对应的 Python 类型。\n    target_type 取值: 'int', 'float', 'bool', 'str', 'list[int]'\n    bool: 'true'/'yes'/'1' -> True, 'false'/'no'/'0' -> False（不区分大小写）\n    list[int]: '1,2,3' -> [1, 2, 3]\n    转换失败时抛出 ValueError。\n    \"\"\"\n    pass",
-    "solutionCode": "def parse_config_value(value: str, target_type: str):\n    if target_type == 'int':\n        return int(value)\n    elif target_type == 'float':\n        return float(value)\n    elif target_type == 'bool':\n        low = value.strip().lower()\n        if low in ('true', 'yes', '1'):\n            return True\n        elif low in ('false', 'no', '0'):\n            return False\n        else:\n            raise ValueError(f\"cannot parse '{value}' as bool\")\n    elif target_type == 'str':\n        return value\n    elif target_type == 'list[int]':\n        parts = [p.strip() for p in value.split(',') if p.strip()]\n        if not parts:\n            raise ValueError('empty list')\n        result = []\n        for p in parts:\n            result.append(int(p))\n        return result\n    else:\n        raise ValueError(f\"unsupported type: {target_type}\")",
+    "solutionCode": "# 【算法思路】将配置字符串安全解析为 int/float/bool/str/list[int] 类型，非法字面量抛出 ValueError。\n# 按目标类型分发转换逻辑，严格校验布尔与列表格式\ndef parse_config_value(value: str, target_type: str):\n    if target_type == 'int':\n        return int(value)\n    elif target_type == 'float':\n        return float(value)\n    elif target_type == 'bool':\n        low = value.strip().lower()\n        if low in ('true', 'yes', '1'):\n            return True\n        elif low in ('false', 'no', '0'):\n            return False\n        else:\n            raise ValueError(f\"cannot parse '{value}' as bool\")\n    elif target_type == 'str':\n        return value\n    elif target_type == 'list[int]':\n        parts = [p.strip() for p in value.split(',') if p.strip()]\n        if not parts:\n            raise ValueError('empty list')\n        result = []\n        for p in parts:\n            result.append(int(p))\n        return result\n    else:\n        raise ValueError(f\"unsupported type: {target_type}\")\n",
     "expectedOutput": "100",
     "testCases": [
       {
@@ -31,7 +31,8 @@
           "100",
           "int"
         ],
-        "expected": 100
+        "expected": 100,
+        "hidden": false
       },
       {
         "name": "parses bool true",
@@ -41,7 +42,8 @@
           "true",
           "bool"
         ],
-        "expected": true
+        "expected": true,
+        "hidden": false
       },
       {
         "name": "parses list[int]",
@@ -55,7 +57,8 @@
           1,
           2,
           3
-        ]
+        ],
+        "hidden": false
       },
       {
         "name": "invalid int raises",
@@ -65,7 +68,8 @@
           "abc",
           "int"
         ],
-        "expectedException": "ValueError"
+        "expectedException": "ValueError",
+        "hidden": false
       }
     ],
     "quizzes": [
@@ -94,7 +98,42 @@
     ],
     "thinkingQuestion": "如果你要支持嵌套类型如 `list[dict[str,int]]`，解析器设计应该如何分层？",
     "aiPrompt": "评估学生对 Python 类型转换、异常处理、字符串解析的理解。按 0-10 分打分。",
-    "status": "published"
+    "status": "published",
+    "evaluationCases": [
+      {
+        "name": "parses negative float",
+        "mode": "function",
+        "function": "parse_config_value",
+        "args": [
+          "-3.14",
+          "float"
+        ],
+        "hidden": true,
+        "expected": -3.14
+      },
+      {
+        "name": "parses bool no/false variants",
+        "mode": "function",
+        "function": "parse_config_value",
+        "args": [
+          " NO ",
+          "bool"
+        ],
+        "hidden": true,
+        "expected": false
+      },
+      {
+        "name": "empty list[int] raises",
+        "mode": "function",
+        "function": "parse_config_value",
+        "args": [
+          " , ",
+          "list[int]"
+        ],
+        "hidden": true,
+        "expectedException": "ValueError"
+      }
+    ]
   },
   {
     "slug": "python-log-level-filter",
@@ -117,7 +156,7 @@
       "Filter(log) = level(log) \\ge min\\_level"
     ],
     "starterCode": "def filter_logs(logs: list[dict], min_level: str) -> list[dict]:\n    \"\"\"\n    根据 min_level 过滤日志条目，返回按 timestamp 升序排列的结果。\n    级别大小: DEBUG=0, INFO=1, WARN=2, ERROR=3, FATAL=4\n    如果 min_level 不在支持列表中，抛出 ValueError。\n    \"\"\"\n    pass",
-    "solutionCode": "def filter_logs(logs: list[dict], min_level: str) -> list[dict]:\n    levels = {'DEBUG': 0, 'INFO': 1, 'WARN': 2, 'ERROR': 3, 'FATAL': 4}\n    if min_level not in levels:\n        raise ValueError(f\"unknown level: {min_level}\")\n    min_val = levels[min_level]\n    result = []\n    for log in logs:\n        level = log.get('level', '').upper()\n        if level in levels and levels[level] >= min_val:\n            result.append(log)\n    result.sort(key=lambda x: x.get('timestamp', ''))\n    return result",
+    "solutionCode": "# 【算法思路】按日志严重等级权重过滤掉低于最低阈值的日志，并按时间戳升序输出。\n# 校验等级名称合法性、过滤并按时间戳排序日志列表\ndef filter_logs(logs: list[dict], min_level: str) -> list[dict]:\n    levels = {'DEBUG': 0, 'INFO': 1, 'WARN': 2, 'ERROR': 3, 'FATAL': 4}\n    if min_level not in levels:\n        raise ValueError(f\"unknown level: {min_level}\")\n    min_val = levels[min_level]\n    result = []\n    for log in logs:\n        level = log.get('level', '').upper()\n        if level in levels and levels[level] >= min_val:\n            result.append(log)\n    result.sort(key=lambda x: x.get('timestamp', ''))\n    return result\n",
     "expectedOutput": "[{\"timestamp\": \"10:00:02\", \"level\": \"WARN\", \"message\": \"disk usage 85%\"}]",
     "testCases": [
       {
@@ -150,7 +189,8 @@
             "level": "WARN",
             "message": "disk usage 85%"
           }
-        ]
+        ],
+        "hidden": false
       },
       {
         "name": "empty input",
@@ -160,7 +200,8 @@
           [],
           "INFO"
         ],
-        "expected": []
+        "expected": [],
+        "hidden": false
       }
     ],
     "quizzes": [
@@ -189,7 +230,58 @@
     ],
     "thinkingQuestion": "如果需要支持动态自定义级别（如 TRACE、AUDIT），目前的字典映射方式有什么优缺点？",
     "aiPrompt": "评估学生对条件判断、字典映射、异常处理的理解。按 0-10 分打分。",
-    "status": "published"
+    "status": "published",
+    "evaluationCases": [
+      {
+        "name": "sorts ascending by timestamp",
+        "mode": "function",
+        "function": "filter_logs",
+        "args": [
+          [
+            {
+              "timestamp": "12:00:00",
+              "level": "FATAL",
+              "message": "down"
+            },
+            {
+              "timestamp": "09:00:00",
+              "level": "error",
+              "message": "oops"
+            },
+            {
+              "timestamp": "08:00:00",
+              "level": "WARN",
+              "message": "slow"
+            }
+          ],
+          "ERROR"
+        ],
+        "hidden": true,
+        "expected": [
+          {
+            "timestamp": "09:00:00",
+            "level": "error",
+            "message": "oops"
+          },
+          {
+            "timestamp": "12:00:00",
+            "level": "FATAL",
+            "message": "down"
+          }
+        ]
+      },
+      {
+        "name": "unknown min level raises",
+        "mode": "function",
+        "function": "filter_logs",
+        "args": [
+          [],
+          "TRACE"
+        ],
+        "hidden": true,
+        "expectedException": "ValueError"
+      }
+    ]
   },
   {
     "slug": "python-batch-task-scheduler",
@@ -212,7 +304,7 @@
       "Time = batches \\times batchSize \\times execTime + (batches-1) \\times interval"
     ],
     "starterCode": "import time\n\ndef run_batches(tasks: list[dict], batch_size: int, interval: float) -> list[dict]:\n    \"\"\"\n    tasks: [{\"id\": 1, \"payload\": \"...\"}, ...]\n    按 batch_size 分批执行，每批之间等待 interval 秒（用 time.sleep 模拟）。\n    执行每个任务调用 execute_task(task) 模拟。\n    返回 [{\"batch\": 1, \"results\": [...]}, ...]\n    每个结果格式: {\"id\": 1, \"status\": \"success\"} 或 {\"id\": 1, \"status\": \"failed\", \"error\": \"...\"}\n    \"\"\"\n    pass\n\ndef execute_task(task: dict) -> str:\n    import time\n    time.sleep(0.01)\n    if isinstance(task.get('payload'), int) and task['payload'] < 0:\n        raise ValueError('negative payload')\n    return f\"processed:{task['payload']}\"",
-    "solutionCode": "import time\n\ndef run_batches(tasks: list[dict], batch_size: int, interval: float) -> list[dict]:\n    if batch_size <= 0:\n        raise ValueError('batch_size must be positive')\n    batches = []\n    batch_no = 1\n    i = 0\n    while i < len(tasks):\n        batch_tasks = tasks[i:i + batch_size]\n        results = []\n        for task in batch_tasks:\n            try:\n                execute_task(task)\n                results.append({'id': task['id'], 'status': 'success'})\n            except Exception as e:\n                results.append({'id': task['id'], 'status': 'failed', 'error': str(e)})\n        batches.append({'batch': batch_no, 'results': results})\n        batch_no += 1\n        i += batch_size\n        if i < len(tasks) and interval > 0:\n            time.sleep(interval)\n    return batches",
+    "solutionCode": "# 【算法思路】按固定批大小切分任务并逐个捕获异常，同时在批次之间保留可配置等待间隔。\nimport time\n\n# 执行单任务并对负数载荷模拟抛出 ValueError\ndef execute_task(task: dict) -> str:\n    # 模拟单个任务执行，负数载荷触发异常以便批处理捕获\n    if isinstance(task.get('payload'), int) and task['payload'] < 0:\n        raise ValueError('negative payload')\n    return f\"processed:{task['payload']}\"\n\n# 分批执行任务、收集成功/失败状态并在批间睡眠\ndef run_batches(tasks: list[dict], batch_size: int, interval: float) -> list[dict]:\n    # 校验批大小必须为正整数\n    if batch_size <= 0:\n        raise ValueError('batch_size must be positive')\n    batches = []\n    batch_no = 1\n    i = 0\n    # 按 batch_size 切片分批执行并隔离单任务失败\n    while i < len(tasks):\n        batch_tasks = tasks[i:i + batch_size]\n        results = []\n        for task in batch_tasks:\n            try:\n                execute_task(task)\n                results.append({'id': task['id'], 'status': 'success'})\n            except Exception as e:\n                results.append({'id': task['id'], 'status': 'failed', 'error': str(e)})\n        batches.append({'batch': batch_no, 'results': results})\n        batch_no += 1\n        i += batch_size\n        # 批间等待（非最后一批且 interval>0）\n        if i < len(tasks) and interval > 0:\n            time.sleep(interval)\n    return batches\n",
     "expectedOutput": "[{\"batch\": 1, \"results\": [{\"id\": 1, \"status\": \"success\"}]}]",
     "testCases": [
       {
@@ -261,7 +353,8 @@
               }
             ]
           }
-        ]
+        ],
+        "hidden": false
       },
       {
         "name": "empty tasks",
@@ -272,7 +365,8 @@
           5,
           0
         ],
-        "expected": []
+        "expected": [],
+        "hidden": false
       }
     ],
     "quizzes": [
@@ -301,7 +395,61 @@
     ],
     "thinkingQuestion": "如果某个任务一直卡住（hang），目前的 try/except 能处理吗？你会如何增加超时机制？",
     "aiPrompt": "评估学生对循环控制、切片分批、异常处理和流量整形的理解。按 0-10 分打分。",
-    "status": "published"
+    "status": "published",
+    "evaluationCases": [
+      {
+        "name": "exact batch multiple",
+        "mode": "function",
+        "function": "run_batches",
+        "args": [
+          [
+            {
+              "id": 1,
+              "payload": "a"
+            },
+            {
+              "id": 2,
+              "payload": "b"
+            }
+          ],
+          2,
+          0
+        ],
+        "hidden": true,
+        "expected": [
+          {
+            "batch": 1,
+            "results": [
+              {
+                "id": 1,
+                "status": "success"
+              },
+              {
+                "id": 2,
+                "status": "success"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "non-positive batch_size raises",
+        "mode": "function",
+        "function": "run_batches",
+        "args": [
+          [
+            {
+              "id": 1,
+              "payload": "a"
+            }
+          ],
+          0,
+          0
+        ],
+        "hidden": true,
+        "expectedException": "ValueError"
+      }
+    ]
   },
   {
     "slug": "python-memoize-decorator",
@@ -324,17 +472,28 @@
       "CacheLookup = \\begin{cases} O(1) & \\text{if } key \\in cache \\\\ O(n) & \\text{on eviction} \\end{cases}",
       "|cache| \\le maxSize"
     ],
-    "starterCode": "import functools\n\ndef memoize_n(max_size: int):\n    \"\"\"\n    装饰器工厂：缓存最近 max_size 次调用的结果。\n    使用 functools.wraps 保留原函数元信息。\n    缓存 key 由参数元组 (args, tuple(sorted(kwargs.items()))) 生成。\n    返回值带缓存统计: {\"result\": ..., \"cached\": True/False}\n    \"\"\"\n    pass",
-    "solutionCode": "import functools\n\ndef memoize_n(max_size: int):\n    if max_size <= 0:\n        raise ValueError('max_size must be positive')\n    def decorator(func):\n        cache = {}\n        order = []\n        @functools.wraps(func)\n        def wrapper(*args, **kwargs):\n            key = (args, tuple(sorted(kwargs.items())))\n            if key in cache:\n                order.remove(key)\n                order.append(key)\n                return {'result': cache[key], 'cached': True}\n            result = func(*args, **kwargs)\n            cache[key] = result\n            order.append(key)\n            if len(order) > max_size:\n                oldest = order.pop(0)\n                del cache[oldest]\n            return {'result': result, 'cached': False}\n        return wrapper\n    return decorator",
+    "starterCode": "import functools\n\ndef memoize_n(max_size: int):\n    \"\"\"\n    装饰器工厂：缓存最近 max_size 次调用的结果。\n    使用 functools.wraps 保留原函数元信息。\n    缓存 key 由参数元组 (args, tuple(sorted(kwargs.items()))) 生成。\n    返回值带缓存统计: {\"result\": ..., \"cached\": True/False}\n    \"\"\"\n    pass\n\n# 评测入口（请勿修改）\ndef eval_memoize(max_size: int, calls: list[list[int]]) -> list[dict]:\n    @memoize_n(max_size)\n    def add(a, b):\n        return a + b\n    return [add(*pair) for pair in calls]\n",
+    "solutionCode": "# 【算法思路】利用闭包字典与访问顺序列表实现容量受限的 LRU 函数结果缓存装饰器。\nimport functools\n\n# 构建缓存装饰器维护最近 max_size 次调用键与命中统计\ndef memoize_n(max_size: int):\n    # LRU 缓存装饰器工厂：保留最近 max_size 次不同参数组合的返回值\n    if max_size <= 0:\n        raise ValueError('max_size must be positive')\n    def decorator(func):\n        cache = {}\n        order = []\n        @functools.wraps(func)\n        def wrapper(*args, **kwargs):\n            key = (args, tuple(sorted(kwargs.items())))\n            if key in cache:\n                order.remove(key)\n                order.append(key)\n                return {'result': cache[key], 'cached': True}\n            result = func(*args, **kwargs)\n            cache[key] = result\n            order.append(key)\n            if len(order) > max_size:\n                oldest = order.pop(0)\n                del cache[oldest]\n            return {'result': result, 'cached': False}\n        return wrapper\n    return decorator\n\n# 评测入口（请勿修改）\ndef eval_memoize(max_size: int, calls: list[list[int]]) -> list[dict]:\n    @memoize_n(max_size)\n    def add(a, b):\n        return a + b\n    return [add(*pair) for pair in calls]\n",
     "expectedOutput": "{\"result\": 5, \"cached\": true}",
     "testCases": [
       {
         "name": "second call returns cached",
         "mode": "function",
-        "function": "memoize_n",
+        "function": "eval_memoize",
         "args": [
-          3
+          3,
+          [
+            [
+              2,
+              3
+            ],
+            [
+              2,
+              3
+            ]
+          ]
         ],
+        "hidden": false,
         "expected": [
           {
             "result": 5,
@@ -349,10 +508,29 @@
       {
         "name": "evicts oldest when full",
         "mode": "function",
-        "function": "memoize_n",
+        "function": "eval_memoize",
         "args": [
-          2
+          2,
+          [
+            [
+              1,
+              0
+            ],
+            [
+              2,
+              0
+            ],
+            [
+              3,
+              0
+            ],
+            [
+              1,
+              0
+            ]
+          ]
         ],
+        "hidden": false,
         "expected": [
           {
             "result": 1,
@@ -399,7 +577,78 @@
     ],
     "thinkingQuestion": "这个实现中 order.remove(key) 是 O(n) 操作。如果用 collections.OrderedDict 或 lru_cache，性能会怎样改进？",
     "aiPrompt": "评估学生对闭包、装饰器、缓存策略、functools.wraps 的理解。按 0-10 分打分。",
-    "status": "published"
+    "status": "published",
+    "evaluationCases": [
+      {
+        "name": "lru refresh promotes existing key",
+        "mode": "function",
+        "function": "eval_memoize",
+        "args": [
+          2,
+          [
+            [
+              1,
+              1
+            ],
+            [
+              2,
+              2
+            ],
+            [
+              1,
+              1
+            ],
+            [
+              3,
+              3
+            ],
+            [
+              1,
+              1
+            ]
+          ]
+        ],
+        "hidden": true,
+        "expected": [
+          {
+            "result": 2,
+            "cached": false
+          },
+          {
+            "result": 4,
+            "cached": false
+          },
+          {
+            "result": 2,
+            "cached": true
+          },
+          {
+            "result": 6,
+            "cached": false
+          },
+          {
+            "result": 2,
+            "cached": true
+          }
+        ]
+      },
+      {
+        "name": "invalid zero capacity raises",
+        "mode": "function",
+        "function": "eval_memoize",
+        "args": [
+          0,
+          [
+            [
+              1,
+              1
+            ]
+          ]
+        ],
+        "hidden": true,
+        "expectedException": "ValueError"
+      }
+    ]
   },
   {
     "slug": "python-sliding-window-stats",
@@ -422,7 +671,7 @@
       "Windows = n - k + 1 \\quad (n \\ge k)"
     ],
     "starterCode": "def sliding_window_stats(numbers: list[float], window_size: int) -> list[dict]:\n    \"\"\"\n    返回每个窗口的统计结果列表：\n    [{\"avg\": 2.0, \"max\": 3, \"min\": 1}, ...]\n    窗口数量 = len(numbers) - window_size + 1\n    如果 numbers 长度小于 window_size，返回空列表。\n    avg 保留两位小数。\n    \"\"\"\n    pass",
-    "solutionCode": "def sliding_window_stats(numbers: list[float], window_size: int) -> list[dict]:\n    if window_size <= 0:\n        raise ValueError('window_size must be positive')\n    if len(numbers) < window_size:\n        return []\n    result = []\n    for i in range(len(numbers) - window_size + 1):\n        window = numbers[i:i + window_size]\n        avg = round(sum(window) / window_size, 2)\n        result.append({'avg': avg, 'max': max(window), 'min': min(window)})\n    return result",
+    "solutionCode": "# 【算法思路】以固定长度窗口在数值序列上右移切片，逐窗口输出均值、最大值与最小值。\n# 校验窗口尺寸并切片计算每个窗口的三项统计量\ndef sliding_window_stats(numbers: list[float], window_size: int) -> list[dict]:\n    if window_size <= 0:\n        raise ValueError('window_size must be positive')\n    if len(numbers) < window_size:\n        return []\n    result = []\n    for i in range(len(numbers) - window_size + 1):\n        window = numbers[i:i + window_size]\n        avg = round(sum(window) / window_size, 2)\n        result.append({'avg': avg, 'max': max(window), 'min': min(window)})\n    return result\n",
     "expectedOutput": "[{\"avg\": 2.0, \"max\": 3, \"min\": 1}, {\"avg\": 3.0, \"max\": 4, \"min\": 2}]",
     "testCases": [
       {
@@ -449,7 +698,8 @@
             "max": 4,
             "min": 2
           }
-        ]
+        ],
+        "hidden": false
       },
       {
         "name": "not enough values",
@@ -462,7 +712,8 @@
           ],
           5
         ],
-        "expected": []
+        "expected": [],
+        "hidden": false
       }
     ],
     "quizzes": [
@@ -491,7 +742,75 @@
     ],
     "thinkingQuestion": "如果数据流无限（如实时监控指标），无法把所有数据存在列表里，你会怎么设计窗口计算？",
     "aiPrompt": "评估学生对列表切片、滑动窗口、计算复杂度和流式处理的理解。按 0-10 分打分。",
-    "status": "published"
+    "status": "published",
+    "evaluationCases": [
+      {
+        "name": "window size 1 mirrors values",
+        "mode": "function",
+        "function": "sliding_window_stats",
+        "args": [
+          [
+            5,
+            2,
+            9
+          ],
+          1
+        ],
+        "hidden": true,
+        "expected": [
+          {
+            "avg": 5,
+            "max": 5,
+            "min": 5
+          },
+          {
+            "avg": 2,
+            "max": 2,
+            "min": 2
+          },
+          {
+            "avg": 9,
+            "max": 9,
+            "min": 9
+          }
+        ]
+      },
+      {
+        "name": "window size equal array len",
+        "mode": "function",
+        "function": "sliding_window_stats",
+        "args": [
+          [
+            -3,
+            0,
+            6
+          ],
+          3
+        ],
+        "hidden": true,
+        "expected": [
+          {
+            "avg": 1,
+            "max": 6,
+            "min": -3
+          }
+        ]
+      },
+      {
+        "name": "zero window size raises",
+        "mode": "function",
+        "function": "sliding_window_stats",
+        "args": [
+          [
+            1,
+            2
+          ],
+          0
+        ],
+        "hidden": true,
+        "expectedException": "ValueError"
+      }
+    ]
   },
   {
     "slug": "python-multi-field-sorter",
@@ -514,7 +833,7 @@
       "(a_1, b_1) < (a_2, b_2) \\iff a_1 < a_2 \\lor (a_1 = a_2 \\land b_1 < b_2)"
     ],
     "starterCode": "def multi_field_sort(data: list[dict], rules: list[dict]) -> list[dict]:\n    \"\"\"\n    data: 待排序的字典列表，如 [{\"name\": \"A\", \"score\": 90}, ...]\n    rules: 排序规则，如 [{\"field\": \"score\", \"desc\": true}, {\"field\": \"name\", \"desc\": false}]\n    返回排序后的新列表（不修改原列表）。\n    如果某条记录缺少 rules 中的字段，该字段值视为 None（排在最后）。\n    \"\"\"\n    pass",
-    "solutionCode": "def multi_field_sort(data: list[dict], rules: list[dict]) -> list[dict]:\n    result = list(data)\n    def sort_key(item):\n        key_tuple = ()\n        for rule in rules:\n            field = rule['field']\n            desc = rule.get('desc', False)\n            val = item.get(field)\n            if desc:\n                key_tuple += (val is None, val if val is not None else float('-inf'))\n            else:\n                key_tuple += (val is None, val if val is not None else float('inf'))\n        return key_tuple\n    result.sort(key=sort_key)\n    return result",
+    "solutionCode": "# 【算法思路】从次高优先级到最高优先级逆序稳定排序，并始终将字段缺失记录置于末尾。\n# 对每条排序规则拆出非空记录与缺失记录后再按升降序重排\ndef multi_field_sort(data: list[dict], rules: list[dict]) -> list[dict]:\n    # 复制列表避免修改原数据，利用 Python 稳定排序从次要规则向主要规则逆序归并\n    result = list(data)\n    for rule in reversed(rules):\n        field = rule['field']\n        desc = rule.get('desc', False)\n        # 缺失值(None)无论升降序始终排在最后\n        present = [item for item in result if item.get(field) is not None]\n        missing = [item for item in result if item.get(field) is None]\n        present.sort(key=lambda item: item[field], reverse=desc)\n        result = present + missing\n    return result\n",
     "expectedOutput": "[{\"name\": \"B\", \"score\": 90}, {\"name\": \"A\", \"score\": 85}]",
     "testCases": [
       {
@@ -548,7 +867,8 @@
             "name": "A",
             "score": 85
           }
-        ]
+        ],
+        "hidden": false
       },
       {
         "name": "missing field sorted last",
@@ -579,7 +899,8 @@
           {
             "name": "A"
           }
-        ]
+        ],
+        "hidden": false
       }
     ],
     "quizzes": [
@@ -608,7 +929,95 @@
     ],
     "thinkingQuestion": "如果排序字段的值是一个嵌套字段（如 user.address.city），你的 key 函数需要怎么改造？",
     "aiPrompt": "评估学生对元组比较、排序 key 函数、None 处理和 sort 稳定性的理解。按 0-10 分打分。",
-    "status": "published"
+    "status": "published",
+    "evaluationCases": [
+      {
+        "name": "multi rule tie-break with string asc",
+        "mode": "function",
+        "function": "multi_field_sort",
+        "args": [
+          [
+            {
+              "name": "Zoe",
+              "score": 90
+            },
+            {
+              "name": "Amy",
+              "score": 90
+            },
+            {
+              "name": "Bob",
+              "score": 95
+            }
+          ],
+          [
+            {
+              "field": "score",
+              "desc": true
+            },
+            {
+              "field": "name",
+              "desc": false
+            }
+          ]
+        ],
+        "hidden": true,
+        "expected": [
+          {
+            "name": "Bob",
+            "score": 95
+          },
+          {
+            "name": "Amy",
+            "score": 90
+          },
+          {
+            "name": "Zoe",
+            "score": 90
+          }
+        ]
+      },
+      {
+        "name": "missing field stays last under asc too",
+        "mode": "function",
+        "function": "multi_field_sort",
+        "args": [
+          [
+            {
+              "name": "A"
+            },
+            {
+              "name": "B",
+              "score": 10
+            },
+            {
+              "name": "C",
+              "score": 5
+            }
+          ],
+          [
+            {
+              "field": "score",
+              "desc": false
+            }
+          ]
+        ],
+        "hidden": true,
+        "expected": [
+          {
+            "name": "C",
+            "score": 5
+          },
+          {
+            "name": "B",
+            "score": 10
+          },
+          {
+            "name": "A"
+          }
+        ]
+      }
+    ]
   },
   {
     "slug": "python-deep-dict-merger",
@@ -631,7 +1040,7 @@
       "Time = O(n) \\quad n = |keys(override)|"
     ],
     "starterCode": "def deep_merge(base: dict, override: dict, conflict: str = 'overwrite') -> dict:\n    \"\"\"\n    将 override 深度合并到 base，返回新字典（不修改入参）。\n    conflict: 'overwrite' | 'ignore' | 'merge'\n    当两个值都是 dict 时递归合并；至少一个不是 dict 时按 conflict 策略处理。\n    \"\"\"\n    pass",
-    "solutionCode": "def deep_merge(base: dict, override: dict, conflict: str = 'overwrite') -> dict:\n    if conflict not in ('overwrite', 'ignore', 'merge'):\n        raise ValueError(f\"unknown conflict strategy: {conflict}\")\n    result = base.copy()\n    for key, val in override.items():\n        if key not in result:\n            result[key] = val\n        elif isinstance(result[key], dict) and isinstance(val, dict):\n            result[key] = deep_merge(result[key], val, conflict)\n        elif conflict == 'overwrite':\n            result[key] = val\n        elif conflict == 'ignore':\n            pass\n        elif conflict == 'merge':\n            result[key] = val\n    return result",
+    "solutionCode": "# 【算法思路】递归深合并两个嵌套字典：子字典继续向下合并，标量按 overwrite/ignore/merge 策略处理。\n# 克隆基础字典并按冲突策略递归合并覆盖键值\ndef deep_merge(base: dict, override: dict, conflict: str = 'overwrite') -> dict:\n    if conflict not in ('overwrite', 'ignore', 'merge'):\n        raise ValueError(f\"unknown conflict strategy: {conflict}\")\n    result = base.copy()\n    for key, val in override.items():\n        if key not in result:\n            result[key] = val\n        elif isinstance(result[key], dict) and isinstance(val, dict):\n            result[key] = deep_merge(result[key], val, conflict)\n        elif conflict == 'overwrite':\n            result[key] = val\n        elif conflict == 'ignore':\n            pass\n        elif conflict == 'merge':\n            result[key] = val\n    return result\n",
     "expectedOutput": "{\"a\": 1, \"b\": {\"x\": 10, \"y\": 20}}",
     "testCases": [
       {
@@ -658,7 +1067,8 @@
             "x": 10,
             "y": 20
           }
-        }
+        },
+        "hidden": false
       },
       {
         "name": "overwrite scalar",
@@ -677,7 +1087,8 @@
         "expected": {
           "a": 1,
           "b": 99
-        }
+        },
+        "hidden": false
       }
     ],
     "quizzes": [
@@ -706,7 +1117,53 @@
     ],
     "thinkingQuestion": "如果合并时遇到相同 key 且两个值都是列表，你希望如何处理？合并列表、取并集还是报错？",
     "aiPrompt": "评估学生对递归函数、深浅拷贝、字典操作和策略模式的理解。按 0-10 分打分。",
-    "status": "published"
+    "status": "published",
+    "evaluationCases": [
+      {
+        "name": "ignore strategy keeps original scalar",
+        "mode": "function",
+        "function": "deep_merge",
+        "args": [
+          {
+            "a": {
+              "x": 1,
+              "y": 2
+            }
+          },
+          {
+            "a": {
+              "x": 9,
+              "z": 3
+            }
+          },
+          "ignore"
+        ],
+        "hidden": true,
+        "expected": {
+          "a": {
+            "x": 1,
+            "y": 2,
+            "z": 3
+          }
+        }
+      },
+      {
+        "name": "invalid conflict strategy raises",
+        "mode": "function",
+        "function": "deep_merge",
+        "args": [
+          {
+            "a": 1
+          },
+          {
+            "a": 2
+          },
+          "error"
+        ],
+        "hidden": true,
+        "expectedException": "ValueError"
+      }
+    ]
   },
   {
     "slug": "python-permission-intersection-analyzer",
@@ -730,7 +1187,7 @@
       "P_{unused} = P_{all} \\setminus P_{granted}"
     ],
     "starterCode": "def analyze_permissions(role_permissions: dict, user_roles: dict) -> dict:\n    \"\"\"\n    role_permissions: {\"admin\": {\"read\", \"write\", \"delete\"}, \"viewer\": {\"read\"}}\n    user_roles: {\"alice\": [\"admin\"], \"bob\": [\"viewer\", \"editor\"]}\n    返回:\n    {\n      \"users\": {\n        \"alice\": {\"permissions\": [\"delete\", \"read\", \"write\"], \"can_delete\": true},\n        ...\n      },\n      \"unused_permissions\": [\"...\"]  # 没有任何用户拥有的权限\n    }\n    \"\"\"\n    pass",
-    "solutionCode": "def analyze_permissions(role_permissions: dict, user_roles: dict) -> dict:\n    result_users = {}\n    all_granted = set()\n    for user, roles in user_roles.items():\n        perms = set()\n        for role in roles:\n            if role in role_permissions:\n                perms |= role_permissions[role]\n        result_users[user] = {\n            'permissions': sorted(perms),\n            'can_delete': 'delete' in perms\n        }\n        all_granted |= perms\n    all_perms = set()\n    for perms in role_permissions.values():\n        all_perms |= perms\n    unused = all_perms - all_granted\n    return {'users': result_users, 'unused_permissions': sorted(unused)}",
+    "solutionCode": "# 【算法思路】汇总用户多角色对应的权限集合并判断 delete 权限，同时识别从未被分配的权限项。\n# 聚合各用户角色权限与全局权限总集，计算差集得到未使用权限\ndef analyze_permissions(role_permissions: dict, user_roles: dict) -> dict:\n    # 将各角色权限统一转换为集合后再求并集，统计用户权限及未被授予的冗余权限\n    normalized_roles = {role: set(perms) for role, perms in role_permissions.items()}\n    result_users = {}\n    all_granted = set()\n    for user, roles in user_roles.items():\n        perms = set()\n        for role in roles:\n            if role in normalized_roles:\n                perms |= normalized_roles[role]\n        result_users[user] = {\n            'permissions': sorted(perms),\n            'can_delete': 'delete' in perms,\n        }\n        all_granted |= perms\n    all_perms = set()\n    for perms in normalized_roles.values():\n        all_perms |= perms\n    unused = all_perms - all_granted\n    return {'users': result_users, 'unused_permissions': sorted(unused)}\n",
     "expectedOutput": "{\"users\": {\"alice\": {\"permissions\": [\"delete\", \"read\", \"write\"], \"can_delete\": true}}, \"unused_permissions\": []}",
     "testCases": [
       {
@@ -739,8 +1196,14 @@
         "function": "analyze_permissions",
         "args": [
           {
-            "admin": {},
-            "viewer": {}
+            "admin": [
+              "read",
+              "write",
+              "delete"
+            ],
+            "viewer": [
+              "read"
+            ]
           },
           {
             "alice": [
@@ -751,6 +1214,7 @@
             ]
           }
         ],
+        "hidden": false,
         "expected": {
           "users": {
             "alice": {
@@ -777,7 +1241,12 @@
         "function": "analyze_permissions",
         "args": [
           {
-            "user": {}
+            "user": [
+              "read"
+            ],
+            "auditor": [
+              "audit"
+            ]
           },
           {
             "alice": [
@@ -786,6 +1255,7 @@
             ]
           }
         ],
+        "hidden": false,
         "expected": {
           "users": {
             "alice": {
@@ -795,7 +1265,9 @@
               "can_delete": false
             }
           },
-          "unused_permissions": []
+          "unused_permissions": [
+            "audit"
+          ]
         }
       }
     ],
@@ -825,7 +1297,71 @@
     ],
     "thinkingQuestion": "当角色数量很大（上千个）且权限层级复杂时，基于集合的权限模型和基于 RBAC/ABAC 的数据库模型各有什么优劣？",
     "aiPrompt": "评估学生对集合运算（并集、差集）、权限模型和安全分析的理解。按 0-10 分打分。",
-    "status": "published"
+    "status": "published",
+    "evaluationCases": [
+      {
+        "name": "multi role union + unused detection",
+        "mode": "function",
+        "function": "analyze_permissions",
+        "args": [
+          {
+            "dev": [
+              "read",
+              "write"
+            ],
+            "ops": [
+              "delete",
+              "deploy"
+            ],
+            "sec": [
+              "audit"
+            ]
+          },
+          {
+            "u1": [
+              "dev",
+              "ops"
+            ],
+            "u2": []
+          }
+        ],
+        "hidden": true,
+        "expected": {
+          "users": {
+            "u1": {
+              "permissions": [
+                "delete",
+                "deploy",
+                "read",
+                "write"
+              ],
+              "can_delete": true
+            },
+            "u2": {
+              "permissions": [],
+              "can_delete": false
+            }
+          },
+          "unused_permissions": [
+            "audit"
+          ]
+        }
+      },
+      {
+        "name": "empty input dicts",
+        "mode": "function",
+        "function": "analyze_permissions",
+        "args": [
+          {},
+          {}
+        ],
+        "hidden": true,
+        "expected": {
+          "users": {},
+          "unused_permissions": []
+        }
+      }
+    ]
   },
   {
     "slug": "python-log-word-frequency",
@@ -848,7 +1384,7 @@
       "Time = O(L \\times K) \\quad L = |logs|, K = |keywords|"
     ],
     "starterCode": "def count_keywords(log_lines: list[str], keywords: list[str]) -> list[dict]:\n    \"\"\"\n    log_lines: 模拟的日志文件行列表\n    keywords: 要统计的关键词列表\n    返回 [{\"keyword\": \"error\", \"count\": 5}, ...] 按 count 降序排列\n    不区分大小写匹配，但结果用原 keywords 中的大小写。\n    如果关键词一次都没出现，count=0 且排在最后。\n    \"\"\"\n    pass",
-    "solutionCode": "def count_keywords(log_lines: list[str], keywords: list[str]) -> list[dict]:\n    counts = {kw: 0 for kw in keywords}\n    for line in log_lines:\n        line_lower = line.lower()\n        for kw in keywords:\n            if kw.lower() in line_lower:\n                counts[kw] += 1\n    result = [{'keyword': kw, 'count': counts[kw]} for kw in keywords]\n    result.sort(key=lambda x: (-x['count'], x['keyword']))\n    return result",
+    "solutionCode": "# 【算法思路】忽略大小写统计每个关键词在日志行中的匹配次数，并按频次降序（同频保持原序）排列。\n# 遍历日志行累加关键词匹配行频次并稳定排序\ndef count_keywords(log_lines: list[str], keywords: list[str]) -> list[dict]:\n    # 统计日志行中出现各关键词的行数（不区分大小写），按频次降序、原顺序稳定输出\n    counts = {kw: 0 for kw in keywords}\n    for line in log_lines:\n        line_lower = line.lower()\n        for kw in keywords:\n            if kw.lower() in line_lower:\n                counts[kw] += 1\n    result = [{'keyword': kw, 'count': counts[kw]} for kw in keywords]\n    order_map = {kw: idx for idx, kw in enumerate(keywords)}\n    result.sort(key=lambda x: (-x['count'], order_map[x['keyword']]))\n    return result\n",
     "expectedOutput": "[{\"keyword\": \"error\", \"count\": 3}, {\"keyword\": \"warn\", \"count\": 1}]",
     "testCases": [
       {
@@ -877,7 +1413,8 @@
             "keyword": "warn",
             "count": 1
           }
-        ]
+        ],
+        "hidden": false
       },
       {
         "name": "zero count",
@@ -901,7 +1438,8 @@
             "keyword": "debug",
             "count": 0
           }
-        ]
+        ],
+        "hidden": false
       }
     ],
     "quizzes": [
@@ -930,7 +1468,58 @@
     ],
     "thinkingQuestion": "如果关键词有上百个，日志文件有上 GB，逐行逐词检查的性能会怎样？你会如何用更高效的算法（如 AC 自动机）来优化？",
     "aiPrompt": "评估学生对文件 I/O、字符串匹配、频率统计和性能优化的理解。按 0-10 分打分。",
-    "status": "published"
+    "status": "published",
+    "evaluationCases": [
+      {
+        "name": "case insensitive matches preserve keyword case",
+        "mode": "function",
+        "function": "count_keywords",
+        "args": [
+          [
+            "Fatal error here",
+            "FATAL crash"
+          ],
+          [
+            "Error",
+            "FATAL"
+          ]
+        ],
+        "hidden": true,
+        "expected": [
+          {
+            "keyword": "FATAL",
+            "count": 2
+          },
+          {
+            "keyword": "Error",
+            "count": 1
+          }
+        ]
+      },
+      {
+        "name": "empty logs list",
+        "mode": "function",
+        "function": "count_keywords",
+        "args": [
+          [],
+          [
+            "warn",
+            "err"
+          ]
+        ],
+        "hidden": true,
+        "expected": [
+          {
+            "keyword": "warn",
+            "count": 0
+          },
+          {
+            "keyword": "err",
+            "count": 0
+          }
+        ]
+      }
+    ]
   },
   {
     "slug": "python-json-data-pipeline",
@@ -953,7 +1542,7 @@
       "Type(val) = \\begin{cases} int(val) & val \\in \\mathbb{Z} \\\\ float(val) & val \\in \\mathbb{R} \\\\ bool(val) & val \\in \\{true, false\\} \\end{cases}"
     ],
     "starterCode": "def clean_json_record(record: dict) -> dict:\n    \"\"\"\n    清洗单条 JSON 记录：\n    1. snake_case 转 camelCase: user_name -> userName\n    2. 字符串数字 ('123', '3.14', 'true', 'false') 转实际类型\n    3. 字符串 trim 前后空白\n    4. 移除值为 None 的字段\n    嵌套 dict 也要递归处理。\n    \"\"\"\n    pass\n\ndef snake_to_camel(name: str) -> str:\n    \"\"\"user_name -> userName\"\"\"\n    pass",
-    "solutionCode": "def snake_to_camel(name: str) -> str:\n    parts = name.split('_')\n    return parts[0] + ''.join(p.capitalize() for p in parts[1:])\n\ndef clean_json_record(record: dict) -> dict:\n    result = {}\n    for key, val in record.items():\n        new_key = snake_to_camel(key)\n        if isinstance(val, dict):\n            val = clean_json_record(val)\n        elif isinstance(val, str):\n            val = val.strip()\n            if val == '':\n                continue\n            if val.lower() in ('true', 'True'):\n                val = True\n            elif val.lower() in ('false', 'False'):\n                val = False\n            elif val == 'null':\n                continue\n            else:\n                try:\n                    if '.' in val:\n                        val = float(val)\n                    else:\n                        val = int(val)\n                except (ValueError, TypeError):\n                    pass\n        if val is not None:\n            result[new_key] = val\n    return result",
+    "solutionCode": "# 【算法思路】完成下划线命名到小驼峰的键名标准化，同时清洗布尔/数字字符串并剔除 null 值字段。\n# 将下划线风格字段名转为小驼峰\ndef snake_to_camel(name: str) -> str:\n    parts = name.split('_')\n    return parts[0] + ''.join(p.capitalize() for p in parts[1:])\n\n# 遍历字典递归清洗键值类型并过滤空值\ndef clean_json_record(record: dict) -> dict:\n    result = {}\n    for key, val in record.items():\n        new_key = snake_to_camel(key)\n        if isinstance(val, dict):\n            val = clean_json_record(val)\n        elif isinstance(val, str):\n            val = val.strip()\n            if val == '':\n                continue\n            if val.lower() in ('true', 'True'):\n                val = True\n            elif val.lower() in ('false', 'False'):\n                val = False\n            elif val == 'null':\n                continue\n            else:\n                try:\n                    if '.' in val:\n                        val = float(val)\n                    else:\n                        val = int(val)\n                except (ValueError, TypeError):\n                    pass\n        if val is not None:\n            result[new_key] = val\n    return result\n",
     "expectedOutput": "{\"userName\": \"alice\", \"userAge\": 30}",
     "testCases": [
       {
@@ -969,7 +1558,8 @@
         "expected": {
           "userName": "alice",
           "userAge": 30
-        }
+        },
+        "hidden": false
       },
       {
         "name": "string to bool",
@@ -984,7 +1574,8 @@
         "expected": {
           "isActive": true,
           "score": 95.5
-        }
+        },
+        "hidden": false
       }
     ],
     "quizzes": [
@@ -1013,7 +1604,38 @@
     ],
     "thinkingQuestion": "如果 JSON 嵌套深度达到 10 层以上，递归实现的 clean_json_record 有栈溢出风险。你会如何改为迭代实现？",
     "aiPrompt": "评估学生对 JSON 处理、递归、字符串转换和数据清洗的理解。按 0-10 分打分。",
-    "status": "published"
+    "status": "published",
+    "evaluationCases": [
+      {
+        "name": "drops null and False/int string coercion",
+        "mode": "function",
+        "function": "clean_json_record",
+        "args": [
+          {
+            "user_score": "88",
+            "is_admin": "false",
+            "deleted_at": "null",
+            "note_text": "hello"
+          }
+        ],
+        "hidden": true,
+        "expected": {
+          "userScore": 88,
+          "isAdmin": false,
+          "noteText": "hello"
+        }
+      },
+      {
+        "name": "snake_to_camel helper",
+        "mode": "function",
+        "function": "snake_to_camel",
+        "args": [
+          "first_middle_last_name"
+        ],
+        "hidden": true,
+        "expected": "firstMiddleLastName"
+      }
+    ]
   },
   {
     "slug": "python-csv-group-aggregator",
@@ -1036,7 +1658,7 @@
       "Time = O(N \\log M) \\quad N = |rows|, M = |groups|"
     ],
     "starterCode": "def group_aggregate(data: list[dict], group_by: str, agg_field: str, agg_func: str) -> list[dict]:\n    \"\"\"\n    data: CSV 行数据列表\n    group_by: 分组字段名\n    agg_field: 聚合字段名\n    agg_func: 'sum' | 'avg' | 'count' | 'max' | 'min'\n    返回 [{\"department\": \"Engineering\", \"salary\": 25000, \"count\": 2}, ...]\n    包含分组字段、聚合值和记录数。按聚合值降序排列。\n    \"\"\"\n    pass",
-    "solutionCode": "def group_aggregate(data: list[dict], group_by: str, agg_field: str, agg_func: str) -> list[dict]:\n    if agg_func not in ('sum', 'avg', 'count', 'max', 'min'):\n        raise ValueError(f\"unsupported agg_func: {agg_func}\")\n    groups = {}\n    for row in data:\n        key = row.get(group_by)\n        val = row.get(agg_field, 0)\n        if key not in groups:\n            groups[key] = {'vals': [], 'count': 0}\n        groups[key]['vals'].append(val if val is not None else 0)\n        groups[key]['count'] += 1\n    result = []\n    for key, info in groups.items():\n        vals = info['vals']\n        if agg_func == 'sum':\n            agg_val = sum(vals)\n        elif agg_func == 'avg':\n            agg_val = round(sum(vals) / len(vals), 2) if vals else 0\n        elif agg_func == 'count':\n            agg_val = info['count']\n        elif agg_func == 'max':\n            agg_val = max(vals)\n        elif agg_func == 'min':\n            agg_val = min(vals)\n        result.append({group_by: key, agg_field: agg_val, 'count': info['count']})\n    result.sort(key=lambda x: x[agg_field], reverse=True)\n    return result",
+    "solutionCode": "# 【算法思路】按指定分组字段聚合记录并支持 sum/avg/count/max/min 五种聚合算子，结果降序排列。\n# 分桶收集数值后按聚合函数计算指标并按结果降序排列\ndef group_aggregate(data: list[dict], group_by: str, agg_field: str, agg_func: str) -> list[dict]:\n    if agg_func not in ('sum', 'avg', 'count', 'max', 'min'):\n        raise ValueError(f\"unsupported agg_func: {agg_func}\")\n    groups = {}\n    for row in data:\n        key = row.get(group_by)\n        val = row.get(agg_field, 0)\n        if key not in groups:\n            groups[key] = {'vals': [], 'count': 0}\n        groups[key]['vals'].append(val if val is not None else 0)\n        groups[key]['count'] += 1\n    result = []\n    for key, info in groups.items():\n        vals = info['vals']\n        if agg_func == 'sum':\n            agg_val = sum(vals)\n        elif agg_func == 'avg':\n            agg_val = round(sum(vals) / len(vals), 2) if vals else 0\n        elif agg_func == 'count':\n            agg_val = info['count']\n        elif agg_func == 'max':\n            agg_val = max(vals)\n        elif agg_func == 'min':\n            agg_val = min(vals)\n        result.append({group_by: key, agg_field: agg_val, 'count': info['count']})\n    result.sort(key=lambda x: x[agg_field], reverse=True)\n    return result\n",
     "expectedOutput": "[{\"department\": \"Engineering\", \"salary\": 25000, \"count\": 2}, {\"department\": \"Sales\", \"salary\": 8000, \"count\": 1}]",
     "testCases": [
       {
@@ -1073,7 +1695,8 @@
             "salary": 8000,
             "count": 1
           }
-        ]
+        ],
+        "hidden": false
       },
       {
         "name": "avg aggregation",
@@ -1109,7 +1732,8 @@
             "val": 15,
             "count": 1
           }
-        ]
+        ],
+        "hidden": false
       }
     ],
     "quizzes": [
@@ -1138,7 +1762,64 @@
     ],
     "thinkingQuestion": "如果数据量很大（百万行），内存放不下所有数据，你会如何设计流式分组聚合？",
     "aiPrompt": "评估学生对分组聚合、字典操作和排序的理解。按 0-10 分打分。",
-    "status": "published"
+    "status": "published",
+    "evaluationCases": [
+      {
+        "name": "min/max/count modes",
+        "mode": "function",
+        "function": "group_aggregate",
+        "args": [
+          [
+            {
+              "g": "x",
+              "v": 10
+            },
+            {
+              "g": "x",
+              "v": 30
+            },
+            {
+              "g": "y",
+              "v": 25
+            }
+          ],
+          "g",
+          "v",
+          "min"
+        ],
+        "hidden": true,
+        "expected": [
+          {
+            "g": "y",
+            "v": 25,
+            "count": 1
+          },
+          {
+            "g": "x",
+            "v": 10,
+            "count": 2
+          }
+        ]
+      },
+      {
+        "name": "unsupported agg raises",
+        "mode": "function",
+        "function": "group_aggregate",
+        "args": [
+          [
+            {
+              "g": "x",
+              "v": 1
+            }
+          ],
+          "g",
+          "v",
+          "median"
+        ],
+        "hidden": true,
+        "expectedException": "ValueError"
+      }
+    ]
   },
   {
     "slug": "python-connection-pool-simulator",
@@ -1160,15 +1841,17 @@
       "Acquire(\\text{timeout}) = \\begin{cases} conn & \\exists idle \\land deadline > now \\\\ TimeoutError & \\text{otherwise} \\end{cases}",
       "|idle| + |busy| = maxSize"
     ],
-    "starterCode": "import time\n\nclass ConnectionPool:\n    \"\"\"简易连接池\"\"\"\n    def __init__(self, max_size: int):\n        \"\"\"创建 max_size 个连接（用整数 ID 1..max_size 模拟）\"\"\"\n        pass\n\n    def acquire(self, timeout: float = 5.0) -> int:\n        \"\"\"获取连接，超时抛出 TimeoutError。timeout=0 不等待。\"\"\"\n        pass\n\n    def release(self, conn: int) -> None:\n        \"\"\"归还连接\"\"\"\n        pass\n\n    def close_all(self) -> None:\n        \"\"\"关闭所有连接\"\"\"\n        pass",
-    "solutionCode": "import time\n\nclass ConnectionPool:\n    def __init__(self, max_size: int):\n        if max_size <= 0:\n            raise ValueError('max_size must be positive')\n        self._idle = list(range(1, max_size + 1))\n        self._busy = set()\n        self._closed = False\n\n    def acquire(self, timeout: float = 5.0) -> int:\n        deadline = time.monotonic() + timeout\n        while time.monotonic() < deadline:\n            if self._closed:\n                raise RuntimeError('pool is closed')\n            if self._idle:\n                conn = self._idle.pop()\n                self._busy.add(conn)\n                return conn\n            if timeout == 0:\n                raise TimeoutError('no available connection')\n            time.sleep(0.05)\n        raise TimeoutError('acquire timed out')\n\n    def release(self, conn: int) -> None:\n        if conn in self._busy:\n            self._busy.remove(conn)\n            self._idle.append(conn)\n\n    def close_all(self) -> None:\n        self._closed = True\n        self._idle.clear()\n        self._busy.clear()",
+    "starterCode": "import time\n\nclass ConnectionPool:\n    \"\"\"简易连接池\"\"\"\n    def __init__(self, max_size: int):\n        \"\"\"创建 max_size 个连接（用整数 ID 1..max_size 模拟）\"\"\"\n        pass\n\n    def acquire(self, timeout: float = 5.0) -> int:\n        \"\"\"获取连接，超时抛出 TimeoutError。timeout=0 不等待。\"\"\"\n        pass\n\n    def release(self, conn: int) -> None:\n        \"\"\"归还连接\"\"\"\n        pass\n\n    def close_all(self) -> None:\n        \"\"\"关闭所有连接\"\"\"\n        pass\n\n# 评测入口（请勿修改）\ndef eval_pool(max_size: int, actions: list[dict]) -> list:\n    pool = ConnectionPool(max_size)\n    out = []\n    for act in actions:\n        op = act.get(\"op\")\n        if op == \"acquire\":\n            try:\n                out.append(pool.acquire(act.get(\"timeout\", 5.0)))\n            except TimeoutError:\n                out.append(\"timeout_error\")\n            except RuntimeError:\n                out.append(\"closed_error\")\n        elif op == \"release\":\n            pool.release(act[\"conn\"])\n            out.append(None)\n        elif op == \"close_all\":\n            pool.close_all()\n            out.append(None)\n    return out\n",
+    "solutionCode": "# 【算法思路】利用空闲队列与占用集合模拟连接池的获取、归还、超时等待及关闭状态隔离。\nimport time\n\n# 管理空闲与活跃连接 ID 集合并提供超时等待获取逻辑\nclass ConnectionPool:\n    \"\"\"基于空闲栈与占用集合的简易数据库连接池\"\"\"\n    def __init__(self, max_size: int):\n        if max_size <= 0:\n            raise ValueError('max_size must be positive')\n        # 使用 pop() 从尾部分配，初始化倒序使首个 acquire 返回连接 1\n        self._idle = list(range(max_size, 0, -1))\n        self._busy = set()\n        self._closed = False\n\n    def acquire(self, timeout: float = 5.0) -> int:\n        if self._closed:\n            raise RuntimeError('pool is closed')\n        if self._idle:\n            conn = self._idle.pop()\n            self._busy.add(conn)\n            return conn\n        if timeout <= 0:\n            raise TimeoutError('no available connection')\n        deadline = time.monotonic() + timeout\n        while time.monotonic() < deadline:\n            if self._closed:\n                raise RuntimeError('pool is closed')\n            if self._idle:\n                conn = self._idle.pop()\n                self._busy.add(conn)\n                return conn\n            time.sleep(0.01)\n        raise TimeoutError('acquire timed out')\n\n    def release(self, conn: int) -> None:\n        if conn in self._busy:\n            self._busy.remove(conn)\n            self._idle.append(conn)\n\n    def close_all(self) -> None:\n        self._closed = True\n        self._idle.clear()\n        self._busy.clear()\n\n# 评测入口（请勿修改）\ndef eval_pool(max_size: int, actions: list[dict]) -> list:\n    pool = ConnectionPool(max_size)\n    out = []\n    for act in actions:\n        op = act.get(\"op\")\n        if op == \"acquire\":\n            try:\n                out.append(pool.acquire(act.get(\"timeout\", 5.0)))\n            except TimeoutError:\n                out.append(\"timeout_error\")\n            except RuntimeError:\n                out.append(\"closed_error\")\n        elif op == \"release\":\n            pool.release(act[\"conn\"])\n            out.append(None)\n        elif op == \"close_all\":\n            pool.close_all()\n            out.append(None)\n    return out\n",
     "expectedOutput": "1",
     "testCases": [
       {
         "name": "acquire and release",
-        "input": {
-          "maxSize": 3,
-          "actions": [
+        "mode": "function",
+        "function": "eval_pool",
+        "args": [
+          3,
+          [
             {
               "op": "acquire"
             },
@@ -1180,7 +1863,8 @@
               "op": "acquire"
             }
           ]
-        },
+        ],
+        "hidden": false,
         "expected": [
           1,
           null,
@@ -1189,9 +1873,11 @@
       },
       {
         "name": "timeout when empty",
-        "input": {
-          "maxSize": 1,
-          "actions": [
+        "mode": "function",
+        "function": "eval_pool",
+        "args": [
+          1,
+          [
             {
               "op": "acquire"
             },
@@ -1200,7 +1886,8 @@
               "timeout": 0
             }
           ]
-        },
+        ],
+        "hidden": false,
         "expected": [
           1,
           "timeout_error"
@@ -1233,7 +1920,65 @@
     ],
     "thinkingQuestion": "这个实现在多线程环境下安全吗？_idle 和 _busy 的操作需要加锁吗？你会如何用 threading.Lock 改造？",
     "aiPrompt": "评估学生对类设计、资源管理、异常处理和超时机制的理解。按 0-10 分打分。",
-    "status": "published"
+    "status": "published",
+    "evaluationCases": [
+      {
+        "name": "reuse multiple connections",
+        "mode": "function",
+        "function": "eval_pool",
+        "args": [
+          2,
+          [
+            {
+              "op": "acquire"
+            },
+            {
+              "op": "acquire"
+            },
+            {
+              "op": "acquire",
+              "timeout": 0
+            },
+            {
+              "op": "release",
+              "conn": 1
+            },
+            {
+              "op": "acquire"
+            }
+          ]
+        ],
+        "hidden": true,
+        "expected": [
+          1,
+          2,
+          "timeout_error",
+          null,
+          1
+        ]
+      },
+      {
+        "name": "acquire after close_all fails",
+        "mode": "function",
+        "function": "eval_pool",
+        "args": [
+          1,
+          [
+            {
+              "op": "close_all"
+            },
+            {
+              "op": "acquire"
+            }
+          ]
+        ],
+        "hidden": true,
+        "expected": [
+          null,
+          "closed_error"
+        ]
+      }
+    ]
   },
   {
     "slug": "python-shopping-cart",
@@ -1256,14 +2001,16 @@
       "Discount(Subtotal) = \\begin{cases} 500 & Subtotal \\ge 10000 \\\\ 200 & Subtotal \\ge 5000 \\\\ 0 & \\text{otherwise} \\end{cases}",
       "Total = \\max(0, Subtotal - Discount)"
     ],
-    "starterCode": "class ShoppingCart:\n    \"\"\"购物车类，封装商品添加、计算逻辑\"\"\"\n    def __init__(self):\n        self._items = []\n\n    def add_item(self, name: str, price: float, quantity: int = 1) -> None:\n        \"\"\"添加商品，已有则累加数量\"\"\"\n        pass\n\n    def remove_item(self, name: str) -> None:\n        \"\"\"移除某商品\"\"\"\n        pass\n\n    def update_quantity(self, name: str, quantity: int) -> None:\n        \"\"\"更新数量，quantity=0 时移除\"\"\"\n        pass\n\n    def get_subtotal(self) -> float:\n        \"\"\"原价总和\"\"\"\n        pass\n\n    def get_discount(self) -> float:\n        \"\"\"优惠金额：满10000减500，满5000减200\"\"\"\n        pass\n\n    def get_total(self) -> float:\n        \"\"\"实际应付\"\"\"\n        pass\n\n    def item_count(self) -> int:\n        \"\"\"商品种类数\"\"\"\n        pass",
-    "solutionCode": "class ShoppingCart:\n    def __init__(self):\n        self._items = []\n\n    def add_item(self, name: str, price: float, quantity: int = 1) -> None:\n        for item in self._items:\n            if item['name'] == name:\n                item['quantity'] += quantity\n                item['price'] = price\n                return\n        self._items.append({'name': name, 'price': price, 'quantity': quantity})\n\n    def remove_item(self, name: str) -> None:\n        self._items = [it for it in self._items if it['name'] != name]\n\n    def update_quantity(self, name: str, quantity: int) -> None:\n        for item in self._items:\n            if item['name'] == name:\n                if quantity <= 0:\n                    self._items.remove(item)\n                else:\n                    item['quantity'] = quantity\n                return\n\n    def get_subtotal(self) -> float:\n        return sum(it['price'] * it['quantity'] for it in self._items)\n\n    def get_discount(self) -> float:\n        sub = self.get_subtotal()\n        if sub >= 10000:\n            return 500\n        elif sub >= 5000:\n            return 200\n        return 0\n\n    def get_total(self) -> float:\n        return max(0, self.get_subtotal() - self.get_discount())\n\n    def item_count(self) -> int:\n        return len(self._items)",
+    "starterCode": "class ShoppingCart:\n    \"\"\"购物车类，封装商品添加、计算逻辑\"\"\"\n    def __init__(self):\n        self._items = []\n\n    def add_item(self, name: str, price: float, quantity: int = 1) -> None:\n        \"\"\"添加商品，已有则累加数量\"\"\"\n        pass\n\n    def remove_item(self, name: str) -> None:\n        \"\"\"移除某商品\"\"\"\n        pass\n\n    def update_quantity(self, name: str, quantity: int) -> None:\n        \"\"\"更新数量，quantity=0 时移除\"\"\"\n        pass\n\n    def get_subtotal(self) -> float:\n        \"\"\"原价总和\"\"\"\n        pass\n\n    def get_discount(self) -> float:\n        \"\"\"优惠金额：满10000减500，满5000减200\"\"\"\n        pass\n\n    def get_total(self) -> float:\n        \"\"\"实际应付\"\"\"\n        pass\n\n    def item_count(self) -> int:\n        \"\"\"商品种类数\"\"\"\n        pass\n\n# 评测入口（请勿修改）\ndef eval_cart(actions: list[dict]) -> dict:\n    cart = ShoppingCart()\n    for act in actions:\n        op = act[\"op\"]\n        if op == \"add\":\n            cart.add_item(act[\"name\"], act[\"price\"], act.get(\"qty\", 1))\n        elif op == \"remove\":\n            cart.remove_item(act[\"name\"])\n        elif op == \"update\":\n            cart.update_quantity(act[\"name\"], act[\"qty\"])\n    return {\n        \"subtotal\": cart.get_subtotal(),\n        \"discount\": cart.get_discount(),\n        \"total\": cart.get_total(),\n    }\n",
+    "solutionCode": "# 【算法思路】维护购物车商品列表的增删改数量逻辑，并实现满 5000 减 200 / 满 10000 减 500 的阶梯折扣。\n# 封装商品行维护、原价小计与阶梯满减计算方法\nclass ShoppingCart:\n    \"\"\"购物车类：维护商品数量增删改及满减价格计算\"\"\"\n    def __init__(self):\n        self._items = []\n\n    def add_item(self, name: str, price: float, quantity: int = 1) -> None:\n        for item in self._items:\n            if item['name'] == name:\n                item['quantity'] += quantity\n                item['price'] = price\n                return\n        self._items.append({'name': name, 'price': price, 'quantity': quantity})\n\n    def remove_item(self, name: str) -> None:\n        self._items = [it for it in self._items if it['name'] != name]\n\n    def update_quantity(self, name: str, quantity: int) -> None:\n        for item in self._items:\n            if item['name'] == name:\n                if quantity <= 0:\n                    self._items.remove(item)\n                else:\n                    item['quantity'] = quantity\n                return\n\n    def get_subtotal(self) -> float:\n        return sum(it['price'] * it['quantity'] for it in self._items)\n\n    def get_discount(self) -> float:\n        sub = self.get_subtotal()\n        if sub >= 10000:\n            return 500\n        elif sub >= 5000:\n            return 200\n        return 0\n\n    def get_total(self) -> float:\n        return max(0, self.get_subtotal() - self.get_discount())\n\n    def item_count(self) -> int:\n        return len(self._items)\n\n# 评测入口（请勿修改）\ndef eval_cart(actions: list[dict]) -> dict:\n    cart = ShoppingCart()\n    for act in actions:\n        op = act[\"op\"]\n        if op == \"add\":\n            cart.add_item(act[\"name\"], act[\"price\"], act.get(\"qty\", 1))\n        elif op == \"remove\":\n            cart.remove_item(act[\"name\"])\n        elif op == \"update\":\n            cart.update_quantity(act[\"name\"], act[\"qty\"])\n    return {\n        \"subtotal\": cart.get_subtotal(),\n        \"discount\": cart.get_discount(),\n        \"total\": cart.get_total(),\n    }\n",
     "expectedOutput": "{\"subtotal\": 11998, \"discount\": 500, \"total\": 11498}",
     "testCases": [
       {
-        "name": "满10000减500",
-        "input": {
-          "actions": [
+        "name": "discount >= 10000",
+        "mode": "function",
+        "function": "eval_cart",
+        "args": [
+          [
             {
               "op": "add",
               "name": "iPhone",
@@ -1271,7 +2018,8 @@
               "qty": 2
             }
           ]
-        },
+        ],
+        "hidden": false,
         "expected": {
           "subtotal": 11998,
           "discount": 500,
@@ -1279,9 +2027,11 @@
         }
       },
       {
-        "name": "累计相同商品",
-        "input": {
-          "actions": [
+        "name": "accumulate same item",
+        "mode": "function",
+        "function": "eval_cart",
+        "args": [
+          [
             {
               "op": "add",
               "name": "Book",
@@ -1295,7 +2045,8 @@
               "qty": 2
             }
           ]
-        },
+        ],
+        "hidden": false,
         "expected": {
           "subtotal": 90,
           "discount": 0,
@@ -1329,7 +2080,60 @@
     ],
     "thinkingQuestion": "如果后续需要支持多种优惠策略（满减、折扣券、会员价），目前的 get_discount 硬编码规则的方式有什么问题？你会如何用策略模式重构？",
     "aiPrompt": "评估学生对封装、类方法设计、条件逻辑和代码可扩展性的理解。按 0-10 分打分。",
-    "status": "published"
+    "status": "published",
+    "evaluationCases": [
+      {
+        "name": "tier 5000 discount + update remove",
+        "mode": "function",
+        "function": "eval_cart",
+        "args": [
+          [
+            {
+              "op": "add",
+              "name": "TV",
+              "price": 5000,
+              "qty": 1
+            },
+            {
+              "op": "add",
+              "name": "Cable",
+              "price": 100,
+              "qty": 2
+            },
+            {
+              "op": "update",
+              "name": "Cable",
+              "qty": 0
+            }
+          ]
+        ],
+        "hidden": true,
+        "expected": {
+          "subtotal": 5000,
+          "discount": 200,
+          "total": 4800
+        }
+      },
+      {
+        "name": "remove non-existent item safe",
+        "mode": "function",
+        "function": "eval_cart",
+        "args": [
+          [
+            {
+              "op": "remove",
+              "name": "ghost"
+            }
+          ]
+        ],
+        "hidden": true,
+        "expected": {
+          "subtotal": 0,
+          "discount": 0,
+          "total": 0
+        }
+      }
+    ]
   },
   {
     "slug": "python-cache-backend-abstraction",
@@ -1352,15 +2156,17 @@
       "is\\_expired(key) = now > created(key) + TTL(key)",
       "CacheInterface: \\{get, set, delete, exists\\}"
     ],
-    "starterCode": "from abc import ABC, abstractmethod\nimport time\n\nclass CacheBackend(ABC):\n    \"\"\"缓存后端抽象基类\"\"\"\n    @abstractmethod\n    def get(self, key: str):\n        \"\"\"获取缓存值，不存在或已过期返回 None\"\"\"\n        pass\n\n    @abstractmethod\n    def set(self, key: str, value, ttl: int = 0) -> None:\n        \"\"\"设置缓存，ttl>0 时记录过期时间戳\"\"\"\n        pass\n\n    @abstractmethod\n    def delete(self, key: str) -> bool:\n        \"\"\"删除 key，返回是否成功\"\"\"\n        pass\n\n    @abstractmethod\n    def exists(self, key: str) -> bool:\n        \"\"\"检查 key 是否存在且未过期\"\"\"\n        pass\n\n\nclass MemoryCache(CacheBackend):\n    \"\"\"内存缓存实现，数据存储在 _store 字典中\"\"\"\n    def __init__(self):\n        self._store = {}\n        self._expiry = {}\n    # 实现所有抽象方法\n\n\nclass RedisCacheMock(CacheBackend):\n    \"\"\"模拟 Redis，key 自动加 \"redis:\" 前缀\"\"\"\n    def __init__(self):\n        self._store = {}\n        self._expiry = {}\n    # 实现所有抽象方法",
-    "solutionCode": "from abc import ABC, abstractmethod\nimport time\n\nclass CacheBackend(ABC):\n    @abstractmethod\n    def get(self, key: str):\n        pass\n\n    @abstractmethod\n    def set(self, key: str, value, ttl: int = 0) -> None:\n        pass\n\n    @abstractmethod\n    def delete(self, key: str) -> bool:\n        pass\n\n    @abstractmethod\n    def exists(self, key: str) -> bool:\n        pass\n\n\nclass MemoryCache(CacheBackend):\n    def __init__(self):\n        self._store = {}\n        self._expiry = {}\n\n    def _is_expired(self, key: str) -> bool:\n        if key in self._expiry and time.time() > self._expiry[key]:\n            del self._store[key]\n            del self._expiry[key]\n            return True\n        return False\n\n    def get(self, key: str):\n        if self._is_expired(key):\n            return None\n        return self._store.get(key)\n\n    def set(self, key: str, value, ttl: int = 0) -> None:\n        self._store[key] = value\n        if ttl > 0:\n            self._expiry[key] = time.time() + ttl\n        elif key in self._expiry:\n            del self._expiry[key]\n\n    def delete(self, key: str) -> bool:\n        self._store.pop(key, None)\n        self._expiry.pop(key, None)\n        return True\n\n    def exists(self, key: str) -> bool:\n        if self._is_expired(key):\n            return False\n        return key in self._store\n\n\nclass RedisCacheMock(CacheBackend):\n    def __init__(self):\n        self._store = {}\n        self._expiry = {}\n\n    def _prefix(self, key: str) -> str:\n        return f'redis:{key}'\n\n    def _is_expired(self, key: str) -> bool:\n        pk = self._prefix(key)\n        if pk in self._expiry and time.time() > self._expiry[pk]:\n            del self._store[pk]\n            del self._expiry[pk]\n            return True\n        return False\n\n    def get(self, key: str):\n        pk = self._prefix(key)\n        if self._is_expired(key):\n            return None\n        return self._store.get(pk)\n\n    def set(self, key: str, value, ttl: int = 0) -> None:\n        pk = self._prefix(key)\n        self._store[pk] = value\n        if ttl > 0:\n            self._expiry[pk] = time.time() + ttl\n        elif pk in self._expiry:\n            del self._expiry[pk]\n\n    def delete(self, key: str) -> bool:\n        pk = self._prefix(key)\n        self._store.pop(pk, None)\n        self._expiry.pop(pk, None)\n        return True\n\n    def exists(self, key: str) -> bool:\n        if self._is_expired(key):\n            return False\n        return self._prefix(key) in self._store",
+    "starterCode": "from abc import ABC, abstractmethod\nimport time\n\nclass CacheBackend(ABC):\n    \"\"\"缓存后端抽象基类\"\"\"\n    @abstractmethod\n    def get(self, key: str):\n        pass\n\n    @abstractmethod\n    def set(self, key: str, value, ttl: int = 0) -> None:\n        pass\n\n    @abstractmethod\n    def delete(self, key: str) -> bool:\n        pass\n\n    @abstractmethod\n    def exists(self, key: str) -> bool:\n        pass\n\n\nclass MemoryCache(CacheBackend):\n    \"\"\"内存缓存实现，数据存储在 _store 字典中\"\"\"\n    def __init__(self):\n        self._store = {}\n        self._expiry = {}\n\n\nclass RedisCacheMock(CacheBackend):\n    \"\"\"模拟 Redis，key 自动加 \"redis:\" 前缀\"\"\"\n    def __init__(self):\n        self._store = {}\n        self._expiry = {}\n\n# 评测入口（请勿修改）\ndef eval_cache(cache_type: str, actions: list[dict]):\n    cache = MemoryCache() if cache_type == \"memory\" else RedisCacheMock()\n    last = None\n    for act in actions:\n        op = act[\"op\"]\n        if op == \"set\":\n            cache.set(act[\"key\"], act[\"value\"], act.get(\"ttl\", 0))\n        elif op == \"get\":\n            last = cache.get(act[\"key\"])\n        elif op == \"delete\":\n            last = cache.delete(act[\"key\"])\n        elif op == \"exists\":\n            last = cache.exists(act[\"key\"])\n    return last\n",
+    "solutionCode": "# 【算法思路】通过 ABC 抽象基类约束统一缓存接口，分别实现本地内存缓存与带前缀隔离的模拟 Redis 缓存。\nfrom abc import ABC, abstractmethod\nimport time\n\n# 声明 get/set/delete/exists 抽象方法契约\nclass CacheBackend(ABC):\n    \"\"\"统一缓存后端抽象接口\"\"\"\n    @abstractmethod\n    def get(self, key: str): pass\n\n    @abstractmethod\n    def set(self, key: str, value, ttl: int = 0) -> None: pass\n\n    @abstractmethod\n    def delete(self, key: str) -> bool: pass\n\n    @abstractmethod\n    def exists(self, key: str) -> bool: pass\n\n# 内存字典与 TTL 过期时间戳维护\nclass MemoryCache(CacheBackend):\n    \"\"\"基于本地字典的内存缓存实现\"\"\"\n    def __init__(self):\n        self._store = {}\n        self._expiry = {}\n\n    def _is_expired(self, key: str) -> bool:\n        if key in self._expiry and time.time() > self._expiry[key]:\n            del self._store[key]\n            del self._expiry[key]\n            return True\n        return False\n\n    def get(self, key: str):\n        if self._is_expired(key):\n            return None\n        return self._store.get(key)\n\n    def set(self, key: str, value, ttl: int = 0) -> None:\n        self._store[key] = value\n        if ttl > 0:\n            self._expiry[key] = time.time() + ttl\n        elif key in self._expiry:\n            del self._expiry[key]\n\n    def delete(self, key: str) -> bool:\n        existed = key in self._store\n        self._store.pop(key, None)\n        self._expiry.pop(key, None)\n        return existed\n\n    def exists(self, key: str) -> bool:\n        if self._is_expired(key):\n            return False\n        return key in self._store\n\n# 自动添加 redis: 前缀的后端实现\nclass RedisCacheMock(CacheBackend):\n    \"\"\"带 redis: 前缀隔离的模拟 Redis 缓存\"\"\"\n    def __init__(self):\n        self._store = {}\n        self._expiry = {}\n\n    def _prefix(self, key: str) -> str:\n        return f'redis:{key}'\n\n    def _is_expired(self, key: str) -> bool:\n        pk = self._prefix(key)\n        if pk in self._expiry and time.time() > self._expiry[pk]:\n            del self._store[pk]\n            del self._expiry[pk]\n            return True\n        return False\n\n    def get(self, key: str):\n        pk = self._prefix(key)\n        if self._is_expired(key):\n            return None\n        return self._store.get(pk)\n\n    def set(self, key: str, value, ttl: int = 0) -> None:\n        pk = self._prefix(key)\n        self._store[pk] = value\n        if ttl > 0:\n            self._expiry[pk] = time.time() + ttl\n        elif pk in self._expiry:\n            del self._expiry[pk]\n\n    def delete(self, key: str) -> bool:\n        pk = self._prefix(key)\n        existed = pk in self._store\n        self._store.pop(pk, None)\n        self._expiry.pop(pk, None)\n        return existed\n\n    def exists(self, key: str) -> bool:\n        if self._is_expired(key):\n            return False\n        return self._prefix(key) in self._store\n\n# 评测入口（请勿修改）\ndef eval_cache(cache_type: str, actions: list[dict]):\n    cache = MemoryCache() if cache_type == \"memory\" else RedisCacheMock()\n    last = None\n    for act in actions:\n        op = act[\"op\"]\n        if op == \"set\":\n            cache.set(act[\"key\"], act[\"value\"], act.get(\"ttl\", 0))\n        elif op == \"get\":\n            last = cache.get(act[\"key\"])\n        elif op == \"delete\":\n            last = cache.delete(act[\"key\"])\n        elif op == \"exists\":\n            last = cache.exists(act[\"key\"])\n    return last\n",
     "expectedOutput": "hello",
     "testCases": [
       {
         "name": "memory cache set/get",
-        "input": {
-          "cacheType": "memory",
-          "actions": [
+        "mode": "function",
+        "function": "eval_cache",
+        "args": [
+          "memory",
+          [
             {
               "op": "set",
               "key": "name",
@@ -1371,14 +2177,17 @@
               "key": "name"
             }
           ]
-        },
+        ],
+        "hidden": false,
         "expected": "hello"
       },
       {
-        "name": "redis mock adds prefix",
-        "input": {
-          "cacheType": "redis",
-          "actions": [
+        "name": "redis mock set/get",
+        "mode": "function",
+        "function": "eval_cache",
+        "args": [
+          "redis",
+          [
             {
               "op": "set",
               "key": "x",
@@ -1389,7 +2198,8 @@
               "key": "x"
             }
           ]
-        },
+        ],
+        "hidden": false,
         "expected": 1
       }
     ],
@@ -1419,7 +2229,50 @@
     ],
     "thinkingQuestion": "这个缓存实现在并发环境下有问题吗？_store 和 _expiry 的操作不是原子的。你会如何加锁来保证线程安全？",
     "aiPrompt": "评估学生对抽象类、继承、方法复写和缓存 TTL 的理解。按 0-10 分打分。",
-    "status": "published"
+    "status": "published",
+    "evaluationCases": [
+      {
+        "name": "memory delete and missing get",
+        "mode": "function",
+        "function": "eval_cache",
+        "args": [
+          "memory",
+          [
+            {
+              "op": "set",
+              "key": "k",
+              "value": 99
+            },
+            {
+              "op": "delete",
+              "key": "k"
+            },
+            {
+              "op": "exists",
+              "key": "k"
+            }
+          ]
+        ],
+        "hidden": true,
+        "expected": false
+      },
+      {
+        "name": "redis delete missing key returns false",
+        "mode": "function",
+        "function": "eval_cache",
+        "args": [
+          "redis",
+          [
+            {
+              "op": "delete",
+              "key": "missing"
+            }
+          ]
+        ],
+        "hidden": true,
+        "expected": false
+      }
+    ]
   },
   {
     "slug": "python-log-formatter-polymorphism",
@@ -1441,28 +2294,34 @@
       "format(record, formatter) = formatter.format(record)",
       "O(1) \\text{ dispatch via virtual method call}"
     ],
-    "starterCode": "from abc import ABC, abstractmethod\nimport json\n\nclass LogRecord:\n    \"\"\"日志记录\"\"\"\n    def __init__(self, level: str, message: str, source: str = ''):\n        self.level = level\n        self.message = message\n        self.source = source\n        self.timestamp = '2025-01-01 10:00:00'\n\nclass LogFormatter(ABC):\n    \"\"\"日志格式化器抽象基类\"\"\"\n    @abstractmethod\n    def format(self, record: LogRecord) -> str:\n        pass\n\nclass PlainTextFormatter(LogFormatter):\n    \"\"\"纯文本格式: [LEVEL] message (source)\"\"\"\n    def format(self, record: LogRecord) -> str:\n        pass\n\nclass JsonFormatter(LogFormatter):\n    \"\"\"JSON 格式: {\"level\": \"...\", \"message\": \"...\", ...}\"\"\"\n    def format(self, record: LogRecord) -> str:\n        pass\n\nclass CompactFormatter(LogFormatter):\n    \"\"\"紧凑格式: LEVEL|message\"\"\"\n    def format(self, record: LogRecord) -> str:\n        pass\n\n\ndef format_log(record: LogRecord, formatter: LogFormatter) -> str:\n    \"\"\"多态调用：不管传什么 formatter，统一调 format\"\"\"\n    pass",
-    "solutionCode": "from abc import ABC, abstractmethod\nimport json\n\nclass LogRecord:\n    def __init__(self, level: str, message: str, source: str = ''):\n        self.level = level\n        self.message = message\n        self.source = source\n        self.timestamp = '2025-01-01 10:00:00'\n\nclass LogFormatter(ABC):\n    @abstractmethod\n    def format(self, record: LogRecord) -> str:\n        pass\n\nclass PlainTextFormatter(LogFormatter):\n    def format(self, record: LogRecord) -> str:\n        src = f' ({record.source})' if record.source else ''\n        return f'[{record.level}] {record.message}{src}'\n\nclass JsonFormatter(LogFormatter):\n    def format(self, record: LogRecord) -> str:\n        return json.dumps({\n            'level': record.level,\n            'message': record.message,\n            'source': record.source,\n            'timestamp': record.timestamp\n        }, ensure_ascii=False)\n\nclass CompactFormatter(LogFormatter):\n    def format(self, record: LogRecord) -> str:\n        return f'{record.level}|{record.message}'\n\n\ndef format_log(record: LogRecord, formatter: LogFormatter) -> str:\n    return formatter.format(record)",
+    "starterCode": "from abc import ABC, abstractmethod\nimport json\n\nclass LogRecord:\n    \"\"\"日志记录\"\"\"\n    def __init__(self, level: str, message: str, source: str = ''):\n        self.level = level\n        self.message = message\n        self.source = source\n        self.timestamp = '2025-01-01 10:00:00'\n\nclass LogFormatter(ABC):\n    \"\"\"日志格式化器抽象基类\"\"\"\n    @abstractmethod\n    def format(self, record: LogRecord) -> str:\n        pass\n\nclass PlainTextFormatter(LogFormatter):\n    \"\"\"纯文本格式: [LEVEL] message (source)\"\"\"\n    def format(self, record: LogRecord) -> str:\n        pass\n\nclass JsonFormatter(LogFormatter):\n    \"\"\"JSON 格式: {\"level\": \"...\", \"message\": \"...\", ...}\"\"\"\n    def format(self, record: LogRecord) -> str:\n        pass\n\nclass CompactFormatter(LogFormatter):\n    \"\"\"紧凑格式: LEVEL|message\"\"\"\n    def format(self, record: LogRecord) -> str:\n        pass\n\ndef format_log(record: LogRecord, formatter: LogFormatter) -> str:\n    \"\"\"多态调用：不管传什么 formatter，统一调 format\"\"\"\n    pass\n\n# 评测入口（请勿修改）\ndef eval_formatter(level: str, message: str, source: str, formatter_type: str) -> str:\n    record = LogRecord(level, message, source)\n    mapping = {\n        \"plain\": PlainTextFormatter(),\n        \"json\": JsonFormatter(),\n        \"compact\": CompactFormatter(),\n    }\n    return format_log(record, mapping[formatter_type])\n",
+    "solutionCode": "# 【算法思路】利用抽象基类与统一调度函数 format_log 实现纯文本、JSON 与紧凑三种日志格式的多态扩展。\nfrom abc import ABC, abstractmethod\nimport json\n\n# 封装日志级别、正文、来源与固定时间戳\nclass LogRecord:\n    \"\"\"结构化日志条目对象\"\"\"\n    def __init__(self, level: str, message: str, source: str = ''):\n        self.level = level\n        self.message = message\n        self.source = source\n        self.timestamp = '2025-01-01 10:00:00'\n\n# 日志格式化抽象基类\nclass LogFormatter(ABC):\n    @abstractmethod\n    def format(self, record: LogRecord) -> str: pass\n\n# 纯文本格式器\nclass PlainTextFormatter(LogFormatter):\n    def format(self, record: LogRecord) -> str:\n        src = f' ({record.source})' if record.source else ''\n        return f'[{record.level}] {record.message}{src}'\n\n# 结构化 JSON 格式器\nclass JsonFormatter(LogFormatter):\n    def format(self, record: LogRecord) -> str:\n        return json.dumps({\n            'level': record.level,\n            'message': record.message,\n            'source': record.source,\n            'timestamp': record.timestamp\n        }, ensure_ascii=False, sort_keys=True)\n\n# 竖线分隔紧凑格式器\nclass CompactFormatter(LogFormatter):\n    def format(self, record: LogRecord) -> str:\n        return f'{record.level}|{record.message}'\n\n# 统一通过多态接口调用具体格式器\ndef format_log(record: LogRecord, formatter: LogFormatter) -> str:\n    # 多态分发至具体格式化器\n    return formatter.format(record)\n\n# 评测入口（请勿修改）\ndef eval_formatter(level: str, message: str, source: str, formatter_type: str) -> str:\n    record = LogRecord(level, message, source)\n    mapping = {\n        \"plain\": PlainTextFormatter(),\n        \"json\": JsonFormatter(),\n        \"compact\": CompactFormatter(),\n    }\n    return format_log(record, mapping[formatter_type])\n",
     "expectedOutput": "[INFO] server started (main.py)",
     "testCases": [
       {
         "name": "plain text formatter",
-        "input": {
-          "level": "INFO",
-          "message": "server started",
-          "source": "main.py",
-          "formatterType": "plain"
-        },
+        "mode": "function",
+        "function": "eval_formatter",
+        "args": [
+          "INFO",
+          "server started",
+          "main.py",
+          "plain"
+        ],
+        "hidden": false,
         "expected": "[INFO] server started (main.py)"
       },
       {
         "name": "compact formatter",
-        "input": {
-          "level": "ERROR",
-          "message": "crash",
-          "source": "",
-          "formatterType": "compact"
-        },
+        "mode": "function",
+        "function": "eval_formatter",
+        "args": [
+          "ERROR",
+          "crash",
+          "",
+          "compact"
+        ],
+        "hidden": false,
         "expected": "ERROR|crash"
       }
     ],
@@ -1492,7 +2351,35 @@
     ],
     "thinkingQuestion": "如果后续需要添加 XML 格式或 YAML 格式，目前的类结构需要修改哪些代码？这种设计遵循了什么设计原则？",
     "aiPrompt": "评估学生对多态、抽象类、开闭原则和策略模式的理解。按 0-10 分打分。",
-    "status": "published"
+    "status": "published",
+    "evaluationCases": [
+      {
+        "name": "plain without source omits parens",
+        "mode": "function",
+        "function": "eval_formatter",
+        "args": [
+          "WARN",
+          "slow query",
+          "",
+          "plain"
+        ],
+        "hidden": true,
+        "expected": "[WARN] slow query"
+      },
+      {
+        "name": "json formatter deterministic keys",
+        "mode": "function",
+        "function": "eval_formatter",
+        "args": [
+          "DEBUG",
+          "ping",
+          "net.py",
+          "json"
+        ],
+        "hidden": true,
+        "expected": "{\"level\": \"DEBUG\", \"message\": \"ping\", \"source\": \"net.py\", \"timestamp\": \"2025-01-01 10:00:00\"}"
+      }
+    ]
   },
   {
     "slug": "python-paginated-iterator",
@@ -1514,22 +2401,25 @@
       "Pages = \\lceil \\frac{N}{pageSize} \\rceil",
       "Page_i = data[i \\times pageSize : (i+1) \\times pageSize]"
     ],
-    "starterCode": "class PaginatedIterator:\n    \"\"\"分页迭代器：每次迭代返回一页数据，自动翻页\"\"\"\n    def __init__(self, all_data: list, page_size: int):\n        \"\"\"all_data: 全部数据, page_size: 每页大小\"\"\"\n        self._all_data = all_data\n        self._page_size = page_size\n        self._index = 0\n\n    def __iter__(self):\n        \"\"\"返回迭代器自身\"\"\"\n        pass\n\n    def __next__(self) -> list:\n        \"\"\"\n        返回当前页数据列表。\n        如果没有更多数据，抛出 StopIteration。\n        \"\"\"\n        pass",
-    "solutionCode": "class PaginatedIterator:\n    def __init__(self, all_data: list, page_size: int):\n        self._all_data = all_data\n        self._page_size = page_size\n        self._index = 0\n\n    def __iter__(self):\n        return self\n\n    def __next__(self) -> list:\n        if self._index >= len(self._all_data):\n            raise StopIteration\n        start = self._index\n        end = min(start + self._page_size, len(self._all_data))\n        page = self._all_data[start:end]\n        self._index = end\n        return page",
+    "starterCode": "class PaginatedIterator:\n    \"\"\"分页迭代器：每次迭代返回一页数据，自动翻页\"\"\"\n    def __init__(self, all_data: list, page_size: int):\n        self._all_data = all_data\n        self._page_size = page_size\n        self._index = 0\n\n    def __iter__(self):\n        \"\"\"返回迭代器自身\"\"\"\n        pass\n\n    def __next__(self) -> list:\n        \"\"\"返回当前页数据列表，无更多数据时抛出 StopIteration\"\"\"\n        pass\n\n# 评测入口（请勿修改）\ndef eval_paginated(all_data: list, page_size: int) -> list[list]:\n    return list(PaginatedIterator(all_data, page_size))\n",
+    "solutionCode": "# 【算法思路】实现 __iter__ 与 __next__ 迭代器协议，每次按页大小切分列表直到越界抛出 StopIteration。\n# 维护游标 _index 逐页截取数据\nclass PaginatedIterator:\n    \"\"\"惰性分页迭代器：按 page_size 切片并在耗尽时抛出 StopIteration\"\"\"\n    def __init__(self, all_data: list, page_size: int):\n        self._all_data = all_data\n        self._page_size = page_size\n        self._index = 0\n\n    def __iter__(self):\n        return self\n\n    def __next__(self) -> list:\n        if self._index >= len(self._all_data):\n            raise StopIteration\n        start = self._index\n        end = min(start + self._page_size, len(self._all_data))\n        page = self._all_data[start:end]\n        self._index = end\n        return page\n\n# 评测入口（请勿修改）\ndef eval_paginated(all_data: list, page_size: int) -> list[list]:\n    return list(PaginatedIterator(all_data, page_size))\n",
     "expectedOutput": "[[1, 2], [3, 4], [5]]",
     "testCases": [
       {
         "name": "iterate pages",
-        "input": {
-          "allData": [
+        "mode": "function",
+        "function": "eval_paginated",
+        "args": [
+          [
             1,
             2,
             3,
             4,
             5
           ],
-          "pageSize": 2
-        },
+          2
+        ],
+        "hidden": false,
         "expected": [
           [
             1,
@@ -1546,10 +2436,13 @@
       },
       {
         "name": "empty data",
-        "input": {
-          "allData": [],
-          "pageSize": 10
-        },
+        "mode": "function",
+        "function": "eval_paginated",
+        "args": [
+          [],
+          10
+        ],
+        "hidden": false,
         "expected": []
       }
     ],
@@ -1579,7 +2472,53 @@
     ],
     "thinkingQuestion": "这个实现只能迭代一次。如果要支持多次独立遍历，__iter__ 应该返回什么？",
     "aiPrompt": "评估学生对迭代器协议、StopIteration、切片和可迭代对象设计的理解。按 0-10 分打分。",
-    "status": "published"
+    "status": "published",
+    "evaluationCases": [
+      {
+        "name": "exact multiple of page size",
+        "mode": "function",
+        "function": "eval_paginated",
+        "args": [
+          [
+            10,
+            20,
+            30,
+            40
+          ],
+          2
+        ],
+        "hidden": true,
+        "expected": [
+          [
+            10,
+            20
+          ],
+          [
+            30,
+            40
+          ]
+        ]
+      },
+      {
+        "name": "page size larger than total",
+        "mode": "function",
+        "function": "eval_paginated",
+        "args": [
+          [
+            1,
+            2
+          ],
+          10
+        ],
+        "hidden": true,
+        "expected": [
+          [
+            1,
+            2
+          ]
+        ]
+      }
+    ]
   },
   {
     "slug": "python-log-parser-generator",
@@ -1602,7 +2541,7 @@
       "Record = \\{level, timestamp, module, message\\}"
     ],
     "starterCode": "def parse_log_lines(log_lines: list[str]) -> list[dict]:\n    \"\"\"\n    将日志行解析为结构化字典列表。\n    1. 跳过空行和 # 开头的注释行\n    2. 格式: '级别 | 时间 | 模块 | 消息'\n    3. 解析为 {\"level\": \"INFO\", \"timestamp\": \"10:00:00\", \"module\": \"server\", \"message\": \"started\"}\n    4. 格式不正确的行直接跳过\n    \n    要求：用生成器实现，内部用 yield 逐行产出。\n    返回时用 list() 收集所有结果。\n    \"\"\"\n    pass",
-    "solutionCode": "def parse_log_lines(log_lines: list[str]) -> list[dict]:\n    def _generator():\n        for line in log_lines:\n            stripped = line.strip()\n            if not stripped or stripped.startswith('#'):\n                continue\n            parts = [p.strip() for p in stripped.split('|')]\n            if len(parts) != 4:\n                continue\n            yield {\n                'level': parts[0],\n                'timestamp': parts[1],\n                'module': parts[2],\n                'message': parts[3],\n            }\n    return list(_generator())",
+    "solutionCode": "# 【算法思路】使用内部生成器按竖线拆分日志行，自动跳过空行、注释行与字段不全的畸形日志。\n# 生成器过滤无效行并拆出四字段日志字典列表\ndef parse_log_lines(log_lines: list[str]) -> list[dict]:\n    def _generator():\n        for line in log_lines:\n            stripped = line.strip()\n            if not stripped or stripped.startswith('#'):\n                continue\n            parts = [p.strip() for p in stripped.split('|')]\n            if len(parts) != 4:\n                continue\n            yield {\n                'level': parts[0],\n                'timestamp': parts[1],\n                'module': parts[2],\n                'message': parts[3],\n            }\n    return list(_generator())\n",
     "expectedOutput": "[{\"level\": \"INFO\", \"timestamp\": \"10:00:00\", \"module\": \"server\", \"message\": \"started\"}]",
     "testCases": [
       {
@@ -1630,7 +2569,8 @@
             "module": "db",
             "message": "timeout"
           }
-        ]
+        ],
+        "hidden": false
       },
       {
         "name": "skips malformed line",
@@ -1641,7 +2581,8 @@
             "bad line without pipes"
           ]
         ],
-        "expected": []
+        "expected": [],
+        "hidden": false
       }
     ],
     "quizzes": [
@@ -1670,7 +2611,41 @@
     ],
     "thinkingQuestion": "如果把所有解析结果用 list() 收集，生成器的惰性优势就没了。如果需要流式处理（边解析边写入），你会怎么设计？",
     "aiPrompt": "评估学生对生成器、yield、惰性求值和日志解析的理解。按 0-10 分打分。",
-    "status": "published"
+    "status": "published",
+    "evaluationCases": [
+      {
+        "name": "filters blanks comments and malformed lines with spaces",
+        "mode": "function",
+        "function": "parse_log_lines",
+        "args": [
+          [
+            "  # comment  ",
+            "",
+            "   WARN | 12:00:00 | cache | high mem  ",
+            "only|two|parts"
+          ]
+        ],
+        "hidden": true,
+        "expected": [
+          {
+            "level": "WARN",
+            "timestamp": "12:00:00",
+            "module": "cache",
+            "message": "high mem"
+          }
+        ]
+      },
+      {
+        "name": "all empty input",
+        "mode": "function",
+        "function": "parse_log_lines",
+        "args": [
+          []
+        ],
+        "hidden": true,
+        "expected": []
+      }
+    ]
   },
   {
     "slug": "python-retry-decorator",
@@ -1692,26 +2667,30 @@
       "attempts \\le maxAttempts",
       "\\Delta t_{retry} = delay \\times (attempt - 1) \\quad \\text{(constant interval)}"
     ],
-    "starterCode": "import time\nimport functools\n\ndef retry(max_attempts: int = 3, delay: float = 0, exceptions: tuple = (Exception,)):\n    \"\"\"\n    装饰器：函数调用失败时自动重试。\n    max_attempts: 最多尝试次数（含第一次）\n    delay: 重试间隔秒数\n    exceptions: 只在这些异常时重试\n    超过次数后抛出最后一次异常。\n    用 functools.wraps 保留元信息。\n    \"\"\"\n    pass",
-    "solutionCode": "import time\nimport functools\n\ndef retry(max_attempts: int = 3, delay: float = 0, exceptions: tuple = (Exception,)):\n    if max_attempts < 1:\n        raise ValueError('max_attempts must be >= 1')\n\n    def decorator(func):\n        @functools.wraps(func)\n        def wrapper(*args, **kwargs):\n            last_exc = None\n            for attempt in range(max_attempts):\n                try:\n                    return func(*args, **kwargs)\n                except exceptions as e:\n                    last_exc = e\n                    if attempt < max_attempts - 1 and delay > 0:\n                        time.sleep(delay)\n            raise last_exc\n        return wrapper\n    return decorator",
+    "starterCode": "import time\nimport functools\n\ndef retry(max_attempts: int = 3, delay: float = 0, exceptions: tuple = (Exception,)):\n    \"\"\"装饰器：函数调用失败时自动重试，超过次数后抛出最后一次异常\"\"\"\n    pass\n\n# 评测入口（请勿修改）\ndef eval_retry(max_attempts: int, fail_times: int) -> str:\n    state = {\"count\": 0}\n    @retry(max_attempts=max_attempts, delay=0, exceptions=(ValueError,))\n    def task():\n        state[\"count\"] += 1\n        if state[\"count\"] <= fail_times:\n            raise ValueError(\"transient error\")\n        return \"success\"\n    return task()\n",
+    "solutionCode": "# 【算法思路】捕获指定异常类型进行有限次重试，并可选等待延迟后在最终失败时重抛末次异常。\nimport time\nimport functools\n\n# 构建异常过滤与重试循环装饰器\ndef retry(max_attempts: int = 3, delay: float = 0, exceptions: tuple = (Exception,)):\n    # 失败自动重试装饰器，仅捕获声明的异常类型\n    if max_attempts < 1:\n        raise ValueError('max_attempts must be >= 1')\n\n    def decorator(func):\n        @functools.wraps(func)\n        def wrapper(*args, **kwargs):\n            last_exc = None\n            for attempt in range(max_attempts):\n                try:\n                    return func(*args, **kwargs)\n                except exceptions as e:\n                    last_exc = e\n                    if attempt < max_attempts - 1 and delay > 0:\n                        time.sleep(delay)\n            raise last_exc\n        return wrapper\n    return decorator\n\n# 评测入口（请勿修改）\ndef eval_retry(max_attempts: int, fail_times: int) -> str:\n    state = {\"count\": 0}\n    @retry(max_attempts=max_attempts, delay=0, exceptions=(ValueError,))\n    def task():\n        state[\"count\"] += 1\n        if state[\"count\"] <= fail_times:\n            raise ValueError(\"transient error\")\n        return \"success\"\n    return task()\n",
     "expectedOutput": "success",
     "testCases": [
       {
         "name": "succeeds on first try",
         "mode": "function",
-        "function": "retry",
+        "function": "eval_retry",
         "args": [
-          3
+          3,
+          0
         ],
+        "hidden": false,
         "expected": "success"
       },
       {
         "name": "retries until success",
         "mode": "function",
-        "function": "retry",
+        "function": "eval_retry",
         "args": [
-          3
+          3,
+          2
         ],
+        "hidden": false,
         "expected": "success"
       }
     ],
@@ -1741,7 +2720,31 @@
     ],
     "thinkingQuestion": "如果重试时遇到系统退出信号（SIGTERM），应该继续重试吗？你会如何让装饰器支持可中断的退出？",
     "aiPrompt": "评估学生对装饰器、闭包、异常处理和系统鲁棒性的理解。按 0-10 分打分。",
-    "status": "published"
+    "status": "published",
+    "evaluationCases": [
+      {
+        "name": "exhausting retries raises ValueError",
+        "mode": "function",
+        "function": "eval_retry",
+        "args": [
+          2,
+          2
+        ],
+        "hidden": true,
+        "expectedException": "ValueError"
+      },
+      {
+        "name": "succeeds right on last allowed attempt",
+        "mode": "function",
+        "function": "eval_retry",
+        "args": [
+          3,
+          2
+        ],
+        "hidden": true,
+        "expected": "success"
+      }
+    ]
   },
   {
     "slug": "python-lambda-expression-sorter",
@@ -1763,14 +2766,14 @@
       "SortKey(x) = (\\lambda_1(x), \\lambda_2(x), \\ldots, \\lambda_k(x))",
       "\\lambda(x) \\rightarrow expression \\quad \\text{(single-expression closure)}"
     ],
-    "starterCode": "def sort_users(users: list[dict], *key_funcs) -> list[dict]:\n    \"\"\"\n    users: [{\"name\": \"Alice\", \"age\": 30, \"score\": 85}, ...]\n    key_funcs: 一个或多个 lambda 函数，每个提取一个排序维度\n    按 key_funcs 依次排序（先按第一个，相同则按第二个，以此类推）\n    全部升序排列。\n    返回排序后的新列表。\n    \"\"\"\n    pass\n\n# ========== 用 lambda 定义以下排序规则 ==========\n\n# 按年龄升序\nby_age = None  # 替换为 lambda\n\n# 按分数降序（提示：返回负值或使用 reversed）\nby_score_desc = None  # 替换为 lambda\n\n# 按姓名长度升序\nby_name_length = None  # 替换为 lambda",
-    "solutionCode": "def sort_users(users: list[dict], *key_funcs) -> list[dict]:\n    if not key_funcs:\n        return list(users)\n\n    def composite_key(user):\n        return tuple(f(user) for f in key_funcs)\n\n    return sorted(users, key=composite_key)\n\n# Lambda 规则\nby_age = lambda u: u['age']\nby_score_desc = lambda u: -u['score']\nby_name_length = lambda u: len(u['name'])",
+    "starterCode": "def sort_users(users: list[dict], *key_funcs) -> list[dict]:\n    \"\"\"按多个 lambda 排序规则依次升序排列，返回新列表\"\"\"\n    pass\n\n# 按年龄升序\nby_age = None\n# 按分数降序\nby_score_desc = None\n# 按姓名长度升序\nby_name_length = None\n\n# 评测入口（请勿修改）\ndef eval_sort_users(users: list[dict], rule_names: list[str]) -> list[dict]:\n    rules_map = {\n        \"age\": by_age,\n        \"score_desc\": by_score_desc,\n        \"name_length\": by_name_length,\n    }\n    funcs = [rules_map[name] for name in rule_names]\n    return sort_users(users, *funcs)\n",
+    "solutionCode": "# 【算法思路】支持任意个 lambda 提取函数组合多维排序键，实现年龄、降序分数与姓名长度组合排序。\n# 将多个键函数组合为排序元组并返回新列表\ndef sort_users(users: list[dict], *key_funcs) -> list[dict]:\n    # 将多个 lambda 键组合为复合元组排序键\n    if not key_funcs:\n        return list(users)\n    return sorted(users, key=lambda u: tuple(f(u) for f in key_funcs))\n\n# 常用排序 lambda 规则\nby_age = lambda u: u['age']\nby_score_desc = lambda u: -u['score']\nby_name_length = lambda u: len(u['name'])\n\n# 评测入口（请勿修改）\ndef eval_sort_users(users: list[dict], rule_names: list[str]) -> list[dict]:\n    rules_map = {\n        \"age\": by_age,\n        \"score_desc\": by_score_desc,\n        \"name_length\": by_name_length,\n    }\n    funcs = [rules_map[name] for name in rule_names]\n    return sort_users(users, *funcs)\n",
     "expectedOutput": "[{\"name\": \"Bob\", \"age\": 25, \"score\": 90}, {\"name\": \"Alice\", \"age\": 30, \"score\": 85}]",
     "testCases": [
       {
         "name": "sort by age",
         "mode": "function",
-        "function": "sort_users",
+        "function": "eval_sort_users",
         "args": [
           [
             {
@@ -1783,8 +2786,12 @@
               "age": 25,
               "score": 90
             }
+          ],
+          [
+            "age"
           ]
         ],
+        "hidden": false,
         "expected": [
           {
             "name": "Bob",
@@ -1801,7 +2808,7 @@
       {
         "name": "sort by score desc",
         "mode": "function",
-        "function": "sort_users",
+        "function": "eval_sort_users",
         "args": [
           [
             {
@@ -1814,8 +2821,12 @@
               "age": 25,
               "score": 90
             }
+          ],
+          [
+            "score_desc"
           ]
         ],
+        "hidden": false,
         "expected": [
           {
             "name": "Bob",
@@ -1856,7 +2867,88 @@
     ],
     "thinkingQuestion": "`by_score_desc = lambda u: -u['score']` 用负数来模拟降序，但如果 score 不是数字（如日期字符串），就不能用负数了。你会如何支持非数字字段的降序？",
     "aiPrompt": "评估学生对 lambda 表达式、排序 key 函数和函数式编程的理解。按 0-10 分打分。",
-    "status": "published"
+    "status": "published",
+    "evaluationCases": [
+      {
+        "name": "multi rule score_desc then name_length",
+        "mode": "function",
+        "function": "eval_sort_users",
+        "args": [
+          [
+            {
+              "name": "Christopher",
+              "age": 20,
+              "score": 90
+            },
+            {
+              "name": "Bo",
+              "age": 30,
+              "score": 90
+            },
+            {
+              "name": "Dan",
+              "age": 25,
+              "score": 95
+            }
+          ],
+          [
+            "score_desc",
+            "name_length"
+          ]
+        ],
+        "hidden": true,
+        "expected": [
+          {
+            "name": "Dan",
+            "age": 25,
+            "score": 95
+          },
+          {
+            "name": "Bo",
+            "age": 30,
+            "score": 90
+          },
+          {
+            "name": "Christopher",
+            "age": 20,
+            "score": 90
+          }
+        ]
+      },
+      {
+        "name": "no rules preserves input order",
+        "mode": "function",
+        "function": "eval_sort_users",
+        "args": [
+          [
+            {
+              "name": "B",
+              "age": 2,
+              "score": 1
+            },
+            {
+              "name": "A",
+              "age": 1,
+              "score": 2
+            }
+          ],
+          []
+        ],
+        "hidden": true,
+        "expected": [
+          {
+            "name": "B",
+            "age": 2,
+            "score": 1
+          },
+          {
+            "name": "A",
+            "age": 1,
+            "score": 2
+          }
+        ]
+      }
+    ]
   },
   {
     "slug": "py-valid-parentheses-l2",
@@ -1876,7 +2968,7 @@
       "match(ch) = stack[-1] == pairs[ch]"
     ],
     "starterCode": "def is_valid(s: str) -> bool:\n    pass",
-    "solutionCode": "def is_valid(s: str) -> bool:\n    pairs = {\")\": \"(\", \"]\": \"[\", \"}\": \"{\"}\n    stack = []\n    for ch in s:\n        if ch in \"([{\":\n            stack.append(ch)\n        elif not stack or stack.pop() != pairs[ch]:\n            return False\n    return len(stack) == 0",
+    "solutionCode": "# 【算法思路】经典括号栈匹配：遇左括号入栈，遇右括号检查栈顶是否为对应开括号。\n# 用栈校验圆括号、方括号与花括号的嵌套配对完整性\ndef is_valid(s: str) -> bool:\n    pairs = {\")\": \"(\", \"]\": \"[\", \"}\": \"{\"}\n    stack = []\n    for ch in s:\n        if ch in \"([{\":\n            stack.append(ch)\n        elif not stack or stack.pop() != pairs[ch]:\n            return False\n    return len(stack) == 0\n",
     "expectedOutput": "True",
     "testCases": [
       {
@@ -1886,7 +2978,8 @@
         "args": [
           "()"
         ],
-        "expected": true
+        "expected": true,
+        "hidden": false
       },
       {
         "name": "all types",
@@ -1895,7 +2988,8 @@
         "args": [
           "()[]{}"
         ],
-        "expected": true
+        "expected": true,
+        "hidden": false
       },
       {
         "name": "mismatched",
@@ -1904,7 +2998,8 @@
         "args": [
           "(]"
         ],
-        "expected": false
+        "expected": false,
+        "hidden": false
       },
       {
         "name": "wrong order",
@@ -1913,7 +3008,8 @@
         "args": [
           "([)]"
         ],
-        "expected": false
+        "expected": false,
+        "hidden": false
       },
       {
         "name": "nested",
@@ -1922,7 +3018,8 @@
         "args": [
           "{[]}"
         ],
-        "expected": true
+        "expected": true,
+        "hidden": false
       },
       {
         "name": "empty",
@@ -1931,7 +3028,8 @@
         "args": [
           ""
         ],
-        "expected": true
+        "expected": true,
+        "hidden": false
       }
     ],
     "quizzes": [
@@ -1949,7 +3047,29 @@
     ],
     "thinkingQuestion": "如果输入包含中文全角括号，如何处理？能否设计一个通用的括号匹配器？",
     "aiPrompt": "评估学生对栈、字符串遍历、括号匹配的理解。按 0-10 分打分。",
-    "status": "published"
+    "status": "published",
+    "evaluationCases": [
+      {
+        "name": "single unclosed left bracket",
+        "mode": "function",
+        "function": "is_valid",
+        "args": [
+          "((("
+        ],
+        "hidden": true,
+        "expected": false
+      },
+      {
+        "name": "leading closing bracket",
+        "mode": "function",
+        "function": "is_valid",
+        "args": [
+          "]()"
+        ],
+        "hidden": true,
+        "expected": false
+      }
+    ]
   },
   {
     "slug": "py-fizzbuzz-l2",
@@ -1970,7 +3090,7 @@
       "i % 15 = 0 \\rightarrow FizzBuzz"
     ],
     "starterCode": "def fizzbuzz(n: int) -> list:\n    pass",
-    "solutionCode": "def fizzbuzz(n: int) -> list:\n    result = []\n    for i in range(1, n+1):\n        if i % 15 == 0: result.append(\"FizzBuzz\")\n        elif i % 3 == 0: result.append(\"Fizz\")\n        elif i % 5 == 0: result.append(\"Buzz\")\n        else: result.append(str(i))\n    return result",
+    "solutionCode": "# 【算法思路】按 1..n 顺序检查能否被 15、3、5 整除并生成相应字符串序列。\n# 优先判断 15 的倍数以免被单一整除分支掩盖\ndef fizzbuzz(n: int) -> list:\n    result = []\n    for i in range(1, n+1):\n        if i % 15 == 0: result.append(\"FizzBuzz\")\n        elif i % 3 == 0: result.append(\"Fizz\")\n        elif i % 5 == 0: result.append(\"Buzz\")\n        else: result.append(str(i))\n    return result\n",
     "expectedOutput": "[\"1\",\"2\",\"Fizz\"]",
     "testCases": [
       {
@@ -1986,7 +3106,8 @@
           "Fizz",
           "4",
           "Buzz"
-        ]
+        ],
+        "hidden": false
       },
       {
         "name": "n=1",
@@ -1997,7 +3118,8 @@
         ],
         "expected": [
           "1"
-        ]
+        ],
+        "hidden": false
       }
     ],
     "quizzes": [
@@ -2015,7 +3137,45 @@
     ],
     "thinkingQuestion": "如果再加一条规则：7 的倍数输出 \"Bazz\"，同时满足多个条件时拼接，代码如何改造？",
     "aiPrompt": "评估学生对条件判断顺序、取模运算的理解。按 0-10 分打分。",
-    "status": "published"
+    "status": "published",
+    "evaluationCases": [
+      {
+        "name": "n=15 ends with FizzBuzz",
+        "mode": "function",
+        "function": "fizzbuzz",
+        "args": [
+          15
+        ],
+        "hidden": true,
+        "expected": [
+          "1",
+          "2",
+          "Fizz",
+          "4",
+          "Buzz",
+          "Fizz",
+          "7",
+          "8",
+          "Fizz",
+          "Buzz",
+          "11",
+          "Fizz",
+          "13",
+          "14",
+          "FizzBuzz"
+        ]
+      },
+      {
+        "name": "n=0 empty list",
+        "mode": "function",
+        "function": "fizzbuzz",
+        "args": [
+          0
+        ],
+        "hidden": true,
+        "expected": []
+      }
+    ]
   },
   {
     "slug": "py-two-sum-l2",
@@ -2035,7 +3195,7 @@
       "complement = target - nums[i]"
     ],
     "starterCode": "def two_sum(nums: list, target: int) -> list:\n    pass",
-    "solutionCode": "def two_sum(nums: list, target: int) -> list:\n    seen = {}\n    for i, num in enumerate(nums):\n        complement = target - num\n        if complement in seen:\n            return [seen[complement], i]\n        seen[num] = i\n    return []",
+    "solutionCode": "# 【算法思路】利用哈希表在单遍扫描中记录已遍历数值索引，快速查找与当前数互补的目标索引。\n# O(n) 时间一遍哈希查找两数之和下标对\ndef two_sum(nums: list, target: int) -> list:\n    seen = {}\n    for i, num in enumerate(nums):\n        complement = target - num\n        if complement in seen:\n            return [seen[complement], i]\n        seen[num] = i\n    return []\n",
     "expectedOutput": "[0, 1]",
     "testCases": [
       {
@@ -2054,7 +3214,8 @@
         "expected": [
           0,
           1
-        ]
+        ],
+        "hidden": false
       },
       {
         "name": "example 2",
@@ -2071,7 +3232,8 @@
         "expected": [
           1,
           2
-        ]
+        ],
+        "hidden": false
       }
     ],
     "quizzes": [
@@ -2089,7 +3251,45 @@
     ],
     "thinkingQuestion": "如果数组已排序，如何用双指针实现空间 O(1) 的解法？",
     "aiPrompt": "评估学生对哈希表、循环、算法复杂度的理解。按 0-10 分打分。",
-    "status": "published"
+    "status": "published",
+    "evaluationCases": [
+      {
+        "name": "duplicate numbers sum target",
+        "mode": "function",
+        "function": "two_sum",
+        "args": [
+          [
+            3,
+            3
+          ],
+          6
+        ],
+        "hidden": true,
+        "expected": [
+          0,
+          1
+        ]
+      },
+      {
+        "name": "negative target",
+        "mode": "function",
+        "function": "two_sum",
+        "args": [
+          [
+            -3,
+            4,
+            3,
+            90
+          ],
+          0
+        ],
+        "hidden": true,
+        "expected": [
+          0,
+          2
+        ]
+      }
+    ]
   },
   {
     "slug": "py-palindrome-checker-l2",
@@ -2109,7 +3309,7 @@
       "s[::-1] = O(n)"
     ],
     "starterCode": "def is_palindrome(s: str) -> bool:\n    pass",
-    "solutionCode": "def is_palindrome(s: str) -> bool:\n    clean = \"\".join(c.lower() for c in s if c.isalnum())\n    return clean == clean[::-1]",
+    "solutionCode": "# 【算法思路】清洗掉非字母数字字符并统一小写后对比正序与反转切片是否完全相等。\n# 过滤符号大小写归一化并检测回文对称性\ndef is_palindrome(s: str) -> bool:\n    clean = \"\".join(c.lower() for c in s if c.isalnum())\n    return clean == clean[::-1]\n",
     "expectedOutput": "True",
     "testCases": [
       {
@@ -2119,7 +3319,8 @@
         "args": [
           "A man, a plan, a canal: Panama"
         ],
-        "expected": true
+        "expected": true,
+        "hidden": false
       },
       {
         "name": "not palindrome",
@@ -2128,7 +3329,8 @@
         "args": [
           "race a car"
         ],
-        "expected": false
+        "expected": false,
+        "hidden": false
       },
       {
         "name": "empty",
@@ -2137,7 +3339,8 @@
         "args": [
           " "
         ],
-        "expected": true
+        "expected": true,
+        "hidden": false
       }
     ],
     "quizzes": [
@@ -2155,7 +3358,29 @@
     ],
     "thinkingQuestion": "不用切片反转，如何用双指针 O(1) 空间检测回文？",
     "aiPrompt": "评估学生对字符串操作、回文判断的理解。按 0-10 分打分。",
-    "status": "published"
+    "status": "published",
+    "evaluationCases": [
+      {
+        "name": "alphanumeric palindrome",
+        "mode": "function",
+        "function": "is_palindrome",
+        "args": [
+          "1221!"
+        ],
+        "hidden": true,
+        "expected": true
+      },
+      {
+        "name": "numeric non-palindrome",
+        "mode": "function",
+        "function": "is_palindrome",
+        "args": [
+          "0P"
+        ],
+        "hidden": true,
+        "expected": false
+      }
+    ]
   },
   {
     "slug": "py-array-rotate-l2",
@@ -2174,8 +3399,8 @@
       "rotate(0, n-1) \\rightarrow rotate(0, k-1) \\rightarrow rotate(k, n-1)",
       "k = k \\bmod n"
     ],
-    "starterCode": "def rotate(nums: list, k: int) -> None:\n    \"\"\"原地修改，不返回新数组\"\"\"\n    pass",
-    "solutionCode": "def rotate(nums: list, k: int) -> None:\n    n = len(nums)\n    k %= n\n    if k == 0: return\n    def rev(l, r):\n        while l < r:\n            nums[l], nums[r] = nums[r], nums[l]\n            l += 1; r -= 1\n    rev(0, n-1); rev(0, k-1); rev(k, n-1)",
+    "starterCode": "def rotate(nums: list, k: int) -> list:\n    \"\"\"原地右旋数组 k 步并返回 nums\"\"\"\n    pass\n",
+    "solutionCode": "# 【算法思路】利用三次局部反转（整体反转+前k反转+后n-k反转）实现 O(1) 额外空间的原地数组右旋。\n# 对 k 取模后分三段反转数组并原地返回\ndef rotate(nums: list, k: int) -> list:\n    # 三次翻转实现 O(n) 原地右旋并返回旋转后数组\n    if not nums:\n        return nums\n    n = len(nums)\n    k %= n\n    if k == 0:\n        return nums\n    def rev(l, r):\n        while l < r:\n            nums[l], nums[r] = nums[r], nums[l]\n            l += 1\n            r -= 1\n    rev(0, n - 1)\n    rev(0, k - 1)\n    rev(k, n - 1)\n    return nums\n",
     "expectedOutput": "[5, 6, 7, 1, 2, 3, 4]",
     "testCases": [
       {
@@ -2202,7 +3427,8 @@
           2,
           3,
           4
-        ]
+        ],
+        "hidden": false
       },
       {
         "name": "k>n",
@@ -2218,7 +3444,8 @@
         "expected": [
           2,
           1
-        ]
+        ],
+        "hidden": false
       }
     ],
     "quizzes": [
@@ -2236,7 +3463,49 @@
     ],
     "thinkingQuestion": "要求返回新数组而非原地修改，代码会简单多少？空间复杂度多少？",
     "aiPrompt": "评估学生对数组操作、原地算法的理解。按 0-10 分打分。",
-    "status": "published"
+    "status": "published",
+    "evaluationCases": [
+      {
+        "name": "k=0 unchanged",
+        "mode": "function",
+        "function": "rotate",
+        "args": [
+          [
+            1,
+            2,
+            3
+          ],
+          0
+        ],
+        "hidden": true,
+        "expected": [
+          1,
+          2,
+          3
+        ]
+      },
+      {
+        "name": "negative elements multiple of n",
+        "mode": "function",
+        "function": "rotate",
+        "args": [
+          [
+            -1,
+            -100,
+            3,
+            99
+          ],
+          4
+        ],
+        "hidden": true,
+        "expected": [
+          -1,
+          -100,
+          3,
+          99
+        ]
+      }
+    ]
   },
   {
     "slug": "py-merge-intervals-l2",
@@ -2256,7 +3525,7 @@
       "merged[-1][1] = max(merged[-1][1], e_i)"
     ],
     "starterCode": "def merge_intervals(intervals: list) -> list:\n    pass",
-    "solutionCode": "def merge_intervals(intervals: list) -> list:\n    if not intervals: return []\n    intervals.sort(key=lambda x: x[0])\n    merged = [list(intervals[0])]\n    for s, e in intervals[1:]:\n        if s <= merged[-1][1]:\n            merged[-1][1] = max(merged[-1][1], e)\n        else:\n            merged.append([s, e])\n    return merged",
+    "solutionCode": "# 【算法思路】按区间起点升序排序后线性扫描，若当前区间起点不大于末尾区间终点则合并扩展右边界。\n# 先排序后贪心合并重叠或相邻区间\ndef merge_intervals(intervals: list) -> list:\n    if not intervals: return []\n    intervals.sort(key=lambda x: x[0])\n    merged = [list(intervals[0])]\n    for s, e in intervals[1:]:\n        if s <= merged[-1][1]:\n            merged[-1][1] = max(merged[-1][1], e)\n        else:\n            merged.append([s, e])\n    return merged\n",
     "expectedOutput": "[[1,6],[8,10],[15,18]]",
     "testCases": [
       {
@@ -2296,7 +3565,8 @@
             15,
             18
           ]
-        ]
+        ],
+        "hidden": false
       },
       {
         "name": "adjacent",
@@ -2319,7 +3589,8 @@
             1,
             5
           ]
-        ]
+        ],
+        "hidden": false
       },
       {
         "name": "empty",
@@ -2328,7 +3599,8 @@
         "args": [
           []
         ],
-        "expected": []
+        "expected": [],
+        "hidden": false
       }
     ],
     "quizzes": [
@@ -2346,7 +3618,65 @@
     ],
     "thinkingQuestion": "如果区间用元组 (start,end) 列表表示（不可变），怎么调整？",
     "aiPrompt": "评估学生对排序、区间合并的理解。按 0-10 分打分。",
-    "status": "published"
+    "status": "published",
+    "evaluationCases": [
+      {
+        "name": "unsorted nested intervals",
+        "mode": "function",
+        "function": "merge_intervals",
+        "args": [
+          [
+            [
+              2,
+              6
+            ],
+            [
+              1,
+              10
+            ],
+            [
+              3,
+              4
+            ]
+          ]
+        ],
+        "hidden": true,
+        "expected": [
+          [
+            1,
+            10
+          ]
+        ]
+      },
+      {
+        "name": "disjoint reverse order",
+        "mode": "function",
+        "function": "merge_intervals",
+        "args": [
+          [
+            [
+              5,
+              7
+            ],
+            [
+              1,
+              3
+            ]
+          ]
+        ],
+        "hidden": true,
+        "expected": [
+          [
+            1,
+            3
+          ],
+          [
+            5,
+            7
+          ]
+        ]
+      }
+    ]
   },
   {
     "slug": "py-word-count-l2",
@@ -2366,7 +3696,7 @@
       "Top-K = sorted(freq, key=-count)[:k]"
     ],
     "starterCode": "def top_k_frequent(text: str, k: int) -> list:\n    pass",
-    "solutionCode": "import re\ndef top_k_frequent(text: str, k: int) -> list:\n    words = re.findall(r\"\\w+\", text.lower())\n    freq = {}\n    for w in words:\n        freq[w] = freq.get(w, 0) + 1\n    return sorted(freq.items(), key=lambda x: (-x[1], x[0]))[:k]",
+    "solutionCode": "# 【算法思路】使用正则提取纯单词词频统计后按频次降序、字典序升序选出 Top-K 单词元组。\nimport re\n# 统计词频哈希表并通过复合排序键提取前 k 高频词\ndef top_k_frequent(text: str, k: int) -> list:\n    words = re.findall(r\"\\w+\", text.lower())\n    freq = {}\n    for w in words:\n        freq[w] = freq.get(w, 0) + 1\n    return sorted(freq.items(), key=lambda x: (-x[1], x[0]))[:k]\n",
     "expectedOutput": "[[\"i\",2],[\"love\",2]]",
     "testCases": [
       {
@@ -2377,6 +3707,7 @@
           "i love coding and i love python",
           2
         ],
+        "hidden": false,
         "expected": [
           [
             "i",
@@ -2384,6 +3715,26 @@
           ],
           [
             "love",
+            2
+          ]
+        ]
+      },
+      {
+        "name": "tie breaks alphabetically",
+        "mode": "function",
+        "function": "top_k_frequent",
+        "args": [
+          "banana apple apple banana cherry",
+          2
+        ],
+        "hidden": false,
+        "expected": [
+          [
+            "apple",
+            2
+          ],
+          [
+            "banana",
             2
           ]
         ]
@@ -2404,7 +3755,40 @@
     ],
     "thinkingQuestion": "如果文本有上亿词放不下内存，如何设计流式 Top-K？",
     "aiPrompt": "评估学生对字典、频率统计的理解。按 0-10 分打分。",
-    "status": "published"
+    "status": "published",
+    "evaluationCases": [
+      {
+        "name": "case-insensitive punctuation ignored",
+        "mode": "function",
+        "function": "top_k_frequent",
+        "args": [
+          "AI, ai! Ml? AI.",
+          2
+        ],
+        "hidden": true,
+        "expected": [
+          [
+            "ai",
+            3
+          ],
+          [
+            "ml",
+            1
+          ]
+        ]
+      },
+      {
+        "name": "k=0 returns empty",
+        "mode": "function",
+        "function": "top_k_frequent",
+        "args": [
+          "hello world",
+          0
+        ],
+        "hidden": true,
+        "expected": []
+      }
+    ]
   },
   {
     "slug": "py-set-operations-l2",
@@ -2424,7 +3808,7 @@
       "A \\setminus B = \\{x: x \\in A \\land x \\notin B\\}"
     ],
     "starterCode": "def set_operations(nums1: list, nums2: list) -> dict:\n    pass",
-    "solutionCode": "def set_operations(nums1: list, nums2: list) -> dict:\n    s1, s2 = set(nums1), set(nums2)\n    return {\"intersection\": sorted(s1 & s2), \"difference\": sorted(s1 - s2)}",
+    "solutionCode": "# 【算法思路】利用 Python 集合交集(`&`)与差集(`-`)运算符求有序去重交集与仅在首数组中出现的元素。\n# 将列表转为集合并返回排序后的 intersection 与 difference\ndef set_operations(nums1: list, nums2: list) -> dict:\n    s1, s2 = set(nums1), set(nums2)\n    return {\"intersection\": sorted(s1 & s2), \"difference\": sorted(s1 - s2)}\n",
     "expectedOutput": "{\"intersection\":[2],\"difference\":[1]}",
     "testCases": [
       {
@@ -2443,12 +3827,36 @@
             2
           ]
         ],
+        "hidden": false,
         "expected": {
           "intersection": [
             2
           ],
           "difference": [
             1
+          ]
+        }
+      },
+      {
+        "name": "disjoint sets",
+        "mode": "function",
+        "function": "set_operations",
+        "args": [
+          [
+            3,
+            1
+          ],
+          [
+            2,
+            4
+          ]
+        ],
+        "hidden": false,
+        "expected": {
+          "intersection": [],
+          "difference": [
+            1,
+            3
           ]
         }
       }
@@ -2468,7 +3876,48 @@
     ],
     "thinkingQuestion": "什么是对称差集？什么工程场景下有用？",
     "aiPrompt": "评估学生对集合运算的理解。按 0-10 分打分。",
-    "status": "published"
+    "status": "published",
+    "evaluationCases": [
+      {
+        "name": "identical duplicate arrays",
+        "mode": "function",
+        "function": "set_operations",
+        "args": [
+          [
+            5,
+            5,
+            5
+          ],
+          [
+            5
+          ]
+        ],
+        "hidden": true,
+        "expected": {
+          "intersection": [
+            5
+          ],
+          "difference": []
+        }
+      },
+      {
+        "name": "empty first array",
+        "mode": "function",
+        "function": "set_operations",
+        "args": [
+          [],
+          [
+            1,
+            2
+          ]
+        ],
+        "hidden": true,
+        "expected": {
+          "intersection": [],
+          "difference": []
+        }
+      }
+    ]
   },
   {
     "slug": "py-file-finder-l2",
@@ -2488,7 +3937,7 @@
       "O(N) \\text{ scan}"
     ],
     "starterCode": "def find_files(files: list, keyword: str) -> list:\n    pass",
-    "solutionCode": "def find_files(files: list, keyword: str) -> list:\n    kw = keyword.lower()\n    return [f[\"path\"] for f in files if kw in f[\"path\"].lower() or kw in f.get(\"content\",\"\").lower()]",
+    "solutionCode": "# 【算法思路】忽略大小写同时检索文件路径与内容中的关键词，返回全部命中路径。\n# 列表推导按大小写无关子串过滤符合条件的文件路径\ndef find_files(files: list, keyword: str) -> list:\n    kw = keyword.lower()\n    return [f[\"path\"] for f in files if kw in f[\"path\"].lower() or kw in f.get(\"content\",\"\").lower()]\n",
     "expectedOutput": "[\"/a.txt\"]",
     "testCases": [
       {
@@ -2510,7 +3959,8 @@
         ],
         "expected": [
           "/a.txt"
-        ]
+        ],
+        "hidden": false
       },
       {
         "name": "no match",
@@ -2525,7 +3975,8 @@
           ],
           "xyz"
         ],
-        "expected": []
+        "expected": [],
+        "hidden": false
       }
     ],
     "quizzes": [
@@ -2543,7 +3994,42 @@
     ],
     "thinkingQuestion": "如果要支持通配符（如 *.log），如何设计匹配逻辑？",
     "aiPrompt": "评估学生对文件搜索的理解。按 0-10 分打分。",
-    "status": "published"
+    "status": "published",
+    "evaluationCases": [
+      {
+        "name": "case insensitive path match",
+        "mode": "function",
+        "function": "find_files",
+        "args": [
+          [
+            {
+              "path": "/SRC/Main.PY",
+              "content": ""
+            },
+            {
+              "path": "/README",
+              "content": ""
+            }
+          ],
+          "main.py"
+        ],
+        "hidden": true,
+        "expected": [
+          "/SRC/Main.PY"
+        ]
+      },
+      {
+        "name": "empty files list",
+        "mode": "function",
+        "function": "find_files",
+        "args": [
+          [],
+          "test"
+        ],
+        "hidden": true,
+        "expected": []
+      }
+    ]
   },
   {
     "slug": "py-json-flattener-l2",
@@ -2563,7 +4049,7 @@
       "flatten(v) = \\begin{cases} dict & recursive \\\\ list & enumerate \\\\ scalar & leaf \\end{cases}"
     ],
     "starterCode": "def flatten_json(obj: dict, parent_key: str = \"\") -> dict:\n    pass",
-    "solutionCode": "def flatten_json(obj, parent_key=\"\"):\n    result = {}\n    for k, v in obj.items():\n        nk = f\"{parent_key}.{k}\" if parent_key else k\n        if isinstance(v, dict):\n            result.update(flatten_json(v, nk))\n        elif isinstance(v, list):\n            for i, item in enumerate(v):\n                result[f\"{nk}.{i}\"] = item\n        else:\n            result[nk] = v\n    return result",
+    "solutionCode": "# 【算法思路】递归展开嵌套字典与列表，使用点号 `.` 拼接层级键名与数组下标扁平化输出。\n# 递归处理 dict 与 list 节点生成单层点分键值字典\ndef flatten_json(obj, parent_key=\"\"):\n    result = {}\n    for k, v in obj.items():\n        nk = f\"{parent_key}.{k}\" if parent_key else k\n        if isinstance(v, dict):\n            result.update(flatten_json(v, nk))\n        elif isinstance(v, list):\n            for i, item in enumerate(v):\n                result[f\"{nk}.{i}\"] = item\n        else:\n            result[nk] = v\n    return result\n",
     "expectedOutput": "{\"a\":1,\"b.c\":2,\"b.d.0\":3,\"b.d.1\":4}",
     "testCases": [
       {
@@ -2582,12 +4068,23 @@
             }
           }
         ],
+        "hidden": false,
         "expected": {
           "a": 1,
           "b.c": 2,
           "b.d.0": 3,
           "b.d.1": 4
         }
+      },
+      {
+        "name": "empty object",
+        "mode": "function",
+        "function": "flatten_json",
+        "args": [
+          {}
+        ],
+        "hidden": false,
+        "expected": {}
       }
     ],
     "quizzes": [
@@ -2605,7 +4102,47 @@
     ],
     "thinkingQuestion": "如何实现反扁平化（将扁平 JSON 恢复为嵌套结构）？",
     "aiPrompt": "评估学生对递归、JSON 处理的理解。按 0-10 分打分。",
-    "status": "published"
+    "status": "published",
+    "evaluationCases": [
+      {
+        "name": "deep nested scalar array",
+        "mode": "function",
+        "function": "flatten_json",
+        "args": [
+          {
+            "cfg": {
+              "hosts": [
+                "h1",
+                "h2"
+              ],
+              "port": 8080
+            }
+          }
+        ],
+        "hidden": true,
+        "expected": {
+          "cfg.hosts.0": "h1",
+          "cfg.hosts.1": "h2",
+          "cfg.port": 8080
+        }
+      },
+      {
+        "name": "already flat dict",
+        "mode": "function",
+        "function": "flatten_json",
+        "args": [
+          {
+            "x": true,
+            "y": "ok"
+          }
+        ],
+        "hidden": true,
+        "expected": {
+          "x": true,
+          "y": "ok"
+        }
+      }
+    ]
   },
   {
     "slug": "py-csv-parser-l2",
@@ -2624,7 +4161,7 @@
       "field = \\begin{cases} \\text{quoted} & \\text{ignore commas} \\\\ \\text{unquoted} & \\text{split by comma} \\end{cases}"
     ],
     "starterCode": "def parse_csv(text: str) -> list:\n    pass",
-    "solutionCode": "def parse_csv(text: str) -> list:\n    lines = text.strip().split(\"\\n\")\n    if not lines: return []\n    headers = lines[0].split(\",\")\n    result = []\n    for line in lines[1:]:\n        row, field, in_q = [], \"\", False\n        for ch in line:\n            if ch == '\"' and not in_q: in_q = True\n            elif ch == '\"' and in_q: in_q = False\n            elif ch == \",\" and not in_q: row.append(field); field = \"\"\n            else: field += ch\n        row.append(field)\n        result.append({headers[i]: row[i] for i in range(len(headers))})\n    return result",
+    "solutionCode": "# 【算法思路】逐字符状态机追踪双引号包围状态，确保引号内的逗号不会被错误切分为新列。\n# 解析首行表头后按引号状态机切分每行字段组装字典列表\ndef parse_csv(text: str) -> list:\n    # 将转义换行字面量归一化为真实换行，按行切分并处理空文本\n    if \"\\n\" not in text and \"\\\\n\" in text:\n        text = text.replace(\"\\\\n\", \"\\n\")\n    lines = [ln for ln in text.strip().split(\"\\n\") if ln]\n    if len(lines) <= 1:\n        return []\n    headers = [h.strip() for h in lines[0].split(\",\")]\n    result = []\n    # 逐字符状态机切分 CSV 字段，避免双引号内部逗号误拆列\n    for line in lines[1:]:\n        row, field, in_q = [], \"\", False\n        for ch in line:\n            if ch == '\"':\n                in_q = not in_q\n            elif ch == \",\" and not in_q:\n                row.append(field)\n                field = \"\"\n            else:\n                field += ch\n        row.append(field)\n        result.append({headers[i]: row[i] for i in range(len(headers))})\n    return result\n",
     "expectedOutput": "[{\"name\":\"Alice\",\"age\":\"30\"}]",
     "testCases": [
       {
@@ -2632,8 +4169,9 @@
         "mode": "function",
         "function": "parse_csv",
         "args": [
-          "name,age\\nAlice,30\\nBob,25"
+          "name,age\nAlice,30\nBob,25"
         ],
+        "hidden": false,
         "expected": [
           {
             "name": "Alice",
@@ -2646,12 +4184,13 @@
         ]
       },
       {
-        "name": "quoted",
+        "name": "quoted comma field",
         "mode": "function",
         "function": "parse_csv",
         "args": [
-          "name,note\\nAlice,\\\"hello, world\\\""
+          "name,note\nAlice,\"hello, world\""
         ],
+        "hidden": false,
         "expected": [
           {
             "name": "Alice",
@@ -2675,7 +4214,38 @@
     ],
     "thinkingQuestion": "如果 CSV 文件有 GB 级，如何流式逐行解析避免 OOM？",
     "aiPrompt": "评估学生对字符串解析、状态机、CSV 格式的理解。按 0-10 分打分。",
-    "status": "published"
+    "status": "published",
+    "evaluationCases": [
+      {
+        "name": "escaped newline string",
+        "mode": "function",
+        "function": "parse_csv",
+        "args": [
+          "col1,col2\\n1,2\\n3,4"
+        ],
+        "hidden": true,
+        "expected": [
+          {
+            "col1": "1",
+            "col2": "2"
+          },
+          {
+            "col1": "3",
+            "col2": "4"
+          }
+        ]
+      },
+      {
+        "name": "header only returns empty",
+        "mode": "function",
+        "function": "parse_csv",
+        "args": [
+          "a,b,c"
+        ],
+        "hidden": true,
+        "expected": []
+      }
+    ]
   },
   {
     "slug": "py-stack-calculator-l2",
@@ -2695,22 +4265,28 @@
       "Term = Factor_1 * Factor_2 \\ldots",
       "num \\rightarrow \\begin{cases} + & push(num) \\\\ - & push(-num) \\\\ * & pop \\times num \\end{cases}"
     ],
-    "starterCode": "class Calculator:\n    @staticmethod\n    def calculate(s: str) -> int:\n        pass",
-    "solutionCode": "class Calculator:\n    @staticmethod\n    def calculate(s: str) -> int:\n        stack, num, sign = [], 0, \"+\"\n        s = s.replace(\" \", \"\")\n        for i, ch in enumerate(s):\n            if ch.isdigit():\n                num = num * 10 + int(ch)\n            if not ch.isdigit() or i == len(s)-1:\n                if sign == \"+\": stack.append(num)\n                elif sign == \"-\": stack.append(-num)\n                elif sign == \"*\": stack.append(stack.pop() * num)\n                elif sign == \"/\": stack.append(int(stack.pop() / num))\n                sign = ch; num = 0\n        return sum(stack)",
+    "starterCode": "class Calculator:\n    @staticmethod\n    def calculate(s: str) -> int:\n        pass\n\n# 评测入口（请勿修改）\ndef eval_calculate(s: str) -> int:\n    return Calculator.calculate(s)\n",
+    "solutionCode": "# 【算法思路】单栈实现四则运算表达式求值：乘除法立即与栈顶归并，加减法连带符号入栈最终求和。\n# 用单栈处理运算符优先级，除法向零取整\nclass Calculator:\n    \"\"\"利用栈处理加减乘除优先级表达式\"\"\"\n    @staticmethod\n    def calculate(s: str) -> int:\n        stack, num, sign = [], 0, \"+\"\n        s = s.replace(\" \", \"\")\n        for i, ch in enumerate(s):\n            if ch.isdigit():\n                num = num * 10 + int(ch)\n            if not ch.isdigit() or i == len(s) - 1:\n                if sign == \"+\": stack.append(num)\n                elif sign == \"-\": stack.append(-num)\n                elif sign == \"*\": stack.append(stack.pop() * num)\n                elif sign == \"/\": stack.append(int(stack.pop() / num))\n                sign = ch\n                num = 0\n        return sum(stack)\n\n# 评测入口（请勿修改）\ndef eval_calculate(s: str) -> int:\n    return Calculator.calculate(s)\n",
     "expectedOutput": "7",
     "testCases": [
       {
-        "name": "basic",
-        "input": {
-          "s": "3+2*2"
-        },
+        "name": "basic precedence",
+        "mode": "function",
+        "function": "eval_calculate",
+        "args": [
+          "3+2*2"
+        ],
+        "hidden": false,
         "expected": 7
       },
       {
-        "name": "with spaces",
-        "input": {
-          "s": " 3+5 / 2 "
-        },
+        "name": "with spaces and div",
+        "mode": "function",
+        "function": "eval_calculate",
+        "args": [
+          " 3+5 / 2 "
+        ],
+        "hidden": false,
         "expected": 5
       }
     ],
@@ -2729,7 +4305,29 @@
     ],
     "thinkingQuestion": "如果要支持括号（如 \"2*(3+4)\"），怎么改？",
     "aiPrompt": "评估学生对栈、表达式求值的理解。按 0-10 分打分。",
-    "status": "published"
+    "status": "published",
+    "evaluationCases": [
+      {
+        "name": "negative division truncates toward zero",
+        "mode": "function",
+        "function": "eval_calculate",
+        "args": [
+          "14-3/2"
+        ],
+        "hidden": true,
+        "expected": 13
+      },
+      {
+        "name": "multi-digit chained mul div",
+        "mode": "function",
+        "function": "eval_calculate",
+        "args": [
+          "10*2/5-3+1"
+        ],
+        "hidden": true,
+        "expected": 2
+      }
+    ]
   },
   {
     "slug": "py-bank-account-l2",
@@ -2748,37 +4346,43 @@
       "balance \\ge amount \\rightarrow withdraw",
       "balance < amount \\rightarrow Exception"
     ],
-    "starterCode": "class BankAccount:\n    def __init__(self, owner: str, balance: float = 0):\n        self.owner = owner\n        self._balance = balance\n    def deposit(self, amount): pass\n    def withdraw(self, amount): pass\n    def transfer(self, amount, target): pass\n    def get_balance(self): pass",
-    "solutionCode": "class BankAccount:\n    def __init__(self, owner, balance=0):\n        self.owner = owner\n        self._balance = max(0, balance)\n        self._txns = []\n    def deposit(self, amount):\n        if amount <= 0: raise ValueError(\"positive only\")\n        self._balance += amount\n        self._txns.append(f\"DEPOSIT +{amount}\")\n    def withdraw(self, amount):\n        if amount <= 0: raise ValueError(\"positive only\")\n        if amount > self._balance: raise ValueError(\"insufficient\")\n        self._balance -= amount\n        self._txns.append(f\"WITHDRAW -{amount}\")\n    def transfer(self, amount, target):\n        self.withdraw(amount)\n        target.deposit(amount)\n    def get_balance(self):\n        return self._balance",
+    "starterCode": "class BankAccount:\n    def __init__(self, owner: str, balance: float = 0):\n        self.owner = owner\n        self._balance = balance\n    def deposit(self, amount): pass\n    def withdraw(self, amount): pass\n    def transfer(self, amount, target): pass\n    def get_balance(self): pass\n\n# 评测入口（请勿修改）\ndef eval_bank(owner: str, initial: float, actions: list[dict]) -> float:\n    acc = BankAccount(owner, initial)\n    for act in actions:\n        op = act[\"op\"]\n        if op == \"deposit\":\n            acc.deposit(act[\"amount\"])\n        elif op == \"withdraw\":\n            acc.withdraw(act[\"amount\"])\n        elif op == \"transfer\":\n            acc.transfer(act[\"amount\"], BankAccount(act[\"target\"], 0))\n    return acc.get_balance()\n",
+    "solutionCode": "# 【算法思路】实现账户存/取/转账额度合法性检验并记录流水，确保余额不为负。\n# 封装账户余额保护与账户间转账逻辑\nclass BankAccount:\n    \"\"\"银行账户：支持存款、取款校验与转账\"\"\"\n    def __init__(self, owner, balance=0):\n        self.owner = owner\n        self._balance = max(0, balance)\n        self._txns = []\n    def deposit(self, amount):\n        if amount <= 0: raise ValueError(\"positive only\")\n        self._balance += amount\n        self._txns.append(f\"DEPOSIT +{amount}\")\n    def withdraw(self, amount):\n        if amount <= 0: raise ValueError(\"positive only\")\n        if amount > self._balance: raise ValueError(\"insufficient\")\n        self._balance -= amount\n        self._txns.append(f\"WITHDRAW -{amount}\")\n    def transfer(self, amount, target):\n        self.withdraw(amount)\n        target.deposit(amount)\n    def get_balance(self):\n        return self._balance\n\n# 评测入口（请勿修改）\ndef eval_bank(owner: str, initial: float, actions: list[dict]) -> float:\n    acc = BankAccount(owner, initial)\n    for act in actions:\n        op = act[\"op\"]\n        if op == \"deposit\":\n            acc.deposit(act[\"amount\"])\n        elif op == \"withdraw\":\n            acc.withdraw(act[\"amount\"])\n        elif op == \"transfer\":\n            acc.transfer(act[\"amount\"], BankAccount(act[\"target\"], 0))\n    return acc.get_balance()\n",
     "expectedOutput": "900",
     "testCases": [
       {
         "name": "withdraw",
-        "input": {
-          "owner": "Alice",
-          "initial": 1000,
-          "actions": [
+        "mode": "function",
+        "function": "eval_bank",
+        "args": [
+          "Alice",
+          1000,
+          [
             {
               "op": "withdraw",
               "amount": 100
             }
           ]
-        },
+        ],
+        "hidden": false,
         "expected": 900
       },
       {
         "name": "transfer",
-        "input": {
-          "owner": "Alice",
-          "initial": 500,
-          "actions": [
+        "mode": "function",
+        "function": "eval_bank",
+        "args": [
+          "Alice",
+          500,
+          [
             {
               "op": "transfer",
               "amount": 200,
               "target": "Bob"
             }
           ]
-        },
+        ],
+        "hidden": false,
         "expected": 300
       }
     ],
@@ -2797,7 +4401,47 @@
     ],
     "thinkingQuestion": "如果要记录交易明细，如何设计 _txns 列表？",
     "aiPrompt": "评估学生对封装、异常处理的理解。按 0-10 分打分。",
-    "status": "published"
+    "status": "published",
+    "evaluationCases": [
+      {
+        "name": "deposit then withdraw",
+        "mode": "function",
+        "function": "eval_bank",
+        "args": [
+          "Bob",
+          0,
+          [
+            {
+              "op": "deposit",
+              "amount": 300
+            },
+            {
+              "op": "withdraw",
+              "amount": 120
+            }
+          ]
+        ],
+        "hidden": true,
+        "expected": 180
+      },
+      {
+        "name": "overdraft raises ValueError",
+        "mode": "function",
+        "function": "eval_bank",
+        "args": [
+          "Bob",
+          50,
+          [
+            {
+              "op": "withdraw",
+              "amount": 100
+            }
+          ]
+        ],
+        "hidden": true,
+        "expectedException": "ValueError"
+      }
+    ]
   },
   {
     "slug": "py-shape-area-l2",
@@ -2817,29 +4461,35 @@
       "A_{rect} = w \\times h",
       "A_{tri} = \\frac{1}{2}bh"
     ],
-    "starterCode": "from abc import ABC, abstractmethod\nimport math\nclass Shape(ABC):\n    @abstractmethod\n    def area(self): pass\nclass Circle(Shape):\n    def __init__(self, r): pass\n    def area(self): pass\nclass Rectangle(Shape):\n    def __init__(self, w, h): pass\n    def area(self): pass",
-    "solutionCode": "from abc import ABC, abstractmethod\nimport math\nclass Shape(ABC):\n    @abstractmethod\n    def area(self): pass\nclass Circle(Shape):\n    def __init__(self, r): self.r = r\n    def area(self): return round(math.pi * self.r**2, 2)\nclass Rectangle(Shape):\n    def __init__(self, w, h): self.w, self.h = w, h\n    def area(self): return self.w * self.h\nclass Triangle(Shape):\n    def __init__(self, b, h): self.b, self.h = b, h\n    def area(self): return 0.5 * self.b * self.h",
+    "starterCode": "from abc import ABC, abstractmethod\nimport math\n\nclass Shape(ABC):\n    @abstractmethod\n    def area(self): pass\n\nclass Circle(Shape):\n    def __init__(self, r): pass\n    def area(self): pass\n\nclass Rectangle(Shape):\n    def __init__(self, w, h): pass\n    def area(self): pass\n\nclass Triangle(Shape):\n    def __init__(self, b, h): pass\n    def area(self): pass\n\n# 评测入口（请勿修改）\ndef eval_shape(shape: str, args: list) -> float:\n    cls = {\"circle\": Circle, \"rectangle\": Rectangle, \"triangle\": Triangle}[shape]\n    return cls(*args).area()\n",
+    "solutionCode": "# 【算法思路】基于抽象基类 Shape 统一面积接口，分别为圆、矩形与三角形实现多态 area 计算。\nfrom abc import ABC, abstractmethod\nimport math\n\n# 几何图形抽象基类\nclass Shape(ABC):\n    @abstractmethod\n    def area(self): pass\n\n# 按 πr^2 保留两位小数算圆面积\nclass Circle(Shape):\n    def __init__(self, r): self.r = r\n    def area(self): return round(math.pi * self.r**2, 2)\n\n# 按宽乘高算矩形面积\nclass Rectangle(Shape):\n    def __init__(self, w, h): self.w, self.h = w, h\n    def area(self): return self.w * self.h\n\n# 按底乘高除以 2 算三角形面积\nclass Triangle(Shape):\n    def __init__(self, b, h): self.b, self.h = b, h\n    def area(self): return 0.5 * self.b * self.h\n\n# 评测入口（请勿修改）\ndef eval_shape(shape: str, args: list) -> float:\n    cls = {\"circle\": Circle, \"rectangle\": Rectangle, \"triangle\": Triangle}[shape]\n    return cls(*args).area()\n",
     "expectedOutput": "78.54",
     "testCases": [
       {
-        "name": "circle",
-        "input": {
-          "shape": "circle",
-          "args": [
+        "name": "circle area",
+        "mode": "function",
+        "function": "eval_shape",
+        "args": [
+          "circle",
+          [
             5
           ]
-        },
+        ],
+        "hidden": false,
         "expected": 78.54
       },
       {
-        "name": "rectangle",
-        "input": {
-          "shape": "rectangle",
-          "args": [
+        "name": "rectangle area",
+        "mode": "function",
+        "function": "eval_shape",
+        "args": [
+          "rectangle",
+          [
             3,
             4
           ]
-        },
+        ],
+        "hidden": false,
         "expected": 12
       }
     ],
@@ -2858,7 +4508,36 @@
     ],
     "thinkingQuestion": "Square 和 Rectangle 是什么关系？应该继承还是单独实现？",
     "aiPrompt": "评估学生对继承、抽象类的理解。按 0-10 分打分。",
-    "status": "published"
+    "status": "published",
+    "evaluationCases": [
+      {
+        "name": "triangle area",
+        "mode": "function",
+        "function": "eval_shape",
+        "args": [
+          "triangle",
+          [
+            6,
+            5
+          ]
+        ],
+        "hidden": true,
+        "expected": 15
+      },
+      {
+        "name": "zero radius circle",
+        "mode": "function",
+        "function": "eval_shape",
+        "args": [
+          "circle",
+          [
+            0
+          ]
+        ],
+        "hidden": true,
+        "expected": 0
+      }
+    ]
   },
   {
     "slug": "py-logger-polymorphism-l2",
@@ -2877,15 +4556,17 @@
       "log(level, msg) \\rightarrow format \\rightarrow output",
       "Polymorphism: same interface, different impl"
     ],
-    "starterCode": "from abc import ABC, abstractmethod\nclass Logger(ABC):\n    @abstractmethod\n    def log(self, level, message): pass\nclass FileLogger(Logger):\n    def __init__(self): self.lines = []\n    def log(self, level, message): pass\nclass ConsoleLogger(Logger):\n    def __init__(self): self.output = []\n    def log(self, level, message): pass\ndef write_logs(logger: Logger, logs: list): pass",
-    "solutionCode": "from abc import ABC, abstractmethod\nclass Logger(ABC):\n    @abstractmethod\n    def log(self, level, message): pass\nclass FileLogger(Logger):\n    def __init__(self): self.lines = []\n    def log(self, level, message): self.lines.append(f\"[{level}] {message}\")\nclass ConsoleLogger(Logger):\n    def __init__(self): self.output = []\n    def log(self, level, message): self.output.append(f\"[CONSOLE][{level}] {message}\")\ndef write_logs(logger: Logger, logs: list):\n    for level, msg in logs: logger.log(level, msg)",
+    "starterCode": "from abc import ABC, abstractmethod\n\nclass Logger(ABC):\n    @abstractmethod\n    def log(self, level, message): pass\n\nclass FileLogger(Logger):\n    def __init__(self): self.lines = []\n    def log(self, level, message): pass\n\nclass ConsoleLogger(Logger):\n    def __init__(self): self.output = []\n    def log(self, level, message): pass\n\ndef write_logs(logger: Logger, logs: list):\n    pass\n\n# 评测入口（请勿修改）\ndef eval_logger(logger_type: str, logs: list) -> list[str]:\n    logger = FileLogger() if logger_type == \"file\" else ConsoleLogger()\n    write_logs(logger, logs)\n    return logger.lines if logger_type == \"file\" else logger.output\n",
+    "solutionCode": "# 【算法思路】面向抽象 Logger 接口编程，使业务写入函数 write_logs 无需关心文件与控制台实现差异。\nfrom abc import ABC, abstractmethod\n\n# 日志抽象基类\nclass Logger(ABC):\n    @abstractmethod\n    def log(self, level, message): pass\n\n# 将日志行追加写入 lines 列表\nclass FileLogger(Logger):\n    def __init__(self): self.lines = []\n    def log(self, level, message): self.lines.append(f\"[{level}] {message}\")\n\n# 生成带 [CONSOLE] 前缀的输出列表\nclass ConsoleLogger(Logger):\n    def __init__(self): self.output = []\n    def log(self, level, message): self.output.append(f\"[CONSOLE][{level}] {message}\")\n\n# 多态接收日志列表并写入指定记录器\ndef write_logs(logger: Logger, logs: list):\n    # 多态遍历日志二元组列表并写入对应记录器\n    for level, msg in logs:\n        logger.log(level, msg)\n\n# 评测入口（请勿修改）\ndef eval_logger(logger_type: str, logs: list) -> list[str]:\n    logger = FileLogger() if logger_type == \"file\" else ConsoleLogger()\n    write_logs(logger, logs)\n    return logger.lines if logger_type == \"file\" else logger.output\n",
     "expectedOutput": "[\"[ERROR] disk full\"]",
     "testCases": [
       {
         "name": "file logger",
-        "input": {
-          "loggerType": "file",
-          "logs": [
+        "mode": "function",
+        "function": "eval_logger",
+        "args": [
+          "file",
+          [
             [
               "ERROR",
               "disk full"
@@ -2895,10 +4576,29 @@
               "started"
             ]
           ]
-        },
+        ],
+        "hidden": false,
         "expected": [
           "[ERROR] disk full",
           "[INFO] started"
+        ]
+      },
+      {
+        "name": "console logger",
+        "mode": "function",
+        "function": "eval_logger",
+        "args": [
+          "console",
+          [
+            [
+              "WARN",
+              "low mem"
+            ]
+          ]
+        ],
+        "hidden": false,
+        "expected": [
+          "[CONSOLE][WARN] low mem"
         ]
       }
     ],
@@ -2917,7 +4617,43 @@
     ],
     "thinkingQuestion": "增加 JsonLogger 最少改哪些代码？",
     "aiPrompt": "评估学生对多态、开闭原则的理解。按 0-10 分打分。",
-    "status": "published"
+    "status": "published",
+    "evaluationCases": [
+      {
+        "name": "multiple console entries",
+        "mode": "function",
+        "function": "eval_logger",
+        "args": [
+          "console",
+          [
+            [
+              "INFO",
+              "a"
+            ],
+            [
+              "ERROR",
+              "b"
+            ]
+          ]
+        ],
+        "hidden": true,
+        "expected": [
+          "[CONSOLE][INFO] a",
+          "[CONSOLE][ERROR] b"
+        ]
+      },
+      {
+        "name": "empty logs",
+        "mode": "function",
+        "function": "eval_logger",
+        "args": [
+          "file",
+          []
+        ],
+        "hidden": true,
+        "expected": []
+      }
+    ]
   },
   {
     "slug": "py-range-iterator-l2",
@@ -2936,17 +4672,20 @@
       "next = current + step",
       "StopIteration \\iff current \\ge stop"
     ],
-    "starterCode": "class RangeIterator:\n    def __init__(self, *args): pass\n    def __iter__(self): pass\n    def __next__(self): pass",
-    "solutionCode": "class RangeIterator:\n    def __init__(self, *args):\n        if len(args)==1: self.s,self.st=0,args[0];self.step=1\n        elif len(args)==2: self.s,self.st=args[0],args[1];self.step=1\n        else: self.s,self.st,self.step=args[0],args[1],args[2]\n        self.c=self.s\n    def __iter__(self): return self\n    def __next__(self):\n        if (self.step>0 and self.c>=self.st) or (self.step<0 and self.c<=self.st):\n            raise StopIteration\n        v=self.c; self.c+=self.step; return v",
+    "starterCode": "class RangeIterator:\n    def __init__(self, *args): pass\n    def __iter__(self): pass\n    def __next__(self): pass\n\n# 评测入口（请勿修改）\ndef eval_range(args: list[int]) -> list[int]:\n    return list(RangeIterator(*args))\n",
+    "solutionCode": "# 【算法思路】兼容 1/2/3 参数签名的自定义步长整数范围迭代器，并支持负步长倒序终止判断。\n# 解析 start/stop/step 并在越界时触发 StopIteration\nclass RangeIterator:\n    \"\"\"支持 1~3 个参数与负步长的自定义整数范围迭代器\"\"\"\n    def __init__(self, *args):\n        if len(args) == 1: self.s, self.st, self.step = 0, args[0], 1\n        elif len(args) == 2: self.s, self.st, self.step = args[0], args[1], 1\n        else: self.s, self.st, self.step = args[0], args[1], args[2]\n        self.c = self.s\n    def __iter__(self): return self\n    def __next__(self):\n        if (self.step > 0 and self.c >= self.st) or (self.step < 0 and self.c <= self.st):\n            raise StopIteration\n        v = self.c\n        self.c += self.step\n        return v\n\n# 评测入口（请勿修改）\ndef eval_range(args: list[int]) -> list[int]:\n    return list(RangeIterator(*args))\n",
     "expectedOutput": "[0,1,2,3,4]",
     "testCases": [
       {
-        "name": "basic",
-        "input": {
-          "args": [
+        "name": "single arg",
+        "mode": "function",
+        "function": "eval_range",
+        "args": [
+          [
             5
           ]
-        },
+        ],
+        "hidden": false,
         "expected": [
           0,
           1,
@@ -2956,14 +4695,17 @@
         ]
       },
       {
-        "name": "step",
-        "input": {
-          "args": [
+        "name": "with step",
+        "mode": "function",
+        "function": "eval_range",
+        "args": [
+          [
             2,
             8,
             2
           ]
-        },
+        ],
+        "hidden": false,
         "expected": [
           2,
           4,
@@ -2971,14 +4713,17 @@
         ]
       },
       {
-        "name": "negative",
-        "input": {
-          "args": [
+        "name": "negative step",
+        "mode": "function",
+        "function": "eval_range",
+        "args": [
+          [
             5,
             0,
             -1
           ]
-        },
+        ],
+        "hidden": false,
         "expected": [
           5,
           4,
@@ -3003,7 +4748,40 @@
     ],
     "thinkingQuestion": "Python range() 是惰性的，你的实现也是吗？",
     "aiPrompt": "评估学生对迭代器协议的理解。按 0-10 分打分。",
-    "status": "published"
+    "status": "published",
+    "evaluationCases": [
+      {
+        "name": "start equals stop empty",
+        "mode": "function",
+        "function": "eval_range",
+        "args": [
+          [
+            3,
+            3
+          ]
+        ],
+        "hidden": true,
+        "expected": []
+      },
+      {
+        "name": "start and stop",
+        "mode": "function",
+        "function": "eval_range",
+        "args": [
+          [
+            -2,
+            2
+          ]
+        ],
+        "hidden": true,
+        "expected": [
+          -2,
+          -1,
+          0,
+          1
+        ]
+      }
+    ]
   },
   {
     "slug": "py-fib-generator-l2",
@@ -3022,15 +4800,18 @@
       "F_n = F_{n-1} + F_{n-2}",
       "F_0 = 0, F_1 = 1"
     ],
-    "starterCode": "def fibonacci():\n    pass\ndef first_n(g, n):\n    pass",
-    "solutionCode": "def fibonacci():\n    a, b = 0, 1\n    while True:\n        yield a\n        a, b = b, a+b\ndef first_n(g, n):\n    return [next(g) for _ in range(n)]",
+    "starterCode": "def fibonacci():\n    pass\n\ndef first_n(g, n):\n    pass\n\n# 评测入口（请勿修改）\ndef eval_fib(n: int) -> list[int]:\n    return first_n(fibonacci(), n)\n",
+    "solutionCode": "# 【算法思路】用 yield 构建无限惰性斐波那契数列生成器，并按需拉取前 n 项。\n# 持续递推生成 a, b 无限斐波那契项\ndef fibonacci():\n    # 无限斐波那契数列生成器\n    a, b = 0, 1\n    while True:\n        yield a\n        a, b = b, a + b\n\n# 借助 next() 从生成器提取指定个数元素\ndef first_n(g, n):\n    # 从生成器中拉取前 n 项\n    return [next(g) for _ in range(n)]\n\n# 评测入口（请勿修改）\ndef eval_fib(n: int) -> list[int]:\n    return first_n(fibonacci(), n)\n",
     "expectedOutput": "[0,1,1,2,3,5]",
     "testCases": [
       {
         "name": "first 6",
         "mode": "function",
-        "function": "fibonacci",
-        "args": [],
+        "function": "eval_fib",
+        "args": [
+          6
+        ],
+        "hidden": false,
         "expected": [
           0,
           1,
@@ -3038,6 +4819,18 @@
           2,
           3,
           5
+        ]
+      },
+      {
+        "name": "first 1",
+        "mode": "function",
+        "function": "eval_fib",
+        "args": [
+          1
+        ],
+        "hidden": false,
+        "expected": [
+          0
         ]
       }
     ],
@@ -3056,7 +4849,38 @@
     ],
     "thinkingQuestion": "第 100 个斐波那契数用生成器 vs 递归各有什么问题？",
     "aiPrompt": "评估学生对生成器、yield 的理解。按 0-10 分打分。",
-    "status": "published"
+    "status": "published",
+    "evaluationCases": [
+      {
+        "name": "first 8 numbers",
+        "mode": "function",
+        "function": "eval_fib",
+        "args": [
+          8
+        ],
+        "hidden": true,
+        "expected": [
+          0,
+          1,
+          1,
+          2,
+          3,
+          5,
+          8,
+          13
+        ]
+      },
+      {
+        "name": "first 0 empty",
+        "mode": "function",
+        "function": "eval_fib",
+        "args": [
+          0
+        ],
+        "hidden": true,
+        "expected": []
+      }
+    ]
   },
   {
     "slug": "py-timing-decorator-l2",
@@ -3075,16 +4899,33 @@
       "t = t_{end} - t_{start}",
       "\\text{decorator: } f \\rightarrow wrapper"
     ],
-    "starterCode": "import time, functools\ndef timer(unit=\"s\"):\n    def decorator(func):\n        @functools.wraps(func)\n        def wrapper(*args,**kwargs): pass\n    return decorator",
-    "solutionCode": "import time, functools\ndef timer(unit=\"s\"):\n    def deco(func):\n        @functools.wraps(func)\n        def wrapper(*a,**kw):\n            start=time.perf_counter()\n            r=func(*a,**kw)\n            t=time.perf_counter()-start\n            u=\"ms\" if unit==\"ms\" else \"s\"\n            d=t*1000 if unit==\"ms\" else t\n            print(f\"{func.__name__} 耗时: {d:.3f}{u}\")\n            return r\n        return wrapper\n    return deco",
+    "starterCode": "import time, functools\n\ndef timer(unit=\"s\"):\n    def decorator(func):\n        @functools.wraps(func)\n        def wrapper(*args, **kwargs):\n            pass\n        return wrapper\n    return decorator\n\n# 评测入口（请勿修改）\ndef eval_timer(unit: str, a: int, b: int) -> int:\n    @timer(unit=unit)\n    def multiply(x, y):\n        return x * y\n    return multiply(a, b)\n",
+    "solutionCode": "# 【算法思路】外层带 unit 参数的三层装饰器，利用 perf_counter 记录高精度函数运行耗时并透传返回值。\nimport time, functools\n\n# 按秒或毫秒格式化打印被装饰函数运行耗时\ndef timer(unit=\"s\"):\n    # 支持秒(s)或毫秒(ms)单位的函数执行耗时统计装饰器\n    def deco(func):\n        @functools.wraps(func)\n        def wrapper(*a, **kw):\n            start = time.perf_counter()\n            r = func(*a, **kw)\n            t = time.perf_counter() - start\n            u = \"ms\" if unit == \"ms\" else \"s\"\n            d = t * 1000 if unit == \"ms\" else t\n            print(f\"{func.__name__} 耗时: {d:.3f}{u}\")\n            return r\n        return wrapper\n    return deco\n\n# 评测入口（请勿修改）\ndef eval_timer(unit: str, a: int, b: int) -> int:\n    @timer(unit=unit)\n    def multiply(x, y):\n        return x * y\n    return multiply(a, b)\n",
     "expectedOutput": "True",
     "testCases": [
       {
-        "name": "timer works",
+        "name": "timer seconds returns value",
         "mode": "function",
-        "function": "timer",
-        "args": [],
-        "expected": true
+        "function": "eval_timer",
+        "args": [
+          "s",
+          6,
+          7
+        ],
+        "hidden": false,
+        "expected": 42
+      },
+      {
+        "name": "timer ms returns value",
+        "mode": "function",
+        "function": "eval_timer",
+        "args": [
+          "ms",
+          -3,
+          9
+        ],
+        "hidden": false,
+        "expected": -27
       }
     ],
     "quizzes": [
@@ -3102,7 +4943,33 @@
     ],
     "thinkingQuestion": "如何同时支持 @timer 和 @timer(unit=\"ms\") 两种用法？",
     "aiPrompt": "评估学生对装饰器、functools.wraps 的理解。按 0-10 分打分。",
-    "status": "published"
+    "status": "published",
+    "evaluationCases": [
+      {
+        "name": "zero multiplication",
+        "mode": "function",
+        "function": "eval_timer",
+        "args": [
+          "ms",
+          0,
+          99
+        ],
+        "hidden": true,
+        "expected": 0
+      },
+      {
+        "name": "large multiplication",
+        "mode": "function",
+        "function": "eval_timer",
+        "args": [
+          "s",
+          123,
+          10
+        ],
+        "hidden": true,
+        "expected": 1230
+      }
+    ]
   },
   {
     "slug": "py-sort-lambda-l2",
@@ -3121,39 +4988,45 @@
       "sorted(items, key=\\lambda)",
       "\\lambda(x) \\rightarrow single\\_expression"
     ],
-    "starterCode": "def sort_words(words, key_func):\n    return sorted(words, key=key_func)\n\nby_length = None\nby_last_char = None\nby_count_a = None",
-    "solutionCode": "def sort_words(words, key_func):\n    return sorted(words, key=key_func)\n\nby_length = lambda w: len(w)\nby_last_char = lambda w: w[-1] if w else \"\"\nby_count_a = lambda w: w.count(\"a\")",
+    "starterCode": "def sort_words(words: list[str], key_func) -> list[str]:\n    \"\"\"按传入键函数对单词列表排序并返回\"\"\"\n    pass\n\nby_length = None\nby_last_char = None\nby_count_a = None\n\n# 评测入口（请勿修改）\ndef eval_sort_words(words: list[str], key_name: str) -> list[str]:\n    mapping = {\n        \"length\": by_length,\n        \"last_char\": by_last_char,\n        \"count_a\": by_count_a,\n    }\n    return sort_words(words, mapping[key_name])\n",
+    "solutionCode": "# 【算法思路】通过高阶函数接收不同 lambda 排序策略，实现按长度、末字符或字母 'a' 次数排序。\n# 使用 key_func 排序单词列表\ndef sort_words(words, key_func):\n    # 使用传入的排序键函数返回新的有序单词列表\n    return sorted(words, key=key_func)\n\n# 定义三种常用的 lambda 排序规则\nby_length = lambda w: len(w)\nby_last_char = lambda w: w[-1] if w else \"\"\nby_count_a = lambda w: w.count(\"a\")\n\n# 评测入口（请勿修改）\ndef eval_sort_words(words: list[str], key_name: str) -> list[str]:\n    mapping = {\n        \"length\": by_length,\n        \"last_char\": by_last_char,\n        \"count_a\": by_count_a,\n    }\n    return sort_words(words, mapping[key_name])\n",
     "expectedOutput": "[\"date\",\"apple\"]",
     "testCases": [
       {
         "name": "by length",
-        "input": {
-          "words": [
+        "mode": "function",
+        "function": "eval_sort_words",
+        "args": [
+          [
             "apple",
             "banana",
             "cherry",
             "date"
           ],
-          "key": "length"
-        },
+          "length"
+        ],
+        "hidden": false,
         "expected": [
           "date",
           "apple",
-          "cherry",
-          "banana"
+          "banana",
+          "cherry"
         ]
       },
       {
         "name": "by last char",
-        "input": {
-          "words": [
+        "mode": "function",
+        "function": "eval_sort_words",
+        "args": [
+          [
             "apple",
             "banana",
             "cherry",
             "date"
           ],
-          "key": "last_char"
-        },
+          "last_char"
+        ],
+        "hidden": false,
         "expected": [
           "banana",
           "apple",
@@ -3177,6 +5050,40 @@
     ],
     "thinkingQuestion": "sorted() 的 key 参数传入 lambda 时，是逐元素调用还是先处理完？对性能的影响？",
     "aiPrompt": "评估学生对 lambda、排序 key 函数的理解。按 0-10 分打分。",
-    "status": "published"
+    "status": "published",
+    "evaluationCases": [
+      {
+        "name": "by count of letter a",
+        "mode": "function",
+        "function": "eval_sort_words",
+        "args": [
+          [
+            "banana",
+            "apple",
+            "pear",
+            "fig"
+          ],
+          "count_a"
+        ],
+        "hidden": true,
+        "expected": [
+          "fig",
+          "apple",
+          "pear",
+          "banana"
+        ]
+      },
+      {
+        "name": "empty list",
+        "mode": "function",
+        "function": "eval_sort_words",
+        "args": [
+          [],
+          "length"
+        ],
+        "hidden": true,
+        "expected": []
+      }
+    ]
   }
 ]

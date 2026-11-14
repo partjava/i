@@ -225,7 +225,7 @@ export default function UniversePage() {
         {/* 主视口 */}
         <main className="flex-1 overflow-hidden relative">
           {currentLayer === 'universe' && (
-            <SpaceUniverse onSelectStage={handleSelectStage} />
+            <SpaceUniverse onSelectStage={handleSelectStage} dbChallenges={dbChallenges} />
           )}
 
           {currentLayer === 'tree' && (

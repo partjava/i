@@ -18,12 +18,12 @@
     "latexFormulas": [
       "text{FMM: }w = argmax_{w in V} |w| s.t. w in prefix(text)"
     ],
-    "starterCode": "def fmm_segment(text, vocab, max_len=5):\n    tokens = []\n    i = 0\n    while i < len(text):\n        matched = False\n        for L in range(min(max_len, len(text)-i), 0, -1):\n            if text[i:i+L] in vocab:\n                tokens.append(text[i:i+L])\n                i += L\n                matched = True\n                break\n        if not matched:\n            tokens.append(text[i])\n            i += 1\n    return tokens\ndef pos_tag(tokens, pos_dict):\n    return [{'word': t, 'pos': pos_dict.get(t, 'UNK')} for t in tokens]",
-    "solutionCode": "def fmm_segment(text, vocab, max_len=5):\n    tokens = []\n    i = 0\n    while i < len(text):\n        matched = False\n        for L in range(min(max_len, len(text)-i), 0, -1):\n            if text[i:i+L] in vocab:\n                tokens.append(text[i:i+L])\n                i += L\n                matched = True\n                break\n        if not matched:\n            tokens.append(text[i])\n            i += 1\n    return tokens\ndef pos_tag(tokens, pos_dict):\n    return [{'word': t, 'pos': pos_dict.get(t, 'UNK')} for t in tokens]",
+    "starterCode": "def fmm_segment(text: str, vocab: list[str], max_len: int = 5) -> list[str]:\n    \"\"\"正向最大匹配中文分词，未登录词按单字切分\"\"\"\n    pass\n\ndef pos_tag(tokens: list[str], pos_dict: dict) -> list[dict]:\n    \"\"\"为分词序列标注词性，返回 [{\"word\": ..., \"pos\": ...}, ...]\"\"\"\n    pass\n",
+    "solutionCode": "# 【算法思路】按正向最大匹配 (FMM) 算法依据词表切分中文文本，并映射词性词典完成标注。\n# 从当前位置按 max_len 递减长度匹配词表，未登录词退化为单字\ndef fmm_segment(text, vocab, max_len=5):\n    tokens = []\n    i = 0\n    while i < len(text):\n        matched = False\n        for L in range(min(max_len, len(text)-i), 0, -1):\n            if text[i:i+L] in vocab:\n                tokens.append(text[i:i+L])\n                i += L\n                matched = True\n                break\n        if not matched:\n            tokens.append(text[i])\n            i += 1\n    return tokens\n# 查表为每个分词赋予词性标签（缺省为 UNK）\ndef pos_tag(tokens, pos_dict):\n    return [{'word': t, 'pos': pos_dict.get(t, 'UNK')} for t in tokens]\n",
     "expectedOutput": "True",
     "testCases": [
       {
-        "name": "fmm basic",
+        "name": "fmm segments with greedy longest match",
         "mode": "function",
         "function": "fmm_segment",
         "args": [
@@ -33,16 +33,49 @@
             "在",
             "野生",
             "野生动物",
+            "野生动物园",
             "动物园",
             "玩"
           ],
           5
         ],
+        "hidden": false,
         "expected": [
           "我们",
           "在",
           "野生动物园",
           "玩"
+        ]
+      },
+      {
+        "name": "pos tag maps known and unknown tokens",
+        "mode": "function",
+        "function": "pos_tag",
+        "args": [
+          [
+            "我们",
+            "玩",
+            "XYZ"
+          ],
+          {
+            "我们": "PRON",
+            "玩": "VERB"
+          }
+        ],
+        "hidden": false,
+        "expected": [
+          {
+            "word": "我们",
+            "pos": "PRON"
+          },
+          {
+            "word": "玩",
+            "pos": "VERB"
+          },
+          {
+            "word": "XYZ",
+            "pos": "UNK"
+          }
         ]
       }
     ],
@@ -61,7 +94,52 @@
     ],
     "thinkingQuestion": "HMM（隐马尔可夫模型）如何解决未登录词识别问题？它与词典匹配的本质区别是什么？",
     "aiPrompt": "评估学生对分词算法、FMM、词性标注的理解。按 0-10 分打分。",
-    "status": "published"
+    "status": "published",
+    "evaluationCases": [
+      {
+        "name": "oov characters split individually",
+        "mode": "function",
+        "function": "fmm_segment",
+        "args": [
+          "今天天气abc",
+          [
+            "今天",
+            "天气"
+          ],
+          4
+        ],
+        "hidden": true,
+        "expected": [
+          "今天",
+          "天气",
+          "a",
+          "b",
+          "c"
+        ]
+      },
+      {
+        "name": "max_len constrains match window",
+        "mode": "function",
+        "function": "fmm_segment",
+        "args": [
+          "中华人民共和国",
+          [
+            "中华",
+            "中华人民共和国"
+          ],
+          2
+        ],
+        "hidden": true,
+        "expected": [
+          "中华",
+          "人",
+          "民",
+          "共",
+          "和",
+          "国"
+        ]
+      }
+    ]
   },
   {
     "slug": "nlp-tfidf-retriever",
@@ -84,34 +162,59 @@
       "text{IDF}(t,D) = log(|D|/(1+|{d in D: t in d}|))"
     ],
     "starterCode": "import math\ndef tf(term, doc): pass\ndef idf(term, docs): pass\ndef tfidf(term, doc, docs): pass\ndef search(query, docs, top_k): pass",
-    "solutionCode": "import math\ndef tf(term, doc):\n    return doc.count(term)/len(doc) if doc else 0\ndef idf(term, docs):\n    n = sum(1 for d in docs if term in d)\n    return math.log((len(docs)+1)/(n+1))+1\ndef tfidf(term, doc, docs):\n    return round(tf(term,doc)*idf(term,docs),4)\ndef search(query, docs, top_k=2):\n    scores = []\n    for i, doc in enumerate(docs):\n        score = sum(tfidf(w,doc,docs) for w in query.split())\n        scores.append((i, round(score,4)))\n    scores.sort(key=lambda x:-x[1])\n    return scores[:top_k]",
+    "solutionCode": "# 【算法思路】统计词频 TF 与平滑逆文档频率 IDF 计算 TF-IDF 权重，按余弦加和排序文档。\nimport math\n# 计算词项在单篇文档中的相对出现频率\ndef tf(term, doc):\n    return doc.count(term)/len(doc) if doc else 0\n# 按加一平滑公式统计词项区分度权重\ndef idf(term, docs):\n    n = sum(1 for d in docs if term in d)\n    return math.log((len(docs)+1)/(n+1))+1\n# 计算 TF 与 IDF 乘积权重\ndef tfidf(term, doc, docs):\n    return round(tf(term,doc)*idf(term,docs),4)\n# 累加查询词 TF-IDF 得分并返回最相关 top_k 文档索引\ndef search(query, docs, top_k=2):\n    scores = []\n    for i, doc in enumerate(docs):\n        score = sum(tfidf(w,doc,docs) for w in query.split())\n        scores.append((i, round(score,4)))\n    scores.sort(key=lambda x:-x[1])\n    return scores[:top_k]\n",
     "expectedOutput": "True",
     "testCases": [
       {
-        "name": "tfidf basic",
-        "input": {
-          "doc": [
+        "name": "tf computes relative term frequency",
+        "mode": "function",
+        "function": "tf",
+        "args": [
+          "苹果",
+          [
             "苹果",
             "香蕉",
-            "苹果"
-          ],
-          "docs": [
-            [
-              "苹果",
-              "香蕉",
-              "苹果"
-            ],
+            "苹果",
+            "梨"
+          ]
+        ],
+        "hidden": false,
+        "expected": 0.5
+      },
+      {
+        "name": "search ranks matching doc highest",
+        "mode": "function",
+        "function": "search",
+        "args": [
+          "苹果",
+          [
             [
               "香蕉",
               "橙子"
             ],
             [
               "苹果",
-              "葡萄"
+              "香蕉",
+              "苹果"
+            ],
+            [
+              "葡萄",
+              "梨"
             ]
+          ],
+          2
+        ],
+        "hidden": false,
+        "expected": [
+          [
+            1,
+            1.1288
+          ],
+          [
+            0,
+            0
           ]
-        },
-        "expected": true
+        ]
       }
     ],
     "quizzes": [
@@ -129,7 +232,44 @@
     ],
     "thinkingQuestion": "TF-IDF 的局限是什么？BERT 的向量表示如何弥补这些局限？",
     "aiPrompt": "评估学生对 TF-IDF、信息检索和文档排序的理解。按 0-10 分打分。",
-    "status": "published"
+    "status": "published",
+    "evaluationCases": [
+      {
+        "name": "idf decreases as term document frequency grows",
+        "mode": "function",
+        "function": "idf",
+        "args": [
+          "a",
+          [
+            [
+              "a",
+              "b"
+            ],
+            [
+              "c",
+              "d"
+            ],
+            [
+              "e",
+              "f"
+            ]
+          ]
+        ],
+        "hidden": true,
+        "expected": 1.6931471805599454
+      },
+      {
+        "name": "empty doc tf safe zero",
+        "mode": "function",
+        "function": "tf",
+        "args": [
+          "a",
+          []
+        ],
+        "hidden": true,
+        "expected": 0
+      }
+    ]
   },
   {
     "slug": "nlp-word2vec-embedding",
@@ -152,11 +292,11 @@
       "hat{y} = softmax(W_2 h)"
     ],
     "starterCode": "import numpy as np\ndef build_vocab(sentences): pass\ndef one_hot(idx, size): pass\ndef cosine_similarity(v1, v2): pass",
-    "solutionCode": "import numpy as np\ndef build_vocab(sentences):\n    words = set()\n    for s in sentences: words.update(s)\n    return {w:i for i,w in enumerate(sorted(words))}\ndef one_hot(idx, size):\n    v = np.zeros(size); v[idx]=1; return v\ndef cosine_similarity(v1, v2):\n    d = np.linalg.norm(v1)*np.linalg.norm(v2)\n    return float(np.dot(v1,v2)/d) if d>0 else 0",
+    "solutionCode": "# 【算法思路】建立排序词汇表映射词到整数索引，构造独热向量并计算词向量余弦相似度。\nimport numpy as np\n\n# 去重排序全部词条并分配连续索引\ndef build_vocab(sentences):\n    words = set()\n    for s in sentences:\n        words.update(s)\n    return {w: i for i, w in enumerate(sorted(words))}\n\n# 生成指定长度并在 idx 处为 1 的独热浮点向量\ndef one_hot(idx, size):\n    v = np.zeros(size, dtype=float)\n    v[idx] = 1.0\n    return v\n\n# 计算向量点积除以模长乘积（零向量防除零返回 0）\ndef cosine_similarity(v1, v2):\n    v1, v2 = np.asarray(v1, dtype=float), np.asarray(v2, dtype=float)\n    d = float(np.linalg.norm(v1) * np.linalg.norm(v2))\n    return float(np.dot(v1, v2) / d) if d > 0 else 0.0\n",
     "expectedOutput": "True",
     "testCases": [
       {
-        "name": "vocab build",
+        "name": "vocab build sorted indices",
         "mode": "function",
         "function": "build_vocab",
         "args": [
@@ -173,7 +313,30 @@
             ]
           ]
         ],
-        "expected": true
+        "hidden": false,
+        "expected": {
+          "NLP": 0,
+          "很": 1,
+          "我": 2,
+          "有趣": 3,
+          "爱": 4
+        }
+      },
+      {
+        "name": "one hot sets target dimension",
+        "mode": "function",
+        "function": "one_hot",
+        "args": [
+          2,
+          4
+        ],
+        "hidden": false,
+        "expected": [
+          0.0,
+          0.0,
+          1.0,
+          0.0
+        ]
       }
     ],
     "quizzes": [
@@ -191,7 +354,43 @@
     ],
     "thinkingQuestion": "Word2Vec 生成的静态词向量无法处理一词多义。ELMo 和 BERT 是如何解决这个问题的？",
     "aiPrompt": "评估学生对词向量、Word2Vec、CBOW 的理解。按 0-10 分打分。",
-    "status": "published"
+    "status": "published",
+    "evaluationCases": [
+      {
+        "name": "cosine opposite vectors -1",
+        "mode": "function",
+        "function": "cosine_similarity",
+        "args": [
+          [
+            1,
+            -2
+          ],
+          [
+            -1,
+            2
+          ]
+        ],
+        "hidden": true,
+        "expected": -0.9999999999999998
+      },
+      {
+        "name": "zero vector similarity returns 0",
+        "mode": "function",
+        "function": "cosine_similarity",
+        "args": [
+          [
+            0,
+            0
+          ],
+          [
+            3,
+            4
+          ]
+        ],
+        "hidden": true,
+        "expected": 0.0
+      }
+    ]
   },
   {
     "slug": "nlp-bert-pretraining",
@@ -214,11 +413,11 @@
       "L_{MLM} = -sum log P(w_i|context)"
     ],
     "starterCode": "import numpy as np\ndef mask_tokens(tokens, mask_id, mask_prob=0.15): pass\ndef mlm_loss(logits, target_ids): pass",
-    "solutionCode": "import numpy as np\ndef mask_tokens(tokens, mask_id, mask_prob=0.15):\n    masked = tokens.copy(); labels = [-100]*len(tokens)\n    for i in range(len(tokens)):\n        if np.random.random() < mask_prob:\n            labels[i] = tokens[i]; masked[i] = mask_id\n    return {'masked': masked, 'labels': labels}\ndef mlm_loss(logits, target_ids):\n    loss=0;n=0\n    for logit,tid in zip(logits,target_ids):\n        if tid<0: continue\n        exp=np.exp(logit-np.max(logit)); probs=exp/np.sum(exp)\n        loss+=-np.log(probs[tid]+1e-10);n+=1\n    return round(float(loss/n),4) if n else 0",
+    "solutionCode": "# 【算法思路】构造掩码语言模型 (MLM) 随机掩码样本及忽略索引 -100 标签，并计算预测交叉熵损失。\nimport numpy as np\n\n# 依概率替换目标 token 为 mask_id 并记录非掩码位置为 -100\ndef mask_tokens(tokens, mask_id, mask_prob=0.15):\n    masked = list(tokens)\n    labels = [-100] * len(tokens)\n    for i in range(len(tokens)):\n        if mask_prob >= 1.0 or (mask_prob > 0.0 and np.random.random() < mask_prob):\n            labels[i] = tokens[i]\n            masked[i] = mask_id\n    return {\"masked\": masked, \"labels\": labels}\n\n# 跳过负标签位仅对被掩码位置求解平均交叉熵\ndef mlm_loss(logits, target_ids):\n    logits = np.asarray(logits, dtype=float)\n    loss, n = 0.0, 0\n    for logit, tid in zip(logits, target_ids):\n        if tid < 0:\n            continue\n        exp = np.exp(logit - np.max(logit))\n        probs = exp / np.sum(exp)\n        loss += -float(np.log(probs[tid] + 1e-10))\n        n += 1\n    return round(float(loss / n), 4) if n else 0.0\n",
     "expectedOutput": "True",
     "testCases": [
       {
-        "name": "mask basic",
+        "name": "mask_tokens prob 0 changes nothing",
         "mode": "function",
         "function": "mask_tokens",
         "args": [
@@ -229,9 +428,53 @@
             3,
             4
           ],
-          100
+          100,
+          0.0
         ],
-        "expected": true
+        "hidden": false,
+        "expected": {
+          "masked": [
+            0,
+            1,
+            2,
+            3,
+            4
+          ],
+          "labels": [
+            -100,
+            -100,
+            -100,
+            -100,
+            -100
+          ]
+        }
+      },
+      {
+        "name": "mask_tokens prob 1 masks every position",
+        "mode": "function",
+        "function": "mask_tokens",
+        "args": [
+          [
+            5,
+            6,
+            7
+          ],
+          99,
+          1.0
+        ],
+        "hidden": false,
+        "expected": {
+          "masked": [
+            99,
+            99,
+            99
+          ],
+          "labels": [
+            5,
+            6,
+            7
+          ]
+        }
       }
     ],
     "quizzes": [
@@ -249,7 +492,50 @@
     ],
     "thinkingQuestion": "为什么 BERT 预训练要同时使用 MLM 和 NSP 两个目标？",
     "aiPrompt": "评估学生对 BERT、MLM、预训练任务的理解。按 0-10 分打分。",
-    "status": "published"
+    "status": "published",
+    "evaluationCases": [
+      {
+        "name": "mlm_loss ignores -100 positions",
+        "mode": "function",
+        "function": "mlm_loss",
+        "args": [
+          [
+            [
+              10.0,
+              0.0
+            ],
+            [
+              0.0,
+              10.0
+            ]
+          ],
+          [
+            -100,
+            1
+          ]
+        ],
+        "hidden": true,
+        "expected": 0.0
+      },
+      {
+        "name": "mlm_loss all ignored returns 0",
+        "mode": "function",
+        "function": "mlm_loss",
+        "args": [
+          [
+            [
+              1.0,
+              2.0
+            ]
+          ],
+          [
+            -100
+          ]
+        ],
+        "hidden": true,
+        "expected": 0.0
+      }
+    ]
   },
   {
     "slug": "nlp-lstm-sequence-model",
@@ -272,13 +558,15 @@
       "c_t = f_t * c_{t-1} + i_t * tilde{c}_t"
     ],
     "starterCode": "import numpy as np\ndef sigmoid(x): pass\ndef lstm_cell(x, h_prev, c_prev, params): pass\ndef lstm_forward(X, params): pass",
-    "solutionCode": "import numpy as np\nsig = lambda x: 1/(1+np.exp(-np.clip(x,-100,100)))\ndef lstm_cell(x, h_prev, c_prev, p):\n    f = sig(x@p['Wf']+h_prev@p['Uf']+p['bf'])\n    i = sig(x@p['Wi']+h_prev@p['Ui']+p['bi'])\n    o = sig(x@p['Wo']+h_prev@p['Uo']+p['bo'])\n    cc = np.tanh(x@p['Wc']+h_prev@p['Uc']+p['bc'])\n    c = f*c_prev + i*cc\n    h = o*np.tanh(c)\n    return h,c\ndef lstm_forward(X, p):\n    h = np.zeros(p['Wf'].shape[1]); c = np.zeros_like(h)\n    hs = []\n    for x in X:\n        h,c = lstm_cell(x,h,c,p); hs.append(h)\n    return hs",
+    "solutionCode": "# 【算法思路】实现遗忘门、输入门、输出门与候选记忆细胞状态更新，并在时间步展开前向 LSTM。\nimport numpy as np\n\n# 数值稳定逻辑斯谛门控激活\ndef sigmoid(x):\n    return 1.0 / (1.0 + np.exp(-np.clip(np.asarray(x, dtype=float), -100, 100)))\n\n# 计算三门一细胞候选状态并迭代更新细胞与隐状态\ndef lstm_cell(x, h_prev, c_prev, p):\n    x = np.asarray(x, dtype=float)\n    h_prev, c_prev = np.asarray(h_prev, dtype=float), np.asarray(c_prev, dtype=float)\n    Wf, Uf, bf = np.asarray(p[\"Wf\"], dtype=float), np.asarray(p[\"Uf\"], dtype=float), np.asarray(p[\"bf\"], dtype=float)\n    Wi, Ui, bi = np.asarray(p[\"Wi\"], dtype=float), np.asarray(p[\"Ui\"], dtype=float), np.asarray(p[\"bi\"], dtype=float)\n    Wo, Uo, bo = np.asarray(p[\"Wo\"], dtype=float), np.asarray(p[\"Uo\"], dtype=float), np.asarray(p[\"bo\"], dtype=float)\n    Wc, Uc, bc = np.asarray(p[\"Wc\"], dtype=float), np.asarray(p[\"Uc\"], dtype=float), np.asarray(p[\"bc\"], dtype=float)\n    f = sigmoid(x @ Wf + h_prev @ Uf + bf)\n    i = sigmoid(x @ Wi + h_prev @ Ui + bi)\n    o = sigmoid(x @ Wo + h_prev @ Uo + bo)\n    cc = np.tanh(x @ Wc + h_prev @ Uc + bc)\n    c = f * c_prev + i * cc\n    h = o * np.tanh(c)\n    return h, c\n\n# 沿输入序列逐时间步展开并收集隐状态列表\ndef lstm_forward(X, p):\n    X = np.asarray(X, dtype=float)\n    Wf = np.asarray(p[\"Wf\"], dtype=float)\n    h = np.zeros(Wf.shape[1], dtype=float)\n    c = np.zeros_like(h)\n    hs = []\n    for x in X:\n        h, c = lstm_cell(x, h, c, p)\n        hs.append(h)\n    return hs\n",
     "expectedOutput": "True",
     "testCases": [
       {
-        "name": "lstm forward shape",
-        "input": {
-          "X": [
+        "name": "lstm forward step count and shape",
+        "mode": "function",
+        "function": "lstm_forward",
+        "args": [
+          [
             [
               1,
               0
@@ -292,10 +580,13 @@
               1
             ]
           ],
-          "params": {
+          {
             "Wf": [
               [
                 0.1
+              ],
+              [
+                0.2
               ]
             ],
             "Uf": [
@@ -309,6 +600,9 @@
             "Wi": [
               [
                 0.1
+              ],
+              [
+                0.2
               ]
             ],
             "Ui": [
@@ -322,6 +616,9 @@
             "Wo": [
               [
                 0.1
+              ],
+              [
+                0.2
               ]
             ],
             "Uo": [
@@ -335,6 +632,9 @@
             "Wc": [
               [
                 0.1
+              ],
+              [
+                0.2
               ]
             ],
             "Uc": [
@@ -346,8 +646,33 @@
               0
             ]
           }
-        },
-        "expected": true
+        ],
+        "hidden": false,
+        "expected": [
+          [
+            0.02744377273738812
+          ],
+          [
+            0.07695660298568485
+          ],
+          [
+            0.14584473753603258
+          ]
+        ]
+      },
+      {
+        "name": "sigmoid at zero equals 0.5",
+        "mode": "function",
+        "function": "sigmoid",
+        "args": [
+          [
+            0.0
+          ]
+        ],
+        "hidden": false,
+        "expected": [
+          0.5
+        ]
       }
     ],
     "quizzes": [
@@ -365,7 +690,166 @@
     ],
     "thinkingQuestion": "GRU 相比 LSTM 减少了哪些门？参数减少对训练和效果有什么影响？",
     "aiPrompt": "评估学生对 LSTM、门控机制、序列建模的理解。按 0-10 分打分。",
-    "status": "published"
+    "status": "published",
+    "evaluationCases": [
+      {
+        "name": "zero input and zero weights emit zero hidden state",
+        "mode": "function",
+        "function": "lstm_forward",
+        "args": [
+          [
+            [
+              0.0
+            ],
+            [
+              0.0
+            ]
+          ],
+          {
+            "Wf": [
+              [
+                0.0
+              ]
+            ],
+            "Uf": [
+              [
+                0.0
+              ]
+            ],
+            "bf": [
+              0.0
+            ],
+            "Wi": [
+              [
+                0.0
+              ]
+            ],
+            "Ui": [
+              [
+                0.0
+              ]
+            ],
+            "bi": [
+              0.0
+            ],
+            "Wo": [
+              [
+                0.0
+              ]
+            ],
+            "Uo": [
+              [
+                0.0
+              ]
+            ],
+            "bo": [
+              0.0
+            ],
+            "Wc": [
+              [
+                0.0
+              ]
+            ],
+            "Uc": [
+              [
+                0.0
+              ]
+            ],
+            "bc": [
+              0.0
+            ]
+          }
+        ],
+        "hidden": true,
+        "expected": [
+          [
+            0.0
+          ],
+          [
+            0.0
+          ]
+        ]
+      },
+      {
+        "name": "lstm_cell updates both h and c",
+        "mode": "function",
+        "function": "lstm_cell",
+        "args": [
+          [
+            1.0
+          ],
+          [
+            0.0
+          ],
+          [
+            0.5
+          ],
+          {
+            "Wf": [
+              [
+                0.0
+              ]
+            ],
+            "Uf": [
+              [
+                0.0
+              ]
+            ],
+            "bf": [
+              0.0
+            ],
+            "Wi": [
+              [
+                0.0
+              ]
+            ],
+            "Ui": [
+              [
+                0.0
+              ]
+            ],
+            "bi": [
+              0.0
+            ],
+            "Wo": [
+              [
+                0.0
+              ]
+            ],
+            "Uo": [
+              [
+                0.0
+              ]
+            ],
+            "bo": [
+              0.0
+            ],
+            "Wc": [
+              [
+                1.0
+              ]
+            ],
+            "Uc": [
+              [
+                0.0
+              ]
+            ],
+            "bc": [
+              0.0
+            ]
+          }
+        ],
+        "hidden": true,
+        "expected": [
+          [
+            0.27930041077890644
+          ],
+          [
+            0.6307970779778824
+          ]
+        ]
+      }
+    ]
   },
   {
     "slug": "nlp-self-attention",
@@ -387,11 +871,11 @@
       "Attention(Q,K,V) = softmax(QK^T / sqrt(d_k)) V"
     ],
     "starterCode": "import numpy as np\ndef scaled_dot_product_attention(Q, K, V): pass\ndef self_attention(X, W_q, W_k, W_v): pass",
-    "solutionCode": "import numpy as np\ndef scaled_dot_product_attention(Q,K,V):\n    d_k = Q.shape[-1]\n    scores = Q @ K.T / np.sqrt(d_k)\n    exp_s = np.exp(scores-np.max(scores,axis=-1,keepdims=True))\n    weights = exp_s / np.sum(exp_s,axis=-1,keepdims=True)\n    return {'output': weights @ V, 'weights': weights}\ndef self_attention(X, W_q, W_k, W_v):\n    return scaled_dot_product_attention(X@W_q, X@W_k, X@W_v)",
+    "solutionCode": "# 【算法思路】根据缩放点积公式 softmax(QK^T / sqrt(d_k)) V 计算自注意力输出和注意力权重矩阵。\nimport numpy as np\n\n# 按特征维度平方根缩放点积分数并归一化加权求值\ndef scaled_dot_product_attention(Q, K, V):\n    Q, K, V = np.asarray(Q, dtype=float), np.asarray(K, dtype=float), np.asarray(V, dtype=float)\n    d_k = Q.shape[-1]\n    scores = Q @ K.T / np.sqrt(d_k)\n    exp_s = np.exp(scores - np.max(scores, axis=-1, keepdims=True))\n    weights = exp_s / np.sum(exp_s, axis=-1, keepdims=True)\n    return {\"output\": weights @ V, \"weights\": weights}\n\n# 通过三个投影矩阵把输入映射为 Q/K/V 后求解自注意力\ndef self_attention(X, W_q, W_k, W_v):\n    X = np.asarray(X, dtype=float)\n    W_q, W_k, W_v = np.asarray(W_q, dtype=float), np.asarray(W_k, dtype=float), np.asarray(W_v, dtype=float)\n    return scaled_dot_product_attention(X @ W_q, X @ W_k, X @ W_v)\n",
     "expectedOutput": "True",
     "testCases": [
       {
-        "name": "attention shape",
+        "name": "scaled dot product attention shapes and weight row sum 1",
         "mode": "function",
         "function": "scaled_dot_product_attention",
         "args": [
@@ -426,7 +910,99 @@
             ]
           ]
         ],
-        "expected": true
+        "hidden": false,
+        "expected": {
+          "output": [
+            [
+              0.014166035876688396,
+              0.9858339641233116
+            ],
+            [
+              5.0197509935188985e-05,
+              0.9999498024900648
+            ]
+          ],
+          "weights": [
+            [
+              0.014166035876688396,
+              0.9858339641233116
+            ],
+            [
+              5.0197509935188985e-05,
+              0.9999498024900648
+            ]
+          ]
+        }
+      },
+      {
+        "name": "self_attention with identity projections",
+        "mode": "function",
+        "function": "self_attention",
+        "args": [
+          [
+            [
+              1,
+              0
+            ],
+            [
+              0,
+              1
+            ]
+          ],
+          [
+            [
+              1,
+              0
+            ],
+            [
+              0,
+              1
+            ]
+          ],
+          [
+            [
+              1,
+              0
+            ],
+            [
+              0,
+              1
+            ]
+          ],
+          [
+            [
+              2,
+              0
+            ],
+            [
+              0,
+              4
+            ]
+          ]
+        ],
+        "hidden": false,
+        "expected": {
+          "output": [
+            [
+              1.3395230986533138,
+              1.3209538026933725
+            ],
+            [
+              0.6604769013466862,
+              2.6790461973066275
+            ]
+          ],
+          "weights": [
+            [
+              0.6697615493266569,
+              0.3302384506733431
+            ],
+            [
+              0.3302384506733431,
+              0.6697615493266569
+            ]
+          ]
+        }
       }
     ],
     "quizzes": [
@@ -444,7 +1020,139 @@
     ],
     "thinkingQuestion": "Self-Attention 的复杂度是 O(n^2)。在处理长序列时有什么优化方法？",
     "aiPrompt": "评估学生对 Self-Attention、缩放点积的理解。按 0-10 分打分。",
-    "status": "published"
+    "status": "published",
+    "evaluationCases": [
+      {
+        "name": "uniform scores equal average of V",
+        "mode": "function",
+        "function": "scaled_dot_product_attention",
+        "args": [
+          [
+            [
+              0,
+              0
+            ],
+            [
+              0,
+              0
+            ]
+          ],
+          [
+            [
+              1,
+              1
+            ],
+            [
+              2,
+              2
+            ]
+          ],
+          [
+            [
+              2,
+              4
+            ],
+            [
+              4,
+              8
+            ]
+          ]
+        ],
+        "hidden": true,
+        "expected": {
+          "output": [
+            [
+              3.0,
+              6.0
+            ],
+            [
+              3.0,
+              6.0
+            ]
+          ],
+          "weights": [
+            [
+              0.5,
+              0.5
+            ],
+            [
+              0.5,
+              0.5
+            ]
+          ]
+        }
+      },
+      {
+        "name": "zero projection weights make uniform weights",
+        "mode": "function",
+        "function": "self_attention",
+        "args": [
+          [
+            [
+              1,
+              2
+            ],
+            [
+              3,
+              4
+            ]
+          ],
+          [
+            [
+              0,
+              0
+            ],
+            [
+              0,
+              0
+            ]
+          ],
+          [
+            [
+              0,
+              0
+            ],
+            [
+              0,
+              0
+            ]
+          ],
+          [
+            [
+              1,
+              0
+            ],
+            [
+              0,
+              1
+            ]
+          ]
+        ],
+        "hidden": true,
+        "expected": {
+          "output": [
+            [
+              2.0,
+              3.0
+            ],
+            [
+              2.0,
+              3.0
+            ]
+          ],
+          "weights": [
+            [
+              0.5,
+              0.5
+            ],
+            [
+              0.5,
+              0.5
+            ]
+          ]
+        }
+      }
+    ]
   },
   {
     "slug": "nlp-multi-head-attention",
@@ -466,11 +1174,11 @@
       "MultiHead(Q,K,V) = Concat(head_1,...,head_h) W_O"
     ],
     "starterCode": "import numpy as np\ndef split_heads(X, h): pass\ndef concat_heads(heads): pass\ndef multi_head_attention(X, params, h): pass",
-    "solutionCode": "import numpy as np\ndef split_heads(X, h):\n    n,d = X.shape\n    return X.reshape(n,h,d//h).transpose(1,0,2)\ndef concat_heads(heads):\n    h,n,dh = heads.shape\n    return heads.transpose(1,0,2).reshape(n,h*dh)\ndef multi_head_attention(X, p, h):\n    Q = X@p['Wq']; K = X@p['Wk']; V = X@p['Wv']\n    heads = []\n    for i in range(h):\n        qi = split_heads(Q,h)[i]; ki = split_heads(K,h)[i]; vi = split_heads(V,h)[i]\n        dk = qi.shape[-1]\n        scores = qi@ki.T/np.sqrt(dk)\n        exp_s = np.exp(scores-np.max(scores,axis=-1,keepdims=True))\n        attn = exp_s/np.sum(exp_s,axis=-1,keepdims=True)\n        heads.append(attn@vi)\n    cat = concat_heads(np.array(heads))\n    return {'output': cat@p['Wo'], 'heads': heads}",
+    "solutionCode": "# 【算法思路】将特征维度按头数切分为多组子空间并行计算注意力，最后拼接线性投影汇总输出。\nimport numpy as np\n\n# 重塑张量为 (heads, seq, d_head) 形式\ndef split_heads(X, h):\n    X = np.asarray(X, dtype=float)\n    n, d = X.shape\n    return X.reshape(n, h, d // h).transpose(1, 0, 2)\n\n# 还原回 (seq, d_model) 二维表征\ndef concat_heads(heads):\n    heads = np.asarray(heads, dtype=float)\n    h, n, dh = heads.shape\n    return heads.transpose(1, 0, 2).reshape(n, h * dh)\n\n# 独立计算各注意力头输出拼接后再过输出矩阵 Wo\ndef multi_head_attention(X, p, h):\n    X = np.asarray(X, dtype=float)\n    Q = X @ np.asarray(p[\"Wq\"], dtype=float)\n    K = X @ np.asarray(p[\"Wk\"], dtype=float)\n    V = X @ np.asarray(p[\"Wv\"], dtype=float)\n    Q_h, K_h, V_h = split_heads(Q, h), split_heads(K, h), split_heads(V, h)\n    heads = []\n    for i in range(h):\n        qi, ki, vi = Q_h[i], K_h[i], V_h[i]\n        scores = qi @ ki.T / np.sqrt(qi.shape[-1])\n        exp_s = np.exp(scores - np.max(scores, axis=-1, keepdims=True))\n        attn = exp_s / np.sum(exp_s, axis=-1, keepdims=True)\n        heads.append(attn @ vi)\n    cat = concat_heads(np.array(heads))\n    return {\"output\": cat @ np.asarray(p[\"Wo\"], dtype=float), \"heads\": heads}\n",
     "expectedOutput": "True",
     "testCases": [
       {
-        "name": "multi-head shape",
+        "name": "split_heads reshapes (4, 4) into (2, 4, 2)",
         "mode": "function",
         "function": "split_heads",
         "args": [
@@ -502,7 +1210,212 @@
           ],
           2
         ],
-        "expected": true
+        "hidden": false,
+        "expected": [
+          [
+            [
+              1.0,
+              2.0
+            ],
+            [
+              5.0,
+              6.0
+            ],
+            [
+              9.0,
+              10.0
+            ],
+            [
+              13.0,
+              14.0
+            ]
+          ],
+          [
+            [
+              3.0,
+              4.0
+            ],
+            [
+              7.0,
+              8.0
+            ],
+            [
+              11.0,
+              12.0
+            ],
+            [
+              15.0,
+              16.0
+            ]
+          ]
+        ]
+      },
+      {
+        "name": "multi_head_attention preserves sequence shape",
+        "mode": "function",
+        "function": "multi_head_attention",
+        "args": [
+          [
+            [
+              1,
+              0,
+              1,
+              0
+            ],
+            [
+              0,
+              1,
+              0,
+              1
+            ]
+          ],
+          {
+            "Wq": [
+              [
+                1,
+                0,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                0,
+                1,
+                0
+              ],
+              [
+                0,
+                0,
+                0,
+                1
+              ]
+            ],
+            "Wk": [
+              [
+                1,
+                0,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                0,
+                1,
+                0
+              ],
+              [
+                0,
+                0,
+                0,
+                1
+              ]
+            ],
+            "Wv": [
+              [
+                1,
+                0,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                0,
+                1,
+                0
+              ],
+              [
+                0,
+                0,
+                0,
+                1
+              ]
+            ],
+            "Wo": [
+              [
+                1,
+                0,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                0,
+                1,
+                0
+              ],
+              [
+                0,
+                0,
+                0,
+                1
+              ]
+            ]
+          },
+          2
+        ],
+        "hidden": false,
+        "expected": {
+          "heads": [
+            [
+              [
+                0.6697615493266569,
+                0.3302384506733431
+              ],
+              [
+                0.3302384506733431,
+                0.6697615493266569
+              ]
+            ],
+            [
+              [
+                0.6697615493266569,
+                0.3302384506733431
+              ],
+              [
+                0.3302384506733431,
+                0.6697615493266569
+              ]
+            ]
+          ],
+          "output": [
+            [
+              0.6697615493266569,
+              0.3302384506733431,
+              0.6697615493266569,
+              0.3302384506733431
+            ],
+            [
+              0.3302384506733431,
+              0.6697615493266569,
+              0.3302384506733431,
+              0.6697615493266569
+            ]
+          ]
+        }
       }
     ],
     "quizzes": [
@@ -520,7 +1433,84 @@
     ],
     "thinkingQuestion": "如果一个注意力头总是关注 [CLS] 标记，这可能说明什么？",
     "aiPrompt": "评估学生对多头注意力、表示子空间的理解。按 0-10 分打分。",
-    "status": "published"
+    "status": "published",
+    "evaluationCases": [
+      {
+        "name": "concat_heads inverse of split_heads",
+        "mode": "function",
+        "function": "concat_heads",
+        "args": [
+          [
+            [
+              [
+                1,
+                2
+              ],
+              [
+                5,
+                6
+              ]
+            ],
+            [
+              [
+                3,
+                4
+              ],
+              [
+                7,
+                8
+              ]
+            ]
+          ]
+        ],
+        "hidden": true,
+        "expected": [
+          [
+            1.0,
+            2.0,
+            3.0,
+            4.0
+          ],
+          [
+            5.0,
+            6.0,
+            7.0,
+            8.0
+          ]
+        ]
+      },
+      {
+        "name": "split_heads single head preserves original",
+        "mode": "function",
+        "function": "split_heads",
+        "args": [
+          [
+            [
+              1,
+              2
+            ],
+            [
+              3,
+              4
+            ]
+          ],
+          1
+        ],
+        "hidden": true,
+        "expected": [
+          [
+            [
+              1.0,
+              2.0
+            ],
+            [
+              3.0,
+              4.0
+            ]
+          ]
+        ]
+      }
+    ]
   },
   {
     "slug": "nlp-encoder-decoder",
@@ -544,22 +1534,100 @@
       "P(y_t|y_{<t},X) = softmax(W_o h_t^{dec})"
     ],
     "starterCode": "import numpy as np\ndef encoder_forward(tokens, W_emb, W_enc): pass\ndef decoder_step(y_t, h_prev, W_emb, W_dec, W_out): pass\ndef greedy_decode(enc_h, start_id, end_id, max_len, params): pass",
-    "solutionCode": "import numpy as np\ndef encoder_forward(tokens, W_emb, W_enc):\n    h = np.zeros(W_enc.shape[1])\n    for t in tokens:\n        x = W_emb[t]; h = np.tanh(x@W_enc + h)\n    return h\ndef decoder_step(y_t, h_prev, W_emb, W_dec, W_out):\n    x = W_emb[y_t]; h = np.tanh(x@W_dec + h_prev)\n    logits = h@W_out; return h, logits\ndef greedy_decode(enc_h, start_id, end_id, max_len, p):\n    y = start_id; h = enc_h; result = []\n    for _ in range(max_len):\n        h, logits = decoder_step(y, h, p['W_emb'], p['W_dec'], p['W_out'])\n        y = int(np.argmax(logits))\n        if y == end_id: break\n        result.append(y)\n    return result",
+    "solutionCode": "# 【算法思路】循环编码输入序列词嵌入得到语境向量，再用贪心解码逐词预测输出序列直到结束符。\nimport numpy as np\n\n# 逐步累加输入嵌入非线性变换产生最终编码隐状态\ndef encoder_forward(tokens, W_emb, W_enc):\n    W_emb, W_enc = np.asarray(W_emb, dtype=float), np.asarray(W_enc, dtype=float)\n    h = np.zeros(W_enc.shape[1], dtype=float)\n    for t in tokens:\n        h = np.tanh(W_emb[t] @ W_enc + h)\n    return h\n\n# 结合上步隐状态与当前词嵌入生成下一时刻隐状态与词表 logits\ndef decoder_step(y_t, h_prev, W_emb, W_dec, W_out):\n    h_prev = np.asarray(h_prev, dtype=float)\n    W_emb = np.asarray(W_emb, dtype=float)\n    W_dec = np.asarray(W_dec, dtype=float)\n    W_out = np.asarray(W_out, dtype=float)\n    h = np.tanh(W_emb[y_t] @ W_dec + h_prev)\n    return h, h @ W_out\n\n# 每步选取概率最大 token 循环生成直至遇见 end_id 或达最大步\ndef greedy_decode(enc_h, start_id, end_id, max_len, p):\n    y, h, result = start_id, np.asarray(enc_h, dtype=float), []\n    for _ in range(max_len):\n        h, logits = decoder_step(y, h, p[\"W_emb\"], p[\"W_dec\"], p[\"W_out\"])\n        y = int(np.argmax(logits))\n        if y == end_id:\n            break\n        result.append(y)\n    return result\n",
     "expectedOutput": "True",
     "testCases": [
       {
-        "name": "encode decode shape",
-        "input": {
-          "tokens": [
+        "name": "encoder_forward returns fixed dim vector",
+        "mode": "function",
+        "function": "encoder_forward",
+        "args": [
+          [
             0,
-            1,
-            2
+            1
           ],
-          "vocabSize": 10,
-          "embSize": 8,
-          "hiddenSize": 8
-        },
-        "expected": true
+          [
+            [
+              1,
+              0
+            ],
+            [
+              0,
+              1
+            ]
+          ],
+          [
+            [
+              1,
+              0
+            ],
+            [
+              0,
+              1
+            ]
+          ]
+        ],
+        "hidden": false,
+        "expected": [
+          0.6420149920119997,
+          0.7615941559557649
+        ]
+      },
+      {
+        "name": "greedy_decode halts at end_id",
+        "mode": "function",
+        "function": "greedy_decode",
+        "args": [
+          [
+            0.0,
+            0.0
+          ],
+          0,
+          2,
+          5,
+          {
+            "W_emb": [
+              [
+                1,
+                0
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                1,
+                1
+              ]
+            ],
+            "W_dec": [
+              [
+                1,
+                0
+              ],
+              [
+                0,
+                1
+              ]
+            ],
+            "W_out": [
+              [
+                0,
+                5,
+                0
+              ],
+              [
+                0,
+                0,
+                5
+              ]
+            ]
+          }
+        ],
+        "hidden": false,
+        "expected": [
+          1
+        ]
       }
     ],
     "quizzes": [
@@ -577,7 +1645,89 @@
     ],
     "thinkingQuestion": "教师强迫会导致训练和推理时的 exposure bias。Scheduled Sampling 是如何缓解的？",
     "aiPrompt": "评估学生对 Seq2Seq、编码器-解码器的理解。按 0-10 分打分。",
-    "status": "published"
+    "status": "published",
+    "evaluationCases": [
+      {
+        "name": "empty token sequence returns zero hidden vector",
+        "mode": "function",
+        "function": "encoder_forward",
+        "args": [
+          [],
+          [
+            [
+              1,
+              0
+            ]
+          ],
+          [
+            [
+              1,
+              0
+            ],
+            [
+              0,
+              1
+            ]
+          ]
+        ],
+        "hidden": true,
+        "expected": [
+          0.0,
+          0.0
+        ]
+      },
+      {
+        "name": "greedy_decode respects max_len budget",
+        "mode": "function",
+        "function": "greedy_decode",
+        "args": [
+          [
+            0.0,
+            0.0
+          ],
+          0,
+          99,
+          2,
+          {
+            "W_emb": [
+              [
+                1,
+                0
+              ],
+              [
+                0,
+                1
+              ]
+            ],
+            "W_dec": [
+              [
+                1,
+                0
+              ],
+              [
+                0,
+                1
+              ]
+            ],
+            "W_out": [
+              [
+                0,
+                1
+              ],
+              [
+                1,
+                0
+              ]
+            ]
+          }
+        ],
+        "hidden": true,
+        "expected": [
+          1,
+          0
+        ]
+      }
+    ]
   },
   {
     "slug": "nlp-bpe-tokenizer-l2",
@@ -595,20 +1745,42 @@
     "latexFormulas": [
       "BPE: 统计合并最频繁对"
     ],
-    "starterCode": "import numpy as np\ndef get_stats(vocab): pass\ndef bpe_tokenize(word, n): pass",
-    "solutionCode": "import re\ndef get_stats(vocab):\n  pairs={}\n  for word,tokens in vocab.items():\n    for i in range(len(tokens)-1):\n      pair=(tokens[i],tokens[i+1])\n      pairs[pair]=pairs.get(pair,0)+len(tokens)\n  return pairs\ndef merge_vocab(pair,vocab):\n  new={}\n  for word,tokens in vocab.items():\n    nt=[];i=0\n    while i<len(tokens):\n      if i<len(tokens)-1 and (tokens[i],tokens[i+1])==pair:\n        nt.append(tokens[i]+tokens[i+1]);i+=2\n      else:nt.append(tokens[i]);i+=1\n    new[word]=nt\n  return new\ndef bpe_tokenize(word,merges,n):\n  vocab={word:list(word)}\n  for _ in range(n):\n    p=get_stats(vocab)\n    if not p:break\n    best=max(p,key=p.get)\n    vocab=merge_vocab(best,vocab)\n  return vocab[word]",
+    "starterCode": "def get_stats(vocab: dict) -> dict:\n    \"\"\"统计词表中相邻符号对频次\"\"\"\n    pass\n\ndef bpe_tokenize(word: str, merges: dict, n: int) -> list[str]:\n    \"\"\"执行 n 轮 BPE 合并并返回子词切分结果\"\"\"\n    pass\n",
+    "solutionCode": "# 【算法思路】统计字符级词表中相邻符号对共现频率并反复合并最高频对构建 BPE 子词切分。\nimport re\n# 累加各单词中相邻符号对频次\ndef get_stats(vocab):\n  pairs={}\n  for word,tokens in vocab.items():\n    for i in range(len(tokens)-1):\n      pair=(tokens[i],tokens[i+1])\n      pairs[pair]=pairs.get(pair,0)+len(tokens)\n  return pairs\n# 将指定最高频相邻符号对替换合并为单个符号\ndef merge_vocab(pair,vocab):\n  new={}\n  for word,tokens in vocab.items():\n    nt=[];i=0\n    while i<len(tokens):\n      if i<len(tokens)-1 and (tokens[i],tokens[i+1])==pair:\n        nt.append(tokens[i]+tokens[i+1]);i+=2\n      else:nt.append(tokens[i]);i+=1\n    new[word]=nt\n  return new\n# 执行 n 轮高频对合并后返回切分列表\ndef bpe_tokenize(word,merges,n):\n  vocab={word:list(word)}\n  for _ in range(n):\n    p=get_stats(vocab)\n    if not p:break\n    best=max(p,key=p.get)\n    vocab=merge_vocab(best,vocab)\n  return vocab[word]\n",
     "expectedOutput": "True",
     "testCases": [
       {
-        "name": "bpe merge",
+        "name": "bpe merge 2 rounds",
         "mode": "function",
         "function": "bpe_tokenize",
         "args": [
-          "lowest",
+          "lowlower",
           {},
           2
         ],
-        "expected": true
+        "hidden": false,
+        "expected": [
+          "low",
+          "low",
+          "e",
+          "r"
+        ]
+      },
+      {
+        "name": "bpe 0 merges preserves chars",
+        "mode": "function",
+        "function": "bpe_tokenize",
+        "args": [
+          "cat",
+          {},
+          0
+        ],
+        "hidden": false,
+        "expected": [
+          "c",
+          "a",
+          "t"
+        ]
       }
     ],
     "quizzes": [
@@ -626,7 +1798,39 @@
     ],
     "thinkingQuestion": "WordPiece 和 BPE 的区别？",
     "aiPrompt": "评估学生对 BPE 的理解。按 0-10 分打分。",
-    "status": "published"
+    "status": "published",
+    "evaluationCases": [
+      {
+        "name": "single char returns one element list",
+        "mode": "function",
+        "function": "bpe_tokenize",
+        "args": [
+          "x",
+          {},
+          3
+        ],
+        "hidden": true,
+        "expected": [
+          "x"
+        ]
+      },
+      {
+        "name": "get_stats counts adjacent frequency",
+        "mode": "function",
+        "function": "bpe_tokenize",
+        "args": [
+          "ababab",
+          {},
+          1
+        ],
+        "hidden": true,
+        "expected": [
+          "ab",
+          "ab",
+          "ab"
+        ]
+      }
+    ]
   },
   {
     "slug": "nlp-bm25-l2",
@@ -645,24 +1849,63 @@
       "BM25 = IDF*(TF/(k1*(1-b+b*|D|/avgDL)+TF))"
     ],
     "starterCode": "import numpy as np\ndef bm25(query, docs, k1, b): pass",
-    "solutionCode": "import math\ndef bm25(query,docs,k1=1.5,b=0.75):\n  N=len(docs);avgDL=sum(len(d)for d in docs)/N\n  scores=[]\n  for i,doc in enumerate(docs):\n    score=0;dl=len(doc)\n    for q in query.split():\n      tf=doc.count(q)\n      df=sum(1 for d in docs if q in d)\n      idf=math.log((N-df+0.5)/(df+0.5)+1)\n      score+=idf*(tf*(k1+1))/(tf+k1*(1-b+b*dl/avgDL))\n    scores.append((i,round(score,4)))\n  return sorted(scores,key=lambda x:-x[1])",
+    "solutionCode": "# 【算法思路】使用考虑词频饱和度与文档长度归一化的 BM25 信息检索评分模型对文档集合排序。\nimport math\n# 按逆文档频率、超参 k1 与长度惩罚因子 b 累加查询相关性排序返回\ndef bm25(query,docs,k1=1.5,b=0.75):\n  N=len(docs);avgDL=sum(len(d)for d in docs)/N\n  scores=[]\n  for i,doc in enumerate(docs):\n    score=0;dl=len(doc)\n    for q in query.split():\n      tf=doc.count(q)\n      df=sum(1 for d in docs if q in d)\n      idf=math.log((N-df+0.5)/(df+0.5)+1)\n      score+=idf*(tf*(k1+1))/(tf+k1*(1-b+b*dl/avgDL))\n    scores.append((i,round(score,4)))\n  return sorted(scores,key=lambda x:-x[1])\n",
     "expectedOutput": "True",
     "testCases": [
       {
-        "name": "bm25 scores",
+        "name": "bm25 ranks matching doc first",
         "mode": "function",
         "function": "bm25",
         "args": [
-          "hello",
+          "hello world",
           [
             "hello world",
             "hello there",
-            "hi world"
+            "bye now"
           ],
           1.5,
           0.75
         ],
-        "expected": true
+        "hidden": false,
+        "expected": [
+          [
+            0,
+            1.366
+          ],
+          [
+            1,
+            0.4425
+          ],
+          [
+            2,
+            0
+          ]
+        ]
+      },
+      {
+        "name": "bm25 unseen query returns zero scores",
+        "mode": "function",
+        "function": "bm25",
+        "args": [
+          "quantum",
+          [
+            "hello",
+            "world"
+          ],
+          1.5,
+          0.75
+        ],
+        "hidden": false,
+        "expected": [
+          [
+            0,
+            0.0
+          ],
+          [
+            1,
+            0.0
+          ]
+        ]
       }
     ],
     "quizzes": [
@@ -680,7 +1923,69 @@
     ],
     "thinkingQuestion": "k1 和 b 对排序结果的影响？",
     "aiPrompt": "评估学生对 BM25 的理解。按 0-10 分打分。",
-    "status": "published"
+    "status": "published",
+    "evaluationCases": [
+      {
+        "name": "bm25 multi-term accumulates query matches",
+        "mode": "function",
+        "function": "bm25",
+        "args": [
+          "ai ml",
+          [
+            "ai",
+            "ml",
+            "ai ml",
+            "none"
+          ],
+          1.5,
+          0.75
+        ],
+        "hidden": true,
+        "expected": [
+          [
+            2,
+            1.1159
+          ],
+          [
+            0,
+            0.8382
+          ],
+          [
+            1,
+            0.8382
+          ],
+          [
+            3,
+            0
+          ]
+        ]
+      },
+      {
+        "name": "bm25 repeated term increases score with saturation",
+        "mode": "function",
+        "function": "bm25",
+        "args": [
+          "deep",
+          [
+            "deep deep deep",
+            "deep"
+          ],
+          1.5,
+          0.75
+        ],
+        "hidden": true,
+        "expected": [
+          [
+            0,
+            0.2668
+          ],
+          [
+            1,
+            0.2431
+          ]
+        ]
+      }
+    ]
   },
   {
     "slug": "nlp-skipgram-l2",
@@ -699,17 +2004,64 @@
       "P(w_c|w_t) = softmax(v_c*u_t)"
     ],
     "starterCode": "import numpy as np\ndef skipgram_forward(center, W_in, W_out): pass",
-    "solutionCode": "import numpy as np\ndef softmax(z):\n  zs=z-np.max(z,axis=-1,keepdims=True);e=np.exp(zs)\n  return e/np.sum(e,axis=-1,keepdims=True)\ndef skipgram_forward(center,W_in,W_out):\n  h=W_in[center];scores=h@W_out.T\n  return softmax(scores)\ndef skipgram_loss(probs,target):\n  return -np.log(probs[target]+1e-10)",
+    "solutionCode": "# 【算法思路】根据中心词嵌入矩阵内积输出上下文词表 Softmax 分布并计算负对数似然损失。\nimport numpy as np\n\n# 对数几率稳定归一化为概率分布\ndef softmax(z):\n    z = np.asarray(z, dtype=float)\n    zs = z - np.max(z, axis=-1, keepdims=True)\n    e = np.exp(zs)\n    return e / np.sum(e, axis=-1, keepdims=True)\n\n# 提取中心词向量与输出词矩阵相乘并归一化\ndef skipgram_forward(center, W_in, W_out):\n    W_in, W_out = np.asarray(W_in, dtype=float), np.asarray(W_out, dtype=float)\n    return softmax(W_in[center] @ W_out.T)\n\n# 提取目标上下词位置的负对数似然\ndef skipgram_loss(probs, target):\n    probs = np.asarray(probs, dtype=float)\n    return float(-np.log(probs[target] + 1e-10))\n",
     "expectedOutput": "True",
     "testCases": [
       {
-        "name": "forward",
-        "input": {
-          "center": 0,
-          "vocabSize": 5,
-          "embSize": 3
-        },
-        "expected": true
+        "name": "softmax sums to 1",
+        "mode": "function",
+        "function": "softmax",
+        "args": [
+          [
+            1.0,
+            2.0,
+            3.0
+          ]
+        ],
+        "hidden": false,
+        "expected": [
+          0.09003057317038046,
+          0.24472847105479764,
+          0.6652409557748218
+        ]
+      },
+      {
+        "name": "skipgram forward symmetric embeddings uniform",
+        "mode": "function",
+        "function": "skipgram_forward",
+        "args": [
+          0,
+          [
+            [
+              0.0,
+              0.0
+            ],
+            [
+              1.0,
+              1.0
+            ]
+          ],
+          [
+            [
+              1.0,
+              1.0
+            ],
+            [
+              1.0,
+              1.0
+            ],
+            [
+              1.0,
+              1.0
+            ]
+          ]
+        ],
+        "hidden": false,
+        "expected": [
+          0.3333333333333333,
+          0.3333333333333333,
+          0.3333333333333333
+        ]
       }
     ],
     "quizzes": [
@@ -727,7 +2079,39 @@
     ],
     "thinkingQuestion": "负采样相比 Softmax 的优势？",
     "aiPrompt": "评估学生对 Word2Vec 的理解。按 0-10 分打分。",
-    "status": "published"
+    "status": "published",
+    "evaluationCases": [
+      {
+        "name": "skipgram_loss prob 1 near zero",
+        "mode": "function",
+        "function": "skipgram_loss",
+        "args": [
+          [
+            1.0,
+            0.0
+          ],
+          0
+        ],
+        "hidden": true,
+        "expected": -1.000000082690371e-10
+      },
+      {
+        "name": "softmax shift invariance",
+        "mode": "function",
+        "function": "softmax",
+        "args": [
+          [
+            1000.0,
+            1000.0
+          ]
+        ],
+        "hidden": true,
+        "expected": [
+          0.5,
+          0.5
+        ]
+      }
+    ]
   },
   {
     "slug": "nlp-bert-pretrain-l2",
@@ -746,11 +2130,11 @@
       "L = L_MLM + L_NSP"
     ],
     "starterCode": "import numpy as np\ndef mlm_loss(logits, target_ids, mask): pass\ndef nsp_loss(seq_logits, is_next): pass",
-    "solutionCode": "import numpy as np\ndef ce(logits,target):\n  s=logits-np.max(logits,axis=-1,keepdims=True)\n  p=np.exp(s)/np.sum(np.exp(s),axis=-1,keepdims=True)\n  return -np.log(p[range(len(target)),target]+1e-10)\ndef mlm_loss(logits,target_ids,mask):\n  mask=np.array(mask);logits=np.array(logits)\n  total=0;cnt=np.sum(mask)\n  for i in range(len(mask)):\n    if mask[i]:total+=ce(logits[i],[target_ids[i]])[0]\n  return round(float(total/cnt),4) if cnt else 0\ndef nsp_loss(seq_logits,is_next):\n  return round(float(np.mean(ce(seq_logits,is_next))),4)",
+    "solutionCode": "# 【算法思路】同时实现带掩码过滤的 MLM 损失与判断句对衔接关系的 NSP 二分类交叉熵损失。\nimport numpy as np\n\n# 二维 logits 批量交叉熵计算\ndef ce(logits, target):\n    logits = np.atleast_2d(np.asarray(logits, dtype=float))\n    target = np.asarray(target, dtype=int)\n    s = logits - np.max(logits, axis=-1, keepdims=True)\n    p = np.exp(s) / np.sum(np.exp(s), axis=-1, keepdims=True)\n    return -np.log(p[range(len(target)), target] + 1e-10)\n\n# 按掩码向量加权平均被遮挡位置的交叉熵\ndef mlm_loss(logits, target_ids, mask):\n    mask = np.asarray(mask)\n    logits = np.asarray(logits, dtype=float)\n    total = 0.0\n    cnt = int(np.sum(mask))\n    for i in range(len(mask)):\n        if mask[i]:\n            total += float(ce(logits[i], [target_ids[i]])[0])\n    return round(float(total / cnt), 4) if cnt else 0.0\n\n# 直接求下一句预测二分类序列均值损失\ndef nsp_loss(seq_logits, is_next):\n    return round(float(np.mean(ce(seq_logits, is_next))), 4)\n",
     "expectedOutput": "True",
     "testCases": [
       {
-        "name": "mlm loss",
+        "name": "mlm loss masks only position 0",
         "mode": "function",
         "function": "mlm_loss",
         "args": [
@@ -760,7 +2144,7 @@
               0
             ],
             [
-              0,
+              10,
               0
             ]
           ],
@@ -773,7 +2157,31 @@
             0
           ]
         ],
-        "expected": true
+        "hidden": false,
+        "expected": 0.6931
+      },
+      {
+        "name": "nsp loss perfect predictions near 0",
+        "mode": "function",
+        "function": "nsp_loss",
+        "args": [
+          [
+            [
+              10.0,
+              -10.0
+            ],
+            [
+              -10.0,
+              10.0
+            ]
+          ],
+          [
+            0,
+            1
+          ]
+        ],
+        "hidden": false,
+        "expected": 0.0
       }
     ],
     "quizzes": [
@@ -791,7 +2199,59 @@
     ],
     "thinkingQuestion": "RoBERTa 去掉 NSP 效果更好说明什么？",
     "aiPrompt": "评估学生对 BERT 的理解。按 0-10 分打分。",
-    "status": "published"
+    "status": "published",
+    "evaluationCases": [
+      {
+        "name": "mlm_loss zero masked tokens safe zero",
+        "mode": "function",
+        "function": "mlm_loss",
+        "args": [
+          [
+            [
+              1,
+              2
+            ],
+            [
+              3,
+              4
+            ]
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            0
+          ]
+        ],
+        "hidden": true,
+        "expected": 0.0
+      },
+      {
+        "name": "nsp_loss equal logits ln(2)",
+        "mode": "function",
+        "function": "nsp_loss",
+        "args": [
+          [
+            [
+              0.0,
+              0.0
+            ],
+            [
+              5.0,
+              5.0
+            ]
+          ],
+          [
+            0,
+            1
+          ]
+        ],
+        "hidden": true,
+        "expected": 0.6931
+      }
+    ]
   },
   {
     "slug": "nlp-gru-l2",
@@ -811,23 +2271,25 @@
       "h_new = z*h + (1-z)*tanh(...)"
     ],
     "starterCode": "import numpy as np\ndef gru_cell(x, h, params): pass\ndef gru_forward(X, params): pass",
-    "solutionCode": "import numpy as np\nsig=lambda x:1/(1+np.exp(-np.clip(x,-100,100)))\ndef gru_cell(x,h,p):\n  z=sig(x@p.Wz+h@p.Uz+p.bz)\n  r=sig(x@p.Wr+h@p.Ur+p.br)\n  n=np.tanh(x@p.Wh+(r*h)@p.Uh+p.bh)\n  return (1-z)*n+z*h\ndef gru_forward(X,p):\n  import collections\n  if isinstance(p,dict):p=collections.namedtuple(\"P\",p.keys())(**p)\n  h=np.zeros(p.Wz.shape[1])\n  hs=[]\n  for x in X:\n    h=gru_cell(x,h,p);hs.append(h)\n  return hs",
+    "solutionCode": "# 【算法思路】实现融合更新门 z 与重置门 r 的 GRU 门控循环单元并沿时间序列前向递推隐状态。\nimport collections\nimport numpy as np\n\n# 稳定逻辑门控函数\ndef sigmoid(x):\n    return 1.0 / (1.0 + np.exp(-np.clip(np.asarray(x, dtype=float), -100, 100)))\n\n# 用重置门控制历史记忆参与并线性插值更新隐状态\ndef gru_cell(x, h, p):\n    if isinstance(p, dict):\n        p = collections.namedtuple(\"P\", p.keys())(**p)\n    x, h = np.asarray(x, dtype=float), np.asarray(h, dtype=float)\n    z = sigmoid(x @ np.asarray(p.Wz, dtype=float) + h @ np.asarray(p.Uz, dtype=float) + np.asarray(p.bz, dtype=float))\n    r = sigmoid(x @ np.asarray(p.Wr, dtype=float) + h @ np.asarray(p.Ur, dtype=float) + np.asarray(p.br, dtype=float))\n    n = np.tanh(x @ np.asarray(p.Wh, dtype=float) + (r * h) @ np.asarray(p.Uh, dtype=float) + np.asarray(p.bh, dtype=float))\n    return (1.0 - z) * n + z * h\n\n# 兼容字典与 namedtuple 参数格式逐时间步前向递推\ndef gru_forward(X, p):\n    X = np.asarray(X, dtype=float)\n    if isinstance(p, dict):\n        p = collections.namedtuple(\"P\", p.keys())(**p)\n    Wz = np.asarray(p.Wz, dtype=float)\n    h = np.zeros(Wz.shape[1], dtype=float)\n    hs = []\n    for x in X:\n        h = gru_cell(x, h, p)\n        hs.append(h)\n    return hs\n",
     "expectedOutput": "True",
     "testCases": [
       {
-        "name": "gru forward",
-        "input": {
-          "X": [
+        "name": "gru forward zero input returns zero hidden sequence",
+        "mode": "function",
+        "function": "gru_forward",
+        "args": [
+          [
             [
-              1,
+              0,
               0
             ],
             [
               0,
-              1
+              0
             ]
           ],
-          "params": {
+          {
             "Wz": [
               [
                 0.1,
@@ -901,8 +2363,120 @@
               0
             ]
           }
-        },
-        "expected": true
+        ],
+        "hidden": false,
+        "expected": [
+          [
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            0.0
+          ]
+        ]
+      },
+      {
+        "name": "gru forward non-zero sequence length matches steps",
+        "mode": "function",
+        "function": "gru_forward",
+        "args": [
+          [
+            [
+              1,
+              0
+            ],
+            [
+              0,
+              1
+            ]
+          ],
+          {
+            "Wz": [
+              [
+                0.1,
+                -0.1
+              ],
+              [
+                0.2,
+                -0.2
+              ]
+            ],
+            "Uz": [
+              [
+                0.1,
+                -0.1
+              ],
+              [
+                0.2,
+                -0.2
+              ]
+            ],
+            "bz": [
+              0,
+              0
+            ],
+            "Wr": [
+              [
+                0.1,
+                -0.1
+              ],
+              [
+                0.2,
+                -0.2
+              ]
+            ],
+            "Ur": [
+              [
+                0.1,
+                -0.1
+              ],
+              [
+                0.2,
+                -0.2
+              ]
+            ],
+            "br": [
+              0,
+              0
+            ],
+            "Wh": [
+              [
+                0.1,
+                -0.1
+              ],
+              [
+                0.2,
+                -0.2
+              ]
+            ],
+            "Uh": [
+              [
+                0.1,
+                -0.1
+              ],
+              [
+                0.2,
+                -0.2
+              ]
+            ],
+            "bh": [
+              0,
+              0
+            ]
+          }
+        ],
+        "hidden": false,
+        "expected": [
+          [
+            0.04734437178909115,
+            -0.05232362283586467
+          ],
+          [
+            0.11417158432366031,
+            -0.1307494819372605
+          ]
+        ]
       }
     ],
     "quizzes": [
@@ -920,7 +2494,121 @@
     ],
     "thinkingQuestion": "GRU 训练速度为什么通常比 LSTM 快？",
     "aiPrompt": "评估学生对 GRU 的理解。按 0-10 分打分。",
-    "status": "published"
+    "status": "published",
+    "evaluationCases": [
+      {
+        "name": "gru_cell pure forget z=1 passes h unchanged",
+        "mode": "function",
+        "function": "gru_cell",
+        "args": [
+          [
+            1,
+            1
+          ],
+          [
+            2,
+            -3
+          ],
+          {
+            "Wz": [
+              [
+                0,
+                0
+              ],
+              [
+                0,
+                0
+              ]
+            ],
+            "Uz": [
+              [
+                0,
+                0
+              ],
+              [
+                0,
+                0
+              ]
+            ],
+            "bz": [
+              50,
+              50
+            ],
+            "Wr": [
+              [
+                0,
+                0
+              ],
+              [
+                0,
+                0
+              ]
+            ],
+            "Ur": [
+              [
+                0,
+                0
+              ],
+              [
+                0,
+                0
+              ]
+            ],
+            "br": [
+              0,
+              0
+            ],
+            "Wh": [
+              [
+                1,
+                1
+              ],
+              [
+                1,
+                1
+              ]
+            ],
+            "Uh": [
+              [
+                0,
+                0
+              ],
+              [
+                0,
+                0
+              ]
+            ],
+            "bh": [
+              0,
+              0
+            ]
+          }
+        ],
+        "hidden": true,
+        "expected": [
+          2,
+          -3
+        ]
+      },
+      {
+        "name": "gru_forward empty sequence empty list",
+        "mode": "function",
+        "function": "gru_forward",
+        "args": [
+          [],
+          {
+            "Wz": [
+              [
+                0.1,
+                0.2
+              ]
+            ]
+          }
+        ],
+        "hidden": true,
+        "expected": []
+      }
+    ]
   },
   {
     "slug": "nlp-cross-attention-l2",
@@ -939,64 +2627,116 @@
       "CrossAttn = softmax(Q*K^T/sqrt(d))*V"
     ],
     "starterCode": "import numpy as np\ndef cross_attention(Q, K, V): pass",
-    "solutionCode": "import numpy as np\ndef softmax(x):\n  xm=x-np.max(x,axis=-1,keepdims=True);e=np.exp(xm);return e/np.sum(e,axis=-1,keepdims=True)\ndef cross_attention(Q,K,V):\n  d=Q.shape[-1];scores=Q@K.T/np.sqrt(d);w=softmax(scores);return w@V\ndef cross_attention_forward(Xd,Xe,Wq,Wk,Wv):\n  return cross_attention(Xd@Wq,Xe@Wk,Xe@Wv)",
+    "solutionCode": "# 【算法思路】由解码器特征提供 Query 向量，对编码器侧 Keys 和 Values 进行交叉注意力语义融合。\nimport numpy as np\n\n# 按行稳定计算注意力权重分布\ndef softmax(x):\n    x = np.asarray(x, dtype=float)\n    xm = x - np.max(x, axis=-1, keepdims=True)\n    e = np.exp(xm)\n    return e / np.sum(e, axis=-1, keepdims=True)\n\n# 按缩放点积把编码器信息聚合并返回\ndef cross_attention(Q, K, V):\n    Q, K, V = np.asarray(Q, dtype=float), np.asarray(K, dtype=float), np.asarray(V, dtype=float)\n    d = Q.shape[-1]\n    return softmax(Q @ K.T / np.sqrt(d)) @ V\n\n# 投影 Q/K/V 后调用跨模态交叉注意力\ndef cross_attention_forward(Xd, Xe, Wq, Wk, Wv):\n    Xd, Xe = np.asarray(Xd, dtype=float), np.asarray(Xe, dtype=float)\n    Wq, Wk, Wv = np.asarray(Wq, dtype=float), np.asarray(Wk, dtype=float), np.asarray(Wv, dtype=float)\n    return cross_attention(Xd @ Wq, Xe @ Wk, Xe @ Wv)\n",
     "expectedOutput": "True",
     "testCases": [
       {
-        "name": "cross attn",
-        "input": {
-          "X_dec": [
+        "name": "cross attention orthogonal queries pick aligned value",
+        "mode": "function",
+        "function": "cross_attention",
+        "args": [
+          [
             [
-              0.2,
-              0.3
+              10,
+              0
             ],
             [
-              0.1,
-              0.4
+              0,
+              10
             ]
           ],
-          "X_enc": [
+          [
             [
-              0.5,
-              0.1
+              10,
+              0
             ],
             [
-              0.3,
-              0.6
+              0,
+              10
             ]
           ],
-          "W_q": [
+          [
             [
-              0.1,
-              -0.2
+              1,
+              2
             ],
             [
-              0.3,
-              0.1
-            ]
-          ],
-          "W_k": [
-            [
-              -0.1,
-              0.2
-            ],
-            [
-              0.3,
-              -0.1
-            ]
-          ],
-          "W_v": [
-            [
-              0.2,
-              0.1
-            ],
-            [
-              -0.1,
-              0.2
+              3,
+              4
             ]
           ]
-        },
-        "expected": true
+        ],
+        "hidden": false,
+        "expected": [
+          [
+            1,
+            2
+          ],
+          [
+            3,
+            4
+          ]
+        ]
+      },
+      {
+        "name": "cross_attention_forward identity weights",
+        "mode": "function",
+        "function": "cross_attention_forward",
+        "args": [
+          [
+            [
+              1,
+              0
+            ]
+          ],
+          [
+            [
+              1,
+              0
+            ],
+            [
+              0,
+              1
+            ]
+          ],
+          [
+            [
+              1,
+              0
+            ],
+            [
+              0,
+              1
+            ]
+          ],
+          [
+            [
+              1,
+              0
+            ],
+            [
+              0,
+              1
+            ]
+          ],
+          [
+            [
+              5,
+              6
+            ],
+            [
+              7,
+              8
+            ]
+          ]
+        ],
+        "hidden": false,
+        "expected": [
+          [
+            5.660476901346686,
+            6.660476901346686
+          ]
+        ]
       }
     ],
     "quizzes": [
@@ -1014,7 +2754,109 @@
     ],
     "thinkingQuestion": "Masked Self-Attention 为什么需要掩码？",
     "aiPrompt": "评估学生对注意力机制的理解。按 0-10 分打分。",
-    "status": "published"
+    "status": "published",
+    "evaluationCases": [
+      {
+        "name": "cross_attention uniform K sums to mean of V",
+        "mode": "function",
+        "function": "cross_attention",
+        "args": [
+          [
+            [
+              1,
+              2
+            ]
+          ],
+          [
+            [
+              0,
+              0
+            ],
+            [
+              0,
+              0
+            ]
+          ],
+          [
+            [
+              2,
+              4
+            ],
+            [
+              6,
+              8
+            ]
+          ]
+        ],
+        "hidden": true,
+        "expected": [
+          [
+            4.0,
+            6.0
+          ]
+        ]
+      },
+      {
+        "name": "cross_attention_forward zero Wq uniforms V",
+        "mode": "function",
+        "function": "cross_attention_forward",
+        "args": [
+          [
+            [
+              3,
+              4
+            ]
+          ],
+          [
+            [
+              1,
+              0
+            ],
+            [
+              0,
+              1
+            ]
+          ],
+          [
+            [
+              0,
+              0
+            ],
+            [
+              0,
+              0
+            ]
+          ],
+          [
+            [
+              1,
+              0
+            ],
+            [
+              0,
+              1
+            ]
+          ],
+          [
+            [
+              1,
+              3
+            ],
+            [
+              5,
+              7
+            ]
+          ]
+        ],
+        "hidden": true,
+        "expected": [
+          [
+            3.0,
+            5.0
+          ]
+        ]
+      }
+    ]
   },
   {
     "slug": "nlp-mha-l2",
@@ -1033,13 +2875,154 @@
       "head_i = Attn(QW_i^Q, KW_i^K, VW_i^V)"
     ],
     "starterCode": "import numpy as np\ndef multihead_attention(X, Wq, Wk, Wv, Wo, h): pass",
-    "solutionCode": "import numpy as np\ndef softmax(x):\n  xm=x-np.max(x,axis=-1,keepdims=True);e=np.exp(xm);return e/np.sum(e,axis=-1,keepdims=True)\ndef multihead_attention(X,Wq,Wk,Wv,Wo,h=2):\n  n,d=X.shape;dk=d//h;Q=X@Wq;K=X@Wk;V=X@Wv;heads=[]\n  for i in range(h):\n    qi=Q[:,i*dk:(i+1)*dk];ki=K[:,i*dk:(i+1)*dk];vi=V[:,i*dk:(i+1)*dk]\n    scores=qi@ki.T/np.sqrt(dk);w=softmax(scores);heads.append(w@vi)\n  return np.concatenate(heads,axis=1)@Wo\ndef get_weights(X,Wq,Wk,h=2):\n  n,d=X.shape;dk=d//h;Q=X@Wq;K=X@Wk;ws=[]\n  for i in range(h):\n    scores=Q[:,i*dk:(i+1)*dk]@K[:,i*dk:(i+1)*dk].T/np.sqrt(dk)\n    ws.append(softmax(scores))\n  return ws",
+    "solutionCode": "# 【算法思路】切片划分多头投影通道并行计算各头加权表示，串联后再经线性层 Wo 映射到输出空间。\nimport numpy as np\n\n# 行级注意力归一化\ndef softmax(x):\n    x = np.asarray(x, dtype=float)\n    xm = x - np.max(x, axis=-1, keepdims=True)\n    e = np.exp(xm)\n    return e / np.sum(e, axis=-1, keepdims=True)\n\n# 遍历多头计算上下文加权并乘以输出权重矩阵\ndef multihead_attention(X, Wq, Wk, Wv, Wo, h=2):\n    X = np.asarray(X, dtype=float)\n    Q = X @ np.asarray(Wq, dtype=float)\n    K = X @ np.asarray(Wk, dtype=float)\n    V = X @ np.asarray(Wv, dtype=float)\n    dk = X.shape[1] // h\n    heads = []\n    for i in range(h):\n        qi, ki, vi = Q[:, i * dk:(i + 1) * dk], K[:, i * dk:(i + 1) * dk], V[:, i * dk:(i + 1) * dk]\n        w = softmax(qi @ ki.T / np.sqrt(dk))\n        heads.append(w @ vi)\n    return np.concatenate(heads, axis=1) @ np.asarray(Wo, dtype=float)\n\n# 单独抽取各头注意力对齐矩阵用于可视化检查\ndef get_weights(X, Wq, Wk, h=2):\n    X = np.asarray(X, dtype=float)\n    Q = X @ np.asarray(Wq, dtype=float)\n    K = X @ np.asarray(Wk, dtype=float)\n    dk = X.shape[1] // h\n    return [softmax(Q[:, i * dk:(i + 1) * dk] @ K[:, i * dk:(i + 1) * dk].T / np.sqrt(dk)) for i in range(h)]\n",
     "expectedOutput": "True",
     "testCases": [
       {
-        "name": "mha",
+        "name": "multihead_attention identity maps sequence",
         "mode": "function",
-        "function": "softmax",
+        "function": "multihead_attention",
+        "args": [
+          [
+            [
+              1,
+              0,
+              1,
+              0
+            ],
+            [
+              0,
+              1,
+              0,
+              1
+            ]
+          ],
+          [
+            [
+              1,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              1,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              1,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              1
+            ]
+          ],
+          [
+            [
+              1,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              1,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              1,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              1
+            ]
+          ],
+          [
+            [
+              1,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              1,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              1,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              1
+            ]
+          ],
+          [
+            [
+              1,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              1,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              1,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              1
+            ]
+          ],
+          2
+        ],
+        "hidden": false,
+        "expected": [
+          [
+            0.6697615493266569,
+            0.3302384506733431,
+            0.6697615493266569,
+            0.3302384506733431
+          ],
+          [
+            0.3302384506733431,
+            0.6697615493266569,
+            0.3302384506733431,
+            0.6697615493266569
+          ]
+        ]
+      },
+      {
+        "name": "get_weights returns h square row-stochastic matrices",
+        "mode": "function",
+        "function": "get_weights",
         "args": [
           [
             [
@@ -1054,9 +3037,84 @@
               1,
               0
             ]
-          ]
+          ],
+          [
+            [
+              1,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              1,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              1,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              1
+            ]
+          ],
+          [
+            [
+              1,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              1,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              1,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              1
+            ]
+          ],
+          2
         ],
-        "expected": true
+        "hidden": false,
+        "expected": [
+          [
+            [
+              0.6697615493266569,
+              0.3302384506733431
+            ],
+            [
+              0.3302384506733431,
+              0.6697615493266569
+            ]
+          ],
+          [
+            [
+              0.6697615493266569,
+              0.3302384506733431
+            ],
+            [
+              0.3302384506733431,
+              0.6697615493266569
+            ]
+          ]
+        ]
       }
     ],
     "quizzes": [
@@ -1074,7 +3132,219 @@
     ],
     "thinkingQuestion": "如何分析注意力头的行为？",
     "aiPrompt": "评估学生对多头注意力的理解。按 0-10 分打分。",
-    "status": "published"
+    "status": "published",
+    "evaluationCases": [
+      {
+        "name": "multihead zero Wo outputs zeros",
+        "mode": "function",
+        "function": "multihead_attention",
+        "args": [
+          [
+            [
+              1,
+              2,
+              3,
+              4
+            ]
+          ],
+          [
+            [
+              1,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              1,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              1,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              1
+            ]
+          ],
+          [
+            [
+              1,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              1,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              1,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              1
+            ]
+          ],
+          [
+            [
+              1,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              1,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              1,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              1
+            ]
+          ],
+          [
+            [
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0
+            ]
+          ],
+          2
+        ],
+        "hidden": true,
+        "expected": [
+          [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ]
+        ]
+      },
+      {
+        "name": "get_weights single token always [1.0]",
+        "mode": "function",
+        "function": "get_weights",
+        "args": [
+          [
+            [
+              1,
+              2,
+              3,
+              4
+            ]
+          ],
+          [
+            [
+              1,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              1,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              1,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              1
+            ]
+          ],
+          [
+            [
+              1,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              1,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              1,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              1
+            ]
+          ],
+          2
+        ],
+        "hidden": true,
+        "expected": [
+          [
+            [
+              1.0
+            ]
+          ],
+          [
+            [
+              1.0
+            ]
+          ]
+        ]
+      }
+    ]
   },
   {
     "slug": "nlp-beam-search-l2",
@@ -1092,23 +3362,52 @@
     "latexFormulas": [
       "每步保留 top-K 个候选"
     ],
-    "starterCode": "import numpy as np\ndef beam_search(init_logits, decoder, beam, max_len, end_id): pass",
-    "solutionCode": "import numpy as np\ndef beam_search(init_logits,decoder,beam=3,max_len=10,end=2):\n  probs=np.exp(init_logits-np.max(init_logits))\n  probs/=np.sum(probs)\n  cand=[(np.log(probs[i]),[i]) for i in range(len(probs))]\n  cand.sort(key=lambda x:-x[0]);cand=cand[:beam]\n  for _ in range(max_len):\n    nw=[]\n    for sc,seq in cand:\n      if seq[-1]==end:nw.append((sc,seq));continue\n      logits=decoder(seq)\n      probs=np.exp(logits-np.max(logits));probs/=np.sum(probs)\n      for i in range(min(beam,len(probs))):\n        nw.append((sc+np.log(probs[i]),seq+[i]))\n    nw.sort(key=lambda x:-x[0]);cand=nw[:beam]\n  return cand[0][1]",
+    "starterCode": "import numpy as np\n\ndef beam_search(init_logits, decoder, beam: int = 3, max_len: int = 10, end_id: int = 2) -> list[int]:\n    \"\"\"束搜索解码，返回对数概率最高的 token 序列\"\"\"\n    pass\n\ndef eval_beam_search(init_logits: list[float], preferred_token: int, beam: int = 2, max_len: int = 4, end_id: int = 2) -> list[int]:\n    \"\"\"使用确定性解码打分器评估 beam_search 解码路径\"\"\"\n    def _decoder(seq):\n        logits = np.full(len(init_logits), -5.0, dtype=float)\n        if len(seq) >= max_len - 1:\n            logits[end_id] = 5.0\n        else:\n            logits[preferred_token] = 5.0\n        return logits\n    return beam_search(init_logits, _decoder, beam, max_len, end_id)\n",
+    "solutionCode": "# 【算法思路】维护最多 beam 条对数概率累计最高的候选生成路径，逐步扩展探索序列空间。\nimport numpy as np\n\n# 按累积对数概率裁剪候选项直至全达 end_id 或最大长度\ndef beam_search(init_logits, decoder, beam=3, max_len=10, end_id=2):\n    init_logits = np.asarray(init_logits, dtype=float)\n    probs = np.exp(init_logits - np.max(init_logits))\n    probs /= np.sum(probs)\n    cand = sorted([(float(np.log(probs[i] + 1e-12)), [i]) for i in range(len(probs))], key=lambda x: -x[0])[:beam]\n    for _ in range(max_len):\n        nw = []\n        for sc, seq in cand:\n            if seq[-1] == end_id:\n                nw.append((sc, seq))\n                continue\n            logits = np.asarray(decoder(seq), dtype=float)\n            p = np.exp(logits - np.max(logits))\n            p /= np.sum(p)\n            for i in np.argsort(-p)[:min(beam, len(p))]:\n                nw.append((sc + float(np.log(p[i] + 1e-12)), seq + [int(i)]))\n        nw.sort(key=lambda x: -x[0])\n        cand = nw[:beam]\n    return cand[0][1]\n\n# 利用确定性解码评分回调验证最优解码路径\ndef eval_beam_search(init_logits: list[float], preferred_token: int, beam: int = 2, max_len: int = 4, end_id: int = 2) -> list[int]:\n    def _decoder(seq):\n        logits = np.full(len(init_logits), -5.0, dtype=float)\n        if len(seq) >= max_len - 1:\n            logits[end_id] = 5.0\n        else:\n            logits[preferred_token] = 5.0\n        return logits\n    return beam_search(init_logits, _decoder, beam, max_len, end_id)\n",
     "expectedOutput": "True",
     "testCases": [
       {
-        "name": "beam",
-        "input": {
-          "initLogits": [
-            0,
-            0,
-            0
+        "name": "beam chooses preferred path and halts at end_id",
+        "mode": "function",
+        "function": "eval_beam_search",
+        "args": [
+          [
+            5.0,
+            0.0,
+            -5.0
           ],
-          "beamSize": 3,
-          "maxLen": 5,
-          "endId": 2
-        },
-        "expected": true
+          1,
+          2,
+          4,
+          2
+        ],
+        "hidden": false,
+        "expected": [
+          0,
+          1,
+          1,
+          2
+        ]
+      },
+      {
+        "name": "immediate stop when init_logits picks end_id",
+        "mode": "function",
+        "function": "eval_beam_search",
+        "args": [
+          [
+            -5.0,
+            -5.0,
+            5.0
+          ],
+          1,
+          2,
+          4,
+          2
+        ],
+        "hidden": false,
+        "expected": [
+          2
+        ]
       }
     ],
     "quizzes": [
@@ -1126,6 +3425,51 @@
     ],
     "thinkingQuestion": "Beam Search 和 Greedy Decoding 的区别？",
     "aiPrompt": "评估学生对解码策略的理解。按 0-10 分打分。",
-    "status": "published"
+    "status": "published",
+    "evaluationCases": [
+      {
+        "name": "beam_search prefers token 0 until max_len-1 then end_id",
+        "mode": "function",
+        "function": "eval_beam_search",
+        "args": [
+          [
+            0.0,
+            10.0,
+            -5.0
+          ],
+          0,
+          2,
+          3,
+          2
+        ],
+        "hidden": true,
+        "expected": [
+          1,
+          0,
+          2
+        ]
+      },
+      {
+        "name": "beam=1 greedy decoding",
+        "mode": "function",
+        "function": "eval_beam_search",
+        "args": [
+          [
+            5.0,
+            0.0,
+            -5.0
+          ],
+          1,
+          1,
+          2,
+          2
+        ],
+        "hidden": true,
+        "expected": [
+          0,
+          2
+        ]
+      }
+    ]
   }
 ]

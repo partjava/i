@@ -54,6 +54,8 @@ def _canonical(value):
         return "[" + ",".join(_canonical(item) for item in value) + "]"
     if isinstance(value, dict) and all(isinstance(key, str) for key in value):
         return "{" + ",".join(_canonical(key) + ":" + _canonical(value[key]) for key in sorted(value)) + "}"
+    if type(value).__module__.startswith("numpy") and hasattr(value, "tolist"):
+        return _canonical(value.tolist())
     raise TypeError("函数返回值必须能表示为 JSON（对象键必须是字符串）")
 
 
@@ -66,14 +68,14 @@ def _to_snake(s):
     return "".join(res)
 
 
-def _adapt_args(function, args, kwargs):
+def _adapt_args(function, args, kwargs, legacy_input=False):
     try:
         inspect.signature(function).bind(*args, **kwargs)
         return args, kwargs
     except (TypeError, ValueError):
         pass
 
-    if len(args) == 1 and isinstance(args[0], dict) and not kwargs:
+    if legacy_input and len(args) == 1 and isinstance(args[0], dict) and not kwargs:
         d = args[0]
         sig = inspect.signature(function)
         params = [p for p in sig.parameters.values() if p.name != "self"]
@@ -122,7 +124,7 @@ def _entry(tree, requested, case=None):
         methods = [node.name for node in classes[0].body if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and not node.name.startswith("_")]
         if len(methods) == 1:
             return "Solution." + methods[0]
-    if case and functions:
+    if case and case.get("legacy_input") and functions:
         args = case.get("args", [])
         if len(args) == 1 and isinstance(args[0], dict):
             d = args[0]
@@ -138,6 +140,35 @@ def _entry(tree, requested, case=None):
             if len(matched_funcs) == 1:
                 return matched_funcs[0]
     raise _ConfigurationError("入口不明确：请配置 function/entryPoint，并用 args/kwargs 明确参数")
+
+
+def _is_numeric_list(val):
+    if not isinstance(val, list) or not val:
+        return False
+    first = val[0]
+    if isinstance(first, (int, float)) and not isinstance(first, bool):
+        return all(isinstance(x, (int, float)) and not isinstance(x, bool) for x in val)
+    if isinstance(first, list):
+        return all(_is_numeric_list(x) for x in val)
+    return False
+
+
+def _to_ndarray_deep(np_mod, val, float_fallback=False):
+    if isinstance(val, list):
+        if _is_numeric_list(val):
+            return np_mod.asarray(val, dtype=float) if float_fallback else np_mod.asarray(val)
+        return [_to_ndarray_deep(np_mod, item, float_fallback) for item in val]
+    if isinstance(val, dict):
+        return {k: _to_ndarray_deep(np_mod, v, float_fallback) for k, v in val.items()}
+    return val
+
+
+def _needs_ndarray(ann, np_mod):
+    if ann is inspect.Parameter.empty or np_mod is None:
+        return False
+    if ann is getattr(np_mod, "ndarray", None):
+        return True
+    return isinstance(ann, str) and "ndarray" in ann
 
 
 def _run(case):
@@ -162,8 +193,48 @@ def _run(case):
             function = namespace[parts[0]] if len(parts) == 1 else getattr(namespace[parts[0]](), parts[1])
         except (KeyError, AttributeError):
             raise _ConfigurationError("指定入口不存在，请检查 function/entryPoint") from None
-        args, kwargs = _adapt_args(function, list(case.get("args", [])), dict(case.get("kwargs", {})))
-        value = function(*args, **kwargs)
+        args, kwargs = _adapt_args(
+            function,
+            list(case.get("args", [])),
+            dict(case.get("kwargs", {})),
+            bool(case.get("legacy_input", False)),
+        )
+        np_mod = next(
+            (v for v in namespace.values() if inspect.ismodule(v) and v.__name__ == "numpy"),
+            None,
+        )
+        if np_mod is not None:
+            sig = inspect.signature(function)
+            bound = sig.bind(*args, **kwargs)
+            for p_name, p_obj in sig.parameters.items():
+                if p_name in bound.arguments and _needs_ndarray(p_obj.annotation, np_mod):
+                    val = bound.arguments[p_name]
+                    if isinstance(val, list):
+                        bound.arguments[p_name] = np_mod.asarray(val)
+            args = list(bound.args)
+            kwargs = dict(bound.kwargs)
+        try:
+            value = function(*args, **kwargs)
+        except (AttributeError, TypeError) as err:
+            msg = str(err)
+            numpy_err = (
+                np_mod is not None
+                and any(
+                    hint in msg
+                    for hint in (
+                        "has no attribute",
+                        "unsupported operand type(s)",
+                        "can't multiply sequence",
+                        "only integer scalar arrays",
+                        "list indices must be integers or slices",
+                    )
+                )
+            )
+            if not numpy_err:
+                raise
+            np_args = [_to_ndarray_deep(np_mod, a, float_fallback=False) for a in args]
+            np_kwargs = {k: _to_ndarray_deep(np_mod, v, float_fallback=False) for k, v in kwargs.items()}
+            value = function(*np_args, **np_kwargs)
         if inspect.isawaitable(value):
             value = asyncio.run(value)
         return value

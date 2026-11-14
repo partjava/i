@@ -1,83 +1,189 @@
+'use client';
+
+import { motion } from 'framer-motion';
+import {
+  InteractiveGraphCanvas,
+  InteractiveMemoryCanvas,
+  InteractiveTimelineCanvas,
+  type VisualizerTone,
+} from '../shared/VisualizerEngine';
+
 type Tone = 'cyan' | 'violet' | 'amber' | 'muted';
 type Cell = string | [string, Tone];
 type Lane = [string, ...Cell[]];
 type Meter = [string, number, number, Tone?];
 
-const tones: Record<Tone, string> = {
-  cyan: 'border-cyan-800 bg-cyan-950/70 text-cyan-100',
-  violet: 'border-violet-700 bg-violet-950/70 text-violet-100',
-  amber: 'border-amber-700 bg-amber-950/70 text-amber-100',
-  muted: 'border-slate-700 bg-slate-900 text-slate-400',
+const mapTone = (t?: Tone): VisualizerTone => {
+  if (t === 'violet') return 'indigo';
+  if (t === 'amber') return 'amber';
+  if (t === 'muted') return 'slate';
+  return 'cyan';
 };
 
 export function Lanes({ rows }: { rows: Lane[] }) {
   return (
-    <div className="space-y-3" aria-live="polite">
-      {rows.map(([label, ...cells]) => (
-        <div key={label} className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
-          <span className="w-20 shrink-0 text-xs text-slate-400">{label}</span>
-          {cells.map((cell, index) => {
-            const [value, tone] = typeof cell === 'string' ? [cell, 'cyan' as const] : cell;
-            return (
-              <span key={index} className={`min-w-0 rounded-md border px-2 py-1.5 text-xs [overflow-wrap:anywhere] ${tones[tone]}`}>
-                {value}
-              </span>
-            );
-          })}
-        </div>
-      ))}
-    </div>
+    <InteractiveMemoryCanvas
+      tracks={rows.map(([name, ...cells]) => ({
+        name,
+        slots: cells.map((cell) => {
+          const [label, t] = typeof cell === 'string' ? [cell, 'cyan' as const] : cell;
+          return { label, tone: mapTone(t) };
+        }),
+      }))}
+    />
   );
 }
 
 export function Meters({ rows }: { rows: Meter[] }) {
+  const maxTime = Math.max(1, ...rows.map(([, val, limit]) => Math.max(val, limit) * 1.15));
   return (
-    <div className="space-y-3" aria-live="polite">
-      {rows.map(([label, value, limit, tone = 'cyan']) => (
-        <div key={label}>
-          <div className="mb-1 flex justify-between gap-2 text-xs text-slate-300">
-            <span>{label}</span><span className="font-mono">{value} / {limit}</span>
-          </div>
-          <div className="h-4 overflow-hidden rounded bg-slate-800">
-            <div className={`h-full rounded border ${tones[tone]}`} style={{ width: `${Math.min(value / limit, 1) * 100}%` }} />
-          </div>
-        </div>
-      ))}
-    </div>
+    <InteractiveTimelineCanvas
+      maxTime={Math.round(maxTime * 10) / 10}
+      lanes={rows.map(([label, value, limit, t = 'cyan']) => ({
+        name: label,
+        blocks: [
+          {
+            start: 0,
+            end: Math.max(0.01, value),
+            label: `${value}/${limit}`,
+            tone: mapTone(t),
+          },
+        ],
+      }))}
+      thresholds={
+        rows[0]
+          ? [
+              {
+                value: rows[0][2],
+                label: `阈值 ${rows[0][2]}`,
+                tone: 'amber',
+              },
+            ]
+          : []
+      }
+    />
   );
 }
 
 export function Flow({ nodes }: { nodes: Cell[] }) {
-  return (
-    <div className="flex flex-wrap items-center gap-2" aria-live="polite">
-      {nodes.map((node, index) => {
-        const [label, tone] = typeof node === 'string' ? [node, 'cyan' as const] : node;
-        return (
-          <div key={index} className="flex min-w-0 items-center gap-2">
-            {index > 0 && <span aria-hidden="true" className="text-violet-400">→</span>}
-            <span className={`min-w-0 rounded-lg border px-2.5 py-2 text-xs [overflow-wrap:anywhere] ${tones[tone]}`}>{label}</span>
-          </div>
-        );
-      })}
-    </div>
-  );
+  const count = Math.max(1, nodes.length);
+  const startX = 56;
+  const endX = 344;
+  const stepX = count > 1 ? (endX - startX) / (count - 1) : 0;
+
+  const graphNodes = nodes.map((node, index) => {
+    const [label, t] = typeof node === 'string' ? [node, 'cyan' as const] : node;
+    return {
+      id: `n-${index}`,
+      x: count === 1 ? 200 : startX + index * stepX,
+      y: 65,
+      label,
+      shape: 'pill' as const,
+      tone: mapTone(t),
+      active: index === count - 1,
+    };
+  });
+
+  const graphEdges = graphNodes.slice(0, -1).map((n, index) => ({
+    from: n.id,
+    to: graphNodes[index + 1].id,
+    tone: graphNodes[index + 1].tone,
+    animated: true,
+  }));
+
+  return <InteractiveGraphCanvas nodes={graphNodes} edges={graphEdges} height={130} />;
 }
 
-export function Intervals({ ranges, sharedFile }: { ranges: [[number, number], [number, number]]; sharedFile: boolean }) {
+export function Intervals({
+  ranges,
+  sharedFile,
+}: {
+  ranges: [[number, number], [number, number]];
+  sharedFile: boolean;
+}) {
   const start = Math.max(ranges[0][0], ranges[1][0]);
   const end = Math.min(ranges[0][1], ranges[1][1]);
-  const x = (line: number) => 60 + (line - 10) * 9;
+  const hasOverlap = sharedFile && start <= end;
+  const x = (line: number) => 66 + (line - 8) * 9.8;
+
   return (
-    <svg viewBox="0 0 320 112" className="w-full" role="img" aria-label={sharedFile && start <= end ? `重叠行 ${start} 到 ${end}` : '没有同文件行范围重叠'}>
-      {sharedFile && start <= end && <rect x={x(start)} y="10" width={x(end + 1) - x(start)} height="76" fill="#78350f" opacity=".6" />}
-      {ranges.map(([first, last], index) => (
-        <g key={index}>
-          <text x="9" y={34 + 36 * index} fill="#cbd5e1" fontSize="12">{index === 0 ? '基准' : '变更'}</text>
-          <rect x={x(first)} y={18 + 36 * index} width={x(last + 1) - x(first)} height="23" rx="4" fill={index === 0 ? '#155e75' : '#6d28d9'} />
-          <text x={x(first) + 5} y={34 + 36 * index} fill="#f8fafc" fontSize="11">{first}–{last}</text>
+    <svg
+      viewBox="0 0 380 124"
+      className="w-full h-auto select-none"
+      role="img"
+      aria-label={hasOverlap ? `重叠行 ${start} 到 ${end}` : '没有同文件行范围重叠'}
+    >
+      {/* Grid ticks */}
+      {[10, 15, 20, 25, 30, 35].map((line) => (
+        <g key={line}>
+          <line x1={x(line)} y1={14} x2={x(line)} y2={96} stroke="rgba(148,163,184,0.12)" />
+          <text x={x(line)} y={112} textAnchor="middle" fill="#64748b" fontSize="9.5" fontFamily="monospace">
+            L{line}
+          </text>
         </g>
       ))}
-      {[10, 20, 30, 35].map(line => <text key={line} x={x(line)} y="103" fill="#94a3b8" fontSize="10">{line}</text>)}
+
+      {/* Conflict Overlap Band */}
+      {hasOverlap && (
+        <motion.g initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+          <rect
+            x={x(start)}
+            y={14}
+            width={Math.max(4, x(end + 1) - x(start))}
+            height={82}
+            rx={4}
+            fill="rgba(251, 113, 133, 0.18)"
+            stroke="#fb7185"
+            strokeDasharray="3 2"
+          />
+          <text
+            x={(x(start) + x(end + 1)) / 2}
+            y={10}
+            textAnchor="middle"
+            fill="#fda4af"
+            fontSize="9"
+            fontFamily="monospace"
+          >
+            冲突区 {start}–{end}
+          </text>
+        </motion.g>
+      )}
+
+      {ranges.map(([first, last], index) => {
+        const y = 24 + index * 38;
+        const color = index === 0 ? '#22d3ee' : '#818cf8';
+        const fill = index === 0 ? 'rgba(34,211,238,0.2)' : 'rgba(129,140,248,0.22)';
+        const w = Math.max(20, x(last + 1) - x(first));
+        return (
+          <g key={index}>
+            <text x={10} y={y + 16} fill="#cbd5e1" fontSize="10.5" fontWeight="600">
+              {index === 0 ? '基准分支' : '待合提交'}
+            </text>
+            <motion.rect
+              x={x(first)}
+              y={y}
+              width={w}
+              height={24}
+              rx={5}
+              animate={{ x: x(first), width: w }}
+              transition={{ duration: 0.25 }}
+              fill={fill}
+              stroke={color}
+              strokeWidth={1.5}
+            />
+            <text
+              x={x(first) + w / 2}
+              y={y + 15}
+              textAnchor="middle"
+              fill="#f8fafc"
+              fontSize="10"
+              fontFamily="monospace"
+            >
+              {first}–{last} 行
+            </text>
+          </g>
+        );
+      })}
     </svg>
   );
 }

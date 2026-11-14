@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { X, Award, Lock, Check, Zap, FileText, Globe } from 'lucide-react';
 
@@ -31,6 +31,26 @@ interface StageMilestone {
 
 export const AchievementsDrawer: React.FC<AchievementsDrawerProps> = ({ onClose, dbChallenges = [] }) => {
   const [selectedMilestoneIndex, setSelectedMilestoneIndex] = useState<number>(0);
+  const [noteCount, setNoteCount] = useState<number>(0);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch('/api/notes?limit=30', { signal: controller.signal })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!data || controller.signal.aborted) return;
+        const count = Array.isArray(data.data)
+          ? data.data.length
+          : Array.isArray(data.data?.notes)
+          ? data.data.notes.length
+          : 0;
+        setNoteCount(count);
+      })
+      .catch(() => {
+        // 未登录或接口不可用时保持默认 0，不抛出未捕获错误
+      });
+    return () => controller.abort();
+  }, []);
 
   const isChallengePassed = (c: any) => Boolean(
     c?.completed === true ||
@@ -142,11 +162,37 @@ export const AchievementsDrawer: React.FC<AchievementsDrawerProps> = ({ onClose,
     completed: isStageCompleted(m.id)
   }));
 
-  // 3个简单的个人基础成就
+  // 3个动态计算的个人基础成就
+  const passedChallengesCount = dbChallenges.filter(isChallengePassed).length;
+  const hasCotMaster = dbChallenges.some((c) => {
+    const score = Number(c?.userRecord?.thinkingScore ?? c?.record?.thinkingScore ?? c?.thinkingScore ?? 0);
+    return Number.isFinite(score) && score >= 8.5;
+  });
+  const clampedNotes = Math.min(noteCount, 5);
+
   const simpleAchievements: Achievement[] = [
-    { id: 'first_blood', name: '初试锋芒 (First Blood)', desc: '成功运行 Docker 沙箱并通过 1 个编程挑战关卡。', status: 'unlocked', icon: 'zap', unlockedAt: '2026-06-27' },
-    { id: 'cot_master', name: '思维觉醒 (CoT Scholar)', desc: '提交 AI 思考答疑回答，并获得 8.5 分以上的成绩。', status: 'unlocked', icon: 'award', unlockedAt: '2026-06-27' },
-    { id: 'note_writer', name: '随堂速记 (Scholar Note)', desc: '在编程挑战的随堂笔记中，记录 5 条学习笔记。', status: 'progress', progress: { current: 3, total: 5 }, icon: 'file' },
+    {
+      id: 'first_blood',
+      name: '初试锋芒 (First Blood)',
+      desc: '成功运行 Docker 沙箱并通过 1 个编程挑战关卡。',
+      status: passedChallengesCount >= 1 ? 'unlocked' : 'locked',
+      icon: 'zap',
+    },
+    {
+      id: 'cot_master',
+      name: '思维觉醒 (CoT Scholar)',
+      desc: '提交 AI 思考答疑回答，并获得 8.5 分以上的成绩。',
+      status: hasCotMaster ? 'unlocked' : 'locked',
+      icon: 'award',
+    },
+    {
+      id: 'note_writer',
+      name: '随堂速记 (Scholar Note)',
+      desc: '在编程挑战的随堂笔记中，记录 5 条学习笔记。',
+      status: noteCount >= 5 ? 'unlocked' : 'progress',
+      progress: noteCount >= 5 ? undefined : { current: clampedNotes, total: 5 },
+      icon: 'file',
+    },
   ];
 
   const selectedStage = milestones[selectedMilestoneIndex];
