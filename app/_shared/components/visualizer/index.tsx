@@ -18,7 +18,7 @@ import {
   renderMachineLearning,
 } from './modules/machineLearning';
 import { CodeLanguage, resolveStepCodeTrace } from './codeTraceMap';
-import MathFormulaBox from './MathFormulaBox';
+import MathFormulaBox, { MixedMathText } from './MathFormulaBox';
 import hljs from 'highlight.js';
 
 function generateStepsForAlgorithm(
@@ -252,7 +252,7 @@ export default function AlgorithmVisualizer({
                   boxShadow: item.glow ? `0 0 8px ${item.color}` : undefined,
                 }}
               />
-              <span>{item.label}</span>
+              <MixedMathText text={item.label} />
             </div>
           ))}
         </div>
@@ -634,7 +634,7 @@ export default function AlgorithmVisualizer({
               {String(Math.max(steps.length, 1)).padStart(2, '0')}
             </span>
             <p className="text-slate-100 text-xs sm:text-sm font-medium truncate">
-              {activeStep?.description || '正在初始化三维算法空间...'}
+              <MixedMathText text={activeStep?.description || '正在初始化三维算法空间...'} />
             </p>
           </div>
           <span className="text-xs font-mono text-sky-400 shrink-0">

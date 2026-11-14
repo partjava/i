@@ -73,7 +73,7 @@ export const ALGORITHM_LATEX_MAP: Record<string, AlgorithmFormulaDetail> = {
   },
   selection: {
     latex: String.raw`C(n) \equiv \sum_{i=0}^{n-2} (n - 1 - i) = \frac{n(n-1)}{2} = \Theta(n^2), \quad S_{\text{swap}}(n) \le n - 1`,
-    secondaryLatex: String.raw`\text{minIdx} = \arg\min_{j \in [i,\, n-1]} A[j], \quad \text{Swap}(A[i],\, A[\text{minIdx}])`,
+    secondaryLatex: String.raw`\text{minIdx} = \operatorname*{arg\,min}_{j \in [i,\, n-1]} A[j], \quad \text{Swap}(A[i],\, A[\text{minIdx}])`,
     symbols: [
       { sym: '\\text{minIdx}', desc: '未排序后缀区间的最小值下标' },
       { sym: 'S_{\\text{swap}}', desc: '最多 n-1 次交换（零写放大）' },
@@ -109,7 +109,7 @@ export const ALGORITHM_LATEX_MAP: Record<string, AlgorithmFormulaDetail> = {
   },
   dijkstra: {
     latex: String.raw`\text{dist}[v] \leftarrow \min\Big(\text{dist}[v],\; \text{dist}[u] + w(u, v)\Big), \quad \forall (u, v) \in E,\; w(u, v) \ge 0`,
-    secondaryLatex: String.raw`u^* = \arg\min_{u \in V \setminus S} \text{dist}[u], \quad S \leftarrow S \cup \{u^*\}`,
+    secondaryLatex: String.raw`u^* = \operatorname*{arg\,min}_{u \in V \setminus S} \text{dist}[u], \quad S \leftarrow S \cup \{u^*\}`,
     symbols: [
       { sym: '\\text{dist}[v]', desc: '源点到节点 v 的当前最短距离上界' },
       { sym: 'w(u, v)', desc: '非负有向/无向边权重' },
@@ -234,7 +234,7 @@ export const ALGORITHM_LATEX_MAP: Record<string, AlgorithmFormulaDetail> = {
     ],
   },
   kmeans: {
-    latex: String.raw`J(c, \mu) = \sum_{i=1}^{N} \left\| \mathbf{x}^{(i)} - \boldsymbol{\mu}_{c^{(i)}} \right\|_2^2, \quad c^{(i)} = \arg\min_{k \in \{1..K\}} \left\| \mathbf{x}^{(i)} - \boldsymbol{\mu}_k \right\|_2^2`,
+    latex: String.raw`J(c, \mu) = \sum_{i=1}^{N} \left\| \mathbf{x}^{(i)} - \boldsymbol{\mu}_{c^{(i)}} \right\|_2^2, \quad c^{(i)} = \operatorname*{arg\,min}_{k \in \{1..K\}} \left\| \mathbf{x}^{(i)} - \boldsymbol{\mu}_k \right\|_2^2`,
     secondaryLatex: String.raw`\text{M-Step 质心更新: }\quad \boldsymbol{\mu}_k \leftarrow \frac{1}{|C_k|} \sum_{\mathbf{x}^{(i)} \in C_k} \mathbf{x}^{(i)} \quad \left(\frac{\partial J}{\partial \boldsymbol{\mu}_k} = 0\right)`,
     symbols: [
       { sym: 'J(c, \\mu)', desc: '簇内平方误差和 (SSE / Inertia)' },
@@ -270,7 +270,7 @@ export const ALGORITHM_LATEX_MAP: Record<string, AlgorithmFormulaDetail> = {
     ],
   },
   'decision-tree': {
-    latex: String.raw`\text{Gini}(D) = 1 - \sum_{k=1}^{K} p_k^2, \qquad (j^*, s^*) = \arg\min_{j,\, s} \left[ \frac{|D_L|}{|D|}\text{Gini}(D_L) + \frac{|D_R|}{|D|}\text{Gini}(D_R) \right]`,
+    latex: String.raw`\text{Gini}(D) = 1 - \sum_{k=1}^{K} p_k^2, \qquad (j^*, s^*) = \operatorname*{arg\,min}_{j,\, s} \left[ \frac{|D_L|}{|D|}\text{Gini}(D_L) + \frac{|D_R|}{|D|}\text{Gini}(D_R) \right]`,
     secondaryLatex: String.raw`\Delta \text{Gini}(D, j, s) = \text{Gini}(D) - \text{Gini}_{\text{split}}(D; j, s), \quad \mathcal{L}_{\text{prune}}(T) = R(T) + \alpha |T_{\text{leaf}}|`,
     symbols: [
       { sym: '\\text{Gini}(D)', desc: '节点样本集合的基尼不纯度（越小越纯）' },
@@ -288,7 +288,7 @@ export const ALGORITHM_LATEX_MAP: Record<string, AlgorithmFormulaDetail> = {
     ],
   },
   pca: {
-    latex: String.raw`\boldsymbol{\Sigma} = \frac{1}{N}\mathbf{X}^\top \mathbf{X} = \mathbf{U}\boldsymbol{\Lambda}\mathbf{U}^\top, \quad \mathbf{u}_k = \arg\max_{\|\mathbf{u}\|=1} \mathbf{u}^\top \boldsymbol{\Sigma} \mathbf{u} \implies \boldsymbol{\Sigma}\mathbf{u}_k = \lambda_k \mathbf{u}_k`,
+    latex: String.raw`\boldsymbol{\Sigma} = \frac{1}{N}\mathbf{X}^\top \mathbf{X} = \mathbf{U}\boldsymbol{\Lambda}\mathbf{U}^\top, \quad \mathbf{u}_k = \operatorname*{arg\,max}_{\|\mathbf{u}\|=1} \mathbf{u}^\top \boldsymbol{\Sigma} \mathbf{u} \implies \boldsymbol{\Sigma}\mathbf{u}_k = \lambda_k \mathbf{u}_k`,
     secondaryLatex: String.raw`\mathbf{Z} = \mathbf{X}\mathbf{U}_{1:K}, \qquad \text{累计方差贡献率 } \eta_K = \frac{\sum_{k=1}^{K} \lambda_k}{\sum_{j=1}^{d} \lambda_j}`,
     symbols: [
       { sym: '\\boldsymbol{\\Sigma}', desc: '零均值化后的 d×d 样本协方差矩阵' },
@@ -316,7 +316,7 @@ export const ALGORITHM_LATEX_MAP: Record<string, AlgorithmFormulaDetail> = {
   },
   'q-learning': {
     latex: String.raw`Q(s_t, a_t) \leftarrow Q(s_t, a_t) + \alpha \Big[ r_{t+1} + \gamma \max_{a'} Q(s_{t+1}, a') - Q(s_t, a_t) \Big]`,
-    secondaryLatex: String.raw`\pi^*(s) = \arg\max_{a \in \mathcal{A}} Q^*(s, a), \qquad \delta_t = r_{t+1} + \gamma \max_{a'} Q(s_{t+1}, a') - Q(s_t, a_t)`,
+    secondaryLatex: String.raw`\pi^*(s) = \operatorname*{arg\,max}_{a \in \mathcal{A}} Q^*(s, a), \qquad \delta_t = r_{t+1} + \gamma \max_{a'} Q(s_{t+1}, a') - Q(s_t, a_t)`,
     symbols: [
       { sym: '\\alpha, \\gamma', desc: '学习步长 α 与未来奖励折扣因子 γ ∈ [0,1)' },
       { sym: '\\delta_t', desc: '时序差分误差 (TD Error) 驱动贝尔曼更新' },
@@ -333,7 +333,7 @@ export const ALGORITHM_LATEX_MAP: Record<string, AlgorithmFormulaDetail> = {
     ],
   },
   rag: {
-    latex: String.raw`\text{sim}(\mathbf{q}, \mathbf{d}_i) = \frac{\mathbf{q} \cdot \mathbf{d}_i}{\|\mathbf{q}\|_2 \|\mathbf{d}_i\|_2}, \qquad \mathcal{D}_K = \arg\max_{\mathbf{d} \in \mathcal{D}}^{(K)} \text{sim}(\mathbf{q}, \mathbf{d})`,
+    latex: String.raw`\operatorname{TopK}(\mathbf{q}) = \mathcal{D}_K = \operatorname*{arg\,max}_{\mathbf{d} \in \mathcal{D}}^{(K)} \frac{\mathbf{q} \cdot \mathbf{d}}{\|\mathbf{q}\|_2 \|\mathbf{d}\|_2}, \qquad \text{sim}(\mathbf{q}, \mathbf{d}_i) = \frac{\mathbf{q} \cdot \mathbf{d}_i}{\|\mathbf{q}\|_2 \|\mathbf{d}_i\|_2}`,
     secondaryLatex: String.raw`P(y \mid x) \approx \sum_{\mathbf{d} \in \mathcal{D}_K} P(\mathbf{d} \mid x)\, P(y \mid x, \mathbf{d})`,
     symbols: [
       { sym: '\\mathbf{q}, \\mathbf{d}_i', desc: '用户查询与向量库文档切片的高维语义嵌入' },

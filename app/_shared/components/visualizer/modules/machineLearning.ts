@@ -1602,7 +1602,7 @@ function renderTransformerAttention(group: THREE.Group, step: VisualizationStep)
 
   group.add(
     createHudBadge([0, 0.6, 4.15], {
-      text: `6×6 注意力矩阵 softmax(QKᵀ/√d_k)`,
+      text: `6×6 注意力矩阵 softmax(QKᵀ/√dₖ)`,
       subText: `当前高亮第 ${qIdx + 1} 行 (${tokens[qIdx]})`,
       borderColor: '#a855f7',
       scale: [2.85, 0.85],
@@ -2174,7 +2174,7 @@ function renderDiffusion3D(group: THREE.Group, step: VisualizationStep) {
   group.add(
     createHudBadge([0, 7.2, 0], {
       text: `Diffusion 去噪步 t = ${step.tVal}`,
-      subText: w === 0 ? '✓ Clean Manifold x₀' : `Score Field -ε_θ(x_t, t)`,
+      subText: w === 0 ? '✓ Clean Manifold x₀' : `Score Field -ε(xₜ, t)`,
       borderColor: w === 0 ? '#10b981' : '#a855f7',
       scale: [2.6, 0.95],
     })
@@ -2480,7 +2480,7 @@ function renderMoe3D(group: THREE.Group, step: VisualizationStep) {
   group.add(
     createHudBadge([7.2, 4.7, 0], {
       text: '加权聚合 y',
-      subText: '∑ G_i(x) · E_i(x)',
+      subText: '∑ Gᵢ(x) · Eᵢ(x)',
       borderColor: step.finalComplete ? '#10b981' : '#a855f7',
       scale: [2.1, 0.88],
     })
@@ -2575,7 +2575,7 @@ function renderLstm3D(group: THREE.Group, step: VisualizationStep) {
 
   group.add(
     createHudBadge([0, 6.65, 0], {
-      text: 'Cell State Highway: C_t = f_t ⊙ C_{t-1} + i_t ⊙ C̃_t',
+      text: 'Cell State Highway: Cₜ = fₜ ⊙ Cₜ₋₁ + iₜ ⊙ C̃ₜ',
       subText: `当前时间步: ${step.token || 'Init'} · 记忆保留度 ${Math.round(cellStrength * 100)}%`,
       borderColor: '#10b981',
       scale: [3.6, 0.95],
@@ -2584,9 +2584,9 @@ function renderLstm3D(group: THREE.Group, step: VisualizationStep) {
 
   // 2. Three Gate Assemblies (Forget, Input, Output)
   const gates = [
-    { x: -3.8, label: '遗忘门 f_t', val: ft, col: 0xf43f5e, formula: 'f_t = σ(Wf·[h,x])' },
-    { x: 0.0, label: '输入门 i_t', val: it, col: 0x38bdf8, formula: 'i_t ⊙ C̃_t (写入)' },
-    { x: 3.8, label: '输出门 o_t', val: ot, col: 0xf59e0b, formula: 'h_t = o_t ⊙ tanh(C_t)' },
+    { x: -3.8, label: '遗忘门 fₜ', val: ft, col: 0xf43f5e, formula: 'fₜ = σ(Wf·[h,x])' },
+    { x: 0.0, label: '输入门 iₜ', val: it, col: 0x38bdf8, formula: 'iₜ ⊙ C̃ₜ (写入)' },
+    { x: 3.8, label: '输出门 oₜ', val: ot, col: 0xf59e0b, formula: 'hₜ = oₜ ⊙ tanh(Cₜ)' },
   ];
 
   gates.forEach((g, idx) => {
@@ -2637,7 +2637,7 @@ function renderLstm3D(group: THREE.Group, step: VisualizationStep) {
   group.add(createEnergyArc(new THREE.Vector3(3.8, 1.5, 0), htPos, 0.9, 0xf59e0b, 0.06, 0.92));
   group.add(
     createHudBadge([6.8, 3.15, 0], {
-      text: `隐藏状态 h_t`,
+      text: `隐藏状态 hₜ`,
       subText: `置信度 ${Math.round(ot * 100)}%`,
       borderColor: '#a855f7',
       scale: [1.85, 0.82],

@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import {
   CatProfile,
   CatFaceTuning,
+  CatEyeStyle,
   SurfaceSampler,
   autoDetectProfile
 } from './catProfiles';
@@ -17,6 +18,10 @@ export interface CatAnimUniforms {
   uRimPower: { value: number };
   uRimStrength: { value: number };
   uWhiteTipStrength: { value: number };
+  uFaceCenter: { value: THREE.Vector2 };
+  uEyeY: { value: number };
+  uEyeSpacing: { value: number };
+  uMouthY: { value: number };
 }
 
 export interface RiggedCatController {
@@ -44,7 +49,8 @@ export interface RiggedCatController {
 
 /**
  * 将原始 GLB 场景归一化到 [x: centered, y: 0..1, z: centered] 空间，
- * 并提取合并后的顶点/法线缓冲用于精确面部采样与表面植绒
+ * 并对 Tripo 高频坑洼法线进行解剖学球面平滑混合与抛光（面庞前方 75%、身体 45%），
+ * 同时提取合并后的顶点/法线缓冲用于精确面部采样与表面植绒
  */
 function normalizeAndExtractGeometry(modelScene: THREE.Object3D): {
   meshList: THREE.Mesh[];
@@ -57,9 +63,9 @@ function normalizeAndExtractGeometry(modelScene: THREE.Object3D): {
   const rawCenter = rawBox.getCenter(new THREE.Vector3());
   const invH = rawSize.y > 1e-5 ? 1.0 / rawSize.y : 1.0;
 
-  const meshList: THREE.Mesh[] = [];
-  const posChunks: Float32Array[] = [];
-  const normChunks: Float32Array[] = [];
+  const staged: { geom: THREE.BufferGeometry; pArr: Float32Array; nArr: Float32Array }[] = [];
+  let headSumX = 0, headSumY = 0, headSumZ = 0, headCount = 0;
+  let bodySumX = 0, bodySumY = 0, bodySumZ = 0, bodyCount = 0;
   let totalVerts = 0;
 
   modelScene.traverse((obj: any) => {
@@ -67,7 +73,6 @@ function normalizeAndExtractGeometry(modelScene: THREE.Object3D): {
       const geom: THREE.BufferGeometry = obj.geometry.clone();
       geom.applyMatrix4(obj.matrixWorld);
 
-      // 变换到归一化模型空间：x/z 居中，y 从 0 到 1
       const posAttr = geom.attributes.position as THREE.BufferAttribute;
       if (!geom.attributes.normal) {
         geom.computeVertexNormals();
@@ -86,53 +91,243 @@ function normalizeAndExtractGeometry(modelScene: THREE.Object3D): {
         pArr[i * 3 + 1] = ny;
         pArr[i * 3 + 2] = nz;
 
-        const vnx = normAttr.getX(i);
-        const vny = normAttr.getY(i);
-        const vnz = normAttr.getZ(i);
-        nArr[i * 3] = vnx;
-        nArr[i * 3 + 1] = vny;
-        nArr[i * 3 + 2] = vnz;
+        if (ny > 0.52 && ny < 0.86) {
+          headSumX += nx;
+          headSumY += ny;
+          headSumZ += nz;
+          headCount++;
+        } else if (ny >= 0.08 && ny <= 0.48) {
+          bodySumX += nx;
+          bodySumY += ny;
+          bodySumZ += nz;
+          bodyCount++;
+        }
       }
 
       posAttr.needsUpdate = true;
-      geom.computeBoundingBox();
-      geom.computeBoundingSphere();
-
-      const cleanMesh = new THREE.Mesh(geom);
-      cleanMesh.castShadow = true;
-      // 关键：关闭自身接收阴影，杜绝毛发凸起在猫脸上投下脏黑斑
-      cleanMesh.receiveShadow = false;
-      meshList.push(cleanMesh);
-
-      posChunks.push(pArr);
-      normChunks.push(nArr);
+      staged.push({ geom, pArr, nArr });
       totalVerts += posAttr.count;
     }
   });
 
+  const hx = headCount > 0 ? headSumX / headCount : 0;
+  const hy = headCount > 0 ? headSumY / headCount : 0.68;
+  const hz = headCount > 0 ? headSumZ / headCount : 0.1;
+  const bx = bodyCount > 0 ? bodySumX / bodyCount : 0;
+  const by = bodyCount > 0 ? bodySumY / bodyCount : 0.27;
+  const bz = bodyCount > 0 ? bodySumZ / bodyCount : -0.04;
+
+  const meshList: THREE.Mesh[] = [];
+  const rawN = new THREE.Vector3();
+  const smoothN = new THREE.Vector3();
+  const polishedN = new THREE.Vector3();
+
+  for (const item of staged) {
+    const { geom, pArr, nArr } = item;
+    const normAttr = geom.attributes.normal as THREE.BufferAttribute;
+    const count = normAttr.count;
+
+    for (let i = 0; i < count; i++) {
+      const nx = pArr[i * 3];
+      const ny = pArr[i * 3 + 1];
+      const nz = pArr[i * 3 + 2];
+
+      rawN.set(normAttr.getX(i), normAttr.getY(i), normAttr.getZ(i));
+      if (rawN.lengthSq() < 1e-8) rawN.set(0, 0, 1);
+      else rawN.normalize();
+
+      // 针对头部与躯干分别计算解剖学平滑椭球法线，擦除 AI 白模的高频表面疙瘩
+      if (ny > 0.46) {
+        smoothN.set((nx - hx) / 0.28, (ny - hy) / 0.23, (nz - hz) / 0.28);
+      } else {
+        smoothN.set((nx - bx) / 0.26, (ny - by) / 0.24, (nz - bz) / 0.26);
+      }
+      if (smoothN.lengthSq() < 1e-8) smoothN.copy(rawN);
+      else smoothN.normalize();
+
+      const isFrontFace = ny > 0.46 && nz > 0.12;
+      const blend = isFrontFace ? 0.75 : 0.45;
+      polishedN.copy(rawN).lerp(smoothN, blend);
+      if (polishedN.lengthSq() < 1e-8) polishedN.copy(smoothN);
+      else polishedN.normalize();
+
+      normAttr.setXYZ(i, polishedN.x, polishedN.y, polishedN.z);
+      nArr[i * 3] = polishedN.x;
+      nArr[i * 3 + 1] = polishedN.y;
+      nArr[i * 3 + 2] = polishedN.z;
+    }
+
+    normAttr.needsUpdate = true;
+    geom.computeBoundingBox();
+    geom.computeBoundingSphere();
+
+    const cleanMesh = new THREE.Mesh(geom);
+    cleanMesh.castShadow = true;
+    // 关键：关闭自身接收阴影，杜绝毛发凸起在猫脸上投下脏黑斑
+    cleanMesh.receiveShadow = false;
+    meshList.push(cleanMesh);
+  }
+
   const positions = new Float32Array(totalVerts * 3);
   const normals = new Float32Array(totalVerts * 3);
   let offset = 0;
-  for (let c = 0; c < posChunks.length; c++) {
-    positions.set(posChunks[c], offset);
-    normals.set(normChunks[c], offset);
-    offset += posChunks[c].length;
+  for (const item of staged) {
+    positions.set(item.pArr, offset);
+    normals.set(item.nArr, offset);
+    offset += item.pArr.length;
   }
 
   return { meshList, positions, normals };
 }
 
 /**
- * 创建炭黑丝绒 + 银白逆光耳尖/尾尖 + 顶点骨骼律动着色器材质
+ * 共享 GLSL 毛流工具与黑白奶牛猫（燕尾服猫）毛色/粉嫩内耳着色函数（body 与 shells 统一使用）
+ */
+const CAT_SHARED_COAT_GLSL = `
+  uniform vec3 uEarTipL;
+  uniform vec3 uEarTipR;
+  uniform float uEarSize;
+  uniform vec3 uHeadPivot;
+  uniform vec2 uHeadRange;
+  uniform vec3 uTailTip;
+  uniform float uTailWhiteRadius;
+  uniform vec3 uBodyCenter;
+  uniform float uPawHeight;
+  uniform vec2 uFaceCenter;
+  uniform float uEyeY;
+  uniform float uEyeSpacing;
+  uniform float uMouthY;
+  uniform float uWhiteTipStrength;
+
+  float furHash(vec3 p) {
+    p = fract(p * 0.3183099 + 0.1);
+    p *= 17.0;
+    return fract(p.x * p.y * p.z * (p.x + p.y + p.z));
+  }
+
+  float furNoise(vec3 p) {
+    vec3 i = floor(p);
+    vec3 f = fract(p);
+    f = f * f * (3.0 - 2.0 * f);
+    return mix(
+      mix(mix(furHash(i + vec3(0,0,0)), furHash(i + vec3(1,0,0)), f.x),
+          mix(furHash(i + vec3(0,1,0)), furHash(i + vec3(1,1,0)), f.x), f.y),
+      mix(mix(furHash(i + vec3(0,0,1)), furHash(i + vec3(1,0,1)), f.x),
+          mix(furHash(i + vec3(0,1,1)), furHash(i + vec3(1,1,1)), f.x), f.y),
+      f.z
+    );
+  }
+
+  // 计算全身顺毛流切线场（鼻梁向额头、双颊向外、脊背向尾端生长）
+  vec3 computeCombTangentModel(vec3 p, vec3 n) {
+    vec3 rawFlow = vec3(p.x * 0.42, -0.88, -0.28);
+    if (p.y > 0.52) {
+      rawFlow = normalize(vec3((p.x - uFaceCenter.x) * 1.12, 0.48, -0.45));
+    }
+    vec3 proj = rawFlow - n * dot(rawFlow, n);
+    float len = length(proj);
+    return len > 1e-4 ? (proj / len) : normalize(vec3(1.0, 0.0, 0.0));
+  }
+
+  float furStrandField(vec3 p, vec3 n) {
+    vec3 t = computeCombTangentModel(p, n);
+    vec3 b = normalize(cross(n, t));
+    float along = dot(p, t);
+    float across = dot(p, b);
+    float radial = dot(p, n);
+    vec3 clumpPos = vec3(across * 90.0, along * 22.0, radial * 60.0);
+    vec3 finePos = vec3(across * 225.0, along * 46.0, radial * 130.0);
+    return furNoise(clumpPos) * 0.58 + furNoise(finePos) * 0.42;
+  }
+
+  // 计算黑白燕尾服奶牛猫毛色 + 粉嫩内耳廓（输出 Linear RGB）
+  vec3 evalTuxedoCoatColor(vec3 p, vec3 n, float strandTex, float clumpTex, out float outWhiteMask, out float outEarPinkMask) {
+    float dxHead = p.x - uFaceCenter.x;
+    float absDx = abs(dxHead);
+    float furJitter = (strandTex - 0.5) * 0.036 + (clumpTex - 0.5) * 0.016;
+    float fNoise = strandTex * 0.72 + clumpTex * 0.28;
+
+    // 1) 正脸倒 V 通天鼻梁白毛 + 饱满雪白双颊/下巴
+    float bridgePeak = 0.115 * max(0.0, 1.0 - absDx / 0.068);
+    float cheekArch = -0.014 + bridgePeak - 0.38 * max(0.0, absDx - 0.145);
+    float maskBoundaryY = uEyeY + cheekArch + furJitter;
+    float belowMask = 1.0 - smoothstep(maskBoundaryY - 0.024, maskBoundaryY + 0.016, p.y);
+    float frontFaceZ = smoothstep(uHeadPivot.z - 0.02, uHeadPivot.z + 0.14, p.z - absDx * 0.18 + furJitter * 0.45);
+    float aboveNeck = smoothstep(uHeadRange.x - 0.04, uHeadRange.x + 0.02, p.y);
+    float faceWhite = belowMask * frontFaceZ * aboveNeck;
+
+    // 2) 胸前围脖 + 肚皮白毛（同时覆盖坐姿宽胸毛与站姿白肚皮/前爪）
+    float inChestY = smoothstep(0.08, 0.15, p.y + furJitter * 0.4) * (1.0 - smoothstep(uHeadRange.x + 0.04, uHeadRange.x + 0.10, p.y));
+    float bibHalfW = mix(0.115, 0.195, smoothstep(0.12, 0.40, p.y)) + furJitter * 0.65;
+    float bibWidthMask = 1.0 - smoothstep(bibHalfW - 0.030, bibHalfW + 0.018, absDx);
+    float chestDepthGate = smoothstep(0.11, 0.21, p.z - absDx * 0.28 - uBodyCenter.z * 0.25 + furJitter * 0.35);
+    float chestWhite = inChestY * bibWidthMask * chestDepthGate;
+
+    // 3) 底部四只雪白小猫爪（避开落地尾巴以免尾巴变白）
+    float pawHeightGate = 1.0 - smoothstep(uPawHeight * 1.12 + furJitter * 0.4, uPawHeight * 1.56 + furJitter * 0.4, p.y);
+    float pawNotTail = smoothstep(-0.08, 0.05, p.z) * smoothstep(uTailWhiteRadius * 1.05, uTailWhiteRadius * 1.45, length(p - uTailTip));
+    float pawWhite = pawHeightGate * pawNotTail;
+
+    // 4) 后颈 V 字白领小标记（还原背面视图白领）
+    float backGate = smoothstep(uHeadPivot.z - 0.04, uHeadPivot.z - 0.18, p.z) * smoothstep(-0.10, -0.42, n.z);
+    float collarY = (uHeadRange.x + 0.042) - absDx * 0.36;
+    float collarBand = 1.0 - smoothstep(0.012, 0.032, abs(p.y - collarY + furJitter * 0.35));
+    float collarSpan = 1.0 - smoothstep(0.11, 0.18, absDx);
+    float backCollarWhite = backGate * collarBand * collarSpan;
+
+    outWhiteMask = clamp(max(max(faceWhite, chestWhite), max(pawWhite, backCollarWhite)), 0.0, 1.0);
+
+    // 5) 粉嫩三角内耳廓（仅正前方内凹耳蜗，外框保留黑色毛边）
+    float hL = clamp((p.y - (uEarTipL.y - 0.175)) / 0.135, -0.2, 1.3);
+    float triWL = max(0.008, 0.056 * (1.0 - hL * 0.72));
+    float inTriL = (1.0 - smoothstep(triWL - 0.016, triWL + 0.010, abs(p.x - (uEarTipL.x + 0.032)) + furJitter * 0.2))
+                 * smoothstep(-0.02, 0.10, hL) * (1.0 - smoothstep(0.84, 1.00, hL));
+
+    float hR = clamp((p.y - (uEarTipR.y - 0.175)) / 0.135, -0.2, 1.3);
+    float triWR = max(0.008, 0.056 * (1.0 - hR * 0.72));
+    float inTriR = (1.0 - smoothstep(triWR - 0.016, triWR + 0.010, abs(p.x - (uEarTipR.x - 0.032)) + furJitter * 0.2))
+                 * smoothstep(-0.02, 0.10, hR) * (1.0 - smoothstep(0.84, 1.00, hR));
+
+    float earFrontGate = smoothstep(0.22, 0.56, n.z) * smoothstep(min(uEarTipL.z, uEarTipR.z) - 0.12, min(uEarTipL.z, uEarTipR.z) - 0.02, p.z);
+    outEarPinkMask = clamp(max(inTriL, inTriR) * earFrontGate, 0.0, 1.0);
+
+    // Linear 空间调色：深炭黑绒毛 vs 奶油雪白绒毛 vs 柔粉内耳
+    vec3 blackFur = mix(vec3(0.022, 0.024, 0.030), vec3(0.088, 0.096, 0.114), smoothstep(0.18, 0.88, fNoise));
+    vec3 whiteFur = mix(vec3(0.56, 0.57, 0.60), vec3(0.88, 0.87, 0.85), smoothstep(0.16, 0.88, fNoise));
+
+    // 面部眼窝轻度 AO，令眼周绒毛柔和立体
+    if (p.z > 0.18) {
+      vec2 leftEyeCenter = vec2(uFaceCenter.x - uEyeSpacing * 0.5, uEyeY);
+      vec2 rightEyeCenter = vec2(uFaceCenter.x + uEyeSpacing * 0.5, uEyeY);
+      float dSocket = min(length(p.xy - leftEyeCenter), length(p.xy - rightEyeCenter));
+      float eyeSocketAO = 1.0 - smoothstep(0.018, 0.068, dSocket);
+      blackFur *= mix(1.0, 0.58, eyeSocketAO * 0.72);
+    }
+
+    // 前白爪趾缝细腻绒毛阴影
+    if (pawWhite > 0.2 && p.y < uPawHeight * 0.78 && p.z > 0.14) {
+      float toeWave = pow(max(0.0, sin((p.x - uFaceCenter.x) * 95.0)), 6.0);
+      whiteFur *= mix(1.0, 0.68, toeWave * 0.55);
+    }
+
+    vec3 coatColor = mix(blackFur, whiteFur, outWhiteMask);
+    vec3 innerPink = mix(vec3(0.54, 0.13, 0.19), vec3(0.76, 0.24, 0.30), smoothstep(0.2, 0.85, fNoise));
+    coatColor = mix(coatColor, innerPink, outEarPinkMask * 0.92);
+    return coatColor;
+  }
+`;
+
+/**
+ * 创建黑白双色燕尾服猫（炭黑丝绒 + 奶油雪白胸爪腮斑 + 粉嫩内耳 + 逆光银边 + 骨骼律动）主材质
  */
 function createCatFurMaterial(
   profile: CatProfile,
   uniforms: CatAnimUniforms
 ): THREE.MeshStandardMaterial {
   const mat = new THREE.MeshStandardMaterial({
-    color: new THREE.Color('#101216'),
-    roughness: 0.76,
-    metalness: 0.04
+    color: new THREE.Color('#ffffff'),
+    roughness: 0.74,
+    metalness: 0.03
   });
 
   mat.onBeforeCompile = shader => {
@@ -160,18 +355,12 @@ function createCatFurMaterial(
     shader.uniforms.uTailWhiteRadius = { value: profile.tailWhiteRadius };
     shader.uniforms.uBodyCenter = { value: profile.bodyCenter.clone() };
     shader.uniforms.uPawHeight = { value: profile.pawHeight };
-    shader.uniforms.uWhisker = {
-      value: profile.whisker
-        ? new THREE.Vector4(
-            profile.whisker[0],
-            profile.whisker[1],
-            profile.whisker[2],
-            profile.whisker[3]
-          )
-        : new THREE.Vector4(0, 99, 0, 0)
-    };
+    shader.uniforms.uFaceCenter = uniforms.uFaceCenter;
+    shader.uniforms.uEyeY = uniforms.uEyeY;
+    shader.uniforms.uEyeSpacing = uniforms.uEyeSpacing;
+    shader.uniforms.uMouthY = uniforms.uMouthY;
 
-    // 注入顶点着色器：传递原始模型空间坐标/法线，并施加锁定脚掌的呼吸、转头、歪头、动耳与摇尾动画
+    // 注入顶点着色器：先在 <beginnormal_vertex> 同步旋转法线以保证光照正确，再计算视图空间毛流切线传给片元（杜绝片元使用 normalMatrix）
     shader.vertexShader =
       `
       uniform float uTime;
@@ -190,9 +379,12 @@ function createCatFurMaterial(
       uniform vec3 uTailBase;
       uniform vec3 uTailTip;
       uniform vec3 uBodyCenter;
+      uniform vec2 uFaceCenter;
 
       varying vec3 vModelPos;
       varying vec3 vModelNormal;
+      varying vec3 vViewCombTangent;
+      varying vec3 vViewCombBitangent;
 
       mat3 rotY(float a) {
         float s = sin(a), c = cos(a);
@@ -206,121 +398,122 @@ function createCatFurMaterial(
         float s = sin(a), c = cos(a);
         return mat3(c, -s, 0.0, s, c, 0.0, 0.0, 0.0, 1.0);
       }
-      ` +
-      shader.vertexShader.replace(
-        '#include <begin_vertex>',
-        `
-        #include <begin_vertex>
-        vModelPos = position;
-        vModelNormal = normal;
 
-        // 1) 脚掌锁死权重（y < 0.12 完全抓地不滑步）
-        float groundLock = smoothstep(0.08, 0.20, position.y);
-
-        // 2) 胸腔自然呼吸起伏
-        float breathMask = smoothstep(0.12, 0.25, position.y) * (1.0 - smoothstep(0.42, 0.54, position.y));
-        vec3 toChest = position - uBodyCenter;
-        transformed += normalize(vec3(toChest.x, 0.15, toChest.z + 0.05)) * (uBreath * 0.012 * breathMask * groundLock);
-
-        // 3) 头部转头、俯仰与好奇歪头（仅对脖子以上且非后背尾巴区域生效）
-        float headWeight = smoothstep(uHeadRange.x, uHeadRange.y, position.y) * smoothstep(uHeadZMin - 0.06, uHeadZMin + 0.06, position.z);
-        if (headWeight > 0.001) {
-          mat3 headRot = rotY(uHeadYaw * headWeight) * rotX(uHeadPitch * headWeight) * rotZ(uHeadRoll * headWeight);
-          transformed = uHeadPivot + headRot * (transformed - uHeadPivot);
-          objectNormal = headRot * objectNormal;
-        }
-
-        // 4) 左右耳朵独立微动抽动
-        float dEarL = length(position - uEarTipL);
-        float wEarL = 1.0 - smoothstep(0.0, uEarSize, dEarL);
-        if (wEarL > 0.01) {
-          vec3 earPivotL = uEarTipL - vec3(0.0, uEarSize * 0.65, 0.0);
-          mat3 rL = rotZ(uEarTwitchL * wEarL);
-          transformed = earPivotL + rL * (transformed - earPivotL);
-        }
-
-        float dEarR = length(position - uEarTipR);
-        float wEarR = 1.0 - smoothstep(0.0, uEarSize, dEarR);
-        if (wEarR > 0.01) {
-          vec3 earPivotR = uEarTipR - vec3(0.0, uEarSize * 0.65, 0.0);
-          mat3 rR = rotZ(-uEarTwitchR * wEarR);
-          transformed = earPivotR + rR * (transformed - earPivotR);
-        }
-
-        // 5) 尾巴轻柔摇摆
-        vec3 tailVec = uTailTip - uTailBase;
-        float tailLen = max(length(tailVec), 0.001);
-        vec3 tailDir = tailVec / tailLen;
-        float tailProj = dot(position - uTailBase, tailDir);
-        vec3 tailClosest = uTailBase + clamp(tailProj, 0.0, tailLen) * tailDir;
-        float tailDist = length(position - tailClosest);
-        float tailMask = smoothstep(0.0, tailLen, tailProj) * (1.0 - smoothstep(0.09, 0.17, tailDist));
-        if (tailMask > 0.001) {
-          float wag = sin(uTime * 3.2 - tailProj * 8.0) * 0.045 * tailMask;
-          transformed.x += wag;
-          transformed.y += abs(wag) * 0.25;
-        }
-        `
-      );
-
-    // 注入片元着色器：复刻参考图中的「炭黑丝绒 + 耳廓外沿银白炸毛 + 银白尾尖 + 哑光肉垫 + 摄影棚级 Fresnel 逆光银边」
-    shader.fragmentShader =
-      `
-      uniform float uRimPower;
-      uniform float uRimStrength;
-      uniform float uWhiteTipStrength;
-      uniform vec3 uEarTipL;
-      uniform vec3 uEarTipR;
-      uniform float uEarSize;
-      uniform vec3 uTailTip;
-      uniform float uTailWhiteRadius;
-      uniform float uPawHeight;
-      uniform vec4 uWhisker;
-
-      varying vec3 vModelPos;
-      varying vec3 vModelNormal;
-
-      // 3D 程序化高频绒毛噪波
-      float furHash(vec3 p) {
-        p = fract(p * 0.3183099 + 0.1);
-        p *= 17.0;
-        return fract(p.x * p.y * p.z * (p.x + p.y + p.z));
-      }
-      float furNoise(vec3 p) {
-        vec3 i = floor(p);
-        vec3 f = fract(p);
-        f = f * f * (3.0 - 2.0 * f);
-        return mix(
-          mix(mix(furHash(i + vec3(0,0,0)), furHash(i + vec3(1,0,0)), f.x),
-              mix(furHash(i + vec3(0,1,0)), furHash(i + vec3(1,1,0)), f.x), f.y),
-          mix(mix(furHash(i + vec3(0,0,1)), furHash(i + vec3(1,0,1)), f.x),
-              mix(furHash(i + vec3(0,1,1)), furHash(i + vec3(1,1,1)), f.x), f.y),
-          f.z
-        );
-      }
-      // 计算猫咪全身自然梳理毛流切线场（从鼻梁向头顶、脸颊向两侧、脊背向尾端顺毛生长）
-      vec3 computeCombTangent(vec3 p, vec3 n) {
-        vec3 rawFlow = vec3(p.x * 0.48, -0.86, -0.32);
-        if (p.y > 0.56) {
-          // 头部与脸颊：由鼻心向额头与双颊放射梳理
-          rawFlow = normalize(vec3(p.x * 1.15, 0.52, -0.45));
+      vec3 calcVertexCombTangent(vec3 p, vec3 n) {
+        vec3 rawFlow = vec3(p.x * 0.42, -0.88, -0.28);
+        if (p.y > 0.52) {
+          rawFlow = normalize(vec3((p.x - uFaceCenter.x) * 1.12, 0.48, -0.45));
         }
         vec3 proj = rawFlow - n * dot(rawFlow, n);
         float len = length(proj);
         return len > 1e-4 ? (proj / len) : normalize(vec3(1.0, 0.0, 0.0));
       }
-      // 顺着毛流方向拉伸的各向异性毛丝纹理（模拟成绺的细密猫毛）
-      float furStrandField(vec3 p, vec3 n) {
-        vec3 t = computeCombTangent(p, n);
-        vec3 b = normalize(cross(n, t));
-        float along = dot(p, t);
-        float across = dot(p, b);
-        float radial = dot(p, n);
-        vec3 clumpPos = vec3(across * 95.0, along * 24.0, radial * 65.0);
-        vec3 finePos = vec3(across * 240.0, along * 48.0, radial * 140.0);
-        return furNoise(clumpPos) * 0.58 + furNoise(finePos) * 0.42;
-      }
       ` +
+      shader.vertexShader
+        .replace(
+          '#include <beginnormal_vertex>',
+          `
+          #include <beginnormal_vertex>
+          vModelPos = position;
+          vModelNormal = normalize(objectNormal);
+
+          mat3 catBoneRot = mat3(1.0);
+          float headWeightN = smoothstep(uHeadRange.x, uHeadRange.y, position.y) * smoothstep(uHeadZMin - 0.06, uHeadZMin + 0.06, position.z);
+          if (headWeightN > 0.001) {
+            catBoneRot = rotY(uHeadYaw * headWeightN) * rotX(uHeadPitch * headWeightN) * rotZ(uHeadRoll * headWeightN);
+            objectNormal = catBoneRot * objectNormal;
+          }
+
+          float dEarLN = length(position - uEarTipL);
+          float wEarLN = 1.0 - smoothstep(0.0, uEarSize, dEarLN);
+          if (wEarLN > 0.01) {
+            mat3 rLN = rotZ(uEarTwitchL * wEarLN);
+            catBoneRot = rLN * catBoneRot;
+            objectNormal = rLN * objectNormal;
+          }
+
+          float dEarRN = length(position - uEarTipR);
+          float wEarRN = 1.0 - smoothstep(0.0, uEarSize, dEarRN);
+          if (wEarRN > 0.01) {
+            mat3 rRN = rotZ(-uEarTwitchR * wEarRN);
+            catBoneRot = rRN * catBoneRot;
+            objectNormal = rRN * objectNormal;
+          }
+
+          vec3 combTModel = calcVertexCombTangent(position, vModelNormal);
+          vec3 combBModel = normalize(cross(vModelNormal, combTModel));
+          vViewCombTangent = normalize(normalMatrix * (catBoneRot * combTModel));
+          vViewCombBitangent = normalize(normalMatrix * (catBoneRot * combBModel));
+          `
+        )
+        .replace(
+          '#include <begin_vertex>',
+          `
+          #include <begin_vertex>
+
+          // 1) 脚掌锁死权重（y < 0.12 完全抓地不滑步）
+          float groundLock = smoothstep(0.08, 0.20, position.y);
+
+          // 2) 胸腔自然呼吸起伏
+          float breathMask = smoothstep(0.12, 0.25, position.y) * (1.0 - smoothstep(0.42, 0.54, position.y));
+          vec3 toChest = position - uBodyCenter;
+          transformed += normalize(vec3(toChest.x, 0.15, toChest.z + 0.05)) * (uBreath * 0.012 * breathMask * groundLock);
+
+          // 3) 头部转头、俯仰与好奇歪头
+          float headWeight = smoothstep(uHeadRange.x, uHeadRange.y, position.y) * smoothstep(uHeadZMin - 0.06, uHeadZMin + 0.06, position.z);
+          if (headWeight > 0.001) {
+            mat3 headRot = rotY(uHeadYaw * headWeight) * rotX(uHeadPitch * headWeight) * rotZ(uHeadRoll * headWeight);
+            transformed = uHeadPivot + headRot * (transformed - uHeadPivot);
+          }
+
+          // 4) 左右耳朵独立微动抽动
+          float dEarL = length(position - uEarTipL);
+          float wEarL = 1.0 - smoothstep(0.0, uEarSize, dEarL);
+          if (wEarL > 0.01) {
+            vec3 earPivotL = uEarTipL - vec3(0.0, uEarSize * 0.65, 0.0);
+            mat3 rL = rotZ(uEarTwitchL * wEarL);
+            transformed = earPivotL + rL * (transformed - earPivotL);
+          }
+
+          float dEarR = length(position - uEarTipR);
+          float wEarR = 1.0 - smoothstep(0.0, uEarSize, dEarR);
+          if (wEarR > 0.01) {
+            vec3 earPivotR = uEarTipR - vec3(0.0, uEarSize * 0.65, 0.0);
+            mat3 rR = rotZ(-uEarTwitchR * wEarR);
+            transformed = earPivotR + rR * (transformed - earPivotR);
+          }
+
+          // 5) 多谐波 S 型尾巴柔顺摇摆
+          vec3 tailVec = uTailTip - uTailBase;
+          float tailLen = max(length(tailVec), 0.001);
+          vec3 tailDir = tailVec / tailLen;
+          float tailProj = dot(position - uTailBase, tailDir);
+          vec3 tailClosest = uTailBase + clamp(tailProj, 0.0, tailLen) * tailDir;
+          float tailDist = length(position - tailClosest);
+          float tailMask = smoothstep(0.0, tailLen, tailProj) * (1.0 - smoothstep(0.09, 0.17, tailDist));
+          if (tailMask > 0.001) {
+            float tailRatio = clamp(tailProj / tailLen, 0.0, 1.0);
+            float wag1 = sin(uTime * 2.8 - tailRatio * 4.2) * 0.042 * tailRatio;
+            float wag2 = sin(uTime * 5.6 - tailRatio * 7.8) * 0.015 * tailRatio * tailRatio;
+            float wag = (wag1 + wag2) * tailMask;
+            transformed.x += wag;
+            transformed.y += abs(wag) * 0.28 + sin(uTime * 2.8 - tailRatio * 3.0) * 0.008 * tailRatio * tailMask;
+          }
+          `
+        );
+
+    // 注入片元着色器：黑白双色毛斑 + 粉嫩内耳 + 法线微扰 + Kajiya-Kay 高光与 Fresnel 轮廓光（严格避免使用顶点限定 normalMatrix）
+    shader.fragmentShader =
+      `
+      uniform float uRimPower;
+      uniform float uRimStrength;
+
+      varying vec3 vModelPos;
+      varying vec3 vModelNormal;
+      varying vec3 vViewCombTangent;
+      varying vec3 vViewCombBitangent;
+      ` +
+      CAT_SHARED_COAT_GLSL +
       shader.fragmentShader.replace(
         '#include <color_fragment>',
         `
@@ -328,94 +521,56 @@ function createCatFurMaterial(
 
         vec3 mPos = vModelPos;
         vec3 mNorm = normalize(vModelNormal);
-
-        // 1) 各向异性毛流纤维 + 多层绒毛团簇明暗纹理（消除塑胶感，呈现真实顺毛拉丝）
         float fStrand = furStrandField(mPos, mNorm);
         float fClump = furNoise(mPos * 52.0);
-        float fNoise = fStrand * 0.72 + fClump * 0.28;
-        vec3 charcoalRoot = vec3(0.022, 0.024, 0.030);
-        vec3 charcoalTip = vec3(0.098, 0.106, 0.128);
-        vec3 charcoalBase = mix(charcoalRoot, charcoalTip, smoothstep(0.18, 0.88, fNoise));
-
-        // 2) 耳廓外缘与耳尖银白色长毛 + 耳窝暖粉微透（SSS 次表面散射近似）
-        float distEarL = length(mPos - uEarTipL);
-        float distEarR = length(mPos - uEarTipR);
-        float distEar = min(distEarL, distEarR);
-        float earZone = 1.0 - smoothstep(0.02, uEarSize * 1.18, distEar);
-        float outerRimMask = smoothstep(0.72, 0.18, mNorm.z) * smoothstep(0.76, 0.96, mPos.y);
-        float earTipPeak = 1.0 - smoothstep(0.0, uEarSize * 0.54, distEar);
-        float earWhiteMask = clamp((earZone * outerRimMask * 1.28 + earTipPeak * 0.88) * (0.68 + 0.58 * fStrand), 0.0, 1.0);
-        // 内耳薄处暖粉次表面透射感
-        float innerEarSSS = earZone * smoothstep(0.32, 0.85, mNorm.z) * (1.0 - earTipPeak * 0.7);
-        charcoalBase = mix(charcoalBase, vec3(0.19, 0.095, 0.115), innerEarSSS * 0.42);
-
-        // 3) 尾巴尖银白色毛簇
-        float distTailTip = length(mPos - uTailTip);
-        float tailWhiteMask = (1.0 - smoothstep(0.02, uTailWhiteRadius, distTailTip)) * (0.68 + 0.55 * fStrand);
-
-        // 4) 站立形态两侧胡须银白高亮
-        float whiskerMask = 0.0;
-        if (abs(mPos.x - uWhisker.x) > uWhisker.y && mPos.y > uWhisker.z && mPos.y < uWhisker.w) {
-          whiskerMask = smoothstep(uWhisker.y, uWhisker.y + 0.025, abs(mPos.x - uWhisker.x));
-        }
-
-        // 5) 底部圆润深棕小爪子肉垫质感
-        float pawMask = (1.0 - smoothstep(0.02, uPawHeight, mPos.y)) * smoothstep(-0.1, 0.35, mNorm.z);
-        vec3 pawColor = vec3(0.11, 0.082, 0.068);
-        diffuseColor.rgb = mix(charcoalBase, pawColor, pawMask * 0.75);
-
-        // 合成银白毛尖（耳缘 + 尾尖 + 胡须）
-        float whiteFurFactor = clamp(max(max(earWhiteMask, tailWhiteMask), whiskerMask) * uWhiteTipStrength, 0.0, 1.0);
-        vec3 silverFurColor = vec3(0.93, 0.96, 1.0) * (0.80 + 0.28 * fStrand);
-        diffuseColor.rgb = mix(diffuseColor.rgb, silverFurColor, whiteFurFactor);
+        float coatWhiteMask = 0.0;
+        float earPinkMask = 0.0;
+        diffuseColor.rgb = evalTuxedoCoatColor(mPos, mNorm, fStrand, fClump, coatWhiteMask, earPinkMask);
         `
       ).replace(
         '#include <normal_fragment_maps>',
         `
         #include <normal_fragment_maps>
-        // ① 法线毛丝微扰（Normal Micro-Perturbation）：沿毛流法线切平面求导，让每一缕猫毛受光时呈现凹凸体积感
+        // 沿视图空间毛流切线做微法线扰动（不依赖 normalMatrix）
         {
           vec3 mPosN = vModelPos;
           vec3 mNormN = normalize(vModelNormal);
-          vec3 combT = computeCombTangent(mPosN, mNormN);
+          vec3 combT = computeCombTangentModel(mPosN, mNormN);
           vec3 combB = normalize(cross(mNormN, combT));
           float s0 = furStrandField(mPosN, mNormN);
           float sAcross = furStrandField(mPosN + combB * 0.0028, mNormN) - s0;
           float sAlong = furStrandField(mPosN + combT * 0.0065, mNormN) - s0;
-          vec3 modelPerturb = combB * (sAcross * 0.34) + combT * (sAlong * 0.12);
-          vec3 viewPerturb = normalize(normalMatrix * (mNormN + modelPerturb));
-          float faceKeepSmooth = smoothstep(0.28, 0.42, mPosN.z) * (1.0 - smoothstep(0.50, 0.72, abs(mPosN.x)));
-          normal = normalize(mix(viewPerturb, normal, faceKeepSmooth * 0.65));
+          vec3 perturbed = normalize(normal + vViewCombBitangent * (sAcross * 0.24) + vViewCombTangent * (sAlong * 0.08));
+          float faceKeepSmooth = smoothstep(0.24, 0.40, mPosN.z) * (1.0 - smoothstep(0.42, 0.68, abs(mPosN.x - uFaceCenter.x)));
+          normal = normalize(mix(perturbed, normal, faceKeepSmooth * 0.68));
         }
         `
       ).replace(
         '#include <opaque_fragment>',
         `
-        // ① Kajiya-Kay 各向异性丝绸高光带 + ④ 毛丝截断式 Fresnel 逆光银边 + 耳廓背光暖透
         vec3 viewDir = normalize(vViewPosition);
         float ndotv = clamp(dot(normalize(normal), viewDir), 0.0, 1.0);
 
-        // Kajiya-Kay 各向异性天鹅绒高光（模拟顺毛梳理的黑曜石丝缎光泽）
-        vec3 combTangentModel = computeCombTangent(vModelPos, normalize(vModelNormal));
-        vec3 combTangentView = normalize(normalMatrix * combTangentModel);
+        // Kajiya-Kay 各向异性柔顺毛发光泽（直接复用视图空间 vViewCombTangent）
         vec3 keyLightDir = normalize(vec3(0.32, 0.82, 0.58));
         vec3 halfVec = normalize(viewDir + keyLightDir);
-        float tdoth = clamp(dot(combTangentView, halfVec), -1.0, 1.0);
+        float tdoth = clamp(dot(normalize(vViewCombTangent), halfVec), -1.0, 1.0);
         float sinTH = sqrt(max(0.0, 1.0 - tdoth * tdoth));
         float strandTex = furStrandField(vModelPos, normalize(vModelNormal));
-        float kajiyaSpec = pow(sinTH, 34.0) * (0.35 + 0.85 * strandTex) * smoothstep(0.05, 0.75, ndotv);
-        vec3 velvetSheen = mix(vec3(0.38, 0.45, 0.62), vec3(0.75, 0.82, 0.96), strandTex) * kajiyaSpec * 0.16;
+        float kajiyaSpec = pow(sinTH, 32.0) * (0.35 + 0.85 * strandTex) * smoothstep(0.05, 0.75, ndotv);
+        vec3 velvetSheen = mix(vec3(0.35, 0.40, 0.50), vec3(0.68, 0.72, 0.82), strandTex) * kajiyaSpec * 0.14;
 
-        // 截断式毛丝逆光轮廓（让边缘不是死板塑料亮圈，而是根根分明的绒毛逆光）
+        // 截断式毛丝 Fresnel 逆光银边（受 uRimStrength 与 uWhiteTipStrength 联合调节）
         float fresnel = pow(1.0 - ndotv, uRimPower);
         float furTipHighlight = smoothstep(0.28, 0.86, strandTex);
-        float rimClump = 0.65 + 0.55 * furNoise(vModelPos * 75.0);
-        vec3 rimGlow = vec3(0.90, 0.95, 1.0) * fresnel * uRimStrength * (0.42 + 0.78 * furTipHighlight) * rimClump;
+        float rimClump = 0.68 + 0.45 * furNoise(vModelPos * 75.0);
+        float dEarEdge = min(length(vModelPos - uEarTipL), length(vModelPos - uEarTipR));
+        float tipFrostBoost = 1.0 + (1.0 - smoothstep(0.0, uEarSize * 0.9, dEarEdge)) * uWhiteTipStrength * 0.35;
+        vec3 rimGlow = vec3(0.76, 0.80, 0.88) * fresnel * uRimStrength * 0.55 * (0.42 + 0.72 * furTipHighlight) * rimClump * tipFrostBoost;
 
         // 耳廓薄处逆光暖粉微透（SSS）
-        float dEarMin = min(length(vModelPos - uEarTipL), length(vModelPos - uEarTipR));
-        float earBacklight = (1.0 - smoothstep(0.0, uEarSize * 1.1, dEarMin)) * pow(1.0 - ndotv, 1.8);
-        vec3 earWarmGlow = vec3(0.62, 0.25, 0.29) * earBacklight * 0.16;
+        float earBacklight = (1.0 - smoothstep(0.0, uEarSize * 1.1, dEarEdge)) * pow(1.0 - ndotv, 1.8);
+        vec3 earWarmGlow = vec3(0.62, 0.22, 0.28) * earBacklight * 0.18;
 
         outgoingLight += velvetSheen + rimGlow + earWarmGlow;
 
@@ -427,9 +582,75 @@ function createCatFurMaterial(
   return mat;
 }
 
+function smooth01(e0: number, e1: number, x: number): number {
+  const t = THREE.MathUtils.clamp((x - e0) / (e1 - e0), 0, 1);
+  return t * t * (3 - 2 * t);
+}
+
+/** CPU 端同步黑白燕尾服猫毛色分布（与 CAT_SHARED_COAT_GLSL 一致，确保 3D 毛簇完美融合黑/白/粉耳区） */
+function sampleTuxedoCoatRgb(
+  pos: THREE.Vector3,
+  norm: THREE.Vector3,
+  profile: CatProfile,
+  outColor: THREE.Color
+) {
+  const dxHead = pos.x - profile.face.centerX;
+  const absDx = Math.abs(dxHead);
+
+  const bridgePeak = 0.115 * Math.max(0, 1 - absDx / 0.068);
+  const cheekArch = -0.014 + bridgePeak - 0.38 * Math.max(0, absDx - 0.145);
+  const maskBoundaryY = profile.face.eyeY + cheekArch;
+  const belowMask = 1 - smooth01(maskBoundaryY - 0.024, maskBoundaryY + 0.016, pos.y);
+  const frontFaceZ = smooth01(
+    profile.headPivot.z - 0.02,
+    profile.headPivot.z + 0.14,
+    pos.z - absDx * 0.18
+  );
+  const aboveNeck = smooth01(profile.headRange[0] - 0.04, profile.headRange[0] + 0.02, pos.y);
+  const faceWhite = belowMask * frontFaceZ * aboveNeck;
+
+  const inChestY =
+    smooth01(0.08, 0.15, pos.y) *
+    (1 - smooth01(profile.headRange[0] + 0.04, profile.headRange[0] + 0.10, pos.y));
+  const bibHalfW = THREE.MathUtils.lerp(0.115, 0.195, smooth01(0.12, 0.40, pos.y));
+  const bibWidthMask = 1 - smooth01(bibHalfW - 0.030, bibHalfW + 0.018, absDx);
+  const chestDepthGate = smooth01(
+    0.11,
+    0.21,
+    pos.z - absDx * 0.28 - profile.bodyCenter.z * 0.25
+  );
+  const chestWhite = inChestY * bibWidthMask * chestDepthGate;
+
+  const pawHeightGate = 1 - smooth01(profile.pawHeight * 1.12, profile.pawHeight * 1.56, pos.y);
+  const pawNotTail =
+    smooth01(-0.08, 0.05, pos.z) *
+    smooth01(profile.tailWhiteRadius * 1.05, profile.tailWhiteRadius * 1.45, pos.distanceTo(profile.tailTip));
+  const pawWhite = pawHeightGate * pawNotTail;
+
+  const backGate =
+    smooth01(profile.headPivot.z - 0.04, profile.headPivot.z - 0.18, pos.z) *
+    smooth01(-0.10, -0.42, norm.z);
+  const collarY = profile.headRange[0] + 0.042 - absDx * 0.36;
+  const collarBand = 1 - smooth01(0.012, 0.032, Math.abs(pos.y - collarY));
+  const collarSpan = 1 - smooth01(0.11, 0.18, absDx);
+  const backCollarWhite = backGate * collarBand * collarSpan;
+
+  const whiteMask = THREE.MathUtils.clamp(
+    Math.max(faceWhite, chestWhite, pawWhite, backCollarWhite),
+    0,
+    1
+  );
+
+  // 黑色丝绒基底 vs 奶油雪白绒毛（Linear RGB）
+  const r = THREE.MathUtils.lerp(0.072, 0.84, whiteMask);
+  const g = THREE.MathUtils.lerp(0.078, 0.83, whiteMask);
+  const b = THREE.MathUtils.lerp(0.094, 0.81, whiteMask);
+  outColor.setRGB(r, g, b);
+}
+
 /**
- * 在猫咪耳廓、脸颊腮毛、胸前绒簇、身体外沿与尾巴表面生成 3段微弯锥化软毛叶 (InstancedMesh)
- * 配备毛根 AO 阴影渐变、逆光毛尖透光高光、以及微风随动摆动
+ * 在猫咪耳廓、脸颊腮毛、胸前绒簇、身体外沿与尾巴表面生成柔和贴体的立体绒毛 (InstancedMesh)
+ * 自动随黑白双色燕尾服猫斑纹上色，呈现图 2/图 3 般柔软丰满的毛绒轮廓
  */
 function buildSurfaceFurTufts(
   positions: Float32Array,
@@ -437,22 +658,20 @@ function buildSurfaceFurTufts(
   profile: CatProfile,
   uniforms: CatAnimUniforms
 ): THREE.InstancedMesh {
-  const maxTufts = 3800;
-  // 3 段式微弯锥化软毛叶（替代原本僵硬的单段四棱锥）
-  const tuftGeo = new THREE.ConeGeometry(0.0044, 0.030, 5, 3, true);
-  tuftGeo.translate(0, 0.015, 0);
+  const maxTufts = 3400;
+  // 柔和细短绒毛叶，顺毛贴伏生长，打造蓬松圆润绒毛轮廓
+  const tuftGeo = new THREE.ConeGeometry(0.0035, 0.018, 5, 2, true);
+  tuftGeo.translate(0, 0.009, 0);
   tuftGeo.rotateX(Math.PI * 0.5);
 
-  // 对几何顶点注入毛根->毛尖归一化高度属性 aFurCoord (0~1)，并施加自然弧度微弯
   const posAttr = tuftGeo.attributes.position as THREE.BufferAttribute;
   const furCoords = new Float32Array(posAttr.count);
   for (let i = 0; i < posAttr.count; i++) {
     const z = posAttr.getZ(i);
-    const t = THREE.MathUtils.clamp(z / 0.030, 0, 1);
+    const t = THREE.MathUtils.clamp(z / 0.018, 0, 1);
     furCoords[i] = t;
-    // 抛物线自然微弯 + 中段饱满度微调，避免几何硬刺感
-    const droop = -0.0046 * t * t;
-    const widthTaper = 1.0 - 0.15 * t * t;
+    const droop = -0.0028 * t * t;
+    const widthTaper = 1.0 - 0.22 * t * t;
     posAttr.setX(i, posAttr.getX(i) * widthTaper);
     posAttr.setY(i, posAttr.getY(i) * widthTaper + droop);
   }
@@ -462,12 +681,11 @@ function buildSurfaceFurTufts(
 
   const tuftMat = new THREE.MeshStandardMaterial({
     color: 0xffffff,
-    roughness: 0.56,
-    metalness: 0.04,
+    roughness: 0.72,
+    metalness: 0.02,
     side: THREE.DoubleSide
   });
 
-  // 毛簇同步变形 + 软毛风摆 + 根部 AO 与毛尖逆光透光
   tuftMat.onBeforeCompile = shader => {
     shader.uniforms.uTime = uniforms.uTime;
     shader.uniforms.uHeadYaw = uniforms.uHeadYaw;
@@ -575,17 +793,19 @@ function buildSurfaceFurTufts(
           float tailDist = length(tuftAnchor - tailClosest);
           float tailMask = smoothstep(0.0, tailLen, tailProj) * (1.0 - smoothstep(0.09, 0.17, tailDist));
           if (tailMask > 0.001) {
-            float wag = sin(uTime * 3.2 - tailProj * 8.0) * 0.045 * tailMask;
+            float tailRatio = clamp(tailProj / tailLen, 0.0, 1.0);
+            float wag1 = sin(uTime * 2.8 - tailRatio * 4.2) * 0.042 * tailRatio;
+            float wag2 = sin(uTime * 5.6 - tailRatio * 7.8) * 0.015 * tailRatio * tailRatio;
+            float wag = (wag1 + wag2) * tailMask;
             deformedAnchor.x += wag;
-            deformedAnchor.y += abs(wag) * 0.25;
+            deformedAnchor.y += abs(wag) * 0.28 + sin(uTime * 2.8 - tailRatio * 3.0) * 0.008 * tailRatio * tailMask;
           }
 
-          // 软毛尖端随呼吸与微风产生柔和的二阶弹性摆动
           vec3 localBlade = instRot * transformed;
           float breezePhase = dot(tuftAnchor, vec3(19.0, 27.0, 15.0));
           float tipFlex = aFurCoord * aFurCoord;
-          localBlade.x += sin(uTime * 2.8 + breezePhase) * 0.0018 * tipFlex;
-          localBlade.y += cos(uTime * 2.3 + breezePhase * 0.7) * 0.0015 * tipFlex;
+          localBlade.x += sin(uTime * 2.8 + breezePhase) * 0.0014 * tipFlex;
+          localBlade.y += cos(uTime * 2.3 + breezePhase * 0.7) * 0.0012 * tipFlex;
 
           mvPosition = vec4(deformedAnchor + tuftRot * localBlade, 1.0);
           vTuftViewNormal = normalize(normalMatrix * (tuftRot * (instRot * objectNormal)));
@@ -608,16 +828,15 @@ function buildSurfaceFurTufts(
       shader.fragmentShader.replace(
         '#include <dithering_fragment>',
         `
-        // 毛根环境光遮蔽 (Root AO) -> 毛尖清透渐变，彻底消除硬刺塑料感
-        float rootAO = mix(0.30, 1.22, smoothstep(0.0, 0.88, vFurCoord));
+        // 温和毛根 AO，确保白色腮毛与胸毛保持洁白饱满不发黑
+        float rootAO = mix(0.62, 1.06, smoothstep(0.0, 0.85, vFurCoord));
         gl_FragColor.rgb *= rootAO;
 
-        // 毛尖逆光透射银边高光
         vec3 viewDir = normalize(vTuftViewPos);
         vec3 nrm = normalize(vTuftViewNormal);
-        float tipFresnel = pow(1.0 - abs(dot(nrm, viewDir)), 1.85);
-        float tipGlow = smoothstep(0.35, 1.0, vFurCoord) * (0.35 + 0.65 * tipFresnel);
-        gl_FragColor.rgb += vec3(0.45, 0.52, 0.64) * tipGlow * 0.26 * uRimStrength;
+        float tipFresnel = pow(1.0 - abs(dot(nrm, viewDir)), 2.1);
+        float tipGlow = smoothstep(0.45, 1.0, vFurCoord) * (0.25 + 0.55 * tipFresnel);
+        gl_FragColor.rgb += vec3(0.32, 0.36, 0.44) * tipGlow * 0.16 * uRimStrength;
         #include <dithering_fragment>
         `
       );
@@ -637,88 +856,81 @@ function buildSurfaceFurTufts(
   const target = new THREE.Vector3();
 
   let placed = 0;
-  const step = Math.max(1, Math.floor(vertCount / (maxTufts * 2.1)));
+  const step = Math.max(1, Math.floor(vertCount / (maxTufts * 2.2)));
 
   for (let i = 0; i < vertCount && placed < maxTufts; i += step) {
     pos.set(positions[i * 3], positions[i * 3 + 1], positions[i * 3 + 2]);
     norm.set(normals[i * 3], normals[i * 3 + 1], normals[i * 3 + 2]).normalize();
 
-    // 跳过脚底和正脸五官中心区（避免毛刺遮挡像素眼与品字嘴）
-    if (pos.y < profile.pawHeight) continue;
+    if (pos.y < 0.025) continue;
     const dxFace = Math.abs(pos.x - profile.face.centerX);
-    const dyFace = Math.abs(pos.y - (profile.face.eyeY + profile.face.mouthY) * 0.5);
-    if (pos.z > 0.24 && dxFace < 0.16 && dyFace < 0.14) continue;
+    // 避开正面眼睛、粉鼻头与立体白嘴套位置，以及粉嫩内耳窝
+    if (
+      pos.z > 0.20 &&
+      dxFace < profile.face.eyeSpacing * 0.68 + 0.044 &&
+      pos.y > profile.face.mouthY - 0.048 &&
+      pos.y < profile.face.eyeY + 0.070
+    ) {
+      continue;
+    }
 
-    // 细分采样区域：耳廓聪明毛、尾尖白毛、脸颊蓬松腮毛、胸前领口绒簇、外轮廓与稀疏银尖针毛
     const dEar = Math.min(pos.distanceTo(profile.earTipL), pos.distanceTo(profile.earTipR));
-    const dTail = pos.distanceTo(profile.tailTip);
-    const isEarRim = dEar < profile.earSize * 1.18 && norm.z < 0.65;
-    const isTailTip = dTail < profile.tailWhiteRadius * 1.05;
-    const isCheekRuff =
-      pos.y > profile.headRange[0] - 0.02 &&
-      pos.y < profile.face.eyeY + 0.05 &&
-      Math.abs(pos.x - profile.face.centerX) > 0.14 &&
-      pos.z > profile.headPivot.z - 0.08;
-    const isChestTuft =
-      pos.y > 0.24 &&
-      pos.y < profile.headRange[0] + 0.04 &&
-      pos.z > profile.bodyCenter.z + 0.08 &&
-      Math.abs(pos.x - profile.bodyCenter.x) < 0.14;
-    const isSilhouette = Math.abs(norm.z) < 0.64;
-    // 确定性哈希挑选约 18% 的表面点作为稀疏突破轮廓的「长护毛 / 银尖针毛」
-    const hash = Math.abs(Math.sin(i * 12.9898 + pos.x * 78.233 + pos.y * 37.719) * 43758.5453) % 1;
-    const isGuardHair = hash < 0.18 && norm.y > -0.35;
+    const isInnerEarFront = pos.y > 0.80 && pos.y < 0.96 && dEar < profile.earSize * 0.85 && norm.z > 0.30;
+    if (isInnerEarFront) continue;
 
-    if (!isEarRim && !isTailTip && !isCheekRuff && !isChestTuft && !isSilhouette && !isGuardHair) {
+    const dTail = pos.distanceTo(profile.tailTip);
+    const isEarRim = dEar < profile.earSize * 1.12 && norm.z < 0.45;
+    const isTailTip = dTail < profile.tailWhiteRadius * 0.95;
+    const isCheekRuff =
+      pos.y > profile.headRange[0] &&
+      pos.y < profile.face.eyeY + 0.03 &&
+      dxFace > profile.face.eyeSpacing * 0.65 &&
+      pos.z > profile.headPivot.z - 0.06;
+    const isChestTuft =
+      pos.y > 0.14 &&
+      pos.y < profile.headRange[0] + 0.05 &&
+      pos.z > profile.bodyCenter.z + 0.12 &&
+      dxFace < 0.19;
+    const isSilhouette = Math.abs(norm.z) < 0.64;
+
+    if (!isEarRim && !isTailTip && !isCheekRuff && !isChestTuft && !isSilhouette) {
       continue;
     }
 
     dummy.position.copy(pos);
 
-    // 计算与表面 Shader 一致的梳毛流向，让实体毛簇顺着毛流自然披散
     if (isEarRim) {
-      combDir.set(pos.x * 0.35, 0.85, 0.1).normalize();
+      combDir.set((pos.x - profile.face.centerX) * 0.35, 0.85, 0.1).normalize();
     } else if (isCheekRuff) {
-      combDir.set(Math.sign(pos.x - profile.face.centerX) * 0.78, -0.36, 0.22).normalize();
+      combDir.set(Math.sign(pos.x - profile.face.centerX) * 0.80, -0.34, 0.22).normalize();
     } else if (isChestTuft) {
-      combDir.set(pos.x * 0.25, -0.72, 0.55).normalize();
+      combDir.set((pos.x - profile.face.centerX) * 0.25, -0.80, 0.42).normalize();
     } else {
-      combDir.set(norm.x * 0.35, -0.52, norm.z * 0.35).normalize();
+      combDir.set(norm.x * 0.28, -0.70, norm.z * 0.28).normalize();
     }
 
     target
       .copy(pos)
-      .addScaledVector(norm, isEarRim ? 0.82 : isCheekRuff ? 0.78 : 0.72)
-      .addScaledVector(combDir, 0.48)
-      .addScaledVector(up, isEarRim ? 0.25 : -0.12);
+      .addScaledVector(norm, isEarRim ? 0.44 : isCheekRuff ? 0.38 : 0.34)
+      .addScaledVector(combDir, 0.90)
+      .addScaledVector(up, isEarRim ? 0.18 : -0.06);
     dummy.lookAt(target);
 
-    const scaleWidth = isCheekRuff || isChestTuft ? 1.24 : isEarRim ? 1.08 : 0.96;
+    const scaleWidth = isCheekRuff || isChestTuft ? 1.18 : isEarRim ? 1.02 : 0.94;
     const scaleLen = isEarRim
-      ? 1.32
+      ? 1.15
       : isTailTip
-        ? 1.22
+        ? 1.10
         : isCheekRuff
-          ? 1.26
+          ? 1.14
           : isChestTuft
-            ? 1.18
-            : isGuardHair
-              ? 1.12
-              : 0.88;
+            ? 1.08
+            : 0.86;
     dummy.scale.set(scaleWidth, scaleWidth, scaleLen);
     dummy.updateMatrix();
     instanced.setMatrixAt(placed, dummy.matrix);
 
-    if (isEarRim || isTailTip) {
-      color.setRGB(0.93, 0.96, 1.0);
-    } else if (isGuardHair && hash < 0.045) {
-      // 少量点缀银灰针毛（呼应黑猫逆光银白毛尖质感）
-      color.setRGB(0.46, 0.51, 0.60);
-    } else if (isCheekRuff || isChestTuft) {
-      color.setRGB(0.11, 0.13, 0.16);
-    } else {
-      color.setRGB(0.08, 0.09, 0.12);
-    }
+    sampleTuxedoCoatRgb(pos, norm, profile, color);
     instanced.setColorAt(placed, color);
     placed++;
   }
@@ -731,7 +943,7 @@ function buildSurfaceFurTufts(
 
 /**
  * 构建双层微偏移体积绒毛壳 (Multi-Layer Fur Shells)
- * 在身体网格与离散长毛簇之间补充绵密的短绒底毛过渡，消除网格边缘硬切感
+ * 通过 <color_fragment> 与场景光源同步着色，黑白胸斑/脸颊/粉耳与主体无缝融为一体
  */
 function buildFurShellsGroup(
   meshList: THREE.Mesh[],
@@ -740,15 +952,15 @@ function buildFurShellsGroup(
 ): THREE.Group {
   const group = new THREE.Group();
   const shellLayers = [
-    { fraction: 0.45, offset: 0.0022 },
-    { fraction: 0.88, offset: 0.0044 }
+    { fraction: 0.35, offset: 0.0018 },
+    { fraction: 0.78, offset: 0.0036 }
   ];
 
   for (const layer of shellLayers) {
     const shellMat = new THREE.MeshStandardMaterial({
-      color: new THREE.Color('#090a0e'),
-      roughness: 0.58,
-      metalness: 0.04,
+      color: new THREE.Color('#ffffff'),
+      roughness: 0.68,
+      metalness: 0.03,
       alphaTest: 0.5
     });
 
@@ -779,12 +991,10 @@ function buildFurShellsGroup(
       shader.uniforms.uTailWhiteRadius = { value: profile.tailWhiteRadius };
       shader.uniforms.uBodyCenter = { value: profile.bodyCenter.clone() };
       shader.uniforms.uPawHeight = { value: profile.pawHeight };
-      shader.uniforms.uFaceCenter = {
-        value: new THREE.Vector2(
-          profile.face.centerX,
-          (profile.face.eyeY + profile.face.mouthY) * 0.5
-        )
-      };
+      shader.uniforms.uFaceCenter = uniforms.uFaceCenter;
+      shader.uniforms.uEyeY = uniforms.uEyeY;
+      shader.uniforms.uEyeSpacing = uniforms.uEyeSpacing;
+      shader.uniforms.uMouthY = uniforms.uMouthY;
 
       shader.vertexShader =
         `
@@ -813,6 +1023,9 @@ function buildFurShellsGroup(
         uniform vec3 uBodyCenter;
         uniform float uPawHeight;
         uniform vec2 uFaceCenter;
+        uniform float uEyeY;
+        uniform float uEyeSpacing;
+        uniform float uMouthY;
 
         mat3 shellRotY(float a) {
           float s = sin(a), c = cos(a);
@@ -833,6 +1046,18 @@ function buildFurShellsGroup(
             `
             #include <beginnormal_vertex>
             vCatOrigNormal = normalize(objectNormal);
+
+            float headWeightN = smoothstep(uHeadRange.x, uHeadRange.y, position.y) * smoothstep(uHeadZMin - 0.06, uHeadZMin + 0.06, position.z);
+            if (headWeightN > 0.001) {
+              mat3 headRotN = shellRotY(uHeadYaw * headWeightN) * shellRotX(uHeadPitch * headWeightN) * shellRotZ(uHeadRoll * headWeightN);
+              objectNormal = headRotN * objectNormal;
+            }
+            float dEarLN = length(position - uEarTipL);
+            float wEarLN = 1.0 - smoothstep(0.0, uEarSize, dEarLN);
+            if (wEarLN > 0.01) objectNormal = shellRotZ(uEarTwitchL * wEarLN) * objectNormal;
+            float dEarRN = length(position - uEarTipR);
+            float wEarRN = 1.0 - smoothstep(0.0, uEarSize, dEarRN);
+            if (wEarRN > 0.01) objectNormal = shellRotZ(-uEarTwitchR * wEarRN) * objectNormal;
             `
           )
           .replace(
@@ -841,11 +1066,14 @@ function buildFurShellsGroup(
             #include <begin_vertex>
             vCatOrigPos = position;
 
-            // 正脸五官区域与脚底不向外膨胀绒毛壳，保证像素眼与地面接触干净利落
-            float faceMask = smoothstep(0.11, 0.18, length(position.xy - uFaceCenter)) + (1.0 - smoothstep(0.18, 0.25, position.z));
-            faceMask = clamp(faceMask, 0.0, 1.0);
-            float pawMask = smoothstep(uPawHeight * 0.7, uPawHeight * 1.2, position.y);
-            vec3 shellPos = transformed + objectNormal * (uShellOffset * faceMask * pawMask) + vec3(0.0, -0.0009 * uShellFraction * uShellFraction, 0.0);
+            // 仅在双眼眼眶与鼻尖核心范围略收薄壳厚，其余面部与白爪均保有柔软绒毛厚度
+            float dEyeShellL = length(position.xy - vec2(uFaceCenter.x - uEyeSpacing * 0.5, uEyeY));
+            float dEyeShellR = length(position.xy - vec2(uFaceCenter.x + uEyeSpacing * 0.5, uEyeY));
+            float dEyeShellMin = min(dEyeShellL, dEyeShellR);
+            float dNoseShell = length(position.xy - vec2(uFaceCenter.x, uMouthY + 0.02));
+            float faceMask = mix(1.0, smoothstep(0.020, 0.052, min(dEyeShellMin, dNoseShell)), smoothstep(0.22, 0.34, position.z));
+            float pawMask = smoothstep(0.015, 0.045, position.y);
+            vec3 shellPos = transformed + vCatOrigNormal * (uShellOffset * faceMask * pawMask) + vec3(0.0, -0.0006 * uShellFraction * uShellFraction, 0.0);
 
             float groundLock = smoothstep(0.08, 0.20, position.y);
             float breathMask = smoothstep(0.12, 0.25, position.y) * (1.0 - smoothstep(0.42, 0.54, position.y));
@@ -856,25 +1084,20 @@ function buildFurShellsGroup(
             if (headWeight > 0.001) {
               mat3 headRot = shellRotY(uHeadYaw * headWeight) * shellRotX(uHeadPitch * headWeight) * shellRotZ(uHeadRoll * headWeight);
               shellPos = uHeadPivot + headRot * (shellPos - uHeadPivot);
-              objectNormal = headRot * objectNormal;
             }
 
             float dEarL = length(position - uEarTipL);
             float wEarL = 1.0 - smoothstep(0.0, uEarSize, dEarL);
             if (wEarL > 0.01) {
               vec3 earPivotL = uEarTipL - vec3(0.0, uEarSize * 0.65, 0.0);
-              mat3 rL = shellRotZ(uEarTwitchL * wEarL);
-              shellPos = earPivotL + rL * (shellPos - earPivotL);
-              objectNormal = rL * objectNormal;
+              shellPos = earPivotL + shellRotZ(uEarTwitchL * wEarL) * (shellPos - earPivotL);
             }
 
             float dEarR = length(position - uEarTipR);
             float wEarR = 1.0 - smoothstep(0.0, uEarSize, dEarR);
             if (wEarR > 0.01) {
               vec3 earPivotR = uEarTipR - vec3(0.0, uEarSize * 0.65, 0.0);
-              mat3 rR = shellRotZ(-uEarTwitchR * wEarR);
-              shellPos = earPivotR + rR * (shellPos - earPivotR);
-              objectNormal = rR * objectNormal;
+              shellPos = earPivotR + shellRotZ(-uEarTwitchR * wEarR) * (shellPos - earPivotR);
             }
 
             vec3 tailVec = uTailTip - uTailBase;
@@ -885,9 +1108,12 @@ function buildFurShellsGroup(
             float tailDist = length(position - tailClosest);
             float tailMask = smoothstep(0.0, tailLen, tailProj) * (1.0 - smoothstep(0.09, 0.17, tailDist));
             if (tailMask > 0.001) {
-              float wag = sin(uTime * 3.2 - tailProj * 8.0) * 0.045 * tailMask;
+              float tailRatio = clamp(tailProj / tailLen, 0.0, 1.0);
+              float wag1 = sin(uTime * 2.8 - tailRatio * 4.2) * 0.042 * tailRatio;
+              float wag2 = sin(uTime * 5.6 - tailRatio * 7.8) * 0.015 * tailRatio * tailRatio;
+              float wag = (wag1 + wag2) * tailMask;
               shellPos.x += wag;
-              shellPos.y += abs(wag) * 0.25;
+              shellPos.y += abs(wag) * 0.28 + sin(uTime * 2.8 - tailRatio * 3.0) * 0.008 * tailRatio * tailMask;
             }
 
             transformed = shellPos;
@@ -898,7 +1124,7 @@ function buildFurShellsGroup(
             `
             #include <project_vertex>
             vCatViewPos = -mvPosition.xyz;
-            vCatViewNormal = normalize(normalMatrix * objectNormal);
+            vCatViewNormal = normalize(transformedNormal);
             `
           );
 
@@ -912,74 +1138,61 @@ function buildFurShellsGroup(
         uniform float uShellFraction;
         uniform float uRimPower;
         uniform float uRimStrength;
-        uniform float uWhiteTipStrength;
-        uniform vec3 uEarTipL;
-        uniform vec3 uEarTipR;
-        uniform float uEarSize;
-        uniform vec3 uTailTip;
-        uniform float uTailWhiteRadius;
-        uniform vec3 uHeadPivot;
-        uniform vec3 uBodyCenter;
-        uniform float uPawHeight;
-        uniform vec2 uFaceCenter;
-
-        float shellHash(vec3 p) {
-          p = fract(p * 0.3183099 + 0.1);
-          p *= 17.0;
-          return fract(p.x * p.y * p.z * (p.x + p.y + p.z));
-        }
-
-        float shellNoise(vec3 x) {
-          vec3 i = floor(x);
-          vec3 f = fract(x);
-          f = f * f * (3.0 - 2.0 * f);
-          return mix(
-            mix(mix(shellHash(i + vec3(0,0,0)), shellHash(i + vec3(1,0,0)), f.x),
-                mix(shellHash(i + vec3(0,1,0)), shellHash(i + vec3(1,1,0)), f.x), f.y),
-            mix(mix(shellHash(i + vec3(0,0,1)), shellHash(i + vec3(1,0,1)), f.x),
-                mix(shellHash(i + vec3(0,1,1)), shellHash(i + vec3(1,1,1)), f.x), f.y),
-            f.z
-          );
-        }
         ` +
-        shader.fragmentShader.replace(
-          '#include <dithering_fragment>',
-          `
-          // 跳过正脸中心与脚底
-          if (vCatOrigPos.y < uPawHeight * 0.85) discard;
-          if (vCatOrigPos.z > 0.24 && length(vCatOrigPos.xy - uFaceCenter) < 0.145) discard;
+        CAT_SHARED_COAT_GLSL +
+        shader.fragmentShader
+          .replace(
+            '#include <color_fragment>',
+            `
+            #include <color_fragment>
+            if (vCatOrigPos.y < 0.015) discard;
 
-          vec3 nOrig = normalize(vCatOrigNormal);
-          vec3 flowDir = normalize(vec3(vCatOrigPos.x, -0.85, vCatOrigPos.z) - uBodyCenter);
-          vec3 combTangent = normalize(flowDir - nOrig * dot(flowDir, nOrig) + vec3(0.0, -0.001, 0.0));
-          vec3 bitangent = normalize(cross(nOrig, combTangent));
-          vec3 anisoCoord = combTangent * dot(vCatOrigPos, combTangent) * 32.0
-                          + bitangent * dot(vCatOrigPos, bitangent) * 195.0
-                          + nOrig * dot(vCatOrigPos, nOrig) * 85.0;
-          float strandDensity = shellNoise(anisoCoord) * 0.65 + shellNoise(anisoCoord * 2.15) * 0.35;
+            vec3 nOrig = normalize(vCatOrigNormal);
+            float fStrand = furStrandField(vCatOrigPos, nOrig);
+            float fClump = furNoise(vCatOrigPos * 52.0);
 
-          vec3 viewDir = normalize(vCatViewPos);
-          vec3 nrm = normalize(vCatViewNormal);
-          float ndotv = abs(dot(nrm, viewDir));
-          // 掠射角自动加密绒毛壳可见度，使轮廓边缘呈现饱满天鹅绒厚度
-          float grazingBoost = pow(1.0 - ndotv, 1.45) * 0.30;
-          float threshold = mix(0.32, 0.60, uShellFraction) - grazingBoost;
-          if (strandDensity < threshold) discard;
+            vec3 combTangent = computeCombTangentModel(vCatOrigPos, nOrig);
+            vec3 bitangent = normalize(cross(nOrig, combTangent));
+            vec3 anisoCoord = combTangent * dot(vCatOrigPos, combTangent) * 32.0
+                            + bitangent * dot(vCatOrigPos, bitangent) * 195.0
+                            + nOrig * dot(vCatOrigPos, nOrig) * 85.0;
+            float strandDensity = furNoise(anisoCoord) * 0.65 + furNoise(anisoCoord * 2.15) * 0.35;
 
-          float dEar = min(length(vCatOrigPos - uEarTipL), length(vCatOrigPos - uEarTipR));
-          float earTipMask = 1.0 - smoothstep(0.0, uEarSize * 0.92, dEar);
-          float dTail = length(vCatOrigPos - uTailTip);
-          float tailTipMask = 1.0 - smoothstep(0.0, uTailWhiteRadius * 0.85, dTail);
-          float whiteMask = clamp(max(earTipMask, tailTipMask) * uWhiteTipStrength, 0.0, 1.0);
+            vec3 viewDir = normalize(vCatViewPos);
+            vec3 nrm = normalize(vCatViewNormal);
+            float ndotv = abs(dot(nrm, viewDir));
+            float grazingBoost = pow(1.0 - ndotv, 1.45) * 0.26;
+            float threshold = mix(0.18, 0.42, uShellFraction) - grazingBoost;
 
-          float fresnel = pow(1.0 - ndotv, uRimPower);
-          float shellAO = mix(0.68, 1.18, uShellFraction);
-          vec3 baseShellCol = mix(vec3(0.04, 0.05, 0.07), vec3(0.92, 0.95, 0.99), whiteMask * 0.88) * shellAO;
-          vec3 rimCol = mix(vec3(0.65, 0.72, 0.84), vec3(0.98, 0.99, 1.0), whiteMask);
-          gl_FragColor.rgb = baseShellCol + rimCol * fresnel * 0.42 * uRimStrength * uShellFraction;
-          #include <dithering_fragment>
-          `
-        );
+            if (vCatOrigPos.z > 0.24) {
+              float dEyeFragL = length(vCatOrigPos.xy - vec2(uFaceCenter.x - uEyeSpacing * 0.5, uEyeY));
+              float dEyeFragR = length(vCatOrigPos.xy - vec2(uFaceCenter.x + uEyeSpacing * 0.5, uEyeY));
+              float dEyeFrag = min(dEyeFragL, dEyeFragR);
+              float eyeFade = smoothstep(0.024, 0.044, dEyeFrag);
+              threshold = mix(1.05, threshold, eyeFade);
+            }
+            if (strandDensity < threshold) discard;
+
+            float shellWhite = 0.0;
+            float shellEarPink = 0.0;
+            vec3 coatColor = evalTuxedoCoatColor(vCatOrigPos, nOrig, fStrand, fClump, shellWhite, shellEarPink);
+            float shellAO = mix(0.76, 1.12, uShellFraction);
+            diffuseColor.rgb = coatColor * shellAO;
+            `
+          )
+          .replace(
+            '#include <opaque_fragment>',
+            `
+            vec3 shellViewDir = normalize(vCatViewPos);
+            vec3 shellNrm = normalize(vCatViewNormal);
+            float shellNdotV = clamp(abs(dot(shellNrm, shellViewDir)), 0.0, 1.0);
+            float shellFresnel = pow(1.0 - shellNdotV, uRimPower);
+            float dEarShellEdge = min(length(vCatOrigPos - uEarTipL), length(vCatOrigPos - uEarTipR));
+            float shellFrost = 1.0 + (1.0 - smoothstep(0.0, uEarSize * 0.9, dEarShellEdge)) * uWhiteTipStrength * 0.30;
+            outgoingLight += vec3(0.68, 0.72, 0.80) * shellFresnel * 0.24 * uRimStrength * uShellFraction * shellFrost;
+            #include <opaque_fragment>
+            `
+          );
     };
 
     meshList.forEach(srcMesh => {
@@ -996,14 +1209,108 @@ function buildFurShellsGroup(
   return group;
 }
 
+const IRIS_PALETTES: Record<Exclude<CatEyeStyle, 'pixel'>, { outer: string; mid: string; inner: string; glow: string }> = {
+  amber: { outer: '#9b510b', mid: '#e89d1c', inner: '#ffd966', glow: '#d98a1e' },
+  emerald: { outer: '#0b4f3a', mid: '#1fb980', inner: '#95f7c9', glow: '#1ea876' },
+  sapphire: { outer: '#143370', mid: '#3b82f6', inner: '#9dd0ff', glow: '#2b6de0' },
+};
+
+/** 生成高质感放射状猫眼虹膜纹理（边缘深色角膜缘环 + 放射状星芒纤维 + 暖光晕） */
+function createCatIrisTexture(style: Exclude<CatEyeStyle, 'pixel'>): THREE.CanvasTexture {
+  const palette = IRIS_PALETTES[style];
+  const size = 128;
+  const canvas = document.createElement('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext('2d')!;
+  const half = size / 2;
+
+  const grad = ctx.createRadialGradient(half, half, 4, half, half, half);
+  grad.addColorStop(0.0, palette.inner);
+  grad.addColorStop(0.45, palette.inner);
+  grad.addColorStop(0.72, palette.mid);
+  grad.addColorStop(0.90, palette.outer);
+  grad.addColorStop(0.96, '#121114');
+  grad.addColorStop(1.0, '#09090b');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, size, size);
+
+  ctx.save();
+  ctx.translate(half, half);
+  for (let i = 0; i < 64; i++) {
+    const angle = (i / 64) * Math.PI * 2;
+    const lenInner = 20 + (i % 3) * 3;
+    const lenOuter = 54 + (i % 4) * 2;
+    ctx.strokeStyle = i % 2 === 0 ? 'rgba(255, 250, 224, 0.20)' : 'rgba(24, 14, 6, 0.22)';
+    ctx.lineWidth = i % 3 === 0 ? 1.3 : 0.9;
+    ctx.beginPath();
+    ctx.moveTo(Math.cos(angle) * lenInner, Math.sin(angle) * lenInner);
+    ctx.lineTo(Math.cos(angle) * lenOuter, Math.sin(angle) * lenOuter);
+    ctx.stroke();
+  }
+  ctx.restore();
+
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
+}
+
+/** 创建带正面前投极坐标 UV 的凸面虹膜几何体（防止极点纹理扭曲） */
+function createFrontDomeGeometry(radius: number, wSeg = 26, hSeg = 16, thetaLength = Math.PI * 0.46): THREE.BufferGeometry {
+  const geo = new THREE.SphereGeometry(radius, wSeg, hSeg, 0, Math.PI * 2, 0, thetaLength);
+  geo.rotateX(Math.PI / 2);
+  const pos = geo.attributes.position as THREE.BufferAttribute;
+  const uv = geo.attributes.uv as THREE.BufferAttribute;
+  for (let i = 0; i < pos.count; i++) {
+    uv.setXY(i, 0.5 + (pos.getX(i) / radius) * 0.5, 0.5 + (pos.getY(i) / radius) * 0.5);
+  }
+  uv.needsUpdate = true;
+  return geo;
+}
+
+/** 创建脚底柔和径向渐变接触阴影贴图 */
+function createContactShadowTexture(): THREE.CanvasTexture {
+  const size = 128;
+  const canvas = document.createElement('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext('2d')!;
+  const half = size / 2;
+  const grad = ctx.createRadialGradient(half, half, 4, half, half, half);
+  grad.addColorStop(0.0, 'rgba(10, 8, 6, 0.62)');
+  grad.addColorStop(0.45, 'rgba(10, 8, 6, 0.36)');
+  grad.addColorStop(0.82, 'rgba(10, 8, 6, 0.08)');
+  grad.addColorStop(1.0, 'rgba(10, 8, 6, 0.0)');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, size, size);
+  const tex = new THREE.CanvasTexture(canvas);
+  return tex;
+}
+
+interface GlassEyeParts {
+  glassRoot: THREE.Group;
+  shellScaler: THREE.Group;
+  irisPivot: THREE.Group;
+  irisMat: THREE.MeshStandardMaterial;
+  pupilMesh: THREE.Mesh;
+  happyArc: THREE.Mesh;
+}
+
 /**
- * 构建 3D 发光像素五官组件（圆角竖条像素眼 + `^ ^` 开心笑眼 + 品字形 3 方块像素嘴）
- * 挂载于 headPivot 下，随猫咪转头/歪头 100% 同步运动
+ * 构建双模式 3D 灵动五官组件：
+ * - 3D 琉璃萌眼模式（amber / emerald / sapphire）：大圆琥珀/琉璃猫眼 + 双点眼神光 + 立体胖白嘴套肉垫 + 粉嫩心形小鼻 + ω 微笑 + 6 根白胡须
+ * - 经典像素模式（pixel）：圆角竖条像素眼 + `^ ^` 开心笑眼 + 品字形 3 方块像素嘴
  */
 class CatPixelFaceRig {
   public group = new THREE.Group();
   private leftEyeGroup = new THREE.Group();
   private rightEyeGroup = new THREE.Group();
+  private mouthPivotGroup = new THREE.Group();
+
+  // 经典像素模式零件
+  private pixelGroupL = new THREE.Group();
+  private pixelGroupR = new THREE.Group();
+  private pixelMouthGroup = new THREE.Group();
   private leftNormalBar: THREE.Mesh;
   private rightNormalBar: THREE.Mesh;
   private leftHappyChevron: THREE.Group;
@@ -1012,9 +1319,29 @@ class CatPixelFaceRig {
   private mouthLeftBlock: THREE.Mesh;
   private mouthRightBlock: THREE.Mesh;
 
+  // 3D 琉璃萌眼与立体胖白嘴套口鼻须零件
+  private leftGlassEye: GlassEyeParts;
+  private rightGlassEye: GlassEyeParts;
+  private irisTextures: Record<Exclude<CatEyeStyle, 'pixel'>, THREE.CanvasTexture>;
+  private nosePivotGroup = new THREE.Group();
+  private muzzlePadsGroup = new THREE.Group();
+  private realisticMouthGroup = new THREE.Group();
+  private openMouthCavity: THREE.Mesh;
+  private whiskersGroup = new THREE.Group();
+  private leftWhiskerGroup = new THREE.Group();
+  private rightWhiskerGroup = new THREE.Group();
+
   private baseLeftEyePos = new THREE.Vector3();
   private baseRightEyePos = new THREE.Vector3();
+  private baseNosePos = new THREE.Vector3();
   private baseMouthPos = new THREE.Vector3();
+  private baseCheekLPos = new THREE.Vector3();
+  private baseCheekRPos = new THREE.Vector3();
+  private currentPupilScale = 0.94;
+  private lastLookX = 0;
+  private lastLookY = 0;
+  private smoothSafeLeftZ = 0;
+  private smoothSafeRightZ = 0;
 
   constructor(
     private sampler: SurfaceSampler,
@@ -1023,16 +1350,12 @@ class CatPixelFaceRig {
   ) {
     this.group.position.copy(headPivot);
 
-    const pixelWhiteMat = new THREE.MeshBasicMaterial({
-      color: 0xffffff
-    });
-
-    // 正常竖长条像素眼（带极轻微圆角感）
+    // ---- A. 经典像素五官部件 ----
+    const pixelWhiteMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
     const eyeGeo = new THREE.BoxGeometry(1, 1, 0.45);
     this.leftNormalBar = new THREE.Mesh(eyeGeo, pixelWhiteMat);
     this.rightNormalBar = new THREE.Mesh(eyeGeo, pixelWhiteMat);
 
-    // 开心 ^ ^ 眯眼笑像素折线
     const createHappyChevron = () => {
       const g = new THREE.Group();
       const legGeo = new THREE.BoxGeometry(0.65, 0.24, 0.45);
@@ -1046,41 +1369,283 @@ class CatPixelFaceRig {
       g.visible = false;
       return g;
     };
-
     this.leftHappyChevron = createHappyChevron();
     this.rightHappyChevron = createHappyChevron();
+    this.pixelGroupL.add(this.leftNormalBar, this.leftHappyChevron);
+    this.pixelGroupR.add(this.rightNormalBar, this.rightHappyChevron);
 
-    this.leftEyeGroup.add(this.leftNormalBar, this.leftHappyChevron);
-    this.rightEyeGroup.add(this.rightNormalBar, this.rightHappyChevron);
-
-    // “品”字形 3 方块像素小嘴（上方居中 1 块 + 下方左右各 1 块，还原参考图）
     const mouthUnitGeo = new THREE.BoxGeometry(1, 0.88, 0.5);
     this.mouthTopBlock = new THREE.Mesh(mouthUnitGeo, pixelWhiteMat);
     this.mouthLeftBlock = new THREE.Mesh(mouthUnitGeo, pixelWhiteMat);
     this.mouthRightBlock = new THREE.Mesh(mouthUnitGeo, pixelWhiteMat);
+    this.pixelMouthGroup.add(this.mouthTopBlock, this.mouthLeftBlock, this.mouthRightBlock);
+
+    // ---- B. 3D 琉璃大圆萌眼 ----
+    this.irisTextures = {
+      amber: createCatIrisTexture('amber'),
+      emerald: createCatIrisTexture('emerald'),
+      sapphire: createCatIrisTexture('sapphire'),
+    };
+
+    const socketGeo = createFrontDomeGeometry(1.06, 22, 14, Math.PI * 0.52);
+    const irisGeo = createFrontDomeGeometry(0.95, 26, 16, Math.PI * 0.45);
+    const corneaGeo = createFrontDomeGeometry(1.02, 26, 16, Math.PI * 0.48);
+    // 萌系大圆瞳孔（参考图 2/图 3 比例：宽圆亮瞳 + 琥珀月牙外缘）
+    const pupilGeo = new THREE.SphereGeometry(0.64, 22, 16);
+    const glintGeo = new THREE.SphereGeometry(1, 14, 10);
+    const lashCurve = new THREE.QuadraticBezierCurve3(
+      new THREE.Vector3(-0.96, 0.24, 0.34),
+      new THREE.Vector3(0, 1.06, 0.56),
+      new THREE.Vector3(0.96, 0.24, 0.34)
+    );
+    const lashGeo = new THREE.TubeGeometry(lashCurve, 18, 0.075, 8, false);
+
+    const happyCurve = new THREE.QuadraticBezierCurve3(
+      new THREE.Vector3(-0.78, -0.14, 0.45),
+      new THREE.Vector3(0, 0.44, 0.72),
+      new THREE.Vector3(0.78, -0.14, 0.45)
+    );
+    const happyArcGeo = new THREE.TubeGeometry(happyCurve, 16, 0.13, 8, false);
+
+    const socketMat = new THREE.MeshStandardMaterial({ color: '#090a0e', roughness: 0.72, metalness: 0.05 });
+    const pupilMat = new THREE.MeshStandardMaterial({ color: '#0b0807', roughness: 0.12, metalness: 0.06 });
+    const lashMat = new THREE.MeshStandardMaterial({ color: '#0c0d12', roughness: 0.65, metalness: 0.05 });
+    const corneaMat = new THREE.MeshPhysicalMaterial({
+      color: 0xffffff,
+      roughness: 0.03,
+      metalness: 0.0,
+      clearcoat: 1.0,
+      clearcoatRoughness: 0.03,
+      reflectivity: 0.98,
+      transparent: true,
+      opacity: 0.16,
+      depthWrite: false,
+    });
+    const glintMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.96 });
+    const happyArcMat = new THREE.MeshStandardMaterial({
+      color: '#fff6e6',
+      emissive: '#f5cd8c',
+      emissiveIntensity: 0.5,
+      roughness: 0.35,
+    });
+
+    const createGlassEye = (): GlassEyeParts => {
+      const glassRoot = new THREE.Group();
+      const shellScaler = new THREE.Group();
+      glassRoot.add(shellScaler);
+
+      const socketRim = new THREE.Mesh(socketGeo, socketMat);
+      socketRim.scale.set(1.04, 1.04, 0.45);
+      shellScaler.add(socketRim);
+
+      const irisPivot = new THREE.Group();
+      shellScaler.add(irisPivot);
+
+      const irisMat = new THREE.MeshStandardMaterial({
+        map: this.irisTextures.amber,
+        roughness: 0.22,
+        metalness: 0.04,
+        emissive: new THREE.Color(IRIS_PALETTES.amber.glow),
+        emissiveIntensity: 0.28,
+      });
+      const irisMesh = new THREE.Mesh(irisGeo, irisMat);
+      irisMesh.scale.set(1.0, 1.0, 0.56);
+      irisPivot.add(irisMesh);
+
+      const pupilMesh = new THREE.Mesh(pupilGeo, pupilMat);
+      pupilMesh.position.set(0, 0, 0.34);
+      pupilMesh.scale.set(0.94, 1.04, 0.36);
+      irisPivot.add(pupilMesh);
+
+      const corneaMesh = new THREE.Mesh(corneaGeo, corneaMat);
+      corneaMesh.scale.set(1.0, 1.0, 0.66);
+      shellScaler.add(corneaMesh);
+
+      const upperLash = new THREE.Mesh(lashGeo, lashMat);
+      shellScaler.add(upperLash);
+
+      const catchlightMain = new THREE.Mesh(glintGeo, glintMat);
+      catchlightMain.position.set(-0.30, 0.32, 0.69);
+      catchlightMain.scale.set(0.21, 0.15, 0.045);
+      catchlightMain.rotation.z = 0.32;
+      shellScaler.add(catchlightMain);
+
+      const catchlightSub = new THREE.Mesh(glintGeo, glintMat);
+      catchlightSub.position.set(0.26, -0.26, 0.67);
+      catchlightSub.scale.set(0.095, 0.095, 0.04);
+      shellScaler.add(catchlightSub);
+
+      const happyArc = new THREE.Mesh(happyArcGeo, happyArcMat);
+      happyArc.visible = false;
+      glassRoot.add(happyArc);
+
+      return { glassRoot, shellScaler, irisPivot, irisMat, pupilMesh, happyArc };
+    };
+
+    this.leftGlassEye = createGlassEye();
+    this.rightGlassEye = createGlassEye();
+
+    this.leftEyeGroup.add(this.pixelGroupL, this.leftGlassEye.glassRoot);
+    this.rightEyeGroup.add(this.pixelGroupR, this.rightGlassEye.glassRoot);
+
+    // ---- C. 粉嫩湿润心形小鼻头 ----
+    const noseGeo = new THREE.SphereGeometry(1, 18, 14);
+    const nosePos = noseGeo.attributes.position as THREE.BufferAttribute;
+    for (let i = 0; i < nosePos.count; i++) {
+      const nx = nosePos.getX(i);
+      const ny = nosePos.getY(i);
+      const nz = nosePos.getZ(i);
+      const widenTop = ny > 0 ? 1.18 : 0.70 + (1 + ny) * 0.36;
+      nosePos.setXYZ(i, nx * widenTop, ny * 0.84, nz * 0.78);
+    }
+    noseGeo.computeVertexNormals();
+    const noseMat = new THREE.MeshPhysicalMaterial({
+      color: '#ee748e',
+      emissive: '#380e16',
+      emissiveIntensity: 0.16,
+      roughness: 0.24,
+      metalness: 0.02,
+      clearcoat: 0.85,
+      clearcoatRoughness: 0.12,
+    });
+    const noseMesh = new THREE.Mesh(noseGeo, noseMat);
+    noseMesh.scale.set(0.0145, 0.0105, 0.011);
+    this.nosePivotGroup.add(noseMesh);
+
+    // ---- D. 立体胖白花生嘴套 + 深炭 ω 微笑猫嘴 + 说话口腔 ----
+    const muzzleWhiteMat = new THREE.MeshStandardMaterial({
+      color: '#e8e6e2',
+      roughness: 0.90,
+      metalness: 0.0,
+    });
+    const muzzleGeo = new THREE.SphereGeometry(1, 20, 16);
+    const muzzleLeftPad = new THREE.Mesh(muzzleGeo, muzzleWhiteMat);
+    muzzleLeftPad.position.set(-0.019, 0.011, -0.004);
+    muzzleLeftPad.scale.set(0.026, 0.0185, 0.017);
+
+    const muzzleRightPad = new THREE.Mesh(muzzleGeo, muzzleWhiteMat);
+    muzzleRightPad.position.set(0.019, 0.011, -0.004);
+    muzzleRightPad.scale.set(0.026, 0.0185, 0.017);
+
+    const chinPad = new THREE.Mesh(muzzleGeo, muzzleWhiteMat);
+    chinPad.position.set(0, -0.009, -0.005);
+    chinPad.scale.set(0.026, 0.014, 0.014);
+
+    this.muzzlePadsGroup.add(muzzleLeftPad, muzzleRightPad, chinPad);
+
+    const lipMat = new THREE.MeshStandardMaterial({
+      color: '#3a302d',
+      roughness: 0.55,
+      metalness: 0.02,
+    });
+    const stemCurve = new THREE.LineCurve3(new THREE.Vector3(0, 0.015, 0.013), new THREE.Vector3(0, 0.002, 0.014));
+    const lipL = new THREE.QuadraticBezierCurve3(
+      new THREE.Vector3(0, 0.002, 0.014),
+      new THREE.Vector3(-0.012, -0.008, 0.013),
+      new THREE.Vector3(-0.025, 0.003, 0.006)
+    );
+    const lipR = new THREE.QuadraticBezierCurve3(
+      new THREE.Vector3(0, 0.002, 0.014),
+      new THREE.Vector3(0.012, -0.008, 0.013),
+      new THREE.Vector3(0.025, 0.003, 0.006)
+    );
+    const philtrumMesh = new THREE.Mesh(new THREE.TubeGeometry(stemCurve, 4, 0.0021, 6, false), lipMat);
+    const arcMeshL = new THREE.Mesh(new THREE.TubeGeometry(lipL, 12, 0.0022, 6, false), lipMat);
+    const arcMeshR = new THREE.Mesh(new THREE.TubeGeometry(lipR, 12, 0.0022, 6, false), lipMat);
+
+    const cavityMat = new THREE.MeshStandardMaterial({
+      color: '#d96d78',
+      emissive: '#782832',
+      emissiveIntensity: 0.25,
+      roughness: 0.35,
+    });
+    this.openMouthCavity = new THREE.Mesh(new THREE.SphereGeometry(0.009, 14, 10), cavityMat);
+    this.openMouthCavity.position.set(0, -0.006, 0.010);
+    this.openMouthCavity.scale.set(1.1, 0.2, 0.55);
+    this.openMouthCavity.visible = false;
+    this.realisticMouthGroup.add(philtrumMesh, arcMeshL, arcMeshR, this.openMouthCavity);
+
+    // ---- E. 6 根柔亮白色 3D 胡须 ----
+    const whiskerMat = new THREE.MeshStandardMaterial({
+      color: '#f5f6f8',
+      roughness: 0.35,
+      metalness: 0.02,
+      transparent: true,
+      opacity: 0.78,
+    });
+    const buildCheekWhiskers = (side: -1 | 1) => {
+      const grp = new THREE.Group();
+      const specs = [
+        { dy: 0.007, ang: 0.14, len: 0.118 },
+        { dy: 0.0, ang: 0.0, len: 0.132 },
+        { dy: -0.007, ang: -0.16, len: 0.115 },
+      ];
+      for (const s of specs) {
+        const curve = new THREE.QuadraticBezierCurve3(
+          new THREE.Vector3(0, s.dy, 0.004),
+          new THREE.Vector3(side * s.len * 0.52, s.dy + Math.sin(s.ang) * s.len * 0.4, 0.008),
+          new THREE.Vector3(side * s.len, s.dy + Math.sin(s.ang) * s.len - 0.010, -0.015)
+        );
+        const wGeo = new THREE.TubeGeometry(curve, 10, 0.0012, 5, false);
+        grp.add(new THREE.Mesh(wGeo, whiskerMat));
+      }
+      return grp;
+    };
+    this.leftWhiskerGroup = buildCheekWhiskers(-1);
+    this.rightWhiskerGroup = buildCheekWhiskers(1);
+    this.whiskersGroup.add(this.leftWhiskerGroup, this.rightWhiskerGroup);
+
+    this.mouthPivotGroup.add(this.pixelMouthGroup, this.muzzlePadsGroup, this.realisticMouthGroup);
 
     this.group.add(
       this.leftEyeGroup,
       this.rightEyeGroup,
-      this.mouthTopBlock,
-      this.mouthLeftBlock,
-      this.mouthRightBlock
+      this.nosePivotGroup,
+      this.mouthPivotGroup,
+      this.whiskersGroup
     );
 
     this.applyTuning(tuning);
+  }
+
+  /** 对大圆眼周边 5 个采样点取最大前凸 Z，防止放大眼睛边缘埋进鼻梁或眼框 */
+  private sampleEyeEnvelope(cx: number, cy: number, centerX: number) {
+    const centerSample = this.sampler.sample(cx, cy, 0.028, centerX);
+    let maxZ = centerSample.point.z;
+    for (const [dx, dy] of [
+      [-0.028, 0],
+      [0.028, 0],
+      [0, -0.024],
+      [0, 0.024],
+    ]) {
+      const s = this.sampler.sample(cx + dx, cy + dy, 0.028, centerX);
+      if (s.point.z > maxZ) maxZ = s.point.z;
+    }
+    return {
+      point: new THREE.Vector3(centerSample.point.x, centerSample.point.y, maxZ),
+      normal: centerSample.normal,
+    };
   }
 
   public applyTuning(next: Partial<CatFaceTuning>) {
     this.tuning = { ...this.tuning, ...next };
     const { centerX, eyeY, eyeSpacing, eyeW, eyeH, mouthY, mouthSize, surfaceOffset } =
       this.tuning;
+    const eyeStyle: CatEyeStyle = this.tuning.eyeStyle || 'amber';
+    const isPixel = eyeStyle === 'pixel';
 
     const lx = centerX - eyeSpacing * 0.5;
     const rx = centerX + eyeSpacing * 0.5;
+    const noseY = mouthY + (eyeY - mouthY) * 0.36;
 
-    const sLeft = this.sampler.sample(lx, eyeY, 0.018);
-    const sRight = this.sampler.sample(rx, eyeY, 0.018);
-    const sMouth = this.sampler.sample(centerX, mouthY, 0.02);
+    const sLeft = this.sampleEyeEnvelope(lx, eyeY, centerX);
+    const sRight = this.sampleEyeEnvelope(rx, eyeY, centerX);
+    const sNose = this.sampler.sample(centerX, noseY, 0.028, centerX);
+    const sMouth = this.sampler.sample(centerX, mouthY, 0.028, centerX);
+    const sCheekL = this.sampler.sample(centerX - 0.048, mouthY + 0.010, 0.028, centerX);
+    const sCheekR = this.sampler.sample(centerX + 0.048, mouthY + 0.010, 0.028, centerX);
+
+    const safeFrontZ = Math.max(sNose.point.z, sMouth.point.z);
 
     this.baseLeftEyePos
       .copy(sLeft.point)
@@ -1090,40 +1655,79 @@ class CatPixelFaceRig {
       .copy(sRight.point)
       .addScaledVector(sRight.normal, surfaceOffset)
       .sub(this.headPivot);
+    this.baseNosePos
+      .set(sNose.point.x, sNose.point.y, Math.max(sNose.point.z, safeFrontZ))
+      .addScaledVector(sNose.normal, surfaceOffset + 0.015)
+      .sub(this.headPivot);
     this.baseMouthPos
-      .copy(sMouth.point)
-      .addScaledVector(sMouth.normal, surfaceOffset + 0.004)
+      .set(sMouth.point.x, sMouth.point.y, Math.max(sMouth.point.z, safeFrontZ - 0.002))
+      .addScaledVector(sMouth.normal, surfaceOffset + 0.006)
+      .sub(this.headPivot);
+    this.baseCheekLPos
+      .copy(sCheekL.point)
+      .addScaledVector(sCheekL.normal, surfaceOffset + 0.005)
+      .sub(this.headPivot);
+    this.baseCheekRPos
+      .copy(sCheekR.point)
+      .addScaledVector(sCheekR.normal, surfaceOffset + 0.005)
       .sub(this.headPivot);
 
     this.leftEyeGroup.position.copy(this.baseLeftEyePos);
     this.rightEyeGroup.position.copy(this.baseRightEyePos);
+    this.smoothSafeLeftZ = this.baseLeftEyePos.z;
+    this.smoothSafeRightZ = this.baseRightEyePos.z;
 
+    const fwd = new THREE.Vector3(0, 0, 1);
+    this.leftEyeGroup.quaternion.setFromUnitVectors(fwd, sLeft.normal);
+    this.rightEyeGroup.quaternion.setFromUnitVectors(fwd, sRight.normal);
+    this.nosePivotGroup.position.copy(this.baseNosePos);
+    this.nosePivotGroup.quaternion.setFromUnitVectors(fwd, sNose.normal);
+    this.mouthPivotGroup.position.copy(this.baseMouthPos);
+    this.mouthPivotGroup.quaternion.setFromUnitVectors(fwd, sMouth.normal);
+    this.leftWhiskerGroup.position.copy(this.baseCheekLPos);
+    this.rightWhiskerGroup.position.copy(this.baseCheekRPos);
+
+    // 模式可见性切换
+    this.pixelGroupL.visible = isPixel;
+    this.pixelGroupR.visible = isPixel;
+    this.pixelMouthGroup.visible = isPixel;
+    this.leftGlassEye.glassRoot.visible = !isPixel;
+    this.rightGlassEye.glassRoot.visible = !isPixel;
+    this.nosePivotGroup.visible = !isPixel;
+    this.muzzlePadsGroup.visible = !isPixel;
+    this.realisticMouthGroup.visible = !isPixel;
+    this.whiskersGroup.visible = !isPixel;
+
+    // 放大萌系大圆琥珀/琉璃猫眼比例
+    const glassRx = Math.max(0.032, eyeH * 0.56);
+    const glassRy = Math.max(0.034, eyeH * 0.57);
+    const glassRz = Math.max(0.018, eyeW * 0.72);
+    this.leftGlassEye.glassRoot.scale.set(glassRx, glassRy, glassRz);
+    this.rightGlassEye.glassRoot.scale.set(glassRx, glassRy, glassRz);
+
+    if (!isPixel) {
+      const tex = this.irisTextures[eyeStyle];
+      const pal = IRIS_PALETTES[eyeStyle];
+      for (const eye of [this.leftGlassEye, this.rightGlassEye]) {
+        eye.irisMat.map = tex;
+        eye.irisMat.emissive.set(pal.glow);
+        eye.irisMat.needsUpdate = true;
+      }
+    }
+
+    // 同步经典像素五官尺寸
     this.leftNormalBar.scale.set(eyeW, eyeH, eyeW);
     this.rightNormalBar.scale.set(eyeW, eyeH, eyeW);
     this.leftHappyChevron.scale.set(eyeH * 0.9, eyeH * 0.9, eyeW);
     this.rightHappyChevron.scale.set(eyeH * 0.9, eyeH * 0.9, eyeW);
 
-    // 品字嘴：上方1块，下方左右各1块
     const ms = mouthSize;
     this.mouthTopBlock.scale.set(ms, ms, ms);
     this.mouthLeftBlock.scale.set(ms, ms, ms);
     this.mouthRightBlock.scale.set(ms, ms, ms);
-
-    this.mouthTopBlock.position.set(
-      this.baseMouthPos.x,
-      this.baseMouthPos.y + ms * 0.48,
-      this.baseMouthPos.z
-    );
-    this.mouthLeftBlock.position.set(
-      this.baseMouthPos.x - ms * 0.85,
-      this.baseMouthPos.y - ms * 0.42,
-      this.baseMouthPos.z
-    );
-    this.mouthRightBlock.position.set(
-      this.baseMouthPos.x + ms * 0.85,
-      this.baseMouthPos.y - ms * 0.42,
-      this.baseMouthPos.z
-    );
+    this.mouthTopBlock.position.set(0, ms * 0.48, 0);
+    this.mouthLeftBlock.position.set(-ms * 0.85, -ms * 0.42, 0);
+    this.mouthRightBlock.position.set(ms * 0.85, -ms * 0.42, 0);
   }
 
   public update(
@@ -1131,72 +1735,115 @@ class CatPixelFaceRig {
     mouseNDC: { x: number; y: number },
     isHappy: boolean,
     isTalking: boolean,
+    isCurious: boolean,
     headQuat: THREE.Quaternion
   ) {
-    // 五官组同步头部旋转
     this.group.quaternion.copy(headQuat);
 
-    // 眼神跟随鼠标视差偏移（全屏灵敏跟随）
-    const lookX = THREE.MathUtils.clamp(mouseNDC.x, -1.2, 1.2) * 0.022;
-    const lookY = THREE.MathUtils.clamp(mouseNDC.y, -1.2, 1.2) * 0.015;
-    this.leftEyeGroup.position.set(
-      this.baseLeftEyePos.x + lookX,
-      this.baseLeftEyePos.y + lookY,
-      this.baseLeftEyePos.z
-    );
-    this.rightEyeGroup.position.set(
-      this.baseRightEyePos.x + lookX,
-      this.baseRightEyePos.y + lookY,
-      this.baseRightEyePos.z
-    );
+    const eyeStyle: CatEyeStyle = this.tuning.eyeStyle || 'amber';
+    const isPixel = eyeStyle === 'pixel';
+    const lookX = THREE.MathUtils.clamp(mouseNDC.x, -1.2, 1.2) * (isPixel ? 0.020 : 0.007);
+    const lookY = THREE.MathUtils.clamp(mouseNDC.y, -1.2, 1.2) * (isPixel ? 0.014 : 0.005);
 
-    // 切换开心 ^ ^ 笑眼 vs 正常竖条像素眼（带自然眨眼）
-    this.leftHappyChevron.visible = isHappy;
-    this.rightHappyChevron.visible = isHappy;
-    this.leftNormalBar.visible = !isHappy;
-    this.rightNormalBar.visible = !isHappy;
+    if (Math.abs(lookX - this.lastLookX) > 0.0008 || Math.abs(lookY - this.lastLookY) > 0.0008) {
+      this.lastLookX = lookX;
+      this.lastLookY = lookY;
+      const lx = this.tuning.centerX - this.tuning.eyeSpacing * 0.5 + lookX;
+      const rx = this.tuning.centerX + this.tuning.eyeSpacing * 0.5 + lookX;
+      const ly = this.tuning.eyeY + lookY;
+      const sL = this.sampleEyeEnvelope(lx, ly, this.tuning.centerX);
+      const sR = this.sampleEyeEnvelope(rx, ly, this.tuning.centerX);
+      const safeZOffset = this.tuning.surfaceOffset - this.headPivot.z;
+      this.smoothSafeLeftZ = Math.max(this.baseLeftEyePos.z, sL.point.z + safeZOffset);
+      this.smoothSafeRightZ = Math.max(this.baseRightEyePos.z, sR.point.z + safeZOffset);
+    }
 
+    const zL = THREE.MathUtils.lerp(this.leftEyeGroup.position.z, this.smoothSafeLeftZ, 0.25);
+    const zR = THREE.MathUtils.lerp(this.rightEyeGroup.position.z, this.smoothSafeRightZ, 0.25);
+
+    this.leftEyeGroup.position.set(this.baseLeftEyePos.x + lookX, this.baseLeftEyePos.y + lookY, zL);
+    this.rightEyeGroup.position.set(this.baseRightEyePos.x + lookX, this.baseRightEyePos.y + lookY, zR);
+
+    const blinkCycle = (elapsed * 0.9) % 3.6;
+    let blinkScale = 1.0;
     if (!isHappy) {
-      // 每 3.6 秒一次快速自然眨眼
-      const blinkCycle = (elapsed * 0.9) % 3.6;
-      let blinkScale = 1.0;
       if (blinkCycle < 0.11) {
         blinkScale = Math.max(0.08, 1.0 - (blinkCycle / 0.11) * 0.92);
       } else if (blinkCycle < 0.22) {
         blinkScale = 0.08 + ((blinkCycle - 0.11) / 0.11) * 0.92;
       }
-      this.leftNormalBar.scale.y = this.tuning.eyeH * blinkScale;
-      this.rightNormalBar.scale.y = this.tuning.eyeH * blinkScale;
     }
 
-    // 说话或开心时，“品”字形像素嘴随语调律动跳动
-    const ms = this.tuning.mouthSize;
-    if (isTalking || isHappy) {
-      const chatter = Math.sin(elapsed * 18.0) * 0.0045;
-      const spread = Math.abs(Math.cos(elapsed * 14.0)) * 0.0035;
-      this.mouthTopBlock.position.y = this.baseMouthPos.y + ms * 0.48 + Math.abs(chatter);
-      this.mouthLeftBlock.position.y = this.baseMouthPos.y - ms * 0.42 - Math.abs(chatter);
-      this.mouthRightBlock.position.y = this.baseMouthPos.y - ms * 0.42 - Math.abs(chatter);
-      this.mouthLeftBlock.position.x = this.baseMouthPos.x - ms * 0.85 - spread;
-      this.mouthRightBlock.position.x = this.baseMouthPos.x + ms * 0.85 + spread;
+    if (isPixel) {
+      this.leftHappyChevron.visible = isHappy;
+      this.rightHappyChevron.visible = isHappy;
+      this.leftNormalBar.visible = !isHappy;
+      this.rightNormalBar.visible = !isHappy;
+      if (!isHappy) {
+        this.leftNormalBar.scale.y = this.tuning.eyeH * blinkScale;
+        this.rightNormalBar.scale.y = this.tuning.eyeH * blinkScale;
+      }
+
+      const ms = this.tuning.mouthSize;
+      if (isTalking || isHappy) {
+        const chatter = Math.sin(elapsed * 18.0) * 0.0045;
+        const spread = Math.abs(Math.cos(elapsed * 14.0)) * 0.0035;
+        this.mouthTopBlock.position.y = ms * 0.48 + Math.abs(chatter);
+        this.mouthLeftBlock.position.y = -ms * 0.42 - Math.abs(chatter);
+        this.mouthRightBlock.position.y = -ms * 0.42 - Math.abs(chatter);
+        this.mouthLeftBlock.position.x = -ms * 0.85 - spread;
+        this.mouthRightBlock.position.x = ms * 0.85 + spread;
+      } else {
+        const idleBreath = Math.sin(elapsed * 2.4) * 0.001;
+        this.mouthTopBlock.position.y = ms * 0.48 + idleBreath;
+        this.mouthLeftBlock.position.y = -ms * 0.42;
+        this.mouthRightBlock.position.y = -ms * 0.42;
+        this.mouthLeftBlock.position.x = -ms * 0.85;
+        this.mouthRightBlock.position.x = ms * 0.85;
+      }
     } else {
-      const idleBreath = Math.sin(elapsed * 2.4) * 0.001;
-      this.mouthTopBlock.position.y = this.baseMouthPos.y + ms * 0.48 + idleBreath;
-      this.mouthLeftBlock.position.y = this.baseMouthPos.y - ms * 0.42;
-      this.mouthRightBlock.position.y = this.baseMouthPos.y - ms * 0.42;
-      this.mouthLeftBlock.position.x = this.baseMouthPos.x - ms * 0.85;
-      this.mouthRightBlock.position.x = this.baseMouthPos.x + ms * 0.85;
+      // 3D 琉璃萌眼模式：保持大圆亮瞳并随好奇/说话轻微散大
+      const targetPupilScale = isCurious || isTalking ? 1.06 : 0.94;
+      this.currentPupilScale += (targetPupilScale - this.currentPupilScale) * 0.1;
+
+      const gazeYaw = THREE.MathUtils.clamp(mouseNDC.x, -1.0, 1.0) * 0.22;
+      const gazePitch = THREE.MathUtils.clamp(-mouseNDC.y, -1.0, 1.0) * 0.16;
+
+      for (const eye of [this.leftGlassEye, this.rightGlassEye]) {
+        eye.happyArc.visible = isHappy;
+        eye.shellScaler.visible = !isHappy;
+        eye.shellScaler.scale.y = blinkScale;
+        eye.irisPivot.rotation.set(gazePitch, gazeYaw, 0);
+        eye.irisPivot.position.set(gazeYaw * 0.34, -gazePitch * 0.30, 0);
+        eye.pupilMesh.scale.set(this.currentPupilScale, this.currentPupilScale * 1.08, 0.36);
+      }
+
+      if (isTalking || isHappy) {
+        const openAmt = isTalking
+          ? 0.35 + Math.abs(Math.sin(elapsed * 16.0)) * 0.85
+          : 0.45 + Math.sin(elapsed * 5.0) * 0.15;
+        this.openMouthCavity.visible = true;
+        this.openMouthCavity.scale.set(1.05, openAmt, 0.6);
+        this.realisticMouthGroup.position.y = -openAmt * 0.0025;
+        this.leftWhiskerGroup.rotation.z = Math.sin(elapsed * 14.0) * 0.045;
+        this.rightWhiskerGroup.rotation.z = -Math.sin(elapsed * 14.0) * 0.045;
+      } else {
+        this.openMouthCavity.visible = false;
+        this.realisticMouthGroup.position.y = Math.sin(elapsed * 2.4) * 0.0008;
+        this.leftWhiskerGroup.rotation.z = Math.sin(elapsed * 2.2) * 0.015;
+        this.rightWhiskerGroup.rotation.z = -Math.sin(elapsed * 2.2) * 0.015;
+      }
     }
   }
 
   public getMouthWorldPosition(target: THREE.Vector3): THREE.Vector3 {
-    this.mouthTopBlock.getWorldPosition(target);
+    this.mouthPivotGroup.getWorldPosition(target);
     return target;
   }
 }
 
 /**
- * 将任意 GLB 模型装配为具备「炭黑丝绒 + 银白逆光毛尖 + 3D 绒毛层 + 灵动像素五官 + 骨骼级呼吸歪头摇尾」的完整角色
+ * 将任意 GLB 模型装配为具备「平滑法线 + 炭黑丝绒 + 银灰毛边 + 柔和立体绒毛 + 3D琉璃五官 + 物理弹性动效」的完整角色
  */
 export function buildRiggedCatFromGLB(
   rawScene: THREE.Object3D,
@@ -1221,7 +1868,16 @@ export function buildRiggedCatFromGLB(
     uBreath: { value: 0 },
     uRimPower: { value: 2.55 },
     uRimStrength: { value: 1.45 },
-    uWhiteTipStrength: { value: 1.0 }
+    uWhiteTipStrength: { value: 1.0 },
+    uFaceCenter: {
+      value: new THREE.Vector2(
+        profile.face.centerX,
+        (profile.face.eyeY + profile.face.mouthY) * 0.5
+      )
+    },
+    uEyeY: { value: profile.face.eyeY },
+    uEyeSpacing: { value: profile.face.eyeSpacing },
+    uMouthY: { value: profile.face.mouthY }
   };
 
   const furMaterial = createCatFurMaterial(profile, uniforms);
@@ -1233,16 +1889,29 @@ export function buildRiggedCatFromGLB(
     root.add(m);
   });
 
-  // 双层微偏移体积短绒底毛壳（与身体共享动画 uniforms，消除网格边缘硬切感）
+  // 双层微偏移体积短绒底毛壳（与身体共享动画 uniforms，消除网格边缘硬切感与脸部秃斑）
   const furShellsGroup = buildFurShellsGroup(meshList, profile, uniforms);
   root.add(furShellsGroup);
 
-  // 表面 3D 立体毛簇层（与身体共享动画 uniforms，毛随呼吸/转头/摇尾同步变形）
+  // 表面柔和贴体 3D 绒毛层（与身体共享动画 uniforms，毛随呼吸/转头/摇尾同步变形）
   const furInstancedMesh = buildSurfaceFurTufts(positions, normals, profile, uniforms);
   root.add(furInstancedMesh);
 
-  // 3D 发光像素五官组件
-  const sampler = new SurfaceSampler(positions, normals);
+  // 脚底地毯接触软阴影（Contact Shadow，随跳跃高度动态缩放淡出）
+  const shadowMat = new THREE.MeshBasicMaterial({
+    map: createContactShadowTexture(),
+    transparent: true,
+    opacity: 0.65,
+    depthWrite: false,
+  });
+  const contactShadow = new THREE.Mesh(new THREE.PlaneGeometry(0.96, 0.86), shadowMat);
+  contactShadow.rotation.x = -Math.PI / 2;
+  contactShadow.position.set(profile.bodyCenter.x * 0.45, 0.004, 0.0);
+  contactShadow.renderOrder = 2;
+  root.add(contactShadow);
+
+  // 3D 琉璃五官 & 经典像素双模式组件
+  const sampler = new SurfaceSampler(positions, normals, profile.face.centerX);
   const faceRig = new CatPixelFaceRig(sampler, profile.headPivot, profile.face);
   root.add(faceRig.group);
 
@@ -1292,6 +1961,14 @@ export function buildRiggedCatFromGLB(
       };
     },
     updateFaceTuning(tuning: Partial<CatFaceTuning>) {
+      Object.assign(profile.face, tuning);
+      uniforms.uFaceCenter.value.set(
+        profile.face.centerX,
+        (profile.face.eyeY + profile.face.mouthY) * 0.5
+      );
+      uniforms.uEyeY.value = profile.face.eyeY;
+      uniforms.uEyeSpacing.value = profile.face.eyeSpacing;
+      uniforms.uMouthY.value = profile.face.mouthY;
       faceRig.applyTuning(tuning);
     },
     updateRimAndFur(opts) {
@@ -1317,10 +1994,10 @@ export function buildRiggedCatFromGLB(
         curiousTimer = Math.max(0, curiousTimer - dt);
       }
       if (jumpProgress > 0) {
-        jumpProgress = Math.max(0, jumpProgress - dt * 2.2);
+        jumpProgress = Math.max(0, jumpProgress - dt * 1.65);
       }
 
-      // 鼠标视线跟随 + 好奇歪头插值
+      // 鼠标视线跟随 + 好奇歪头插值（dt 无关阻尼，60/120 FPS 与 24 FPS 省电模式速度一致）
       const curiousTiltOffset = curiousTimer > 0 ? Math.sin(elapsed * 3.2) * 0.16 + 0.14 : 0;
       const targetYaw = THREE.MathUtils.clamp(mouseNDC.x * 0.32, -0.35, 0.35);
       const targetPitch = THREE.MathUtils.clamp(-mouseNDC.y * 0.2, -0.22, 0.22);
@@ -1329,12 +2006,12 @@ export function buildRiggedCatFromGLB(
         Math.sin(elapsed * 1.1) * 0.04 +
         curiousTiltOffset;
 
-      curYaw += (targetYaw - curYaw) * 0.08;
-      curPitch += (targetPitch - curPitch) * 0.08;
-      curRoll += (targetRoll - curRoll) * 0.08;
+      const headDamp = 1.0 - Math.exp(-5.8 * dt);
+      curYaw += (targetYaw - curYaw) * headDamp;
+      curPitch += (targetPitch - curPitch) * headDamp;
+      curRoll += (targetRoll - curRoll) * headDamp;
 
       // GLSL mat3 按列构造，旧 rotX/Y/Z 的符号与 Three.js 四元数相反。
-      // 所有设备都与 Three.js 的 YXZ 面部四元数保持同向。
       const shaderDirection = -1;
       uniforms.uHeadYaw.value = curYaw * shaderDirection;
       uniforms.uHeadPitch.value = curPitch * shaderDirection;
@@ -1346,14 +2023,48 @@ export function buildRiggedCatFromGLB(
       uniforms.uEarTwitchL.value = earWaveL * 0.22 + (happyTimer > 0 ? Math.sin(elapsed * 12) * 0.12 : 0);
       uniforms.uEarTwitchR.value = earWaveR * 0.22 + (happyTimer > 0 ? -Math.sin(elapsed * 12) * 0.12 : 0);
 
-      // 计算头部旋转四元数同步给 3D 像素五官
+      // 计算头部旋转四元数同步给 3D 五官
       euler.set(curPitch, curYaw, curRoll, 'YXZ');
       headQuat.setFromEuler(euler);
-      faceRig.update(elapsed, mouseNDC, happyTimer > 0, isTalking, headQuat);
+      faceRig.update(elapsed, mouseNDC, happyTimer > 0, isTalking, curiousTimer > 0, headQuat);
 
-      // 点击撸猫开心跳跃
-      const jumpY = Math.sin(jumpProgress * Math.PI) * 0.26;
+      // Squash & Stretch 物理弹性跳跃曲线：蓄力下蹲 -> 腾空舒展 -> 落地缓冲回弹
+      let jumpY = 0;
+      let scaleY = 1.0;
+      let scaleXZ = 1.0;
+      if (jumpProgress > 0) {
+        const phase = 1.0 - jumpProgress;
+        if (phase < 0.16) {
+          const s = Math.sin((phase / 0.16) * Math.PI);
+          jumpY = -0.020 * s;
+          scaleY = 1.0 - 0.11 * s;
+          scaleXZ = 1.0 + 0.065 * s;
+        } else if (phase < 0.78) {
+          const arc = Math.sin(((phase - 0.16) / 0.62) * Math.PI);
+          jumpY = arc * 0.27;
+          scaleY = 1.0 + 0.085 * arc;
+          scaleXZ = 1.0 - 0.042 * arc;
+        } else {
+          const s = Math.sin(((phase - 0.78) / 0.22) * Math.PI);
+          jumpY = 0;
+          scaleY = 1.0 - 0.095 * s;
+          scaleXZ = 1.0 + 0.055 * s;
+        }
+      }
+
       root.position.y = jumpY;
+      root.scale.set(
+        targetWorldHeight * scaleXZ,
+        targetWorldHeight * scaleY,
+        targetWorldHeight * scaleXZ
+      );
+
+      // 接触阴影始终紧贴地毯表面并随跳跃高度柔和缩放淡出
+      const heightRatio = THREE.MathUtils.clamp(Math.max(0, jumpY) / 0.27, 0, 1);
+      const shadowScale = 1.0 - heightRatio * 0.36;
+      contactShadow.position.y = (0.004 * targetWorldHeight - jumpY) / (targetWorldHeight * scaleY);
+      contactShadow.scale.set(shadowScale / scaleXZ, shadowScale / scaleXZ, 1);
+      shadowMat.opacity = 0.65 * (1.0 - heightRatio * 0.60);
     }
   };
 }

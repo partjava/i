@@ -32,8 +32,6 @@ export class SceneManager {
   private pointLight1: THREE.PointLight;
   private pointLight2: THREE.PointLight;
   private starField: THREE.Points | null = null;
-  private stageRingOuter: THREE.Mesh | null = null;
-  private stageRingInner: THREE.Mesh | null = null;
   private stepEnterTime = 0;
   private stepTransitionDone = true;
 
@@ -93,31 +91,6 @@ export class SceneManager {
       gridMat.opacity = 0.55;
     }
     this.scene.add(grid);
-
-    // Dual counter-rotating holographic rings beneath the stage
-    const outerGeo = new THREE.RingGeometry(11.8, 12.12, 72);
-    const outerMat = new THREE.MeshBasicMaterial({
-      color: 0x38bdf8,
-      side: THREE.DoubleSide,
-      transparent: true,
-      opacity: 0.22,
-    });
-    this.stageRingOuter = new THREE.Mesh(outerGeo, outerMat);
-    this.stageRingOuter.rotation.x = -Math.PI / 2;
-    this.stageRingOuter.position.y = -0.04;
-    this.scene.add(this.stageRingOuter);
-
-    const innerGeo = new THREE.RingGeometry(8.2, 8.42, 64);
-    const innerMat = new THREE.MeshBasicMaterial({
-      color: 0x818cf8,
-      side: THREE.DoubleSide,
-      transparent: true,
-      opacity: 0.24,
-    });
-    this.stageRingInner = new THREE.Mesh(innerGeo, innerMat);
-    this.stageRingInner.rotation.x = -Math.PI / 2;
-    this.stageRingInner.position.y = -0.035;
-    this.scene.add(this.stageRingInner);
 
     // Ambient volumetric starfield around the holographic stage
     const starCount = 160;
@@ -372,15 +345,9 @@ export class SceneManager {
         }
       }
 
-      // Ambient holographic rings & volumetric starfield rotation
+      // Ambient volumetric starfield rotation
       if (this.starField) {
         this.starField.rotation.y += 0.0005;
-      }
-      if (this.stageRingOuter) {
-        this.stageRingOuter.rotation.z += 0.0012;
-      }
-      if (this.stageRingInner) {
-        this.stageRingInner.rotation.z -= 0.0018;
       }
 
       // Traveling energy photons & active glow modulation
@@ -428,16 +395,6 @@ export class SceneManager {
       this.scene.remove(this.starField);
       this.disposeObject(this.starField);
       this.starField = null;
-    }
-    if (this.stageRingOuter) {
-      this.scene.remove(this.stageRingOuter);
-      this.disposeObject(this.stageRingOuter);
-      this.stageRingOuter = null;
-    }
-    if (this.stageRingInner) {
-      this.scene.remove(this.stageRingInner);
-      this.disposeObject(this.stageRingInner);
-      this.stageRingInner = null;
     }
     this.renderer.dispose();
   }

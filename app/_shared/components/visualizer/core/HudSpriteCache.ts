@@ -12,6 +12,39 @@ export interface BadgeOptions {
   fontSize?: number;
 }
 
+const SUBSCRIPT_CHAR_MAP: Record<string, string> = {
+  '0': '₀', '1': '₁', '2': '₂', '3': '₃', '4': '₄',
+  '5': '₅', '6': '₆', '7': '₇', '8': '₈', '9': '₉',
+  '+': '₊', '-': '₋', '=': '₌', '(': '₍', ')': '₎',
+  'a': 'ₐ', 'e': 'ₑ', 'h': 'ₕ', 'i': 'ᵢ', 'j': 'ⱼ',
+  'k': 'ₖ', 'l': 'ₗ', 'm': 'ₘ', 'n': 'ₙ', 'o': 'ₒ',
+  'p': 'ₚ', 'r': 'ᵣ', 's': 'ₛ', 't': 'ₜ', 'u': 'ᵤ',
+  'v': 'ᵥ', 'x': 'ₓ', 'θ': '𝜃',
+};
+
+const SUPERSCRIPT_CHAR_MAP: Record<string, string> = {
+  '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴',
+  '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹',
+  '+': '⁺', '-': '⁻', '=': '⁼', '(': '⁽', ')': '⁾',
+  'i': 'ⁱ', 'n': 'ⁿ', 't': 'ᵗ', 'T': 'ᵀ',
+};
+
+function formatCanvasMathText(raw: string): string {
+  if (!raw) return raw;
+  return raw
+    .replace(/\\_/g, '_')
+    .replace(/_\{([^{}]+)\}/g, (_, inner: string) =>
+      Array.from(inner).map((ch) => SUBSCRIPT_CHAR_MAP[ch] ?? ch).join('')
+    )
+    .replace(/_([0-9a-zθ])/gi, (_, ch: string) => SUBSCRIPT_CHAR_MAP[ch] ?? `_${ch}`)
+    .replace(/\^\{([^{}]+)\}/g, (_, inner: string) =>
+      Array.from(inner).map((ch) => SUPERSCRIPT_CHAR_MAP[ch] ?? ch).join('')
+    )
+    .replace(/\^\(([^()]+)\)/g, (_, inner: string) =>
+      Array.from(inner).map((ch) => SUPERSCRIPT_CHAR_MAP[ch] ?? ch).join('')
+    );
+}
+
 /**
  * High-DPI cached 3D text badge sprite generator.
  * Uses large, bold typography that fills the badge pill for crisp readability at any zoom level.
@@ -30,19 +63,22 @@ export function createHudBadge(
     fontSize = subText ? 54 : 68,
   } = options;
 
-  const cacheKey = `v2|${text}|${subText || ''}|${borderColor}|${bgColor}|${textColor}|${fontSize}`;
+  const displayText = formatCanvasMathText(text);
+  const displaySubText = subText ? formatCanvasMathText(subText) : undefined;
+
+  const cacheKey = `v2|${displayText}|${displaySubText || ''}|${borderColor}|${bgColor}|${textColor}|${fontSize}`;
   let texture = textureCache.get(cacheKey);
 
   if (!texture && typeof document !== 'undefined') {
     const canvas = document.createElement('canvas');
     // Dynamic width based on text length so numbers are large and nevertiny
     const charUnits = Math.max(
-      text.length,
-      subText ? Math.ceil(subText.length * 0.78) : 0,
+      displayText.length,
+      displaySubText ? Math.ceil(displaySubText.length * 0.78) : 0,
       2.2
     );
     canvas.width = Math.min(Math.max(Math.round(charUnits * 62 + 80), 240), 640);
-    canvas.height = subText ? 184 : 132;
+    canvas.height = displaySubText ? 184 : 132;
 
     const ctx = canvas.getContext('2d');
     if (ctx) {
@@ -76,13 +112,13 @@ export function createHudBadge(
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
 
-      if (subText) {
-        ctx.fillText(text, canvas.width / 2, canvas.height * 0.37, w - 20);
+      if (displaySubText) {
+        ctx.fillText(displayText, canvas.width / 2, canvas.height * 0.37, w - 20);
         ctx.fillStyle = borderColor;
         ctx.font = `700 ${Math.round(fontSize * 0.68)}px "JetBrains Mono", "Microsoft YaHei", monospace`;
-        ctx.fillText(subText, canvas.width / 2, canvas.height * 0.73, w - 20);
+        ctx.fillText(displaySubText, canvas.width / 2, canvas.height * 0.73, w - 20);
       } else {
-        ctx.fillText(text, canvas.width / 2, canvas.height / 2 + 2, w - 20);
+        ctx.fillText(displayText, canvas.width / 2, canvas.height / 2 + 2, w - 20);
       }
     }
 

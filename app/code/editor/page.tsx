@@ -10,7 +10,7 @@ import AlgorithmVisualizer, {
   ALGORITHM_REGISTRY,
   getAlgorithmMeta,
 } from '../../_shared/components/AlgorithmVisualizer';
-import MathFormulaBox from '../../_shared/components/visualizer/MathFormulaBox';
+import MathFormulaBox, { MixedMathText } from '../../_shared/components/visualizer/MathFormulaBox';
 import {
   Terminal,
   Cpu,
@@ -479,7 +479,7 @@ export default function CodeEditorPage() {
                       <span>深度数学原理与四层结构剖析（KaTeX 高清公式排版）</span>
                     </h3>
                     <span className="text-xs font-mono px-2.5 py-0.5 rounded-full bg-sky-500/15 text-sky-300 border border-sky-400/30">
-                      {currentAlgorithm.complexity}
+                      <MixedMathText text={currentAlgorithm.complexity} />
                     </span>
                   </div>
 
@@ -507,7 +507,7 @@ export default function CodeEditorPage() {
                       <span>三维几何与空间映射原理</span>
                     </div>
                     <p className="text-xs sm:text-sm text-slate-200 leading-relaxed">
-                      {currentAlgorithm.principle}
+                      <MixedMathText text={currentAlgorithm.principle} />
                     </p>
                   </div>
 
@@ -528,7 +528,7 @@ export default function CodeEditorPage() {
                               L{idx + 1}
                             </span>
                             <p className="text-xs sm:text-[13px] text-slate-300 leading-relaxed">
-                              {layerText}
+                              <MixedMathText text={layerText} />
                             </p>
                           </div>
                         ))}
@@ -544,7 +544,7 @@ export default function CodeEditorPage() {
                         <span>工业级底层优化与实现细节</span>
                       </div>
                       <p className="text-xs sm:text-[13px] text-slate-300 leading-relaxed">
-                        {currentAlgorithm.implementation}
+                        <MixedMathText text={currentAlgorithm.implementation} />
                       </p>
                     </div>
 
@@ -554,7 +554,7 @@ export default function CodeEditorPage() {
                         <span>典型工业与科研应用场景</span>
                       </div>
                       <p className="text-xs sm:text-[13px] text-slate-300 leading-relaxed">
-                        {currentAlgorithm.scenario}
+                        <MixedMathText text={currentAlgorithm.scenario} />
                       </p>
                     </div>
                   </div>

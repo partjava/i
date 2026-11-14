@@ -35,7 +35,7 @@ export const ALGORITHM_REGISTRY: AlgorithmMeta[] = [
     cameraPreset: { position: [0, 6.2, 20.5], target: [0, 3.0, 0], autoOrbitSpeed: 0.12 },
     legends: SORTING_LEGENDS,
     complexity: '平均/最坏时间 O(n²) · 最优时间 O(n) · 空间 O(1) · 稳定原地排序',
-    mathFormula: '比较总数 C(n) = n(n-1)/2，平均交换次数 S(n) = n(n-1)/4（等价于随机排列期望逆序对数）',
+    mathFormula: String.raw`比较总数 $C(n) = \frac{n(n-1)}{2}$，平均交换次数 $S(n) = \frac{n(n-1)}{4}$（等价于随机排列期望逆序对数）`,
     principle: '通过相邻元素两两比较与逆序交换，每轮消去若干逆序对并将未排序区间的极值“浮”至右侧边界。',
     deepLayers: [
       '第一层（逆序对不变量）：每次相邻交换 a[j] ↔ a[j+1] 严格消除数组中的 1 个逆序对 (Inversion Pair)。',
@@ -56,7 +56,7 @@ export const ALGORITHM_REGISTRY: AlgorithmMeta[] = [
     cameraPreset: { position: [0, 6.2, 20.5], target: [0, 3.0, 0], autoOrbitSpeed: 0.12 },
     legends: SORTING_LEGENDS,
     complexity: '期望时间 O(n log n) ≈ 1.39n log₂n · 最坏 O(n²) · 递归栈空间 O(log n)',
-    mathFormula: '递推方程 T(n) = T(k) + T(n-k-1) + Θ(n)；主定理期望解 E[T(n)] = 2n ln n ≈ 1.386 n log₂n',
+    mathFormula: String.raw`递推方程 $T(n) = T(k) + T(n-k-1) + \Theta(n)$；主定理期望解 $\mathbb{E}[T(n)] = 2n \ln n \approx 1.386\,n\log_2 n$`,
     principle: '选定基准值 Pivot，利用双指针原地划分（Partition）使左区全小、右区全大，随后对左右子区间递归分治。',
     deepLayers: [
       '第一层（分区三区间不变量）：维护 [low..i] < Pivot、[i+1..j-1] ≥ Pivot、[j..high-1] 未扫描三个不相交区间。',
@@ -77,7 +77,7 @@ export const ALGORITHM_REGISTRY: AlgorithmMeta[] = [
     cameraPreset: { position: [0, 6.4, 21.0], target: [0, 3.0, 0], autoOrbitSpeed: 0.12 },
     legends: SORTING_LEGENDS,
     complexity: '最优/平均/最坏严格 Θ(n log n) · 辅助空间 O(n) · 严格稳定排序',
-    mathFormula: '主定理递推式 T(n) = 2T(n/2) + Θ(n)，递归树深度 h = ⌈log₂n⌉，每层线性归并代价 cn',
+    mathFormula: String.raw`主定理递推式 $T(n) = 2T(n/2) + \Theta(n)$，递归树深度 $h = \lceil\log_2 n\rceil$，每层线性归并代价 $cn$`,
     principle: '冯·诺依曼提出的经典分治范式：自顶向下对半切分至单元素有序基态，再通过双指针线性归并合成为有序序列。',
     deepLayers: [
       '第一层（递归树对称拆分）：将区间 [L, R] 沿中点 M = ⌊(L+R)/2⌋ 拆分为高度平衡的满二叉递归树。',
@@ -98,7 +98,7 @@ export const ALGORITHM_REGISTRY: AlgorithmMeta[] = [
     cameraPreset: { position: [0, 6.5, 21.5], target: [0, 3.2, 0], autoOrbitSpeed: 0.15 },
     legends: SORTING_LEGENDS,
     complexity: '建堆 O(n) · 排序总时间 Θ(n log n) · 空间复杂度严格 O(1) · 不稳定',
-    mathFormula: '完全二叉树下标映射：parent(i)=⌊(i-1)/2⌋, left(i)=2i+1, right(i)=2i+2；线性建堆代价 ∑ (n/2^{h+1})·O(h) = O(n)',
+    mathFormula: String.raw`完全二叉树下标映射：$\text{parent}(i)=\lfloor(i-1)/2\rfloor,\;\text{left}(i)=2i+1,\;\text{right}(i)=2i+2$；线性建堆代价 $\sum (n/2^{h+1})\cdot\mathcal{O}(h) = \mathcal{O}(n)$`,
     principle: '利用数组隐式映射完全二叉树，先通过 Floyd 自底向上下滤在 O(n) 时间内构建大顶堆，再反复交换堆顶与末尾元素。',
     deepLayers: [
       '第一层（隐式完全二叉树）：无需任何指针开销，直接通过数组下标算术在连续内存中表达父子拓扑关系。',
@@ -119,7 +119,7 @@ export const ALGORITHM_REGISTRY: AlgorithmMeta[] = [
     cameraPreset: { position: [0, 6.2, 20.5], target: [0, 3.0, 0], autoOrbitSpeed: 0.12 },
     legends: SORTING_LEGENDS,
     complexity: '时间复杂度 O(n + I)（I 为逆序对数）· 最优 O(n) · 最坏 O(n²) · 空间 O(1)',
-    mathFormula: '运行时间精确正比于初始序列逆序对总数 I(A)：T(n) = Θ(n + I(A))，当基本有序时 I(A) = O(n) 即达线性',
+    mathFormula: String.raw`运行时间精确正比于初始序列逆序对总数 $I(A)$：$T(n) = \Theta(n + I(A))$，当基本有序时 $I(A) = \mathcal{O}(n)$ 即达线性`,
     principle: '维护前端已排序前缀 a[0..i-1]，提取待插元素 key = a[i] 向左扫描平移较大元素，将其精准嵌入有序槽位。',
     deepLayers: [
       '第一层（前缀有序循环不变量）：在第 i 步迭代开始前，前缀子数组 a[0..i-1] 始终包含原前 i 个元素且严格升序。',
@@ -140,7 +140,7 @@ export const ALGORITHM_REGISTRY: AlgorithmMeta[] = [
     cameraPreset: { position: [0, 6.2, 20.5], target: [0, 3.0, 0], autoOrbitSpeed: 0.12 },
     legends: SORTING_LEGENDS,
     complexity: '比较次数恒为 n(n-1)/2 = Θ(n²) · 交换次数至多 n-1 = O(n) · 空间 O(1)',
-    mathFormula: '比较次数与输入分布无关：C(n) ≡ ∑_{i=1}^{n-1} (n-i) = n(n-1)/2；写入交换次数上限 W(n) ≤ 3(n-1)',
+    mathFormula: String.raw`比较次数与输入分布无关：$C(n) \equiv \sum_{i=1}^{n-1} (n-i) = \frac{n(n-1)}{2}$；写入交换次数上限 $W(n) \le 3(n-1)$`,
     principle: '每轮完整扫描右侧未排序后缀 a[i..n-1] 锁定全局最小元索引 minIdx，仅在轮末执行一次交换归位至 a[i]。',
     deepLayers: [
       '第一层（前缀全局最小不变量）：前 i 轮结束后，a[0..i-1] 不仅有序，而且严格小于右侧 a[i..n-1] 中的任何元素。',
@@ -163,7 +163,7 @@ export const ALGORITHM_REGISTRY: AlgorithmMeta[] = [
     cameraPreset: { position: [0, 6.2, 20.5], target: [0, 3.0, 0], autoOrbitSpeed: 0.1 },
     legends: SEARCHING_LEGENDS,
     complexity: '时间复杂度 O(log₂ n) · 空间复杂度 O(1) · 比较次数上限 ⌊log₂ n⌋ + 1',
-    mathFormula: '区间收缩递推 L_{k+1} = ⌊L_k / 2⌋，防整型溢出中点公式 mid = left + ((right - left) >> 1)',
+    mathFormula: String.raw`区间收缩递推 $L_{k+1} = \lfloor L_k / 2\rfloor$，防整型溢出中点公式 $\text{mid} = \text{left} + ((\text{right} - \text{left}) \gg 1)$`,
     principle: '利用序列单调性，每次探查区间中点 mid 并与目标比对，将搜索空间直接折半剪枝，在极少步数内锁定目标。',
     deepLayers: [
       '第一层（闭区间搜索不变量）：维护闭区间 [left, right]，保证若 target 存在则必位于当前区间内，直至 left > right。',
@@ -184,7 +184,7 @@ export const ALGORITHM_REGISTRY: AlgorithmMeta[] = [
     cameraPreset: { position: [0, 6.2, 20.5], target: [0, 3.0, 0], autoOrbitSpeed: 0.1 },
     legends: SEARCHING_LEGENDS,
     complexity: '最优 O(1) · 平均 (n+1)/2 = O(n) · 最坏 O(n) · 空间 O(1)',
-    mathFormula: '等概率命中期望比较次数 E[C] = (1/n) ∑_{k=1}^n k = (n + 1) / 2',
+    mathFormula: String.raw`等概率命中期望比较次数 $\mathbb{E}[C] = \frac{1}{n}\sum_{k=1}^n k = \frac{n + 1}{2}$`,
     principle: '对无序或链式存储序列从头至尾顺序扫描，逐个检验元素是否满足目标谓词条件。',
     deepLayers: [
       '第一层（无前置假设普适性）：对数据分布与有序性零要求，支持任意自定义谓词匹配（Predicate Search）。',
@@ -212,7 +212,7 @@ export const ALGORITHM_REGISTRY: AlgorithmMeta[] = [
       { color: '#fbbf24', label: '最优黄金路径 f(n)=g+h', glow: true },
     ],
     complexity: '时间复杂度 O(E log V) · 空间复杂度 O(V) · 可采纳启发下保证全局最优',
-    mathFormula: '综合评估函数 f(n) = g(n) + h(n)；可采纳性条件 0 ≤ h(n) ≤ h*(n)，一致性三角不等式 h(u) ≤ w(u,v) + h(v)',
+    mathFormula: String.raw`综合评估函数 $f(n) = g(n) + h(n)$；可采纳性条件 $0 \le h(n) \le h^*(n)$，一致性三角不等式 $h(u) \le w(u,v) + h(v)$`,
     principle: '融合 Dijkstra 的历史真实代价 g(n) 与 Best-First 的未来启发预估代价 h(n)，引导搜索波束直扑终点。',
     deepLayers: [
       '第一层（代价解耦）：g(n) 记录从起点 S 到当前格 n 的精确已走步数；h(n) 预估从 n 到终点 G 的乐观下界距离。',
@@ -238,7 +238,7 @@ export const ALGORITHM_REGISTRY: AlgorithmMeta[] = [
       { color: '#fbbf24', label: 'S → T 全局最短路径链', glow: true },
     ],
     complexity: '二叉堆优化 O((V + E) log V) · 斐波那契堆 O(E + V log V) · 空间 O(V)',
-    mathFormula: '三角不等式边松弛 (Edge Relaxation)：∀(u,v)∈E, dist[v] ← min(dist[v], dist[u] + w(u,v))，要求 ∀e, w(e) ≥ 0',
+    mathFormula: String.raw`三角不等式边松弛 (Edge Relaxation)：$\forall (u,v)\in E,\; \text{dist}[v] \leftarrow \min(\text{dist}[v],\; \text{dist}[u] + w(u,v))$，要求 $\forall e,\; w(e) \ge 0$`,
     principle: '基于贪心选择性质与动态规划最优子结构，按距离源点由近及远的次序逐个永久锁定节点最短路径，构建最短路径树（SPT）。',
     deepLayers: [
       '第一层（双集合划分不变量）：将顶点集划分为已收敛集合 S（最短距离已严格确定）与未确定集合 V \\ S。',
@@ -264,7 +264,7 @@ export const ALGORITHM_REGISTRY: AlgorithmMeta[] = [
       { color: '#10b981', label: '锁定终点 Goal', glow: true },
     ],
     complexity: '时间复杂度同为 O(V + E) · BFS 空间 O(W)（最大层宽） · DFS 空间 O(H)（最大深度）',
-    mathFormula: 'BFS 波前满足 d(s, u_k) ≤ d(s, u_{k+1}) 单调非递减；DFS 时间戳满足括号化定理 [d[u], f[u]] 嵌套包含',
+    mathFormula: String.raw`BFS 波前满足 $d(s, u_k) \le d(s, u_{k+1})$ 单调非递减；DFS 时间戳满足括号化定理 $[d[u], f[u]]$ 嵌套包含`,
     principle: '同屏对比图论两大基石搜索：左侧 BFS 用先进先出队列（FIFO）呈等距水波扩散；右侧 DFS 用后进先出栈（LIFO）纵深钻取并回溯。',
     deepLayers: [
       '第一层（容器决定拓扑形态）：仅将底层容器从 Queue 换成 Stack，遍历形态便从“同心圆层序波纹”剧变为“单点纵深触手”。',
@@ -290,7 +290,7 @@ export const ALGORITHM_REGISTRY: AlgorithmMeta[] = [
       { color: '#10b981', label: '旋转后恢复平衡', glow: true },
     ],
     complexity: '查找/插入/删除最坏时间严格 O(log n) · 树高上界 H < 1.4404 log₂(n + 2) - 0.328',
-    mathFormula: '平衡因子 BF(u) = height(left(u)) - height(right(u)) ∈ {-1, 0, +1}；高度为 h 的最少节点数满足斐波那契递推 N(h) = N(h-1) + N(h-2) + 1',
+    mathFormula: String.raw`平衡因子 $\text{BF}(u) = h(\text{left}(u)) - h(\text{right}(u)) \in \{-1, 0, +1\}$；高度 $h$ 的最少节点数满足斐波那契递推 $N(h) = N(h-1) + N(h-2) + 1$`,
     principle: '人类历史上第一棵自平衡二叉搜索树（Adelson-Velsky & Landis, 1962）：通过维护子树高度并在 |BF|=2 时执行局部旋转，彻底根除 BST 退化链表风险。',
     deepLayers: [
       '第一层（高度与平衡因子维护）：每个节点维护高度 h = 1 + max(h_L, h_R)，每次插入后沿祖先路径向上回溯重算 BF。',
@@ -316,7 +316,7 @@ export const ALGORITHM_REGISTRY: AlgorithmMeta[] = [
       { color: '#38bdf8', label: '范围查询 [L, R] 命中与剪枝', glow: true },
     ],
     complexity: '平衡态时间 O(log n) · 随机插入期望树高 4.311 ln n · 有序插入退化最坏 O(n)',
-    mathFormula: '全局搜索树不变量：∀u, (∀x ∈ Left(u), key(x) < key(u)) ∧ (∀y ∈ Right(u), key(y) > key(u))',
+    mathFormula: String.raw`全局搜索树不变量：$\forall u,\;(\forall x \in \text{Left}(u),\; \text{key}(x) < \text{key}(u)) \land (\forall y \in \text{Right}(u),\; \text{key}(y) > \text{key}(u))$`,
     principle: '将二分查找的折半决策固化为三维动态树形指针结构，同时支持对数时间的动态检索、插入、Hibbard 后继删除与区间剪枝查询。',
     deepLayers: [
       '第一层（四层对数路由）：从根出发每次比较直接淘汰一整棵左或右子树，在 15 个节点的 4 层满树中至多比较 4 次即可定位任意元素。',
@@ -341,7 +341,7 @@ export const ALGORITHM_REGISTRY: AlgorithmMeta[] = [
       { color: '#fbbf24', label: '找到 6×6 全局完美解', glow: true },
     ],
     complexity: '暴力穷举 O(N^N) → 逐行约束回溯 O(N!) · 空间复杂度 O(N)',
-    mathFormula: '冲突约束代数判据：同列 c₁ = c₂；主对角线 r₁ - c₁ = r₂ - c₂；副对角线 r₁ + c₁ = r₂ + c₂',
+    mathFormula: String.raw`冲突约束代数判据：同列 $c_1 = c_2$；主对角线 $r_1 - c_1 = r_2 - c_2$；副对角线 $r_1 + c_1 = r_2 + c_2$`,
     principle: '回溯法（Backtracking）与约束满足问题（CSP）典范：按行递增构建隐式状态空间树，利用三组对角/列布尔掩码实施前置剪枝。',
     deepLayers: [
       '第一层（降维建模）：由于每行恰有 1 枚皇后，可将二维棋盘压缩为一维排列向量 Q[0..N-1]，其中 Q[r] 表示第 r 行皇后所在列号。',
@@ -367,7 +367,7 @@ export const ALGORITHM_REGISTRY: AlgorithmMeta[] = [
       { color: '#10b981', label: '最优解集逆向回溯链', glow: true },
     ],
     complexity: '时间复杂度 Θ(N × W)（伪多项式时间） · 空间 O(N × W)（一维滚动数组可压至 O(W)）',
-    mathFormula: '贝尔曼最优性递推方程：dp[i][w] = max( dp[i-1][w], dp[i-1][w - weight_i] + value_i )  (当 w ≥ weight_i)',
+    mathFormula: String.raw`贝尔曼最优性递推方程：$dp[i][w] = \max\big(dp[i-1][w],\; dp[i-1][w - \text{wt}_i] + \text{val}_i\big)\quad (w \ge \text{wt}_i)$`,
     principle: '将指数级 O(2^N) 子集组合搜索转化为二维状态网格递推：每座水晶塔高度代表前 i 件物品在容量 w 下的理论最大价值。',
     deepLayers: [
       '第一层（重叠子问题与无后效性）：无论前 i-1 件物品如何组合，只要消耗容量相同，留给后续物品的剩余决策空间完全等价。',
@@ -395,7 +395,7 @@ export const ALGORITHM_REGISTRY: AlgorithmMeta[] = [
       { color: '#fbbf24', label: '黄金分割对数螺线轨 φ≈1.618', glow: true },
     ],
     complexity: '线性递推 Θ(n) · 矩阵快速幂 Θ(log n) · Binet 闭式解渐近增长率 Θ(φⁿ)',
-    mathFormula: 'Binet 显式通项公式：F(n) = (φⁿ - ψⁿ)/√5，其中黄金比 φ = (1+√5)/2 ≈ 1.6180339887，共轭根 ψ = (1-√5)/2 ≈ -0.618',
+    mathFormula: String.raw`Binet 显式通项公式：$F(n) = \frac{\varphi^n - \psi^n}{\sqrt{5}}$，其中黄金比 $\varphi = \frac{1+\sqrt{5}}{2} \approx 1.6180339887$，共轭根 $\psi = \frac{1-\sqrt{5}}{2} \approx -0.618$`,
     principle: '二阶齐次线性常系数差分方程 F(n) - F(n-1) - F(n-2) = 0 的三维几何映射：柱高呈指数增长，相邻项比值快速振荡收敛于黄金分割常数 φ。',
     deepLayers: [
       '第一层（特征方程与黄金根）：由递推关系导出特征多项式 λ² - λ - 1 = 0，其唯一正根即为黄金分割比 φ = (1+√5)/2。',
@@ -421,7 +421,7 @@ export const ALGORITHM_REGISTRY: AlgorithmMeta[] = [
       { color: '#10b981', label: '前方时域合成方波轨迹', glow: true },
     ],
     complexity: '离散傅里叶变换 DFT O(N²) · 库利-图基快速傅里叶变换 FFT O(N log N)',
-    mathFormula: '方波傅里叶级数展开：f(t) = (4/π) ∑_{k=1}^∞ [ sin((2k-1)ω₀t) / (2k-1) ]；欧拉相量形式 e^{iωt} = cos(ωt) + i·sin(ωt)',
+    mathFormula: String.raw`方波傅里叶级数展开：$f(t) = \frac{4}{\pi}\sum_{k=1}^\infty \frac{\sin((2k-1)\omega_0 t)}{2k-1}$；欧拉相量形式 $e^{i\omega t} = \cos(\omega t) + i\sin(\omega t)$`,
     principle: '在同一个三维舞台同时打通【复平面相量圆】、【时域正弦分解波】与【频域离散幅度谱】：展示光滑正弦波如何叠加逼近陡峭跳变的方波。',
     deepLayers: [
       '第一层（希尔伯特空间正交基分解）：任何满足狄利克雷条件（Dirichlet）的周期信号，均可唯一分解为无穷多个正交谐波 sin(nω₀t) 的线性组合。',
@@ -447,7 +447,7 @@ export const ALGORITHM_REGISTRY: AlgorithmMeta[] = [
       { color: '#a855f7', label: '137.5° 黄金叶序星云与螺线臂', glow: true },
     ],
     complexity: '三维参数曲线微分几何 · 常曲率 κ = R/(R²+c²) · 常挠率 τ = c/(R²+c²)',
-    mathFormula: '双螺旋参数方程 r_A(t)=(R cos t, ct, R sin t), r_B(t)=(R cos(t+π), ct, R sin(t+π))；Frenet 方程 dT/ds = κN, dN/ds = -κT + τB',
+    mathFormula: String.raw`双螺旋参数方程 $\mathbf{r}_A(t)=(R\cos t, ct, R\sin t),\;\mathbf{r}_B(t)=(R\cos(t+\pi), ct, R\sin(t+\pi))$；Frenet 方程 $\frac{d\mathbf{T}}{ds} = \kappa\mathbf{N},\;\frac{d\mathbf{N}}{ds} = -\kappa\mathbf{T} + \tau\mathbf{B}$`,
     principle: '融合微分几何空间曲线论与生物数学叶序模型：上方演示常曲率常挠率双螺旋与 Frenet 运动标架，底部演示黄金发散角向日葵螺旋阵。',
     deepLayers: [
       '第一层（Lancret 定理与一般螺线）：圆柱螺线的切向量 T 与中心竖直轴始终保持恒定夹角，其曲率 κ 与挠率 τ 之比为常数 R/c。',
@@ -473,7 +473,7 @@ export const ALGORITHM_REGISTRY: AlgorithmMeta[] = [
       { color: '#fbbf24', label: '复平面逃逸轨 vs 周期收敛轨', glow: true },
     ],
     complexity: '单点逃逸时间判定 O(MaxIter) · 连续势能平滑着色 ν(c) = n - log₂(log|zₙ|/log 2)',
-    mathFormula: '二次复动力映射 z_{n+1} = z_n² + c (z_0 = 0, c ∈ ℂ)；集合定义 M = { c ∈ ℂ | sup_n |z_n| ≤ 2 }',
+    mathFormula: String.raw`二次复动力映射 $z_{n+1} = z_n^2 + c\;(z_0 = 0,\; c \in \mathbb{C})$；集合定义 $\mathcal{M} = \{ c \in \mathbb{C} \mid \sup_n |z_n| \le 2 \}$`,
     principle: '将复平面上最简单的二次多项式迭代映射为三维分形高程地形：中心幽暗盆地代表永不发散的稳定参数，四周崇山峻岭展现无穷自相似边界。',
     deepLayers: [
       '第一层（逃逸半径定理 Escape Radius）：一旦某步迭代模长 |z_n| > 2，则序列后续必然以双指数速度发散至无穷大，故以 R=2 作为精确逃逸判据。',
@@ -499,7 +499,7 @@ export const ALGORITHM_REGISTRY: AlgorithmMeta[] = [
       { color: '#fbbf24', label: '双翼鞍焦平衡点 C⁺ 与 C⁻', glow: true },
     ],
     complexity: '三元自治非线性常微分方程组 · RK4 四阶龙格-库塔数值积分 · 奇异吸引子分形维数 D_KY ≈ 2.06',
-    mathFormula: 'dx/dt = σ(y - x),  dy/dt = x(ρ - z) - y,  dz/dt = xy - βz  (经典混沌参数 σ=10, ρ=28, β=8/3)',
+    mathFormula: String.raw`$\frac{dx}{dt} = \sigma(y - x),\;\frac{dy}{dt} = x(\rho - z) - y,\;\frac{dz}{dt} = xy - \beta z$（经典混沌参数 $\sigma=10,\;\rho=28,\;\beta=8/3$）`,
     principle: '爱德华·洛伦兹 1963 年大气热对流简化模型：在三维相空间同场释放初值仅相差万分之一的青/红双轨，直观重现“蝴蝶效应”从同步伴飞到彻底分道扬镳。',
     deepLayers: [
       '第一层（相空间体积耗散收缩）：速度场散度 ∇·V = ∂ẋ/∂x + ∂ẏ/∂y + ∂ż/∂z = -(σ + 1 + β) = -13.67 < 0，说明三维相体积以 e^{-13.67t} 极速收缩至零体积薄片。',
@@ -525,7 +525,7 @@ export const ALGORITHM_REGISTRY: AlgorithmMeta[] = [
       { color: '#1e1b4b', label: '相消干涉静止节线 (Δr = (m+0.5)λ)', glow: false },
     ],
     complexity: '二维达朗贝尔波动方程 ∂²u/∂t² = c²(∂²u/∂x² + ∂²u/∂z²) · 惠更斯-菲涅耳线性叠加原理',
-    mathFormula: '合成波场 u(x,z,t) = A(r₁)sin(kr₁ - ωt) + A(r₂)sin(kr₂ - ωt)；合成振幅 A_total = 2A|cos(k(r₁ - r₂)/2)|',
+    mathFormula: String.raw`合成波场 $u(x,z,t) = A(r_1)\sin(kr_1 - \omega t) + A(r_2)\sin(kr_2 - \omega t)$；合成振幅 $A_{\text{total}} = 2A|\cos(k(r_1 - r_2)/2)|$`,
     principle: '两颗同步振动的相干点源在连续三维水面上激起球面/柱面简谐波，空间各点位移严格遵循线性叠加原理，交织出稳定的双曲线干涉花样。',
     deepLayers: [
       '第一层（波程差决定空间振幅调制）：空间任意点 P(x,z) 到两波源的距离差 Δr = |r₁ - r₂| 恒定，其轨迹在几何上构成以 S₁, S₂ 为焦点的共焦双曲线族。',
@@ -551,7 +551,7 @@ export const ALGORITHM_REGISTRY: AlgorithmMeta[] = [
       { color: '#10b981', label: '流形测地线相位追踪粒子', glow: true },
     ],
     complexity: '二维紧致可定向闭流形 · 亏格 g = 1 · 欧拉示性数 χ = 2 - 2g = 0 · 纽结交叉数 c = min(p(q-1), q(p-1)) = 12',
-    mathFormula: '环面参数化 x=(R+r cos v)cos u, y=r sin v, z=(R+r cos v)sin u；(p,q) 纽结映射 u = p·t, v = q·t (gcd(p,q)=1)',
+    mathFormula: String.raw`环面参数化 $x=(R+r\cos v)\cos u,\;y=r\sin v,\;z=(R+r\cos v)\sin u$；$(p,q)$ 纽结映射 $u = p t,\; v = q t\;(\gcd(p,q)=1)$`,
     principle: '展示代数拓扑与纽结理论中的核心基准流形：二维环面 T² = S¹ × S¹ 及其一阶同调群的两个正交生成元圆环，外表面缠绕一条 (3,5) 互质环面纽结。',
     deepLayers: [
       '第一层（圆周笛卡尔积拓扑）：环面 T² 是两个一维圆周 S¹ 的拓扑乘积，其基本群 π₁(T²) ≅ ℤ × ℤ 为交换群，由不可缩成一点的经圈 α 与纬圈 β 张成。',
@@ -577,7 +577,7 @@ export const ALGORITHM_REGISTRY: AlgorithmMeta[] = [
       { color: '#f43f5e', label: '单位法向量 n(u) 反转指示箭', glow: true },
     ],
     complexity: '二维紧致不可定向无边闭流形 · 欧拉示性数 χ = 0 · 不可定向亏格 k = 2 · R⁴ 嵌入 / R³ 浸入',
-    mathFormula: '基本多边形粘合关系 aba⁻¹b = 1；同调群 H₀=ℤ, H₁=ℤ ⊕ ℤ₂（含二阶挠元 Torsion）, H₂=0',
+    mathFormula: String.raw`基本多边形粘合关系 $aba^{-1}b = 1$；同调群 $H_0=\mathbb{Z},\; H_1=\mathbb{Z}\oplus\mathbb{Z}_2$（含二阶挠元 Torsion），$H_2=0$`,
     principle: '菲利克斯·克莱因 1882 年构造的著名四维拓扑流形：通过将圆柱面两端沿相反方向粘合，形成一个没有边界、也不分“内部”与“外部”的单侧闭合曲面。',
     deepLayers: [
       '第一层（双莫比乌斯带沿边缝合）：若将克莱因瓶沿对称平面纵向切开，会得到两条完全镜像对称的莫比乌斯带（Möbius Strip）。',
@@ -605,7 +605,7 @@ export const ALGORITHM_REGISTRY: AlgorithmMeta[] = [
       { color: '#eab308', label: '簇 #4 质心与样本归属激光连线', glow: true },
     ],
     complexity: 'Lloyd 迭代每轮 O(K · N · d) · NP-Hard 精确全局最优 · 坐标下降保证单调收敛至局部极值',
-    mathFormula: '畸变代价函数（簇内平方误差和） J(c, μ) = ∑_{i=1}^N || x^{(i)} - μ_{c^{(i)}} ||₂²；质心更新 μ_k = (1/|C_k|) ∑_{x∈C_k} x',
+    mathFormula: String.raw`畸变代价函数（簇内平方误差和）$J(c, \mu) = \sum_{i=1}^N \|\mathbf{x}^{(i)} - \boldsymbol{\mu}_{c^{(i)}}\|_2^2$；质心更新 $\boldsymbol{\mu}_k = \frac{1}{|C_k|}\sum_{\mathbf{x}\in C_k}\mathbf{x}$`,
     principle: '期望最大化（EM）思想的硬聚类特例：在三维特征空间交替固定质心划分 Voronoi 归属域（E步），再固定样本移动质心至几何均值重心（M步）。',
     deepLayers: [
       '第一层（Voronoi 空间剖分 — E步）：固定 K 个质心 μ_k，计算每个三维样本到各质心的欧氏距离，将空间切割为 K 个凸多面体 Voronoi 单元。',
@@ -631,7 +631,7 @@ export const ALGORITHM_REGISTRY: AlgorithmMeta[] = [
       { color: '#10b981', label: '低残差收敛柱 (最小二乘拟合)', glow: true },
     ],
     complexity: '梯度下降每轮 O(N · d) · 正规方程矩阵求逆 O(d³ + N·d²) · 凸优化唯一全局最优解',
-    mathFormula: '目标函数 L(w,b) = (1/2N) ||Xw - y||₂²；梯度 ∇_w L = (1/N) Xᵀ(Xw - y)；闭式正规方程 w* = (XᵀX)⁻¹Xᵀy',
+    mathFormula: String.raw`目标函数 $\mathcal{L}(\mathbf{w},b) = \frac{1}{2N}\|\mathbf{X}\mathbf{w} - \mathbf{y}\|_2^2$；梯度 $\nabla_{\mathbf{w}}\mathcal{L} = \frac{1}{N}\mathbf{X}^\top(\mathbf{X}\mathbf{w} - \mathbf{y})$；闭式正规方程 $\mathbf{w}^* = (\mathbf{X}^\top\mathbf{X})^{-1}\mathbf{X}^\top\mathbf{y}$`,
     principle: '高斯-马尔可夫最小二乘法的三维空间展现：通过梯度下降调整法向量权重 (w₁, w₂) 与截距 b，使半透明回归超平面最小化所有垂直残差柱平方和。',
     deepLayers: [
       '第一层（高维仿射超平面建模）：双特征输入 (x₁, x₂) 与连续响应值 y 在 R³ 中张成一张二维平面，权重 w₁, w₂ 直接决定平面的法向倾角。',
@@ -657,7 +657,7 @@ export const ALGORITHM_REGISTRY: AlgorithmMeta[] = [
       { color: '#10b981', label: 'Softmax 类别置信度概率柱', glow: true },
     ],
     complexity: '单步前向/反向复杂度 O(∑_{l=1}^L d_{l-1} · d_l) · 万能近似定理（Universal Approximation）',
-    mathFormula: '前向 a^{(l)} = σ(W^{(l)} a^{(l-1)} + b^{(l)})；反向误差项 δ^{(l)} = ((W^{(l+1)})ᵀ δ^{(l+1)}) ⊙ σ\'(z^{(l)})，∂L/∂W^{(l)} = δ^{(l)} (a^{(l-1)})ᵀ',
+    mathFormula: String.raw`前向 $\mathbf{a}^{(l)} = \sigma(\mathbf{W}^{(l)}\mathbf{a}^{(l-1)} + \mathbf{b}^{(l)})$；反向误差项 $\boldsymbol{\delta}^{(l)} = ((\mathbf{W}^{(l+1)})^\top \boldsymbol{\delta}^{(l+1)}) \odot \sigma'(\mathbf{z}^{(l)})$，$\frac{\partial\mathcal{L}}{\partial\mathbf{W}^{(l)}} = \boldsymbol{\delta}^{(l)}(\mathbf{a}^{(l-1)})^\top$`,
     principle: '深度学习的核心引擎（Rumelhart, Hinton & Williams, 1986）：前向传播逐层扭曲折叠输入流形并输出 Softmax 概率；反向传播利用微积分链式法则逆向分配误差责任。',
     deepLayers: [
       '第一层（仿射变换与非线性激活交替）：若无 ReLU / GELU 等非线性激活函数 σ(·)，任意多层线性矩阵连乘 W_L...W_1 仍退化为单层线性变换。',
@@ -683,7 +683,7 @@ export const ALGORITHM_REGISTRY: AlgorithmMeta[] = [
       { color: '#f43f5e', label: '全局最优解极小值靶心', glow: true },
     ],
     complexity: '一阶梯度迭代每步 O(P)（P 为参数量） · Adam 额外维护 2P 动量与方差状态缓冲区',
-    mathFormula: 'Adam 更新方程：m_t = β₁m_{t-1} + (1-β₁)g_t，v_t = β₂v_{t-1} + (1-β₂)g_t²，θ_{t+1} = θ_t - η · m̂_t / (√v̂_t + ε)',
+    mathFormula: String.raw`Adam 更新方程：$m_t = \beta_1 m_{t-1} + (1-\beta_1)g_t$，$v_t = \beta_2 v_{t-1} + (1-\beta_2)g_t^2$，$\theta_{t+1} = \theta_t - \eta\frac{\hat{m}_t}{\sqrt{\hat{v}_t} + \varepsilon}$`,
     principle: '在具有病态条件数（Ill-Conditioned，横向平缓、纵向陡峭）的三维损失峡谷上同场竞速，直观揭示为什么现代深度学习普遍采用 Adam / AdamW。',
     deepLayers: [
       '第一层（负梯度最速下降方向）：梯度向量 ∇L(θ) 正交于等高线并指向函数增长最快方向，负梯度 -∇L(θ) 即为一阶泰勒展开下的局部最速下降方向。',
@@ -709,7 +709,7 @@ export const ALGORITHM_REGISTRY: AlgorithmMeta[] = [
       { color: '#10b981', label: '当前落入高纯度分类叶节点', glow: true },
     ],
     complexity: '单棵树构建 O(N · d · log N) · 推理路由时间严格等于树深 O(Depth) · 强可解释白盒模型',
-    mathFormula: '基尼不纯度 Gini(D) = 1 - ∑_{k=1}^K p_k²；最优分裂准则 argmin_{j, s} [ (|D_L|/|D|)Gini(D_L) + (|D_R|/|D|)Gini(D_R) ]',
+    mathFormula: String.raw`基尼不纯度 $\text{Gini}(D) = 1 - \sum_{k=1}^K p_k^2$；最优分裂准则 $\operatorname*{arg\,min}_{j, s}\big[\frac{|D_L|}{|D|}\text{Gini}(D_L) + \frac{|D_R|}{|D|}\text{Gini}(D_R)\big]$`,
     principle: '通过递归贪心搜索最优特征 X_j 与切分阈值 s，将高维特征空间正交切割为轴平行的超矩形区域，使落入每个第 4 层叶子桶的样本类别纯度最高。',
     deepLayers: [
       '第一层（信息熵与基尼不纯度度量）：根节点初始混合了多类样本（Gini=0.66 不纯度高）；每次二元分裂的目标是最大化子节点纯度增益 ΔGini。',
@@ -735,7 +735,7 @@ export const ALGORITHM_REGISTRY: AlgorithmMeta[] = [
       { color: '#10b981', label: '3D 最大间隔分割超平面与间隔带', glow: true },
     ],
     complexity: 'SMO 序列最小优化训练 O(N² ~ N³) · 推理仅依赖支持向量 O(N_sv · d) · 凸二次规划全局最优',
-    mathFormula: '原问题 min (1/2)||w||² + C∑ξ_i  s.t. y_i(wᵀφ(x_i)+b) ≥ 1-ξ_i；高斯核 K(x,z) = ⟨φ(x),φ(z)⟩ = exp(-γ||x-z||²)',
+    mathFormula: String.raw`原问题 $\min\;\frac{1}{2}\|\mathbf{w}\|_2^2 + C\sum\xi_i\;\text{s.t.}\; y_i(\mathbf{w}^\top\phi(\mathbf{x}_i)+b)\ge 1-\xi_i$；高斯核 $K(\mathbf{x},\mathbf{z}) = \langle\phi(\mathbf{x}),\phi(\mathbf{z})\rangle = \exp(-\gamma\|\mathbf{x}-\mathbf{z}\|_2^2)$`,
     principle: '统计学习理论（Vapnik）的巅峰之作：当二维同心圆数据线性不可分时，通过高斯 RBF 核函数将内圈样本向三维高度轴“顶起”，再用最大间隔超平面一刀切开！',
     deepLayers: [
       '第一层（Cover 定理与高维线性可分）：低维空间中非线性纠缠的复杂分类边界，通过非线性映射 φ(x) 投射到高维乃至无穷维希尔伯特空间后，以极高概率变为线性可分。',
@@ -761,7 +761,7 @@ export const ALGORITHM_REGISTRY: AlgorithmMeta[] = [
       { color: '#10b981', label: '正交激光投影降维后 2D 流形', glow: true },
     ],
     complexity: '协方差矩阵计算 O(N · d²) · 特征值分解 EVD / 奇异值分解 SVD O(d³)',
-    mathFormula: '中心化协方差矩阵 Σ = (1/N) XᵀX = U Λ Uᵀ；最大方差优化 max_{||u||=1} uᵀΣu  ⇒  Σu₁ = λ₁u₁；方差贡献率 η_k = ∑_{i=1}^k λ_i / ∑_{j=1}^d λ_j',
+    mathFormula: String.raw`中心化协方差矩阵 $\boldsymbol{\Sigma} = \frac{1}{N}\mathbf{X}^\top\mathbf{X} = \mathbf{U}\boldsymbol{\Lambda}\mathbf{U}^\top$；最大方差优化 $\max_{\|\mathbf{u}\|=1}\mathbf{u}^\top\boldsymbol{\Sigma}\mathbf{u} \implies \boldsymbol{\Sigma}\mathbf{u}_1 = \lambda_1\mathbf{u}_1$；方差贡献率 $\eta_k = \frac{\sum_{i=1}^k\lambda_i}{\sum_{j=1}^d\lambda_j}$`,
     principle: '无监督线性降维皇冠算法：通过正交坐标旋转对角化协方差矩阵，找出数据延展最宽的正交主轴 PC₁, PC₂，并发射正交投影激光将 3D 点云压缩至 2D 主平面。',
     deepLayers: [
       '第一层（最大投影方差与最小重构误差等价性）：由勾股定理 ||x_i||² = ||投影点||² + ||正交残差柱||²，最大化投影点在主平面上的分散程度（方差），严格等价于最小化绿色正交激光投影距离平方和！',
@@ -787,7 +787,7 @@ export const ALGORITHM_REGISTRY: AlgorithmMeta[] = [
       { color: '#10b981', label: '强关联 Key/Value 上下文语义聚焦', glow: true },
     ],
     complexity: '标准自注意力时间 O(L² · d) · 显存激活 O(L²) · FlashAttention 分块 IO 感知压缩至线性显存 O(L)',
-    mathFormula: 'Scaled Dot-Product Attention：Attention(Q, K, V) = softmax( (Q · Kᵀ) / √d_k ) · V，其中 Q=XW_Q, K=XW_K, V=XW_V',
+    mathFormula: String.raw`Scaled Dot-Product Attention：$\text{Attention}(\mathbf{Q},\mathbf{K},\mathbf{V}) = \text{softmax}\big(\frac{\mathbf{Q}\mathbf{K}^\top}{\sqrt{d_k}}\big)\mathbf{V}$，其中 $\mathbf{Q}=\mathbf{X}\mathbf{W}_Q,\;\mathbf{K}=\mathbf{X}\mathbf{W}_K,\;\mathbf{V}=\mathbf{X}\mathbf{W}_V$`,
     principle: '现代大语言模型（GPT / DeepSeek / Claude）的心脏（Vaswani et al., 2017）：打破 RNN 顺序依赖瓶颈，让序列中任意两个 Token 通过三维注意力能量拱桥在 O(1) 路径长度内直接交互。',
     deepLayers: [
       '第一层（Q / K / V 检索数据库隐喻）：每个 Token 通过三个独立线性矩阵投影为查询向量 Query（我要找什么）、键向量 Key（我有什么特征标签）与值向量 Value（我承载的实际语义内容）。',
@@ -813,7 +813,7 @@ export const ALGORITHM_REGISTRY: AlgorithmMeta[] = [
       { color: '#10b981', label: '2×2 最大池化与 Softmax 输出', glow: true },
     ],
     complexity: '单层卷积计算量 O(H_out · W_out · K² · C_in · C_out) · 局部感知 + 权值共享',
-    mathFormula: 'Y(i, j) = ReLU( ∑_m ∑_n X(i+m, j+n) · W(m, n) + b )；MaxPool 保留局部 2×2 显著响应极值',
+    mathFormula: String.raw`$Y(i,j) = \text{ReLU}\big(\sum_m\sum_n X(i+m, j+n)\,W(m,n) + b\big)$；MaxPool 保留局部 $2\times 2$ 显著响应极值`,
     principle: '利用平移不变的局部卷积核扫描二维像素矩阵，逐层提取边缘、纹理、部件直到高级语义表征，并通过池化降低空间维度。',
     deepLayers: [
       '第一层（局部感受野与参数共享）：每个输出特征像素仅连接局部 3×3 邻域，且全图共享同一组卷积权重，参数量较全连接减少数个数量级。',
@@ -839,7 +839,7 @@ export const ALGORITHM_REGISTRY: AlgorithmMeta[] = [
       { color: '#10b981', label: '宝藏终点 (+100) 与最优导航路径', glow: true },
     ],
     complexity: '表格型每次交互更新 O(1) · 状态空间 |S|×|A| · DQN 引入神经网络泛化高维状态',
-    mathFormula: 'Q(s, a) ← Q(s, a) + α [ r + γ max_{a\'} Q(s\', a\') - Q(s, a) ]',
+    mathFormula: String.raw`$Q(s,a) \leftarrow Q(s,a) + \alpha\big[r + \gamma\max_{a'} Q(s',a') - Q(s,a)\big]$`,
     principle: '无模型（Model-Free）异策略强化学习经典算法：智能体在环境中不断试错，利用时序差分（TD）误差逐步逼近最优贝尔曼动作价值函数 Q*。',
     deepLayers: [
       '第一层（探索与利用权衡 ε-Greedy）：以概率 ε 随机尝试未知动作防止陷入局部次优，以概率 1-ε 选择当前最大 Q 值动作。',
@@ -865,7 +865,7 @@ export const ALGORITHM_REGISTRY: AlgorithmMeta[] = [
       { color: '#10b981', label: '外环高清目标分布 x₀ 收敛', glow: true },
     ],
     complexity: 'DDPM 采样 O(T · C_net)（T=50~1000 步） · DDIM / Flow Matching 加速至 4~20 步',
-    mathFormula: '前向加噪 q(x_t|x₀)=N(√ᾱ_t x₀, (1-ᾱ_t)I)；逆向预测 x_{t-1} = (1/√α_t)[x_t - ((1-α_t)/√(1-ᾱ_t)) ε_θ(x_t,t)] + σ_t z',
+    mathFormula: String.raw`前向加噪 $q(\mathbf{x}_t\mid\mathbf{x}_0)=\mathcal{N}(\sqrt{\bar{\alpha}_t}\mathbf{x}_0,\,(1-\bar{\alpha}_t)\mathbf{I})$；逆向预测 $\mathbf{x}_{t-1}=\frac{1}{\sqrt{\alpha_t}}\big[\mathbf{x}_t-\frac{1-\alpha_t}{\sqrt{1-\bar{\alpha}_t}}\boldsymbol{\epsilon}_\theta(\mathbf{x}_t,t)\big]+\sigma_t\mathbf{z}$`,
     principle: '生成式 AI 图像与视频底座核心范式：从纯高斯白噪声出发，通过神经网络反复估计当前样本所含噪声方向并逆向逐步去噪，雕刻出高维清晰流形。',
     deepLayers: [
       '第一层（可控前向马尔可夫加噪）：按调度系数 β_t 向真实数据连续注入微小高斯噪声，使任意复杂分布平滑退化为标准正态分布。',
@@ -891,7 +891,7 @@ export const ALGORITHM_REGISTRY: AlgorithmMeta[] = [
       { color: '#38bdf8', label: 'LLM 融合外部上下文生成回答', glow: true },
     ],
     complexity: 'HNSW 近似最近邻检索 O(log N) · 余弦相似度 cos(q, d) = (q·d)/(||q|| ||d||)',
-    mathFormula: 'TopK(q) = argmax_{d ∈ D}^{(k)} (q · d) / (||q||₂ ||d||₂)；P(y|x) ≈ ∑_{d ∈ TopK} P(d|x) P(y|x, d)',
+    mathFormula: String.raw`直觉对照：余弦Top-K检索 $\operatorname{TopK}(\mathbf{q}) = \operatorname*{arg\,max}_{d \in \mathcal{D}}^{(k)} \frac{\mathbf{q} \cdot \mathbf{d}}{\|\mathbf{q}\|_2 \|\mathbf{d}\|_2}$；知识边缘化生成 $P(y\mid x) \approx \sum_{d \in \operatorname{TopK}} P(d\mid x)\,P(y\mid x, d)$`,
     principle: '打破大模型静态参数记忆局限与幻觉瓶颈：通过 HNSW 多层小世界向量索引在毫秒级内召回最新私有知识切片，注入 Prompt 作为事实依据生成答案。',
     deepLayers: [
       '第一层（稠密语义嵌入 Embedding）：将非结构化文本切分为 Chunk 并映射为高维向量，使语义相近的片段在几何空间距离极近。',
@@ -917,7 +917,7 @@ export const ALGORITHM_REGISTRY: AlgorithmMeta[] = [
       { color: '#10b981', label: 'Top-2 辅助专家与加权输出', glow: true },
     ],
     complexity: '总参数扩容 E× · 单 Token 推理仅激活 K/E 比例 FLOPs (如 Top-2/8 = 25%)',
-    mathFormula: 'y = ∑_{i ∈ TopK(G(x))} G_i(x) · E_i(x)，其中 G(x) = Softmax(TopK(x · W_g))',
+    mathFormula: String.raw`$\mathbf{y} = \sum_{i \in \operatorname{TopK}(G(\mathbf{x}))} G_i(\mathbf{x})\,E_i(\mathbf{x})$，其中 $G(\mathbf{x}) = \text{Softmax}(\operatorname{TopK}(\mathbf{x}\mathbf{W}_g))$`,
     principle: '现代万亿级大语言模型（DeepSeek / Mixtral / Switch Transformer）的核心扩容机制：将臃肿的单体 FFN 拆分为多个领域专家子网络，每个 Token 动态路由至 Top-K 个最擅长专家。',
     deepLayers: [
       '第一层（条件计算打破参数-算力耦合）：模型总容量可随专家数线性扩张，但单次前向推理激活的计算量保持恒定稀疏，实现极高性价比。',
@@ -943,7 +943,7 @@ export const ALGORITHM_REGISTRY: AlgorithmMeta[] = [
       { color: '#f59e0b', label: '输出门 o_t → 隐藏状态 h_t', glow: true },
     ],
     complexity: '单时间步 O(4 · (d_in + d_h) · d_h) · 加性细胞通道缓解深层时间梯度消失',
-    mathFormula: 'f_t=σ(W_f[h_{t-1},x_t]);\; i_t=σ(W_i[h_{t-1},x_t]);\; C_t = f_t⊙C_{t-1} + i_t⊙C̃_t;\; h_t = o_t⊙tanh(C_t)',
+    mathFormula: String.raw`$\mathbf{f}_t=\sigma(\mathbf{W}_f[\mathbf{h}_{t-1},\mathbf{x}_t]),\;\mathbf{i}_t=\sigma(\mathbf{W}_i[\mathbf{h}_{t-1},\mathbf{x}_t]),\;\mathbf{C}_t=\mathbf{f}_t\odot\mathbf{C}_{t-1}+\mathbf{i}_t\odot\tilde{\mathbf{C}}_t,\;\mathbf{h}_t=\mathbf{o}_t\odot\tanh(\mathbf{C}_t)$`,
     principle: 'Hochreiter & Schmidhuber 提出的经典序列建模单元：在隐藏状态之外增设一条仅通过少量线性加减门控交互的细胞状态高速公路 C_t，使长距离关键上下文与梯度畅通无阻。',
     deepLayers: [
       '第一层（遗忘门 Forget Gate）：由 Sigmoid 输出 [0, 1] 阀门权重 f_t，决定上一时刻细胞记忆 C_{t-1} 中哪些过期信息应当衰减清空，哪些长期主线予以保留。',

@@ -6,6 +6,8 @@ import * as THREE from 'three';
  * Tripo 导出的两只猫本身就是这个空间，所以下面的预设值是对 GLB 顶点逐一分析后量出来的。
  */
 
+export type CatEyeStyle = 'amber' | 'emerald' | 'sapphire' | 'pixel';
+
 export interface CatFaceTuning {
   /** 五官水平中心 */
   centerX: number;
@@ -22,6 +24,8 @@ export interface CatFaceTuning {
   mouthSize: number;
   /** 五官离开模型表面的距离（防止被毛刺穿透） */
   surfaceOffset: number;
+  /** 眼眸风格：3D 琉璃猫眼（琥珀/翡翠/星河蓝）或经典像素 */
+  eyeStyle?: CatEyeStyle;
 }
 
 export interface CatProfile {
@@ -58,18 +62,19 @@ export const SITTING_CAT_PROFILE: CatProfile = {
   face: {
     centerX: -0.11,
     eyeY: 0.64,
-    eyeSpacing: 0.198,
-    eyeW: 0.03,
-    eyeH: 0.062,
-    mouthY: 0.553,
+    eyeSpacing: 0.186,
+    eyeW: 0.032,
+    eyeH: 0.078,
+    mouthY: 0.558,
     mouthSize: 0.018,
-    surfaceOffset: 0.006
+    surfaceOffset: 0.015,
+    eyeStyle: 'amber'
   },
   earTipL: v(-0.268, 1.0, 0.279),
   earTipR: v(0.083, 0.981, 0.294),
   earSize: 0.16,
   headPivot: v(-0.11, 0.47, 0.18),
-  headRange: [0.42, 0.56],
+  headRange: [0.38, 0.50],
   headZMin: -0.06,
   tailBase: v(0.2, 0.09, -0.22),
   tailTip: v(0.43, 0.08, -0.17),
@@ -87,18 +92,19 @@ export const UPRIGHT_CAT_PROFILE: CatProfile = {
   face: {
     centerX: -0.004,
     eyeY: 0.684,
-    eyeSpacing: 0.243,
-    eyeW: 0.03,
-    eyeH: 0.06,
-    mouthY: 0.6,
+    eyeSpacing: 0.206,
+    eyeW: 0.032,
+    eyeH: 0.076,
+    mouthY: 0.602,
     mouthSize: 0.016,
-    surfaceOffset: 0.008
+    surfaceOffset: 0.016,
+    eyeStyle: 'amber'
   },
   earTipL: v(-0.234, 0.997, 0.17),
   earTipR: v(0.201, 1.0, 0.145),
   earSize: 0.17,
   headPivot: v(-0.004, 0.52, 0.1),
-  headRange: [0.47, 0.6],
+  headRange: [0.42, 0.52],
   headZMin: -0.14,
   tailBase: v(0.06, 0.24, -0.14),
   tailTip: v(0.32, 0.45, -0.36),
@@ -177,18 +183,19 @@ export function autoDetectProfile(positions: Float32Array): CatProfile {
     face: {
       centerX: cx,
       eyeY: 0.64,
-      eyeSpacing: 0.2,
-      eyeW: 0.03,
-      eyeH: 0.06,
-      mouthY: 0.55,
+      eyeSpacing: 0.19,
+      eyeW: 0.032,
+      eyeH: 0.076,
+      mouthY: 0.556,
       mouthSize: 0.017,
-      surfaceOffset: 0.008
+      surfaceOffset: 0.015,
+      eyeStyle: 'amber'
     },
     earTipL: earL,
     earTipR: earR,
     earSize: 0.16,
     headPivot: v(cx, 0.5, headZ),
-    headRange: [0.45, 0.58],
+    headRange: [0.40, 0.52],
     headZMin: Number.isFinite(headZMin) ? headZMin + 0.04 : -0.1,
     tailBase,
     tailTip: tail,
@@ -201,39 +208,100 @@ export function autoDetectProfile(positions: Float32Array): CatProfile {
   };
 }
 
-/** 在模型表面找某个 (x, y) 正前方的落点与法线，用来把像素五官「贴」到脸上 */
+/** 在模型表面找某个 (x, y) 正前方的落点与法线，用来把立体五官「贴」到脸上 */
 export class SurfaceSampler {
-  constructor(private positions: Float32Array, private normals: Float32Array) {}
+  private static readonly GRID_W = 240;
+  private static readonly GRID_H = 200;
+  private static readonly X_MIN = -0.6;
+  private static readonly X_SPAN = 1.2;
+  private cellZ: Float32Array;
+  private cellNx: Float32Array;
+  private cellNy: Float32Array;
+  private cellNz: Float32Array;
 
-  sample(x: number, y: number, radius = 0.01): { point: THREE.Vector3; normal: THREE.Vector3 } {
-    const P = this.positions;
-    const N = this.normals;
-    const count = P.length / 3;
+  constructor(
+    private positions: Float32Array,
+    private normals: Float32Array,
+    private centerX = 0
+  ) {
+    const size = SurfaceSampler.GRID_W * SurfaceSampler.GRID_H;
+    this.cellZ = new Float32Array(size).fill(-Infinity);
+    this.cellNx = new Float32Array(size);
+    this.cellNy = new Float32Array(size);
+    this.cellNz = new Float32Array(size);
+
+    const count = positions.length / 3;
+    for (let i = 0; i < count; i++) {
+      const x = positions[i * 3];
+      const y = positions[i * 3 + 1];
+      const z = positions[i * 3 + 2];
+      const gx = Math.floor(((x - SurfaceSampler.X_MIN) / SurfaceSampler.X_SPAN) * SurfaceSampler.GRID_W);
+      const gy = Math.floor(y * SurfaceSampler.GRID_H);
+      if (gx < 0 || gx >= SurfaceSampler.GRID_W || gy < 0 || gy >= SurfaceSampler.GRID_H) continue;
+      const idx = gy * SurfaceSampler.GRID_W + gx;
+      if (z > this.cellZ[idx]) {
+        this.cellZ[idx] = z;
+        this.cellNx[idx] = normals[i * 3];
+        this.cellNy[idx] = normals[i * 3 + 1];
+        this.cellNz[idx] = normals[i * 3 + 2];
+      }
+    }
+  }
+
+  sample(
+    x: number,
+    y: number,
+    radius = 0.01,
+    centerX = this.centerX
+  ): { point: THREE.Vector3; normal: THREE.Vector3 } {
+    const baseRadius = Math.max(radius, 0.028);
+    const symNormal = new THREE.Vector3((x - centerX) * 0.6, (y - 0.6) * 0.5, 1.0).normalize();
+    const cellW = SurfaceSampler.X_SPAN / SurfaceSampler.GRID_W;
+    const cellH = 1.0 / SurfaceSampler.GRID_H;
 
     for (let attempt = 0; attempt < 4; attempt++) {
-      const r = radius * Math.pow(2, attempt);
+      const r = baseRadius * Math.pow(2, attempt);
+      const x0 = Math.max(0, Math.floor(((x - r - SurfaceSampler.X_MIN) / SurfaceSampler.X_SPAN) * SurfaceSampler.GRID_W));
+      const x1 = Math.min(SurfaceSampler.GRID_W - 1, Math.floor(((x + r - SurfaceSampler.X_MIN) / SurfaceSampler.X_SPAN) * SurfaceSampler.GRID_W));
+      const y0 = Math.max(0, Math.floor((y - r) * SurfaceSampler.GRID_H));
+      const y1 = Math.min(SurfaceSampler.GRID_H - 1, Math.floor((y + r) * SurfaceSampler.GRID_H));
+
       let zMax = -Infinity;
-      for (let i = 0; i < count; i++) {
-        if (Math.abs(P[i * 3] - x) > r || Math.abs(P[i * 3 + 1] - y) > r) continue;
-        if (P[i * 3 + 2] > zMax) zMax = P[i * 3 + 2];
+      for (let gy = y0; gy <= y1; gy++) {
+        const row = gy * SurfaceSampler.GRID_W;
+        for (let gx = x0; gx <= x1; gx++) {
+          const z = this.cellZ[row + gx];
+          if (z > zMax) zMax = z;
+        }
       }
       if (!Number.isFinite(zMax)) continue;
 
       const normal = new THREE.Vector3();
-      for (let i = 0; i < count; i++) {
-        if (Math.abs(P[i * 3] - x) > r || Math.abs(P[i * 3 + 1] - y) > r) continue;
-        if (P[i * 3 + 2] < zMax - 0.012) continue;
-        normal.x += N[i * 3];
-        normal.y += N[i * 3 + 1];
-        normal.z += N[i * 3 + 2];
+      for (let gy = y0; gy <= y1; gy++) {
+        const row = gy * SurfaceSampler.GRID_W;
+        for (let gx = x0; gx <= x1; gx++) {
+          const idx = row + gx;
+          if (this.cellZ[idx] < zMax - 0.014) continue;
+          normal.x += this.cellNx[idx];
+          normal.y += this.cellNy[idx];
+          normal.z += this.cellNz[idx];
+        }
       }
-      if (normal.lengthSq() < 1e-8) normal.set(0, 0, 1);
-      normal.normalize();
-      // 往正前方收拢一半，避免毛发法线噪声让五官歪斜
-      normal.lerp(new THREE.Vector3(0, 0, 1), 0.5).normalize();
-      return { point: new THREE.Vector3(x, y, zMax), normal };
+      if (normal.lengthSq() < 1e-8) normal.copy(symNormal);
+      else normal.normalize();
+
+      // 向对称前向球面法线平滑收敛，避免 Tripo 表面凹坑噪点导致双侧五官倾斜不对称
+      normal.lerp(symNormal, 0.68).normalize();
+      return {
+        point: new THREE.Vector3(
+          THREE.MathUtils.clamp(x, SurfaceSampler.X_MIN + cellW, SurfaceSampler.X_MIN + SurfaceSampler.X_SPAN - cellW),
+          THREE.MathUtils.clamp(y, cellH, 1.0 - cellH),
+          zMax
+        ),
+        normal
+      };
     }
 
-    return { point: new THREE.Vector3(x, y, 0.45), normal: new THREE.Vector3(0, 0, 1) };
+    return { point: new THREE.Vector3(x, y, 0.45), normal: symNormal };
   }
 }

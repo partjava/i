@@ -8,7 +8,8 @@ import { buildSpaceCapsuleRoom } from '../SpaceCapsuleRoom3D';
 import {
   SITTING_CAT_PROFILE,
   UPRIGHT_CAT_PROFILE,
-  CatFaceTuning
+  CatFaceTuning,
+  CatEyeStyle
 } from '../cat/catProfiles';
 import { buildRiggedCatFromGLB, RiggedCatController } from '../cat/catShaderAndRig';
 import styles from '../AI3DRobot.module.css';
@@ -140,6 +141,35 @@ export default function CatStage(props: CatStageProps) {
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.18;
     renderer.outputColorSpace = THREE.SRGBColorSpace;
+
+    // 注入温暖书房实时 IBL 环境反射贴图（PMREM），赋予黑猫丝绒、琥珀/琉璃瞳孔清漆层与木器铜饰真实光影反射
+    const pmremGenerator = new THREE.PMREMGenerator(renderer);
+    const envScene = new THREE.Scene();
+    envScene.background = new THREE.Color('#221d18');
+    const envPanels: { pos: [number, number, number]; size: [number, number, number]; color: string; intensity: number }[] = [
+      { pos: [-8, 4, -3], size: [1, 7, 9], color: '#c4e2ff', intensity: 2.4 },
+      { pos: [5.5, 6.2, 3.5], size: [7, 0.8, 7], color: '#ffe1b5', intensity: 2.1 },
+      { pos: [0, 4.2, -9], size: [9, 4, 1], color: '#e4f0ff', intensity: 1.75 },
+      { pos: [0, -4.5, 0], size: [14, 0.6, 14], color: '#5c3f2b', intensity: 1.0 },
+    ];
+    const envDisposables: { geo: THREE.BufferGeometry; mat: THREE.Material }[] = [];
+    for (const p of envPanels) {
+      const geo = new THREE.BoxGeometry(p.size[0], p.size[1], p.size[2]);
+      const mat = new THREE.MeshBasicMaterial({
+        color: new THREE.Color(p.color).multiplyScalar(p.intensity),
+      });
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.position.set(p.pos[0], p.pos[1], p.pos[2]);
+      envScene.add(mesh);
+      envDisposables.push({ geo, mat });
+    }
+    const envRenderTarget = pmremGenerator.fromScene(envScene, 0.04);
+    scene.environment = envRenderTarget.texture;
+    scene.environmentIntensity = 0.72;
+    for (const item of envDisposables) {
+      item.geo.dispose();
+      item.mat.dispose();
+    }
 
     const orbit = new OrbitControls(camera, renderer.domElement);
     orbit.target.set(0, 1.55, -2.0);
@@ -293,8 +323,9 @@ export default function CatStage(props: CatStageProps) {
     const animate = (now: number) => {
       if (disposed) return;
       frameId = requestAnimationFrame(animate);
-      const interval = livePropsRef.current.userTyping ? 1000 / 24 : 1000 / 30;
-      if (document.hidden || now - lastFrameAt < interval) return;
+      // 交互态全程解锁 60 FPS 满帧渲染；仅在闲置打瞌睡时降至 24 FPS 省电
+      const minInterval = dozingRef.current ? 1000 / 24 : 0;
+      if (document.hidden || (minInterval > 0 && now - lastFrameAt < minInterval)) return;
       lastFrameAt = now;
 
       const dt = Math.min(clock.getDelta(), 0.05);
@@ -322,11 +353,13 @@ export default function CatStage(props: CatStageProps) {
         followSpeed = 0.03;
       }
       if (target) {
-        effectiveNDCRef.current.x += (target.x - effectiveNDCRef.current.x) * followSpeed;
-        effectiveNDCRef.current.y += (target.y - effectiveNDCRef.current.y) * followSpeed;
+        const k = 1.0 - Math.exp(-followSpeed * 60 * dt);
+        effectiveNDCRef.current.x += (target.x - effectiveNDCRef.current.x) * k;
+        effectiveNDCRef.current.y += (target.y - effectiveNDCRef.current.y) * k;
       } else {
-        effectiveNDCRef.current.x += (mouseNDCRef.current.x - effectiveNDCRef.current.x) * 0.14;
-        effectiveNDCRef.current.y += (mouseNDCRef.current.y - effectiveNDCRef.current.y) * 0.14;
+        const k = 1.0 - Math.exp(-8.5 * dt);
+        effectiveNDCRef.current.x += (mouseNDCRef.current.x - effectiveNDCRef.current.x) * k;
+        effectiveNDCRef.current.y += (mouseNDCRef.current.y - effectiveNDCRef.current.y) * k;
       }
 
       if (cat) {
@@ -411,11 +444,12 @@ export default function CatStage(props: CatStageProps) {
 
       // ---- B8 灯光情绪插值 ----
       const preset = MOOD_PRESETS[live.stageMood] || MOOD_PRESETS.idle;
-      lightState.c1.lerp(tmpColor.setHex(preset.c1), 0.05);
-      lightState.c2.lerp(tmpColor.setHex(preset.c2), 0.05);
-      lightState.i1 += (preset.i1 - lightState.i1) * 0.05;
-      lightState.i2 += (preset.i2 - lightState.i2) * 0.05;
-      lightState.exp += (preset.exp - lightState.exp) * 0.06;
+      const lightDamp = 1.0 - Math.exp(-3.2 * dt);
+      lightState.c1.lerp(tmpColor.setHex(preset.c1), lightDamp);
+      lightState.c2.lerp(tmpColor.setHex(preset.c2), lightDamp);
+      lightState.i1 += (preset.i1 - lightState.i1) * lightDamp;
+      lightState.i2 += (preset.i2 - lightState.i2) * lightDamp;
+      lightState.exp += (preset.exp - lightState.exp) * (1.0 - Math.exp(-3.6 * dt));
       let breathe = 1;
       if (live.stageMood === 'thinking') breathe = 0.85 + 0.25 * Math.sin(elapsed * 2.4);
       if (live.stageMood === 'searching') breathe = 0.9 + 0.18 * Math.sin(elapsed * 3.2);
@@ -492,6 +526,8 @@ export default function CatStage(props: CatStageProps) {
       container.removeEventListener('pointerup', onPointerUp);
       resizeObserver.disconnect();
       orbit.dispose();
+      envRenderTarget.dispose();
+      pmremGenerator.dispose();
       scene.traverse(object => {
         const mesh = object as THREE.Mesh;
         mesh.geometry?.dispose();
@@ -565,12 +601,39 @@ export default function CatStage(props: CatStageProps) {
         </div>
       )}
 
-      {/* 毛色逆光 & 像素五官微调面板 */}
+      {/* 毛色逆光 & 立体/像素五官微调面板 */}
       {showTuningPanel && (
         <div className="absolute top-3 left-3 z-20 w-72 bg-[#161412]/92 backdrop-blur-md border border-[#d4a36a]/35 rounded-xl p-3.5 text-xs text-[#f4eadc] shadow-2xl space-y-2.5">
           <div className="flex items-center justify-between border-b border-white/10 pb-2">
             <span className="font-semibold text-[#d4a36a]">五官与毛色微调</span>
             <button onClick={onCloseTuning} className="text-[#e9dac3]/60 hover:text-white">✕</button>
+          </div>
+          <div>
+            <div className="mb-1.5 text-[#e9dac3]/85">眼眸风格</div>
+            <div className="grid grid-cols-2 gap-1.5">
+              {([
+                { id: 'amber', label: '✨ 琥珀流光' },
+                { id: 'emerald', label: '💚 翡翠琉璃' },
+                { id: 'sapphire', label: '🌌 星河蓝瞳' },
+                { id: 'pixel', label: '👾 经典像素' },
+              ] as { id: CatEyeStyle; label: string }[]).map(opt => {
+                const active = (faceTuning.eyeStyle || 'amber') === opt.id;
+                return (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    onClick={() => onFaceTuningChange({ eyeStyle: opt.id })}
+                    className={`px-2 py-1.5 rounded-lg text-[11px] border transition-all text-left ${
+                      active
+                        ? 'bg-[#d4a36a] text-[#1c1a17] border-[#d4a36a] font-semibold'
+                        : 'bg-[#141210] text-[#e9dac3]/85 border-white/10 hover:border-[#d4a36a]/50'
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                );
+              })}
+            </div>
           </div>
           <div>
             <div className="flex justify-between mb-1">
@@ -583,7 +646,7 @@ export default function CatStage(props: CatStageProps) {
           </div>
           <div>
             <div className="flex justify-between mb-1">
-              <span>耳缘 & 尾尖银白毛浓度</span>
+              <span>耳缘 & 尾尖银毛浓度</span>
               <span className="font-mono text-[#d4a36a]">{whiteTipStrength.toFixed(2)}</span>
             </div>
             <input type="range" min={0} max={1.6} step={0.05} value={whiteTipStrength}
@@ -592,7 +655,7 @@ export default function CatStage(props: CatStageProps) {
           </div>
           <div>
             <div className="flex justify-between mb-1">
-              <span>像素眼高度 (Eye Y)</span>
+              <span>眼眸高度 (Eye Y)</span>
               <span className="font-mono text-[#d4a36a]">{faceTuning.eyeY.toFixed(3)}</span>
             </div>
             <input type="range" min={0.48} max={0.82} step={0.004} value={faceTuning.eyeY}
@@ -610,7 +673,7 @@ export default function CatStage(props: CatStageProps) {
           </div>
           <div>
             <div className="flex justify-between mb-1">
-              <span>品字嘴高度 (Mouth Y)</span>
+              <span>嘴部高度 (Mouth Y)</span>
               <span className="font-mono text-[#d4a36a]">{faceTuning.mouthY.toFixed(3)}</span>
             </div>
             <input type="range" min={0.42} max={0.72} step={0.004} value={faceTuning.mouthY}

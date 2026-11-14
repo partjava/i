@@ -1039,46 +1039,6 @@ export function buildSpaceCapsuleRoom(scene: THREE.Scene): WarmStudyRoomControll
   const matNeonGreen = new THREE.MeshBasicMaterial({ color: 0x34d399 });
 
   // ------------------------------------------
-  // 物品 ②：全息发光底座 (正中央猫咪脚下, y = 0.02, z = centerZ)
-  // ------------------------------------------
-  const pedestalGroup = new THREE.Group();
-  pedestalGroup.position.set(0, 0.02, centerZ);
-  virtualPropsGroup.add(pedestalGroup);
-
-  // 超薄金属暗环衬底
-  const basePlate = new THREE.Mesh(
-    new THREE.RingGeometry(0.72, 1.08, 64),
-    new THREE.MeshStandardMaterial({
-      color: '#111827',
-      roughness: 0.3,
-      metalness: 0.85,
-      transparent: true,
-      opacity: 0.75,
-      side: THREE.DoubleSide
-    })
-  );
-  basePlate.rotation.x = -Math.PI / 2;
-  pedestalGroup.add(basePlate);
-
-  // 外圈青色发光全息环
-  const holoRingOuter = new THREE.Mesh(
-    new THREE.TorusGeometry(1.02, 0.018, 16, 96),
-    matNeonCyan
-  );
-  holoRingOuter.rotation.x = Math.PI / 2;
-  holoRingOuter.position.y = 0.012;
-  pedestalGroup.add(holoRingOuter);
-
-  // 内圈紫色发光全息环
-  const holoRingInner = new THREE.Mesh(
-    new THREE.TorusGeometry(0.82, 0.015, 16, 96),
-    matNeonPurple
-  );
-  holoRingInner.rotation.x = Math.PI / 2;
-  holoRingInner.position.y = 0.015;
-  pedestalGroup.add(holoRingInner);
-
-  // ------------------------------------------
   // 物品 ③：AI 算力机柜书架 (环绕在猫咪左身旁，微向中心旋转 24°)
   // ------------------------------------------
   const rackGroup = new THREE.Group();
@@ -1447,6 +1407,66 @@ export function buildSpaceCapsuleRoom(scene: THREE.Scene): WarmStudyRoomControll
   yellowMugGroup.add(yellowHandle);
 
   // ------------------------------------------
+  // ⑪b 窗户丁达尔暖阳体积光束（从左侧深凹木窗斜射向中央地毯）
+  // ------------------------------------------
+  function createSunbeamTexture() {
+    const c = document.createElement('canvas');
+    c.width = 256;
+    c.height = 512;
+    const g = c.getContext('2d')!;
+    g.clearRect(0, 0, 256, 512);
+
+    // 纵向衰减：窗边柔亮，向地毯方向渐弱消失
+    const img = g.createImageData(256, 512);
+    for (let y = 0; y < 512; y++) {
+      const v = y / 511; // 0 = 窗前, 1 = 地毯端
+      const axial = Math.sin(Math.min(1, v * 1.05) * Math.PI) * Math.pow(1 - v, 0.72);
+      for (let x = 0; x < 256; x++) {
+        const u = x / 255;
+        const lateral = Math.pow(Math.sin(u * Math.PI), 2.0);
+        // 模拟木窗框竖梃切割出的柔光束条纹
+        const panes = 0.74 + 0.26 * Math.cos((u - 0.5) * Math.PI * 6.0);
+        const alpha = Math.max(0, Math.min(255, Math.round(axial * lateral * panes * 255)));
+        const idx = (y * 256 + x) * 4;
+        img.data[idx] = 255;
+        img.data[idx + 1] = 232;
+        img.data[idx + 2] = 192;
+        img.data[idx + 3] = alpha;
+      }
+    }
+    g.putImageData(img, 0, 0);
+
+    const tex = new THREE.CanvasTexture(c);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    return tex;
+  }
+
+  const sunbeamTex = createSunbeamTexture();
+  const sunbeamMat = new THREE.MeshBasicMaterial({
+    map: sunbeamTex,
+    transparent: true,
+    opacity: 0.11,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+    side: THREE.DoubleSide
+  });
+
+  const beamStart = new THREE.Vector3(-3.35, 3.85, -6.28);
+  const beamEnd = new THREE.Vector3(0.05, 0.22, -1.68);
+  const beamLen = beamStart.distanceTo(beamEnd);
+  const sunbeamGroup = new THREE.Group();
+  sunbeamGroup.position.copy(beamStart).lerp(beamEnd, 0.5);
+  sunbeamGroup.lookAt(beamEnd);
+  scene.add(sunbeamGroup);
+
+  const beamGeo = new THREE.PlaneGeometry(3.6, beamLen);
+  beamGeo.rotateX(Math.PI / 2); // 本地 +Z 沿光束推进，u=横向，v=0(窗前)→1(地毯端)
+  const beamPlaneA = new THREE.Mesh(beamGeo, sunbeamMat);
+  const beamPlaneB = new THREE.Mesh(beamGeo, sunbeamMat);
+  beamPlaneB.rotation.z = 0.45;
+  sunbeamGroup.add(beamPlaneA, beamPlaneB);
+
+  // ------------------------------------------
   // ⑫ 漂浮尘埃微粒：暖光束里的细小浮尘缓慢漂移，打破场景的完全静止
   // ------------------------------------------
   const dustCount = 42;
@@ -1475,9 +1495,9 @@ export function buildSpaceCapsuleRoom(scene: THREE.Scene): WarmStudyRoomControll
     robotAnchor,
     virtualPropsGroup,
     update(time: number) {
-      // ② 脚下全息圆环底座平滑反向旋转
-      holoRingOuter.rotation.z = time * 0.45;
-      holoRingInner.rotation.z = -time * 0.65;
+
+      // ⑪b 窗户丁达尔体积光随光线柔和呼吸
+      sunbeamMat.opacity = 0.098 + Math.sin(time * 0.65) * 0.016;
 
       // ④ 左后方悬浮全息屏柔和上下呼吸浮动
       holoFloatingGroup.position.y = 1.38 + Math.sin(time * 1.8) * 0.04;

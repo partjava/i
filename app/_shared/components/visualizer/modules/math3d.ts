@@ -234,7 +234,7 @@ function renderFourierSine(group: THREE.Group, step: VisualizationStep) {
   group.add(
     createHudBadge([-7.6, 5.2, 3.2], {
       text: '相量本轮圆',
-      subText: '∑ cₙe^(inωt)',
+      subText: '∑ cₙ eⁱⁿωᵗ',
       borderColor: '#fbbf24',
       scale: [2.2, 0.9],
     })

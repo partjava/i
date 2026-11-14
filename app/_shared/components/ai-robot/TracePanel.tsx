@@ -8,8 +8,8 @@ import type { AgentStepItem } from './types';
 export default function TracePanel({ steps, offline }: { steps: AgentStepItem[]; offline?: boolean }) {
   if (!steps || steps.length === 0) return null;
   return (
-    <div className="rounded-xl bg-black/30 border border-[#d4a36a]/25 overflow-hidden">
-      <div className="px-2.5 py-1.5 text-[10px] font-semibold text-[#d4a36a] flex items-center gap-1.5 bg-[#d4a36a]/10">
+    <div className="rounded-xl bg-[#221d18]/92 border border-[#8b7355]/45 shadow-sm overflow-hidden">
+      <div className="px-2.5 py-1.5 text-[10px] font-semibold text-[#f3c687] flex items-center gap-1.5 bg-[#d4a36a]/15">
         <span>🧠 执行轨迹</span>
         <span className="opacity-60 font-normal">
           自主决策 · {steps.length} 步
@@ -38,7 +38,7 @@ export default function TracePanel({ steps, offline }: { steps: AgentStepItem[];
             </span>
             <span className="text-[#e8dcc8] font-medium flex-shrink-0">{step.label}</span>
             {step.detail && (
-              <span className="text-gray-400/90 truncate">{step.detail}</span>
+              <span className="text-[#cbbba6] truncate">{step.detail}</span>
             )}
           </div>
         ))}
