@@ -16,6 +16,7 @@ import NoteKnowledgeStudio from '@shared/components/NoteKnowledgeStudio';
 import { normalizeNoteMarkdown } from '@shared/lib/note-knowledge-extractor';
 import QRCode from 'qrcode';
 import { useUser } from '@shared/providers/UserProvider';
+import SiteFooter from '@shared/components/SiteFooter';
 import { message } from 'antd';
 
 const PreBlockContext = createContext(false);
@@ -433,7 +434,8 @@ export default function NoteDetailPage() {
   const isOwner = session?.user?.id === String(note.authorId ?? '');
 
   return (
-    <div className="flex min-h-screen">
+    <div className="min-h-[calc(100vh-70px)] bg-surface-page flex flex-col">
+      <div className="flex flex-1">
       {/* 左侧导航栏（固定吸顶 sticky，向上滑动长笔记时始终保持在屏幕左侧完整显示） */}
       <div
         className={`${
@@ -781,6 +783,7 @@ export default function NoteDetailPage() {
           <CommentSection noteId={noteId} isPublic={note.isPublic} />
         )}
       </div>
+      </div>
 
       {/* 分享弹窗 */}
       {showShareModal && (
@@ -818,6 +821,7 @@ export default function NoteDetailPage() {
           </div>
         </div>
       )}
+      <SiteFooter className="mt-auto" />
     </div>
   );
 }

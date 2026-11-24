@@ -1460,7 +1460,7 @@ ${output ? `### 终端运行输出\n\`\`\`\n${output}\n\`\`\`\n` : ''}
             <kbd className="text-slate-300">Ctrl+S</kbd> 存笔记
           </span>
 
-          <span className="text-slate-500">PartJava Studio v3.2</span>
+          <span className="text-slate-500">Unolgy Studio v3.2</span>
         </div>
       </div>
 

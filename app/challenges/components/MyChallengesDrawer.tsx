@@ -137,24 +137,24 @@ export function MyChallengesDrawer({ onClose }: MyChallengesDrawerProps) {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="absolute inset-0 z-50 bg-[#0C1F3D]/98 backdrop-blur-sm flex overflow-hidden"
+      className="absolute inset-0 z-50 bg-[#0B0E14]/96 backdrop-blur-sm flex overflow-hidden"
     >
       {/* 左侧题目列表 */}
-      <div className="w-72 border-r border-[#234272]/60 bg-[#08172F]/90 flex flex-col shrink-0">
-        <div className="flex items-center justify-between px-4 py-3 border-b border-[#234272]/60">
-          <span className="font-bold text-slate-200 text-sm flex items-center gap-2">
-            <GraduationCap className="w-4 h-4 text-purple-400" /> 我的出题
+      <div className="w-72 border-r border-white/10 bg-[#12161F]/95 flex flex-col shrink-0">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
+          <span className="font-bold text-[#F2EDE4] text-sm flex items-center gap-2">
+            <GraduationCap className="w-4 h-4 text-[#D4AD72]" /> 我的出题
           </span>
           <button onClick={onClose} className="p-1 rounded text-slate-500 hover:text-white"><X className="w-4 h-4" /></button>
         </div>
 
-        <div className="px-3 py-3 border-b border-[#234272]/40 space-y-2">
+        <div className="px-3 py-3 border-b border-white/10 space-y-2">
           <button
             onClick={() => { setShowForm(true); setShowHistory(false); }}
             className={`w-full flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-bold transition ${
               showForm && !showHistory
-                ? 'bg-slate-800 text-slate-300 border border-slate-700'
-                : 'bg-gradient-to-r from-purple-500 to-fuchsia-500 text-white hover:from-purple-400 hover:to-fuchsia-400 shadow-lg shadow-purple-500/25'
+                ? 'bg-[#181D27] text-[#F2EDE4] border border-white/15'
+                : 'bg-gradient-to-r from-[#D4AD72] to-[#B88E52] text-[#0E1116] hover:from-[#E0BD86] hover:to-[#C89C5E] shadow-lg shadow-[#D4AD72]/20'
             }`}
           >
             <Plus className="w-4 h-4" /> 新建出题
@@ -214,8 +214,8 @@ export function MyChallengesDrawer({ onClose }: MyChallengesDrawerProps) {
       <div className="flex-1 flex flex-col overflow-hidden">
         {showForm ? (
           <div className="flex-1 overflow-y-auto p-6 space-y-4">
-            <h3 className="text-sm font-bold text-slate-200 flex items-center gap-2 border-b border-[#234272]/60 pb-3">
-              <Edit3 className="w-4 h-4 text-purple-400" /> 编写新题目
+            <h3 className="text-sm font-bold text-[#F2EDE4] flex items-center gap-2 border-b border-white/10 pb-3">
+              <Edit3 className="w-4 h-4 text-[#D4AD72]" /> 编写新题目
             </h3>
             <div className="grid grid-cols-3 gap-3">
               <div>
@@ -398,24 +398,24 @@ export function MyChallengesDrawer({ onClose }: MyChallengesDrawerProps) {
                 取消
               </button>
               <button onClick={handleSubmit} disabled={submitting}
-                className="flex-1 py-2.5 rounded-lg text-sm font-bold bg-gradient-to-r from-purple-500 to-fuchsia-500 text-white hover:from-purple-400 hover:to-fuchsia-400 shadow-lg shadow-purple-500/25 transition disabled:opacity-50 flex items-center justify-center gap-2">
+                className="flex-1 py-2.5 rounded-lg text-sm font-bold bg-gradient-to-r from-[#D4AD72] to-[#B88E52] text-[#0E1116] hover:from-[#E0BD86] hover:to-[#C89C5E] shadow-lg shadow-[#D4AD72]/20 transition disabled:opacity-50 flex items-center justify-center gap-2">
                 <Send className="w-4 h-4" /> {submitting ? '提交中...' : '提交草稿审核'}
               </button>
             </div>
           </div>
         ) : showHistory ? (
           <div className="flex-1 overflow-y-auto p-6">
-            <h3 className="text-sm font-bold text-slate-200 flex items-center gap-2 border-b border-[#234272]/60 pb-3 mb-4">
-              <Clock className="w-4 h-4 text-amber-400" /> 历史申请记录
+            <h3 className="text-sm font-bold text-[#F2EDE4] flex items-center gap-2 border-b border-white/10 pb-3 mb-4">
+              <Clock className="w-4 h-4 text-[#D4AD72]" /> 历史申请记录
             </h3>
             {drafts.length === 0 ? (
               <p className="text-slate-500 text-xs text-center py-10">暂无申请记录</p>
             ) : (
               <div className="space-y-3">
                 {drafts.map((d: any) => (
-                  <div key={d.id} className="p-3 rounded-lg bg-slate-900/60 border border-slate-800">
+                  <div key={d.id} className="p-3 rounded-lg bg-[#12161F] border border-white/10">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-semibold text-slate-200">{d.levelTitle}</span>
+                      <span className="text-sm font-semibold text-[#F2EDE4]">{d.levelTitle}</span>
                       <span className={`text-[10px] px-2 py-0.5 rounded ${
                         d.status === 'approved' ? 'bg-emerald-900/40 text-emerald-400' :
                         d.status === 'rejected' ? 'bg-red-900/40 text-red-400' :
@@ -428,7 +428,7 @@ export function MyChallengesDrawer({ onClose }: MyChallengesDrawerProps) {
                       S{d.stageId} · {d.topicName} / {d.subtopicName} · 难度: {d.difficulty || '基础'}
                     </div>
                     {d.reviewComment && (
-                      <div className="text-[10px] text-slate-500 mt-1 border-t border-slate-800 pt-1">
+                      <div className="text-[10px] text-slate-500 mt-1 border-t border-white/10 pt-1">
                         审核意见: {d.reviewComment}
                       </div>
                     )}
@@ -443,12 +443,12 @@ export function MyChallengesDrawer({ onClose }: MyChallengesDrawerProps) {
         ) : (
           <div className="flex-1 flex items-center justify-center">
             <div className="text-center space-y-4">
-              <div className="w-20 h-20 rounded-full bg-purple-500/10 border border-purple-500/30 flex items-center justify-center mx-auto">
-                <FileText className="w-8 h-8 text-purple-400" />
+              <div className="w-20 h-20 rounded-full bg-[#D4AD72]/10 border border-[#D4AD72]/30 flex items-center justify-center mx-auto">
+                <FileText className="w-8 h-8 text-[#D4AD72]" />
               </div>
               <div>
-                <p className="text-slate-400 text-sm">点击左侧 <span className="text-purple-400 font-bold">新建出题</span> 开始编写题目</p>
-                <p className="text-slate-600 text-xs mt-1">提交后由站长或管理员审核通过即可发布到宇宙题库</p>
+                <p className="text-slate-400 text-sm">点击左侧 <span className="text-[#D4AD72] font-bold">新建出题</span> 开始编写题目</p>
+                <p className="text-slate-500 text-xs mt-1">提交后由站长或管理员审核通过即可发布到宇宙题库</p>
               </div>
             </div>
           </div>

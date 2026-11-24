@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
+import BrandLogo from '../../_shared/components/BrandLogo';
+import SiteFooter from '../../_shared/components/SiteFooter';
 import MonacoCodeEditor from '../../_shared/components/MonacoCodeEditor';
 import StudyTimeTracker from '../../_shared/components/StudyTimeTracker';
 import AlgorithmVisualizer, {
@@ -76,126 +77,101 @@ export default function CodeEditorPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] dark:bg-slate-950 text-slate-800 dark:text-slate-100 relative overflow-x-clip py-4 sm:py-8 selection:bg-indigo-500/20 selection:text-indigo-700 dark:selection:text-indigo-300 transition-colors">
-      {/* 现代极简浅/深色自适应背景微光与网格装饰 */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_-10%,rgba(99,102,241,0.08),transparent)] dark:bg-[radial-gradient(ellipse_80%_60%_at_50%_-10%,rgba(99,102,241,0.18),transparent)] pointer-events-none" />
-      <div className="absolute top-1/4 right-0 w-[450px] h-[450px] bg-sky-400/5 dark:bg-sky-500/10 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-1/3 left-0 w-[500px] h-[500px] bg-indigo-400/5 dark:bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,#e2e8f060_1px,transparent_1px),linear-gradient(to_bottom,#e2e8f060_1px,transparent_1px)] dark:bg-[linear-gradient(to_right,#1e293b55_1px,transparent_1px),linear-gradient(to_bottom,#1e293b55_1px,transparent_1px)] bg-[size:36px_36px] pointer-events-none" />
-
+    <div className="min-h-[calc(100vh-70px)] bg-surface-page text-content-primary relative overflow-x-clip pt-3 pb-2 transition-colors flex flex-col">
       <div
-        className={`relative z-10 mx-auto px-3 sm:px-5 lg:px-6 transition-all duration-300 ${
+        className={`flex-1 w-full relative z-10 mx-auto px-3 sm:px-5 lg:px-6 transition-all duration-300 ${
           activeTab === 'visualizer' ? 'max-w-[1720px]' : 'max-w-7xl'
         }`}
       >
-        {/* 顶部 Hero 科技工坊主标头（浅/深色自适应） */}
-        <div className="text-center pt-2 pb-6 md:pb-8">
-          {/* 状态徽标小胶囊 */}
-          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-indigo-50/90 dark:bg-indigo-950/60 border border-indigo-200/80 dark:border-indigo-500/30 text-indigo-700 dark:text-indigo-300 text-xs font-mono font-semibold mb-3 shadow-sm backdrop-blur-sm">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span>CLOUD DEV STUDIO · DOCKER SANDBOX · 3D MANIFOLDS</span>
-          </div>
-
-          <div className="flex items-center justify-center gap-3 mb-2 sm:mb-3">
-            <Image
-              src="/images/logo-calligraphy-transparent.png"
-              alt="PartJava"
-              width={921}
-              height={601}
+        {/* 紧凑双层工作台顶栏 */}
+        <div className="rounded-2xl bg-surface-raised border border-line-subtle shadow-sm px-4 sm:px-5 py-3 mb-3 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <BrandLogo
+              variant="full"
               priority
-              className="h-9 sm:h-12 w-auto inline-block drop-shadow-sm dark:brightness-110"
+              className="h-9 sm:h-10 w-auto shrink-0 drop-shadow-sm"
             />
-            <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-800 dark:from-white dark:via-indigo-200 dark:to-sky-200 bg-clip-text text-transparent">
-              极客代码工坊
-            </h1>
+            <span className="hidden sm:block w-px h-7 bg-line-subtle shrink-0" />
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <h1 className="text-lg sm:text-xl font-display font-bold tracking-tight text-content-primary truncate">
+                  极客代码工坊
+                </h1>
+                <span className="hidden xl:inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-surface-muted border border-line-subtle text-brand-primary text-[10px] font-mono font-semibold shrink-0">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#D4AD72]" />
+                  <span>CLOUD DEV STUDIO</span>
+                </span>
+              </div>
+              <p className="text-xs text-content-muted truncate">
+                Docker 隔离沙箱 · {ALGORITHM_REGISTRY.length} 种 3D 算法空间推演 · JVM 逐帧变量回放
+              </p>
+            </div>
           </div>
 
-          <p className="text-xs sm:text-base text-slate-600 dark:text-slate-300 max-w-2xl mx-auto font-normal">
-            轻量级在线云 IDE · 毫秒级多语言 Docker 隔离沙箱 · {ALGORITHM_REGISTRY.length} 种 3D 算法空间推演 · JVM 逐帧变量回放
-          </p>
+          <div className="flex flex-wrap items-center gap-2 shrink-0">
+            <div className="inline-flex p-1 rounded-xl bg-surface-muted border border-line-subtle">
+              <button
+                type="button"
+                onClick={() => setActiveTab('editor')}
+                className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg font-semibold text-xs sm:text-sm transition-all ${
+                  activeTab === 'editor'
+                    ? 'bg-brand-primary text-content-inverse shadow-sm'
+                    : 'text-content-secondary hover:text-content-primary hover:bg-surface-raised'
+                }`}
+              >
+                <Terminal className="w-3.5 h-3.5" />
+                <span>代码工坊</span>
+              </button>
 
-          {/* 核心特性标签行（浅/深色卡片化呈现） */}
-          <div className="flex flex-wrap items-center justify-center gap-2 mt-3.5 text-xs text-slate-700 dark:text-slate-200 font-medium">
-            <span className="px-2.5 py-1 rounded-xl bg-white dark:bg-slate-900/90 border border-slate-200/90 dark:border-slate-700/80 shadow-sm flex items-center gap-1.5">
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-              <span>Docker 容器硬隔离</span>
-            </span>
-            <span className="px-2.5 py-1 rounded-xl bg-white dark:bg-slate-900/90 border border-slate-200/90 dark:border-slate-700/80 shadow-sm flex items-center gap-1.5">
-              <Zap className="w-3.5 h-3.5 text-amber-500 dark:text-amber-400" />
-              <span>Monaco 智能补全</span>
-            </span>
-            <span className="px-2.5 py-1 rounded-xl bg-white dark:bg-slate-900/90 border border-slate-200/90 dark:border-slate-700/80 shadow-sm flex items-center gap-1.5">
-              <Cpu className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400" />
-              <span>JVM 栈帧变量回放</span>
-            </span>
-            <span className="px-2.5 py-1 rounded-xl bg-white dark:bg-slate-900/90 border border-slate-200/90 dark:border-slate-700/80 shadow-sm flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
-              <span>禾桔 AI 诊断修复</span>
-            </span>
-            <span className="px-2.5 py-1 rounded-xl bg-white dark:bg-slate-900/90 border border-slate-200/90 dark:border-slate-700/80 shadow-sm flex items-center gap-1.5">
-              <Compass className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
-              <span>{ALGORITHM_REGISTRY.length} 种 3D 算法流形 + 同步代码动画</span>
-            </span>
+              <button
+                type="button"
+                onClick={() => setActiveTab('visualizer')}
+                className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg font-semibold text-xs sm:text-sm transition-all ${
+                  activeTab === 'visualizer'
+                    ? 'bg-brand-primary text-content-inverse shadow-sm'
+                    : 'text-content-secondary hover:text-content-primary hover:bg-surface-raised'
+                }`}
+              >
+                <Box className="w-3.5 h-3.5" />
+                <span>3D 算法演进</span>
+                <span
+                  className={`text-[10px] font-mono px-1.5 py-0.5 rounded-full ${
+                    activeTab === 'visualizer' ? 'bg-black/20 text-inherit' : 'bg-surface-page text-content-muted'
+                  }`}
+                >
+                  {ALGORITHM_REGISTRY.length}
+                </span>
+              </button>
+            </div>
+
             <Link
               href="/knowledge-graph"
-              className="px-2.5 py-1 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 dark:hover:bg-indigo-900/70 border border-indigo-200 dark:border-indigo-500/40 text-indigo-700 dark:text-indigo-300 shadow-sm flex items-center gap-1.5 transition-all"
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-surface-muted hover:bg-brand-soft border border-line-subtle text-xs font-medium text-brand-primary transition-colors"
             >
-              <Network className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
-              <span>🌐 全栈知识图谱 →</span>
+              <Network className="w-3.5 h-3.5" />
+              <span>知识图谱 →</span>
             </Link>
-          </div>
-        </div>
-
-        {/* 核心模式切换器（现代极客分段选择器） */}
-        <div className="flex justify-center mb-6">
-          <div className="inline-flex p-1.5 rounded-2xl bg-slate-200/70 dark:bg-slate-900/90 border border-slate-300/80 dark:border-slate-700/80 backdrop-blur-md shadow-sm">
-            <button
-              type="button"
-              onClick={() => setActiveTab('editor')}
-              className={`flex items-center gap-2.5 px-4 sm:px-6 py-2 sm:py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all duration-300 ${
-                activeTab === 'editor'
-                  ? 'bg-gradient-to-r from-indigo-600 via-indigo-500 to-sky-600 text-white shadow-md shadow-indigo-900/20'
-                  : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-white/80 dark:hover:bg-white/10'
-              }`}
-            >
-              <Terminal className="w-4 h-4 text-sky-200" />
-              <span>💻 极客代码工坊</span>
-              <span className="hidden sm:inline-block text-[11px] font-mono px-2 py-0.5 rounded-full bg-black/20 text-indigo-100">
-                IDE Studio
-              </span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveTab('visualizer')}
-              className={`flex items-center gap-2.5 px-4 sm:px-6 py-2 sm:py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all duration-300 ${
-                activeTab === 'visualizer'
-                  ? 'bg-gradient-to-r from-purple-600 via-indigo-600 to-sky-600 text-white shadow-md shadow-purple-900/20'
-                  : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-white/80 dark:hover:bg-white/10'
-              }`}
-            >
-              <Box className="w-4 h-4 text-purple-200" />
-              <span>🌌 3D 算法演进矩阵</span>
-              <span className="hidden sm:inline-block text-[11px] font-mono px-2 py-0.5 rounded-full bg-black/20 text-purple-100">
-                {ALGORITHM_REGISTRY.length} 种算法
-              </span>
-            </button>
           </div>
         </div>
 
         {/* 模式一：极客代码工坊 (IDE Studio) */}
         {activeTab === 'editor' && (
-          <div className="space-y-4">
-            {/* 工坊辅助工具条（左侧沙箱就绪提示 + 右侧沉浸式伴学计时 HUD） */}
-            <div className="flex items-center justify-between px-3 sm:px-4 py-2.5 rounded-2xl bg-white dark:bg-slate-900/90 border border-slate-200/90 dark:border-slate-700/80 shadow-sm backdrop-blur-md flex-wrap gap-2.5">
-              <div className="flex items-center gap-2.5 text-xs text-slate-700 dark:text-slate-200">
-                <span className="flex items-center gap-1.5 font-mono text-emerald-600 dark:text-emerald-400 font-bold">
+          <div className="space-y-3">
+            {/* 工坊辅助工具条 */}
+            <div className="flex items-center justify-between px-3 sm:px-4 py-2 rounded-2xl bg-surface-raised border border-line-subtle shadow-sm flex-wrap gap-2.5">
+              <div className="flex items-center gap-2.5 text-xs text-content-secondary flex-wrap">
+                <span className="flex items-center gap-1.5 font-mono text-emerald-500 font-bold">
                   <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                   <span>Docker Linux Sandbox</span>
                 </span>
-                <span className="text-slate-300 dark:text-slate-600">|</span>
-                <span className="text-slate-500 dark:text-slate-400 hidden md:inline">
-                  纳秒级热重载 · 快捷键 <kbd className="text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded border border-slate-300 dark:border-slate-600 font-mono text-[10px] font-semibold">Ctrl+Enter</kbd> 编译执行
+                <span className="text-line-strong">|</span>
+                <span className="text-content-muted hidden md:inline">
+                  快捷键 <kbd className="text-content-primary bg-surface-muted px-1.5 py-0.5 rounded border border-line-strong font-mono text-[10px] font-semibold">Ctrl+Enter</kbd> 编译执行
+                </span>
+                <span className="hidden xl:inline-flex items-center gap-3 text-[11px] text-content-muted pl-2 border-l border-line-subtle">
+                  <span className="inline-flex items-center gap-1"><ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />容器硬隔离</span>
+                  <span className="inline-flex items-center gap-1"><Zap className="w-3.5 h-3.5 text-[#D4AD72]" />Monaco 补全</span>
+                  <span className="inline-flex items-center gap-1"><Sparkles className="w-3.5 h-3.5 text-[#D4AD72]" />禾桔 AI 诊断</span>
                 </span>
               </div>
 
@@ -230,16 +206,16 @@ export default function CodeEditorPage() {
               <div
                 className="flex-1 min-h-0 flex flex-col rounded-2xl p-3.5 border shadow-xl"
                 style={{
-                  background: 'linear-gradient(165deg, #0d1526 0%, #111c33 100%)',
-                  borderColor: 'rgba(99, 102, 241, 0.25)',
+                  background: 'linear-gradient(165deg, #151921 0%, #0E1116 100%)',
+                  borderColor: 'rgba(212, 173, 114, 0.25)',
                 }}
               >
                 <div className="flex items-center justify-between mb-2.5 shrink-0">
-                  <h3 className="text-sm sm:text-base font-bold text-slate-100 flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-sky-400 shadow-[0_0_8px_#38bdf8]" />
+                  <h3 className="text-sm sm:text-base font-bold text-[#F2EDE4] flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-[#D4AD72] shadow-[0_0_8px_#D4AD72]" />
                     <span>算法流形矩阵</span>
                   </h3>
-                  <span className="text-xs font-mono text-indigo-300 bg-indigo-500/15 border border-indigo-400/30 px-2 py-0.5 rounded-full">
+                  <span className="text-xs font-mono text-[#D4AD72] bg-[#D4AD72]/15 border border-[#D4AD72]/30 px-2 py-0.5 rounded-full">
                     {filteredAlgorithms.length} 项
                   </span>
                 </div>
@@ -252,8 +228,8 @@ export default function CodeEditorPage() {
                       onClick={() => setActiveCategory(cat.id)}
                       className={`px-2.5 py-0.5 rounded-full text-xs font-medium transition-all ${
                         activeCategory === cat.id
-                          ? 'bg-gradient-to-r from-indigo-500 to-sky-500 text-white shadow-md'
-                          : 'bg-white/5 text-slate-400 hover:text-slate-200 hover:bg-white/10'
+                          ? 'bg-[#D4AD72] text-[#0E1116] font-semibold shadow-sm'
+                          : 'bg-white/5 text-slate-400 hover:text-[#F2EDE4] hover:bg-white/10'
                       }`}
                     >
                       {cat.label}
@@ -271,7 +247,7 @@ export default function CodeEditorPage() {
                         onClick={() => setSelectedAlgorithm(algo.id)}
                         className={`w-full text-left px-2.5 py-2 rounded-xl transition-all text-sm border ${
                           active
-                            ? 'bg-gradient-to-r from-indigo-600/80 to-sky-600/70 text-white border-indigo-400/60 shadow-lg'
+                            ? 'bg-[#D4AD72]/20 text-[#F2EDE4] border-[#D4AD72]/50 shadow-sm'
                             : 'bg-white/[0.03] text-slate-300 border-white/5 hover:bg-white/[0.08] hover:border-white/15'
                         }`}
                       >
@@ -286,7 +262,7 @@ export default function CodeEditorPage() {
                             <div className="text-[10.5px] mt-0.5 flex items-center gap-1.5">
                               <span
                                 className={
-                                  active ? 'text-indigo-100/90' : 'text-slate-400'
+                                  active ? 'text-[#D4AD72]' : 'text-slate-400'
                                 }
                               >
                                 {algo.category}
@@ -316,12 +292,12 @@ export default function CodeEditorPage() {
                 <div
                   className="shrink-0 rounded-2xl p-3.5 border shadow-xl"
                   style={{
-                    background: 'linear-gradient(165deg, #0d1526 0%, #111c33 100%)',
-                    borderColor: 'rgba(99, 102, 241, 0.25)',
+                    background: 'linear-gradient(165deg, #151921 0%, #0E1116 100%)',
+                    borderColor: 'rgba(212, 173, 114, 0.25)',
                   }}
                 >
                   <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-xs sm:text-sm font-bold text-slate-100">
+                    <h3 className="text-xs sm:text-sm font-bold text-[#F2EDE4]">
                       输入序列数据
                     </h3>
                     <span className="text-[11px] font-mono text-slate-400">
@@ -331,16 +307,16 @@ export default function CodeEditorPage() {
                   <textarea
                     value={inputData}
                     onChange={(e) => handleDataChange(e.target.value)}
-                    className="w-full px-2.5 py-1.5 bg-slate-950/80 border border-indigo-500/30 rounded-xl text-slate-100 font-mono text-xs focus:border-sky-400 focus:outline-none"
+                    className="w-full px-2.5 py-1.5 bg-[#0E1116] border border-[#D4AD72]/30 rounded-xl text-[#F2EDE4] font-mono text-xs focus:border-[#D4AD72] focus:outline-none"
                     rows={2}
                     placeholder="输入数字，用逗号分隔"
                   />
                   <button
                     onClick={generateRandomData}
-                    className="w-full mt-2 px-3 py-1.5 rounded-xl text-xs font-bold text-white transition-all hover:brightness-110 shadow-md"
+                    className="w-full mt-2 px-3 py-1.5 rounded-xl text-xs font-bold text-[#0E1116] transition-all hover:brightness-110 shadow-md"
                     style={{
                       background:
-                        'linear-gradient(135deg, #0ea5e9 0%, #6366f1 100%)',
+                        'linear-gradient(135deg, #D4AD72 0%, #E2BE84 100%)',
                     }}
                   >
                     🎲 随机生成测试序列
@@ -564,100 +540,101 @@ export default function CodeEditorPage() {
           </div>
         )}
 
-        {/* 底部 Bento Grid: 四大核心极客架构支柱（浅/深色自适应 Bento 呈现） */}
+        {/* 底部 Bento Grid: 四大核心极客架构支柱 */}
         <div className="mt-8 sm:mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Card 1: Docker 容器沙箱隔离 */}
-          <div className="group relative rounded-2xl p-4 sm:p-5 bg-white dark:bg-slate-900/90 border border-slate-200/90 dark:border-slate-700/80 hover:border-emerald-400/60 transition-all duration-300 shadow-sm hover:shadow-xl flex flex-col justify-between">
+          <div className="group relative rounded-2xl p-4 sm:p-5 bg-surface-raised border border-line-subtle hover:border-[#D4AD72]/60 transition-all duration-300 shadow-sm hover:shadow-xl flex flex-col justify-between">
             <div>
-              <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-500/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-lg mb-3 shadow-inner group-hover:scale-105 transition-transform">
+              <div className="w-10 h-10 rounded-xl bg-surface-muted border border-line-subtle text-emerald-500 flex items-center justify-center text-lg mb-3 group-hover:scale-105 transition-transform">
                 <ShieldCheck className="w-5 h-5" />
               </div>
-              <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 mb-1.5 flex items-center gap-2">
+              <h3 className="text-base font-bold text-content-primary mb-1.5 flex items-center gap-2">
                 <span>Docker 容器沙箱隔离</span>
               </h3>
-              <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+              <p className="text-xs text-content-secondary leading-relaxed">
                 毫秒级独立轻量容器隔离，基于 Linux cgroups v2 进行 CPU 与内存配额防护，多语言安全编译无污染。
               </p>
             </div>
-            <div className="flex flex-wrap gap-1.5 mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 text-[10px] font-mono font-medium">
-              <span className="px-2 py-0.5 rounded bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-500/30">
+            <div className="flex flex-wrap gap-1.5 mt-3 pt-3 border-t border-line-subtle text-[10px] font-mono font-medium">
+              <span className="px-2 py-0.5 rounded bg-surface-muted text-content-secondary border border-line-subtle">
                 cgroups v2
               </span>
-              <span className="px-2 py-0.5 rounded bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-500/30">
+              <span className="px-2 py-0.5 rounded bg-surface-muted text-content-secondary border border-line-subtle">
                 网络硬隔离
               </span>
             </div>
           </div>
 
           {/* Card 2: Monaco 智能感知引擎 */}
-          <div className="group relative rounded-2xl p-4 sm:p-5 bg-white dark:bg-slate-900/90 border border-slate-200/90 dark:border-slate-700/80 hover:border-sky-400/60 transition-all duration-300 shadow-sm hover:shadow-xl flex flex-col justify-between">
+          <div className="group relative rounded-2xl p-4 sm:p-5 bg-surface-raised border border-line-subtle hover:border-[#D4AD72]/60 transition-all duration-300 shadow-sm hover:shadow-xl flex flex-col justify-between">
             <div>
-              <div className="w-10 h-10 rounded-xl bg-sky-50 dark:bg-sky-950/60 border border-sky-200 dark:border-sky-500/30 text-sky-600 dark:text-sky-400 flex items-center justify-center text-lg mb-3 shadow-inner group-hover:scale-105 transition-transform">
+              <div className="w-10 h-10 rounded-xl bg-surface-muted border border-line-subtle text-brand-primary flex items-center justify-center text-lg mb-3 group-hover:scale-105 transition-transform">
                 <Code2 className="w-5 h-5" />
               </div>
-              <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 mb-1.5 flex items-center gap-2">
+              <h3 className="text-base font-bold text-content-primary mb-1.5 flex items-center gap-2">
                 <span>Monaco 智能代码引擎</span>
               </h3>
-              <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+              <p className="text-xs text-content-secondary leading-relaxed">
                 VS Code 同源核心编辑器，支持智能感知语法高亮、自动补全、多光标编辑与全量键盘快捷键映射。
               </p>
             </div>
-            <div className="flex flex-wrap gap-1.5 mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 text-[10px] font-mono font-medium">
-              <span className="px-2 py-0.5 rounded bg-sky-50 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-500/30">
+            <div className="flex flex-wrap gap-1.5 mt-3 pt-3 border-t border-line-subtle text-[10px] font-mono font-medium">
+              <span className="px-2 py-0.5 rounded bg-surface-muted text-content-secondary border border-line-subtle">
                 IntelliSense
               </span>
-              <span className="px-2 py-0.5 rounded bg-sky-50 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-500/30">
+              <span className="px-2 py-0.5 rounded bg-surface-muted text-content-secondary border border-line-subtle">
                 快捷键映射
               </span>
             </div>
           </div>
 
           {/* Card 3: JVM 栈帧与变量演进 */}
-          <div className="group relative rounded-2xl p-4 sm:p-5 bg-white dark:bg-slate-900/90 border border-slate-200/90 dark:border-slate-700/80 hover:border-purple-400/60 transition-all duration-300 shadow-sm hover:shadow-xl flex flex-col justify-between">
+          <div className="group relative rounded-2xl p-4 sm:p-5 bg-surface-raised border border-line-subtle hover:border-[#D4AD72]/60 transition-all duration-300 shadow-sm hover:shadow-xl flex flex-col justify-between">
             <div>
-              <div className="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-950/60 border border-purple-200 dark:border-purple-500/30 text-purple-600 dark:text-purple-400 flex items-center justify-center text-lg mb-3 shadow-inner group-hover:scale-105 transition-transform">
+              <div className="w-10 h-10 rounded-xl bg-surface-muted border border-line-subtle text-[#D4AD72] flex items-center justify-center text-lg mb-3 group-hover:scale-105 transition-transform">
                 <Layers className="w-5 h-5" />
               </div>
-              <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 mb-1.5 flex items-center gap-2">
+              <h3 className="text-base font-bold text-content-primary mb-1.5 flex items-center gap-2">
                 <span>JVM 栈帧与变量回放</span>
               </h3>
-              <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+              <p className="text-xs text-content-secondary leading-relaxed">
                 独创运行时执行状态回放，单步时间轴回溯局部变量表、操作数栈与空间拓扑结构。
               </p>
             </div>
-            <div className="flex flex-wrap gap-1.5 mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 text-[10px] font-mono font-medium">
-              <span className="px-2 py-0.5 rounded bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-500/30">
+            <div className="flex flex-wrap gap-1.5 mt-3 pt-3 border-t border-line-subtle text-[10px] font-mono font-medium">
+              <span className="px-2 py-0.5 rounded bg-surface-muted text-content-secondary border border-line-subtle">
                 栈帧拓扑
               </span>
-              <span className="px-2 py-0.5 rounded bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-500/30">
+              <span className="px-2 py-0.5 rounded bg-surface-muted text-content-secondary border border-line-subtle">
                 单步断点回溯
               </span>
             </div>
           </div>
 
           {/* Card 4: 禾桔 AI 诊断与热修复 */}
-          <div className="group relative rounded-2xl p-4 sm:p-5 bg-white dark:bg-slate-900/90 border border-slate-200/90 dark:border-slate-700/80 hover:border-amber-400/60 transition-all duration-300 shadow-sm hover:shadow-xl flex flex-col justify-between">
+          <div className="group relative rounded-2xl p-4 sm:p-5 bg-surface-raised border border-line-subtle hover:border-[#D4AD72]/60 transition-all duration-300 shadow-sm hover:shadow-xl flex flex-col justify-between">
             <div>
-              <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-500/30 text-amber-600 dark:text-amber-400 flex items-center justify-center text-lg mb-3 shadow-inner group-hover:scale-105 transition-transform">
+              <div className="w-10 h-10 rounded-xl bg-surface-muted border border-line-subtle text-amber-500 flex items-center justify-center text-lg mb-3 group-hover:scale-105 transition-transform">
                 <Sparkles className="w-5 h-5" />
               </div>
-              <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 mb-1.5 flex items-center gap-2">
+              <h3 className="text-base font-bold text-content-primary mb-1.5 flex items-center gap-2">
                 <span>禾桔 AI 诊断与热修复</span>
               </h3>
-              <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+              <p className="text-xs text-content-secondary leading-relaxed">
                 报错信息自动捕获，大模型深度分析异常根因并生成高精度 Diff 补丁，一键平滑合并代码。
               </p>
             </div>
-            <div className="flex flex-wrap gap-1.5 mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 text-[10px] font-mono font-medium">
-              <span className="px-2 py-0.5 rounded bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-500/30">
+            <div className="flex flex-wrap gap-1.5 mt-3 pt-3 border-t border-line-subtle text-[10px] font-mono font-medium">
+              <span className="px-2 py-0.5 rounded bg-surface-muted text-content-secondary border border-line-subtle">
                 堆栈根因溯源
               </span>
-              <span className="px-2 py-0.5 rounded bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-500/30">
+              <span className="px-2 py-0.5 rounded bg-surface-muted text-content-secondary border border-line-subtle">
                 一键 Diff 补丁
               </span>
             </div>
           </div>
         </div>
+        <SiteFooter className="mt-auto !py-3" />
       </div>
     </div>
   );

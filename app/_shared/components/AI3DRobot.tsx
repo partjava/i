@@ -172,7 +172,12 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
     try {
       setTtsOn(window.localStorage.getItem('partjava-tts-on') === '1');
       setEdgeAiOn(window.localStorage.getItem('partjava-edge-ai') === '1');
-      setPaperTheme(window.localStorage.getItem('heju-paper-theme') === '1');
+      const savedTheme = window.localStorage.getItem('heju-paper-theme');
+      if (savedTheme !== null) {
+        setPaperTheme(savedTheme === '1');
+      } else {
+        setPaperTheme(!document.body.classList.contains('dark'));
+      }
     } catch {}
     const rec = loadAffection();
     const days = (Date.now() - rec.lastSeen) / 86400000;
@@ -826,12 +831,12 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
     <div
       role="dialog"
       aria-modal="true"
-      aria-label="温暖书房"
+      aria-label="禾硙 · 伴学书房"
       style={{ zIndex: 2000 }}
       className="fixed inset-0 z-[2000] bg-black/65 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 animate-fadeIn"
     >
       <div
-        className={`${styles.dialog} ${paperTheme ? styles.paperTheme : ''} bg-[#1c1a17] rounded-2xl shadow-2xl animate-slideUp w-full h-full max-w-6xl max-h-[95vh] flex flex-col overflow-hidden border border-[#d4a36a]/25`}
+        className={`${styles.dialog} ${paperTheme ? styles.paperTheme : ''} bg-[#0E1116] rounded-2xl shadow-2xl animate-slideUp w-full h-full max-w-6xl max-h-[95vh] flex flex-col overflow-hidden border border-[#D4AD72]/30`}
         onDragOver={e => { e.preventDefault(); setIsDraggingOver(true); }}
         onDragLeave={e => { if (!e.relatedTarget) setIsDraggingOver(false); }}
         onDrop={handleDropGLB}
@@ -840,7 +845,7 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
         <div className={styles.header}>
           <div className={styles.brand}>
             <span aria-hidden="true" className={styles.brandDot} />
-            <span>PartJava · 温暖书房</span>
+            <span>禾硙 · 伴学书房</span>
             <span className={styles.affectionMeter} title={`亲密度 ${affection}/100：常来陪禾桔、夸夸它会让它更活泼`}>
               {'❤'.repeat(Math.max(1, Math.round(affection / 25)))}
               <span className={styles.affectionNum}>{affection}</span>
@@ -856,11 +861,11 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
           {showSettings && (
             <div id="study-room-settings" className={styles.settings} role="region" aria-label="书房设置">
               <div className={styles.settingsTitle}>书房与禾桔</div>
-              <div className="flex items-center bg-[#141210] p-0.5 rounded-lg border border-[#d4a36a]/25">
+              <div className="flex items-center bg-[#0E1116]/90 p-0.5 rounded-lg border border-[#D4AD72]/30">
                 <button
                   onClick={() => activatePostureModel('standing')}
                   className={`px-2.5 py-1 rounded-md text-xs font-medium transition-all ${
-                    posture === 'standing' ? 'bg-[#d4a36a] text-[#1c1a17] shadow-sm font-semibold' : 'text-[#e9dac3]/80 hover:text-white'
+                    posture === 'standing' ? 'bg-[#D4AD72] text-[#0E1116] shadow-sm font-semibold' : 'text-[#CBD5E1] hover:text-white'
                   }`}
                 >
                   🐱 乖巧坐姿
@@ -868,7 +873,7 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
                 <button
                   onClick={() => activatePostureModel('crouching')}
                   className={`px-2.5 py-1 rounded-md text-xs font-medium transition-all ${
-                    posture === 'crouching' ? 'bg-[#d4a36a] text-[#1c1a17] shadow-sm font-semibold' : 'text-[#e9dac3]/80 hover:text-white'
+                    posture === 'crouching' ? 'bg-[#D4AD72] text-[#0E1116] shadow-sm font-semibold' : 'text-[#CBD5E1] hover:text-white'
                   }`}
                 >
                   🐾 爬起站姿
@@ -877,7 +882,7 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
 
               <button
                 onClick={() => { setShowBubble(true); setBubbleSide(prev => (prev === 'right' ? 'left' : 'right')); }}
-                className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs border border-[#d4a36a]/40 bg-[#141210] text-[#f7efe4] hover:bg-[#d4a36a]/20 transition-all"
+                className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs border border-[#D4AD72]/40 bg-[#1C222D] text-[#F2EDE4] hover:bg-[#D4AD72]/20 transition-all"
                 title="调整聊天窗位置"
               >
                 {bubbleSide === 'right' ? '聊天窗移到左侧' : '聊天窗移到右侧'}
@@ -885,7 +890,7 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
 
               <button
                 onClick={handlePetCat}
-                className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs border border-[#d4a36a]/40 bg-[#d4a36a]/15 text-[#f7efe4] hover:bg-[#d4a36a]/30 transition-all"
+                className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs border border-[#D4AD72]/40 bg-[#D4AD72]/15 text-[#F2EDE4] hover:bg-[#D4AD72]/30 transition-all"
                 title="点击触发 ^ ^ 眯眼笑跳跃互动"
               >
                 摸摸禾桔
@@ -895,8 +900,8 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
                 onClick={() => { setShowTuningPanel(!showTuningPanel); setShowSettings(false); }}
                 className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs border transition-all ${
                   showTuningPanel
-                    ? 'bg-[#d4a36a] text-[#1c1a17] border-[#d4a36a] font-semibold'
-                    : 'bg-[#141210] border-white/15 text-[#e9dac3]/80 hover:text-white'
+                    ? 'bg-[#D4AD72] text-[#0E1116] border-[#D4AD72] font-semibold'
+                    : 'bg-[#1C222D] border-white/15 text-[#CBD5E1] hover:text-white'
                 }`}
               >
                 五官与毛色微调
@@ -907,7 +912,7 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
                 className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs border transition-all ${
                   showVirtualProps
                     ? 'bg-[#56b6c2]/20 border-[#56b6c2]/50 text-[#a8e4ec]'
-                    : 'bg-[#141210] border-white/15 text-[#e9dac3]/70'
+                    : 'bg-[#1C222D] border-white/15 text-[#CBD5E1]'
                 }`}
                 title="显示或隐藏猫身边的配饰"
               >
@@ -924,12 +929,12 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
                 }}
                 className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs border transition-all ${
                   paperTheme
-                    ? 'bg-[#d4a36a] text-[#1c1a17] border-[#d4a36a] font-semibold'
-                    : 'bg-[#141210] border-white/15 text-[#e9dac3]/80 hover:text-white'
+                    ? 'bg-[#D4AD72] text-[#0E1116] border-[#D4AD72] font-semibold'
+                    : 'bg-[#1C222D] border-white/15 text-[#CBD5E1] hover:text-white'
                 }`}
-                title="对话 UI 切换为宣纸暖光配色，与主站纸墨风呼应"
+                title="切换伴学书房弹窗面板风格（素笺浅色 / 墨砚深色）"
               >
-                {paperTheme ? '📜 宣纸暖光：开' : '📜 宣纸暖光'}
+                {paperTheme ? '📄 素笺浅色面板' : '🪨 墨砚深色面板'}
               </button>
 
               <div className={styles.modelInfo}>
@@ -945,7 +950,7 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
         </div>
 
         {/* 3D 舞台 + 对话气泡 + 输入坞 */}
-        <div className="flex-1 relative bg-[#1c1a17] overflow-hidden">
+        <div className="flex-1 relative bg-[#0E1116] overflow-hidden">
           <div ref={stageContainerRef} className="absolute inset-0">
             <CatStage
               containerRef={stageContainerRef}
@@ -1003,7 +1008,7 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
             />
           )}
 
-          {archive.error && !showArchive && <div role="alert" className="absolute top-2 left-1/2 -translate-x-1/2 z-30 max-w-md px-3 py-2 rounded-lg bg-[#34281d] text-amber-100 text-xs">{archive.error}</div>}
+          {archive.error && !showArchive && <div role="alert" className="absolute top-2 left-1/2 -translate-x-1/2 z-30 max-w-md px-3 py-2 rounded-lg bg-[#1C222D] border border-[#D4AD72]/40 text-[#F2EDE4] text-xs">{archive.error}</div>}
           {showArchive && <HistoryPanel
             sessions={archive.sessions} loading={archive.loading} error={archive.error} signedIn={!!account}
             disabled={isTyping || authStatus === 'loading'} activeId={archive.activeId}
@@ -1017,7 +1022,7 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
           {!isLoading && !showBubble && (
             <button
               onClick={() => setShowBubble(true)}
-              className="absolute top-4 right-4 z-10 px-3.5 py-2 rounded-full bg-[#1a1714]/90 border border-[#d4a36a]/50 text-[#f7efe4] text-xs shadow-xl hover:bg-[#d4a36a] hover:text-[#1c1a17] transition-all font-semibold"
+              className="absolute top-4 right-4 z-10 px-3.5 py-2 rounded-full bg-[#151921]/90 border border-[#D4AD72]/50 text-[#F2EDE4] text-xs shadow-xl hover:bg-[#D4AD72] hover:text-[#0E1116] transition-all font-semibold"
             >
               打开对话
             </button>

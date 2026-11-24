@@ -79,21 +79,20 @@ export default function UserTab({ users, onToggleUserStatus, onChangeRole, onGra
             allowClear
             size="small"
             className="w-48"
-            style={{ background: '#0f1a2f', borderColor: '#234272', color: '#e2e8f0' }}
           />
-          <button onClick={onRefresh} className="text-xs text-indigo-400 hover:text-indigo-300 bg-indigo-900/30 px-3 py-1 rounded">刷新</button>
+          <button onClick={onRefresh} className="text-xs text-brand-primary bg-brand-soft hover:bg-surface-muted border border-line-subtle px-3 py-1 rounded-lg transition-colors">刷新</button>
         </div>
       }
       bordered={false}
-      className="bg-slate-900 border border-slate-800"
+      className="bg-surface-raised border border-line-subtle rounded-2xl shadow-sm"
     >
       <Table
         dataSource={sorted}
         rowKey="id"
         pagination={{ pageSize: 8 }}
         columns={[
-          { title: '用户ID', dataIndex: 'id', key: 'id', render: (val: number) => <span className="font-mono text-indigo-400">#{val}</span> },
-          { title: '用户名', dataIndex: 'username', key: 'username', render: (text: string) => <span className="font-semibold text-slate-200">{text}</span> },
+          { title: '用户ID', dataIndex: 'id', key: 'id', render: (val: number) => <span className="font-mono text-brand-primary">#{val}</span> },
+          { title: '用户名', dataIndex: 'username', key: 'username', render: (text: string) => <span className="font-semibold text-content-primary">{text}</span> },
           { title: '昵称', dataIndex: 'nickname', key: 'nickname', render: (text: string) => text || '—' },
           { title: '注册邮箱', dataIndex: 'email', key: 'email' },
           { title: '注册日期', dataIndex: 'createdAt', key: 'createdAt', render: (val: string) => val ? new Date(val).toLocaleDateString('zh-CN') : '—' },

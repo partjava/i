@@ -162,23 +162,23 @@ export default function AIAssistantPage() {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-gray-50 pb-16">
-      <div className="bg-white shadow-sm p-4 flex items-center">
-        <RobotOutlined className="text-blue-500 text-xl mr-2" />
-        <span className="font-semibold text-gray-800">AI 编程助手</span>
+    <div className="flex flex-col h-[calc(100vh-70px)] bg-surface-page text-content-primary">
+      <div className="bg-surface-raised border-b border-line-subtle shadow-sm px-5 py-3.5 flex items-center">
+        <RobotOutlined className="text-brand-primary text-xl mr-2.5" />
+        <span className="font-semibold text-content-primary">禾硙 AI 编程助手</span>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
         {messages.map((message) => (
           <div
             key={message.id}
             className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
           >
             <div
-              className={`max-w-[80%] rounded-lg p-3 ${
+              className={`max-w-[80%] rounded-2xl p-3.5 shadow-sm ${
                 message.role === 'user'
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-white border border-gray-200'
+                  ? 'bg-brand-primary text-content-inverse'
+                  : 'bg-surface-raised border border-line-subtle text-content-primary'
               }`}
             >
               <div className="flex items-center mb-1">
@@ -197,8 +197,8 @@ export default function AIAssistantPage() {
         ))}
         {loading && (
           <div className="flex justify-start">
-            <div className="max-w-[80%] rounded-lg p-4 bg-white border border-gray-200">
-              <Spin size="small" /> <span className="ml-2 text-xs text-gray-500">正在思考...</span>
+            <div className="max-w-[80%] rounded-2xl p-4 bg-surface-raised border border-line-subtle">
+              <Spin size="small" /> <span className="ml-2 text-xs text-content-muted">正在思考...</span>
             </div>
           </div>
         )}
@@ -211,7 +211,7 @@ export default function AIAssistantPage() {
         </div>
       )}
 
-      <div className="bg-white border-t border-gray-200 p-3 safe-area-inset-bottom">
+      <div className="bg-surface-raised border-t border-line-subtle p-3.5 safe-area-inset-bottom">
         <div className="flex">
           <Input.TextArea
             value={input}
@@ -230,8 +230,8 @@ export default function AIAssistantPage() {
             className="flex-shrink-0"
           />
         </div>
-        <div className="text-xs text-gray-400 mt-1 text-center">
-          由 PartJava AI 驱动，回答仅供学习参考
+        <div className="text-xs text-content-muted mt-1.5 text-center">
+          由禾硙 AI 伴学引擎驱动，回答仅供学习参考
         </div>
       </div>
     </div>

@@ -260,32 +260,32 @@ export default function SpaceUniverse({ onSelectStage, dbChallenges = [] }: Prop
       {/* 🌌 背景粒子星空 */}
       <StarBackground />
 
-      {/* 🪐 深空五彩星云背景光晕 (Deep Space Animated Nebula Clouds) */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none z-0 opacity-40">
+      {/* 🪐 深空星云背景光晕 */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none z-0 opacity-35">
         <div
-          className="absolute -top-1/4 -left-1/4 w-1/2 h-1/2 rounded-full bg-purple-900/30 blur-[130px] animate-pulse"
+          className="absolute -top-1/4 -left-1/4 w-1/2 h-1/2 rounded-full bg-[#D4AD72]/10 blur-[130px] animate-pulse"
           style={{ animationDuration: '12s' }}
         />
         <div
-          className="absolute -bottom-1/4 -right-1/4 w-1/2 h-1/2 rounded-full bg-cyan-900/30 blur-[120px] animate-pulse"
+          className="absolute -bottom-1/4 -right-1/4 w-1/2 h-1/2 rounded-full bg-slate-700/25 blur-[120px] animate-pulse"
           style={{ animationDuration: '14s', animationDelay: '2s' }}
         />
         <div
-          className="absolute top-1/3 left-1/3 w-1/3 h-1/3 rounded-full bg-indigo-900/25 blur-[100px] animate-pulse"
+          className="absolute top-1/3 left-1/3 w-1/3 h-1/3 rounded-full bg-[#C68B59]/12 blur-[100px] animate-pulse"
           style={{ animationDuration: '9s', animationDelay: '1s' }}
         />
         <div
-          className="absolute top-1/4 right-1/4 w-1/4 h-1/4 rounded-full bg-pink-900/20 blur-[90px] animate-pulse"
+          className="absolute top-1/4 right-1/4 w-1/4 h-1/4 rounded-full bg-amber-900/15 blur-[90px] animate-pulse"
           style={{ animationDuration: '16s', animationDelay: '3s' }}
         />
       </div>
 
       {/* 🧠 中心 AI 能量核心 */}
       <div className="absolute left-1/2 top-1/2 w-48 h-48 -translate-x-1/2 -translate-y-1/2 pointer-events-none select-none">
-        <div className="w-full h-full rounded-full bg-purple-600/10 blur-3xl animate-pulse" />
-        <div className="absolute inset-8 rounded-full border border-dashed border-purple-500/20 animate-[spin_20s_linear_infinite]" />
-        <div className="absolute inset-12 rounded-full border border-indigo-500/30 animate-[spin_8s_reverse_infinite]" />
-        <div className="absolute inset-16 rounded-full bg-indigo-950/40 shadow-[0_0_60px_rgba(124,58,237,0.4)] blur-sm" />
+        <div className="w-full h-full rounded-full bg-[#D4AD72]/10 blur-3xl animate-pulse" />
+        <div className="absolute inset-8 rounded-full border border-dashed border-[#D4AD72]/25 animate-[spin_20s_linear_infinite]" />
+        <div className="absolute inset-12 rounded-full border border-[#D4AD72]/30 animate-[spin_8s_reverse_infinite]" />
+        <div className="absolute inset-16 rounded-full bg-[#D4AD72]/10 shadow-[0_0_50px_rgba(212,173,114,0.22)] blur-sm" />
       </div>
 
       {/* 🧬 神经网络能量传输连接线：对半分双色渐变，且光流会沿着渐变颜色传输 */}
@@ -473,28 +473,28 @@ export default function SpaceUniverse({ onSelectStage, dbChallenges = [] }: Prop
                       initial={{ opacity: 0, y: 15 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: 10 }}
-                      className="absolute top-30 w-64 bg-slate-950/90 border border-purple-500/20 rounded-xl p-3.5 backdrop-blur-md shadow-2xl z-50 text-left pointer-events-none select-none"
+                      className="absolute top-30 w-64 bg-[#12161F]/94 border border-[#D4AD72]/30 rounded-xl p-3.5 backdrop-blur-md shadow-2xl z-50 text-left pointer-events-none select-none"
                     >
-                      <span className="text-[9px] uppercase text-indigo-400 font-mono font-bold">Stage {String(stage.id).padStart(2, '0')}</span>
-                      <h3 className="text-xs font-bold text-white mb-1.5 mt-0.5">{stage.name}</h3>
+                      <span className="text-[9px] uppercase text-[#D4AD72] font-mono font-bold">Stage {String(stage.id).padStart(2, '0')}</span>
+                      <h3 className="text-xs font-bold text-[#F2EDE4] mb-1.5 mt-0.5">{stage.name}</h3>
                       <p className="text-[11px] text-slate-400 leading-relaxed mb-3">{stage.desc}</p>
 
                       <div className="space-y-1.5">
                         <div className="flex justify-between text-[9px] text-slate-500">
                           <span>掌握进度</span>
-                          <span className="text-indigo-400 font-semibold">{stagePct}%</span>
+                          <span className="text-[#D4AD72] font-semibold">{stagePct}%</span>
                         </div>
-                        <div className="w-full h-1 bg-slate-900 rounded-full overflow-hidden">
+                        <div className="w-full h-1 bg-[#181D27] rounded-full overflow-hidden">
                           <div
-                            className="h-full bg-gradient-to-r from-blue-500 to-indigo-500"
+                            className="h-full bg-gradient-to-r from-[#B88E52] to-[#D4AD72]"
                             style={{ width: `${stagePct}%` }}
                           />
                         </div>
                       </div>
 
-                      <div className="mt-3 text-[10px] text-indigo-300 flex items-center justify-between border-t border-white/5 pt-2">
+                      <div className="mt-3 text-[10px] text-[#D4AD72]/80 flex items-center justify-between border-t border-white/10 pt-2">
                         <span>核心知识点: {stage.topics.length} 个</span>
-                        <span className="flex items-center text-cyan-400 font-semibold">点击星体直接进入 <ChevronRight className="w-3 h-3 ml-0.5 animate-pulse" /></span>
+                        <span className="flex items-center text-[#D4AD72] font-semibold">点击星体直接进入 <ChevronRight className="w-3 h-3 ml-0.5 animate-pulse" /></span>
                       </div>
                     </motion.div>
                   )}

@@ -329,12 +329,12 @@ export const QuizWorkspace: React.FC<QuizWorkspaceProps> = ({
     }
   };
 
-  if (loading) return <div className="w-full h-full flex flex-col items-center justify-center bg-black/60 text-indigo-400 gap-3"><Loader className="w-8 h-8 animate-spin" /><span className="text-xs font-medium tracking-widest font-mono">LOADING STAR DATA...</span></div>;
+  if (loading) return <div className="w-full h-full flex flex-col items-center justify-center bg-black/60 text-[#D4AD72] gap-3"><Loader className="w-8 h-8 animate-spin" /><span className="text-xs font-medium tracking-widest font-mono">LOADING STAR DATA...</span></div>;
   if (!detail) return (
     <div className="flex h-full flex-col items-center justify-center gap-4 text-sm text-slate-300">
       <p role="status">{loadError ? '关卡加载失败，暂时无法运行样例或提交判题。' : '本章节暂无可用关卡。'}</p>
       {loadError && (
-        <button type="button" onClick={() => setLoadAttempt(attempt => attempt + 1)} className="rounded-lg bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-500">
+        <button type="button" onClick={() => setLoadAttempt(attempt => attempt + 1)} className="rounded-lg bg-[#D4AD72] px-4 py-2 text-[#0E1116] font-semibold hover:bg-[#E0BD86]">
           重新加载关卡
         </button>
       )}
@@ -346,13 +346,13 @@ export const QuizWorkspace: React.FC<QuizWorkspaceProps> = ({
       className="w-full h-full flex flex-col overflow-hidden z-10">
 
       {/* 顶部关卡选择器 */}
-      <div className="bg-slate-950 border-b border-slate-900 px-6 py-4 flex items-center justify-between shrink-0 select-none">
+      <div className="bg-[#12161F]/90 border-b border-white/10 px-6 py-4 flex items-center justify-between shrink-0 select-none">
         <div className="flex items-center gap-3">
-          <span className="text-sm font-extrabold text-white tracking-wider">当前的闯关进度：</span>
+          <span className="text-sm font-extrabold text-[#F2EDE4] tracking-wider">当前的闯关进度：</span>
           <div className="flex items-center gap-2">
             {levels.map((lvl, i) => (
               <button key={i} onClick={() => { if (i !== activeLevelIndex) { runRequests.current.cancel(); setIsRunning(false); setActiveLevelIndex(i); onLevelChange?.(i); } }}
-                className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold tracking-wide transition flex items-center gap-1.5 border ${i === activeLevelIndex ? "bg-indigo-500/20 border-indigo-400 text-indigo-300 shadow-[0_0_12px_rgba(99,102,241,0.2)]" : "bg-slate-900 border-slate-800 text-slate-300 hover:border-slate-700 hover:text-white"}`}>
+                className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold tracking-wide transition flex items-center gap-1.5 border ${i === activeLevelIndex ? "bg-[#D4AD72]/18 border-[#D4AD72]/60 text-[#D4AD72] shadow-[0_0_12px_rgba(212,173,114,0.18)]" : "bg-[#181D27] border-white/10 text-slate-300 hover:border-white/20 hover:text-[#F2EDE4]"}`}>
                 ⭐ 第 {lvl.levelIndex} 关：{lvl.levelTitle}
               </button>
             ))}

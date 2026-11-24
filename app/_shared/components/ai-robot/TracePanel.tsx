@@ -8,10 +8,10 @@ import type { AgentStepItem } from './types';
 export default function TracePanel({ steps, offline }: { steps: AgentStepItem[]; offline?: boolean }) {
   if (!steps || steps.length === 0) return null;
   return (
-    <div className="rounded-xl bg-[#221d18]/92 border border-[#8b7355]/45 shadow-sm overflow-hidden">
-      <div className="px-2.5 py-1.5 text-[10px] font-semibold text-[#f3c687] flex items-center gap-1.5 bg-[#d4a36a]/15">
+    <div className="rounded-xl bg-[#151921]/92 border border-[#D4AD72]/35 shadow-sm overflow-hidden">
+      <div className="px-2.5 py-1.5 text-[10px] font-semibold text-[#D4AD72] flex items-center gap-1.5 bg-[#D4AD72]/12">
         <span>🧠 执行轨迹</span>
-        <span className="opacity-60 font-normal">
+        <span className="opacity-70 font-normal">
           自主决策 · {steps.length} 步
         </span>
         {offline && (
@@ -29,16 +29,16 @@ export default function TracePanel({ steps, offline }: { steps: AgentStepItem[];
                   ? 'text-[#b8a4e8]'
                   : step.phase === 'act'
                   ? step.status === 'running'
-                    ? 'text-[#f3c687] animate-pulse'
-                    : 'text-[#f3c687]'
+                    ? 'text-[#D4AD72] animate-pulse'
+                    : 'text-[#D4AD72]'
                   : 'text-emerald-400'
               }
             >
               {step.phase === 'plan' ? '💭' : step.phase === 'act' ? '⚡' : '✓'}
             </span>
-            <span className="text-[#e8dcc8] font-medium flex-shrink-0">{step.label}</span>
+            <span className="text-[#F2EDE4] font-medium flex-shrink-0">{step.label}</span>
             {step.detail && (
-              <span className="text-[#cbbba6] truncate">{step.detail}</span>
+              <span className="text-[#94A3B8] truncate">{step.detail}</span>
             )}
           </div>
         ))}

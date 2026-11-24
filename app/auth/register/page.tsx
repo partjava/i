@@ -3,10 +3,10 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import Image from 'next/image';
 import { Modal } from 'antd';
 import EyePet from '@shared/components/EyePet';
-import InkWashDecoration from '@shared/components/InkWashDecoration';
+import BrandLogo from '@shared/components/BrandLogo';
+import SiteFooter from '@shared/components/SiteFooter';
 import {
   User,
   Smile,
@@ -124,55 +124,35 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen flex bg-[#f8fafc] relative overflow-hidden font-sans text-slate-800">
-      {/* 柔和极光背景装饰 */}
-      <div className="absolute inset-0 z-0 pointer-events-none">
-        <div className="absolute top-[-12%] right-[-8%] w-[520px] h-[520px] rounded-full bg-indigo-500/8 blur-[120px]" />
-        <div className="absolute bottom-[-12%] left-[-8%] w-[520px] h-[520px] rounded-full bg-sky-400/10 blur-[110px]" />
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#e2e8f050_1px,transparent_1px),linear-gradient(to_bottom,#e2e8f050_1px,transparent_1px)] bg-[size:36px_36px]" />
-      </div>
-
+    <div className="min-h-[calc(100vh-70px)] flex flex-col bg-surface-page relative overflow-hidden font-sans text-content-primary transition-colors">
+      <div className="flex-1 flex">
       {/* 左侧：品牌展示与禾桔灵宠互动舞台 */}
-      <div
-        className="hidden lg:flex lg:w-[50%] relative overflow-hidden z-10 border-r border-slate-200/80"
-        style={{
-          background: 'radial-gradient(circle at 30% 25%, #f1f5f9 0%, #e8edf5 100%)',
-        }}
-      >
-        {/* 水墨装饰 */}
-        <div className="absolute left-0 top-0 bottom-0 w-32 opacity-10 pointer-events-none">
-          <InkWashDecoration variant="bamboo" height={700} />
-        </div>
-        <div className="absolute top-8 right-0 w-1/3 opacity-15 pointer-events-none">
-          <InkWashDecoration variant="birds" height={200} />
-        </div>
-
+      <div className="hidden lg:flex lg:w-[50%] relative overflow-hidden z-10 bg-surface-muted border-r border-line-subtle">
         <div className="relative z-10 flex flex-col justify-center w-full max-w-xl mx-auto px-12 xl:px-16 py-8">
           <div className="text-center mb-5">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-700 text-xs font-mono font-semibold mb-2.5">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span>JOIN PARTJAVA DEVELOPER UNIVERSE</span>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-surface-raised border border-line-subtle text-brand-primary text-xs font-mono font-semibold mb-2.5 shadow-sm">
+              <span className="w-2 h-2 rounded-full bg-[#D4AD72]" />
+              <span>JOIN UNOLGY · 禾硙学习空间</span>
             </div>
-            <Image
-              src="/images/logo-calligraphy-transparent.png"
-              alt="PartJava"
-              width={921}
-              height={601}
-              priority
-              className="w-[230px] xl:w-[260px] h-auto mx-auto drop-shadow-sm"
-            />
-            <p className="text-sm xl:text-base text-slate-600 mt-1 font-normal">
+            <div className="flex justify-center">
+              <BrandLogo
+                variant="full"
+                priority
+                className="h-16 xl:h-20 w-auto drop-shadow-sm"
+              />
+            </div>
+            <p className="text-sm xl:text-base text-content-secondary mt-1 font-normal">
               开启专属云端 Docker 沙箱与全栈进阶之旅
             </p>
           </div>
 
           {/* 禾桔黑猫互动舞台 */}
-          <div className="relative flex flex-col items-center justify-center mb-5 bg-white/80 backdrop-blur-md pt-5 pb-3 px-6 rounded-3xl border border-white shadow-[0_12px_36px_rgba(15,23,42,0.06)]">
-            <div className="absolute top-3 left-4 flex items-center gap-1.5 text-[11px] font-mono text-slate-400">
+          <div className="relative flex flex-col items-center justify-center mb-5 bg-white/95 pt-5 pb-3 px-6 rounded-3xl border border-line-subtle shadow-[0_12px_36px_rgba(15,23,42,0.06)]">
+            <div className="absolute top-3 left-4 flex items-center gap-1.5 text-[11px] font-mono text-slate-500">
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
               <span>禾桔隐私护航</span>
             </div>
-            <div className="absolute top-3 right-4 text-[11px] text-indigo-500 font-medium">
+            <div className="absolute top-3 right-4 text-[11px] text-[#1B3B6F] font-medium">
               {focusField === 'password' || focusField === 'confirm'
                 ? showPassword || showConfirm
                   ? '🫣 帮你核对密码'
@@ -195,36 +175,36 @@ export default function RegisterPage() {
             {[
               {
                 step: '01',
-                icon: <Rocket className="w-4 h-4 text-indigo-600" />,
+                icon: <Rocket className="w-4 h-4 text-brand-primary" />,
                 title: '初始化专属极客通行证',
                 desc: '10 秒极速注册，立即分配独立云端学习档案与 Docker 编译沙箱配额',
               },
               {
                 step: '02',
-                icon: <Code2 className="w-4 h-4 text-sky-600" />,
+                icon: <Code2 className="w-4 h-4 text-[#D4AD72]" />,
                 title: '沉浸式编程与 3D 算法推演',
                 desc: '边学边练 31 种三维流形算法、JVM 栈帧回放与 Markdown/LaTeX 素笺笔记',
               },
               {
                 step: '03',
-                icon: <Award className="w-4 h-4 text-emerald-600" />,
+                icon: <Award className="w-4 h-4 text-emerald-500" />,
                 title: '点亮 365 天打卡热力星环',
                 desc: '基于 Redis 位图记录每日成长轨迹，解锁全栈知识图谱与闯关勋章',
               },
             ].map((item) => (
               <div
                 key={item.step}
-                className="p-3.5 rounded-2xl bg-white/75 backdrop-blur-sm border border-white/90 shadow-sm hover:shadow-md hover:bg-white transition-all flex items-center gap-3.5"
+                className="p-3.5 rounded-2xl bg-surface-raised border border-line-subtle shadow-sm hover:shadow-md transition-all flex items-center gap-3.5"
               >
-                <div className="w-9 h-9 bg-indigo-50/80 border border-indigo-100 rounded-xl flex items-center justify-center shrink-0 text-xs font-black text-indigo-600">
+                <div className="w-9 h-9 bg-brand-soft border border-line-subtle rounded-xl flex items-center justify-center shrink-0 text-xs font-black text-brand-primary">
                   {item.step}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="font-bold text-slate-800 text-xs sm:text-sm flex items-center gap-1.5">
+                  <div className="font-bold text-content-primary text-xs sm:text-sm flex items-center gap-1.5">
                     {item.icon}
                     <span>{item.title}</span>
                   </div>
-                  <div className="text-[11px] text-slate-500 mt-0.5 truncate">
+                  <div className="text-[11px] text-content-muted mt-0.5 truncate">
                     {item.desc}
                   </div>
                 </div>
@@ -247,31 +227,28 @@ export default function RegisterPage() {
 
       {/* 右侧：注册表单卡片区 */}
       <div className="w-full lg:w-[50%] flex items-center justify-center px-4 sm:px-6 py-8 z-10">
-        <div className="w-full max-w-[480px] bg-white/95 backdrop-blur-xl shadow-[0_20px_50px_rgba(15,23,42,0.08)] border border-slate-200/80 p-6 sm:p-8 rounded-3xl">
+        <div className="w-full max-w-[480px] bg-surface-raised shadow-[0_20px_50px_rgba(15,23,42,0.08)] border border-line-subtle p-6 sm:p-8 rounded-3xl">
           {/* 移动端 Logo */}
-          <div className="lg:hidden text-center mb-5">
-            <Image
-              src="/images/logo-calligraphy-transparent.png"
-              alt="PartJava"
-              width={921}
-              height={601}
-              className="w-[140px] h-auto mx-auto"
+          <div className="lg:hidden flex justify-center mb-5">
+            <BrandLogo
+              variant="full"
+              className="h-14 w-auto"
             />
           </div>
 
           <div className="mb-5">
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-600 text-xs font-semibold mb-1.5">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-brand-soft text-brand-primary text-xs font-semibold mb-1.5">
               <Sparkles className="w-3 h-3" />
               <span>免费开启云端实验室</span>
             </div>
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-content-primary tracking-tight">
               创建极客账号
             </h2>
-            <p className="mt-1 text-slate-500 text-sm">
-              已有 PartJava 账号？{' '}
+            <p className="mt-1 text-content-secondary text-sm">
+              已有 禾硙 账号？{' '}
               <Link
                 href="/auth/login"
-                className="text-indigo-600 hover:text-indigo-500 transition-colors font-semibold underline-offset-4 hover:underline"
+                className="text-brand-primary hover:underline transition-colors font-semibold underline-offset-4"
               >
                 直接登录 →
               </Link>
@@ -279,7 +256,7 @@ export default function RegisterPage() {
           </div>
 
           {error && (
-            <div className="mb-4 p-3 bg-rose-50 border border-rose-200 rounded-2xl flex items-center gap-2.5 text-rose-600 text-xs sm:text-sm font-medium">
+            <div className="mb-4 p-3 bg-rose-500/10 border border-rose-500/30 rounded-2xl flex items-center gap-2.5 text-rose-500 text-xs sm:text-sm font-medium">
               <AlertCircle className="w-4 h-4 shrink-0 text-rose-500" />
               <span>{error}</span>
             </div>
@@ -290,11 +267,11 @@ export default function RegisterPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
               {/* 登录账号 */}
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                <label className="block text-xs font-bold text-content-secondary mb-1.5">
                   登录账号 <span className="text-rose-500">*</span>
                 </label>
                 <div className="relative group">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 group-focus-within:text-indigo-600">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-content-muted group-focus-within:text-brand-primary">
                     <User className="w-4 h-4" />
                   </div>
                   <input
@@ -309,12 +286,12 @@ export default function RegisterPage() {
                       if (error) setError('');
                     }}
                     placeholder="5~16位字母/数字/下划线"
-                    className={`w-full pl-9 pr-8 py-2.5 bg-slate-50/80 focus:bg-white border rounded-xl focus:outline-none focus:ring-4 text-slate-900 placeholder-slate-400 transition-all text-xs sm:text-sm ${
+                    className={`w-full pl-9 pr-8 py-2.5 bg-surface-muted focus:bg-surface-page border rounded-xl focus:outline-none text-content-primary placeholder:text-content-muted transition-all text-xs sm:text-sm ${
                       form.username && !isUsernameValid
-                        ? 'border-rose-400 focus:border-rose-500 focus:ring-rose-500/10'
+                        ? 'border-rose-400 focus:border-rose-500'
                         : isUsernameValid
-                        ? 'border-emerald-300 focus:border-indigo-500 focus:ring-indigo-500/10'
-                        : 'border-slate-200 focus:border-indigo-500 focus:ring-indigo-500/10'
+                        ? 'border-emerald-400 focus:border-[#D4AD72]'
+                        : 'border-line-subtle focus:border-[#D4AD72]'
                     }`}
                   />
                   {isUsernameValid && (
@@ -330,11 +307,11 @@ export default function RegisterPage() {
 
               {/* 用户昵称 */}
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                  显示昵称 <span className="font-normal text-slate-400">(选填，支持中文)</span>
+                <label className="block text-xs font-bold text-content-secondary mb-1.5">
+                  显示昵称 <span className="font-normal text-content-muted">(选填，支持中文)</span>
                 </label>
                 <div className="relative group">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 group-focus-within:text-indigo-600">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-content-muted group-focus-within:text-brand-primary">
                     <Smile className="w-4 h-4" />
                   </div>
                   <input
@@ -345,7 +322,7 @@ export default function RegisterPage() {
                     onBlur={() => setFocusField('none')}
                     onChange={(e) => setForm({ ...form, name: e.target.value })}
                     placeholder={cleanUsername ? `默认 "${cleanUsername}"` : '取个好听的昵称'}
-                    className="w-full pl-9 pr-3 py-2.5 bg-slate-50/80 focus:bg-white border border-slate-200 focus:border-indigo-500 rounded-xl focus:outline-none focus:ring-4 focus:ring-indigo-500/10 text-slate-900 placeholder-slate-400 transition-all text-xs sm:text-sm"
+                    className="w-full pl-9 pr-3 py-2.5 bg-surface-muted focus:bg-surface-page border border-line-subtle focus:border-[#D4AD72] rounded-xl focus:outline-none text-content-primary placeholder:text-content-muted transition-all text-xs sm:text-sm"
                   />
                 </div>
               </div>
@@ -353,12 +330,12 @@ export default function RegisterPage() {
 
             {/* 邮箱地址 */}
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5">
+              <label className="block text-xs font-bold text-content-secondary mb-1.5">
                 电子邮箱 <span className="text-rose-500">*</span>{' '}
-                <span className="font-normal text-slate-400">(支持直接作为登录账号及找回密码)</span>
+                <span className="font-normal text-content-muted">(支持直接作为登录账号及找回密码)</span>
               </label>
               <div className="relative group">
-                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 group-focus-within:text-indigo-600">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-content-muted group-focus-within:text-brand-primary">
                   <Mail className="w-4 h-4" />
                 </div>
                 <input
@@ -373,12 +350,12 @@ export default function RegisterPage() {
                     if (error) setError('');
                   }}
                   placeholder="yourname@example.com"
-                  className={`w-full pl-10 pr-9 py-2.5 bg-slate-50/80 focus:bg-white border rounded-xl focus:outline-none focus:ring-4 text-slate-900 placeholder-slate-400 transition-all text-sm ${
+                  className={`w-full pl-10 pr-9 py-2.5 bg-surface-muted focus:bg-surface-page border rounded-xl focus:outline-none text-content-primary placeholder:text-content-muted transition-all text-sm ${
                     form.email && !isEmailValid
-                      ? 'border-rose-400 focus:border-rose-500 focus:ring-rose-500/10'
+                      ? 'border-rose-400 focus:border-rose-500'
                       : isEmailValid
-                      ? 'border-emerald-300 focus:border-indigo-500 focus:ring-indigo-500/10'
-                      : 'border-slate-200 focus:border-indigo-500 focus:ring-indigo-500/10'
+                      ? 'border-emerald-400 focus:border-[#D4AD72]'
+                      : 'border-line-subtle focus:border-[#D4AD72]'
                   }`}
                 />
                 {isEmailValid && (
@@ -392,7 +369,7 @@ export default function RegisterPage() {
             {/* 登录密码 */}
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <label className="block text-xs font-bold text-slate-700">
+                <label className="block text-xs font-bold text-content-secondary">
                   设置登录密码 <span className="text-rose-500">*</span>
                 </label>
                 {form.password && (
@@ -402,7 +379,7 @@ export default function RegisterPage() {
                 )}
               </div>
               <div className="relative group">
-                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 group-focus-within:text-indigo-600">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-content-muted group-focus-within:text-brand-primary">
                   <Lock className="w-4 h-4" />
                 </div>
                 <input
@@ -417,19 +394,19 @@ export default function RegisterPage() {
                     if (error) setError('');
                   }}
                   placeholder="8~20位，需同时包含字母和数字"
-                  className={`w-full pl-10 pr-11 py-2.5 bg-slate-50/80 focus:bg-white border rounded-xl focus:outline-none focus:ring-4 text-slate-900 placeholder-slate-400 transition-all text-sm ${
+                  className={`w-full pl-10 pr-11 py-2.5 bg-surface-muted focus:bg-surface-page border rounded-xl focus:outline-none text-content-primary placeholder:text-content-muted transition-all text-sm ${
                     form.password && !isPasswordValid
-                      ? 'border-rose-400 focus:border-rose-500 focus:ring-rose-500/10'
+                      ? 'border-rose-400 focus:border-rose-500'
                       : isPasswordValid
-                      ? 'border-emerald-300 focus:border-indigo-500 focus:ring-indigo-500/10'
-                      : 'border-slate-200 focus:border-indigo-500 focus:ring-indigo-500/10'
+                      ? 'border-emerald-400 focus:border-[#D4AD72]'
+                      : 'border-line-subtle focus:border-[#D4AD72]'
                   }`}
                 />
                 <button
                   type="button"
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-indigo-600 transition-colors"
+                  className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-content-muted hover:text-brand-primary transition-colors"
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
@@ -443,7 +420,7 @@ export default function RegisterPage() {
                       <div
                         key={i}
                         className={`h-1.5 flex-1 rounded-full transition-all duration-300 ${
-                          passwordScore >= i ? strengthMeta.bar : 'bg-slate-200'
+                          passwordScore >= i ? strengthMeta.bar : 'bg-surface-muted'
                         }`}
                       />
                     ))}
@@ -453,8 +430,8 @@ export default function RegisterPage() {
                   <span
                     className={`px-2 py-0.5 rounded-md border transition-colors ${
                       hasLen
-                        ? 'bg-emerald-50 border-emerald-200 text-emerald-700 font-medium'
-                        : 'bg-slate-50 border-slate-200 text-slate-400'
+                        ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-500 font-medium'
+                        : 'bg-surface-muted border-line-subtle text-content-muted'
                     }`}
                   >
                     {hasLen ? '✓' : '○'} 8~20 位长度
@@ -462,8 +439,8 @@ export default function RegisterPage() {
                   <span
                     className={`px-2 py-0.5 rounded-md border transition-colors ${
                       hasLetter
-                        ? 'bg-emerald-50 border-emerald-200 text-emerald-700 font-medium'
-                        : 'bg-slate-50 border-slate-200 text-slate-400'
+                        ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-500 font-medium'
+                        : 'bg-surface-muted border-line-subtle text-content-muted'
                     }`}
                   >
                     {hasLetter ? '✓' : '○'} 包含英文字母
@@ -471,8 +448,8 @@ export default function RegisterPage() {
                   <span
                     className={`px-2 py-0.5 rounded-md border transition-colors ${
                       hasDigit
-                        ? 'bg-emerald-50 border-emerald-200 text-emerald-700 font-medium'
-                        : 'bg-slate-50 border-slate-200 text-slate-400'
+                        ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-500 font-medium'
+                        : 'bg-surface-muted border-line-subtle text-content-muted'
                     }`}
                   >
                     {hasDigit ? '✓' : '○'} 包含数字
@@ -483,11 +460,11 @@ export default function RegisterPage() {
 
             {/* 确认密码 */}
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5">
+              <label className="block text-xs font-bold text-content-secondary mb-1.5">
                 确认登录密码 <span className="text-rose-500">*</span>
               </label>
               <div className="relative group">
-                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 group-focus-within:text-indigo-600">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-content-muted group-focus-within:text-brand-primary">
                   <ShieldCheck className="w-4 h-4" />
                 </div>
                 <input
@@ -501,19 +478,19 @@ export default function RegisterPage() {
                     if (error) setError('');
                   }}
                   placeholder="请再次输入密码以确认无误"
-                  className={`w-full pl-10 pr-11 py-2.5 bg-slate-50/80 focus:bg-white border rounded-xl focus:outline-none focus:ring-4 text-slate-900 placeholder-slate-400 transition-all text-sm ${
+                  className={`w-full pl-10 pr-11 py-2.5 bg-surface-muted focus:bg-surface-page border rounded-xl focus:outline-none text-content-primary placeholder:text-content-muted transition-all text-sm ${
                     form.confirmPassword && !isConfirmMatch
-                      ? 'border-rose-400 focus:border-rose-500 focus:ring-rose-500/10'
+                      ? 'border-rose-400 focus:border-rose-500'
                       : isConfirmMatch
-                      ? 'border-emerald-300 focus:border-indigo-500 focus:ring-indigo-500/10'
-                      : 'border-slate-200 focus:border-indigo-500 focus:ring-indigo-500/10'
+                      ? 'border-emerald-400 focus:border-[#D4AD72]'
+                      : 'border-line-subtle focus:border-[#D4AD72]'
                   }`}
                 />
                 <button
                   type="button"
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => setShowConfirm(!showConfirm)}
-                  className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-indigo-600 transition-colors"
+                  className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-content-muted hover:text-brand-primary transition-colors"
                 >
                   {showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
@@ -527,11 +504,11 @@ export default function RegisterPage() {
             <button
               type="submit"
               disabled={loading}
-              className="group w-full py-3.5 px-4 rounded-xl text-white font-bold text-sm sm:text-base transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed mt-2 bg-gradient-to-r from-indigo-600 via-indigo-500 to-sky-500 hover:from-indigo-500 hover:to-sky-400 shadow-[0_10px_25px_-5px_rgba(99,102,241,0.45)] hover:shadow-[0_14px_30px_-5px_rgba(99,102,241,0.55)] active:scale-[0.99] flex items-center justify-center gap-2"
+              className="group w-full py-3.5 px-4 rounded-xl text-content-inverse font-bold text-sm sm:text-base transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed mt-2 bg-brand-primary hover:bg-brand-hover shadow-sm active:scale-[0.99] flex items-center justify-center gap-2"
             >
               {loading ? (
                 <>
-                  <svg className="animate-spin w-4 h-4 text-white" fill="none" viewBox="0 0 24 24">
+                  <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                   </svg>
@@ -547,12 +524,12 @@ export default function RegisterPage() {
           </form>
 
           {/* 底部协议 */}
-          <div className="mt-5 text-center text-xs text-slate-400">
+          <div className="mt-5 text-center text-xs text-content-muted">
             注册即代表您已阅读并同意{' '}
             <button
               type="button"
               onClick={() => setLegalModal('terms')}
-              className="text-indigo-600 hover:text-indigo-500 font-medium hover:underline"
+              className="text-brand-primary font-medium hover:underline"
             >
               《服务协议》
             </button>{' '}
@@ -560,13 +537,16 @@ export default function RegisterPage() {
             <button
               type="button"
               onClick={() => setLegalModal('privacy')}
-              className="text-indigo-600 hover:text-indigo-500 font-medium hover:underline"
+              className="text-brand-primary font-medium hover:underline"
             >
               《隐私权政策》
             </button>
           </div>
         </div>
       </div>
+      </div>
+
+      <SiteFooter className="relative z-10 !py-3 border-t border-line-subtle bg-surface-page" />
 
       {/* 协议与隐私弹窗 */}
       <Modal
@@ -575,16 +555,16 @@ export default function RegisterPage() {
         onOk={() => setLegalModal(null)}
         okText="我已了解"
         cancelButtonProps={{ style: { display: 'none' } }}
-        title={legalModal === 'terms' ? 'PartJava 平台服务协议' : 'PartJava 隐私权保护政策'}
+        title={legalModal === 'terms' ? '禾硙 Unolgy 平台服务协议' : '禾硙 Unolgy 隐私权保护政策'}
       >
         {legalModal === 'terms' ? (
-          <div className="space-y-2.5 text-xs sm:text-sm text-slate-600 leading-relaxed py-2">
-            <p>1. <strong>服务范围</strong>：PartJava 提供在线交互式编程教程、Markdown/LaTeX 学习笔记、3D 算法流形推演及 Docker 隔离代码沙箱服务。</p>
+          <div className="space-y-2.5 text-xs sm:text-sm text-content-secondary leading-relaxed py-2">
+            <p>1. <strong>服务范围</strong>：禾硙 Unolgy 提供在线交互式编程教程、Markdown/LaTeX 学习笔记、3D 算法流形推演及 Docker 隔离代码沙箱服务。</p>
             <p>2. <strong>沙箱安全规范</strong>：请勿在在线代码编辑器与判题终端内运行恶意网络扫描、挖矿程序或破坏容器隔离的指令，系统配有 cgroups 资源配额与审计保护。</p>
             <p>3. <strong>知识产权</strong>：用户在平台撰写的原创学习笔记归用户所有；平台内置课程、3D 可视化模型与题库仅供个人学习交流使用。</p>
           </div>
         ) : (
-          <div className="space-y-2.5 text-xs sm:text-sm text-slate-600 leading-relaxed py-2">
+          <div className="space-y-2.5 text-xs sm:text-sm text-content-secondary leading-relaxed py-2">
             <p>1. <strong>信息收集最小化</strong>：我们仅收集您注册时主动填写的账号、昵称与邮箱，用于跨设备同步学习进度、打卡日历与云端笔记。</p>
             <p>2. <strong>凭证加密存储</strong>：您的个人密码经过高强度单向哈希加盐加密存储，平台任何人员与 AI 伴学模块均无法读取您的明文密码。</p>
             <p>3. <strong>数据自主权</strong>：您可随时在个人中心导出、编辑或删除您的学习笔记与历史对话记录。</p>

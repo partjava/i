@@ -9,7 +9,6 @@ import BottomNavigation from './BottomNavigation';
 import MobileGestureHandler from './MobileGestureHandler';
 import NextAuthSessionProvider from '../providers/SessionProvider';
 import { UserProvider } from '../providers/UserProvider';
-import SimpleLearningTracker from './SimpleLearningTracker';
 import PWAProvider from './PWAProvider';
 import DevTools from './DevTools';
 import AiChat from './AiChat';
@@ -121,17 +120,16 @@ export default function RootLayoutClient({ children }: RootLayoutClientProps) {
         <FetchInterceptor />
         <UserProvider>
           <PWAProvider />
-          <SimpleLearningTracker />
           <DevTools />
           <SidebarProvider>
             <MobileGestureHandler>
-              <div data-theme-shell className={`${chromeTheme.shell} ${mobileStyles.layout} relative flex flex-col h-screen bg-page-bg dark:bg-page-dark overflow-hidden`}>
-                {/* 环境光斑（蓝绿灰配色，透过玻璃形成渐变色调） */}
+              <div data-theme-shell className={`${chromeTheme.shell} ${mobileStyles.layout} relative flex flex-col h-screen bg-surface-page overflow-hidden`}>
+                {/* 环境光斑（清透雾银 × 淡雅禾穗微金，透过液态玻璃呈现通透水晶质感） */}
                 <div data-ambient-light className="absolute inset-0 pointer-events-none" aria-hidden="true">
-                  <div className="absolute -left-24 -top-10 w-[28rem] h-[28rem] rounded-full bg-sky-500/45 blur-3xl" />
-                  <div className="absolute left-8 top-1/3 w-96 h-96 rounded-full bg-emerald-400/40 blur-3xl" />
-                  <div className="absolute -left-16 bottom-0 w-[26rem] h-[26rem] rounded-full bg-slate-400/45 blur-3xl" />
-                  <div className="absolute right-0 top-0 w-72 h-72 rounded-full bg-cyan-300/30 blur-3xl" />
+                  <div className="absolute -left-24 -top-10 w-[28rem] h-[28rem] rounded-full bg-slate-300/30 blur-3xl" />
+                  <div className="absolute left-8 top-1/3 w-96 h-96 rounded-full bg-[#D4AD72]/14 blur-3xl" />
+                  <div className="absolute -left-16 bottom-0 w-[26rem] h-[26rem] rounded-full bg-slate-200/40 blur-3xl" />
+                  <div className="absolute right-0 top-0 w-72 h-72 rounded-full bg-indigo-200/18 blur-3xl" />
                 </div>
                 <Navbar />
                 <div className="relative flex flex-1 overflow-hidden">

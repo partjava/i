@@ -1,9 +1,8 @@
 'use client';
 import { TypeAnimation } from 'react-type-animation';
 import Link from 'next/link';
-import Image from 'next/image';
 import { useEffect, useState } from 'react';
-import InkWashDecoration from './InkWashDecoration';
+import BrandLogo from './BrandLogo';
 
 export default function HeroSection() {
   const [mounted, setMounted] = useState(false);
@@ -14,28 +13,8 @@ export default function HeroSection() {
 
   return (
     <div className="relative min-h-[520px] flex items-center justify-center overflow-hidden">
-      {/* 冷色宣纸底色 */}
-      <div className="absolute inset-0 bg-gradient-to-b from-surface-page via-surface-muted to-surface-muted" />
-
-      {/* 远山层叠 - 极淡 */}
-      <div className="absolute inset-0 opacity-20">
-        <InkWashDecoration variant="landscape" height={560} className="absolute inset-0 w-full h-full" />
-      </div>
-
-      {/* 云雾缭绕 */}
-      <div className="absolute inset-0 opacity-15">
-        <InkWashDecoration variant="mist" height={560} className="absolute inset-0 w-full h-full" />
-      </div>
-
-      {/* 飞鸟点缀 */}
-      <div className="absolute top-10 right-0 w-1/3 opacity-25">
-        <InkWashDecoration variant="birds" height={200} />
-      </div>
-
-      {/* 墨竹侧边 */}
-      <div className="absolute left-0 top-0 bottom-0 w-24 opacity-15">
-        <InkWashDecoration variant="bamboo" height={560} />
-      </div>
+      {/* 素笺 / 墨砚统一背景 */}
+      <div className="absolute inset-0 bg-surface-page" />
 
       {/* 内容区域 */}
       <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-20 text-center">
@@ -76,13 +55,10 @@ export default function HeroSection() {
           {/* 主标题 - 飞逸水墨毛笔字 (使用原生透明无损 PNG 实现完美水墨渲染) */}
           <div className="flex justify-center mb-4">
             {mounted && (
-              <Image
-                src="/images/logo-calligraphy-transparent.png"
-                alt="PartJava"
-                width={660}
-                height={431}
+              <BrandLogo
+                variant="full"
                 priority
-                className="w-[400px] md:w-[660px] h-auto pointer-events-none select-none animate-[fadeIn_1.2s_ease-out]"
+                className="h-24 md:h-32 w-auto pointer-events-none select-none animate-[fadeIn_1.2s_ease-out]"
               />
             )}
           </div>

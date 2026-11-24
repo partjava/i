@@ -204,17 +204,17 @@ export const AchievementsDrawer: React.FC<AchievementsDrawerProps> = ({ onClose,
       animate={{ x: 0, opacity: 1 }}
       exit={{ x: 400, opacity: 0 }}
       transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-      className="absolute top-0 right-16 h-full w-[360px] bg-slate-950/95 border-l border-slate-900 backdrop-blur-xl z-20 shadow-2xl flex flex-col overflow-hidden font-sans"
+      className="absolute top-0 right-16 h-full w-[360px] bg-[#12161F]/96 border-l border-white/10 backdrop-blur-xl z-20 shadow-2xl flex flex-col overflow-hidden font-sans"
     >
       {/* 头部 */}
-      <div className="h-14 border-b border-slate-900 px-5 flex justify-between items-center bg-slate-950 shrink-0">
-        <h3 className="text-xs font-bold tracking-wider text-slate-200 flex items-center gap-1.5">
-          <Award className="w-4 h-4 text-purple-400" />
+      <div className="h-14 border-b border-white/10 px-5 flex justify-between items-center bg-[#0E1116] shrink-0">
+        <h3 className="text-xs font-bold tracking-wider text-[#F2EDE4] flex items-center gap-1.5">
+          <Award className="w-4 h-4 text-[#D4AD72]" />
           星际探索成就 (Achievements)
         </h3>
         <button 
           onClick={onClose}
-          className="p-1 rounded-lg hover:bg-slate-950 text-slate-500 hover:text-white transition"
+          className="p-1 rounded-lg hover:bg-white/10 text-slate-400 hover:text-white transition"
         >
           <X className="w-4 h-4" />
         </button>
@@ -227,13 +227,13 @@ export const AchievementsDrawer: React.FC<AchievementsDrawerProps> = ({ onClose,
         <div className="space-y-3">
           <div className="flex justify-between items-center px-1">
             <h4 className="text-[11px] font-bold tracking-wider text-slate-400">星系节点通关里程碑</h4>
-            <span className="text-[10px] text-purple-400 font-mono font-bold">
+            <span className="text-[10px] text-[#D4AD72] font-mono font-bold">
               星空基站: {unlockedMilestonesCount} / 11已亮起
             </span>
           </div>
 
           {/* 11 关卡图标网格 */}
-          <div className="grid grid-cols-6 gap-2 bg-slate-900/20 border border-slate-900 p-3 rounded-2xl">
+          <div className="grid grid-cols-6 gap-2 bg-[#181D27]/60 border border-white/10 p-3 rounded-2xl">
             {milestones.map((m, idx) => {
               const isSelected = selectedMilestoneIndex === idx;
               return (
@@ -336,15 +336,15 @@ export const AchievementsDrawer: React.FC<AchievementsDrawerProps> = ({ onClose,
                   key={a.id}
                   className={`border rounded-2xl p-4 transition-all relative overflow-hidden ${
                     isUnlocked 
-                      ? 'bg-purple-950/5 border-purple-500/20 shadow-[0_0_15px_rgba(168,85,247,0.03)]' 
-                      : 'bg-slate-900/10 border-slate-900 hover:border-slate-850'
+                      ? 'bg-[#D4AD72]/10 border-[#D4AD72]/35 shadow-[0_0_15px_rgba(212,173,114,0.06)]' 
+                      : 'bg-[#181D27]/40 border-white/10 hover:border-white/20'
                   }`}
                 >
                   <div className="flex gap-3">
                     <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
                       isUnlocked 
-                        ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30'
-                        : 'bg-slate-900 text-indigo-400 border border-slate-850'
+                        ? 'bg-[#D4AD72]/20 text-[#D4AD72] border border-[#D4AD72]/35'
+                        : 'bg-[#181D27] text-slate-400 border border-white/10'
                     }`}>
                       {a.icon === 'zap' ? <Zap className="w-4 h-4" /> :
                        a.icon === 'file' ? <FileText className="w-4 h-4" /> :
@@ -353,28 +353,28 @@ export const AchievementsDrawer: React.FC<AchievementsDrawerProps> = ({ onClose,
 
                     <div className="space-y-1 flex-1">
                       <div className="flex justify-between items-start">
-                        <h4 className={`text-xs font-bold ${isUnlocked ? 'text-slate-100' : 'text-slate-400'}`}>
+                        <h4 className={`text-xs font-bold ${isUnlocked ? 'text-[#F2EDE4]' : 'text-slate-400'}`}>
                           {a.name}
                         </h4>
                         {isUnlocked && (
-                          <div className="w-4 h-4 rounded-full bg-purple-500/20 text-purple-400 flex items-center justify-center border border-purple-500/40">
+                          <div className="w-4 h-4 rounded-full bg-[#D4AD72]/20 text-[#D4AD72] flex items-center justify-center border border-[#D4AD72]/40">
                             <Check className="w-2.5 h-2.5" />
                           </div>
                         )}
                       </div>
-                      <p className="text-[10px] text-slate-500 leading-relaxed pr-2">
+                      <p className="text-[10px] text-slate-400 leading-relaxed pr-2">
                         {a.desc}
                       </p>
 
                       {isProgress && a.progress && (
                         <div className="pt-2">
-                          <div className="flex justify-between text-[9px] text-slate-500 font-mono mb-1">
+                          <div className="flex justify-between text-[9px] text-slate-400 font-mono mb-1">
                             <span>探索进度</span>
                             <span>{a.progress.current} / {a.progress.total}</span>
                           </div>
-                          <div className="w-full h-1.5 bg-slate-900 rounded-full overflow-hidden">
+                          <div className="w-full h-1.5 bg-[#0E1116] rounded-full overflow-hidden">
                             <div 
-                              className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full"
+                              className="h-full bg-gradient-to-r from-[#B88E52] to-[#D4AD72] rounded-full"
                               style={{ width: `${(a.progress.current / a.progress.total) * 100}%` }}
                             />
                           </div>
@@ -382,7 +382,7 @@ export const AchievementsDrawer: React.FC<AchievementsDrawerProps> = ({ onClose,
                       )}
 
                       {isUnlocked && a.unlockedAt && (
-                        <p className="text-[9px] text-purple-500/60 font-mono pt-1">
+                        <p className="text-[9px] text-[#D4AD72]/70 font-mono pt-1">
                           解锁于: {a.unlockedAt}
                         </p>
                       )}

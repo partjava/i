@@ -3,11 +3,34 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>PartJava — 沉浸式 3D 数字书房与技术架构空间</title>
+  <title>禾硙 Unolgy — 沉浸式 3D 数字书房与技术架构空间</title>
   <script src="./vendor/tailwind.min.js"></script>
   <script src="./vendor/three.min.js"></script>
   <script src="./vendor/gsap.min.js"></script>
   <link rel="stylesheet" href="./css/sanctuary.css" />
+  <script>
+    window.__SANCTUARY_EMBEDDED__ = new URLSearchParams(window.location.search).get('embedded') === '1';
+    if (window.__SANCTUARY_EMBEDDED__) {
+      document.documentElement.classList.add('is-embedded');
+    }
+  </script>
+  <style>
+    html.is-embedded #brand-home-btn,
+    html.is-embedded header nav,
+    html.is-embedded #hero-section,
+    html.is-embedded #btn-scroll-down,
+    html.is-embedded #bottom-bar > div:first-child {
+      display: none !important;
+    }
+    html.is-embedded header {
+      padding: 12px 16px !important;
+      justify-content: flex-end !important;
+    }
+    html.is-embedded #bottom-bar {
+      padding: 12px 16px !important;
+      justify-content: space-between !important;
+    }
+  </style>
 </head>
 <body class="selection:bg-[#D4AD72]/30 selection:text-[#F2E9DC]">
 
@@ -19,7 +42,7 @@
   <div id="loader-curtain" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#111418] transition-opacity duration-1000">
     <div class="flex items-center gap-2.5 mb-4">
       <span class="w-1.5 h-1.5 rounded-full bg-[#D4AD72] animate-ping"></span>
-      <span class="text-[11px] font-mono-code uppercase tracking-[0.32em] text-[#D4AD72]/90">PartJava</span>
+      <span class="text-[11px] font-mono-code uppercase tracking-[0.32em] text-[#D4AD72]/90">UNOLGY</span>
     </div>
     <div class="w-48 h-[1px] bg-white/10 overflow-hidden">
       <div id="loader-bar" class="h-full bg-[#D4AD72] w-0 transition-all duration-500"></div>
@@ -40,7 +63,7 @@
     <!-- 品牌标识 -->
     <button id="brand-home-btn" class="pointer-events-auto flex items-center gap-3 group text-left">
       <span class="w-2 h-2 rounded-full bg-[#D4AD72] group-hover:scale-125 transition-transform"></span>
-      <span class="text-sm font-mono-code tracking-[0.2em] text-[#F2E9DC] font-medium">PartJava</span>
+      <span class="text-sm font-mono-code tracking-[0.2em] text-[#F2E9DC] font-medium">禾硙 UNOLGY</span>
     </button>
 
     <!-- 导航链接与精简控制 -->
@@ -251,13 +274,13 @@
     <div id="about-dialog" class="glass-panel w-full max-w-2xl rounded-3xl border border-[#D4AD72]/30 p-6 sm:p-8 transform scale-95 transition-transform duration-500 space-y-6">
       <div class="flex items-center justify-between border-b border-white/10 pb-4">
         <div>
-          <div class="text-[10px] font-mono-code uppercase tracking-[0.25em] text-[#D4AD72]">About PartJava Sanctuary</div>
-          <h2 class="text-xl font-serif-editorial font-semibold text-[#F2E9DC] mt-1">关于作者与这座数字书房</h2>
+          <div class="text-[10px] font-mono-code uppercase tracking-[0.25em] text-[#D4AD72]">About Unolgy Sanctuary</div>
+          <h2 class="text-xl font-serif-editorial font-semibold text-[#F2E9DC] mt-1">关于禾硙与这座数字书房</h2>
         </div>
         <button id="btn-close-about" class="px-3.5 py-1.5 rounded-full bg-white/10 hover:bg-white/15 text-xs text-[#F2E9DC]">返回 (ESC)</button>
       </div>
       <p class="text-xs sm:text-sm text-[#F2E9DC]/75 leading-relaxed">
-        PartJava 数字书房是一座实时渲染于浏览器中的 3D 个人技术空间。这里没有喧嚣的弹窗与廉价特效，只有温润的深胡桃木书桌、2850K 的暖色台灯、正在编译的系统代码，以及随时可以翻阅的算法手稿。
+        禾硙 Unolgy 数字书房是一座实时渲染于浏览器中的 3D 交互学习空间。这里没有喧嚣的弹窗，只有温润的木质书桌、2850K 的暖色台灯、正在运行的算法代码，以及随时可以翻阅的技术手稿。
       </p>
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5 text-xs font-mono-code">
         <div class="p-3.5 rounded-2xl bg-white/[0.03] border border-white/10">

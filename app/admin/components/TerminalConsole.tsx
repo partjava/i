@@ -17,15 +17,18 @@ export default function TerminalConsole({ users, onLogAdd, sysInfo, stats, logs 
   const [cmdInput, setCmdInput] = useState('');
   const [cmdHistory, setCmdHistory] = useState<string[]>([
     '========================================',
-    '   PartJava Cloud Sandbox Console v1.2  ',
+    '   Unolgy Cloud Sandbox Console v2.0    ',
     '========================================',
     '输入 "help" 可以查看可执行的管理指令。',
     ''
   ]);
-  const terminalEndRef = useRef<HTMLDivElement>(null);
+  const terminalContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    terminalEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const el = terminalContainerRef.current;
+    if (el) {
+      el.scrollTop = el.scrollHeight;
+    }
   }, [cmdHistory]);
 
   const handleCommandSubmit = (e: React.FormEvent) => {
@@ -107,44 +110,43 @@ export default function TerminalConsole({ users, onLogAdd, sysInfo, stats, logs 
         response = [`bash: command not found: ${cmdInput}. 输入 "help" 获取提示.`];
     }
 
-    setCmdHistory(prev => [...prev, `root@partjava:~# ${cmdInput}`, ...response, '']);
+    setCmdHistory(prev => [...prev, `root@unolgy:~# ${cmdInput}`, ...response, '']);
     setCmdInput('');
     onLogAdd(`管理员在控制台执行了指令: "${trimmedCmd}"`, 'INFO');
   };
 
   return (
-    <div className="bg-slate-950 p-4 rounded-lg border border-slate-800 font-mono text-xs flex flex-col h-[230px] overflow-hidden">
-      <div className="flex items-center gap-1.5 text-slate-400 mb-2 border-b border-slate-900 pb-1">
-        <Terminal size={14} className="text-indigo-400" />
+    <div className="bg-[#0E1116] p-4 rounded-2xl border border-line-subtle font-mono text-xs flex flex-col h-[230px] overflow-hidden shadow-sm">
+      <div className="flex items-center gap-1.5 text-[#D4AD72] mb-2 border-b border-white/10 pb-1.5">
+        <Terminal size={14} className="text-[#D4AD72]" />
         <span>OJ 交互式命令行控制台</span>
       </div>
       
-      <div className="flex-1 overflow-y-auto pr-1 flex flex-col gap-1 select-text">
+      <div ref={terminalContainerRef} className="flex-1 overflow-y-auto pr-1 flex flex-col gap-1 select-text">
         {cmdHistory.map((h, i) => (
           <div key={i} className="whitespace-pre-wrap text-emerald-400">
             {h.startsWith('root@') ? (
               <span>
-                <span className="text-indigo-400">root@partjava</span>
+                <span className="text-[#D4AD72]">root@unolgy</span>
                 <span className="text-slate-400">:~# </span>
-                <span className="text-slate-200">{h.substring(13)}</span>
+                <span className="text-slate-200">{h.includes(':~# ') ? h.slice(h.indexOf(':~# ') + 4) : h}</span>
               </span>
             ) : (
               <span className="text-slate-300">{h}</span>
             )}
           </div>
         ))}
-        <div ref={terminalEndRef} />
       </div>
       
-      <form onSubmit={handleCommandSubmit} className="flex gap-2 border-t border-slate-800 pt-2 mt-2">
-        <span className="text-indigo-400">root@partjava</span>
+      <form onSubmit={handleCommandSubmit} className="flex gap-2 border-t border-white/10 pt-2 mt-2">
+        <span className="text-[#D4AD72]">root@unolgy</span>
         <span className="text-slate-400">:~#</span>
         <input
           type="text"
           value={cmdInput}
           onChange={(e) => setCmdInput(e.target.value)}
           placeholder="输入 'help' 以列出控制台命令..."
-          className="flex-1 bg-transparent border-none outline-none text-slate-100 caret-indigo-400"
+          className="flex-1 bg-transparent border-none outline-none text-[#F2EDE4] caret-[#D4AD72]"
         />
       </form>
     </div>

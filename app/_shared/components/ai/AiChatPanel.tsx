@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { UserOutlined } from '@ant-design/icons';
+import { Trash2 } from 'lucide-react';
 import StitchLogo from '../StitchLogo';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -38,39 +39,39 @@ export default function AiChatPanel() {
 
   return (
     <div className="flex flex-col w-full h-full min-h-0">
-      {/* 头部 */}
+      {/* 头部（随书本主题色统一 + 防止窄栏文字折行） */}
       <div
-        className="flex items-center gap-2 px-3 py-2.5 flex-shrink-0"
-        style={{ background: 'linear-gradient(90deg,#4f8cff,#33d2ff)', color: '#fff' }}
+        className="flex items-center gap-1.5 px-2.5 py-2 flex-shrink-0"
+        style={{ background: 'var(--book-accent, #1B3B6F)', color: '#fff' }}
       >
-        <div className="w-6 h-6 flex items-center justify-center">
-          <StitchLogo size={22} />
+        <div className="w-5 h-5 flex items-center justify-center shrink-0">
+          <StitchLogo size={20} />
         </div>
-        <span className="font-bold text-sm">AI助手</span>
-        <div className="flex-1" />
+        <span className="font-semibold text-xs whitespace-nowrap shrink-0">AI助手</span>
+        <div className="flex-1 min-w-0" />
         <button
           onClick={() => { if (window.confirm('确定清空当前对话？')) ai.clearConversation(); }}
           disabled={ai.loading}
           title="清空对话"
-          className="bg-white/15 hover:bg-white/25 border-none text-white w-6 h-6 rounded-md cursor-pointer text-xs transition-colors disabled:opacity-60 flex items-center justify-center"
+          className="bg-white/15 hover:bg-white/25 border-none text-white w-6 h-6 rounded-md cursor-pointer transition-colors disabled:opacity-60 flex items-center justify-center shrink-0"
         >
-          🧹
+          <Trash2 className="w-3.5 h-3.5" />
         </button>
         <button
           onClick={ai.summarizeAndCreateNote}
           disabled={ai.loading}
           title="总结并保存为笔记"
-          className="bg-white/15 hover:bg-white/25 border-none text-white px-2 py-1 rounded-md cursor-pointer text-xs transition-colors disabled:opacity-60"
+          className="bg-white/15 hover:bg-white/25 border-none text-white px-2 py-1 rounded-md cursor-pointer text-[11px] whitespace-nowrap shrink-0 transition-colors disabled:opacity-60"
         >
-          总结并保存
+          总结
         </button>
         <button
           onClick={ai.createNoteFromConversation}
           disabled={ai.loading}
           title="直接保存为笔记"
-          className="bg-white/15 hover:bg-white/25 border-none text-white px-2 py-1 rounded-md cursor-pointer text-xs transition-colors disabled:opacity-60"
+          className="bg-white/15 hover:bg-white/25 border-none text-white px-2 py-1 rounded-md cursor-pointer text-[11px] whitespace-nowrap shrink-0 transition-colors disabled:opacity-60"
         >
-          保存为笔记
+          存笔记
         </button>
       </div>
 
@@ -85,7 +86,7 @@ export default function AiChatPanel() {
               >
                 <div
                   className="w-6 h-6 rounded-full text-white flex items-center justify-center flex-shrink-0"
-                  style={{ background: m.role === 'assistant' ? '#4f8cff' : '#6a11cb' }}
+                  style={{ background: m.role === 'assistant' ? 'var(--book-accent, #1B3B6F)' : '#0F1D33' }}
                 >
                   {m.role === 'assistant' ? <StitchLogo size={16} /> : <UserOutlined style={{ fontSize: 13 }} />}
                 </div>
@@ -94,7 +95,7 @@ export default function AiChatPanel() {
               <div
                 className="px-3 py-2.5 rounded-lg text-[13px] leading-relaxed"
                 style={{
-                  background: m.role === 'assistant' ? '#fff' : '#4f8cff',
+                  background: m.role === 'assistant' ? '#fff' : 'var(--book-accent, #1B3B6F)',
                   color: m.role === 'assistant' ? '#111' : '#fff',
                   boxShadow: '0 2px 10px rgba(0,0,0,0.04)',
                 }}
@@ -124,8 +125,8 @@ export default function AiChatPanel() {
             onClick={() => ai.sendMessage(q)}
             disabled={ai.loading}
             className="text-xs px-2 py-1 rounded-full border transition-colors disabled:opacity-50 hover:text-white"
-            style={{ borderColor: 'var(--book-accent, #4f8cff)', color: 'var(--book-accent, #4f8cff)' }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--book-accent, #4f8cff)'; }}
+            style={{ borderColor: 'var(--book-accent, #1B3B6F)', color: 'var(--book-accent, #1B3B6F)' }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--book-accent, #1B3B6F)'; }}
             onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
           >
             {q}
@@ -148,7 +149,7 @@ export default function AiChatPanel() {
             onClick={() => ai.sendMessage()}
             disabled={ai.loading || !ai.input.trim()}
             className="px-3 py-2 rounded-lg text-white border-none cursor-pointer text-sm disabled:opacity-50"
-            style={{ background: 'var(--book-accent, #4f8cff)' }}
+            style={{ background: 'var(--book-accent, #1B3B6F)' }}
           >
             发送
           </button>

@@ -4,7 +4,11 @@ import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '@shared/hooks/useAuth';
 import { usePathname } from 'next/navigation';
 
-export default function SimpleLearningTracker() {
+export default function SimpleLearningTracker({
+  variant = 'navbar',
+}: {
+  variant?: 'navbar' | 'floating';
+} = {}) {
   const { data: session } = useAuth();
   const pathname = usePathname();
   const [seconds, setSeconds] = useState(0);
@@ -193,12 +197,123 @@ export default function SimpleLearningTracker() {
   const currentMinutes = Math.floor(seconds / 60);
   const displayTotal = todayTotal + currentMinutes;
 
-  // 完全隐藏状态
+  if (variant === 'navbar') {
+    if (isMinimized) {
+      return (
+        <div className="relative flex-shrink-0">
+          <button
+            type="button"
+            onClick={toggleMinimized}
+            className="relative h-10 w-10 rounded-full bg-surface-raised border border-line-subtle text-content-primary hover:border-brand-primary/40 shadow-sm flex items-center justify-center transition-all"
+            title="展开学习计时"
+            aria-label="展开学习计时"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span
+              className={`absolute top-1.5 right-1.5 w-2 h-2 rounded-full ${
+                isActive ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'
+              }`}
+            />
+          </button>
+        </div>
+      );
+    }
+
+    return (
+      <div className="relative flex-shrink-0">
+        <div
+          onClick={() => setIsExpanded(prev => !prev)}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              setIsExpanded(prev => !prev);
+            }
+          }}
+          className="h-10 px-3 rounded-full bg-surface-raised border border-line-subtle text-content-primary hover:border-brand-primary/40 shadow-sm cursor-pointer flex items-center gap-2 text-xs font-mono transition-all select-none"
+          title="查看本次与今日学习时长"
+        >
+          <span
+            className={`w-2 h-2 rounded-full shrink-0 ${
+              isActive ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'
+            }`}
+          />
+          <span className="tabular-nums font-semibold">{formatTime(seconds)}</span>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              toggleMinimized();
+            }}
+            className="text-content-muted hover:text-content-primary pl-0.5 transition-colors"
+            title="最小化计时器"
+            aria-label="最小化计时器"
+          >
+            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        {isExpanded && (
+          <div className="absolute right-0 top-full mt-2 w-56 rounded-2xl bg-surface-raised border border-line-subtle shadow-xl p-3 z-50 text-content-primary space-y-2">
+            <div className="flex items-center justify-between border-b border-line-subtle pb-2">
+              <div className="flex items-center gap-1.5 text-xs font-semibold">
+                <span
+                  className={`w-2 h-2 rounded-full ${
+                    isActive ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'
+                  }`}
+                />
+                <span>{isActive ? '学习专注中' : '当前暂停检测'}</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => setIsExpanded(false)}
+                  className="px-1.5 py-0.5 rounded text-[11px] text-content-muted hover:text-content-primary hover:bg-surface-muted transition-colors"
+                  title="收起面板"
+                >
+                  收起
+                </button>
+                <button
+                  type="button"
+                  onClick={toggleMinimized}
+                  className="px-1.5 py-0.5 rounded text-[11px] text-content-muted hover:text-content-primary hover:bg-surface-muted transition-colors"
+                  title="最小化为时钟图标"
+                >
+                  最小化
+                </button>
+              </div>
+            </div>
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-content-secondary">本次专注</span>
+              <span className="font-mono font-bold tabular-nums">{formatTime(seconds)}</span>
+            </div>
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-content-secondary">今日累计</span>
+              <span className="font-mono font-semibold tabular-nums">{displayTotal} 分钟</span>
+            </div>
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-content-secondary">当前场景</span>
+              <span className="px-2 py-0.5 rounded-full bg-surface-muted border border-line-subtle text-brand-primary font-medium text-[11px]">
+                {getPageCategory(pathname)}
+              </span>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // 完全隐藏状态（floating 模式）
   if (isMinimized) {
     return (
       <button
         onClick={toggleMinimized}
-        className="fixed bottom-4 right-4 bg-blue-500 hover:bg-blue-600 text-white w-10 h-10 rounded-full shadow-lg z-50 flex items-center justify-center transition-all duration-200"
+        className="fixed bottom-4 right-4 bg-surface-raised border border-line-strong text-content-primary hover:border-brand-primary w-10 h-10 rounded-full shadow-lg z-50 flex items-center justify-center transition-all duration-200"
         title="显示学习追踪"
       >
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

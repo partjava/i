@@ -15,7 +15,7 @@ export interface Message {
 const STORAGE_KEY = 'ai_chat_messages_v1';
 
 const WELCOME_MESSAGE: Message[] = [
-  { id: 'welcome', role: 'assistant', content: '你好！我是PartJava AI助手，有什么我可以帮你的？' },
+  { id: 'welcome', role: 'assistant', content: '你好！我是禾硙 AI 助手，有什么我可以帮你的？' },
 ];
 
 function loadInitialMessages(key: string): Message[] {

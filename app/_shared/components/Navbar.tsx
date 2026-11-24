@@ -1,7 +1,6 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import dynamic from 'next/dynamic';
 import { useAuth } from '@shared/hooks/useAuth';
 import { useUser } from '../providers/UserProvider';
@@ -16,16 +15,18 @@ import {
   EditOutlined,
   BellOutlined,
   CodeOutlined,
-  RobotOutlined,
-  BarChartOutlined
+  CrownOutlined,
 } from '@ant-design/icons';
 import { useSidebar } from './Sidebar';
 import SettingModal from './SettingModal';
 // three.js + VRM 体积大（~1MB+），必须懒加载，避免拖累全站首屏（与 BottomNavigation 保持一致）
 const AI3DRobot = dynamic(() => import('./AI3DRobot'), { ssr: false });
 import StitchLogo from './StitchLogo';
+import BrandLogo from './BrandLogo';
+import SimpleLearningTracker from './SimpleLearningTracker';
 import GlobalSearch from './GlobalSearch';
 import VipModal from './VipModal';
+import { navigationItems } from '../data/navigation';
 import {
   PetCompanionEventDetail,
   speakWithHeju,
@@ -47,6 +48,41 @@ export default function Navbar() {
   const [companionBubble, setCompanionBubble] = useState<PetCompanionEventDetail | null>(null);
   const [isHejuSpeaking, setIsHejuSpeaking] = useState(false);
   const [isPyiGpt, setIsPyiGpt] = useState(false);
+  const [studyMenuOpen, setStudyMenuOpen] = useState(false);
+  const studyMenuTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const openStudyMenu = useCallback(() => {
+    if (studyMenuTimerRef.current) {
+      clearTimeout(studyMenuTimerRef.current);
+      studyMenuTimerRef.current = null;
+    }
+    setStudyMenuOpen(true);
+  }, []);
+
+  const scheduleCloseStudyMenu = useCallback(() => {
+    if (studyMenuTimerRef.current) {
+      clearTimeout(studyMenuTimerRef.current);
+    }
+    studyMenuTimerRef.current = setTimeout(() => {
+      setStudyMenuOpen(false);
+      studyMenuTimerRef.current = null;
+    }, 180);
+  }, []);
+
+  useEffect(() => {
+    setStudyMenuOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setStudyMenuOpen(false);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => {
+      window.removeEventListener('keydown', onKeyDown);
+      if (studyMenuTimerRef.current) clearTimeout(studyMenuTimerRef.current);
+    };
+  }, []);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -149,6 +185,12 @@ export default function Navbar() {
       label: '设置',
       onClick: () => setSettingOpen(true),
     },
+    {
+      key: 'vip',
+      icon: <CrownOutlined style={{ color: '#D4AD72' }} />,
+      label: '会员中心',
+      onClick: () => setShowVip(true),
+    },
     // 如果具备管理员权限，动态增加”后台管理”入口链接
     ...(user?.role === 'ADMIN' || user?.role === 'OWNER' ? [
       {
@@ -201,30 +243,14 @@ export default function Navbar() {
             <MenuOutlined className="w-5 h-5" />
           </button>
 
-          {/* Logo */}
-          <Link href={homeHref} className="relative flex items-center space-x-2 pr-1">
-            <div
-              className="w-9 h-9 rounded-full flex items-center justify-center overflow-hidden transition-all duration-200 hover:scale-105 relative"
-              style={{
-                background:
-                  'radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.75) 0%, rgba(255, 255, 255, 0.22) 55%, rgba(186, 230, 253, 0.28) 100%)',
-                backdropFilter: 'blur(12px)',
-                WebkitBackdropFilter: 'blur(12px)',
-                border: '1.5px solid rgba(255, 255, 255, 0.85)',
-                boxShadow:
-                  '0 4px 14px rgba(15, 23, 42, 0.08), inset 0 1.5px 3px rgba(255, 255, 255, 0.9)',
-              }}
-            >
-              <StitchLogo size={24} />
-            </div>
-            <Image
-              src="/images/logo-calligraphy-transparent.png"
-              alt="PartJava"
-              data-nav-wordmark
-              width={921}
-              height={601}
-              className="h-6 sm:h-7 w-auto hidden sm:block drop-shadow-sm"
-            />
+          {/* 禾硙 Brand Logo（随深浅色主题自动切换） */}
+          <Link href={homeHref} className="relative flex items-center pr-1.5 shrink-0 transition-transform duration-200 hover:scale-[1.02]">
+            <span className="inline-flex sm:hidden items-center">
+              <BrandLogo variant="mark" className="w-10 h-10" priority />
+            </span>
+            <span className="hidden sm:inline-flex items-center">
+              <BrandLogo variant="full" className="h-11 sm:h-12 w-auto drop-shadow-sm" priority />
+            </span>
           </Link>
 
           {/* 分隔竖线 */}
@@ -242,7 +268,18 @@ export default function Navbar() {
               <span className="text-[11px] leading-tight">笔记</span>
             </Link>
 
-            <Link href="/knowledge-graph" data-nav-item aria-current={isActive('/knowledge-graph') ? 'page' : undefined} className={navItemClass('/knowledge-graph')}>
+            <Link
+              href="/knowledge-graph"
+              data-nav-item
+              data-nav-graph
+              aria-current={isActive('/knowledge-graph') ? 'page' : undefined}
+              aria-expanded={studyMenuOpen}
+              onMouseEnter={openStudyMenu}
+              onMouseLeave={scheduleCloseStudyMenu}
+              onFocus={openStudyMenu}
+              onClick={() => setStudyMenuOpen(false)}
+              className={navItemClass('/knowledge-graph')}
+            >
               <svg className="w-4 h-4 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
               </svg>
@@ -283,21 +320,6 @@ export default function Navbar() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
               </svg>
               <span className="text-[11px] leading-tight">机器人</span>
-            </button>
-
-            {/* 👑 VIP 会员入口 */}
-            <button
-              onClick={() => setShowVip(true)}
-              className="relative flex flex-col items-center justify-center px-2.5 py-1 rounded-2xl transition-all duration-200 hover:scale-105 bg-amber-400/15 hover:bg-amber-400/25 border border-amber-400/45 group"
-              title="开通/续费 VIP 会员"
-            >
-              <div className="relative">
-                <svg className="w-4 h-4 mb-0.5 text-amber-500 group-hover:text-amber-400 drop-shadow-[0_0_6px_rgba(250,204,21,0.6)]" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm2 3h10v1a1 1 0 01-1 1H8a1 1 0 01-1-1v-1z" />
-                </svg>
-                <span className="absolute -top-0.5 -right-1 w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
-              </div>
-              <span className="text-[11px] leading-tight text-amber-600 dark:text-amber-300 font-bold">VIP</span>
             </button>
           </div>
         </div>
@@ -343,12 +365,12 @@ export default function Navbar() {
                   style={{
                     width: 64, height: 48, minWidth: 64, borderRadius: '50%',
                     background:
-                      'radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.72) 0%, rgba(255, 255, 255, 0.22) 55%, rgba(186, 230, 253, 0.32) 100%)',
-                    backdropFilter: 'blur(16px) saturate(180%)',
-                    WebkitBackdropFilter: 'blur(16px) saturate(180%)',
+                      'radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.85) 0%, rgba(244, 245, 247, 0.42) 58%, rgba(212, 173, 114, 0.22) 100%)',
+                    backdropFilter: 'blur(16px) saturate(160%)',
+                    WebkitBackdropFilter: 'blur(16px) saturate(160%)',
                     border: '1.5px solid rgba(255, 255, 255, 0.85)',
                     boxShadow:
-                      '0 8px 24px rgba(15, 23, 42, 0.1), inset 0 2px 4px rgba(255, 255, 255, 0.95), inset 0 -2px 6px rgba(56, 189, 248, 0.25)',
+                      '0 8px 24px rgba(15, 23, 42, 0.10), inset 0 2px 4px rgba(255, 255, 255, 0.92), inset 0 -2px 6px rgba(212, 173, 114, 0.22)',
                   }}
                   aria-label="打开AI助手"
                 >
@@ -451,7 +473,9 @@ export default function Navbar() {
           )}
         </div>
 
-        {/* 🏝️ 右岛：用户状态与通知液态玻璃胶囊 */}
+        {/* 🏝️ 右侧：学习计时器 + 用户状态与通知液态玻璃胶囊 */}
+        <div className="flex items-center gap-2 shrink-0">
+          <SimpleLearningTracker variant="navbar" />
         <div
           className="relative flex items-center h-14 px-3 sm:px-3.5 rounded-full backdrop-blur-2xl backdrop-saturate-150 border border-white/75 dark:border-white/20 space-x-2 overflow-hidden"
           data-nav-island
@@ -529,12 +553,76 @@ export default function Navbar() {
               </button>
               <button
                 onClick={() => router.push('/auth/register')}
-                className="px-4 py-1.5 rounded-full text-xs sm:text-sm font-semibold text-white bg-gradient-to-r from-indigo-500 to-blue-500 hover:from-indigo-600 hover:to-blue-600 shadow-sm transition-all"
+                className="px-4 py-1.5 rounded-full text-xs sm:text-sm font-semibold text-content-inverse bg-brand-primary hover:bg-brand-hover shadow-sm transition-all"
               >
                 注册
               </button>
             </div>
           )}
+        </div>
+        </div>
+      </div>
+
+      {/* 悬停「图谱」展开的学习中心 4 栏体系课程矩阵（置于 overflow-hidden 胶囊之外防止裁切） */}
+      <div
+        data-study-mega-menu
+        onMouseEnter={openStudyMenu}
+        onMouseLeave={scheduleCloseStudyMenu}
+        className={`hidden md:block absolute left-4 lg:left-6 top-[calc(100%-6px)] pt-2.5 z-50 w-[min(1080px,calc(100vw-2rem))] transition-all duration-200 ${
+          studyMenuOpen
+            ? 'opacity-100 visible translate-y-0 pointer-events-auto'
+            : 'opacity-0 invisible -translate-y-1 pointer-events-none'
+        }`}
+      >
+        <div className="rounded-2xl border border-line-strong bg-surface-raised shadow-[0_24px_60px_rgba(15,29,51,0.18)] p-5">
+          <div className="flex items-center justify-between gap-4 pb-3 mb-4 border-b border-line-subtle">
+            <div className="flex items-center gap-2.5">
+              <span className="px-2.5 py-0.5 rounded-lg bg-brand-soft text-brand-primary text-xs font-bold">
+                学习中心
+              </span>
+              <span className="text-xs text-content-muted">
+                41 门全栈体系课程 · 悬停快速直达
+              </span>
+            </div>
+            <Link
+              href="/knowledge-graph"
+              onClick={() => setStudyMenuOpen(false)}
+              className="text-xs font-semibold text-brand-primary hover:underline"
+            >
+              查看全栈知识图谱 →
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-5 max-h-[68vh] overflow-y-auto pr-1">
+            {Object.entries(navigationItems).map(([category, items]) => (
+              <div key={category} className="min-w-0">
+                <h3 className="text-sm font-semibold text-content-primary mb-2.5 pb-1.5 border-b border-line-subtle">
+                  {category}
+                </h3>
+                <div className="grid grid-cols-1 gap-1">
+                  {items.map((item) => {
+                    const homepage =
+                      item.subitems && item.subitems.length > 0
+                        ? item.subitems[0].href.split('/').slice(0, -1).join('/')
+                        : `/study/${item.name.toLowerCase()}`;
+                    return (
+                      <Link
+                        key={item.code + item.name}
+                        href={homepage}
+                        onClick={() => setStudyMenuOpen(false)}
+                        className="flex items-center gap-2 text-content-secondary hover:text-content-primary text-[13px] transition-colors py-1 px-2 rounded-lg hover:bg-brand-soft"
+                      >
+                        <span className="flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-md bg-brand-soft text-xs font-medium text-brand-primary">
+                          {item.code}
+                        </span>
+                        <span className="truncate">{item.name}</span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 

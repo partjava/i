@@ -312,6 +312,7 @@ export default function NoteKnowledgeStudio({
           roam: true,
           draggable: true,
           focusNodeAdjacency: true,
+          labelLayout: { hideOverlap: true },
           categories: categories.map(c => ({
             name: CATEGORY_META[c].label,
             itemStyle: { color: CATEGORY_META[c].color },
@@ -337,14 +338,18 @@ export default function NoteKnowledgeStudio({
               },
               label: {
                 show: true,
-                position: n.category === 'root' ? 'inside' : 'bottom',
+                position: 'bottom',
+                formatter: (p: any) => {
+                  const s = String(p?.name || '');
+                  return s.length > 14 ? `${s.slice(0, 14)}…` : s;
+                },
                 color: n.category === 'root' ? '#ffffff' : '#1e293b',
                 fontSize: n.category === 'root' ? 12 : 11,
                 fontWeight: n.category === 'root' || n.category === 'chapter' ? 'bold' : 'normal',
                 backgroundColor:
-                  n.category === 'root' ? 'transparent' : 'rgba(255,255,255,0.86)',
-                padding: n.category === 'root' ? [0, 0] : [2, 5],
-                borderRadius: 4,
+                  n.category === 'root' ? 'rgba(15, 29, 51, 0.92)' : 'rgba(255,255,255,0.9)',
+                padding: n.category === 'root' ? [3, 8] : [2, 5],
+                borderRadius: n.category === 'root' ? 6 : 4,
               },
             };
           }),
@@ -353,19 +358,22 @@ export default function NoteKnowledgeStudio({
             target: l.target,
             relation: l.relation,
             label: {
-              show: true,
+              show: false,
               formatter: l.relation,
               fontSize: 10,
-              color: '#64748b',
-              backgroundColor: 'rgba(248, 250, 252, 0.85)',
-              padding: [1, 4],
-              borderRadius: 3,
+              color: '#475569',
+              backgroundColor: 'rgba(248, 250, 252, 0.92)',
+              padding: [2, 5],
+              borderRadius: 4,
+            },
+            emphasis: {
+              label: { show: true },
             },
             lineStyle: {
               color: '#94a3b8',
               width: 1.6,
               curveness: 0.16,
-              opacity: 0.82,
+              opacity: 0.72,
             },
           })),
           force: {

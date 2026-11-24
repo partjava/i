@@ -117,7 +117,7 @@ export default function EyePet({
     (hasError
       ? '哎呀，填写的信息好像有点小问题喵~'
       : isSuccess
-      ? '太棒啦！禾桔欢迎你来到 PartJava 喵 ✨'
+      ? '太棒啦！禾桔欢迎你来到禾硙喵 ✨'
       : isPeeking
       ? '偷偷露只眼帮你检查密码有没有输错 🫣'
       : isCoveringEyes

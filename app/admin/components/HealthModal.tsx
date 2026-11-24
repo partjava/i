@@ -30,9 +30,9 @@ export default function HealthModal({ isOpen, onClose, sysInfo }: HealthModalPro
   return (
     <Modal
       title={
-        <span className="text-slate-100 flex items-center gap-2">
-          <Server size={18} className="text-indigo-400" />
-          PartJava 平台健康度体检诊断
+        <span className="text-content-primary flex items-center gap-2 font-bold">
+          <Server size={18} className="text-brand-primary" />
+          禾硙 Unolgy 平台健康度体检诊断
         </span>
       }
       open={isOpen}
@@ -44,15 +44,15 @@ export default function HealthModal({ isOpen, onClose, sysInfo }: HealthModalPro
       onCancel={onClose}
       width={640}
     >
-      <div className="mt-4 flex flex-col gap-6 text-sm text-slate-300">
+      <div className="mt-4 flex flex-col gap-6 text-sm text-content-secondary">
         <div>
           <div className="flex justify-between mb-1">
             <span>Java JVM Heap (后端服务堆内存占用)</span>
-            <span className="font-semibold text-slate-100">{processMem}MB / {maxProcessMem}MB</span>
+            <span className="font-semibold text-content-primary">{processMem}MB / {maxProcessMem}MB</span>
           </div>
           <Progress
             percent={Math.min(100, Math.round((processMem / Math.max(1, maxProcessMem)) * 100))}
-            strokeColor={{ '0%': '#6366f1', '100%': '#a855f7' }}
+            strokeColor={{ '0%': '#1B3B6F', '100%': '#D4AD72' }}
             status="active"
           />
         </div>
@@ -60,36 +60,36 @@ export default function HealthModal({ isOpen, onClose, sysInfo }: HealthModalPro
         <div>
           <div className="flex justify-between mb-1">
             <span>Host CPU Core Load (1分钟负载: {loadAvg} / {cpuCores || 1} 核)</span>
-            <span className="font-semibold text-slate-100">{cpuModel} ({cpuCores} 核)</span>
+            <span className="font-semibold text-content-primary">{cpuModel} ({cpuCores} 核)</span>
           </div>
-          <Progress percent={cpuPercent} strokeColor="#3b82f6" />
+          <Progress percent={cpuPercent} strokeColor="#1B3B6F" />
         </div>
 
         <div>
           <div className="flex justify-between mb-1">
             <span>Physical Memory Usage (服务器物理内存负载)</span>
-            <span className="font-semibold text-slate-100">{usedMem}GB / {totalMem}GB</span>
+            <span className="font-semibold text-content-primary">{usedMem}GB / {totalMem}GB</span>
           </div>
-          <Progress percent={memPct} strokeColor="#eab308" />
+          <Progress percent={memPct} strokeColor="#D4AD72" />
         </div>
 
         <div>
           <div className="flex justify-between mb-1">
             <span>Root Disk Usage (根分区磁盘占用)</span>
-            <span className="font-semibold text-slate-100">{usedDiskGB}GB / {totalDiskGB}GB</span>
+            <span className="font-semibold text-content-primary">{usedDiskGB}GB / {totalDiskGB}GB</span>
           </div>
-          <Progress percent={Math.min(100, Math.round(diskPct))} strokeColor="#10b981" />
+          <Progress percent={Math.min(100, Math.round(diskPct))} strokeColor="#2F855A" />
         </div>
 
-        <Divider className="border-slate-800 my-2" />
+        <Divider className="border-line-subtle my-2" />
 
         <Row gutter={[16, 16]}>
           <Col span={12}>
-            <Card 
-              size="small" 
-              className="bg-slate-900 border border-slate-800" 
+            <Card
+              size="small"
+              className="bg-surface-muted border border-line-subtle rounded-xl"
               title={
-                <span className="text-xs text-slate-400 flex items-center gap-1">
+                <span className="text-xs text-content-muted flex items-center gap-1">
                   <Database size={12} /> MySQL 数据库状态
                 </span>
               }
@@ -98,7 +98,7 @@ export default function HealthModal({ isOpen, onClose, sysInfo }: HealthModalPro
                 <div className="flex justify-between"><span>连接池:</span><span className="font-mono">HikariCP (SELECT 1)</span></div>
                 <div className="flex justify-between">
                   <span>连通状态:</span>
-                  <span className={`flex items-center gap-1 ${dbConnected ? 'text-emerald-400' : 'text-red-400'}`}>
+                  <span className={`flex items-center gap-1 ${dbConnected ? 'text-emerald-600' : 'text-red-500'}`}>
                     <Heart size={10} /> {dbConnected ? '正常连通' : '连接异常'}
                   </span>
                 </div>
@@ -107,19 +107,19 @@ export default function HealthModal({ isOpen, onClose, sysInfo }: HealthModalPro
             </Card>
           </Col>
           <Col span={12}>
-            <Card 
-              size="small" 
-              className="bg-slate-900 border border-slate-800" 
+            <Card
+              size="small"
+              className="bg-surface-muted border border-line-subtle rounded-xl"
               title={
-                <span className="text-xs text-slate-400 flex items-center gap-1">
+                <span className="text-xs text-content-muted flex items-center gap-1">
                   <HardDrive size={12} /> 宿主机与 JVM 环境
                 </span>
               }
             >
               <div className="flex flex-col gap-1 text-xs">
-                <div className="flex justify-between"><span>操作系统:</span><span className="font-mono text-slate-200">{info.osType ?? '—'} ({info.osArch ?? '—'})</span></div>
-                <div className="flex justify-between"><span>Java 版本:</span><span className="font-mono text-indigo-400">{info.nodeVersion ?? '—'}</span></div>
-                <div className="flex justify-between"><span>CPU 使用率:</span><span className="font-mono text-emerald-400">{info.cpu ?? 0}%</span></div>
+                <div className="flex justify-between"><span>操作系统:</span><span className="font-mono text-content-primary">{info.osType ?? '—'} ({info.osArch ?? '—'})</span></div>
+                <div className="flex justify-between"><span>Java 版本:</span><span className="font-mono text-brand-primary">{info.nodeVersion ?? '—'}</span></div>
+                <div className="flex justify-between"><span>CPU 使用率:</span><span className="font-mono text-emerald-600">{info.cpu ?? 0}%</span></div>
               </div>
             </Card>
           </Col>

@@ -386,17 +386,17 @@ export default function ChallengeTab({ challenges, drafts, users, onApproveDraft
 
   return (
     <Card
-      title={<span className="text-slate-200 font-bold">🪐 宇宙大地图关卡与评测逻辑维护</span>}
+      title={<span className="text-content-primary font-bold">宇宙大地图关卡与评测逻辑维护</span>}
       extra={
         <div className="flex items-center gap-2">
           {/* 切换关卡管理 vs 全站提交记录 */}
-          <div className="bg-slate-950 p-0.5 rounded-lg border border-slate-800 flex items-center mr-2">
+          <div className="bg-surface-muted p-0.5 rounded-lg border border-line-subtle flex items-center mr-2">
             <button
               onClick={() => setActiveSection('challenges')}
               className={`px-3 py-1 rounded text-xs font-semibold transition ${
                 activeSection === 'challenges'
-                  ? 'bg-indigo-600 text-white shadow'
-                  : 'text-slate-400 hover:text-slate-200'
+                  ? 'bg-brand-primary text-content-inverse shadow'
+                  : 'text-content-secondary hover:text-content-primary'
               }`}
             >
               关卡与草稿
@@ -408,8 +408,8 @@ export default function ChallengeTab({ challenges, drafts, users, onApproveDraft
               }}
               className={`px-3 py-1 rounded text-xs font-semibold transition flex items-center gap-1.5 ${
                 activeSection === 'submissions'
-                  ? 'bg-indigo-600 text-white shadow'
-                  : 'text-slate-400 hover:text-slate-200'
+                  ? 'bg-brand-primary text-content-inverse shadow'
+                  : 'text-content-secondary hover:text-content-primary'
               }`}
             >
               <History size={12} />
@@ -420,7 +420,7 @@ export default function ChallengeTab({ challenges, drafts, users, onApproveDraft
           {activeSection === 'challenges' && (
             <>
               <Input
-                prefix={<Search size={12} className="text-slate-400" />}
+                prefix={<Search size={12} className="text-content-muted" />}
                 placeholder="搜索标题/主题/slug/ID..."
                 value={challengeSearch}
                 onChange={e => setChallengeSearch(e.target.value)}
@@ -431,7 +431,7 @@ export default function ChallengeTab({ challenges, drafts, users, onApproveDraft
               <Select placeholder="全部阶段" allowClear value={stageFilter}
                 onChange={(v) => setStageFilter(v || null)} size="small" style={{ width: 150 }}
                 options={STAGES.map((s, i) => i > 0 ? { value: i, label: `S${i} ${s}` } : null).filter(Boolean) as any} />
-              <Button size="small" type={showTrash ? 'primary' : 'default'} ghost={!showTrash}
+              <Button size="small" type={showTrash ? 'primary' : 'default'} ghost={showTrash}
                 icon={<Trash size={12} />}
                 onClick={async () => {
                   const next = !showTrash;
@@ -452,13 +452,13 @@ export default function ChallengeTab({ challenges, drafts, users, onApproveDraft
           )}
         </div>
       }
-      bordered={false} className="bg-slate-900 border border-slate-800"
+      bordered={false} className="bg-surface-raised border border-line-subtle rounded-2xl shadow-sm"
     >
       {activeSection === 'submissions' ? (
         /* ===== 全站学员挑战提交记录看板 ===== */
         <div>
           {/* 筛选工具栏 */}
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-3 bg-slate-950/60 p-3 rounded-lg border border-slate-800">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3 bg-surface-muted p-3 rounded-xl border border-line-subtle">
             <div className="flex flex-wrap items-center gap-3">
               <Select
                 placeholder="全部判题状态"
@@ -919,28 +919,28 @@ export default function ChallengeTab({ challenges, drafts, users, onApproveDraft
       >
         {inspectingSub && (
           <div className="space-y-4 my-2">
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-slate-950 p-3 rounded-lg border border-slate-800 text-xs">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-surface-muted p-3 rounded-xl border border-line-subtle text-xs">
               <div>
-                <span className="text-slate-500 block">提交学员</span>
-                <span className="font-semibold text-purple-300">
+                <span className="text-content-muted block">提交学员</span>
+                <span className="font-semibold text-brand-primary">
                   @{inspectingSub.username} (UID-{inspectingSub.userId})
                 </span>
               </div>
               <div>
-                <span className="text-slate-500 block">关卡题目</span>
-                <span className="font-semibold text-slate-200">
+                <span className="text-content-muted block">关卡题目</span>
+                <span className="font-semibold text-content-primary">
                   #{inspectingSub.challengeId} {inspectingSub.challengeTitle}
                 </span>
               </div>
               <div>
-                <span className="text-slate-500 block">判题状态</span>
+                <span className="text-content-muted block">判题状态</span>
                 <Tag color={getSubmissionTagColor(inspectingSub.status)}>
                   {inspectingSub.status}
                 </Tag>
               </div>
               <div>
-                <span className="text-slate-500 block">耗时 / 时间</span>
-                <span className="text-slate-300">
+                <span className="text-content-muted block">耗时 / 时间</span>
+                <span className="text-content-secondary">
                   {inspectingSub.executionTime !== undefined && inspectingSub.executionTime !== null
                     ? `${inspectingSub.executionTime}ms`
                     : '—'}{' '}

@@ -4,6 +4,7 @@ import { useAuth } from '@shared/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import CodeEditor from '@shared/components/CodeEditor';
+import SiteFooter from '@shared/components/SiteFooter';
 import { Card, Typography, Steps, Alert } from 'antd';
 import { CodeOutlined, PlayCircleOutlined, SaveOutlined } from '@ant-design/icons';
 
@@ -51,15 +52,15 @@ export default function CodeEditorPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-4 py-8">
+    <div className="min-h-[calc(100vh-70px)] bg-surface-page text-content-primary flex flex-col">
+      <div className="flex-1 w-full container mx-auto px-4 py-8">
         {/* 页面标题 */}
         <div className="text-center mb-8">
-          <Title level={1} className="text-4xl font-bold text-gray-800 mb-4">
-            <CodeOutlined className="mr-3 text-blue-600" />
+          <Title level={1} className="text-4xl font-bold !text-content-primary mb-4">
+            <CodeOutlined className="mr-3 text-brand-primary" />
             在线代码编辑器
           </Title>
-          <Paragraph className="text-lg text-gray-600 max-w-2xl mx-auto">
+          <Paragraph className="text-lg !text-content-secondary max-w-2xl mx-auto">
             支持多种编程语言的在线编译和运行环境。安全沙箱执行，实时查看结果。
           </Paragraph>
         </div>
@@ -183,6 +184,7 @@ int main() {
           </div>
         </Card>
       </div>
+      <SiteFooter className="mt-auto" />
     </div>
   );
 } 

@@ -90,26 +90,40 @@ body:not(.dark) .text-gray-600 {
 }
 
 :root {
-  --background: #ffffff;
-  --foreground: #1f2937;
+  --background: #F4F5F7;
+  --foreground: #0F1D33;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --color-primary: #6366f1;
-  --color-secondary: #8b5cf6;
-  --color-accent: #f59e0b;
-  --color-success: #10b981;
+  --color-primary: #1B3B6F;
+  --color-secondary: #D4AD72;
+  --color-accent: #DE9A2E;
+  --color-success: #1F7A5C;
 }
 
-/* 深色模式支持 - 手动切换 */
+/* 深色模式支持 - 墨砚主题 */
 body.dark {
-  --background: #111827;
-  --foreground: #f9fafb;
-  --color-primary: #818cf8;
-  --color-secondary: #a78bfa;
-  --color-accent: #fbbf24;
-  --color-success: #34d399;
-  background: #111827;
-  color: #f9fafb;
+  --background: #0E1116;
+  --foreground: #F2EDE4;
+  --color-primary: #D4AD72;
+  --color-secondary: #8AB4F8;
+  --color-accent: #DE9A2E;
+  --color-success: #34D399;
+  background: #0E1116;
+  color: #F2EDE4;
+}
+
+/* 禾硙双态 Logo 随 body.dark 自动切换 */
+.brand-logo-for-light {
+  display: inline-block;
+}
+.brand-logo-for-dark {
+  display: none;
+}
+body.dark .brand-logo-for-light {
+  display: none;
+}
+body.dark .brand-logo-for-dark {
+  display: inline-block;
 }
 
 /* AI 助手提示动画 */
@@ -118,17 +132,17 @@ body.dark {
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* 全局 Tailwind 暗黑模式等价类 */
-body.dark .bg-white { background-color: #1f2937; }
-body.dark .bg-gray-50 { background-color: #111827; }
-body.dark .bg-gray-100 { background-color: #1f2937; }
-body.dark .bg-gray-200 { background-color: #374151; }
-body.dark .bg-gray-900 { background-color: #f9fafb; }
-body.dark .bg-indigo-50 { background-color: #1e1b4b; }
-body.dark .bg-blue-50 { background-color: #172554; }
-body.dark .bg-blue-100 { background-color: #1e3a5f; }
-body.dark .bg-green-100 { background-color: #14532d; }
-body.dark .bg-red-50 { background-color: #450a0a; }
+/* 全局 Tailwind 暗黑模式等价类（对齐墨砚色阶） */
+body.dark .bg-white { background-color: #151921; }
+body.dark .bg-gray-50 { background-color: #0E1116; }
+body.dark .bg-gray-100 { background-color: #151921; }
+body.dark .bg-gray-200 { background-color: #1E2430; }
+body.dark .bg-gray-900 { background-color: #F2EDE4; }
+body.dark .bg-indigo-50 { background-color: rgba(27, 59, 111, 0.25); }
+body.dark .bg-blue-50 { background-color: rgba(27, 59, 111, 0.22); }
+body.dark .bg-blue-100 { background-color: rgba(27, 59, 111, 0.35); }
+body.dark .bg-green-100 { background-color: rgba(31, 122, 92, 0.25); }
+body.dark .bg-red-50 { background-color: #3B1219; }
 
 body.dark .text-gray-300 { color: #d1d5db; }
 body.dark .text-gray-400 { color: #9ca3af; }
@@ -958,9 +972,15 @@ body.dark .liquid-glass-search .ant-input::placeholder {
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.85) 0%, rgba(59, 130, 246, 0.85) 100%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.65) !important;
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.5) !important;
+  background: linear-gradient(135deg, #1B3B6F 0%, #0F1D33 100%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.55) !important;
+  box-shadow: 0 4px 12px rgba(15, 29, 51, 0.20), inset 0 1px 0 rgba(255, 255, 255, 0.35) !important;
+}
+body.dark .liquid-glass-search .ant-input-search-button {
+  background: linear-gradient(135deg, #D4AD72 0%, #B88B4A 100%) !important;
+  color: #0E1116 !important;
+  border: 1px solid rgba(242, 237, 228, 0.35) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35) !important;
 }
 
 /* 搜索动画 */
@@ -1010,65 +1030,67 @@ body {
 }
 
 
-/* Semantic color migration tokens */
+/* Semantic color migration tokens - 禾硙「素笺 × 墨砚」双态色板 */
 :root {
-  --surface-page: #EDF0F5;
-  --surface-raised: #f5f7fa;
-  --surface-muted: #e2e6ed;
-  --surface-inverse: #0C1F3D;
-  --content-primary: #0C1F3D;
-  --content-secondary: #3d4f6b;
-  --content-muted: #6b7d99;
-  --content-inverse: #ffffff;
-  --content-link: #044BB5;
-  --line-subtle: #d1d6e0;
-  --line-strong: #b8bfcc;
-  --brand-primary: #6366f1;
-  --brand-hover: #4f46e5;
-  --brand-active: #3730a3;
-  --brand-soft: #e0e7ff;
-  --state-success: #10b981;
-  --state-success-soft: #d1fae5;
-  --state-warning: #f59e0b;
-  --state-warning-soft: #fef3c7;
-  --state-danger: #ef4444;
-  --state-danger-soft: #fee2e2;
-  --state-info: #0ea5e9;
-  --state-info-soft: #e0f2fe;
-  --control-fill: #ffffff;
-  --control-fill-hover: #e8ecf2;
-  --control-disabled: #a0aec0;
-  --control-ring: #818cf8;
+  --surface-page: #F4F5F7;
+  --surface-raised: #FFFFFF;
+  --surface-muted: #EBEEF3;
+  --surface-inverse: #0E1116;
+  --content-primary: #0F1D33;
+  --content-secondary: #42526B;
+  --content-muted: #6B7B93;
+  --content-inverse: #FFFFFF;
+  --content-link: #1B3B6F;
+  --line-subtle: #E3E7F0;
+  --line-strong: #D0D7E3;
+  --brand-primary: #1B3B6F;
+  --brand-hover: #142C54;
+  --brand-active: #0F1D33;
+  --brand-soft: #EEF2F8;
+  --accent-gold: #D4AD72;
+  --accent-wheat: #DE9A2E;
+  --state-success: #1F7A5C;
+  --state-success-soft: #E6F4EF;
+  --state-warning: #B87324;
+  --state-warning-soft: #FEF3C7;
+  --state-danger: #B83B3B;
+  --state-danger-soft: #FEE2E2;
+  --state-info: #1B3B6F;
+  --state-info-soft: #EEF2F8;
+  --control-fill: #FFFFFF;
+  --control-fill-hover: #EBEEF3;
+  --control-disabled: #9BA7B8;
+  --control-ring: rgba(27, 59, 111, 0.32);
 }
 
 body.dark {
-  --surface-page: #111827;
-  --surface-raised: #1f2937;
-  --surface-muted: #374151;
-  --surface-inverse: #f9fafb;
-  --content-primary: #f9fafb;
-  --content-secondary: #e5e7eb;
-  --content-muted: #9ca3af;
-  --content-inverse: #111827;
-  --content-link: #93c5fd;
-  --line-subtle: #374151;
-  --line-strong: #4b5563;
-  --brand-primary: #818cf8;
-  --brand-hover: #6366f1;
-  --brand-active: #4f46e5;
-  --brand-soft: #1e1b4b;
-  --state-success: #34d399;
-  --state-success-soft: #064e3b;
-  --state-warning: #fbbf24;
-  --state-warning-soft: #451a03;
-  --state-danger: #f87171;
-  --state-danger-soft: #450a0a;
-  --state-info: #38bdf8;
-  --state-info-soft: #082f49;
-  --control-fill: #1f2937;
-  --control-fill-hover: #374151;
-  --control-disabled: #4b5563;
-  --control-ring: #a5b4fc;
+  --surface-page: #0E1116;
+  --surface-raised: #151921;
+  --surface-muted: #1E2430;
+  --surface-inverse: #F2EDE4;
+  --content-primary: #F2EDE4;
+  --content-secondary: #C5CBD6;
+  --content-muted: #8B95A8;
+  --content-inverse: #0E1116;
+  --content-link: #D4AD72;
+  --line-subtle: rgba(255, 255, 255, 0.08);
+  --line-strong: rgba(255, 255, 255, 0.14);
+  --brand-primary: #D4AD72;
+  --brand-hover: #E0BD86;
+  --brand-active: #C49958;
+  --brand-soft: rgba(212, 173, 114, 0.14);
+  --state-success: #34D399;
+  --state-success-soft: #064E3B;
+  --state-warning: #FBBF24;
+  --state-warning-soft: #451A03;
+  --state-danger: #F87171;
+  --state-danger-soft: #450A0A;
+  --state-info: #8AB4F8;
+  --state-info-soft: rgba(138, 180, 248, 0.14);
+  --control-fill: #151921;
+  --control-fill-hover: #1E2430;
+  --control-disabled: #4B5563;
+  --control-ring: rgba(212, 173, 114, 0.35);
 }
 @layer components {
   .btn {
@@ -1119,18 +1141,18 @@ body.dark {
 /* 浅色钉死作用域：背景为设计固定浅色（内联浅色渐变）的区块，
    强制沿用浅色主题的语义 token，避免深色模式下文字/线条翻浅导致不可读 */
 .always-light-scope {
-  --surface-page: #EDF0F5;
-  --surface-raised: #f5f7fa;
-  --surface-muted: #e2e6ed;
-  --surface-inverse: #0C1F3D;
-  --content-primary: #0C1F3D;
-  --content-secondary: #3d4f6b;
-  --content-muted: #6b7d99;
+  --surface-page: #F4F5F7;
+  --surface-raised: #FFFFFF;
+  --surface-muted: #EBEEF3;
+  --surface-inverse: #0E1116;
+  --content-primary: #0F1D33;
+  --content-secondary: #42526B;
+  --content-muted: #6B7B93;
   --content-inverse: #ffffff;
-  --content-link: #044BB5;
-  --line-subtle: #d1d6e0;
-  --line-strong: #b8bfcc;
-  --brand-soft: #e0e7ff;
+  --content-link: #1B3B6F;
+  --line-subtle: #E3E7F0;
+  --line-strong: #D0D7E3;
+  --brand-soft: #EEF2F8;
   --control-fill: #ffffff;
   background-color: transparent;
 }

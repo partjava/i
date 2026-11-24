@@ -143,10 +143,10 @@ export function CodeEditorPanel({
   return (
     <div className="flex-1 flex flex-col overflow-hidden bg-[#030308]">
       {/* 工具栏 */}
-      <div className="min-h-11 border-b border-slate-900 bg-slate-950/80 px-4 py-2 flex flex-wrap gap-2 justify-between items-center shrink-0">
+      <div className="min-h-11 border-b border-white/10 bg-[#12161F]/90 px-4 py-2 flex flex-wrap gap-2 justify-between items-center shrink-0">
         <div className="flex items-center gap-2">
-          <Code className="w-4 h-4 text-cyan-400" />
-          <span className="text-xs font-bold font-mono text-slate-300">Solution.py</span>
+          <Code className="w-4 h-4 text-[#D4AD72]" />
+          <span className="text-xs font-bold font-mono text-[#F2EDE4]">Solution.py</span>
         </div>
         <div className="flex items-center gap-2">
           {starterCode && (
@@ -201,10 +201,10 @@ export function CodeEditorPanel({
       </div>
 
       {/* 控制台输出 */}
-      <div className="h-[220px] border-t border-slate-900 bg-slate-950 flex flex-col overflow-hidden shrink-0">
-        <div className="h-9 border-b border-slate-900/60 bg-slate-950 px-4 flex justify-between items-center shrink-0">
+      <div className="h-[220px] border-t border-white/10 bg-[#12161F] flex flex-col overflow-hidden shrink-0">
+        <div className="h-9 border-b border-white/10 bg-[#0E1116] px-4 flex justify-between items-center shrink-0">
           <div className="flex items-center gap-2 text-slate-400 font-mono text-xs">
-            <Terminal className="w-3.5 h-3.5 text-cyan-400" />
+            <Terminal className="w-3.5 h-3.5 text-[#D4AD72]" />
             <span>控制台输出 (Console Output)</span>
           </div>
           <div className="flex items-center gap-2">
@@ -214,7 +214,7 @@ export function CodeEditorPanel({
                 type="button"
                 onClick={handleRequestPatch}
                 disabled={patchLoading}
-                className="px-2.5 py-1 rounded-lg text-xs font-bold text-white bg-gradient-to-r from-amber-500 via-rose-500 to-indigo-600 hover:opacity-90 disabled:opacity-50 transition flex items-center gap-1.5 shadow-md shadow-indigo-500/20"
+                className="px-2.5 py-1 rounded-lg text-xs font-bold text-[#0E1116] bg-gradient-to-r from-[#D4AD72] to-[#E5C796] hover:opacity-90 disabled:opacity-50 transition flex items-center gap-1.5 shadow-md"
                 title="让 3D 灵宠禾桔根据报错信息生成修复补丁与红绿 Diff 对比"
               >
                 {patchLoading ? (

@@ -8,7 +8,6 @@ import Link from 'next/link';
 import MarkdownEditor from '@shared/components/MarkdownEditor';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import InkWashDecoration from '@shared/components/InkWashDecoration';
 import SiteFooter from '@shared/components/SiteFooter';
 
 export interface Note {
@@ -631,12 +630,8 @@ export default function NotesPage() {
     .filter(n => selectedCategory === 'all' || n.category === selectedCategory);
 
   return (
-    <div className={`${mobileStyles.page} min-h-screen bg-surface-page`}>
-      {/* 水墨画顶部装饰 */}
-      <InkWashDecoration variant="landscape" height={160} className={`${mobileStyles.topDecoration} bg-surface-page`} />
-      <InkWashDecoration variant="mist" height={40} className={`${mobileStyles.mistDecoration} bg-surface-page -mt-4`} />
-
-    <div className={`${mobileStyles.layout} flex p-8 gap-6`}>
+    <div className={`${mobileStyles.page} min-h-[calc(100vh-70px)] bg-surface-page flex flex-col`}>
+    <div className={`${mobileStyles.layout} flex-1 flex p-6 md:p-8 gap-6`}>
       {/* 左侧分类侧边栏 */}
       <aside className="hidden md:block w-56 flex-shrink-0">
         <div className="rounded-lg border border-line-subtle bg-surface-raised p-4 shadow-frost sticky top-8">
@@ -681,11 +676,11 @@ export default function NotesPage() {
       <div className="flex-1 min-w-0">
 
       <div className={`${mobileStyles.toolbar} flex justify-between items-center mb-6`}>
-        <h1 className="text-3xl font-bold">
+        <h1 className="text-3xl font-bold font-display text-content-primary">
           {viewMode === 'my' ? '我的笔记' : '公开笔记'}
         </h1>
         <div className={`${mobileStyles.actions} flex items-center space-x-4`}>
-          <div className={`${mobileStyles.modeSwitch} flex rounded-lg border border-line-subtle bg-surface-muted p-1`} style={{ marginTop: '50px' }}>
+          <div className={`${mobileStyles.modeSwitch} flex rounded-lg border border-line-subtle bg-surface-muted p-1`}>
             {/* 只有登录用户才能看到"我的笔记"按钮 */}
             {status === 'authenticated' && session?.user && (
               <button
@@ -723,7 +718,7 @@ export default function NotesPage() {
             </button>
           </div>
           {viewMode === 'my' && status === 'authenticated' && session?.user && (
-            <div className={`${mobileStyles.buttons} flex space-x-2`} style={{ marginTop: '50px' }}>
+            <div className={`${mobileStyles.buttons} flex space-x-2`}>
               <button
                 onClick={() => {
                   if (status === 'authenticated' && session?.user) {
@@ -1088,12 +1083,8 @@ export default function NotesPage() {
       </div>{/* /右侧主内容区 */}
     </div>
 
-      {/* 水墨画底部装饰 */}
-      <InkWashDecoration variant="bamboo" height={80} className="bg-surface-page mt-8" />
-      <InkWashDecoration variant="landscape" height={180} className="bg-surface-page" />
-
       {/* 网站合规备案与页脚 */}
-      <SiteFooter />
+      <SiteFooter className="mt-auto" />
     </div>
   );
 }

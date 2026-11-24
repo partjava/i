@@ -1113,7 +1113,7 @@ export function buildSpaceCapsuleRoom(scene: THREE.Scene): WarmStudyRoomControll
 
     ctx.fillStyle = '#38bdf8';
     ctx.font = 'bold 22px Consolas, monospace';
-    ctx.fillText('PARTJAVA AI ENGINE · TELEMETRY', 28, 44);
+    ctx.fillText('UNOLGY AI ENGINE · TELEMETRY', 28, 44);
 
     // 实时波形折线图
     ctx.strokeStyle = '#38bdf8';

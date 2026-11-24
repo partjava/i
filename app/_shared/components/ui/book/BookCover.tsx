@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react'
 import Link from 'next/link'
-import Image from 'next/image'
+import BrandLogo from '../../BrandLogo'
 import { SubjectTheme, THEMES, isLight } from './theme'
 
 // ==================== 类型 ====================
@@ -236,7 +236,7 @@ export default function BookCover({
         {/* 底部 */}
         <div className="flex items-center justify-center mt-8 gap-1">
           <span className="text-xs text-ink-lighter tracking-widest">◆</span>
-          <Image src="/images/logo-calligraphy-transparent.png" alt="PartJava" width={921} height={601} className="h-5 w-auto inline-block opacity-70" />
+          <BrandLogo variant="full" tone="for-light" className="!h-5 w-auto inline-block opacity-80" />
           <span className="text-xs text-ink-lighter tracking-widest">学习平台 ◆</span>
         </div>
       </div>

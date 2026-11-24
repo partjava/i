@@ -3,7 +3,8 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
-import Image from 'next/image';
+import BrandLogo from '../_shared/components/BrandLogo';
+import SiteFooter from '../_shared/components/SiteFooter';
 import {
   buildGlobalKnowledgeGraph,
   CURATED_ROADMAPS,
@@ -23,6 +24,7 @@ import {
   Search,
   Layers,
   ArrowRight,
+  ArrowLeft,
   GitBranch,
   Flame,
   ZoomIn,
@@ -32,6 +34,7 @@ import {
   Minimize2,
   Eye,
   EyeOff,
+  Lock,
 } from 'lucide-react';
 
 const ReactECharts = dynamic(() => import('echarts-for-react'), { ssr: false });
@@ -56,10 +59,14 @@ export default function GlobalKnowledgeGraphPage() {
     subj_机器学习: 'learning',
   });
 
-  // Load persisted mastery progress
+  // Load persisted mastery progress & optional domain URL filter
   useEffect(() => {
     if (typeof window === 'undefined') return;
     try {
+      const domParam = new URLSearchParams(window.location.search).get('domain');
+      if (domParam && ['全部', '计算机', '人工智能', '软件工程', '网络安全'].includes(domParam)) {
+        setDomainFilter(domParam);
+      }
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
         setMasteryMap((prev) => ({ ...prev, ...JSON.parse(raw) }));
@@ -206,7 +213,7 @@ export default function GlobalKnowledgeGraphPage() {
     if (viewMode === 'radial') {
       // Build hierarchical tree structure from navigationItems
       const treeRoot = {
-        name: 'PartJava 全栈星系',
+        name: '禾硙全栈星系',
         id: 'hub_partjava',
         depth: 0,
         itemStyle: {
@@ -309,6 +316,7 @@ export default function GlobalKnowledgeGraphPage() {
             initialTreeDepth: radialExpandAll ? 3 : 2,
             animationDurationUpdate: 650,
             roam: true,
+            labelLayout: { hideOverlap: true },
             label: {
               position: 'right',
               align: 'left',
@@ -461,11 +469,12 @@ export default function GlobalKnowledgeGraphPage() {
           categories,
           roam: true,
           draggable: true,
+          labelLayout: { hideOverlap: true },
           zoom: domainFilter === '全部' ? 0.92 : 1.05,
           force: {
-            repulsion: domainFilter === '全部' ? 320 : 380,
-            edgeLength: [55, 140],
-            gravity: 0.1,
+            repulsion: domainFilter === '全部' ? 460 : 520,
+            edgeLength: [60, 150],
+            gravity: 0.08,
           },
           emphasis: {
             focus: 'adjacency',
@@ -506,57 +515,46 @@ export default function GlobalKnowledgeGraphPage() {
     masteryMap[selectedNode?.id] || 'locked';
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] text-slate-800 relative overflow-hidden py-4 sm:py-8">
-      {/* 浅色科技感背景网格与光晕装饰 */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_-10%,rgba(99,102,241,0.09),transparent)] pointer-events-none" />
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,#e2e8f060_1px,transparent_1px),linear-gradient(to_bottom,#e2e8f060_1px,transparent_1px)] bg-[size:36px_36px] pointer-events-none" />
-
-      <div className="relative z-10 max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 space-y-6">
+    <div className="min-h-[calc(100vh-70px)] bg-surface-page text-content-primary relative overflow-hidden py-4 sm:py-5 transition-colors flex flex-col">
+      <div className="flex-1 w-full relative z-10 max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 space-y-6">
         {/* 顶部 Hero 标题与统计总览 */}
         <div className="text-center pt-1 pb-2">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-indigo-50 border border-indigo-200 text-indigo-700 text-xs font-mono font-semibold mb-3 shadow-sm">
-            <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse" />
+          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-surface-raised border border-line-subtle text-brand-primary text-xs font-mono font-semibold mb-3 shadow-sm">
+            <span className="w-2 h-2 rounded-full bg-[#D4AD72]" />
             <span>FULL-STACK KNOWLEDGE GALAXY · INTERACTIVE GRAPH</span>
           </div>
 
           <div className="flex items-center justify-center gap-3 mb-2">
-            <Image
-              src="/images/logo-calligraphy-transparent.png"
-              alt="PartJava"
-              width={921}
-              height={601}
-              priority
-              className="h-9 sm:h-11 w-auto inline-block drop-shadow-sm"
-            />
-            <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight bg-gradient-to-r from-slate-900 via-indigo-950 to-sky-900 bg-clip-text text-transparent">
+            <BrandLogo variant="full" className="h-11 sm:h-14 w-auto drop-shadow-sm" priority />
+            <h1 className="text-2xl sm:text-3xl font-display font-bold tracking-tight text-content-primary">
               全栈知识星系图谱
             </h1>
           </div>
 
-          <p className="text-xs sm:text-base text-slate-600 max-w-2xl mx-auto">
+          <p className="text-xs sm:text-base text-content-secondary max-w-2xl mx-auto">
             四大核心技术域 · {stats.totalSubjects} 门主干学科 · {stats.totalChapters}+ 知识章节 · 先后置学习依赖导航与 3D 算法演练直达
           </p>
 
           {/* 顶部统计小卡片 */}
           <div className="flex flex-wrap items-center justify-center gap-2.5 mt-4 text-xs">
-            <div className="px-3.5 py-1.5 rounded-xl bg-white border border-slate-200/90 shadow-sm flex items-center gap-2">
-              <Layers className="w-4 h-4 text-indigo-600" />
-              <span className="text-slate-600">收录学科/章节:</span>
-              <strong className="font-mono text-slate-900">
+            <div className="px-3.5 py-1.5 rounded-xl bg-surface-raised border border-line-subtle shadow-sm flex items-center gap-2">
+              <Layers className="w-4 h-4 text-brand-primary" />
+              <span className="text-content-secondary">收录学科/章节:</span>
+              <strong className="font-mono text-content-primary">
                 {stats.totalSubjects} 门 / {stats.totalChapters} 节
               </strong>
             </div>
-            <div className="px-3.5 py-1.5 rounded-xl bg-white border border-emerald-200 shadow-sm flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-              <span className="text-slate-600">已点亮掌握:</span>
-              <strong className="font-mono text-emerald-600">
+            <div className="px-3.5 py-1.5 rounded-xl bg-surface-raised border border-line-subtle shadow-sm flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+              <span className="text-content-secondary">已点亮掌握:</span>
+              <strong className="font-mono text-emerald-500">
                 {stats.masteredCount} 节点
               </strong>
             </div>
-            <div className="px-3.5 py-1.5 rounded-xl bg-white border border-amber-200 shadow-sm flex items-center gap-2">
-              <Flame className="w-4 h-4 text-amber-500" />
-              <span className="text-slate-600">正在攻克:</span>
-              <strong className="font-mono text-amber-600">
+            <div className="px-3.5 py-1.5 rounded-xl bg-surface-raised border border-line-subtle shadow-sm flex items-center gap-2">
+              <Flame className="w-4 h-4 text-[#D4AD72]" />
+              <span className="text-content-secondary">正在攻克:</span>
+              <strong className="font-mono text-[#D4AD72]">
                 {stats.learningCount} 节点
               </strong>
             </div>
@@ -564,44 +562,44 @@ export default function GlobalKnowledgeGraphPage() {
         </div>
 
         {/* 视图模式切换 + 领域筛选 + 节点快速检索条 */}
-        <div className="p-3 sm:p-4 rounded-2xl bg-white border border-slate-200/90 shadow-sm flex flex-wrap items-center justify-between gap-3">
+        <div className="p-3 sm:p-4 rounded-2xl bg-surface-raised border border-line-subtle shadow-sm flex flex-wrap items-center justify-between gap-3">
           {/* 3种图谱模式切换 */}
-          <div className="inline-flex p-1 rounded-xl bg-slate-100 border border-slate-200">
+          <div className="inline-flex p-1 rounded-xl bg-surface-muted border border-line-subtle">
             <button
               type="button"
               onClick={() => setViewMode('force')}
               className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
                 viewMode === 'force'
-                  ? 'bg-gradient-to-r from-indigo-600 to-sky-600 text-white shadow'
-                  : 'text-slate-600 hover:text-slate-900'
+                  ? 'bg-brand-primary text-content-inverse shadow'
+                  : 'text-content-secondary hover:text-content-primary'
               }`}
             >
               <Network className="w-3.5 h-3.5" />
-              <span>🌌 星系力导向图</span>
+              <span>星系力导向图</span>
             </button>
             <button
               type="button"
               onClick={() => setViewMode('radial')}
               className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
                 viewMode === 'radial'
-                  ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow'
-                  : 'text-slate-600 hover:text-slate-900'
+                  ? 'bg-brand-primary text-content-inverse shadow'
+                  : 'text-content-secondary hover:text-content-primary'
               }`}
             >
               <Compass className="w-3.5 h-3.5" />
-              <span>🎡 360° 径向知识树</span>
+              <span>360° 径向知识树</span>
             </button>
             <button
               type="button"
               onClick={() => setViewMode('roadmap')}
               className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
                 viewMode === 'roadmap'
-                  ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow'
-                  : 'text-slate-600 hover:text-slate-900'
+                  ? 'bg-[#1F7A5C] text-white shadow'
+                  : 'text-content-secondary hover:text-content-primary'
               }`}
             >
               <GitBranch className="w-3.5 h-3.5" />
-              <span>🗺️ 进阶闯关路线</span>
+              <span>进阶闯关路线</span>
             </button>
           </div>
 
@@ -614,8 +612,8 @@ export default function GlobalKnowledgeGraphPage() {
                 onClick={() => setDomainFilter(dom)}
                 className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all ${
                   domainFilter === dom
-                    ? 'bg-slate-900 text-white border-slate-900 shadow-sm'
-                    : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+                    ? 'bg-brand-primary text-content-inverse border-transparent shadow-sm'
+                    : 'bg-surface-muted text-content-secondary border-line-subtle hover:bg-brand-soft hover:text-content-primary'
                 }`}
               >
                 {dom !== '全部' && (
@@ -631,19 +629,19 @@ export default function GlobalKnowledgeGraphPage() {
                 onClick={() => setRadialExpandAll((v) => !v)}
                 className={`px-3 py-1.5 rounded-xl text-xs font-medium border transition-all flex items-center gap-1 ${
                   radialExpandAll
-                    ? 'bg-indigo-50 text-indigo-700 border-indigo-200'
-                    : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+                    ? 'bg-brand-soft text-brand-primary border-line-strong'
+                    : 'bg-surface-muted text-content-secondary border-line-subtle hover:bg-brand-soft hover:text-content-primary'
                 }`}
               >
                 {radialExpandAll ? (
                   <>
                     <EyeOff className="w-3.5 h-3.5" />
-                    <span>🍃 折叠到学科主干</span>
+                    <span>折叠到学科主干</span>
                   </>
                 ) : (
                   <>
                     <Eye className="w-3.5 h-3.5" />
-                    <span>🌸 展开全部章节</span>
+                    <span>展开全部章节</span>
                   </>
                 )}
               </button>
@@ -655,8 +653,8 @@ export default function GlobalKnowledgeGraphPage() {
                 onClick={() => setShowTopics((v) => !v)}
                 className={`px-2.5 py-1.5 rounded-xl text-xs font-mono border transition-all ${
                   showTopics
-                    ? 'bg-indigo-50 text-indigo-700 border-indigo-200'
-                    : 'bg-slate-50 text-slate-500 border-slate-200'
+                    ? 'bg-brand-soft text-brand-primary border-line-strong'
+                    : 'bg-surface-muted text-content-secondary border-line-subtle'
                 }`}
               >
                 {showTopics ? '🔹 显示章节细节点' : '🔸 仅显示学科主干'}
@@ -666,14 +664,14 @@ export default function GlobalKnowledgeGraphPage() {
 
           {/* 知识点即时搜索框 */}
           <div className="relative w-full sm:w-60">
-            <div className="flex items-center px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 focus-within:border-indigo-400">
-              <Search className="w-3.5 h-3.5 text-slate-400 mr-2 shrink-0" />
+            <div className="flex items-center px-3 py-1.5 rounded-xl bg-surface-muted border border-line-subtle focus-within:border-[#D4AD72]">
+              <Search className="w-3.5 h-3.5 text-content-muted mr-2 shrink-0" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="检索知识点 (如 Java, 深度学习)..."
-                className="w-full bg-transparent text-xs text-slate-800 focus:outline-none"
+                className="w-full bg-transparent text-xs text-content-primary placeholder:text-content-muted focus:outline-none"
               />
             </div>
             {searchMatches.length > 0 && (
@@ -822,75 +820,76 @@ export default function GlobalKnowledgeGraphPage() {
                   <div className="absolute w-[680px] h-[680px] rounded-full border border-dashed border-sky-400/10" />
                 </div>
 
-                {/* 画布左上角状态与提示浮岛 */}
-                <div className="absolute top-4 left-4 z-10 flex flex-wrap items-center gap-2 pointer-events-none">
-                  <span className="px-3 py-1 rounded-xl bg-slate-950/85 backdrop-blur-md border border-indigo-400/35 text-xs font-bold text-indigo-200 shadow-md flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                    <span>
-                      {viewMode === 'force'
-                        ? '🌌 力导向知识星系 (支持滚轮缩放 / 拖拽节点 / 交互透视)'
-                        : radialExpandAll
-                        ? '🎡 360° 径向知识树 · 全景展开视图'
-                        : '🎡 360° 径向知识树 (点击学科节点展开对应章节花瓣)'}
+                {/* 画布顶部 HUD 行：左侧状态 + 右侧交互工具栏（Flex 自适应防遮挡） */}
+                <div className="absolute top-3.5 inset-x-3.5 z-20 flex flex-wrap items-center justify-between gap-2 pointer-events-none">
+                  <div className="flex flex-wrap items-center gap-2 min-w-0">
+                    <span className="px-3 py-1 rounded-xl bg-slate-950/85 backdrop-blur-md border border-indigo-400/35 text-xs font-semibold text-indigo-100 shadow-md flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+                      <span className="truncate">
+                        {viewMode === 'force'
+                          ? '力导向知识星系 · 支持滚轮缩放与拖拽'
+                          : radialExpandAll
+                          ? '360° 径向知识树 · 全景展开'
+                          : '360° 径向知识树 · 点击节点展开'}
+                      </span>
                     </span>
-                  </span>
-                  <span className="px-2.5 py-1 rounded-xl bg-slate-950/80 backdrop-blur-md border border-sky-400/30 text-[11px] font-mono text-sky-300 shadow-md">
-                    {graphData.nodes.length} 核心节点 · {graphData.links.length} 拓扑依赖
-                  </span>
-                </div>
+                    <span className="px-2.5 py-1 rounded-xl bg-slate-950/80 backdrop-blur-md border border-sky-400/30 text-[11px] font-mono text-sky-300 shadow-md whitespace-nowrap">
+                      {graphData.nodes.length} 节点 · {graphData.links.length} 依赖
+                    </span>
+                  </div>
 
-                {/* 画布右上角：缩放与视角交互控制面板 (HUD Controls) */}
-                <div className="absolute top-4 right-4 z-20 flex items-center gap-1.5 bg-slate-950/80 backdrop-blur-md p-1.5 rounded-2xl border border-indigo-400/30 shadow-xl">
-                  <button
-                    type="button"
-                    onClick={() => handleZoom('in')}
-                    title="放大画布"
-                    className="p-1.5 rounded-xl text-slate-300 hover:text-white hover:bg-indigo-600/30 transition-colors"
-                  >
-                    <ZoomIn className="w-4 h-4" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleZoom('out')}
-                    title="缩小画布"
-                    className="p-1.5 rounded-xl text-slate-300 hover:text-white hover:bg-indigo-600/30 transition-colors"
-                  >
-                    <ZoomOut className="w-4 h-4" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleResetZoom}
-                    title="复位视角"
-                    className="p-1.5 rounded-xl text-slate-300 hover:text-white hover:bg-indigo-600/30 transition-colors"
-                  >
-                    <RotateCcw className="w-4 h-4" />
-                  </button>
-
-                  {viewMode === 'radial' && (
+                  <div className="pointer-events-auto flex items-center gap-1 bg-slate-950/85 backdrop-blur-md p-1 rounded-2xl border border-indigo-400/30 shadow-xl shrink-0">
                     <button
                       type="button"
-                      onClick={() => setRadialExpandAll((v) => !v)}
-                      title={radialExpandAll ? '折叠到学科主干' : '展开全部章节'}
-                      className="px-2 py-1 rounded-xl text-xs font-semibold text-sky-300 bg-sky-500/15 hover:bg-sky-500/25 border border-sky-400/30 transition-all flex items-center gap-1"
+                      onClick={() => handleZoom('in')}
+                      title="放大画布"
+                      className="p-1.5 rounded-xl text-slate-300 hover:text-white hover:bg-indigo-600/30 transition-colors"
                     >
-                      {radialExpandAll ? '🍃 折叠' : '🌸 展开全部'}
+                      <ZoomIn className="w-4 h-4" />
                     </button>
-                  )}
+                    <button
+                      type="button"
+                      onClick={() => handleZoom('out')}
+                      title="缩小画布"
+                      className="p-1.5 rounded-xl text-slate-300 hover:text-white hover:bg-indigo-600/30 transition-colors"
+                    >
+                      <ZoomOut className="w-4 h-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleResetZoom}
+                      title="复位视角"
+                      className="p-1.5 rounded-xl text-slate-300 hover:text-white hover:bg-indigo-600/30 transition-colors"
+                    >
+                      <RotateCcw className="w-4 h-4" />
+                    </button>
 
-                  <div className="w-px h-4 bg-white/20 mx-0.5" />
-
-                  <button
-                    type="button"
-                    onClick={handleToggleFullscreen}
-                    title={isFullscreen ? '退出全屏' : '全屏透视'}
-                    className="p-1.5 rounded-xl text-slate-300 hover:text-white hover:bg-indigo-600/30 transition-colors"
-                  >
-                    {isFullscreen ? (
-                      <Minimize2 className="w-4 h-4" />
-                    ) : (
-                      <Maximize2 className="w-4 h-4" />
+                    {viewMode === 'radial' && (
+                      <button
+                        type="button"
+                        onClick={() => setRadialExpandAll((v) => !v)}
+                        title={radialExpandAll ? '折叠到学科主干' : '展开全部章节'}
+                        className="px-2.5 py-1 rounded-xl text-xs font-semibold text-sky-200 bg-sky-500/15 hover:bg-sky-500/25 border border-sky-400/30 transition-all whitespace-nowrap"
+                      >
+                        {radialExpandAll ? '折叠主干' : '展开全部'}
+                      </button>
                     )}
-                  </button>
+
+                    <div className="w-px h-4 bg-white/20 mx-0.5" />
+
+                    <button
+                      type="button"
+                      onClick={handleToggleFullscreen}
+                      title={isFullscreen ? '退出全屏' : '全屏透视'}
+                      className="p-1.5 rounded-xl text-slate-300 hover:text-white hover:bg-indigo-600/30 transition-colors"
+                    >
+                      {isFullscreen ? (
+                        <Minimize2 className="w-4 h-4" />
+                      ) : (
+                        <Maximize2 className="w-4 h-4" />
+                      )}
+                    </button>
+                  </div>
                 </div>
 
                 {/* 画布底端交互小提示 */}
@@ -969,47 +968,54 @@ export default function GlobalKnowledgeGraphPage() {
                     [
                       {
                         id: 'locked',
-                        label: '🔒 待学习',
+                        label: '待学习',
+                        Icon: Lock,
                         activeCls:
                           'bg-slate-700/80 text-white border-slate-400 shadow-md',
                       },
                       {
                         id: 'learning',
-                        label: '🔥 攻克中',
+                        label: '攻克中',
+                        Icon: Flame,
                         activeCls:
-                          'bg-gradient-to-r from-amber-500/30 to-orange-500/30 text-amber-200 border-amber-400 shadow-[0_0_12px_rgba(245,158,11,0.25)]',
+                          'bg-amber-500/20 text-[#D4AD72] border-[#D4AD72] shadow-sm',
                       },
                       {
                         id: 'mastered',
-                        label: '✅ 已掌握',
+                        label: '已掌握',
+                        Icon: CheckCircle2,
                         activeCls:
-                          'bg-gradient-to-r from-emerald-500/30 to-teal-500/30 text-emerald-200 border-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.25)]',
+                          'bg-emerald-500/20 text-emerald-300 border-emerald-400 shadow-sm',
                       },
                     ] as const
-                  ).map((item) => (
-                    <button
-                      key={item.id}
-                      type="button"
-                      onClick={() =>
-                        selectedNode && handleSetMastery(selectedNode.id, item.id)
-                      }
-                      className={`py-2 px-2 rounded-xl text-xs font-bold border transition-all ${
-                        currentMastery === item.id
-                          ? item.activeCls
-                          : 'bg-slate-900/60 text-slate-400 border-white/5 hover:text-slate-200 hover:bg-slate-900'
-                      }`}
-                    >
-                      {item.label}
-                    </button>
-                  ))}
+                  ).map((item) => {
+                    const StatusIcon = item.Icon;
+                    return (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() =>
+                          selectedNode && handleSetMastery(selectedNode.id, item.id)
+                        }
+                        className={`py-2 px-2 rounded-xl text-xs font-bold border transition-all flex items-center justify-center gap-1 ${
+                          currentMastery === item.id
+                            ? item.activeCls
+                            : 'bg-slate-900/60 text-slate-400 border-white/5 hover:text-slate-200 hover:bg-slate-900'
+                        }`}
+                      >
+                        <StatusIcon className="w-3.5 h-3.5 shrink-0" />
+                        <span>{item.label}</span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
               {/* 节点核心概述 */}
               <div className="p-3.5 rounded-2xl bg-slate-950/65 border border-indigo-500/25 relative overflow-hidden">
-                <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-indigo-500 to-sky-400" />
-                <div className="text-xs font-bold text-sky-300 mb-1.5 flex items-center gap-1.5">
-                  <span className="text-sm">📌</span>
+                <div className="absolute top-0 left-0 w-1 h-full bg-[#D4AD72]" />
+                <div className="text-xs font-bold text-[#D4AD72] mb-1.5 flex items-center gap-1.5">
+                  <Compass className="w-3.5 h-3.5" />
                   <span>知识模块定位与概述</span>
                 </div>
                 <p className="text-xs text-slate-300 leading-relaxed pl-1">
@@ -1020,8 +1026,8 @@ export default function GlobalKnowledgeGraphPage() {
               {/* 核心知识点列表 */}
               {selectedNode?.keyPoints && selectedNode.keyPoints.length > 0 && (
                 <div className="space-y-2">
-                  <div className="text-xs font-bold text-indigo-300 flex items-center gap-1.5">
-                    <span>🔬</span>
+                  <div className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                    <Layers className="w-3.5 h-3.5 text-[#D4AD72]" />
                     <span>核心章节与关键考点</span>
                   </div>
                   <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
@@ -1052,7 +1058,7 @@ export default function GlobalKnowledgeGraphPage() {
                   className="p-3 rounded-2xl bg-slate-950/65 border border-white/10 text-left hover:border-indigo-400/40 hover:bg-slate-900/80 transition-all group"
                 >
                   <div className="text-[10px] text-slate-400 mb-1 flex items-center justify-between">
-                    <span>⬅️ 前置依赖基础</span>
+                    <span className="inline-flex items-center gap-1"><ArrowLeft className="w-3 h-3" />前置依赖基础</span>
                     <span className="text-[9px] text-indigo-300 opacity-0 group-hover:opacity-100 transition-opacity">
                       跳转
                     </span>
@@ -1070,7 +1076,7 @@ export default function GlobalKnowledgeGraphPage() {
                   className="p-3 rounded-2xl bg-slate-950/65 border border-white/10 text-left hover:border-indigo-400/40 hover:bg-slate-900/80 transition-all group"
                 >
                   <div className="text-[10px] text-slate-400 mb-1 flex items-center justify-between">
-                    <span>➡️ 后续进阶方向</span>
+                    <span className="inline-flex items-center gap-1">后续进阶方向<ArrowRight className="w-3 h-3" /></span>
                     <span className="text-[9px] text-indigo-300 opacity-0 group-hover:opacity-100 transition-opacity">
                       跳转
                     </span>
@@ -1081,14 +1087,14 @@ export default function GlobalKnowledgeGraphPage() {
                 </button>
               </div>
 
-              {/* 三大一键直达行动按钮 */}
+              {/* 三大一键直达行动按钮（消除矢量图标 + Emoji 双重堆砌） */}
               <div className="pt-2 space-y-2.5">
                 <Link
                   href={selectedNode?.href || '/study'}
-                  className="w-full py-3 px-4 rounded-2xl font-bold text-xs sm:text-sm text-white bg-gradient-to-r from-indigo-600 via-indigo-500 to-sky-500 hover:brightness-110 active:scale-[0.99] transition-all shadow-lg shadow-indigo-600/30 flex items-center justify-center gap-2"
+                  className="w-full py-3 px-4 rounded-2xl font-bold text-xs sm:text-sm text-[#0E1116] bg-[#D4AD72] hover:bg-[#e0bd86] active:scale-[0.99] transition-all shadow-lg flex items-center justify-center gap-2"
                 >
                   <BookOpen className="w-4 h-4" />
-                  <span>📖 进入《{selectedNode?.name}》课程学习</span>
+                  <span>进入《{selectedNode?.name}》课程学习</span>
                 </Link>
 
                 <div className="grid grid-cols-2 gap-2">
@@ -1097,16 +1103,16 @@ export default function GlobalKnowledgeGraphPage() {
                     className="py-2.5 px-3 rounded-xl font-bold text-xs text-emerald-200 bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-400/35 transition-all flex items-center justify-center gap-1.5 active:scale-[0.98]"
                   >
                     <Code2 className="w-3.5 h-3.5" />
-                    <span>💻 代码工坊演练</span>
+                    <span>代码工坊演练</span>
                   </Link>
 
                   <button
                     type="button"
                     onClick={() => selectedNode && handleAskHeju(selectedNode)}
-                    className="py-2.5 px-3 rounded-xl font-bold text-xs text-amber-200 bg-amber-500/15 hover:bg-amber-500/25 border border-amber-400/35 transition-all flex items-center justify-center gap-1.5 active:scale-[0.98]"
+                    className="py-2.5 px-3 rounded-xl font-bold text-xs text-[#D4AD72] bg-[#D4AD72]/15 hover:bg-[#D4AD72]/25 border border-[#D4AD72]/35 transition-all flex items-center justify-center gap-1.5 active:scale-[0.98]"
                   >
                     <Sparkles className="w-3.5 h-3.5" />
-                    <span>🤖 召唤禾桔讲解</span>
+                    <span>召唤禾桔讲解</span>
                   </button>
                 </div>
               </div>
@@ -1114,6 +1120,7 @@ export default function GlobalKnowledgeGraphPage() {
           </div>
         </div>
       </div>
+      <SiteFooter className="mt-auto !py-3" />
     </div>
   );
 }

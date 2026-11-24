@@ -17,7 +17,7 @@ export default function StitchLogo({
     >
       <Image
         src="/images/mascot-pixel-cat.png"
-        alt="PartJava 吉祥物"
+        alt="禾硙 Unolgy 伴学灵宠"
         width={size}
         height={size}
         className="w-full h-full object-contain pointer-events-none drop-shadow-sm"

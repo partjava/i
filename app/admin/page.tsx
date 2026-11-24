@@ -12,8 +12,9 @@ import UserTab from './components/UserTab';
 import ChallengeTab from './components/ChallengeTab';
 import NoteTab from './components/NoteTab';
 import HealthModal from './components/HealthModal';
-import InkWashDecoration from '@shared/components/InkWashDecoration';
 import { getStoredUser, getAuthHeaders } from '@shared/lib/auth-client';
+import BrandLogo from '@shared/components/BrandLogo';
+import SiteFooter from '@shared/components/SiteFooter';
 
 /** 通用 fetch 封装 */
 async function api(url: string, options?: RequestInit) {
@@ -58,6 +59,15 @@ export default function AdminDashboard() {
 
   const [restartingId, setRestartingId] = useState<string | null>(null);
   const [isHealthOpen, setIsHealthOpen] = useState(false);
+  const [isDark, setIsDark] = useState(false);
+
+  useEffect(() => {
+    const sync = () => setIsDark(document.body.classList.contains('dark'));
+    sync();
+    const obs = new MutationObserver(sync);
+    obs.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+    return () => obs.disconnect();
+  }, []);
 
   // ---- 首次加载：每个 API 独立调用，单个失败不影响其他 ----
   useEffect(() => {
@@ -276,17 +286,18 @@ export default function AdminDashboard() {
   // 门禁未通过 → 不渲染任何管理端内容
   if (!authorized) {
     return (
-      <div className="min-h-screen bg-[#0C1F3D] flex items-center justify-center">
+      <div className="min-h-[calc(100vh-70px)] bg-surface-page flex items-center justify-center">
         <Spin size="large" />
-        <span className="ml-3 text-slate-400">权限校验中...</span>
+        <span className="ml-3 text-content-muted">权限校验中...</span>
       </div>
     );
   }
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0C1F3D] flex items-center justify-center">
-        <div className="text-[#BBFF5C] text-lg">加载中...</div>
+      <div className="min-h-[calc(100vh-70px)] bg-surface-page flex items-center justify-center">
+        <Spin size="large" />
+        <span className="ml-3 text-content-secondary font-medium">控制台数据加载中...</span>
       </div>
     );
   }
@@ -294,84 +305,88 @@ export default function AdminDashboard() {
   return (
     <ConfigProvider
       theme={{
-        algorithm: theme.darkAlgorithm,
-        token: {
-          colorPrimary: '#BBFF5C',
-          colorBgContainer: '#08172F',
-          colorBgElevated: '#112240',
-          colorBgLayout: '#0C1F3D',
-          colorBorder: '#234272',
-          colorTextBase: '#EDF0F5',
-          borderRadius: 12,
-        }
+        algorithm: isDark ? theme.darkAlgorithm : theme.defaultAlgorithm,
+        token: isDark
+          ? {
+              colorPrimary: '#D4AD72',
+              colorBgContainer: '#151921',
+              colorBgElevated: '#1C222D',
+              colorBgLayout: '#0E1116',
+              colorBorder: '#2A3342',
+              colorTextBase: '#F2EDE4',
+              borderRadius: 12,
+            }
+          : {
+              colorPrimary: '#1B3B6F',
+              colorBgContainer: '#FFFFFF',
+              colorBgElevated: '#FFFFFF',
+              colorBgLayout: '#F4F5F7',
+              colorBorder: '#E2E8F0',
+              colorTextBase: '#0F1D33',
+              borderRadius: 12,
+            },
       }}
     >
-      <div className="min-h-screen bg-[#0C1F3D] text-[#EDF0F5] flex flex-col font-sans relative overflow-hidden">
+      <div className="h-[calc(100vh-70px)] min-h-[560px] bg-surface-page text-content-primary flex flex-col font-sans relative overflow-hidden transition-colors">
 
-        <div className="absolute inset-0 opacity-10 pointer-events-none z-0">
-          <InkWashDecoration variant="landscape" height={800} className="w-full h-full object-cover" />
-        </div>
-
-        <header className="border-b border-[#234272]/60 bg-[#0C1F3D]/80 backdrop-blur px-6 py-4 flex items-center justify-between z-20">
+        <header className="shrink-0 border-b border-line-subtle bg-surface-raised/95 backdrop-blur px-6 py-3.5 flex flex-wrap items-center justify-between gap-4 z-20">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 border border-[#BBFF5C]/60 rounded flex items-center justify-center bg-[#BBFF5C]/10 shadow-[0_0_15px_rgba(187,255,92,0.2)]">
-              <span className="text-[#BBFF5C] text-lg font-black font-serif">学</span>
-            </div>
-            <div>
-              <span className="text-lg font-black tracking-wider text-white">Part<span className="text-[#BBFF5C] font-light">Java</span></span>
-              <span className="ml-2 text-[10px] bg-[#BBFF5C]/15 text-[#BBFF5C] px-1.5 py-0.5 rounded border border-[#BBFF5C]/30">管理系统</span>
-            </div>
+            <BrandLogo variant="full" priority className="h-8 w-auto" />
+            <span className="text-[11px] font-medium bg-brand-soft text-brand-primary px-2.5 py-0.5 rounded-full border border-line-subtle">
+              管理系统
+            </span>
           </div>
 
-          <div className="flex items-center gap-6 text-sm text-slate-400">
-            <div className="flex items-center gap-2 cursor-pointer hover:opacity-85" onClick={() => setIsHealthOpen(true)}>
+          <div className="flex flex-wrap items-center gap-5 text-sm text-content-secondary">
+            <div className="flex items-center gap-2 cursor-pointer hover:text-brand-primary transition-colors" onClick={() => setIsHealthOpen(true)}>
               <Badge status={containers.some(c => c.status !== 'RUNNING') ? 'warning' : 'processing'} />
-              <span className="hover:text-indigo-400 transition-colors">
+              <span>
                 沙箱节点: {containers.filter(c => c.status === 'RUNNING').length}/{containers.length || 3} 正常 (体检)
               </span>
             </div>
-            <div className="flex items-center gap-2 cursor-pointer hover:opacity-85" onClick={() => setIsHealthOpen(true)}>
+            <div className="flex items-center gap-2 cursor-pointer hover:text-brand-primary transition-colors" onClick={() => setIsHealthOpen(true)}>
               <Badge status={sysInfo?.dbConnected === false ? 'error' : 'success'} />
-              <span className="hover:text-indigo-400 transition-colors">
+              <span>
                 数据库: {sysInfo?.dbConnected === false ? '连接异常' : 'MySQL 正常'}
               </span>
             </div>
-            <div className="w-px h-4 bg-[#234272]/60" />
-            <span className="text-slate-300 font-medium">管理员: {currentUser?.username || 'Admin'}</span>
+            <div className="w-px h-4 bg-line-subtle hidden sm:block" />
+            <span className="text-content-primary font-semibold">管理员: {currentUser?.username || 'Admin'}</span>
           </div>
         </header>
 
-        <div className="flex-1 flex overflow-hidden">
-          <aside className="w-64 border-r border-[#234272]/60 bg-[#08172F]/90 backdrop-blur-md flex flex-col p-4 gap-2 z-10">
-            <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider px-3 mb-2">主控制面板</span>
+        <div className="flex-1 min-h-0 flex overflow-hidden">
+          <aside className="w-60 border-r border-line-subtle bg-surface-raised flex flex-col p-4 gap-1.5 z-10 shrink-0 overflow-y-auto">
+            <span className="text-[11px] text-content-muted font-bold uppercase tracking-wider px-3 mb-1">主控制面板</span>
 
             {[
-              { key: 'dashboard', icon: <LayoutDashboard size={18} />, emoji: '📊', label: '仪表盘与大屏' },
-              { key: 'users', icon: <Users size={18} />, emoji: '👥', label: '用户账号管理' },
-              { key: 'challenges', icon: <GraduationCap size={18} />, emoji: '🪐', label: '算法关卡维护' },
-              { key: 'notes', icon: <FileText size={18} />, emoji: '📝', label: '学员随堂笔记' },
+              { key: 'dashboard', icon: <LayoutDashboard size={17} />, label: '仪表盘与大屏' },
+              { key: 'users', icon: <Users size={17} />, label: '用户账号管理' },
+              { key: 'challenges', icon: <GraduationCap size={17} />, label: '算法关卡维护' },
+              { key: 'notes', icon: <FileText size={17} />, label: '学员随堂笔记' },
             ].map(tab => (
               <button key={tab.key}
                 onClick={() => setActiveTab(tab.key as any)}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-300 ${
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all duration-200 ${
                   activeTab === tab.key
-                    ? 'bg-[#BBFF5C]/15 border border-[#BBFF5C]/40 text-[#BBFF5C] font-semibold'
-                    : 'text-slate-400 hover:bg-[#1E3E6E]/40 hover:text-white border border-transparent'
+                    ? 'bg-brand-soft border border-line-strong text-brand-primary font-semibold shadow-sm'
+                    : 'text-content-secondary hover:bg-surface-muted hover:text-content-primary border border-transparent'
                 }`}
               >
-                {tab.icon}<span>{tab.emoji} {tab.label}</span>
+                {tab.icon}<span>{tab.label}</span>
               </button>
             ))}
 
-            <div className="mt-auto border-t border-[#234272]/60 pt-4 flex flex-col gap-2">
-              <span className="text-[10px] text-slate-600 px-3">系统版本 v2.0 (Java BFF)</span>
+            <div className="mt-auto border-t border-line-subtle pt-4 flex flex-col gap-2">
+              <span className="text-[11px] text-content-muted px-3">系统版本 v2.0 (Java BFF)</span>
               <button onClick={() => setIsHealthOpen(true)}
-                className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs text-slate-500 hover:bg-[#1E3E6E]/40 hover:text-[#BBFF5C] transition-colors"
+                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs text-content-secondary hover:bg-brand-soft hover:text-brand-primary transition-colors"
               ><Server size={14} /><span>服务器运维大体检</span></button>
             </div>
           </aside>
 
-          <main className="flex-1 overflow-y-auto p-6 bg-[#0C1F3D]/40 backdrop-blur-sm z-10">
+          <main className="flex-1 min-w-0 overflow-y-auto p-5 sm:p-6 bg-surface-page flex flex-col z-10">
+            <div className="flex-1">
             {activeTab === 'dashboard' && (
               <DashboardTab
                 users={users}
@@ -382,6 +397,7 @@ export default function AdminDashboard() {
                 onLogAdd={handleLogAdd}
                 sysInfo={sysInfo}
                 stats={stats}
+                isDark={isDark}
               />
             )}
             {activeTab === 'users' && (
@@ -433,6 +449,8 @@ export default function AdminDashboard() {
                 }}
               />
             )}
+            </div>
+            <SiteFooter className="mt-8 !py-3" />
           </main>
         </div>
 

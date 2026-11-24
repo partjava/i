@@ -3,6 +3,8 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@shared/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import SiteFooter from '@shared/components/SiteFooter';
+import { Bookmark, Heart, MessageSquare, Search, ArrowRight, User, Star } from 'lucide-react';
 
 interface BookmarkedNote {
   id: number;
@@ -18,10 +20,10 @@ interface BookmarkedNote {
   commentCount: number;
 }
 
-// 去掉 Markdown 符号，只保留纯文本
+// 去掉 Markdown 符号，只保留干净可读的纯文本摘要
 function stripMarkdown(text: string): string {
   return text
-    .replace(/```[\s\S]*?```/g, '[代码]')
+    .replace(/```[\s\S]*?```/g, ' ')
     .replace(/#{1,6}\s+/g, '')
     .replace(/\*\*(.+?)\*\*/g, '$1')
     .replace(/\*(.+?)\*/g, '$1')
@@ -29,7 +31,7 @@ function stripMarkdown(text: string): string {
     .replace(/\[(.+?)\]\(.+?\)/g, '$1')
     .replace(/^[-*]\s+/gm, '')
     .replace(/^\d+\.\s+/gm, '')
-    .replace(/\n+/g, ' ')
+    .replace(/\s+/g, ' ')
     .trim();
 }
 
@@ -149,56 +151,62 @@ export default function BookmarksPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* 顶部 Banner */}
-      <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
-        <div className="max-w-6xl mx-auto px-6 py-10">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold flex items-center gap-3">
-                <span>⭐</span> 我的收藏
-              </h1>
-              <p className="mt-2 text-blue-100 text-sm">
-                已收藏 <span className="font-semibold text-white">{notes.length}</span> 篇笔记
-              </p>
+    <div className="min-h-[calc(100vh-70px)] bg-surface-page flex flex-col">
+      {/* 素笺极简页头 */}
+      <div className="bg-surface-raised border-b border-line-subtle">
+        <div className="max-w-6xl mx-auto px-6 py-8">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex items-center gap-3.5">
+              <div className="w-11 h-11 rounded-2xl bg-brand-soft text-brand-primary flex items-center justify-center border border-line-subtle">
+                <Bookmark className="w-5 h-5" />
+              </div>
+              <div>
+                <h1 className="font-display text-2xl sm:text-3xl font-bold text-content-primary tracking-tight">
+                  我的收藏
+                </h1>
+                <p className="mt-1 text-content-muted text-sm">
+                  已收藏 <span className="font-code font-semibold text-brand-primary">{notes.length}</span> 篇精选笔记
+                </p>
+              </div>
             </div>
             <Link
               href="/notes"
-              className="bg-white/20 hover:bg-white/30 text-white text-sm px-4 py-2 rounded-lg transition-colors backdrop-blur-sm"
+              className="inline-flex items-center gap-1.5 bg-[#0F1D33] hover:bg-[#1B3B6F] text-white text-sm font-medium px-4 py-2 rounded-xl shadow-sm transition-colors"
             >
-              浏览更多笔记 →
+              <span>浏览更多笔记</span>
+              <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
           {/* 搜索框 */}
           <div className="mt-6 relative max-w-md">
-            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-blue-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-content-muted" />
             <input
               type="text"
-              placeholder="搜索收藏..."
+              placeholder="搜索收藏的标题或标签..."
               value={search}
               onChange={e => setSearch(e.target.value)}
-              className="w-full pl-9 pr-4 py-2.5 bg-white/20 placeholder-blue-200 text-white rounded-lg border border-white/30 focus:outline-none focus:bg-white/30 text-sm"
+              className="w-full pl-10 pr-4 py-2.5 bg-surface-page placeholder-content-muted text-content-primary rounded-xl border border-line-subtle focus:outline-none focus:border-brand-primary focus:bg-surface-raised text-sm transition-colors"
             />
           </div>
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto px-6 py-8">
+      <div className="flex-1 w-full max-w-6xl mx-auto px-6 py-8">
         {notes.length === 0 ? (
           <div className="text-center py-24">
-            <div className="text-6xl mb-4">📭</div>
-            <p className="text-xl text-gray-500 font-medium">还没有收藏任何笔记</p>
-            <p className="text-gray-400 text-sm mt-2">去发现感兴趣的内容，点击星标即可收藏</p>
-            <Link href="/notes" className="mt-6 inline-block bg-blue-600 text-white px-6 py-2.5 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">
+            <div className="w-14 h-14 mx-auto mb-4 rounded-2xl bg-surface-raised border border-line-subtle flex items-center justify-center text-content-muted">
+              <Bookmark className="w-6 h-6" />
+            </div>
+            <p className="text-lg text-content-primary font-semibold">还没有收藏任何笔记</p>
+            <p className="text-content-muted text-sm mt-1.5">去发现感兴趣的内容，点击星标即可收藏</p>
+            <Link href="/notes" className="mt-6 inline-block bg-brand-primary text-content-inverse px-6 py-2.5 rounded-xl hover:bg-brand-hover transition-colors text-sm font-medium">
               去浏览笔记
             </Link>
           </div>
         ) : filtered.length === 0 ? (
-          <div className="text-center py-20 text-gray-400">
-            <div className="text-4xl mb-3">🔍</div>
-            <p>没有找到匹配的收藏</p>
+          <div className="text-center py-20 text-content-muted">
+            <Search className="w-8 h-8 mx-auto mb-3 opacity-60" />
+            <p className="text-sm">没有找到匹配的收藏</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
@@ -210,14 +218,14 @@ export default function BookmarksPage() {
                 <div
                   key={note.id}
                   id={`bookmark-note-${note.id}`}
-                  className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col overflow-hidden group cursor-pointer"
+                  className="bg-surface-raised rounded-2xl border border-line-subtle shadow-sm hover:shadow-md hover:border-line-strong transition-all duration-200 flex flex-col overflow-hidden group cursor-pointer"
                   onClick={() => {
                     rememberBookmarksPosition(note.id);
                     router.push(`/notes/${note.id}`);
                   }}
                 >
-                  {/* 卡片顶部色条 */}
-                  <div className="h-1 bg-gradient-to-r from-blue-400 to-indigo-400" />
+                  {/* 卡片顶部细微点缀条 */}
+                  <div className="h-0.5 bg-gradient-to-r from-[#1B3B6F] to-[#D4AD72]" />
 
                   <div className="p-5 flex flex-col flex-1">
                     {/* 标题行 */}
@@ -230,7 +238,7 @@ export default function BookmarksPage() {
                           rememberBookmarksPosition(note.id);
                         }}
                       >
-                        <h2 className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-2 leading-snug">
+                        <h2 className="font-semibold text-content-primary group-hover:text-brand-primary transition-colors line-clamp-2 leading-snug">
                           {note.title}
                         </h2>
                       </Link>
@@ -240,20 +248,18 @@ export default function BookmarksPage() {
                           handleRemoveBookmark(note.id);
                         }}
                         disabled={removingId === note.id}
-                        className="shrink-0 text-yellow-400 hover:text-gray-300 transition-colors mt-0.5"
+                        className="shrink-0 text-[#D4AD72] hover:text-content-muted transition-colors mt-0.5"
                         title="取消收藏"
                       >
                         {removingId === note.id
-                          ? <div className="w-4 h-4 border-2 border-gray-300 border-t-transparent rounded-full animate-spin" />
-                          : <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                              <path d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
-                            </svg>
+                          ? <div className="w-4 h-4 border-2 border-line-strong border-t-transparent rounded-full animate-spin" />
+                          : <Star className="w-4 h-4 fill-current" />
                         }
                       </button>
                     </div>
 
                     {/* 内容预览 */}
-                    <p className="text-sm text-gray-500 mt-2 line-clamp-3 leading-relaxed flex-1">
+                    <p className="text-sm text-content-secondary mt-2 line-clamp-3 leading-relaxed flex-1">
                       {preview || '暂无内容预览'}
                     </p>
 
@@ -271,21 +277,24 @@ export default function BookmarksPage() {
                       )}
                     </div>
 
-                    {/* 底部信息 */}
-                    <div className="mt-4 pt-3 border-t border-gray-50 flex items-center justify-between text-xs text-gray-400">
-                      <div className="flex items-center gap-3">
-                        <span className="flex items-center gap-1">
-                          <span>❤️</span> {note.likeCount}
+                    {/* 底部信息（移除 Emoji，空作者名不渲染 ? 圆圈） */}
+                    <div className="mt-4 pt-3 border-t border-line-subtle flex items-center justify-between text-xs text-content-muted">
+                      <div className="flex items-center gap-3 font-code tabular-nums">
+                        <span className="inline-flex items-center gap-1">
+                          <Heart className="w-3.5 h-3.5 text-rose-500/80" /> {note.likeCount}
                         </span>
-                        <span className="flex items-center gap-1">
-                          <span>💬</span> {note.commentCount}
+                        <span className="inline-flex items-center gap-1">
+                          <MessageSquare className="w-3.5 h-3.5" /> {note.commentCount}
                         </span>
                       </div>
                       <div className="flex items-center gap-1.5">
-                        <div className="w-5 h-5 rounded-full bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center text-white text-xs font-bold">
-                          {note.authorName?.[0]?.toUpperCase() || '?'}
+                        <div className="w-5 h-5 rounded-full bg-brand-soft text-brand-primary flex items-center justify-center text-[11px] font-bold">
+                          {note.authorName?.trim()
+                            ? note.authorName.trim()[0].toUpperCase()
+                            : <User className="w-3 h-3" />
+                          }
                         </div>
-                        <span>{note.authorName}</span>
+                        <span>{note.authorName?.trim() || '社区作者'}</span>
                       </div>
                     </div>
                   </div>
@@ -295,6 +304,7 @@ export default function BookmarksPage() {
           </div>
         )}
       </div>
+      <SiteFooter className="mt-auto" />
     </div>
   );
 }

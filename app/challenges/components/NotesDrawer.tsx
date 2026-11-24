@@ -236,17 +236,17 @@ export const NotesDrawer: React.FC<NotesDrawerProps> = ({ onClose }) => {
         animate={{ x: 0, opacity: 1 }}
         exit={{ x: 400, opacity: 0 }}
         transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-        className="absolute top-0 right-16 h-full w-[360px] bg-slate-950/95 border-l border-slate-900 backdrop-blur-xl z-20 shadow-2xl flex flex-col overflow-hidden font-sans"
+        className="absolute top-0 right-16 h-full w-[360px] bg-[#12161F]/96 border-l border-white/10 backdrop-blur-xl z-20 shadow-2xl flex flex-col overflow-hidden font-sans"
       >
         {/* Drawer 头部 */}
-        <div className="h-14 border-b border-slate-900 px-5 flex justify-between items-center bg-slate-950 shrink-0">
-          <h3 className="text-xs font-bold tracking-wider text-slate-200 flex items-center gap-1.5">
-            <FileText className="w-4 h-4 text-indigo-400" />
+        <div className="h-14 border-b border-white/10 px-5 flex justify-between items-center bg-[#0E1116] shrink-0">
+          <h3 className="text-xs font-bold tracking-wider text-[#F2EDE4] flex items-center gap-1.5">
+            <FileText className="w-4 h-4 text-[#D4AD72]" />
             我的随堂笔记 (Notes)
           </h3>
           <button 
             onClick={onClose}
-            className="p-1 rounded-lg hover:bg-slate-950 text-slate-500 hover:text-white transition"
+            className="p-1 rounded-lg hover:bg-white/10 text-slate-400 hover:text-white transition"
           >
             <X className="w-4 h-4" />
           </button>
@@ -257,7 +257,7 @@ export const NotesDrawer: React.FC<NotesDrawerProps> = ({ onClose }) => {
           {/* 点击弹出新建笔记模态框 */}
           <button
             onClick={openNewNoteModal}
-            className="w-full py-2.5 border border-dashed border-slate-800 hover:border-indigo-500/60 bg-slate-900/10 hover:bg-slate-900/30 rounded-xl text-xs text-slate-400 hover:text-indigo-400 transition flex items-center justify-center gap-1.5"
+            className="w-full py-2.5 border border-dashed border-white/15 hover:border-[#D4AD72]/60 bg-[#181D27]/50 hover:bg-[#181D27] rounded-xl text-xs text-slate-300 hover:text-[#D4AD72] transition flex items-center justify-center gap-1.5"
           >
             <Plus className="w-4 h-4" />
             新建一笔关卡记录
@@ -265,12 +265,12 @@ export const NotesDrawer: React.FC<NotesDrawerProps> = ({ onClose }) => {
 
           {/* 笔记列表加载与显示 */}
           {loading ? (
-            <div className="py-12 flex flex-col items-center justify-center gap-2 text-xs text-slate-500">
-              <Loader2 className="w-5 h-5 animate-spin text-indigo-400" />
+            <div className="py-12 flex flex-col items-center justify-center gap-2 text-xs text-slate-400">
+              <Loader2 className="w-5 h-5 animate-spin text-[#D4AD72]" />
               正在加载您的笔记...
             </div>
           ) : notes.length === 0 ? (
-            <div className="py-16 text-center text-xs text-slate-600 leading-relaxed">
+            <div className="py-16 text-center text-xs text-slate-500 leading-relaxed">
               暂无历史随堂笔记，<br />点击上方新建笔记，记录你的算法总结吧！
             </div>
           ) : (
@@ -280,13 +280,13 @@ export const NotesDrawer: React.FC<NotesDrawerProps> = ({ onClose }) => {
                 return (
                   <div 
                     key={note.id}
-                    className="bg-slate-900/30 border border-slate-900 hover:border-slate-850 rounded-xl p-3.5 transition duration-150"
+                    className="bg-[#181D27]/60 border border-white/10 hover:border-[#D4AD72]/30 rounded-xl p-3.5 transition duration-150"
                   >
                     <div 
                       onClick={() => setExpandedNoteId(isExpanded ? null : note.id)}
                       className="flex justify-between items-start cursor-pointer group"
                     >
-                      <h4 className="text-xs font-semibold text-slate-200 group-hover:text-indigo-400 transition">
+                      <h4 className="text-xs font-semibold text-[#F2EDE4] group-hover:text-[#D4AD72] transition">
                         {note.title}
                       </h4>
                       <span className="text-[10px] text-slate-600 shrink-0 font-mono">

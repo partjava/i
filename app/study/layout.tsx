@@ -3,7 +3,7 @@ import StudyScreenshot from '../_shared/components/StudyScreenshot';
 
 export default function StudyLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen">
+    <div className="min-h-[calc(100vh-70px)]">
       {children}
       {/* 桌面端（xl+）由 BookSpread 内的右侧栏承载截图/进度，悬浮球仅在窄屏显示 */}
       <div className="xl:hidden">

@@ -303,10 +303,10 @@ export default function BookSpread(props: BookSpreadProps) {
         .bg-dot-active { background: var(--book-accent) !important; }
         .border-accent { border-color: var(--book-accent) !important; }
       `}</style>
-      <div className="max-w-[1600px] mx-auto px-3 py-5 sm:px-4 sm:py-6 flex items-start gap-5">
-        <div className="flex-1 min-w-0 max-w-6xl">
-        {/* ===== 顶部面包屑 ===== */}
-        <div className="flex items-center gap-2 text-xs text-ink-lighter mb-4 sm:mb-5 px-1">
+      <div className="w-full max-w-[1920px] mx-auto px-4 py-5 sm:px-6 sm:py-6 flex items-start gap-5">
+        <div className="flex-1 min-w-0">
+        {/* ===== 顶部面包屑 + 紧凑工具动作（释放右侧栏空间给 AI 助手） ===== */}
+        <div className="flex flex-wrap items-center gap-2 text-xs text-ink-lighter mb-4 sm:mb-5 px-1">
           {subjectHref ? (
             <a href={subjectHref} className="hover-accent transition-colors">
               {subject}
@@ -316,9 +316,13 @@ export default function BookSpread(props: BookSpreadProps) {
           )}
           <span className="text-ink-fade mx-1">/</span>
           <span className="text-ink-light">{chapterTitle}</span>
-          <span className="ml-auto hidden sm:inline text-ink-fade">
-            {chapterNumber} / {totalChapters}
-          </span>
+          <div className="ml-auto flex items-center gap-2">
+            <StudyScreenshot compact />
+            <StudyProgressBar compact />
+            <span className="hidden sm:inline text-ink-fade font-code tabular-nums pl-1">
+              {chapterNumber} / {totalChapters}
+            </span>
+          </div>
         </div>
 
         {/* ===== 书本容器 ===== */}
@@ -507,7 +511,7 @@ export default function BookSpread(props: BookSpreadProps) {
         </div>
 
         {/* ===== 右侧栏：章节大纲 + AI 助手 + 工具 ===== */}
-        <aside className="hidden xl:flex flex-col gap-4 w-[300px] shrink-0 sticky top-4 h-[calc(100vh-6rem)] overflow-y-auto">
+        <aside className="hidden xl:flex flex-col gap-4 w-[300px] 2xl:w-[340px] shrink-0 sticky top-4 h-[calc(100vh-6rem)] overflow-y-auto">
           {/* 章节大纲（可折叠） */}
           <div className="shrink-0 bg-white/90 rounded-xl border border-black/5 shadow-sm p-3">
             <button
@@ -573,15 +577,9 @@ export default function BookSpread(props: BookSpreadProps) {
             )}
           </div>
 
-          {/* AI 助手嵌入面板（保底高度，保证消息区可用） */}
-          <div className="flex-1 min-h-[340px] bg-white/90 rounded-xl border border-black/5 shadow-sm overflow-hidden">
+          {/* AI 助手嵌入面板（独占右侧剩余高度，视野更宽敞） */}
+          <div className="flex-1 min-h-[420px] bg-white/95 rounded-xl border border-black/5 shadow-sm overflow-hidden">
             <AiChatPanel />
-          </div>
-
-          {/* 工具：截图 + 学习进度 */}
-          <div className="shrink-0 flex flex-col gap-2">
-            <StudyScreenshot inline />
-            <StudyProgressBar inline />
           </div>
         </aside>
       </div>

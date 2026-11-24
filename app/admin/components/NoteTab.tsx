@@ -62,26 +62,25 @@ export default function NoteTab({ notes, users, onDeleteNote, onToggleNotePublic
             allowClear
             size="small"
             className="w-56"
-            style={{ background: '#0f1a2f', borderColor: '#234272', color: '#e2e8f0' }}
           />
           {onRefresh && (
-            <button onClick={onRefresh} className="text-xs text-indigo-400 hover:text-indigo-300 bg-indigo-900/30 px-3 py-1 rounded">
+            <button onClick={onRefresh} className="text-xs text-brand-primary bg-brand-soft hover:bg-surface-muted border border-line-subtle px-3 py-1 rounded-lg transition-colors">
               刷新
             </button>
           )}
         </div>
       }
       bordered={false}
-      className="bg-slate-900 border border-slate-800"
+      className="bg-surface-raised border border-line-subtle rounded-2xl shadow-sm"
     >
       <Table
         dataSource={filteredNotes}
         rowKey="id"
         pagination={{ pageSize: 8 }}
         columns={[
-          { title: '笔记ID', dataIndex: 'id', key: 'id', width: 60, render: (val: number) => <span className="font-mono text-indigo-400">#{val}</span> },
-          { title: '笔记标题', dataIndex: 'title', key: 'title', render: (text: string) => <span className="font-semibold text-slate-200">{text}</span> },
-          { title: '作者', dataIndex: 'authorId', key: 'authorId', render: (val: number) => <span className="text-slate-400">{getAuthorName(val, users)}</span> },
+          { title: '笔记ID', dataIndex: 'id', key: 'id', width: 60, render: (val: number) => <span className="font-mono text-brand-primary">#{val}</span> },
+          { title: '笔记标题', dataIndex: 'title', key: 'title', render: (text: string) => <span className="font-semibold text-content-primary">{text}</span> },
+          { title: '作者', dataIndex: 'authorId', key: 'authorId', render: (val: number) => <span className="text-content-muted">{getAuthorName(val, users)}</span> },
           { title: '所属分类', dataIndex: 'category', key: 'category', render: (text: string) => text || '—' },
           { title: '创建日期', dataIndex: 'createdAt', key: 'createdAt', render: (val: string) => val ? new Date(val).toLocaleDateString('zh-CN') : '—' },
           {
@@ -142,8 +141,8 @@ export default function NoteTab({ notes, users, onDeleteNote, onToggleNotePublic
         width={680}
       >
         {previewNote && (
-          <div className="space-y-3 text-slate-300 text-sm">
-            <div className="flex flex-wrap items-center gap-2 text-xs text-slate-400">
+          <div className="space-y-3 text-content-secondary text-sm">
+            <div className="flex flex-wrap items-center gap-2 text-xs text-content-muted">
               <span>作者: {getAuthorName(previewNote.authorId, users)}</span>
               <span>•</span>
               <span>分类: {previewNote.category || '—'}</span>
@@ -157,7 +156,7 @@ export default function NoteTab({ notes, users, onDeleteNote, onToggleNotePublic
                 {previewNote.isPublic ? '公开' : '私有'}
               </Tag>
             </div>
-            <div className="p-3 rounded-lg bg-slate-950 border border-slate-800 whitespace-pre-wrap max-h-[380px] overflow-y-auto leading-relaxed">
+            <div className="p-3 rounded-xl bg-surface-muted border border-line-subtle text-content-primary whitespace-pre-wrap max-h-[380px] overflow-y-auto leading-relaxed">
               {previewNote.content || '(无正文内容)'}
             </div>
           </div>

@@ -69,9 +69,7 @@ export default function Composer(props: ComposerProps) {
           <button
             onClick={onToggleSearch}
             className={`px-2.5 py-2 rounded-xl text-xs font-semibold border transition-all flex items-center gap-1 flex-shrink-0 ${
-              enableWebSearch
-                ? 'bg-[#1d3b47] border-[#56b6c2] text-[#a8e4ec] shadow-[0_0_12px_rgba(86,182,194,0.35)]'
-                : 'bg-[#24201c] border-white/15 text-[#e9dac3]/70 hover:text-white'
+              enableWebSearch ? styles.dockToggleSearchActive : styles.dockToggle
             }`}
             title="开启后可联网查找相关资料"
             aria-label={enableWebSearch ? '联网搜索：开' : '联网搜索：关'}
@@ -87,9 +85,7 @@ export default function Composer(props: ComposerProps) {
           <button
             onClick={onToggleTts}
             className={`px-2.5 py-2 rounded-xl text-xs font-semibold border transition-all flex items-center gap-1 flex-shrink-0 ${
-              ttsOn
-                ? 'bg-[#3a2f1d] border-[#d4a36a] text-[#f5d5a3] shadow-[0_0_12px_rgba(212,163,106,0.35)]'
-                : 'bg-[#24201c] border-white/15 text-[#e9dac3]/70 hover:text-white'
+              ttsOn ? styles.dockToggleTtsActive : styles.dockToggle
             }`}
             title={ttsOn ? '语音朗读：开（回答完成后自动朗读）' : '语音朗读：关'}
             aria-pressed={ttsOn}
@@ -103,9 +99,7 @@ export default function Composer(props: ComposerProps) {
             onClick={onToggleEdge}
             disabled={edgeStatus === 'loading'}
             className={`px-2.5 py-2 rounded-xl text-xs font-semibold border transition-all flex items-center gap-1 flex-shrink-0 ${
-              edgeAiOn
-                ? 'bg-[#1d3b2f] border-[#7bd88f] text-[#c9f2d4] shadow-[0_0_12px_rgba(123,216,143,0.3)]'
-                : 'bg-[#24201c] border-white/15 text-[#e9dac3]/70 hover:text-white'
+              edgeAiOn ? styles.dockToggleEdgeActive : styles.dockToggle
             }`}
             title={
               edgeStatus === 'loading'
@@ -136,7 +130,7 @@ export default function Composer(props: ComposerProps) {
                 : '问知识点、找课程，或整理学习笔记…'
             }
             disabled={isTyping}
-            className="flex-1 min-w-0 bg-[#100e0c]/90 text-[#f7efe4] placeholder-[#e9dac3]/45 text-xs sm:text-sm px-3.5 py-2.5 rounded-xl border border-[#d4a36a]/30 focus:outline-none focus:border-[#d4a36a] transition-colors"
+            className={`flex-1 min-w-0 text-xs sm:text-sm px-3.5 py-2.5 rounded-xl border focus:outline-none transition-colors ${styles.dockInput}`}
           />
 
           {/* 语音输入麦克风（Web Speech API，多模态输入） */}
@@ -144,9 +138,7 @@ export default function Composer(props: ComposerProps) {
             onClick={onToggleMic}
             disabled={isTyping}
             className={`px-3 py-2.5 rounded-xl border transition-all flex-shrink-0 ${
-              micListening
-                ? 'bg-red-500/25 border-red-400/70 text-red-200 animate-pulse'
-                : 'bg-[#24201c] border-white/15 text-[#e9dac3]/80 hover:text-white'
+              micListening ? `${styles.dockToggleMicActive} animate-pulse` : styles.dockToggle
             }`}
             title={micListening ? '正在聆听，点击停止' : '语音输入（普通话）'}
             aria-label={micListening ? '停止语音输入' : '开始语音输入'}
@@ -158,7 +150,7 @@ export default function Composer(props: ComposerProps) {
           <button
             onClick={submit}
             disabled={!draft.trim() || isTyping}
-            className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#d4a36a] to-[#b8894e] hover:from-[#e2b478] hover:to-[#c8985a] text-[#1c1a17] font-bold text-xs sm:text-sm shadow-md transition-all disabled:opacity-45 flex items-center gap-1.5 flex-shrink-0"
+            className={`px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm shadow-md transition-all disabled:opacity-45 flex items-center gap-1.5 flex-shrink-0 ${styles.dockSend}`}
           >
             <SendOutlined />
             <span>{isTyping ? '思考中' : '发送'}</span>

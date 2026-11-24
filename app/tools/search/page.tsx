@@ -3,6 +3,7 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import SiteFooter from '@shared/components/SiteFooter';
 import { Input, Card, Button, Tabs, Tag, Empty, Spin, Radio, Select } from 'antd';
 import {
   SearchOutlined,
@@ -14,7 +15,6 @@ import {
   ClockCircleOutlined
 } from '@ant-design/icons';
 import { navigationItems } from '@shared/data/navigation';
-import InkWashDecoration from '@shared/components/InkWashDecoration';
 
 const { Search } = Input;
 
@@ -281,12 +281,8 @@ function SearchContent() {
   const categories = Array.from(new Set(searchResults.map(r => r.category))).filter(Boolean);
 
   return (
-    <div className="min-h-screen bg-surface-page">
-      {/* 水墨画顶部装饰 */}
-      <InkWashDecoration variant="landscape" height={160} className="bg-surface-page" />
-      <InkWashDecoration variant="mist" height={50} className="bg-surface-page -mt-4" />
-
-      <div className="py-6">
+    <div className="min-h-[calc(100vh-70px)] bg-surface-page flex flex-col">
+      <div className="flex-1 w-full py-6">
         {/* 搜索头部 */}
         <div className="bg-surface-raised shadow-sm p-6 mb-6 border-b border-line-subtle">
           <div className="max-w-4xl mx-auto">
@@ -512,10 +508,7 @@ function SearchContent() {
           )}
         </div>
       </div>
-
-      {/* 水墨画底部装饰 */}
-      <InkWashDecoration variant="bamboo" height={100} className="bg-surface-page mt-8" />
-      <InkWashDecoration variant="landscape" height={200} className="bg-surface-page" />
+      <SiteFooter className="mt-auto" />
     </div>
   );
 }

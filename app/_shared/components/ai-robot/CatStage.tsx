@@ -603,13 +603,13 @@ export default function CatStage(props: CatStageProps) {
 
       {/* 毛色逆光 & 立体/像素五官微调面板 */}
       {showTuningPanel && (
-        <div className="absolute top-3 left-3 z-20 w-72 bg-[#161412]/92 backdrop-blur-md border border-[#d4a36a]/35 rounded-xl p-3.5 text-xs text-[#f4eadc] shadow-2xl space-y-2.5">
+        <div className="absolute top-3 left-3 z-20 w-72 bg-[#151921]/94 backdrop-blur-md border border-[#D4AD72]/35 rounded-xl p-3.5 text-xs text-[#F2EDE4] shadow-2xl space-y-2.5">
           <div className="flex items-center justify-between border-b border-white/10 pb-2">
-            <span className="font-semibold text-[#d4a36a]">五官与毛色微调</span>
-            <button onClick={onCloseTuning} className="text-[#e9dac3]/60 hover:text-white">✕</button>
+            <span className="font-semibold text-[#D4AD72]">五官与毛色微调</span>
+            <button onClick={onCloseTuning} className="text-[#CBD5E1]/70 hover:text-white">✕</button>
           </div>
           <div>
-            <div className="mb-1.5 text-[#e9dac3]/85">眼眸风格</div>
+            <div className="mb-1.5 text-[#CBD5E1]">眼眸风格</div>
             <div className="grid grid-cols-2 gap-1.5">
               {([
                 { id: 'amber', label: '✨ 琥珀流光' },
@@ -625,8 +625,8 @@ export default function CatStage(props: CatStageProps) {
                     onClick={() => onFaceTuningChange({ eyeStyle: opt.id })}
                     className={`px-2 py-1.5 rounded-lg text-[11px] border transition-all text-left ${
                       active
-                        ? 'bg-[#d4a36a] text-[#1c1a17] border-[#d4a36a] font-semibold'
-                        : 'bg-[#141210] text-[#e9dac3]/85 border-white/10 hover:border-[#d4a36a]/50'
+                        ? 'bg-[#D4AD72] text-[#0E1116] border-[#D4AD72] font-semibold'
+                        : 'bg-[#0E1116] text-[#CBD5E1] border-white/10 hover:border-[#D4AD72]/50'
                     }`}
                   >
                     {opt.label}
@@ -638,60 +638,60 @@ export default function CatStage(props: CatStageProps) {
           <div>
             <div className="flex justify-between mb-1">
               <span>Fresnel 逆光银边强度</span>
-              <span className="font-mono text-[#d4a36a]">{rimStrength.toFixed(2)}</span>
+              <span className="font-mono text-[#D4AD72]">{rimStrength.toFixed(2)}</span>
             </div>
             <input type="range" min={0.2} max={2.6} step={0.05} value={rimStrength}
               onChange={e => onShaderChange({ rim: parseFloat(e.target.value) })}
-              className="w-full accent-[#d4a36a]" />
+              className="w-full accent-[#D4AD72]" />
           </div>
           <div>
             <div className="flex justify-between mb-1">
               <span>耳缘 & 尾尖银毛浓度</span>
-              <span className="font-mono text-[#d4a36a]">{whiteTipStrength.toFixed(2)}</span>
+              <span className="font-mono text-[#D4AD72]">{whiteTipStrength.toFixed(2)}</span>
             </div>
             <input type="range" min={0} max={1.6} step={0.05} value={whiteTipStrength}
               onChange={e => onShaderChange({ whiteTip: parseFloat(e.target.value) })}
-              className="w-full accent-[#d4a36a]" />
+              className="w-full accent-[#D4AD72]" />
           </div>
           <div>
             <div className="flex justify-between mb-1">
               <span>眼眸高度 (Eye Y)</span>
-              <span className="font-mono text-[#d4a36a]">{faceTuning.eyeY.toFixed(3)}</span>
+              <span className="font-mono text-[#D4AD72]">{faceTuning.eyeY.toFixed(3)}</span>
             </div>
             <input type="range" min={0.48} max={0.82} step={0.004} value={faceTuning.eyeY}
               onChange={e => onFaceTuningChange({ eyeY: parseFloat(e.target.value) })}
-              className="w-full accent-[#d4a36a]" />
+              className="w-full accent-[#D4AD72]" />
           </div>
           <div>
             <div className="flex justify-between mb-1">
               <span>两眼间距 (Spacing)</span>
-              <span className="font-mono text-[#d4a36a]">{faceTuning.eyeSpacing.toFixed(3)}</span>
+              <span className="font-mono text-[#D4AD72]">{faceTuning.eyeSpacing.toFixed(3)}</span>
             </div>
             <input type="range" min={0.1} max={0.34} step={0.004} value={faceTuning.eyeSpacing}
               onChange={e => onFaceTuningChange({ eyeSpacing: parseFloat(e.target.value) })}
-              className="w-full accent-[#d4a36a]" />
+              className="w-full accent-[#D4AD72]" />
           </div>
           <div>
             <div className="flex justify-between mb-1">
               <span>嘴部高度 (Mouth Y)</span>
-              <span className="font-mono text-[#d4a36a]">{faceTuning.mouthY.toFixed(3)}</span>
+              <span className="font-mono text-[#D4AD72]">{faceTuning.mouthY.toFixed(3)}</span>
             </div>
             <input type="range" min={0.42} max={0.72} step={0.004} value={faceTuning.mouthY}
               onChange={e => onFaceTuningChange({ mouthY: parseFloat(e.target.value) })}
-              className="w-full accent-[#d4a36a]" />
+              className="w-full accent-[#D4AD72]" />
           </div>
           <div className="flex items-center justify-between pt-1 border-t border-white/10">
             <span>3D 表面立体绒毛簇</span>
             <input type="checkbox" checked={showFurTufts}
               onChange={e => onShaderChange({ tufts: e.target.checked })}
-              className="accent-[#d4a36a] w-4 h-4" />
+              className="accent-[#D4AD72] w-4 h-4" />
           </div>
         </div>
       )}
 
       {/* GLB 拖拽覆盖层 */}
       {isDraggingOver && (
-        <div className="absolute inset-5 z-20 border-2 border-dashed border-[#ddb982]/80 rounded-2xl grid place-items-center text-[#f7efe4] bg-[#141210]/70 backdrop-blur-md text-base sm:text-lg tracking-wider">
+        <div className="absolute inset-5 z-20 border-2 border-dashed border-[#D4AD72]/80 rounded-2xl grid place-items-center text-[#F2EDE4] bg-[#0E1116]/75 backdrop-blur-md text-base sm:text-lg tracking-wider">
           释放鼠标，将 GLB 模型放入书房中央并自动注入炭黑绒毛与像素五官
         </div>
       )}
@@ -705,19 +705,19 @@ export default function CatStage(props: CatStageProps) {
 
       {/* 加载进度覆盖层（人格化：禾桔正在醒来） */}
       {isLoading && (
-        <div className="absolute inset-0 bg-[#1c1a17]/90 flex items-center justify-center backdrop-blur-sm z-20">
-          <div className="text-center text-[#f4eadc] max-w-sm px-4">
+        <div className="absolute inset-0 bg-[#0E1116]/92 flex items-center justify-center backdrop-blur-sm z-20">
+          <div className="text-center text-[#F2EDE4] max-w-sm px-4">
             <div className="text-5xl mb-5 animate-bounce">🐱</div>
-            <div className="text-lg sm:text-xl font-serif font-semibold mb-4 tracking-wider text-[#f7efe4]">
+            <div className="text-lg sm:text-xl font-serif font-semibold mb-4 tracking-wider text-[#F2EDE4]">
               禾桔正在醒来…
             </div>
-            <div className="w-64 bg-[#2c2723] rounded-full h-2.5 mb-3 overflow-hidden border border-[#d4a36a]/30 mx-auto">
+            <div className="w-64 bg-[#1C222D] rounded-full h-2.5 mb-3 overflow-hidden border border-[#D4AD72]/30 mx-auto">
               <div
-                className="bg-gradient-to-r from-[#b8935c] to-[#e5c07b] h-full rounded-full transition-all duration-300"
+                className="bg-gradient-to-r from-[#B88E52] to-[#D4AD72] h-full rounded-full transition-all duration-300"
                 style={{ width: `${loadingProgress}%` }}
               />
             </div>
-            <div className="text-sm font-mono text-[#d4a36a]">{loadingProgress}%</div>
+            <div className="text-sm font-mono text-[#D4AD72]">{loadingProgress}%</div>
           </div>
         </div>
       )}

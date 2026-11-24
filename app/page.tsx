@@ -17,16 +17,14 @@ import {
 import { VscVscode } from 'react-icons/vsc';
 import Link from 'next/link';
 import { useState, useMemo, useEffect, useRef } from 'react';
-import Image from 'next/image';
-import { navigationItems } from './_shared/data/navigation';
+import { Trophy, ArrowRight, Code2, ChevronDown, ChevronUp, Users, FileText, Clock } from 'lucide-react';
 import { useAuth } from '@shared/hooks/useAuth';
 import SanctuaryHero from './_shared/components/sanctuary/SanctuaryHero';
-import StatsSection from './_shared/components/StatsSection';
+import CoreEnginesShowcase from './_shared/components/CoreEnginesShowcase';
 import ToolCard from './_shared/components/ToolCard';
 import ToolGroupPreview from './_shared/components/ToolGroupPreview';
 import BackToTop from './_shared/components/BackToTop';
 import QuickSearch from './_shared/components/QuickSearch';
-import InkWashDecoration from './_shared/components/InkWashDecoration';
 import SiteFooter from './_shared/components/SiteFooter';
 import { useSidebar } from './_shared/components/Sidebar';
 import mobileStyles from './mobile-home.module.css';
@@ -520,7 +518,34 @@ export default function Home() {
   const { data: session, status } = useAuth();
   const { collapsed } = useSidebar();
   const [searchQuery, setSearchQuery] = useState('');
+  const [arsenalExpanded, setArsenalExpanded] = useState(false);
   const [achievementProgress, setAchievementProgress] = useState<{ earned: number; total: number } | null>(null);
+  const [platformStats, setPlatformStats] = useState<{
+    users: number | null;
+    notes: number | null;
+    studyHours: number | null;
+    challenges: number;
+  }>({ users: null, notes: null, studyHours: null, challenges: 215 });
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch('/api/stats/platform')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((json) => {
+        if (!json || cancelled) return;
+        const d = json.data ?? json;
+        setPlatformStats({
+          users: typeof d.users === 'number' ? d.users : null,
+          notes: typeof d.notes === 'number' ? d.notes : null,
+          studyHours: typeof d.totalStudyTime === 'number' ? Math.floor(d.totalStudyTime / 3600) : null,
+          challenges: typeof d.challenges === 'number' && d.challenges > 0 ? d.challenges : 215,
+        });
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
   const [folderConfigsExpanded, setFolderConfigsExpanded] = useState<Record<string, { k: number; r: number }>>({});
   const [folderConfigsCollapsed, setFolderConfigsCollapsed] = useState<Record<string, { k: number; r: number }>>({});
   const [previewGroup, setPreviewGroup] = useState<string | null>(null);
@@ -540,19 +565,22 @@ export default function Home() {
   const activeFolderConfigs = collapsed ? folderConfigsCollapsed : folderConfigsExpanded;
 
   useEffect(() => {
+    if (!arsenalExpanded) return;
     const el = toolsContainerRef.current;
     if (!el) return;
     const measure = () => setContainerW(el.clientWidth);
     measure();
+    const rafId = requestAnimationFrame(measure);
     // 持续监听容器尺寸变化（侧边栏收起/展开、窗口缩放都会触发）
     const ro = new ResizeObserver(measure);
     ro.observe(el);
     window.addEventListener('resize', measure);
     return () => {
+      cancelAnimationFrame(rafId);
       ro.disconnect();
       window.removeEventListener('resize', measure);
     };
-  }, []);
+  }, [arsenalExpanded]);
 
   useEffect(() => {
     try {
@@ -697,156 +725,269 @@ export default function Home() {
   }, [activeFolderConfigs, activeDefaultSizes, collapsed, containerW, filteredSoftware, searchQuery, isMobile]);
 
 
+  const totalToolCount = useMemo(
+    () => groupedSoftware.reduce((acc, g) => acc + g.items.length, 0),
+    [],
+  );
+
+  const arsenalShortcuts = useMemo(() => {
+    const targets: Array<{ name: string; dotColor: string; fallbackUrl: string }> = [
+      { name: 'ChatGPT', dotColor: '#10A37F', fallbackUrl: 'https://chatgpt.com/' },
+      { name: 'Claude', dotColor: '#D97757', fallbackUrl: 'https://claude.ai/' },
+      { name: 'VS Code', dotColor: '#007ACC', fallbackUrl: 'https://code.visualstudio.com/' },
+      { name: 'PyTorch', dotColor: '#EE4C2C', fallbackUrl: 'https://pytorch.org/' },
+      { name: 'LeetCode', dotColor: '#FFA116', fallbackUrl: 'https://leetcode.cn/' },
+    ];
+    const urlMap = new Map<string, string>();
+    groupedSoftware.forEach((group) => {
+      group.items.forEach((item) => urlMap.set(item.name, item.url));
+    });
+    return targets.map((t) => ({
+      ...t,
+      url: urlMap.get(t.name) || t.fallbackUrl,
+    }));
+  }, []);
+
   const handleSearch = (query: string) => {
     setSearchQuery(query);
-    // 滚动到软件列表区域
-    const mainElement = document.querySelector('main');
-    if (mainElement) {
-      mainElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
+    setArsenalExpanded(true);
+    requestAnimationFrame(() => {
+      const arsenalEl = document.getElementById('developer-arsenal');
+      if (arsenalEl) {
+        arsenalEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    });
   };
 
   return (
-    <div className={`${mobileStyles.page} min-h-screen bg-surface-page`}>
-      {/* 3D 数字书房首屏 */}
-      <SanctuaryHero />
+    <div className={`${mobileStyles.page} min-h-[calc(100vh-70px)] bg-surface-page flex flex-col justify-between`}>
+      <div>
+      {/* 第一屏：左清爽教程引导 + 右缩放嵌入 3D 数字书房 */}
+      <section className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 pt-1.5 pb-1.5">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-7 items-center">
+          <div className="lg:col-span-5 space-y-2">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-surface-raised border border-line-subtle shadow-sm text-xs font-medium text-brand-primary">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#D4AD72]" />
+              <span>禾硙 · 交互式编程学习平台</span>
+            </div>
 
-      {/* 数据统计区域（接口失败时自动隐藏） */}
-      <StatsSection />
+            <h1 className="font-display text-[28px] sm:text-[32px] xl:text-[34px] 2xl:text-[42px] font-bold text-content-primary leading-[1.28] tracking-tight">
+              如禾生息，如硙精研。
+              <br />
+              <span className="text-brand-primary whitespace-nowrap">让每一行算法立体可见。</span>
+            </h1>
 
-      {/* 成就进度条 - 仅在有数据时显示 */}
-      {achievementProgress && (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-4 mb-4">
-          <div className="bg-surface-raised rounded-xl shadow-md border border-line-strong p-5">
+            <p className="text-sm sm:text-[14.5px] text-content-secondary leading-relaxed max-w-md">
+              在线编写并运行多语言代码，观看实时 3D 算法演练，在星图闯关与体系课程中稳步提升编程能力。
+            </p>
+
+            <div className="pt-0.5 flex flex-wrap items-center gap-3">
+              <Link
+                href="/challenges"
+                className="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-brand-primary hover:bg-brand-hover text-content-inverse text-sm font-semibold shadow-sm transition-all"
+              >
+                <span>开始闯关练习</span>
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+              <Link
+                href="/code/editor"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-surface-raised hover:bg-surface-muted text-content-primary border border-line-strong text-sm font-medium shadow-sm transition-all"
+              >
+                <Code2 className="w-4 h-4 text-brand-primary" />
+                <span>进入代码实验室</span>
+              </Link>
+            </div>
+
+            {/* 平台实时核心数据条（紧凑横排 · 可点击直达） */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
+              <Link
+                href="/profile"
+                className="group rounded-xl bg-surface-raised border border-line-subtle px-2.5 py-1.5 hover:-translate-y-0.5 hover:border-brand-primary/40 hover:shadow-sm transition-all flex items-center justify-between gap-1.5"
+              >
+                <div className="flex items-center gap-1 text-[11px] text-content-muted min-w-0">
+                  <Users className="w-3 h-3 text-brand-primary shrink-0" />
+                  <span className="truncate">用户</span>
+                </div>
+                <span className="font-code text-xs font-bold text-content-primary tabular-nums group-hover:text-brand-primary transition-colors shrink-0">
+                  {platformStats.users !== null ? `${platformStats.users}+` : '—'}
+                </span>
+              </Link>
+
+              <Link
+                href="/notes"
+                className="group rounded-xl bg-surface-raised border border-line-subtle px-2.5 py-1.5 hover:-translate-y-0.5 hover:border-brand-primary/40 hover:shadow-sm transition-all flex items-center justify-between gap-1.5"
+              >
+                <div className="flex items-center gap-1 text-[11px] text-content-muted min-w-0">
+                  <FileText className="w-3 h-3 text-emerald-600 shrink-0" />
+                  <span className="truncate">笔记</span>
+                </div>
+                <span className="font-code text-xs font-bold text-content-primary tabular-nums group-hover:text-brand-primary transition-colors shrink-0">
+                  {platformStats.notes !== null ? `${platformStats.notes}+` : '—'}
+                </span>
+              </Link>
+
+              <Link
+                href="/profile"
+                className="group rounded-xl bg-surface-raised border border-line-subtle px-2.5 py-1.5 hover:-translate-y-0.5 hover:border-brand-primary/40 hover:shadow-sm transition-all flex items-center justify-between gap-1.5"
+              >
+                <div className="flex items-center gap-1 text-[11px] text-content-muted min-w-0">
+                  <Clock className="w-3 h-3 text-amber-600 shrink-0" />
+                  <span className="truncate">时长</span>
+                </div>
+                <span className="font-code text-xs font-bold text-content-primary tabular-nums group-hover:text-brand-primary transition-colors shrink-0">
+                  {platformStats.studyHours !== null ? `${platformStats.studyHours}h` : '—'}
+                </span>
+              </Link>
+
+              <Link
+                href="/challenges"
+                className="group rounded-xl bg-surface-raised border border-line-subtle px-2.5 py-1.5 hover:-translate-y-0.5 hover:border-brand-primary/40 hover:shadow-sm transition-all flex items-center justify-between gap-1.5"
+              >
+                <div className="flex items-center gap-1 text-[11px] text-content-muted min-w-0">
+                  <Trophy className="w-3 h-3 text-[#D4AD72] shrink-0" />
+                  <span className="truncate">挑战</span>
+                </div>
+                <span className="font-code text-xs font-bold text-content-primary tabular-nums group-hover:text-brand-primary transition-colors shrink-0">
+                  {`${platformStats.challenges}+`}
+                </span>
+              </Link>
+            </div>
+          </div>
+
+          <div className="lg:col-span-7">
+            <SanctuaryHero embedded />
+          </div>
+        </div>
+      </section>
+
+      {/* 第二屏：三大核心学习模块（带动态演示与点击直达） */}
+      <CoreEnginesShowcase challengesCount={platformStats.challenges} />
+
+      {/* 个人成就进度条 - 仅在已解锁成就 > 0 时显示 */}
+      {achievementProgress && achievementProgress.earned > 0 && (
+        <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 mb-2.5">
+          <div className="bg-surface-raised rounded-2xl shadow-sm border border-line-subtle p-3.5">
             <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <span className="text-2xl">🏆</span>
-                <span className="font-bold text-lg text-content-primary">已解锁成就</span>
+              <div className="flex items-center gap-2.5">
+                <span className="w-8 h-8 rounded-lg bg-brand-soft text-brand-primary flex items-center justify-center">
+                  <Trophy className="w-4 h-4" />
+                </span>
+                <span className="font-bold text-base text-content-primary">已解锁学习成就</span>
               </div>
-              <span className="text-base font-bold font-mono text-content-secondary bg-brand-soft px-3 py-1 rounded-full">
+              <span className="text-sm font-bold font-code tabular-nums text-brand-primary bg-brand-soft px-3 py-1 rounded-full">
                 {achievementProgress.earned} / {achievementProgress.total}
               </span>
             </div>
-            <div className="w-full h-5 bg-gray-200 rounded-full overflow-hidden border border-gray-300">
+            <div className="w-full h-3.5 bg-surface-muted rounded-full overflow-hidden border border-line-subtle">
               <div
                 className="h-full rounded-full transition-all duration-1000 ease-out"
                 style={{
                   width: `${Math.min(100, (achievementProgress.earned / Math.max(1, achievementProgress.total)) * 100)}%`,
-                  background: 'linear-gradient(90deg, #4f46e5, #6366f1, #818cf8)',
-                  boxShadow: '0 0 8px rgba(99,102,241,0.4)',
+                  background: 'linear-gradient(90deg, #1B3B6F, #D4AD72)',
                 }}
               />
             </div>
             <div className="flex justify-between items-center mt-2">
-              <span className="text-sm font-semibold text-indigo-600">
+              <span className="text-xs font-code font-semibold text-brand-primary">
                 {Math.round((achievementProgress.earned / Math.max(1, achievementProgress.total)) * 100)}%
               </span>
               <span className="text-xs text-content-muted">
-                {achievementProgress.earned === 0
-                  ? '开始你的学习之旅，解锁第一个成就！'
-                  : '继续加油，解锁更多成就！'}
+                继续学习与刷题，解锁更多里程碑成就
               </span>
             </div>
           </div>
         </div>
       )}
 
-      {/* 学习分类悬停菜单 */}
-      <div className="relative">
-        <div className={`${mobileStyles.learningHeader} always-light-scope shadow-md py-4 px-3 md:px-6 border-b border-line-strong`} style={{ background: 'linear-gradient(180deg, #EDF0F5 0%, #e8ecf2 100%)' }}>
-          <div className="max-w-[1400px] mx-auto">
-            <h1 className="text-xl md:text-3xl font-bold text-content-primary mb-4 md:mb-6 tracking-wide flex items-center gap-2">
-              <Image src="/images/logo-calligraphy-transparent.png" alt="PartJava" width={921} height={601} className="h-7 md:h-10 w-auto inline-block" />
-              <span>学习平台</span>
-            </h1>
-            
-            {/* 学习分类导航 */}
-            <div className="relative group">
-              <button className="flex items-center text-content-primary font-semibold text-lg hover:text-content-primary transition-colors py-2 px-4 rounded-md hover:bg-brand-soft">
-                🏫 学习中心
-                <svg className="ml-2 w-5 h-5 transition-transform group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
+      <div id="developer-arsenal" className={`${arsenalExpanded ? 'py-3 md:py-4' : 'pt-1 pb-1.5'} px-3 md:px-6`}>
+        {/* 默认折叠的单行工具矩阵直达条（点击右侧按钮完整展开全部桌面文件夹） */}
+        <div className={`max-w-[1440px] mx-auto px-1 sm:px-0 lg:px-2 ${arsenalExpanded ? 'mb-4' : 'mb-0'}`}>
+          <div className="rounded-2xl bg-surface-raised border border-line-subtle shadow-sm px-4 sm:px-5 py-2 flex flex-wrap items-center justify-between gap-2.5">
+            <div className="flex flex-wrap items-center gap-2.5 min-w-0">
+              <span className="px-2.5 py-0.5 rounded-md bg-[#0F1D33] text-[#D4AD72] text-[11px] font-mono font-bold tracking-wider uppercase shrink-0">
+                ARSENAL
+              </span>
+              <span className="text-sm font-bold text-content-primary shrink-0">
+                开发者工具矩阵直达
+              </span>
+              <span className="text-xs text-content-muted hidden sm:inline truncate">
+                精选 {totalToolCount} 款研发常用大模型、IDE、论文与竞赛平台
+              </span>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              {arsenalShortcuts.map((shortcut) => (
+                <a
+                  key={shortcut.name}
+                  href={shortcut.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-line-subtle bg-surface-muted hover:bg-brand-soft px-2.5 py-1 text-xs font-medium text-content-secondary hover:text-content-primary transition-colors"
+                >
+                  <span
+                    className="w-1.5 h-1.5 rounded-full shrink-0"
+                    style={{ backgroundColor: shortcut.dotColor }}
+                  />
+                  <span>{shortcut.name}</span>
+                </a>
+              ))}
+
+              <button
+                type="button"
+                data-arsenal-toggle
+                onClick={() => setArsenalExpanded((v) => !v)}
+                aria-expanded={arsenalExpanded}
+                className="inline-flex items-center gap-1 ml-1 px-2 py-1 rounded-lg text-xs sm:text-sm font-semibold text-brand-primary hover:text-brand-hover hover:bg-brand-soft transition-colors cursor-pointer"
+              >
+                <span>{arsenalExpanded ? '收起工具矩阵' : '展开全部文件夹'}</span>
+                {arsenalExpanded ? (
+                  <ChevronUp className="w-4 h-4" />
+                ) : (
+                  <ChevronDown className="w-4 h-4" />
+                )}
               </button>
-              
-              {/* 悬停显示的学习分类菜单 */}
-              <div className={`${mobileStyles.learningMenu} absolute left-0 top-full mt-2 shadow-xl rounded-lg p-6 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 w-full max-w-[1400px] border border-line-strong`} style={{ background: 'linear-gradient(135deg, #f5f7fa 0%, #f0f3f8 50%, #f5f7fa 100%)' }}>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                  {Object.entries(navigationItems).map(([category, items]) => (
-                    <div key={category} className="col-span-1">
-                      <h3 className="text-base font-medium text-content-primary mb-4 pb-2 border-b border-line-strong">
-                        {category}
-                      </h3>
-                      <div className="grid grid-cols-1 gap-y-3">
-                        {items.map((item) => {
-                          let homepage = '';
-                          if (item.subitems && item.subitems.length > 0) {
-                            const firstHref = item.subitems[0].href;
-                            const parts = firstHref.split('/');
-                            homepage = parts.slice(0, -1).join('/');
-                          } else {
-                            homepage = `/study/${item.name.toLowerCase()}`;
-                          }
-                          return (
-                            <Link
-                              key={item.code}
-                              href={homepage}
-                              className="flex items-center space-x-2 text-content-secondary hover:text-content-primary text-sm transition-colors py-1 px-2 rounded hover:bg-brand-soft"
-                            >
-                              <span className="flex-shrink-0 w-6 h-6 flex items-center justify-center bg-brand-soft text-sm text-content-secondary hover:bg-brand-primary/15 hover:text-content-primary rounded">
-                                {item.code}
-                              </span>
-                              <span>{item.name}</span>
-                            </Link>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
             </div>
           </div>
         </div>
-      </div>
-      
-      <main className="py-3 md:py-4 px-3 md:px-6">
-        {/* 快速搜索 */}
-        <div className="max-w-[1400px] mx-auto mb-8">
-          <QuickSearch onSearch={handleSearch} />
-          {searchQuery && (
-            <div className="text-center mb-4">
-              <span className="text-content-secondary">
-                搜索 "<span className="font-semibold text-brand-primary">{searchQuery}</span>" 
-                找到 {filteredSoftware.reduce((acc, group) => acc + group.items.length, 0)} 个结果
-              </span>
-              <button
-                onClick={() => setSearchQuery('')}
-                className="ml-4 text-brand-primary hover:text-brand-hover underline"
-              >
-                清除搜索
-              </button>
-            </div>
-          )}
-        </div>
 
-        {/* 灰金桌面文件夹舞台 */}
-        <div
-          className="rounded-3xl p-4 md:p-6 border shadow-2xl"
-          style={{
-            background: 'linear-gradient(145deg, #161920 0%, #1d222b 55%, #15181f 100%)',
-            borderColor: 'rgba(212, 173, 114, 0.28)',
-          }}
-        >
+        {arsenalExpanded && (
+          <>
+            {/* 快速搜索 */}
+            <div className="max-w-[1400px] mx-auto mb-6">
+              <QuickSearch onSearch={handleSearch} />
+              {searchQuery && (
+                <div className="text-center mb-4">
+                  <span className="text-content-secondary">
+                    搜索 &quot;<span className="font-semibold text-brand-primary">{searchQuery}</span>&quot; 
+                    找到 {filteredSoftware.reduce((acc, group) => acc + group.items.length, 0)} 个结果
+                  </span>
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    className="ml-4 text-brand-primary hover:text-brand-hover underline"
+                  >
+                    清除搜索
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* 灰金桌面文件夹舞台（完整保留可拖拽调整与悬停翻转预览特性） */}
+            <div
+              className="rounded-3xl p-4 md:p-6 border shadow-2xl"
+              style={{
+                background: 'linear-gradient(145deg, #161920 0%, #1d222b 55%, #15181f 100%)',
+                borderColor: 'rgba(212, 173, 114, 0.28)',
+              }}
+            >
           <div className="mb-5 md:mb-6 flex items-end justify-between gap-4 border-b pb-4" style={{ borderColor: 'rgba(242, 233, 220, 0.1)' }}>
             <div>
               <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full text-[11px] font-mono uppercase tracking-widest mb-1.5" style={{ background: 'rgba(212, 173, 114, 0.12)', color: '#D4AD72', border: '1px solid rgba(212, 173, 114, 0.3)' }}>
-                <span className="w-1.5 h-1.5 rounded-full bg-[#67D9D2]" />
+                <span className="w-1.5 h-1.5 rounded-full bg-[#D4AD72]" />
                 <span>Developer Arsenal · 桌面工具矩阵</span>
               </div>
-              <h1 className="text-xl md:text-3xl font-bold" style={{ color: '#F2E9DC' }}>常用软件 / 工具官网直达</h1>
+              <h2 className="text-xl md:text-2xl font-bold" style={{ color: '#F2E9DC' }}>常用软件 / 工具官网直达</h2>
               <p className="text-xs md:text-sm mt-1" style={{ color: 'rgba(242, 233, 220, 0.6)' }}>
-                按知识点分组 · 悬停图标翻转放大预览窗口 · 拖拽文件夹右下角自由调整行列
+                按知识点分组 · 悬停图标翻转放大预览 · 拖拽文件夹右下角自由调整行列
               </p>
             </div>
             <button
@@ -984,46 +1125,13 @@ export default function Home() {
         <div className="mt-6 md:mt-8 text-center text-content-muted text-xs md:text-sm">
           如有更多常用软件建议，欢迎补充！
         </div>
-
-        {/* 水墨分隔（缩减为一条细分割线） */}
-        <InkWashDecoration variant="divider" height={50} className="mt-8 mb-4" />
-
-        {/* 算法可视化入口 */}
-        <div className="mt-12 mb-8">
-          <Link href="/code/editor">
-            <div className="relative overflow-hidden rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-[1.01] border border-white/10"
-              style={{ background: 'linear-gradient(135deg, #0C1F3D 0%, #1a2d4a 55%, #0C1F3D 100%)' }}>
-              {/* 水墨山纹（与工具卡背面呼应） */}
-              <svg className="absolute bottom-0 left-0 w-full h-1/3 opacity-15" viewBox="0 0 200 100" preserveAspectRatio="none" aria-hidden="true">
-                <path d="M0 100 L0 70 Q30 30 60 50 Q90 70 110 40 Q135 60 160 35 Q185 50 200 55 L200 100 Z" fill="white" />
-              </svg>
-              {/* 柔光斑 */}
-              <div className="absolute -top-12 -right-12 w-44 h-44 rounded-full bg-indigo-500/20 blur-3xl pointer-events-none" />
-              <div className="absolute -bottom-16 -left-12 w-44 h-44 rounded-full bg-fuchsia-500/15 blur-3xl pointer-events-none" />
-              <div className="relative px-6 py-10 md:py-12 text-center">
-                <div className="text-4xl mb-3">🎨</div>
-                <h3 className="text-2xl md:text-3xl font-bold text-white mb-2">编程实验室</h3>
-                <p className="text-gray-300 mb-6">在线编写代码 · 沉浸式 3D 算法可视化体验</p>
-                <div className="flex justify-center gap-2 md:gap-3 flex-wrap mb-7">
-                  <span className="px-3 py-1 bg-white/10 text-[#c7d2fe] rounded-full text-xs border border-white/15">💻 在线编辑</span>
-                  <span className="px-3 py-1 bg-white/10 text-[#c7d2fe] rounded-full text-xs border border-white/15">🫧 冒泡排序</span>
-                  <span className="px-3 py-1 bg-white/10 text-[#c7d2fe] rounded-full text-xs border border-white/15">⚡ 快速排序</span>
-                  <span className="px-3 py-1 bg-white/10 text-[#c7d2fe] rounded-full text-xs border border-white/15">🔍 二分查找</span>
-                </div>
-                <span className="inline-block px-7 py-2.5 bg-white text-[#0C1F3D] rounded-full font-semibold hover:bg-indigo-50 transition-colors">
-                  立即体验 →
-                </span>
-              </div>
-            </div>
-          </Link>
-        </div>
-      </main>
-
-      {/* 底部水墨收尾（缩减高度） */}
-      <InkWashDecoration variant="landscape" height={120} className="bg-surface-page" />
+          </>
+        )}
+      </div>
+      </div>
 
       {/* 网站合规备案与页脚 */}
-      <SiteFooter />
+      <SiteFooter className="!py-2.5" />
 
       {/* 工具分组预览弹窗 */}
       {previewGroup && (() => {

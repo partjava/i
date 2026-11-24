@@ -89,9 +89,39 @@ function useStudyCompletion() {
   return { completed, toggleComplete, categoryProgress };
 }
 
-export function StudyProgressBar({ inline = false }: { inline?: boolean }) {
+export function StudyProgressBar({ inline = false, compact = false }: { inline?: boolean; compact?: boolean }) {
   const { completed, toggleComplete, categoryProgress } = useStudyCompletion();
   const [collapsed, setCollapsed] = useState(true);
+
+  if (compact) {
+    return (
+      <button
+        onClick={toggleComplete}
+        title={categoryProgress.total > 0 ? `当前分类进度 ${categoryProgress.done}/${categoryProgress.total}` : '标记本页学习完成'}
+        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border shadow-sm transition-all whitespace-nowrap shrink-0 ${
+          completed
+            ? 'bg-[#1F7A5C]/10 text-[#1F7A5C] border-[#1F7A5C]/30 hover:bg-[#1F7A5C]/15'
+            : 'bg-white/90 text-slate-700 border-slate-200/80 hover:bg-white hover:text-[#1B3B6F]'
+        }`}
+      >
+        {completed ? (
+          <svg className="w-3.5 h-3.5 text-[#1F7A5C] flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+          </svg>
+        ) : (
+          <svg className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        )}
+        <span>{completed ? '已完成' : '标记完成'}</span>
+        {categoryProgress.total > 0 && (
+          <span className="font-mono text-[10px] opacity-70 pl-0.5">
+            {categoryProgress.done}/{categoryProgress.total}
+          </span>
+        )}
+      </button>
+    );
+  }
 
   if (inline) {
     return (

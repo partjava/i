@@ -58,27 +58,27 @@ export default function ToolCard({ name, icon: Icon, url, desc, color }: ToolCar
               e.preventDefault();
             }
           }}
-          className="absolute inset-0 flex flex-col items-center justify-center px-2.5 py-3"
+          className="absolute inset-0 flex flex-col items-center justify-center px-2 py-2"
           style={{
             backfaceVisibility: 'hidden',
             WebkitBackfaceVisibility: 'hidden',
-            borderRadius: '22px',
+            borderRadius: '20px',
             background:
               'radial-gradient(circle at 50% 32%, rgba(212, 173, 114, 0.07) 0%, transparent 68%), linear-gradient(155deg, rgba(255, 255, 255, 0.045) 0%, rgba(255, 255, 255, 0.015) 100%)',
             border: '1px solid rgba(242, 233, 220, 0.09)',
             boxShadow:
               '0 8px 20px rgba(0, 0, 0, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.05)',
-            gap: '10px',
+            gap: '6px',
             zIndex: isFlipped ? 0 : 1,
           }}
         >
           {/* 透明磨砂玻璃图标框（去掉彩色实心块） */}
           <div
-            className="w-13 h-13 flex items-center justify-center flex-shrink-0"
+            className="flex items-center justify-center flex-shrink-0"
             style={{
-              width: '52px',
-              height: '52px',
-              borderRadius: '16px',
+              width: '44px',
+              height: '44px',
+              borderRadius: '14px',
               background: 'rgba(255, 255, 255, 0.04)',
               border: '1px solid rgba(242, 233, 220, 0.08)',
               boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.06)',
@@ -87,7 +87,7 @@ export default function ToolCard({ name, icon: Icon, url, desc, color }: ToolCar
             <Icon
               style={{
                 color: iconColor,
-                fontSize: 28,
+                fontSize: 24,
                 filter: `drop-shadow(0 2px 8px ${iconColor}40)`,
               }}
             />
@@ -95,7 +95,7 @@ export default function ToolCard({ name, icon: Icon, url, desc, color }: ToolCar
 
           {/* 软件名称 */}
           <span
-            className="font-semibold text-[13px] leading-tight text-center truncate w-full px-1"
+            className="font-semibold text-[12px] leading-[1.2] text-center truncate w-full px-1"
             style={{ color: '#F2E9DC' }}
           >
             {name}

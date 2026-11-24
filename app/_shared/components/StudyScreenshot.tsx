@@ -15,7 +15,7 @@ interface Annotation {
   imageSize?: { w: number; h: number };
 }
 
-export default function StudyScreenshot({ inline = false }: { inline?: boolean }) {
+export default function StudyScreenshot({ inline = false, compact = false }: { inline?: boolean; compact?: boolean }) {
   const [capturing, setCapturing] = useState(false);
   const [editorOpen, setEditorOpen] = useState(false);
   const [baseImage, setBaseImage] = useState<string | null>(null);
@@ -552,6 +552,22 @@ export default function StudyScreenshot({ inline = false }: { inline?: boolean }
   };
 
   if (!editorOpen) {
+    if (compact) {
+      return (
+        <button
+          onClick={handleCapture}
+          disabled={capturing}
+          title="截取并编辑当前学习内容"
+          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/90 border border-slate-200/80 shadow-sm text-xs font-medium text-slate-700 hover:bg-white hover:text-[#1B3B6F] transition-all whitespace-nowrap shrink-0 disabled:opacity-60"
+        >
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={capturing ? 'animate-pulse text-[#1B3B6F]' : 'text-[#1B3B6F]'}>
+            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+            <circle cx="12" cy="13" r="4"/>
+          </svg>
+          <span>{capturing ? '截图中...' : '截图'}</span>
+        </button>
+      );
+    }
     if (inline) {
       return (
         <button

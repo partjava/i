@@ -40,7 +40,6 @@ import {
 } from '@ant-design/icons';
 import LearningHeatmap from '@shared/components/LearningHeatmap';
 import DataVisualization from '@shared/components/DataVisualization';
-import InkWashDecoration from '@shared/components/InkWashDecoration';
 import SiteFooter from '@shared/components/SiteFooter';
 import AchievementCard from '@shared/components/AchievementCard';
 import EyePet from '@shared/components/EyePet';
@@ -759,17 +758,14 @@ export default function ProfilePage() {
 
 
   return (
-    <div className={`${styles.page} min-h-screen bg-surface-page dark:bg-surface-inverse`}>
-      {/* 水墨画顶部装饰 */}
-      <InkWashDecoration variant="landscape" height={64} className="bg-surface-page" />
-      <InkWashDecoration variant="birds" height={28} className="bg-surface-page -mt-4" />
-
+    <div className={`${styles.page} min-h-[calc(100vh-70px)] bg-surface-page pt-3 flex flex-col`}>
+      <div className="flex-1 w-full">
       {/* 未登录提示横幅 */}
       {isGuest && (
-        <div className="bg-gradient-to-r from-[#0C1F3D] to-[#3d4f6b] text-white py-4 px-6 shadow-lg">
+        <div className="bg-gradient-to-r from-[#0F1D33] to-[#1B3B6F] text-white py-4 px-6 shadow-md">
           <div className="max-w-4xl mx-auto flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-surface-raised bg-opacity-20 rounded-full flex items-center justify-center">
+              <div className="w-10 h-10 bg-white/15 border border-white/20 rounded-full flex items-center justify-center">
                 <BarChartOutlined className="text-xl" />
               </div>
               <div>
@@ -799,9 +795,9 @@ export default function ProfilePage() {
       <div className={styles.shell}>
         {/* 主要个人信息卡片 - 作为页面头部 */}
         <Card 
-          className={`${styles.hero} mb-6 border-0 overflow-hidden`}
+          className={`${styles.hero} mb-6 border-0 overflow-visible`}
           style={{
-            background: 'linear-gradient(135deg, #0C1F3D 0%, #3d4f6b 100%)',
+            background: 'linear-gradient(135deg, #0F1D33 0%, #1B3B6F 100%)',
             color: 'white'
           }}
         >
@@ -860,7 +856,7 @@ export default function ProfilePage() {
                     {profileForm.name || session?.user?.name || '未设置用户名'}
                   </Title>
                   {isGuest && (stats?.notes?.total || 0) > 0 && (
-                    <span className="px-3 py-1 bg-surface-raised bg-opacity-20 rounded-full text-sm font-semibold">
+                    <span className="px-3 py-1 bg-white/15 border border-white/25 text-white rounded-full text-sm font-semibold">
                       平台数据
                     </span>
                   )}
@@ -873,7 +869,7 @@ export default function ProfilePage() {
 
                 {/* 登录账户展示 */}
                 {profileForm.username && (
-                  <div className="text-[#BBFF5C] font-mono text-base opacity-90 mb-3 flex items-center justify-center gap-1 font-semibold">
+                  <div className="text-[#D4AD72] font-mono text-base opacity-95 mb-3 flex items-center justify-center gap-1 font-semibold">
                     <span>@</span>
                     <span>{profileForm.username}</span>
                   </div>
@@ -1036,17 +1032,17 @@ export default function ProfilePage() {
 
             {/* 右侧：禾桔灵宠伴学互动舞台 */}
             <div className="hidden lg:flex flex-col items-center justify-center flex-shrink-0 self-center my-auto">
-              <div className="relative flex flex-col items-center justify-center bg-white/90 backdrop-blur-md pt-5 pb-3 px-6 rounded-3xl border border-white/60 shadow-[0_12px_36px_rgba(15,23,42,0.22)] hover:shadow-[0_16px_40px_rgba(15,23,42,0.3)] transition-all select-none">
+              <div className="relative flex flex-col items-center justify-center bg-white/95 backdrop-blur-md pt-9 pb-4 px-6 rounded-3xl border border-white/60 shadow-[0_12px_36px_rgba(15,23,42,0.22)] hover:shadow-[0_16px_40px_rgba(15,23,42,0.3)] transition-all select-none">
                 <div className="absolute top-3 left-4 flex items-center gap-1.5 text-[11px] font-mono text-slate-500">
                   <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
                   <span>禾桔安全守卫中</span>
                 </div>
-                <div className="absolute top-3 right-4 text-[11px] text-indigo-500 font-medium">
-                  👀 眼神实时跟随
+                <div className="absolute top-3 right-4 text-[11px] text-[#1B3B6F] font-medium">
+                  眼神实时跟随
                 </div>
-                <div className="mt-3">
+                <div className="mt-2">
                   <EyePet 
-                    customBubble={saving ? '正在保存你的新资料喵~ 💾' : editMode ? '正在用心编辑个人名片喵~ ✨' : undefined}
+                    customBubble={saving ? '正在保存你的新资料喵~' : editMode ? '正在用心编辑个人名片喵~' : undefined}
                   />
                 </div>
               </div>
@@ -1422,13 +1418,10 @@ export default function ProfilePage() {
           </div>
         )}
       </div>
-
-      {/* 水墨画底部装饰 */}
-      <InkWashDecoration variant="bamboo" height={48} className="bg-surface-page mt-8" />
-      <InkWashDecoration variant="landscape" height={80} className="bg-surface-page" />
+      </div>
 
       {/* 网站合规备案与页脚 */}
-      <SiteFooter />
+      <SiteFooter className="mt-auto" />
     </div>
   );
 } 

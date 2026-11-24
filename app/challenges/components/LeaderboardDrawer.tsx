@@ -42,14 +42,14 @@ export const LeaderboardDrawer: React.FC<LeaderboardDrawerProps> = ({ onClose })
       animate={{ x: 0, opacity: 1 }}
       exit={{ x: 400, opacity: 0 }}
       transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-      className="absolute top-0 right-16 h-full w-[360px] bg-slate-950/95 border-l border-slate-900 backdrop-blur-xl z-20 shadow-2xl flex flex-col overflow-hidden font-sans"
+      className="absolute top-0 right-16 h-full w-[360px] bg-[#12161F]/96 border-l border-white/10 backdrop-blur-xl z-20 shadow-2xl flex flex-col overflow-hidden font-sans"
     >
-      <div className="h-14 border-b border-slate-900 px-5 flex justify-between items-center bg-slate-950 shrink-0">
-        <h3 className="text-xs font-bold tracking-wider text-slate-200 flex items-center gap-1.5">
-          <Trophy className="w-4 h-4 text-yellow-500" />
+      <div className="h-14 border-b border-white/10 px-5 flex justify-between items-center bg-[#0E1116] shrink-0">
+        <h3 className="text-xs font-bold tracking-wider text-[#F2EDE4] flex items-center gap-1.5">
+          <Trophy className="w-4 h-4 text-[#D4AD72]" />
           星河探索排行榜
         </h3>
-        <button onClick={onClose} className="p-1 rounded-lg hover:bg-slate-950 text-slate-500 hover:text-white transition">
+        <button onClick={onClose} className="p-1 rounded-lg hover:bg-white/10 text-slate-400 hover:text-white transition">
           <X className="w-4 h-4" />
         </button>
       </div>
@@ -86,18 +86,18 @@ export const LeaderboardDrawer: React.FC<LeaderboardDrawerProps> = ({ onClose })
             <div className="space-y-2">
               {rest.map((u) => (
                 <div key={u.rank}
-                  className={`flex items-center justify-between p-3 rounded-xl transition ${u.isMe ? 'bg-indigo-500/10 border border-indigo-500/30' : 'bg-slate-900/20 border border-slate-900 hover:border-slate-850'}`}
+                  className={`flex items-center justify-between p-3 rounded-xl transition ${u.isMe ? 'bg-[#D4AD72]/15 border border-[#D4AD72]/40' : 'bg-[#181D27]/50 border border-white/10 hover:border-white/20'}`}
                 >
                   <div className="flex items-center gap-3">
                     <div className={`w-6 h-6 rounded-lg flex items-center justify-center font-bold text-[11px] ${
                       u.rank === 2 ? 'bg-slate-700 text-slate-200' :
                       u.rank === 3 ? 'bg-amber-800/60 text-amber-300' :
-                      'bg-slate-950 text-slate-500'
+                      'bg-[#0E1116] text-slate-400'
                     }`}>{u.rank}</div>
                     <div>
                       <div className="flex items-center gap-1.5">
-                        <span className={`text-xs font-bold ${u.isMe ? 'text-indigo-400' : 'text-slate-200'}`}>{u.username}</span>
-                        {u.isMe && <Star className="w-3 h-3 text-indigo-400 fill-indigo-400" />}
+                        <span className={`text-xs font-bold ${u.isMe ? 'text-[#D4AD72]' : 'text-[#F2EDE4]'}`}>{u.username}</span>
+                        {u.isMe && <Star className="w-3 h-3 text-[#D4AD72] fill-[#D4AD72]" />}
                       </div>
                       <span className="text-[9px] text-slate-500 mt-0.5 block">{TITLES[Math.min(u.rank - 1, TITLES.length - 1)]}</span>
                     </div>

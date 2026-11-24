@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
-import InkWashDecoration from '@shared/components/InkWashDecoration';
+import SiteFooter from '@shared/components/SiteFooter';
 import GameContainer from './components/GameContainer';
 import { useGameApi, GameStateData } from './components/useGameApi';
 import Game2048 from './components/games/Game2048';
@@ -218,23 +218,13 @@ export default function GamePage() {
   const Renderer = selectedGame ? GAME_COMPONENTS[selectedGame] : null;
 
   return (
-    <div className="game-center-root min-h-screen bg-[#f8fafc] text-slate-800 relative overflow-hidden">
-      {/* 浅色科技感背景网格与光晕装饰（与极客代码工坊保持一致） */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_-10%,rgba(99,102,241,0.08),transparent)] pointer-events-none" />
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,#e2e8f060_1px,transparent_1px),linear-gradient(to_bottom,#e2e8f060_1px,transparent_1px)] bg-[size:36px_36px] pointer-events-none" />
-
-      {/* 顶部国风极客背景装饰 */}
-      <div className="w-full overflow-hidden relative z-10">
-        <InkWashDecoration variant="landscape" height={160} />
-      </div>
-      <InkWashDecoration variant="birds" height={45} className="-mt-3 relative z-10" />
-
-      {/* 极客 Hero 头部（优雅浅色科技风） */}
+    <div className="game-center-root min-h-[calc(100vh-70px)] bg-surface-page text-content-primary relative overflow-hidden flex flex-col">
+      {/* 素笺 / 墨砚主题 Hero 头部 */}
       <div className="hero-banner relative z-10">
         <div className="hero-inner">
           <div className="hero-badge">
             <span className="dot" />
-            <span>PARTJAVA · ARCADE CENTER</span>
+            <span>UNOLGY · 禾硙互动解压中心</span>
           </div>
           <h1 className="hero-title">极客解压游戏中心</h1>
           <p className="hero-desc">
@@ -386,22 +376,19 @@ export default function GamePage() {
         </GameContainer>
       )}
 
-      {/* 底部国风点缀 */}
-      <div className="w-full overflow-hidden mt-12 relative z-10">
-        <InkWashDecoration variant="bamboo" height={90} />
-        <InkWashDecoration variant="landscape" height={180} />
-      </div>
+      {/* 站点页脚备案 */}
+      <SiteFooter className="mt-auto" />
 
       <style jsx>{`
         .game-center-root {
-          min-height: 100vh;
-          background: #f8fafc;
-          color: #1e293b;
+          min-height: calc(100vh - 70px);
+          background: var(--surface-page);
+          color: var(--content-primary);
         }
 
         .hero-banner {
           background: transparent;
-          padding: 24px 20px 28px;
+          padding: 28px 20px 24px;
           text-align: center;
         }
         .hero-inner {
@@ -414,31 +401,30 @@ export default function GamePage() {
           gap: 6px;
           padding: 4px 14px;
           border-radius: 20px;
-          background: rgba(99, 102, 241, 0.08);
-          border: 1px solid rgba(99, 102, 241, 0.22);
-          color: #4f46e5;
+          background: var(--surface-raised);
+          border: 1px solid var(--line-subtle);
+          color: var(--brand-primary);
           font-size: 11px;
           font-family: monospace;
           letter-spacing: 0.1em;
           margin-bottom: 12px;
           font-weight: 600;
+          box-shadow: 0 2px 8px rgba(15, 29, 51, 0.05);
         }
         .hero-badge .dot {
           width: 6px; height: 6px; border-radius: 50%;
-          background: #6366f1; box-shadow: 0 0 8px #6366f1;
+          background: #D4AD72; box-shadow: 0 0 8px rgba(212, 173, 114, 0.6);
         }
         .hero-title {
           font-size: 2.3em;
           font-weight: 900;
           margin: 0 0 10px;
-          background: linear-gradient(135deg, #0f172a 0%, #1e293b 60%, #334155 100%);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
+          color: var(--content-primary);
           letter-spacing: -0.02em;
         }
         .hero-desc {
           font-size: 0.95em;
-          color: #64748b;
+          color: var(--content-secondary);
           max-width: 640px;
           margin: 0 auto 20px;
           line-height: 1.6;
@@ -448,11 +434,11 @@ export default function GamePage() {
           display: inline-flex;
           align-items: center;
           gap: 16px;
-          background: #ffffff;
+          background: var(--surface-raised);
           padding: 8px 24px;
           border-radius: 30px;
-          border: 1px solid rgba(226, 232, 240, 0.9);
-          box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04);
+          border: 1px solid var(--line-subtle);
+          box-shadow: 0 4px 14px rgba(15, 29, 51, 0.04);
         }
         .hero-stat-item {
           display: flex;
@@ -461,24 +447,24 @@ export default function GamePage() {
         }
         .hero-stat-item .num {
           font-weight: 800;
-          color: #d97706;
+          color: #C5933E;
           font-family: monospace;
           font-size: 16px;
         }
         .hero-stat-item .lbl {
           font-size: 11px;
-          color: #64748b;
+          color: var(--content-muted);
         }
         .hero-stat-sep {
           width: 1px;
           height: 14px;
-          background: #e2e8f0;
+          background: var(--line-subtle);
         }
 
         .main-content-container {
           max-width: 1240px;
           margin: 0 auto;
-          padding: 16px 20px 40px;
+          padding: 16px 20px 32px;
         }
 
         .recent-games-bar {
@@ -486,16 +472,16 @@ export default function GamePage() {
           align-items: center;
           flex-wrap: wrap;
           gap: 8px;
-          background: #ffffff;
-          border: 1px solid rgba(226, 232, 240, 0.9);
-          box-shadow: 0 2px 8px rgba(15, 23, 42, 0.03);
+          background: var(--surface-raised);
+          border: 1px solid var(--line-subtle);
+          box-shadow: 0 2px 8px rgba(15, 29, 51, 0.03);
           padding: 10px 16px;
           border-radius: 14px;
           margin-bottom: 22px;
         }
         .recent-label {
           font-size: 12px;
-          color: #64748b;
+          color: var(--content-muted);
           font-weight: 600;
         }
         .recent-tags {
@@ -510,25 +496,25 @@ export default function GamePage() {
           gap: 6px;
           padding: 4px 12px;
           border-radius: 10px;
-          background: #f8fafc;
-          border: 1px solid #e2e8f0;
-          color: #334155;
+          background: var(--surface-muted);
+          border: 1px solid var(--line-subtle);
+          color: var(--content-secondary);
           font-size: 12px;
           font-weight: 500;
           cursor: pointer;
           transition: all 0.2s;
         }
         .recent-pill:hover {
-          background: #f1f5f9;
-          border-color: #cbd5e1;
-          color: #0f172a;
+          background: var(--brand-soft);
+          border-color: var(--line-strong);
+          color: var(--content-primary);
         }
         .recent-score {
           font-size: 10px;
-          background: #e0f2fe;
+          background: var(--brand-soft);
           padding: 1px 6px;
           border-radius: 6px;
-          color: #0369a1;
+          color: var(--brand-primary);
           font-family: monospace;
           font-weight: 700;
         }
@@ -553,26 +539,26 @@ export default function GamePage() {
           gap: 6px;
           padding: 8px 16px;
           border-radius: 12px;
-          background: #ffffff;
-          border: 1px solid #e2e8f0;
-          color: #64748b;
+          background: var(--surface-raised);
+          border: 1px solid var(--line-subtle);
+          color: var(--content-secondary);
           font-size: 13px;
           font-weight: 600;
           cursor: pointer;
           transition: all 0.2s;
-          box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
+          box-shadow: 0 1px 3px rgba(15, 29, 51, 0.03);
         }
         .cat-tab:hover {
-          color: #0f172a;
-          background: #f8fafc;
-          border-color: #cbd5e1;
+          color: var(--content-primary);
+          background: var(--surface-muted);
+          border-color: var(--line-strong);
         }
         .cat-tab.active {
-          background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-          color: #ffffff;
+          background: var(--brand-primary);
+          color: var(--content-inverse);
           font-weight: 700;
-          border-color: #0f172a;
-          box-shadow: 0 4px 14px rgba(15, 23, 42, 0.15);
+          border-color: var(--brand-primary);
+          box-shadow: 0 4px 14px rgba(15, 29, 51, 0.14);
         }
         .cat-count {
           font-size: 11px;
@@ -580,10 +566,12 @@ export default function GamePage() {
           font-family: monospace;
           padding: 1px 6px;
           border-radius: 8px;
-          background: rgba(0, 0, 0, 0.06);
+          background: var(--surface-muted);
+          color: var(--content-secondary);
         }
         .cat-tab.active .cat-count {
-          background: rgba(255, 255, 255, 0.2);
+          background: rgba(255, 255, 255, 0.18);
+          color: inherit;
         }
 
         .search-box-wrapper {
@@ -596,30 +584,30 @@ export default function GamePage() {
           position: absolute;
           left: 12px;
           font-size: 13px;
-          opacity: 0.5;
+          opacity: 0.55;
         }
         .search-input {
           width: 100%;
           padding: 8px 32px 8px 34px;
           border-radius: 12px;
-          background: #ffffff;
-          border: 1px solid #e2e8f0;
-          color: #0f172a;
+          background: var(--surface-raised);
+          border: 1px solid var(--line-subtle);
+          color: var(--content-primary);
           font-size: 13px;
           outline: none;
           transition: border-color 0.2s, box-shadow 0.2s;
-          box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
+          box-shadow: 0 1px 3px rgba(15, 29, 51, 0.03);
         }
         .search-input:focus {
-          border-color: #6366f1;
-          box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+          border-color: var(--brand-primary);
+          box-shadow: 0 0 0 3px var(--brand-soft);
         }
         .clear-search-btn {
           position: absolute;
           right: 10px;
           background: none;
           border: none;
-          color: #94a3b8;
+          color: var(--content-muted);
           cursor: pointer;
           font-size: 12px;
         }
@@ -631,10 +619,10 @@ export default function GamePage() {
         }
 
         .game-card {
-          background: #ffffff;
+          background: var(--surface-raised);
           border-radius: 18px;
-          border: 1px solid rgba(226, 232, 240, 0.95);
-          box-shadow: 0 4px 18px rgba(15, 23, 42, 0.03);
+          border: 1px solid var(--line-subtle);
+          box-shadow: 0 4px 18px rgba(15, 29, 51, 0.03);
           padding: 18px 20px;
           display: flex;
           flex-direction: column;
@@ -646,9 +634,9 @@ export default function GamePage() {
           overflow: hidden;
         }
         .game-card:hover {
-          transform: translateY(-5px);
-          border-color: rgba(99, 102, 241, 0.4);
-          box-shadow: 0 16px 36px rgba(15, 23, 42, 0.08), 0 0 20px rgba(99, 102, 241, 0.06);
+          transform: translateY(-4px);
+          border-color: rgba(212, 173, 114, 0.55);
+          box-shadow: 0 16px 36px rgba(15, 29, 51, 0.12);
         }
 
         .card-top-row {
@@ -661,27 +649,27 @@ export default function GamePage() {
           font-size: 10px;
           padding: 2.5px 8px;
           border-radius: 6px;
-          background: #f1f5f9;
-          color: #475569;
+          background: var(--surface-muted);
+          color: var(--content-secondary);
           font-weight: 600;
         }
         .hot-pill {
           font-size: 10px;
           padding: 2.5px 8px;
           border-radius: 6px;
-          background: #fff1f2;
-          border: 1px solid #ffe4e6;
-          color: #e11d48;
+          background: rgba(212, 173, 114, 0.14);
+          border: 1px solid rgba(212, 173, 114, 0.35);
+          color: #B88635;
           font-weight: 700;
         }
         .best-score-badge {
           margin-left: auto;
           font-size: 11px;
-          color: #0284c7;
+          color: var(--brand-primary);
           font-weight: bold;
           font-family: monospace;
-          background: #f0f9ff;
-          border: 1px solid #e0f2fe;
+          background: var(--brand-soft);
+          border: 1px solid var(--line-subtle);
           padding: 2px 7px;
           border-radius: 6px;
         }
@@ -702,13 +690,13 @@ export default function GamePage() {
         .game-name {
           font-size: 16px;
           font-weight: 800;
-          color: #0f172a;
+          color: var(--content-primary);
           margin: 0 0 4px;
           letter-spacing: -0.01em;
         }
         .game-desc {
           font-size: 11.5px;
-          color: #64748b;
+          color: var(--content-muted);
           margin: 0;
           line-height: 1.5;
           display: -webkit-box;
@@ -722,32 +710,31 @@ export default function GamePage() {
           align-items: center;
           justify-content: space-between;
           padding-top: 10px;
-          border-top: 1px solid #f1f5f9;
+          border-top: 1px solid var(--line-subtle);
         }
         .diff-pill {
           font-size: 11px;
-          color: #d97706;
+          color: #C5933E;
           font-weight: 600;
         }
         .start-btn-label {
           font-size: 11px;
-          color: #4f46e5;
+          color: var(--brand-primary);
           font-weight: 700;
-          opacity: 0.85;
+          opacity: 0.9;
           transition: opacity 0.2s, transform 0.2s;
         }
         .game-card:hover .start-btn-label {
           opacity: 1;
           transform: translateX(2px);
-          color: #4338ca;
         }
 
         .empty-state {
           text-align: center;
           padding: 60px 20px;
-          background: #ffffff;
+          background: var(--surface-raised);
           border-radius: 18px;
-          border: 1px dashed #cbd5e1;
+          border: 1px dashed var(--line-strong);
         }
         .empty-icon {
           font-size: 40px;
@@ -756,18 +743,18 @@ export default function GamePage() {
         }
         .clear-filter-btn {
           margin-top: 14px;
-          background: #0f172a;
-          color: #ffffff;
+          background: var(--brand-primary);
+          color: var(--content-inverse);
           border: none;
           padding: 8px 18px;
           border-radius: 10px;
           font-weight: 600;
           font-size: 13px;
           cursor: pointer;
-          transition: background 0.2s;
+          transition: opacity 0.2s;
         }
         .clear-filter-btn:hover {
-          background: #1e293b;
+          opacity: 0.9;
         }
 
         @media (max-width: 1100px) {

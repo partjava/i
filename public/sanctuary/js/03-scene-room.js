@@ -6,14 +6,15 @@
     const container = document.getElementById('webgl-container');
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const isMobile = window.innerWidth < 768;
+    const isEmbedded = Boolean(window.__SANCTUARY_EMBEDDED__);
 
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x0f1318);
     scene.fog = new THREE.FogExp2(0x0f1318, 0.055);
 
-    // 采用 34° 中焦镜头，彻底消除广角边缘拉伸畸变
+    // 采用 34° 中焦镜头，彻底消除广角边缘拉伸畸变；嵌入视窗模式采用 38° 居中构图
     const camera = new THREE.PerspectiveCamera(
-      isMobile ? 44 : 34,
+      isEmbedded ? 38 : (isMobile ? 44 : 34),
       window.innerWidth / window.innerHeight,
       0.1,
       40
@@ -21,18 +22,22 @@
 
     /**
      * 电影级三分之二侧向构图 (2/3 Angled Perspective Rig):
-     * - 相机位于书桌左前方偏侧，视线斜向穿过桌面指向偏右侧的显示器与书本核心区。
-     * - 画面左侧自然留出深邃的建筑景深负空间，供主标题与 CTA 按钮优雅排布，互不遮挡。
+     * - 全屏模式下相机偏左侧留出负空间；嵌入视窗模式下居中构图以完整呈现书桌、显示器、台灯与立体翻页书。
      */
     const CAMERA_SHOTS = {
       INTRO_START: {
         pos: new THREE.Vector3(-1.68, 1.18, 2.88),
         look: new THREE.Vector3(0.15, 0.34, -0.18)
       },
-      HERO_HOME: {
-        pos: new THREE.Vector3(isMobile ? -0.95 : -1.16, isMobile ? 1.08 : 0.86, isMobile ? 2.65 : 2.16),
-        look: new THREE.Vector3(isMobile ? 0.12 : 0.18, 0.36, -0.10)
-      },
+      HERO_HOME: isEmbedded
+        ? {
+            pos: new THREE.Vector3(-0.48, 0.94, 2.34),
+            look: new THREE.Vector3(0.06, 0.34, -0.10)
+          }
+        : {
+            pos: new THREE.Vector3(isMobile ? -0.95 : -1.16, isMobile ? 1.08 : 0.86, isMobile ? 2.65 : 2.16),
+            look: new THREE.Vector3(isMobile ? 0.12 : 0.18, 0.36, -0.10)
+          },
       FIRST_PERSON: {
         pos: new THREE.Vector3(0.05, 0.72, 1.38),
         look: new THREE.Vector3(0.06, 0.19, -0.12)

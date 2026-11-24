@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { Card, Avatar, Typography, Tag, Space, Divider, Spin, message } from "antd";
 import { UserOutlined, GithubOutlined, MailOutlined, GlobalOutlined, EnvironmentOutlined, CalendarOutlined } from "@ant-design/icons";
+import SiteFooter from "@shared/components/SiteFooter";
 
 const { Title, Text, Paragraph, Link } = Typography;
 
@@ -50,8 +51,8 @@ export default function UserProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-2xl mx-auto px-4 py-8">
+    <div className="min-h-[calc(100vh-70px)] bg-surface-page flex flex-col">
+      <div className="flex-1 w-full max-w-2xl mx-auto px-4 py-8">
         <Card className="shadow-xl border-0 overflow-hidden">
           <div className="text-center py-8">
             <div className="mb-6">
@@ -112,6 +113,7 @@ export default function UserProfilePage() {
         </Card>
         {/* 可扩展：成就、学习统计等 */}
       </div>
+      <SiteFooter className="mt-auto" />
     </div>
   );
 } 

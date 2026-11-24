@@ -4,6 +4,21 @@ import { useState, useEffect, useRef, createContext, useContext } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@shared/hooks/useAuth';
 import { usePathname } from 'next/navigation';
+import {
+  Monitor,
+  Cpu,
+  Shield,
+  Wrench,
+  BookOpen,
+  Target,
+  Layers,
+  Compass,
+  Trophy,
+  FileText,
+  User,
+  LayoutGrid,
+  type LucideIcon,
+} from 'lucide-react';
 import { navigationItems, NavigationItems, NavigationItem } from '../data/navigation';
 
 // 创建侧边栏上下文
@@ -113,18 +128,18 @@ export function SidebarSpacer({ position }: { position: 'left' | 'right' }) {
   );
 }
 
-/* 分类彩色图标（按分类名固定映射，未登记的走哈希兜底） */
-const CATEGORY_ICONS: Record<string, { icon: string; color: string }> = {
-  '计算机': { icon: '💻', color: '#0ea5e9' },
-  '人工智能': { icon: '🤖', color: '#8b5cf6' },
-  '网络安全': { icon: '🛡️', color: '#ef4444' },
-  '软件工程': { icon: '⚙️', color: '#10b981' },
+/* 分类线性矢量图标（按分类名固定映射，未登记的走哈希兜底） */
+const CATEGORY_ICONS: Record<string, { Icon: LucideIcon; color: string }> = {
+  '计算机': { Icon: Monitor, color: '#1B3B6F' },
+  '人工智能': { Icon: Cpu, color: '#6366f1' },
+  '网络安全': { Icon: Shield, color: '#b83b3b' },
+  '软件工程': { Icon: Wrench, color: '#1F7A5C' },
 };
-const FALLBACK_ICONS = [
-  { icon: '📚', color: '#6366f1' },
-  { icon: '🎯', color: '#f59e0b' },
-  { icon: '🧩', color: '#ec4899' },
-  { icon: '🔧', color: '#14b8a6' },
+const FALLBACK_ICONS: { Icon: LucideIcon; color: string }[] = [
+  { Icon: BookOpen, color: '#1B3B6F' },
+  { Icon: Target, color: '#B87324' },
+  { Icon: Layers, color: '#6366f1' },
+  { Icon: Compass, color: '#1F7A5C' },
 ];
 function categoryIcon(category: string) {
   if (CATEGORY_ICONS[category]) return CATEGORY_ICONS[category];
@@ -134,11 +149,11 @@ function categoryIcon(category: string) {
 }
 
 /* 底部快捷入口 */
-const QUICK_LINKS = [
-  { label: '学习路线图', desc: '规划你的学习路径', icon: '🗺️', href: '/study' },
-  { label: '编程挑战', desc: '星图关卡闯关', icon: '🏆', href: '/challenges' },
-  { label: '我的笔记', desc: '记录与分享知识', icon: '📝', href: '/notes' },
-  { label: '个人中心', desc: '成就与收藏', icon: '⭐', href: '/profile' },
+const QUICK_LINKS: { label: string; desc: string; Icon: LucideIcon; href: string }[] = [
+  { label: '学习路线图', desc: '规划你的学习路径', Icon: Compass, href: '/study' },
+  { label: '编程挑战', desc: '星图关卡闯关', Icon: Trophy, href: '/challenges' },
+  { label: '我的笔记', desc: '记录与分享知识', Icon: FileText, href: '/notes' },
+  { label: '个人中心', desc: '成就与收藏', Icon: User, href: '/profile' },
 ];
 
 const PANEL_W = 288; // 侧边栏宽度 w-72
@@ -356,8 +371,10 @@ export default function Sidebar() {
             title="拖动移动位置"
             data-sidebar-divider
           >
-            <h2 data-sidebar-title className="text-base font-semibold text-gray-800 flex items-center gap-2 pointer-events-none">
-              <span className="w-6 h-6 rounded-md bg-gradient-to-br from-indigo-500 to-sky-400 flex items-center justify-center text-white text-xs shadow-sm">☰</span>
+            <h2 data-sidebar-title className="text-base font-semibold text-content-primary flex items-center gap-2 pointer-events-none">
+              <span className="w-6 h-6 rounded-md bg-[#0F1D33] text-[#D4AD72] flex items-center justify-center shadow-sm">
+                <LayoutGrid className="w-3.5 h-3.5" />
+              </span>
               分类导航
             </h2>
             <div className="flex items-center gap-1">
@@ -397,7 +414,7 @@ export default function Sidebar() {
           <nav data-sidebar-nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
             {Object.entries(navigationItems).map(([category, items]: [string, NavigationItem[]]) => {
               const catOpen = expandedCategory === category;
-              const { icon, color } = categoryIcon(category);
+              const { Icon, color } = categoryIcon(category);
               return (
                 <div key={category}>
                   {/* 一级：大分类 */}
@@ -412,10 +429,10 @@ export default function Sidebar() {
                     }`}
                   >
                     <span
-                      className="w-7 h-7 rounded-lg flex items-center justify-center text-sm flex-shrink-0"
-                      style={{ background: `${color}1a` }}
+                      className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+                      style={{ background: `${color}15`, color }}
                     >
-                      {icon}
+                      <Icon className="w-4 h-4" />
                     </span>
                     <span className="flex-1 text-left">{category}</span>
                     <svg
@@ -505,6 +522,7 @@ export default function Sidebar() {
           <div data-sidebar-divider className="px-3 py-3 border-t border-white/10 space-y-0.5">
             {QUICK_LINKS.map(link => {
               const active = pathname === link.href;
+              const QuickIcon = link.Icon;
               return (
                 <Link
                   key={link.href}
@@ -518,7 +536,9 @@ export default function Sidebar() {
                       : 'text-gray-600 hover:bg-white/50 hover:text-gray-900'
                   }`}
                 >
-                  <span className="text-base flex-shrink-0">{link.icon}</span>
+                  <span className="w-7 h-7 rounded-lg bg-slate-900/[0.05] dark:bg-white/10 flex items-center justify-center flex-shrink-0 text-content-secondary">
+                    <QuickIcon className="w-4 h-4" />
+                  </span>
                   <span className="flex-1 min-w-0">
                     <span className="block text-sm font-medium leading-tight">{link.label}</span>
                     <span data-sidebar-description className="block text-[11px] text-gray-400 leading-tight">{link.desc}</span>

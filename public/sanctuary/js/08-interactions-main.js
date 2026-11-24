@@ -436,7 +436,7 @@
      */
     window.addEventListener('resize', () => {
       const mob = window.innerWidth < 768;
-      camera.fov = currentRoute === 'WORKSPACE' ? (mob ? 52 : 43) : (mob ? 44 : 34);
+      camera.fov = currentRoute === 'WORKSPACE' ? (mob ? 52 : 43) : (isEmbedded ? 38 : (mob ? 44 : 34));
       camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
       renderer.setSize(window.innerWidth, window.innerHeight);
@@ -458,7 +458,7 @@
 
       camera.position.set(camRig.posX + px, camRig.posY + py, camRig.posZ);
       camera.lookAt(camRig.lookX + px * 0.3, camRig.lookY + py * 0.25, camRig.lookZ);
-      const desiredFov = currentRoute === 'WORKSPACE' ? (window.innerWidth < 768 ? 52 : 43) : (window.innerWidth < 768 ? 44 : 34);
+      const desiredFov = currentRoute === 'WORKSPACE' ? (window.innerWidth < 768 ? 52 : 43) : (isEmbedded ? 38 : (window.innerWidth < 768 ? 44 : 34));
       if (Math.abs(camera.fov - desiredFov) > 0.015) {
         camera.fov += (desiredFov - camera.fov) * 0.065;
         camera.updateProjectionMatrix();
@@ -591,7 +591,11 @@
       loaderBar.style.width = '100%';
       setTimeout(() => {
         loaderCurtain.classList.add('opacity-0', 'pointer-events-none');
-        startCinematicIntro();
+        if (isEmbedded) {
+          completeIntroAndSettle();
+        } else {
+          startCinematicIntro();
+        }
         requestAnimationFrame(animate);
-      }, 400);
+      }, isEmbedded ? 180 : 400);
     });
