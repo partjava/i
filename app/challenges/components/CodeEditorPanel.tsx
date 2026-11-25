@@ -215,14 +215,14 @@ export function CodeEditorPanel({
                 onClick={handleRequestPatch}
                 disabled={patchLoading}
                 className="px-2.5 py-1 rounded-lg text-xs font-bold text-[#0E1116] bg-gradient-to-r from-[#D4AD72] to-[#E5C796] hover:opacity-90 disabled:opacity-50 transition flex items-center gap-1.5 shadow-md"
-                title="让 3D 灵宠禾桔根据报错信息生成修复补丁与红绿 Diff 对比"
+                title="让 3D 灵宠禾硙根据报错信息生成修复补丁与红绿 Diff 对比"
               >
                 {patchLoading ? (
                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
                 ) : (
                   <Sparkles className="w-3.5 h-3.5" />
                 )}
-                <span>{patchLoading ? '诊断中...' : '✨ 禾桔诊断修复'}</span>
+                <span>{patchLoading ? '诊断中...' : '✨ 禾硙诊断修复'}</span>
               </button>
             )}
             {executionStatus !== null && (
@@ -379,7 +379,7 @@ export function CodeEditorPanel({
         </div>
       )}
 
-      {/* 禾桔 AI 诊断与热修复补丁弹窗 */}
+      {/* 禾硙 AI 诊断与热修复补丁弹窗 */}
       <InlineCodePatchModal
         open={showPatchModal}
         onClose={() => setShowPatchModal(false)}

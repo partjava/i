@@ -56,7 +56,7 @@ export default function ForgotPasswordPage() {
     <div className="min-h-[calc(100vh-70px)] flex flex-col justify-between bg-surface-page relative overflow-hidden font-sans text-content-primary transition-colors">
       <div className="flex-1 flex items-center justify-center px-4 py-10">
       <div className="relative z-10 w-full max-w-[440px] bg-surface-raised shadow-[0_20px_50px_rgba(15,23,42,0.08)] border border-line-subtle p-7 sm:p-9 rounded-3xl">
-        {/* 顶部禾桔灵宠守护 */}
+        {/* 顶部禾硙灵宠守护 */}
         <div className="flex flex-col items-center mb-5">
           <BrandLogo
             variant="full"

@@ -68,7 +68,7 @@ export default function ChatPanel(props: ChatPanelProps) {
             />
           </span>
           <span className={`text-xs sm:text-sm font-bold truncate ${styles.bubbleTitle}`}>
-            禾桔 · 学习助手
+            禾硙 · 学习助手
           </span>
         </div>
 

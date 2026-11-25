@@ -76,7 +76,7 @@ export default function InlineCodePatchModal({
             </div>
             <div>
               <div className="text-sm font-bold text-slate-100 flex items-center gap-2">
-                <span>禾桔 AI 诊断与热修复补丁</span>
+                <span>禾硙 AI 诊断与热修复补丁</span>
                 <span
                   className={`text-[10px] px-2 py-0.5 rounded-full font-mono border ${
                     patch.source === 'ai'

@@ -141,6 +141,52 @@ public class DatabaseMigrationConfig {
                 }
             }
 
+            // 10. 创建我的书架 PDF 图书馆相关表（pdf_books / pdf_annotations / pdf_bookmarks）
+            jdbcTemplate.execute("CREATE TABLE IF NOT EXISTS pdf_books (\n" +
+                    "  id BIGINT AUTO_INCREMENT PRIMARY KEY,\n" +
+                    "  user_id INT NOT NULL,\n" +
+                    "  title VARCHAR(255) NOT NULL,\n" +
+                    "  original_filename VARCHAR(255) NOT NULL,\n" +
+                    "  stored_filename VARCHAR(255) NOT NULL,\n" +
+                    "  file_size BIGINT NOT NULL DEFAULT 0,\n" +
+                    "  page_count INT NOT NULL DEFAULT 1,\n" +
+                    "  last_page INT NOT NULL DEFAULT 1,\n" +
+                    "  category VARCHAR(64) NOT NULL DEFAULT '未分类',\n" +
+                    "  cover_data MEDIUMTEXT NULL,\n" +
+                    "  reading_seconds INT NOT NULL DEFAULT 0,\n" +
+                    "  last_read_at TIMESTAMP NULL DEFAULT NULL,\n" +
+                    "  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\n" +
+                    "  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n" +
+                    "  INDEX idx_pdf_books_user_updated (user_id, updated_at)\n" +
+                    ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
+
+            jdbcTemplate.execute("CREATE TABLE IF NOT EXISTS pdf_annotations (\n" +
+                    "  id BIGINT AUTO_INCREMENT PRIMARY KEY,\n" +
+                    "  book_id BIGINT NOT NULL,\n" +
+                    "  user_id INT NOT NULL,\n" +
+                    "  page_number INT NOT NULL,\n" +
+                    "  type VARCHAR(20) NOT NULL DEFAULT 'pin',\n" +
+                    "  x_pct DECIMAL(6,3) NULL,\n" +
+                    "  y_pct DECIMAL(6,3) NULL,\n" +
+                    "  color VARCHAR(20) NOT NULL DEFAULT 'amber',\n" +
+                    "  note_content TEXT NOT NULL,\n" +
+                    "  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\n" +
+                    "  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n" +
+                    "  INDEX idx_pdf_ann_book_page (book_id, page_number),\n" +
+                    "  INDEX idx_pdf_ann_user (user_id)\n" +
+                    ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
+
+            jdbcTemplate.execute("CREATE TABLE IF NOT EXISTS pdf_bookmarks (\n" +
+                    "  id BIGINT AUTO_INCREMENT PRIMARY KEY,\n" +
+                    "  book_id BIGINT NOT NULL,\n" +
+                    "  user_id INT NOT NULL,\n" +
+                    "  page_number INT NOT NULL,\n" +
+                    "  label VARCHAR(120) DEFAULT '',\n" +
+                    "  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\n" +
+                    "  UNIQUE KEY uk_pdf_bm_book_user_page (book_id, user_id, page_number)\n" +
+                    ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
+            log.info("pdf_books / pdf_annotations / pdf_bookmarks 表迁移成功");
+
             log.info("数据库 DDL 自动迁移成功！");
         } catch (Exception e) {
             log.error("数据库 DDL 迁移失败", e);

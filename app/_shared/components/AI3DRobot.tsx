@@ -122,7 +122,7 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 'welcome-1',
-      text: '我是禾桔，陪你一起学习。\n\n可以帮你解释知识点、找站内课程，或把对话整理成笔记。',
+      text: '我是禾硙，陪你一起学习。\n\n可以帮你解释知识点、找站内课程，或把对话整理成笔记。',
       sender: 'ai',
       timestamp: new Date(),
     }
@@ -357,7 +357,7 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
     window.speechSynthesis.speak(utterance);
   }, []);
 
-  // 订阅全站「禾桔」伴学事件总线与语音口型律动状态
+  // 订阅全站「禾硙」伴学事件总线与语音口型律动状态
   useEffect(() => {
     const unsubSpeak = subscribePetSpeakingState(speaking => {
       activeCatRef.current?.setTalking(speaking);
@@ -467,7 +467,7 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
     setSavedNoteTip(null);
     try {
       const payload = {
-        title: noteData.title || `禾桔提炼笔记 - ${new Date().toLocaleString()}`,
+        title: noteData.title || `禾硙提炼笔记 - ${new Date().toLocaleString()}`,
         content: noteData.content || '',
         category: noteData.category || '后端',
         technology: noteData.technology || 'Java',
@@ -851,7 +851,7 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
           <div className={styles.brand}>
             <span aria-hidden="true" className={styles.brandDot} />
             <span>禾硙 · 伴学书房</span>
-            <span className={styles.affectionMeter} title={`亲密度 ${affection}/100：常来陪禾桔、夸夸它会让它更活泼`}>
+            <span className={styles.affectionMeter} title={`亲密度 ${affection}/100：常来陪禾硙、夸夸它会让它更活泼`}>
               {'❤'.repeat(Math.max(1, Math.round(affection / 25)))}
               <span className={styles.affectionNum}>{affection}</span>
             </span>
@@ -865,7 +865,7 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
           </div>
           {showSettings && (
             <div id="study-room-settings" className={styles.settings} role="region" aria-label="书房设置">
-              <div className={styles.settingsTitle}>书房与禾桔</div>
+              <div className={styles.settingsTitle}>书房与禾硙</div>
               <div className={`flex items-center p-0.5 rounded-lg border ${paperTheme ? 'bg-[#F4F5F7] border-[#D0D7E3]' : 'bg-[#0E1116]/90 border-[#D4AD72]/30'}`}>
                 <button
                   onClick={() => activatePostureModel('standing')}
@@ -910,7 +910,7 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
                 }`}
                 title="点击触发 ^ ^ 眯眼笑跳跃互动"
               >
-                摸摸禾桔
+                摸摸禾硙
               </button>
 
               <button

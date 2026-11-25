@@ -189,7 +189,7 @@ export default function CodeEditorPage() {
                 <span className="hidden xl:inline-flex items-center gap-3 text-[11px] text-content-muted pl-2 border-l border-line-subtle">
                   <span className="inline-flex items-center gap-1"><ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />容器硬隔离</span>
                   <span className="inline-flex items-center gap-1"><Zap className="w-3.5 h-3.5 text-[#D4AD72]" />Monaco 补全</span>
-                  <span className="inline-flex items-center gap-1"><Sparkles className="w-3.5 h-3.5 text-[#D4AD72]" />禾桔 AI 诊断</span>
+                  <span className="inline-flex items-center gap-1"><Sparkles className="w-3.5 h-3.5 text-[#D4AD72]" />禾硙 AI 诊断</span>
                 </span>
               </div>
 
@@ -629,14 +629,14 @@ export default function CodeEditorPage() {
             </div>
           </div>
 
-          {/* Card 4: 禾桔 AI 诊断与热修复 */}
+          {/* Card 4: 禾硙 AI 诊断与热修复 */}
           <div className="group relative rounded-2xl p-4 sm:p-5 bg-surface-raised border border-line-subtle hover:border-[#D4AD72]/60 transition-all duration-300 shadow-sm hover:shadow-xl flex flex-col justify-between">
             <div>
               <div className="w-10 h-10 rounded-xl bg-surface-muted border border-line-subtle text-amber-500 flex items-center justify-center text-lg mb-3 group-hover:scale-105 transition-transform">
                 <Sparkles className="w-5 h-5" />
               </div>
               <h3 className="text-base font-bold text-content-primary mb-1.5 flex items-center gap-2">
-                <span>禾桔 AI 诊断与热修复</span>
+                <span>禾硙 AI 诊断与热修复</span>
               </h3>
               <p className="text-xs text-content-secondary leading-relaxed">
                 报错信息自动捕获，大模型深度分析异常根因并生成高精度 Diff 补丁，一键平滑合并代码。

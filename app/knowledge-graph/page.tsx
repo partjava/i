@@ -502,7 +502,7 @@ export default function GlobalKnowledgeGraphPage() {
   const handleAskHeju = (node: GlobalGraphNode) => {
     emitPetCompanionEvent({
       type: 'celebrate',
-      title: `禾桔正在为你解析「${node.name}」`,
+      title: `禾硙正在为你解析「${node.name}」`,
       message: `${node.summary} 点击顶部导航栏「机器人」或右侧伴学窗即可深入提问喵！`,
       durationMs: 8000,
     });
@@ -1112,7 +1112,7 @@ export default function GlobalKnowledgeGraphPage() {
                     className="py-2.5 px-3 rounded-xl font-bold text-xs text-[#D4AD72] bg-[#D4AD72]/15 hover:bg-[#D4AD72]/25 border border-[#D4AD72]/35 transition-all flex items-center justify-center gap-1.5 active:scale-[0.98]"
                   >
                     <Sparkles className="w-3.5 h-3.5" />
-                    <span>召唤禾桔讲解</span>
+                    <span>召唤禾硙讲解</span>
                   </button>
                 </div>
               </div>

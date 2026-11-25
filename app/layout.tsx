@@ -1,28 +1,8 @@
 import './_shared/styles/globals.css'
 import type { Metadata, Viewport } from 'next'
-import { Inter, JetBrains_Mono, Noto_Serif_SC } from 'next/font/google'
 import RootLayoutClient from './_shared/components/RootLayoutClient'
 import 'antd/dist/reset.css'
 import 'katex/dist/katex.min.css'
-
-const inter = Inter({
-  subsets: ['latin'],
-  variable: '--font-sans',
-  display: 'swap',
-})
-
-const jetbrainsMono = JetBrains_Mono({
-  subsets: ['latin'],
-  variable: '--font-code',
-  display: 'swap',
-})
-
-const notoSerifSC = Noto_Serif_SC({
-  weight: ['600', '700'],
-  preload: false,
-  variable: '--font-display',
-  display: 'swap',
-})
 
 export const metadata: Metadata = {
   title: '禾硙 Unolgy - 编程学习与开发工具导航平台',
@@ -59,7 +39,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="zh" suppressHydrationWarning className={`${inter.variable} ${jetbrainsMono.variable} ${notoSerifSC.variable}`}>
+    <html lang="zh" suppressHydrationWarning>
       <head>
         {/* PWA Meta Tags */}
         <meta name="application-name" content="禾硙 Unolgy" />

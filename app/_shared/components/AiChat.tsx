@@ -72,7 +72,7 @@ function FloatingAiChat() {
     };
   };
 
-  // 监听来自顶部导航栏史迪仔按钮或禾桔伴学气泡的唤起事件
+  // 监听来自顶部导航栏史迪仔按钮或禾硙伴学气泡的唤起事件
   useEffect(() => {
     const handleToggle = (ev: Event) => {
       const customEv = ev as CustomEvent<{ prompt?: string; forceOpen?: boolean }>;

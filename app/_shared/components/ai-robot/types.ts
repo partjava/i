@@ -1,5 +1,5 @@
 /**
- * AI 黑猫「禾桔」组件族的共享类型
+ * AI 黑猫「禾硙」组件族的共享类型
  * 拆分自原 AI3DRobot.tsx（1880+ 行）：
  *   AI3DRobot.tsx    —— 编排层（状态 / Agent 调度 / 弹窗）
  *   ai-robot/CatStage.tsx    —— 3D 舞台（场景 / 灯光 / 注意力 / 思维气泡）
@@ -79,6 +79,17 @@ export function collectCurrentPageContext(): { pathname: string; contextText: st
     return { pathname: '', contextText: '' };
   }
   const pathname = window.location.pathname;
+  const customProvider = (window as unknown as {
+    __PARTJAVA_AI_PAGE_CONTEXT__?: (() => { title?: string; contextText: string } | null) | undefined;
+  }).__PARTJAVA_AI_PAGE_CONTEXT__;
+  if (typeof customProvider === 'function') {
+    try {
+      const custom = customProvider();
+      if (custom?.contextText) {
+        return { pathname, contextText: custom.contextText };
+      }
+    } catch {}
+  }
   const contentRoot = document.querySelector('#study-book-root') || document.querySelector('main');
   const h = contentRoot?.querySelector('h1, h2') || document.querySelector('h1');
   const title = h?.textContent?.trim() || document.title || '';
@@ -120,6 +131,15 @@ const DEFAULT_ACTIONS: QuickAction[] = [
 /** 按路由返回上下文化的快捷操作 */
 export function buildQuickActions(pathname: string): QuickAction[] {
   if (!pathname) return DEFAULT_ACTIONS;
+
+  if (pathname.startsWith('/study/library')) {
+    return [
+      { label: '解读当前页', text: '请解读当前打开 PDF 页面的核心内容、术语与逻辑结构。' },
+      { label: '提炼本页要点', text: '请帮我把当前显示的两页 PDF 内容提炼成简洁清晰的要点清单。' },
+      { label: '结合批注整理笔记', text: '请结合当前页面的 PDF 正文与我留存的批注，整理一份学习笔记草稿，供我预览后保存。', opts: { explicitAgent: 'note' } },
+      { label: '出 2 道自测题', text: '请根据当前 PDF 页面内容出 2 道自测题（先不给答案，我答完再批改）。' },
+    ];
+  }
 
   if (pathname.startsWith('/study')) {
     return [

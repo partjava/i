@@ -8,8 +8,8 @@ spring:
     name: partjava-backend
   servlet:
     multipart:
-      max-file-size: 10MB
-      max-request-size: 10MB
+      max-file-size: 100MB
+      max-request-size: 100MB
 
   # Database Connection（凭据通过环境变量注入，模板见 partjavadata/secrets）
   datasource:
@@ -81,3 +81,7 @@ onlinecompiler:
   base-url: ${ONLINECOMPILER_BASE_URL:https://api.onlinecompiler.io}
   compiler: ${ONLINECOMPILER_COMPILER:python-3.14}
   batch-size: ${ONLINECOMPILER_BATCH_SIZE:8}
+
+partjava:
+  pdf:
+    storage-dir: "${PDF_STORAGE_DIR:../partjavadata/pdfs}"

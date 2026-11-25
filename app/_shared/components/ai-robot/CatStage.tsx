@@ -72,7 +72,7 @@ const MOOD_PRESETS: Record<StageMood, { c1: number; c2: number; i1: number; i2: 
 };
 
 /**
- * 3D 舞台：温暖书房场景 + 禾桔黑猫 + 全息引线 + 灵气系统
+ * 3D 舞台：温暖书房场景 + 禾硙黑猫 + 全息引线 + 灵气系统
  * - A1 空闲微动作池（张望 / 轻跳 / 好奇 / 偶尔换姿势）
  * - A2 注意力状态机（看鼠标 / 看输入框 / 侧耳倾听 / 打瞌睡与惊醒）
  * - A3 摸猫反馈（悬停头部→开心；连摸三下→雀跃）
@@ -703,13 +703,13 @@ export default function CatStage(props: CatStageProps) {
         </div>
       )}
 
-      {/* 加载进度覆盖层（人格化：禾桔正在醒来） */}
+      {/* 加载进度覆盖层（人格化：禾硙正在醒来） */}
       {isLoading && (
         <div className="absolute inset-0 bg-[#0E1116]/92 flex items-center justify-center backdrop-blur-sm z-20">
           <div className="text-center text-[#F2EDE4] max-w-sm px-4">
             <div className="text-5xl mb-5 animate-bounce">🐱</div>
             <div className="text-lg sm:text-xl font-serif font-semibold mb-4 tracking-wider text-[#F2EDE4]">
-              禾桔正在醒来…
+              禾硙正在醒来…
             </div>
             <div className="w-64 bg-[#1C222D] rounded-full h-2.5 mb-3 overflow-hidden border border-[#D4AD72]/30 mx-auto">
               <div

@@ -138,7 +138,7 @@ export default function Navbar() {
 
   const homeHref = isPyiGpt ? '/home' : '/';
 
-  // 订阅全站「禾桔」主动伴学事件，直接赋能顶部导航栏 AI 助手按钮（无需右下角冗余悬浮球）
+  // 订阅全站「禾硙」主动伴学事件，直接赋能顶部导航栏 AI 助手按钮（无需右下角冗余悬浮球）
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout> | undefined;
     const unsubEvent = subscribePetCompanionEvent(detail => {
@@ -388,7 +388,7 @@ export default function Navbar() {
           {/* 🐱 AI 学习助手：透明圆泡泡背景 + 像素黑猫 + 主动伴学情绪共振气泡 */}
           {!pathname?.startsWith('/study') && (
             <div className="relative flex-shrink-0">
-              <Tooltip title="AI 学习助手（禾桔伴学中枢）">
+              <Tooltip title="AI 学习助手（禾硙伴学中枢）">
                 <button
                   onClick={() => {
                     setCompanionBubble(null);
@@ -423,7 +423,7 @@ export default function Navbar() {
                 </button>
               </Tooltip>
 
-              {/* 🐾 顶栏「禾桔」主动伴学弹出胶囊（墨砚金玻璃质感，锚点缩放） */}
+              {/* 🐾 顶栏「禾硙」主动伴学弹出胶囊（墨砚金玻璃质感，锚点缩放） */}
               {companionBubble && (
                 <div
                   className="absolute right-0 top-14 w-80 rounded-2xl p-3.5 shadow-2xl border backdrop-blur-xl z-50 origin-top-right animate-fadeIn transition-[transform,opacity] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)]"
@@ -487,7 +487,7 @@ export default function Navbar() {
                         }}
                         className="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-[#F2EDE4] text-[11px] font-medium transition-colors active:scale-[0.97]"
                       >
-                        🐱 召唤 3D 禾桔
+                        🐱 召唤 3D 禾硙
                       </button>
                     </div>
 

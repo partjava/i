@@ -345,10 +345,10 @@ export const CURATED_AUTHORITIES = [
 // ============ Function Calling 工具层 ============
 
 export const TOOL_LABELS: Record<string, { label: string; desc: string }> = {
-  search_site_pages: { label: '🧭 站内课程检索', desc: 'RAG 向量检索 PartJava 310+ 站内课程页面' },
+  search_site_pages: { label: '🧭 站内课程检索', desc: 'RAG 向量检索 禾硙 310+ 站内课程页面' },
   web_search: { label: '🌐 联网深搜', desc: '调用搜索引擎检索并抓取权威外部资料' },
   draft_note: { label: '📝 提炼写笔记', desc: '把对话或当前页面提炼为结构化 Markdown 笔记草稿' },
-  set_companion_state: { label: '🐾 3D 神态控制', desc: '控制 3D 黑猫禾桔的情绪、动作与姿态' },
+  set_companion_state: { label: '🐾 3D 神态控制', desc: '控制 3D 黑猫禾硙的情绪、动作与姿态' },
 };
 
 export const TOOL_AGENT_BADGE: Record<string, string> = {
@@ -364,7 +364,7 @@ export const TOOL_SCHEMAS = [
     function: {
       name: 'search_site_pages',
       description:
-        '基于 RAG 向量检索在 PartJava 平台 310+ 个站内课程页面中找到与用户问题最语义相关的页面，返回可点击直达的课程链接列表。当用户想找学习资源、课程、教程，或问题与站内某一门课程强相关时调用。',
+        '基于 RAG 向量检索在 禾硙 平台 310+ 个站内课程页面中找到与用户问题最语义相关的页面，返回可点击直达的课程链接列表。当用户想找学习资源、课程、教程，或问题与站内某一门课程强相关时调用。',
       parameters: {
         type: 'object',
         properties: {
@@ -409,7 +409,7 @@ export const TOOL_SCHEMAS = [
     function: {
       name: 'set_companion_state',
       description:
-        '控制 3D 黑猫助教『禾桔』的神态与动作。当用户撸猫、夸奖、要求坐下/站起来/跳一下，或回答场景值得庆祝时调用，增强陪伴感。',
+        '控制 3D 黑猫助教『禾硙』的神态与动作。当用户撸猫、夸奖、要求坐下/站起来/跳一下，或回答场景值得庆祝时调用，增强陪伴感。',
       parameters: {
         type: 'object',
         properties: {
@@ -428,7 +428,7 @@ export function summarizeToolResult(name: string, result: any): string {
     if (name === 'search_site_pages') return `RAG 命中 ${(result.links || []).length} 个站内课程页`;
     if (name === 'web_search') return result.source === 'recommended' ? `实时搜索不可用，推荐 ${(result.citations || []).length} 篇文档` : `实时搜索获得 ${(result.citations || []).length} 条结果，读取 ${result.fetchedCount || 0} 篇正文`;
     if (name === 'draft_note') return `已生成笔记草稿《${result.title || ''}》`;
-    if (name === 'set_companion_state') return `禾桔已切换神态：${result.state || ''}`;
+    if (name === 'set_companion_state') return `禾硙已切换神态：${result.state || ''}`;
   } catch {}
   return '执行完成';
 }
@@ -587,13 +587,13 @@ export async function executeTool(name: string, args: Record<string, any>, ctx: 
         ctx.sendSSE('search_status', { stage: 'writing_note', text: '📝 正在提炼对话与当前页面，生成结构化 Markdown 笔记...' });
         const convStr = ctx.history
           .slice(-6)
-          .map((m) => `${m.role === 'user' ? '用户' : '禾桔'}: ${m.content}`)
+          .map((m) => `${m.role === 'user' ? '用户' : '禾硙'}: ${m.content}`)
           .join('\n');
         let noteDraft: any = null;
         if (ctx.apiKey) {
           try {
             const notePrompt =
-              `你是 PartJava 温暖书房的【智能体二：知识提炼与自动写笔记专家】。\n` +
+              `你是 禾硙 温暖书房的【智能体二：知识提炼与自动写笔记专家】。\n` +
               `请将以下内容整理为高质量 Markdown 学习笔记，严格只返回一个 JSON 对象（不含 \`\`\`json 标记）：\n` +
               `{"title":"不超过28字标题","content":"Markdown正文(含##分节、列表与代码块)","category":"算法/前端/后端/数据库/AI/安全/软件工程","technology":"Java/Python/React等","subcategory":"子分类","tags":["标签1","标签2"],"isPublic":false}\n\n` +
               `对话内容:\n${convStr}\n\n当前页面:\n${ctx.pageContext.slice(0, 8000)}`;
@@ -623,15 +623,15 @@ export async function executeTool(name: string, args: Record<string, any>, ctx: 
         if (!noteDraft) {
           const mTitle = ctx.pageContext.match(/标题:\s*(.+)/);
           const autoTitle = mTitle
-            ? `${mTitle[1].trim()} · 禾桔智能提炼笔记`
-            : `PartJava 学习笔记 · ${topic.slice(0, 18)}`;
+            ? `${mTitle[1].trim()} · 禾硙智能提炼笔记`
+            : `禾硙 学习笔记 · ${topic.slice(0, 18)}`;
           noteDraft = {
             title: autoTitle.slice(0, 35),
             content:
               `## 一、 核心知识点提炼\n\n` +
               (convStr ? `${convStr}\n\n` : '') +
               (ctx.pageContext ? `## 二、 当前课程页面重点\n\n${ctx.pageContext.slice(0, 1800)}\n\n` : '') +
-              `## 三、 实战与复习建议\n\n- 建议前往 PartJava **在线代码编辑器 (\`/code/editor\`)** 动手实践；\n- 在 **星际编程挑战 (\`/challenges\`)** 中完成对应专项刷题巩固。`,
+              `## 三、 实战与复习建议\n\n- 建议前往 禾硙 **在线代码编辑器 (\`/code/editor\`)** 动手实践；\n- 在 **星际编程挑战 (\`/challenges\`)** 中完成对应专项刷题巩固。`,
             category: ctx.pageContext.includes('/ai/')
               ? 'AI'
               : ctx.pageContext.includes('/security/')
@@ -641,7 +641,7 @@ export async function executeTool(name: string, args: Record<string, any>, ctx: 
               : '后端',
             technology: ctx.pageContext.includes('/python/') ? 'Python' : 'Java',
             subcategory: 'AI智能总结',
-            tags: ['禾桔笔记', '核心考点', 'PartJava'],
+            tags: ['禾硙笔记', '核心考点', '禾硙'],
             isPublic: false,
           };
         }

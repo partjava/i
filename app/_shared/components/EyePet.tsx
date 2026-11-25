@@ -20,7 +20,7 @@ export interface EyePetProps {
 }
 
 /**
- * 禾桔 (TsuYi) 高还原度二头身奶牛猫互动组件
+ * 禾硙 (TsuYi) 高还原度二头身奶牛猫互动组件
  * 复刻参考图：梨形包子脸、八字白面具、金琥珀琉璃大眼（内层虹膜+大瞳孔随鼠标平滑转动）、
  * 粉嫩耳窝、花生豆立体 ω 吻部、粉鼻头、胸前 V 形白围兜与山竹白手套（输密码捂眼/明文偷看）
  */
@@ -117,14 +117,14 @@ export default function EyePet({
     (hasError
       ? '哎呀，填写的信息好像有点小问题喵~'
       : isSuccess
-      ? '太棒啦！禾桔欢迎你来到禾硙喵 ✨'
+      ? '太棒啦！禾硙欢迎你来到禾硙喵 ✨'
       : isPeeking
       ? '偷偷露只眼帮你检查密码有没有输错 🫣'
       : isCoveringEyes
-      ? '非礼勿视！禾桔绝不偷看你的密码喵 🙈'
+      ? '非礼勿视！禾硙绝不偷看你的密码喵 🙈'
       : focusField === 'account'
       ? '正在认真核对你的账号信息喵~ ✍️'
-      : '嗨！我是禾桔 TsuYi，动动鼠标看我大眼睛喵~');
+      : '嗨！我是禾硙 TsuYi，动动鼠标看我大眼睛喵~');
 
   const scale = compact ? 0.54 : 1;
 
@@ -140,7 +140,7 @@ export default function EyePet({
         transform: `scale(${scale})`,
         transformOrigin: compact ? 'top right' : 'center center',
       }}
-      title="点击摸摸禾桔的圆脑袋喵~"
+      title="点击摸摸禾硙的圆脑袋喵~"
     >
       {/* 顶部互动对话气泡 */}
       {!compact && (
@@ -158,7 +158,7 @@ export default function EyePet({
         </div>
       )}
 
-      {/* 二头身奶牛猫「禾桔」高清矢量毛绒画布 */}
+      {/* 二头身奶牛猫「禾硙」高清矢量毛绒画布 */}
       <div
         className="relative transition-transform duration-300"
         style={{

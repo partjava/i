@@ -168,7 +168,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true, data: heuristic });
   }
 
-  const prompt = `你是一位资深编程导师（3D 灵宠“禾桔”）。用户的 ${language} 代码在沙箱执行时报错或未通过测试，请诊断根因并给出最小化修改的修复后完整代码。
+  const prompt = `你是一位资深编程导师（3D 灵宠“禾硙”）。用户的 ${language} 代码在沙箱执行时报错或未通过测试，请诊断根因并给出最小化修改的修复后完整代码。
 
 ${problemTitle ? `当前题目/场景：${problemTitle}\n` : ''}用户当前代码：
 \`\`\`${language}

@@ -138,7 +138,7 @@ export function runAgentStream(body: AgentRequestBody, apiKey: string): Readable
               `\n\n点击气泡底部的 **🌐 权威网站外链卡片** 即可直接访问官方文档！`;
           } else {
             replyText =
-              `喵呜~ 我是温暖书房的 3D 像素绒毛黑猫 **禾桔** 🐾！关于「**${message}**」，已为你匹配了站内相关课程与知识点，快看看下方的直达胶囊吧！`;
+              `喵呜~ 我是温暖书房的 3D 像素绒毛黑猫 **禾硙** 🐾！关于「**${message}**」，已为你匹配了站内相关课程与知识点，快看看下方的直达胶囊吧！`;
           }
           for (let i = 0; i < replyText.length; i += 5) {
             sendSSE(controller, 'token', { text: replyText.slice(i, i + 5) });
@@ -154,7 +154,7 @@ export function runAgentStream(body: AgentRequestBody, apiKey: string): Readable
         });
 
         const sysParts = [
-          '你是 PartJava 温暖书房里的 3D 灵动像素绒毛黑猫助教，名字叫「禾桔」🐾。请用条理清晰、亲切专业的风格回答（善用 Markdown 列表、加粗与代码块）。',
+          '你是 禾硙 温暖书房里的 3D 灵动像素绒毛黑猫助教，名字叫「禾硙」🐾。请用条理清晰、亲切专业的风格回答（善用 Markdown 列表、加粗与代码块）。',
           AGENCY_INSTRUCTIONS,
         ];
         if (siteLinks.length > 0) {
@@ -319,7 +319,7 @@ export function runAgentStream(body: AgentRequestBody, apiKey: string): Readable
               `\n\n点击气泡底部的 **🌐 权威网站外链卡片** 即可直接访问官方文档！`;
           } else {
             replyText =
-              `喵呜~ 我是温暖书房的 3D 像素绒毛黑猫 **禾桔** 🐾！关于「**${message}**」，已为你匹配了站内相关课程与知识点，快看看下方的直达胶囊吧！`;
+              `喵呜~ 我是温暖书房的 3D 像素绒毛黑猫 **禾硙** 🐾！关于「**${message}**」，已为你匹配了站内相关课程与知识点，快看看下方的直达胶囊吧！`;
           }
           for (let i = 0; i < replyText.length; i += 5) {
             sendSSE(controller, 'token', { text: replyText.slice(i, i + 5) });
@@ -329,7 +329,7 @@ export function runAgentStream(body: AgentRequestBody, apiKey: string): Readable
 
         sendSSE(controller, 'done', { ok: true });
       } catch (e: any) {
-        sendSSE(controller, 'token', { text: `喵~ 禾桔刚刚打了个盹：${e?.message || '请稍后再试'}` });
+        sendSSE(controller, 'token', { text: `喵~ 禾硙刚刚打了个盹：${e?.message || '请稍后再试'}` });
         sendSSE(controller, 'done', { ok: false });
       } finally {
         controller.close();

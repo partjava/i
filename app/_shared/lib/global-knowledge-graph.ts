@@ -260,7 +260,7 @@ export function buildGlobalKnowledgeGraph(options?: {
     keyPoints: [
       '四大领域全景打通：计算机基础 ↔ AI 大模型 ↔ 企业级架构 ↔ 网络安全',
       '支持前置依赖路径溯源、掌握状态标记与 3D 算法流形一键演练',
-      '点击任意节点即可直达对应课程章节或召唤 3D 禾桔 AI 深度伴学',
+      '点击任意节点即可直达对应课程章节或召唤 3D 禾硙 AI 深度伴学',
     ],
     prerequisites: [],
     nextSteps: ['计算机', '人工智能', '软件工程', '网络安全'],

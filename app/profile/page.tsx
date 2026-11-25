@@ -1030,12 +1030,12 @@ export default function ProfilePage() {
               </div>
             </div>
 
-            {/* 右侧：禾桔灵宠伴学互动舞台 */}
+            {/* 右侧：禾硙灵宠伴学互动舞台 */}
             <div className="hidden lg:flex flex-col items-center justify-center flex-shrink-0 self-center my-auto">
               <div className="relative flex flex-col items-center justify-center bg-white/95 backdrop-blur-md pt-9 pb-4 px-6 rounded-3xl border border-white/60 shadow-[0_12px_36px_rgba(15,23,42,0.22)] hover:shadow-[0_16px_40px_rgba(15,23,42,0.3)] transition-all select-none">
                 <div className="absolute top-3 left-4 flex items-center gap-1.5 text-[11px] font-mono text-slate-500">
                   <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
-                  <span>禾桔安全守卫中</span>
+                  <span>禾硙安全守卫中</span>
                 </div>
                 <div className="absolute top-3 right-4 text-[11px] text-[#1B3B6F] font-medium">
                   眼神实时跟随

@@ -9,6 +9,7 @@ interface ToolCardProps {
   desc: string;
   color: string;
   isDark?: boolean;
+  onVisit?: (name: string) => void;
 }
 
 function getHexLuminance(hex: string): number {
@@ -34,6 +35,7 @@ export default function ToolCard({
   desc,
   color,
   isDark = true,
+  onVisit,
 }: ToolCardProps) {
   const [isFlipped, setIsFlipped] = useState(false);
 
@@ -43,33 +45,26 @@ export default function ToolCard({
     }
   };
 
-  // 基于感知亮度动态识别暗色/中暗色品牌色，深色主题下自动加亮托底或高亮增益
+  // Direction A：深色模式统一采用磨砂玻璃底座 + 温润象牙白提亮单色图标，彻底告别“白膏药”补丁；浅色保持素笺精致卡片
   const luminance = getHexLuminance(color);
   const isVeryDarkBrand = luminance < 75;
-  const isMidDarkBrand = luminance >= 75 && luminance < 130;
+  const isMidDarkBrand = luminance >= 75 && luminance < 145;
 
-  const iconColor = isDark && isVeryDarkBrand ? '#181F2C' : color;
+  const iconColor = isDark && isVeryDarkBrand ? '#F2EDE4' : color;
+  const auraColor = isVeryDarkBrand ? '#D4AD72' : color;
   const iconPadBackground = isDark
-    ? isVeryDarkBrand
-      ? 'rgba(242, 237, 228, 0.94)'
-      : isMidDarkBrand
-      ? 'rgba(242, 237, 228, 0.16)'
-      : 'rgba(255, 255, 255, 0.11)'
-    : 'rgba(244, 245, 247, 0.95)';
+    ? `radial-gradient(circle at 50% 26%, ${auraColor}28 0%, rgba(255, 255, 255, 0.055) 75%)`
+    : 'linear-gradient(160deg, #FFFFFF 0%, #F4F6FA 100%)';
   const iconPadBorder = isDark
-    ? isVeryDarkBrand
-      ? '1px solid rgba(255, 255, 255, 0.72)'
-      : isMidDarkBrand
-      ? '1px solid rgba(242, 237, 228, 0.28)'
-      : '1px solid rgba(242, 233, 220, 0.14)'
-    : '1px solid rgba(15, 29, 51, 0.08)';
+    ? '1px solid rgba(242, 233, 220, 0.13)'
+    : '1px solid rgba(15, 29, 51, 0.09)';
   const iconFilter = isDark
     ? isVeryDarkBrand
-      ? undefined
+      ? 'drop-shadow(0 2px 10px rgba(242, 237, 228, 0.22))'
       : isMidDarkBrand
-      ? `brightness(1.38) saturate(1.18) drop-shadow(0 2px 8px ${color}55)`
-      : `drop-shadow(0 2px 8px ${iconColor}40)`
-    : `drop-shadow(0 2px 8px ${iconColor}40)`;
+      ? `brightness(1.45) saturate(1.22) drop-shadow(0 0 10px ${color}70)`
+      : `drop-shadow(0 0 8px ${color}55)`
+    : `drop-shadow(0 2px 6px ${color}33)`;
 
   return (
     <div
@@ -92,11 +87,11 @@ export default function ToolCard({
           transformStyle: 'preserve-3d',
           transition: 'transform 0.48s cubic-bezier(0.22, 1, 0.36, 1)',
           transform: isFlipped
-            ? 'rotateY(180deg) scale(1.15) translateY(-4px)'
+            ? 'rotateY(180deg) scale(1.12) translateY(-4px)'
             : 'rotateY(0deg) scale(1) translateY(0px)',
         }}
       >
-        {/* 正面：高对比双态自适应图标卡片 */}
+        {/* 正面：去外层方框的通透 Launchpad 磁贴（直接突出 56px 品牌微光图标底座 + 工具名） */}
         <a
           href={url}
           target="_blank"
@@ -104,51 +99,46 @@ export default function ToolCard({
           onClick={(e) => {
             if (window.innerWidth < 768 && !isFlipped) {
               e.preventDefault();
+              return;
             }
+            onVisit?.(name);
           }}
-          className="absolute inset-0 flex flex-col items-center justify-center px-2 py-2"
+          className="absolute inset-0 flex flex-col items-center justify-center px-1.5 py-2"
           style={{
             backfaceVisibility: 'hidden',
             WebkitBackfaceVisibility: 'hidden',
             borderRadius: '20px',
-            background: isDark
-              ? 'radial-gradient(circle at 50% 28%, rgba(212, 173, 114, 0.08) 0%, transparent 70%), linear-gradient(155deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.02) 100%)'
-              : 'linear-gradient(160deg, #FFFFFF 0%, #F7F8FB 100%)',
-            border: isDark
-              ? '1px solid rgba(242, 233, 220, 0.12)'
-              : '1px solid rgba(15, 29, 51, 0.09)',
-            boxShadow: isDark
-              ? '0 8px 20px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.06)'
-              : '0 6px 16px rgba(15, 29, 51, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.9)',
-            gap: '7px',
+            background: 'transparent',
+            border: '1px solid transparent',
+            gap: '8px',
             zIndex: isFlipped ? 0 : 1,
           }}
         >
           <div
-            className="flex items-center justify-center flex-shrink-0"
+            className="flex items-center justify-center flex-shrink-0 transition-transform duration-200"
             style={{
-              width: '46px',
-              height: '46px',
-              borderRadius: '14px',
+              width: '56px',
+              height: '56px',
+              borderRadius: '16px',
               background: iconPadBackground,
               border: iconPadBorder,
               boxShadow: isDark
-                ? 'inset 0 1px 0 rgba(255, 255, 255, 0.14)'
-                : '0 2px 6px rgba(15, 29, 51, 0.04)',
+                ? '0 8px 20px rgba(0, 0, 0, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.16)'
+                : '0 6px 14px rgba(15, 29, 51, 0.06), inset 0 1px 0 #FFFFFF',
             }}
           >
             <Icon
               style={{
                 color: iconColor,
-                fontSize: 24,
+                fontSize: 28,
                 filter: iconFilter,
               }}
             />
           </div>
 
           <span
-            className="font-semibold text-[12px] leading-[1.2] text-center truncate w-full px-1"
-            style={{ color: isDark ? '#F2E9DC' : '#0F1D33' }}
+            className="font-medium text-[12px] leading-[1.2] text-center truncate w-full px-1"
+            style={{ color: isDark ? '#E8E2D6' : '#0F1D33' }}
           >
             {name}
           </span>
@@ -159,6 +149,7 @@ export default function ToolCard({
           href={url}
           target="_blank"
           rel="noopener noreferrer"
+          onClick={() => onVisit?.(name)}
           className="absolute inset-0 flex flex-col justify-between overflow-hidden"
           style={{
             backfaceVisibility: 'hidden',

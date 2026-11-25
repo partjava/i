@@ -17,7 +17,7 @@ import {
 import { VscVscode } from 'react-icons/vsc';
 import Link from 'next/link';
 import { useState, useMemo, useEffect, useRef } from 'react';
-import { Trophy, ArrowRight, Code2, ChevronDown, ChevronUp, Users, FileText, Clock, Box, BookOpen, Wrench, Gamepad2 } from 'lucide-react';
+import { Trophy, ArrowRight, Code2, ChevronDown, ChevronUp, Users, FileText, Clock, Box, BookOpen, Wrench, Gamepad2, Search, X, Sparkles, Palette, Eye, Film, Layers, Wand2, LayoutGrid, MousePointerClick, Activity, Clapperboard, Play, Video, GraduationCap, PenTool, ShieldCheck, Blocks, ListChecks, Zap, Minimize2, Scissors, Smile } from 'lucide-react';
 import { useAuth } from '@shared/hooks/useAuth';
 import SanctuaryHero, { SanctuaryFocusTarget } from './_shared/components/sanctuary/SanctuaryHero';
 import { ALGORITHM_REGISTRY } from './_shared/components/visualizer/registry';
@@ -26,7 +26,6 @@ import CoreEnginesShowcase from './_shared/components/CoreEnginesShowcase';
 import ToolCard from './_shared/components/ToolCard';
 import ToolGroupPreview from './_shared/components/ToolGroupPreview';
 import BackToTop from './_shared/components/BackToTop';
-import QuickSearch from './_shared/components/QuickSearch';
 import SiteFooter from './_shared/components/SiteFooter';
 import { useSidebar } from './_shared/components/Sidebar';
 import { useLocale, UI_DICT } from './_shared/lib/i18n';
@@ -273,9 +272,35 @@ const groupedSoftware = [
       { name: 'Udemy', icon: SiUdemy, url: 'https://www.udemy.com/', desc: '综合在线课程平台' },
     ]
   },
+  {
+    group: 'AI Skills 技能库',
+    items: [
+      { name: 'finesse-ui', icon: Palette, url: 'https://github.com/mouse-lin/finesse-skill', desc: '后台/工作台/H5/苹果风高质感前端设计与定向精修工作流' },
+      { name: 'ui-ux-pro-max', icon: Sparkles, url: 'https://github.com/nextlevelbuilder/ui-ux-pro-max-skill', desc: '内置 80 套风格、194 配色与 74 字体配对的本地设计知识库' },
+      { name: 'taste-skill', icon: Eye, url: 'https://github.com/Leonxlnx/taste-skill', desc: '专治“AI 模板感”的官网审美与浏览器一致性验收规范' },
+      { name: 'motionsites', icon: Film, url: 'https://github.com/motionsites-ai/claude-skill', desc: '电影级官网、Hero 首屏、3D/WebGL 与视差滚动落地页方案' },
+      { name: 'awesome-design-md', icon: Layers, url: 'https://github.com/VoltAgent/awesome-design-md', desc: '84 套 Apple、Linear、Stripe、Vercel 等大厂逆向 DESIGN.md 设计系统' },
+      { name: 'stitch-skills', icon: Wand2, url: 'https://github.com/google-labs-code/stitch-skills', desc: 'Google Stitch 提示词强化、提取 DESIGN.md 与导出静态 HTML 套件' },
+      { name: 'shadcn-ui', icon: LayoutGrid, url: 'https://github.com/shadcn-ui/ui', desc: 'React + Tailwind 下的 shadcn/ui 组件选型与主题定制指南' },
+      { name: 'emilkowalski/skills', icon: MousePointerClick, url: 'https://github.com/emilkowalski/skills', desc: 'UI 微交互物理手感、手势拖拽、缓动曲线与动效审查/做减法' },
+      { name: 'gsap-skills', icon: Activity, url: 'https://github.com/greensock/gsap-skills', desc: 'GSAP 官方时间轴、ScrollTrigger 滚动视差与 React useGSAP() 规范' },
+      { name: 'chaojifeng-video-design', icon: Clapperboard, url: 'https://github.com/mileson/chaojifeng-video-design', desc: '中文抖音科普/口播视频全流程，含 59 套视觉风格包与成片工具' },
+      { name: 'hyperframes', icon: Play, url: 'https://github.com/heygen-com/hyperframes', desc: 'HeyGen 开源的轻量 HTML+CSS+GSAP 代码视频与参考视频复刻框架' },
+      { name: 'remotion-skills', icon: Video, url: 'https://github.com/remotion-dev/skills', desc: 'Remotion 官方 React+TS 代码视频与动态关键词高亮字幕规范' },
+      { name: 'CCFA-Skills', icon: GraduationCap, url: 'https://github.com/mikubaka88/CCFA-Skills', desc: 'CCF-A 顶会科研全周期助手（选题、调研、实验、写作、绘图、审稿与 Rebuttal）' },
+      { name: 'anti-defensive-writing', icon: PenTool, url: 'https://github.com/Adkid-Zephyr/anti-defensive-writing-Skill', desc: '去除论文与文档中“心虚/过度免责”的防御性 AI 腔' },
+      { name: 'superpowers', icon: ShieldCheck, url: 'https://github.com/obra/superpowers', desc: '强工程纪律开发工作流（头脑风暴、写计划、系统排错、代码审查与实测验收）' },
+      { name: 'anthropics/skills', icon: Blocks, url: 'https://github.com/anthropics/skills', desc: 'Anthropic 官方工具集（MCP 开发、PPTX 制作、Skill 创建与 Playwright 前端测试）' },
+      { name: 'planning-with-files', icon: ListChecks, url: 'https://github.com/OthmanAdi/planning-with-files', desc: '用本地 Markdown 文件做长任务持久化记忆与进度跟踪' },
+      { name: 'caveman', icon: Zap, url: 'https://github.com/JuliusBrussee/caveman', desc: '极简无废话回答模式，大幅节省 Token' },
+      { name: 'ponytail', icon: Minimize2, url: 'https://github.com/DietrichGebert/ponytail', desc: '懒人高级工程师模式，强制最小改动、拒绝过度设计' },
+      { name: 'code-simplifier', icon: Scissors, url: 'https://github.com/anthropics/claude-plugins-official', desc: '不改功能的前提下精简重构刚修改的代码' },
+      { name: 'hatch-pet', icon: Smile, url: 'https://github.com/openai/skills', desc: 'OpenAI 官方 Codex 动画桌宠制作与雪碧图打包工具' },
+    ]
+  },
 ];
 
-/* 分组竖杠配色：固定映射保证 8 组颜色全不重复，未登记的分组走哈希兜底 */
+/* 分组竖杠配色：固定映射保证各组颜色互异，未登记的分组走哈希兜底 */
 const GROUP_BAR_COLORS: Record<string, string> = {
   'AI 工具': '#6366f1',
   '编程开发': '#0ea5e9',
@@ -285,6 +310,7 @@ const GROUP_BAR_COLORS: Record<string, string> = {
   '操作系统与虚拟化': '#8b5cf6',
   '硬件与仿真': '#14b8a6',
   '文档与效率': '#ec4899',
+  'AI Skills 技能库': '#D4AD72',
 };
 
 const FALLBACK_BAR_COLORS = ['#6366f1', '#0ea5e9', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6'];
@@ -300,6 +326,7 @@ const DEFAULT_FOLDER_SIZES_EXPANDED: Record<string, { k: number; r: number }> = 
   '硬件与仿真': { k: 4, r: 2 },
   '文档与效率': { k: 3, r: 2 },
   '学习网站': { k: 5, r: 2 },
+  'AI Skills 技能库': { k: 8, r: 2 },
 };
 
 /* 默认文件夹布局（左侧目录收缩时：每行 10 列，三行对齐） */
@@ -313,6 +340,7 @@ const DEFAULT_FOLDER_SIZES_COLLAPSED: Record<string, { k: number; r: number }> =
   '硬件与仿真': { k: 2, r: 2 },
   '文档与效率': { k: 3, r: 2 },
   '学习网站': { k: 5, r: 2 },
+  'AI Skills 技能库': { k: 10, r: 2 },
 };
 
 function groupBarColor(group: string): string {
@@ -515,6 +543,27 @@ const brandColors: { [key: string]: string } = {  'VS Code': '#007ACC',
   '学习强国': '#E60012',
   '慕课网': '#F08519',
   'Python 教程': '#3776AB',
+  'finesse-ui': '#D4AD72',
+  'ui-ux-pro-max': '#8B5CF6',
+  'taste-skill': '#EC4899',
+  'motionsites': '#6366F1',
+  'awesome-design-md': '#0EA5E9',
+  'stitch-skills': '#3B82F6',
+  'shadcn-ui': '#18181B',
+  'emilkowalski/skills': '#F97316',
+  'gsap-skills': '#88CE02',
+  'chaojifeng-video-design': '#EF4444',
+  'hyperframes': '#14B8A6',
+  'remotion-skills': '#2563EB',
+  'CCFA-Skills': '#B45309',
+  'anti-defensive-writing': '#10B981',
+  'superpowers': '#059669',
+  'anthropics/skills': '#D97757',
+  'planning-with-files': '#0284C7',
+  'caveman': '#F59E0B',
+  'ponytail': '#64748B',
+  'code-simplifier': '#7C3AED',
+  'hatch-pet': '#FB7185',
 };
 
 export default function Home() {
@@ -568,6 +617,7 @@ export default function Home() {
   const [folderConfigsExpanded, setFolderConfigsExpanded] = useState<Record<string, { k: number; r: number }>>({});
   const [folderConfigsCollapsed, setFolderConfigsCollapsed] = useState<Record<string, { k: number; r: number }>>({});
   const [previewGroup, setPreviewGroup] = useState<string | null>(null);
+  const [recentTools, setRecentTools] = useState<string[]>([]);
   const [resizing, setResizing] = useState<string | null>(null);
   const resizeStart = useRef({ x: 0, y: 0, k: 4, r: 2, group: '' });
   const toolsContainerRef = useRef<HTMLDivElement | null>(null);
@@ -622,7 +672,7 @@ export default function Home() {
       const y = e.touches ? e.touches[0].clientY : (e as MouseEvent).clientY;
       if (e.touches) e.preventDefault();
       const g = resizeStart.current;
-      const nk = Math.min(Math.max(g.k + Math.round((x - g.x) / 146), 1), 8);
+      const nk = Math.min(Math.max(g.k + Math.round((x - g.x) / 146), 1), 10);
       const nr = Math.min(Math.max(g.r + Math.round((y - g.y) / 146), 1), 8);
       if (collapsed) {
         setFolderConfigsCollapsed(prev => {
@@ -721,14 +771,13 @@ export default function Home() {
     let height = 0;
     for (const group of filteredSoftware) {
       const cfg = activeFolderConfigs[group.group] || activeDefaultSizes[group.group] || { k: 4, r: 2 };
-      const k = Math.min(Math.max(Math.round(Number(cfg.k)) || 4, 1), 8);
+      const k = Math.min(Math.max(Math.round(Number(cfg.k)) || 4, 1), 10);
       const r = Math.min(Math.max(Math.round(Number(cfg.r)) || 2, 1), 8);
       const w = Math.min(cw, k * S + (k - 1) * ITEM_GAP + FOLDER_PAD);
       const shown = searchQuery ? group.items.length : Math.min(group.items.length, k * r);
       const rows = Math.max(1, Math.ceil(shown / k));
-      const hasMore = group.items.length > shown;
-      // 文件夹内部包含标题栏(50px) + 上下内边距(32px) + 图标网格 + 展开全部按钮(48px)
-      const folderH = 32 + 50 + rows * S + (rows - 1) * ITEM_GAP + (hasMore ? 48 : 0);
+      // 文件夹内部包含标题栏(48px) + 上下内边距(32px) + 图标网格（全部按钮已收进标题栏右侧）
+      const folderH = 32 + 48 + rows * S + (rows - 1) * ITEM_GAP;
       const totalH = folderH + GAP_Y;
       const wWithGapCells = Math.max(1, Math.ceil((w + GAP_X) / CELL));
       const wOnlyCells = Math.max(1, Math.ceil(w / CELL));
@@ -779,16 +828,36 @@ export default function Home() {
     }));
   }, []);
 
-  const handleSearch = (query: string) => {
-    setSearchQuery(query);
-    setArsenalExpanded(true);
-    requestAnimationFrame(() => {
-      const arsenalEl = document.getElementById('developer-arsenal');
-      if (arsenalEl) {
-        arsenalEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem('unolgy_recent_tools') || '[]');
+      if (Array.isArray(saved)) setRecentTools(saved.slice(0, 6));
+    } catch {}
+  }, []);
+
+  const recordRecentTool = (name: string) => {
+    setRecentTools((prev) => {
+      const next = [name, ...prev.filter((item) => item !== name)].slice(0, 6);
+      try {
+        localStorage.setItem('unolgy_recent_tools', JSON.stringify(next));
+      } catch {}
+      return next;
     });
   };
+
+  const toolLookup = useMemo(() => {
+    const map = new Map<string, { name: string; url: string; color: string }>();
+    groupedSoftware.forEach((group) => {
+      group.items.forEach((item) => {
+        map.set(item.name, {
+          name: item.name,
+          url: item.url,
+          color: brandColors[item.name] || '#3B82F6',
+        });
+      });
+    });
+    return map;
+  }, []);
 
   return (
     <div className={`${mobileStyles.page} min-h-[calc(100vh-70px)] bg-surface-page flex flex-col justify-between`}>
@@ -797,9 +866,14 @@ export default function Home() {
       <section className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 pt-1.5 pb-1.5">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-7 items-center">
           <div className="lg:col-span-5 space-y-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-surface-raised border border-line-subtle shadow-sm text-xs font-medium text-brand-primary">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#D4AD72]" />
-              <span>{t.eyebrow}</span>
+            <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-surface-raised border border-line-subtle shadow-sm text-xs font-medium text-brand-primary shrink-0">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#D4AD72]" />
+                <span>{t.eyebrow}</span>
+              </div>
+              <span data-brand-meaning className="text-[11.5px] text-content-muted tracking-wide">
+                {t.brandMeaning}
+              </span>
             </div>
 
             <h1 className="font-display text-[28px] sm:text-[32px] xl:text-[34px] 2xl:text-[42px] font-bold text-content-primary leading-[1.28] tracking-tight">
@@ -1048,26 +1122,7 @@ export default function Home() {
 
         {arsenalExpanded && (
           <>
-            {/* 快速搜索 */}
-            <div className="max-w-[1400px] mx-auto mb-6">
-              <QuickSearch onSearch={handleSearch} />
-              {searchQuery && (
-                <div className="text-center mb-4">
-                  <span className="text-content-secondary">
-                    搜索 &quot;<span className="font-semibold text-brand-primary">{searchQuery}</span>&quot; 
-                    找到 {filteredSoftware.reduce((acc, group) => acc + group.items.length, 0)} 个结果
-                  </span>
-                  <button
-                    onClick={() => setSearchQuery('')}
-                    className="ml-4 text-brand-primary hover:text-brand-hover underline"
-                  >
-                    清除搜索
-                  </button>
-                </div>
-              )}
-            </div>
-
-            {/* 双态桌面文件夹舞台（素笺磨砂 / 墨砚灰金自适应 + 分类胶囊速跳 + 完整保留可拖拽调整与悬停翻转预览特性） */}
+            {/* 双态桌面文件夹舞台（方向 A 通透玻璃工作台 + 分类胶囊 + 行内即时搜工具 + 最近打开 + 顶边微光 + 标题区全部按钮） */}
             <div
               data-arsenal-stage
               className="rounded-3xl p-4 md:p-6 border shadow-xl transition-colors"
@@ -1075,12 +1130,12 @@ export default function Home() {
                 background: isDark
                   ? 'linear-gradient(145deg, #131720 0%, #191F2B 55%, #11151D 100%)'
                   : 'linear-gradient(145deg, #F8F9FB 0%, #FFFFFF 55%, #F2F4F8 100%)',
-                borderColor: isDark ? 'rgba(212, 173, 114, 0.28)' : 'rgba(27, 59, 111, 0.14)',
+                borderColor: isDark ? 'rgba(212, 173, 114, 0.24)' : 'rgba(27, 59, 111, 0.14)',
               }}
             >
           <div
             className="mb-4 flex flex-wrap items-end justify-between gap-4 border-b pb-4"
-            style={{ borderColor: isDark ? 'rgba(242, 233, 220, 0.1)' : 'rgba(15, 29, 51, 0.08)' }}
+            style={{ borderColor: isDark ? 'rgba(242, 233, 220, 0.08)' : 'rgba(15, 29, 51, 0.08)' }}
           >
             <div>
               <div
@@ -1088,7 +1143,7 @@ export default function Home() {
                 style={{
                   background: isDark ? 'rgba(212, 173, 114, 0.12)' : 'rgba(27, 59, 111, 0.08)',
                   color: isDark ? '#D4AD72' : '#1B3B6F',
-                  border: isDark ? '1px solid rgba(212, 173, 114, 0.3)' : '1px solid rgba(27, 59, 111, 0.18)',
+                  border: isDark ? '1px solid rgba(212, 173, 114, 0.28)' : '1px solid rgba(27, 59, 111, 0.18)',
                 }}
               >
                 <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: isDark ? '#D4AD72' : '#1B3B6F' }} />
@@ -1097,13 +1152,14 @@ export default function Home() {
               <h2 className="text-xl md:text-2xl font-bold" style={{ color: isDark ? '#F2E9DC' : '#0F1D33' }}>
                 {t.expandedTitle}
               </h2>
-              <p className="text-xs md:text-sm mt-1" style={{ color: isDark ? 'rgba(242, 233, 220, 0.65)' : '#42526B' }}>
+              <p className="text-xs md:text-sm mt-1" style={{ color: isDark ? 'rgba(242, 233, 220, 0.62)' : '#42526B' }}>
                 {t.expandedSub}
               </p>
             </div>
             <button
               onClick={() => {
                 setSelectedArsenalGroup('全部');
+                setSearchQuery('');
                 setFolderConfigsExpanded({});
                 setFolderConfigsCollapsed({});
                 try {
@@ -1115,8 +1171,8 @@ export default function Home() {
               className="flex-shrink-0 text-xs px-3.5 py-1.5 rounded-full font-medium transition-[transform,background-color] duration-150 active:scale-[0.96]"
               style={{
                 color: isDark ? '#D4AD72' : '#1B3B6F',
-                background: isDark ? 'rgba(212, 173, 114, 0.14)' : 'rgba(27, 59, 111, 0.08)',
-                border: isDark ? '1px solid rgba(212, 173, 114, 0.35)' : '1px solid rgba(27, 59, 111, 0.22)',
+                background: isDark ? 'rgba(212, 173, 114, 0.12)' : 'rgba(27, 59, 111, 0.08)',
+                border: isDark ? '1px solid rgba(212, 173, 114, 0.32)' : '1px solid rgba(27, 59, 111, 0.22)',
               }}
               title="恢复所有文件夹为默认大小"
             >
@@ -1124,45 +1180,120 @@ export default function Home() {
             </button>
           </div>
 
-          {/* 分类速跳过滤胶囊栏 */}
-          <div className="flex flex-wrap items-center gap-1.5 mb-5" data-arsenal-filters>
-            <button
-              type="button"
-              onClick={() => setSelectedArsenalGroup('全部')}
-              className={`px-3 py-1 rounded-full text-xs font-medium transition-[transform,background-color,color] duration-150 active:scale-[0.96] border ${
-                selectedArsenalGroup === '全部'
-                  ? isDark
-                    ? 'bg-[#D4AD72] text-[#0E1116] border-[#D4AD72] font-semibold'
-                    : 'bg-[#1B3B6F] text-white border-[#1B3B6F] font-semibold'
-                  : isDark
-                  ? 'bg-white/[0.04] text-[#C5CBD6] border-white/10 hover:text-[#F2EDE4]'
-                  : 'bg-white text-[#42526B] border-[#E3E7F0] hover:text-[#0F1D33]'
-              }`}
-            >
-              {t.allGroups} ({totalToolCount})
-            </button>
-            {groupedSoftware.map((grp) => {
-              const active = selectedArsenalGroup === grp.group;
-              return (
+          {/* 分类速跳过滤胶囊栏 + 舞台内即时搜工具输入框 */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 mb-4" data-arsenal-filters>
+            <div className="flex flex-wrap items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => setSelectedArsenalGroup('全部')}
+                className={`px-3 py-1 rounded-full text-xs font-medium transition-[transform,background-color,color] duration-150 active:scale-[0.96] border ${
+                  selectedArsenalGroup === '全部'
+                    ? isDark
+                      ? 'bg-[#D4AD72] text-[#0E1116] border-[#D4AD72] font-semibold'
+                      : 'bg-[#1B3B6F] text-white border-[#1B3B6F] font-semibold'
+                    : isDark
+                    ? 'bg-white/[0.04] text-[#C5CBD6] border-white/10 hover:text-[#F2EDE4]'
+                    : 'bg-white text-[#42526B] border-[#E3E7F0] hover:text-[#0F1D33]'
+                }`}
+              >
+                {t.allGroups} ({totalToolCount})
+              </button>
+              {groupedSoftware.map((grp) => {
+                const active = selectedArsenalGroup === grp.group;
+                return (
+                  <button
+                    key={grp.group}
+                    type="button"
+                    onClick={() => setSelectedArsenalGroup(grp.group)}
+                    className={`px-2.5 py-1 rounded-full text-xs font-medium transition-[transform,background-color,color] duration-150 active:scale-[0.96] border ${
+                      active
+                        ? isDark
+                          ? 'bg-[#D4AD72] text-[#0E1116] border-[#D4AD72] font-semibold'
+                          : 'bg-[#1B3B6F] text-white border-[#1B3B6F] font-semibold'
+                        : isDark
+                        ? 'bg-white/[0.04] text-[#C5CBD6] border-white/10 hover:text-[#F2EDE4]'
+                        : 'bg-white text-[#42526B] border-[#E3E7F0] hover:text-[#0F1D33]'
+                    }`}
+                  >
+                    {grp.group} · {grp.items.length}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="relative w-full sm:w-56 shrink-0">
+              <Search
+                className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
+                style={{ color: isDark ? 'rgba(242, 233, 220, 0.45)' : '#64748B' }}
+              />
+              <input
+                type="text"
+                data-arsenal-search
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder={t.searchToolsPlaceholder}
+                className="w-full h-8 pl-8 pr-7 rounded-full text-xs border focus:outline-none transition-colors"
+                style={{
+                  background: isDark ? 'rgba(255, 255, 255, 0.05)' : '#FFFFFF',
+                  borderColor: isDark ? 'rgba(242, 233, 220, 0.14)' : 'rgba(15, 29, 51, 0.12)',
+                  color: isDark ? '#F2EDE4' : '#0F1D33',
+                }}
+              />
+              {searchQuery && (
                 <button
-                  key={grp.group}
                   type="button"
-                  onClick={() => setSelectedArsenalGroup(grp.group)}
-                  className={`px-2.5 py-1 rounded-full text-xs font-medium transition-[transform,background-color,color] duration-150 active:scale-[0.96] border ${
-                    active
-                      ? isDark
-                        ? 'bg-[#D4AD72] text-[#0E1116] border-[#D4AD72] font-semibold'
-                        : 'bg-[#1B3B6F] text-white border-[#1B3B6F] font-semibold'
-                      : isDark
-                      ? 'bg-white/[0.04] text-[#C5CBD6] border-white/10 hover:text-[#F2EDE4]'
-                      : 'bg-white text-[#42526B] border-[#E3E7F0] hover:text-[#0F1D33]'
-                  }`}
+                  onClick={() => setSearchQuery('')}
+                  aria-label="清除筛选"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full flex items-center justify-center opacity-65 hover:opacity-100"
+                  style={{ color: isDark ? '#F2EDE4' : '#0F1D33' }}
                 >
-                  {grp.group} · {grp.items.length}
+                  <X className="w-3 h-3" />
                 </button>
-              );
-            })}
+              )}
+            </div>
           </div>
+
+          {/* 最近打开直达条（点击任意工具后自动记录，最多 6 个） */}
+          {recentTools.length > 0 && !searchQuery && (
+            <div
+              data-arsenal-recent
+              className="mb-4 flex flex-wrap items-center gap-1.5 px-3 py-2 rounded-2xl border"
+              style={{
+                background: isDark ? 'rgba(255, 255, 255, 0.025)' : 'rgba(27, 59, 111, 0.03)',
+                borderColor: isDark ? 'rgba(242, 233, 220, 0.08)' : 'rgba(15, 29, 51, 0.07)',
+              }}
+            >
+              <span
+                className="text-[11px] font-medium mr-1 flex items-center gap-1"
+                style={{ color: isDark ? '#D4AD72' : '#1B3B6F' }}
+              >
+                <Clock className="w-3 h-3" />
+                {t.recentToolsLabel}
+              </span>
+              {recentTools.map((name) => {
+                const meta = toolLookup.get(name);
+                if (!meta) return null;
+                return (
+                  <a
+                    key={name}
+                    href={meta.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => recordRecentTool(name)}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium border transition-colors hover:brightness-110"
+                    style={{
+                      background: isDark ? 'rgba(255, 255, 255, 0.05)' : '#FFFFFF',
+                      borderColor: isDark ? 'rgba(242, 233, 220, 0.12)' : 'rgba(15, 29, 51, 0.1)',
+                      color: isDark ? '#E8E2D6' : '#0F1D33',
+                    }}
+                  >
+                    <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: meta.color }} />
+                    <span>{meta.name}</span>
+                  </a>
+                );
+              })}
+            </div>
+          )}
 
           <div ref={toolsContainerRef} className={`${mobileStyles.tools} relative`} style={{ height: layout.placed.length ? layout.height : undefined }}>
             {filteredSoftware.length > 0 ? (
@@ -1177,41 +1308,66 @@ export default function Home() {
                     className={`${mobileStyles.folder} absolute hover:z-20`}
                     style={{ left: x, top: y, width: w }}
                   >
-                    {/* 桌面文件夹容器：双态自适应 + 右下角拖拽改变宽度和数量 */}
+                    {/* 桌面文件夹容器：顶边微光高亮 + 悬停氛围光 + 标题栏右置「全部 ↗」 + 右下角安静缩放标 */}
                     <div
-                      className={`relative rounded-[24px] p-4 transition-colors duration-200 ${
+                      className={`group/folder relative rounded-[24px] p-4 transition-all duration-200 ${
                         resizing === group.group ? 'ring-2 ring-[#D4AD72] shadow-2xl' : ''
                       }`}
                       style={{
                         background: isDark
-                          ? 'linear-gradient(165deg, rgba(30, 36, 48, 0.94) 0%, rgba(20, 24, 33, 0.98) 100%)'
+                          ? 'linear-gradient(165deg, rgba(28, 34, 46, 0.92) 0%, rgba(19, 23, 32, 0.96) 100%)'
                           : 'linear-gradient(165deg, #FFFFFF 0%, #F7F8FB 100%)',
                         border: isDark
-                          ? '1px solid rgba(212, 173, 114, 0.26)'
-                          : '1px solid rgba(15, 29, 51, 0.10)',
+                          ? '1px solid rgba(242, 233, 220, 0.11)'
+                          : '1px solid rgba(15, 29, 51, 0.09)',
                         boxShadow: isDark
-                          ? '0 14px 34px rgba(0, 0, 0, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.06)'
-                          : '0 10px 26px rgba(15, 29, 51, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.95)',
+                          ? '0 14px 34px rgba(0, 0, 0, 0.36), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
+                          : '0 10px 26px rgba(15, 29, 51, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.95)',
                       }}
                     >
-                      {/* 文件夹内部标题栏 */}
+                      {/* 顶缘玻璃高光 + 悬停左侧品牌主题微光条 */}
                       <div
-                        className="flex items-center justify-between mb-3.5 pl-2.5 border-l-[3px] h-9"
+                        aria-hidden="true"
+                        className="pointer-events-none absolute top-0 inset-x-6 h-px rounded-full opacity-0 group-hover/folder:opacity-100 transition-opacity duration-300"
+                        style={{
+                          background: `linear-gradient(90deg, transparent 5%, ${barColor}B3 50%, transparent 95%)`,
+                        }}
+                      />
+
+                      {/* 文件夹内部标题栏：左侧分类名与总数 + 右侧轻量「全部 XX ↗」胶囊 */}
+                      <div
+                        className="flex items-center justify-between gap-2 mb-3 pl-2.5 border-l-[3px] h-9"
                         style={{ borderLeftColor: barColor }}
                       >
-                        <h2 className="flex items-center gap-2 text-base md:text-lg font-bold truncate" style={{ color: isDark ? '#F2E9DC' : '#0F1D33' }}>
+                        <h2 className="flex items-center gap-2 text-base md:text-lg font-bold truncate min-w-0" style={{ color: isDark ? '#F2E9DC' : '#0F1D33' }}>
                           <span className="truncate">{group.group}</span>
                           <span
-                            className="text-xs font-semibold px-2.5 py-0.5 rounded-full flex-shrink-0"
+                            className="text-xs font-semibold px-2 py-0.5 rounded-full flex-shrink-0"
                             style={{
                               color: isDark ? '#D4AD72' : '#1B3B6F',
-                              background: isDark ? 'rgba(212, 173, 114, 0.15)' : '#EEF2F8',
-                              border: isDark ? '1px solid rgba(212, 173, 114, 0.35)' : '1px solid rgba(27, 59, 111, 0.18)',
+                              background: isDark ? 'rgba(212, 173, 114, 0.13)' : '#EEF2F8',
+                              border: isDark ? '1px solid rgba(212, 173, 114, 0.28)' : '1px solid rgba(27, 59, 111, 0.16)',
                             }}
                           >
                             {group.items.length}
                           </span>
                         </h2>
+
+                        {hiddenCount > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => setPreviewGroup(group.group)}
+                            className="shrink-0 px-2.5 py-1 rounded-full text-[11px] font-medium transition-[transform,background-color] duration-150 active:scale-[0.96] cursor-pointer"
+                            style={{
+                              color: isDark ? '#D4AD72' : '#1B3B6F',
+                              background: isDark ? 'rgba(212, 173, 114, 0.1)' : 'rgba(27, 59, 111, 0.06)',
+                              border: isDark ? '1px solid rgba(212, 173, 114, 0.24)' : '1px solid rgba(27, 59, 111, 0.16)',
+                            }}
+                            title="预览全部工具"
+                          >
+                            {t.allToolsBtn.replace('{count}', String(group.items.length))}
+                          </button>
+                        )}
                       </div>
 
                       {/* 桌面图标网格 */}
@@ -1234,33 +1390,18 @@ export default function Home() {
                               desc={item.desc}
                               color={color}
                               isDark={isDark}
+                              onVisit={recordRecentTool}
                             />
                           );
                         })}
                       </div>
-
-                      {hiddenCount > 0 && (
-                        <button
-                          onClick={() => setPreviewGroup(group.group)}
-                          className="mt-3 w-full h-9 rounded-xl text-xs font-medium transition-[transform,filter] duration-150 active:scale-[0.98] flex items-center justify-center gap-2 hover:brightness-110"
-                          style={{
-                            border: isDark ? '1px dashed rgba(212, 173, 114, 0.36)' : '1px dashed rgba(27, 59, 111, 0.28)',
-                            background: isDark ? 'rgba(212, 173, 114, 0.08)' : 'rgba(27, 59, 111, 0.05)',
-                            color: isDark ? '#D4AD72' : '#1B3B6F',
-                          }}
-                          title="预览全部工具"
-                        >
-                          <span className="text-base tracking-widest leading-none font-bold">···</span>
-                          <span>{t.allToolsBtn.replace('{count}', String(group.items.length))}</span>
-                        </button>
-                      )}
 
                       {!isSearching && !isMobile && (
                         <div
                           onMouseDown={(e) => { e.preventDefault(); startResize(group.group, e.clientX, e.clientY); }}
                           onTouchStart={(e) => { startResize(group.group, e.touches[0].clientX, e.touches[0].clientY); }}
                           title="拖动调整文件夹大小"
-                          className="absolute bottom-2 right-2 z-20 w-4 h-4 cursor-nwse-resize transition-opacity opacity-60 hover:opacity-100"
+                          className="absolute bottom-2.5 right-2.5 z-20 w-3.5 h-3.5 cursor-nwse-resize transition-opacity opacity-20 group-hover/folder:opacity-75 hover:!opacity-100"
                           style={{ color: isDark ? '#D4AD72' : '#1B3B6F' }}
                         >
                           <svg viewBox="0 0 16 16" className="w-full h-full" fill="none">
@@ -1303,6 +1444,8 @@ export default function Home() {
             group={g.group}
             items={g.items}
             brandColors={brandColors}
+            isDark={isDark}
+            onVisit={recordRecentTool}
             onClose={() => setPreviewGroup(null)}
           />
         );

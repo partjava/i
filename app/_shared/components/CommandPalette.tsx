@@ -172,10 +172,10 @@ export default function CommandPalette() {
       {
         id: 'act-ai',
         category: 'action',
-        title: '打开「禾桔」AI 伴学助手',
+        title: '打开「禾硙」AI 伴学助手',
         subtitle: '随时提问课程知识点、代码调试与错题点拨',
         badge: 'AI 助教',
-        keywords: 'ai 禾桔 助手 机器人 对话 chat bot',
+        keywords: 'ai 禾硙 助手 机器人 对话 chat bot',
         icon: 'bot',
         action: () =>
           window.dispatchEvent(new CustomEvent('toggle-ai-chat', { detail: { forceOpen: true } })),

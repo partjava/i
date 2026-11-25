@@ -21,7 +21,7 @@ const EVENT_NAME = 'partjava-pet-companion-event';
 const SPEAK_STATE_EVENT = 'partjava-pet-speaking-state';
 
 /**
- * 向全站顶栏 AI 助手按钮与 3D 灵宠「禾桔」广播主动伴学事件
+ * 向全站顶栏 AI 助手按钮与 3D 灵宠「禾硙」广播主动伴学事件
  */
 export function emitPetCompanionEvent(detail: PetCompanionEventDetail) {
   if (typeof window === 'undefined') return;
@@ -52,7 +52,7 @@ export function subscribePetCompanionEvent(
 }
 
 /**
- * 使用浏览器 Web Speech API 让「禾桔」朗读指定文本，并同步广播口型开合状态
+ * 使用浏览器 Web Speech API 让「禾硙」朗读指定文本，并同步广播口型开合状态
  */
 export function speakWithHeju(text: string, onEnd?: () => void) {
   if (typeof window === 'undefined' || !('speechSynthesis' in window)) {

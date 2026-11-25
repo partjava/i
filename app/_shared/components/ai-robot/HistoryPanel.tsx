@@ -4,7 +4,7 @@ export default function HistoryPanel({sessions, loading, error, signedIn, disabl
   sessions: ArchivedConversation[]; loading: boolean; error: string | null; signedIn: boolean; disabled: boolean; activeId: number | null;
   onChoose: (id: number) => void; onRefresh: () => void; onNew: () => void; onCurrent: () => void; onClose: () => void;
 }) {
-  return <section role="dialog" aria-label="禾桔对话历史" className="absolute inset-x-3 top-4 sm:left-auto sm:right-5 sm:w-[420px] z-40 max-h-[75%] flex flex-col rounded-2xl border border-[#D4AD72]/40 bg-[#151921] text-[#F2EDE4] shadow-2xl">
+  return <section role="dialog" aria-label="禾硙对话历史" className="absolute inset-x-3 top-4 sm:left-auto sm:right-5 sm:w-[420px] z-40 max-h-[75%] flex flex-col rounded-2xl border border-[#D4AD72]/40 bg-[#151921] text-[#F2EDE4] shadow-2xl">
     <div className="flex items-center justify-between gap-2 p-4 border-b border-white/10">
       <strong>对话历史</strong><button onClick={onClose} aria-label="关闭对话历史">关闭</button>
     </div>

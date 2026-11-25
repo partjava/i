@@ -126,7 +126,7 @@ export default function RegisterPage() {
   return (
     <div className="min-h-[calc(100vh-70px)] flex flex-col bg-surface-page relative overflow-hidden font-sans text-content-primary transition-colors">
       <div className="flex-1 flex">
-      {/* 左侧：品牌展示与禾桔灵宠互动舞台 */}
+      {/* 左侧：品牌展示与禾硙灵宠互动舞台 */}
       <div className="hidden lg:flex lg:w-[50%] relative overflow-hidden z-10 bg-surface-muted border-r border-line-subtle">
         <div className="relative z-10 flex flex-col justify-center w-full max-w-xl mx-auto px-12 xl:px-16 py-8">
           <div className="text-center mb-5">
@@ -146,11 +146,11 @@ export default function RegisterPage() {
             </p>
           </div>
 
-          {/* 禾桔黑猫互动舞台 */}
+          {/* 禾硙黑猫互动舞台 */}
           <div className="relative flex flex-col items-center justify-center mb-5 bg-white/95 pt-5 pb-3 px-6 rounded-3xl border border-line-subtle shadow-[0_12px_36px_rgba(15,23,42,0.06)]">
             <div className="absolute top-3 left-4 flex items-center gap-1.5 text-[11px] font-mono text-slate-500">
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
-              <span>禾桔隐私护航</span>
+              <span>禾硙隐私护航</span>
             </div>
             <div className="absolute top-3 right-4 text-[11px] text-[#1B3B6F] font-medium">
               {focusField === 'password' || focusField === 'confirm'

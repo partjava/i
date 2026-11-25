@@ -18,8 +18,10 @@ import {
   User,
   LayoutGrid,
   Gamepad2,
+  Library,
   type LucideIcon,
 } from 'lucide-react';
+import { getAuthHeaders } from '@shared/lib/auth-client';
 import { navigationItems, NavigationItems, NavigationItem } from '../data/navigation';
 
 // 创建侧边栏上下文
@@ -169,6 +171,38 @@ export default function Sidebar() {
   const initialized = useRef(false);
   const itemRefs = useRef<{ [key: string]: HTMLButtonElement | null }>({});
   const { isOpen, setIsOpen, collapsed, toggleCollapsed, side, setSide } = useSidebar();
+  const { status: authStatus } = useAuth();
+  const [recentPdfBooks, setRecentPdfBooks] = useState<Array<{ id: number; title: string; lastPage: number; pageCount: number }>>([]);
+  const [bookshelfOpen, setBookshelfOpen] = useState(false);
+
+  useEffect(() => {
+    if (authStatus !== 'authenticated') {
+      setRecentPdfBooks([]);
+      return;
+    }
+    let cancelled = false;
+    const loadRecent = () => {
+      fetch('/api/pdf-books', { headers: { ...getAuthHeaders() }, cache: 'no-store' })
+        .then((r) => (r.ok ? r.json() : null))
+        .then((json) => {
+          if (cancelled || !json?.success || !Array.isArray(json.data)) return;
+          setRecentPdfBooks(json.data.slice(0, 5));
+        })
+        .catch(() => {});
+    };
+    loadRecent();
+    window.addEventListener('pdf-library-updated', loadRecent);
+    return () => {
+      cancelled = true;
+      window.removeEventListener('pdf-library-updated', loadRecent);
+    };
+  }, [authStatus]);
+
+  useEffect(() => {
+    if (pathname.startsWith('/study/library')) {
+      setBookshelfOpen(true);
+    }
+  }, [pathname]);
   const dragStartX = useRef(0);
   const dragActive = useRef(false);
   const offsetRef = useRef(0);
@@ -518,6 +552,91 @@ export default function Sidebar() {
                 </div>
               );
             })}
+
+            {/* 我的书架（个人 PDF 图书馆入口，紧邻四大学科下方） */}
+            <div>
+              {(() => {
+                const shelfActive = pathname.startsWith('/study/library');
+                return (
+                  <div
+                    className={`w-full flex items-center gap-1 rounded-lg transition-colors ${
+                      shelfActive
+                        ? 'text-gray-900 bg-white/70 font-semibold'
+                        : 'text-gray-600 hover:bg-white/50 hover:text-gray-900'
+                    }`}
+                  >
+                    <Link
+                      href="/study/library"
+                      onClick={handleLinkClick}
+                      data-sidebar-node
+                      aria-current={shelfActive ? 'page' : undefined}
+                      className="flex-1 flex items-center gap-2.5 px-2.5 py-2 text-sm font-medium min-w-0"
+                    >
+                      <span
+                        className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+                        style={{ background: '#B8862E18', color: '#B8862E' }}
+                      >
+                        <Library className="w-4 h-4" />
+                      </span>
+                      <span className="flex-1 text-left truncate">我的书架</span>
+                      {recentPdfBooks.length > 0 && (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-300 tabular-nums">
+                          {recentPdfBooks.length}
+                        </span>
+                      )}
+                    </Link>
+                    {recentPdfBooks.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => setBookshelfOpen((prev) => !prev)}
+                        aria-label="展开最近阅读书籍"
+                        aria-expanded={bookshelfOpen}
+                        className="p-2 mr-1 rounded-md text-gray-400 hover:text-gray-800 transition-colors"
+                      >
+                        <svg
+                          className={`w-3.5 h-3.5 transition-transform duration-300 ${bookshelfOpen ? 'rotate-90' : ''}`}
+                          fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </button>
+                    )}
+                  </div>
+                );
+              })()}
+
+              {recentPdfBooks.length > 0 && (
+                <div className={`grid transition-all duration-300 ${bookshelfOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
+                  <div className="overflow-hidden">
+                    <div data-sidebar-branch className="ml-5 pl-4 border-l-2 border-white/10 space-y-0.5 my-1">
+                      {recentPdfBooks.map((book) => {
+                        const href = `/study/library/${book.id}`;
+                        const active = pathname === href;
+                        return (
+                          <Link
+                            key={book.id}
+                            href={href}
+                            onClick={handleLinkClick}
+                            data-sidebar-node
+                            aria-current={active ? 'page' : undefined}
+                            className={`flex items-center justify-between gap-2 px-2.5 py-1.5 text-xs rounded-lg transition-colors ${
+                              active
+                                ? 'bg-white/80 text-gray-900 font-semibold'
+                                : 'text-gray-500 hover:bg-white/50 hover:text-gray-900'
+                            }`}
+                          >
+                            <span className="truncate">{book.title}</span>
+                            <span className="text-[10px] text-gray-400 shrink-0 tabular-nums">
+                              P.{book.lastPage || 1}
+                            </span>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
           </nav>
 
           {/* 底部快捷入口 */}

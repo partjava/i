@@ -217,8 +217,8 @@ export const QuizWorkspace: React.FC<QuizWorkspaceProps> = ({
         } else if (resultStatus !== 'ACCEPTED' && resultStatus !== 'EXECUTED' && resultStatus !== 'CANCELLED') {
           emitPetCompanionEvent({
             type: 'error_diagnosis',
-            title: '禾桔发现报错喵~',
-            message: `别灰心！「${challengeResultLabel(execution.mode, resultStatus)}」已捕获，点击控制台的「✨ 禾桔诊断修复」查看一键修复补丁吧！`,
+            title: '禾硙发现报错喵~',
+            message: `别灰心！「${challengeResultLabel(execution.mode, resultStatus)}」已捕获，点击控制台的「✨ 禾硙诊断修复」查看一键修复补丁吧！`,
             promptToAsk: `我在关卡【${detail.levelTitle || detail.name || selectedNodeName}】遇到报错：${challengeResultLabel(execution.mode, resultStatus)}，请给我一些思路提示`,
             mood: 'curious',
           });

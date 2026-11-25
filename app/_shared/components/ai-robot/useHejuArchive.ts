@@ -3,7 +3,7 @@ import { archiveRequest, type ArchivedConversation, type ArchivedMessage } from 
 import type { Message } from './types';
 
 export function welcomeMessages(): Message[] {
-  return [{ id: 'welcome-1', text: '我是禾桔，陪你一起学习。\n\n可以帮你解释知识点、找站内课程，或把对话整理成笔记。', sender: 'ai', timestamp: new Date() }];
+  return [{ id: 'welcome-1', text: '我是禾硙，陪你一起学习。\n\n可以帮你解释知识点、找站内课程，或把对话整理成笔记。', sender: 'ai', timestamp: new Date() }];
 }
 
 export function useHejuArchive(account: string | null, setMessages: React.Dispatch<React.SetStateAction<Message[]>>) {

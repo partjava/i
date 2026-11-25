@@ -61,7 +61,8 @@ public class SecurityConfig {
                 .requestMatchers("/api/admin/**").hasAnyRole("ADMIN", "OWNER")
                 // 其余写操作与个人数据接口要求登录
                 .requestMatchers("/api/challenges/**", "/api/notes/**", "/api/comments/**",
-                    "/api/user/**", "/api/challenge-drafts/**", "/api/execute-code/**").authenticated()
+                    "/api/user/**", "/api/challenge-drafts/**", "/api/execute-code/**",
+                    "/api/pdf-books/**").authenticated()
                 // 默认拒绝：未显式放行的路径一律需要认证（替换原 anyRequest().permitAll()）
                 .anyRequest().authenticated()
             )
@@ -92,7 +93,7 @@ public class SecurityConfig {
             "https://pyigpt.com",
             "http://pyigpt.com"
         ));
-        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-Requested-With"));
         configuration.setExposedHeaders(List.of("Authorization"));
         configuration.setAllowCredentials(true);

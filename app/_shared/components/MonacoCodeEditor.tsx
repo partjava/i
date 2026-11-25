@@ -140,7 +140,7 @@ public class Main {
 
 public class Main {
     public static void main(String[] args) {
-        Person dev = new Person("禾桔", 1);
+        Person dev = new Person("禾硙", 1);
         dev.introduce();
     }
 }`,
@@ -168,7 +168,7 @@ print("斐波那契前10项:", fibonacci(10))`,
     def greet(self):
         return f"我是 {self.name}，正在使用 {self.lang} 编写高性能服务。"
 
-coder = Developer("禾桔", "Python")
+coder = Developer("禾硙", "Python")
 print(coder.greet())`,
     'algorithm': `# 经典快速排序
 def quicksort(arr):
@@ -249,7 +249,7 @@ fetchMock().then(res => console.log(res));`,
   role: 'developer' | 'researcher';
 }
 
-const user: StudioUser = { id: 'TsuYi-禾桔', role: 'developer' };
+const user: StudioUser = { id: 'TsuYi-禾硙', role: 'developer' };
 console.log(\`欢迎 \${user.id}，权限角色: \${user.role}\`);`,
   },
   go: {
@@ -594,7 +594,7 @@ export default function MonacoCodeEditor({
     );
   }, [language]);
 
-  // 监听报错输出，向禾桔伴学广播
+  // 监听报错输出，向禾硙伴学广播
   useEffect(() => {
     if (
       output &&
@@ -607,7 +607,7 @@ export default function MonacoCodeEditor({
       emitPetCompanionEvent({
         type: 'error_diagnosis',
         title: '沙箱运行异常',
-        message: '检测到代码报错喵！可以点击控制台右上方「✨ 禾桔诊断修复」查看一键修复补丁哦~',
+        message: '检测到代码报错喵！可以点击控制台右上方「✨ 禾硙诊断修复」查看一键修复补丁哦~',
         mood: 'curious',
       });
     }
@@ -1211,7 +1211,7 @@ ${output ? `### 终端运行输出\n\`\`\`\n${output}\n\`\`\`\n` : ''}
                 title="根据当前输出诊断报错并一键生成热修复补丁"
               >
                 <Sparkles className="w-3.5 h-3.5 text-amber-200 animate-spin-slow" />
-                <span>{patchLoading ? '诊断中...' : '✨ 禾桔诊断修复'}</span>
+                <span>{patchLoading ? '诊断中...' : '✨ 禾硙诊断修复'}</span>
               </button>
             )}
           </div>
@@ -1360,7 +1360,7 @@ ${output ? `### 终端运行输出\n\`\`\`\n${output}\n\`\`\`\n` : ''}
                       {parsedOutputMeta?.isError && (
                         <div className="pt-3 mt-3 border-t border-rose-500/20 flex items-center justify-between">
                           <span className="text-rose-400/90 text-[11px]">
-                            💡 遇到编译或运行错误？禾桔大模型可自动剖析根因并输出
+                            💡 遇到编译或运行错误？禾硙大模型可自动剖析根因并输出
                             Diff 补丁。
                           </span>
                           <button
@@ -1464,7 +1464,7 @@ ${output ? `### 终端运行输出\n\`\`\`\n${output}\n\`\`\`\n` : ''}
         </div>
       </div>
 
-      {/* 禾桔 AI 诊断与热修复补丁弹窗 */}
+      {/* 禾硙 AI 诊断与热修复补丁弹窗 */}
       <InlineCodePatchModal
         open={showPatchModal}
         onClose={() => setShowPatchModal(false)}
