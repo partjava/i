@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { Maximize2, X } from 'lucide-react';
+import { useLocale, UI_DICT } from '../../lib/i18n';
 
 export type SanctuaryFocusTarget = 'monitor' | 'book' | 'lamp' | null;
 
@@ -23,6 +24,8 @@ export default function SanctuaryHero({
   embedded = false,
   focusTarget = null,
 }: SanctuaryHeroProps) {
+  const locale = useLocale();
+  const st = UI_DICT[locale].sanctuary;
   const containerRef = useRef<HTMLDivElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [fullscreenOpen, setFullscreenOpen] = useState(false);
@@ -187,12 +190,12 @@ export default function SanctuaryHero({
             />
             <span>
               {focusTarget === 'monitor'
-                ? '3D 书房 · 聚焦代码监视器'
+                ? st.focusMonitor
                 : focusTarget === 'book'
-                ? '3D 书房 · 聚焦全息技术手稿'
+                ? st.focusBook
                 : focusTarget === 'lamp'
-                ? '3D 书房 · 激活架构光域'
-                : '3D 书房 · 点击屏幕或书本直接互动'}
+                ? st.focusLamp
+                : st.focusDefault}
             </span>
           </div>
 
@@ -204,7 +207,7 @@ export default function SanctuaryHero({
             title="全屏沉浸式浏览 3D 数字书房"
           >
             <Maximize2 className="w-3 h-3" />
-            <span>全屏浏览</span>
+            <span>{st.fullscreen}</span>
           </button>
         </div>
 
@@ -246,7 +249,7 @@ export default function SanctuaryHero({
             className="fixed top-5 right-5 z-[110] inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#0E1116]/85 hover:bg-[#1B2230] border border-[#D4AD72]/40 text-xs text-[#F2EDE4] shadow-xl backdrop-blur-md transition-[transform,background-color] duration-150 active:scale-[0.96]"
           >
             <X className="w-3.5 h-3.5 text-[#D4AD72]" />
-            <span>退出全屏 (ESC)</span>
+            <span>{st.exitFullscreen}</span>
           </button>
           <iframe
             src="/sanctuary/index.html"

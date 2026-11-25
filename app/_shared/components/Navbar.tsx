@@ -24,7 +24,10 @@ import {
   Compass,
   Bot,
   Gamepad2,
+  Sun,
+  Moon,
 } from 'lucide-react';
+import { useLocale, UI_DICT } from '../lib/i18n';
 import { useSidebar } from './Sidebar';
 import SettingModal from './SettingModal';
 // three.js + VRM 体积大（~1MB+），必须懒加载，避免拖累全站首屏（与 BottomNavigation 保持一致）
@@ -56,8 +59,43 @@ export default function Navbar() {
   const [companionBubble, setCompanionBubble] = useState<PetCompanionEventDetail | null>(null);
   const [isHejuSpeaking, setIsHejuSpeaking] = useState(false);
   const [isPyiGpt, setIsPyiGpt] = useState(false);
+  const [isDark, setIsDark] = useState(false);
+  const locale = useLocale();
+  const t = UI_DICT[locale].nav;
   const [studyMenuOpen, setStudyMenuOpen] = useState(false);
   const studyMenuTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    const syncDark = () => setIsDark(document.body.classList.contains('dark'));
+    syncDark();
+    const observer = new MutationObserver(syncDark);
+    observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+    window.addEventListener('partjava-settings-change', syncDark);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('partjava-settings-change', syncDark);
+    };
+  }, []);
+
+  const toggleThemeMode = useCallback(() => {
+    const nextDark = !document.body.classList.contains('dark');
+    document.body.classList.toggle('dark', nextDark);
+    setIsDark(nextDark);
+    try {
+      localStorage.setItem('theme', nextDark ? 'dark' : 'light');
+      const raw = localStorage.getItem('user_settings');
+      const parsed = raw ? JSON.parse(raw) : {};
+      localStorage.setItem(
+        'user_settings',
+        JSON.stringify({ ...parsed, theme: nextDark ? 'dark' : 'light', darkMode: nextDark })
+      );
+    } catch {}
+    window.dispatchEvent(
+      new CustomEvent('partjava-settings-change', {
+        detail: { theme: nextDark ? 'dark' : 'light', darkMode: nextDark },
+      })
+    );
+  }, []);
 
   const openStudyMenu = useCallback(() => {
     if (studyMenuTimerRef.current) {
@@ -178,31 +216,31 @@ export default function Navbar() {
     {
       key: 'profile',
       icon: <UserOutlined />,
-      label: '个人资料',
+      label: t.menuProfile,
       onClick: () => router.push('/profile'),
     },
     {
       key: 'notes',
       icon: <EditOutlined />,
-      label: '我的笔记',
+      label: t.menuNotes,
       onClick: () => router.push('/notes'),
     },
     {
       key: 'settings',
       icon: <SettingOutlined />,
-      label: '设置',
+      label: t.menuSettings,
       onClick: () => setSettingOpen(true),
     },
     {
       key: 'vip',
       icon: <CrownOutlined style={{ color: '#D4AD72' }} />,
-      label: '会员中心',
+      label: t.menuVip,
       onClick: () => setShowVip(true),
     },
     {
       key: 'game',
       icon: <Gamepad2 className="w-3.5 h-3.5 text-[#D4AD72]" />,
-      label: '极客解压室',
+      label: t.menuGame,
       onClick: () => router.push('/tools/game'),
     },
     // 如果具备管理员权限，动态增加”后台管理”入口链接
@@ -210,7 +248,7 @@ export default function Navbar() {
       {
         key: 'admin',
         icon: <SettingOutlined style={{ color: '#D4AD72' }} />,
-        label: '后台管理',
+        label: t.menuAdmin,
         onClick: () => router.push('/admin'),
       }
     ] : []),
@@ -220,7 +258,7 @@ export default function Navbar() {
     {
       key: 'logout',
       icon: <LogoutOutlined />,
-      label: '退出登录',
+      label: t.menuLogout,
       onClick: handleSignOut,
     },
   ];
@@ -274,12 +312,12 @@ export default function Navbar() {
           <div className="hidden md:flex items-center space-x-1 lg:space-x-1.5">
             <Link href={homeHref} data-nav-item aria-current={isActive(homeHref) ? 'page' : undefined} className={navItemClass(homeHref)}>
               <Home className="w-4 h-4 mb-0.5" strokeWidth={1.75} />
-              <span className="text-[11px] leading-tight">首页</span>
+              <span className="text-[11px] leading-tight">{t.home}</span>
             </Link>
 
             <Link href="/notes" data-nav-item aria-current={isActive('/notes') ? 'page' : undefined} className={navItemClass('/notes')}>
               <PenLine className="w-4 h-4 mb-0.5" strokeWidth={1.75} />
-              <span className="text-[11px] leading-tight">笔记</span>
+              <span className="text-[11px] leading-tight">{t.notes}</span>
             </Link>
 
             <Link
@@ -295,22 +333,22 @@ export default function Navbar() {
               className={navItemClass('/knowledge-graph')}
             >
               <Network className="w-4 h-4 mb-0.5" strokeWidth={1.75} />
-              <span className="text-[11px] leading-tight">图谱</span>
+              <span className="text-[11px] leading-tight">{t.graph}</span>
             </Link>
 
             <Link href="/profile" data-nav-item aria-current={isActive('/profile') ? 'page' : undefined} className={navItemClass('/profile')}>
               <User className="w-4 h-4 mb-0.5" strokeWidth={1.75} />
-              <span className="text-[11px] leading-tight">{session ? '资料' : '数据'}</span>
+              <span className="text-[11px] leading-tight">{session ? t.profile : t.data}</span>
             </Link>
 
             <Link href="/code/editor" data-nav-item aria-current={isActive('/code') ? 'page' : undefined} className={navItemClass('/code')}>
               <Code2 className="w-4 h-4 mb-0.5" strokeWidth={1.75} />
-              <span className="text-[11px] leading-tight">代码</span>
+              <span className="text-[11px] leading-tight">{t.code}</span>
             </Link>
 
             <Link href="/challenges" data-nav-item aria-current={isActive('/challenges') ? 'page' : undefined} className={navItemClass('/challenges')}>
               <Compass className="w-4 h-4 mb-0.5" strokeWidth={1.75} />
-              <span className="text-[11px] leading-tight">挑战</span>
+              <span className="text-[11px] leading-tight">{t.challenges}</span>
             </Link>
 
             <button
@@ -320,7 +358,7 @@ export default function Navbar() {
               title={robotPreloaded ? '3D 伴学机器人已就绪' : '正在加载机器人...'}
             >
               <Bot className="w-4 h-4 mb-0.5" strokeWidth={1.75} />
-              <span className="text-[11px] leading-tight">机器人</span>
+              <span className="text-[11px] leading-tight">{t.robot}</span>
             </button>
           </div>
         </div>
@@ -342,7 +380,7 @@ export default function Navbar() {
             />
             <GlobalSearch
               className="w-full liquid-glass-search"
-              placeholder="搜索课程、工具、笔记... (Ctrl+K)"
+              placeholder={t.searchPlaceholder}
               size="middle"
             />
           </div>
@@ -474,8 +512,23 @@ export default function Navbar() {
           )}
         </div>
 
-        {/* 🏝️ 右侧：学习计时器 + 用户状态与通知液态玻璃胶囊 */}
+        {/* 🏝️ 右侧：深浅主题一键切换 + 学习计时器 + 用户状态与通知液态玻璃胶囊 */}
         <div className="flex items-center gap-2 shrink-0">
+          <Tooltip title={isDark ? t.themeToLight : t.themeToDark}>
+            <button
+              type="button"
+              data-theme-toggle
+              onClick={toggleThemeMode}
+              aria-label={isDark ? t.themeToLight : t.themeToDark}
+              className="h-10 w-10 rounded-full bg-surface-raised border border-line-subtle text-content-primary hover:border-brand-primary/45 hover:text-brand-primary shadow-sm flex items-center justify-center transition-[transform,border-color,color,background-color] duration-150 active:scale-[0.94] cursor-pointer shrink-0"
+            >
+              {isDark ? (
+                <Sun className="w-4 h-4 text-[#D4AD72] transition-transform duration-300 rotate-0" />
+              ) : (
+                <Moon className="w-4 h-4 text-brand-primary transition-transform duration-300 rotate-0" />
+              )}
+            </button>
+          </Tooltip>
           <SimpleLearningTracker variant="navbar" />
         <div
           className="relative flex items-center h-14 px-3 sm:px-3.5 rounded-full backdrop-blur-2xl backdrop-saturate-150 border border-white/75 dark:border-white/20 space-x-2 overflow-hidden"
@@ -550,13 +603,13 @@ export default function Navbar() {
                 onClick={() => router.push('/auth/login')}
                 className="px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-semibold text-content-primary hover:text-brand-primary hover:bg-white/35 transition-[transform,color,background-color] duration-150 active:scale-[0.96]"
               >
-                登录
+                {t.login}
               </button>
               <button
                 onClick={() => router.push('/auth/register')}
                 className="px-4 py-1.5 rounded-full text-xs sm:text-sm font-semibold text-content-inverse bg-brand-primary hover:bg-brand-hover shadow-sm transition-[transform,background-color] duration-150 active:scale-[0.96]"
               >
-                注册
+                {t.register}
               </button>
             </div>
           )}
@@ -579,10 +632,10 @@ export default function Navbar() {
           <div className="flex items-center justify-between gap-4 pb-3 mb-4 border-b border-line-subtle">
             <div className="flex items-center gap-2.5">
               <span className="px-2.5 py-0.5 rounded-lg bg-brand-soft text-brand-primary text-xs font-bold">
-                学习中心
+                {t.megaBadge}
               </span>
               <span className="text-xs text-content-muted">
-                41 门全栈体系课程 · 悬停快速直达
+                {t.megaSub}
               </span>
             </div>
             <Link
@@ -590,7 +643,7 @@ export default function Navbar() {
               onClick={() => setStudyMenuOpen(false)}
               className="text-xs font-semibold text-brand-primary hover:underline"
             >
-              查看全栈知识图谱 →
+              {t.megaLink}
             </Link>
           </div>
 

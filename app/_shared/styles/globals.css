@@ -216,9 +216,31 @@ body.dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
 }
 
 body.dark .ant-modal-content,
-body.dark .ant-dropdown-menu {
+body.dark .ant-dropdown .ant-dropdown-menu {
   background-color: #151921;
   color: #F2EDE4;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 20px 44px rgba(0, 0, 0, 0.55);
+}
+
+body.dark .ant-dropdown .ant-dropdown-menu-item,
+body.dark .ant-dropdown .ant-dropdown-menu-title-content,
+body.dark .ant-dropdown .ant-dropdown-menu-item-icon {
+  color: #F2EDE4;
+}
+
+body.dark .ant-dropdown .ant-dropdown-menu-item:hover {
+  background-color: rgba(212, 173, 114, 0.14);
+  color: #D4AD72;
+}
+
+body.dark .ant-dropdown .ant-dropdown-menu-item:hover .ant-dropdown-menu-title-content,
+body.dark .ant-dropdown .ant-dropdown-menu-item:hover .ant-dropdown-menu-item-icon {
+  color: #D4AD72;
+}
+
+body.dark .ant-dropdown .ant-dropdown-menu-item-divider {
+  background-color: rgba(255, 255, 255, 0.10);
 }
 
 /* 基础样式 */

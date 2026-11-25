@@ -172,13 +172,14 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
     try {
       setTtsOn(window.localStorage.getItem('partjava-tts-on') === '1');
       setEdgeAiOn(window.localStorage.getItem('partjava-edge-ai') === '1');
-      const savedTheme = window.localStorage.getItem('heju-paper-theme');
-      if (savedTheme !== null) {
-        setPaperTheme(savedTheme === '1');
-      } else {
-        setPaperTheme(!document.body.classList.contains('dark'));
-      }
+      setPaperTheme(!document.body.classList.contains('dark'));
     } catch {}
+    const syncGlobalTheme = () => {
+      setPaperTheme(!document.body.classList.contains('dark'));
+    };
+    const bodyObserver = new MutationObserver(syncGlobalTheme);
+    bodyObserver.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+    window.addEventListener('partjava-settings-change', syncGlobalTheme);
     const rec = loadAffection();
     const days = (Date.now() - rec.lastSeen) / 86400000;
     if (days > 1.5) {
@@ -198,7 +199,11 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
     // 页面关闭时持久化最近陪伴时间
     const onHide = () => saveAffection({ score: affectionRef.current, lastSeen: Date.now() });
     window.addEventListener('beforeunload', onHide);
-    return () => window.removeEventListener('beforeunload', onHide);
+    return () => {
+      window.removeEventListener('beforeunload', onHide);
+      bodyObserver.disconnect();
+      window.removeEventListener('partjava-settings-change', syncGlobalTheme);
+    };
   }, []);
 
   const affectionRef = useRef(affection);
@@ -861,19 +866,23 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
           {showSettings && (
             <div id="study-room-settings" className={styles.settings} role="region" aria-label="书房设置">
               <div className={styles.settingsTitle}>书房与禾桔</div>
-              <div className="flex items-center bg-[#0E1116]/90 p-0.5 rounded-lg border border-[#D4AD72]/30">
+              <div className={`flex items-center p-0.5 rounded-lg border ${paperTheme ? 'bg-[#F4F5F7] border-[#D0D7E3]' : 'bg-[#0E1116]/90 border-[#D4AD72]/30'}`}>
                 <button
                   onClick={() => activatePostureModel('standing')}
-                  className={`px-2.5 py-1 rounded-md text-xs font-medium transition-all ${
-                    posture === 'standing' ? 'bg-[#D4AD72] text-[#0E1116] shadow-sm font-semibold' : 'text-[#CBD5E1] hover:text-white'
+                  className={`px-2.5 py-1 rounded-md text-xs font-medium transition-[transform,background-color,color] duration-150 active:scale-[0.97] ${
+                    posture === 'standing'
+                      ? (paperTheme ? 'bg-[#1B3B6F] !text-white shadow-sm font-semibold' : 'bg-[#D4AD72] !text-[#0E1116] shadow-sm font-semibold')
+                      : (paperTheme ? '!bg-transparent !text-[#42526B] hover:!text-[#0F1D33]' : '!bg-transparent !text-[#CBD5E1] hover:!text-white')
                   }`}
                 >
                   🐱 乖巧坐姿
                 </button>
                 <button
                   onClick={() => activatePostureModel('crouching')}
-                  className={`px-2.5 py-1 rounded-md text-xs font-medium transition-all ${
-                    posture === 'crouching' ? 'bg-[#D4AD72] text-[#0E1116] shadow-sm font-semibold' : 'text-[#CBD5E1] hover:text-white'
+                  className={`px-2.5 py-1 rounded-md text-xs font-medium transition-[transform,background-color,color] duration-150 active:scale-[0.97] ${
+                    posture === 'crouching'
+                      ? (paperTheme ? 'bg-[#1B3B6F] !text-white shadow-sm font-semibold' : 'bg-[#D4AD72] !text-[#0E1116] shadow-sm font-semibold')
+                      : (paperTheme ? '!bg-transparent !text-[#42526B] hover:!text-[#0F1D33]' : '!bg-transparent !text-[#CBD5E1] hover:!text-white')
                   }`}
                 >
                   🐾 爬起站姿
@@ -882,7 +891,11 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
 
               <button
                 onClick={() => { setShowBubble(true); setBubbleSide(prev => (prev === 'right' ? 'left' : 'right')); }}
-                className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs border border-[#D4AD72]/40 bg-[#1C222D] text-[#F2EDE4] hover:bg-[#D4AD72]/20 transition-all"
+                className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs border transition-[transform,background-color,color] duration-150 active:scale-[0.97] ${
+                  paperTheme
+                    ? '!border-[#D0D7E3] !bg-[#F4F5F7] !text-[#0F1D33] hover:!bg-[#EBEEF3]'
+                    : '!border-[#D4AD72]/40 !bg-[#1C222D] !text-[#F2EDE4] hover:!bg-[#D4AD72]/20'
+                }`}
                 title="调整聊天窗位置"
               >
                 {bubbleSide === 'right' ? '聊天窗移到左侧' : '聊天窗移到右侧'}
@@ -890,7 +903,11 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
 
               <button
                 onClick={handlePetCat}
-                className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs border border-[#D4AD72]/40 bg-[#D4AD72]/15 text-[#F2EDE4] hover:bg-[#D4AD72]/30 transition-all"
+                className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs border font-medium transition-[transform,background-color,color] duration-150 active:scale-[0.97] ${
+                  paperTheme
+                    ? '!border-[#D4AD72] !bg-[#FDF6E9] !text-[#7A5418] hover:!bg-[#FAECD2]'
+                    : '!border-[#D4AD72]/50 !bg-[#1C222D] !text-[#F2EDE4] hover:!bg-[#D4AD72]/25'
+                }`}
                 title="点击触发 ^ ^ 眯眼笑跳跃互动"
               >
                 摸摸禾桔
@@ -898,10 +915,10 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
 
               <button
                 onClick={() => { setShowTuningPanel(!showTuningPanel); setShowSettings(false); }}
-                className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs border transition-all ${
+                className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs border transition-[transform,background-color,color] duration-150 active:scale-[0.97] ${
                   showTuningPanel
-                    ? 'bg-[#D4AD72] text-[#0E1116] border-[#D4AD72] font-semibold'
-                    : 'bg-[#1C222D] border-white/15 text-[#CBD5E1] hover:text-white'
+                    ? (paperTheme ? '!bg-[#1B3B6F] !text-white !border-[#1B3B6F] font-semibold' : '!bg-[#D4AD72] !text-[#0E1116] !border-[#D4AD72] font-semibold')
+                    : (paperTheme ? '!bg-[#F4F5F7] !border-[#D0D7E3] !text-[#0F1D33] hover:!bg-[#EBEEF3]' : '!bg-[#1C222D] !border-white/15 !text-[#F2EDE4] hover:!bg-[#252D3B]')
                 }`}
               >
                 五官与毛色微调
@@ -909,10 +926,10 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
 
               <button
                 onClick={toggleVirtualProps}
-                className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs border transition-all ${
+                className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs border font-medium transition-[transform,background-color,color] duration-150 active:scale-[0.97] ${
                   showVirtualProps
-                    ? 'bg-[#56b6c2]/20 border-[#56b6c2]/50 text-[#a8e4ec]'
-                    : 'bg-[#1C222D] border-white/15 text-[#CBD5E1]'
+                    ? (paperTheme ? '!bg-[#E6F4EF] !border-[#1F7A5C]/40 !text-[#145841] hover:!bg-[#D5ECE4]' : '!bg-[#1E2A38] !border-[#67D9D2]/50 !text-[#9BECE6] hover:!bg-[#243445]')
+                    : (paperTheme ? '!bg-[#F4F5F7] !border-[#D0D7E3] !text-[#42526B] hover:!text-[#0F1D33]' : '!bg-[#1C222D] !border-white/15 !text-[#CBD5E1] hover:!text-[#F2EDE4]')
                 }`}
                 title="显示或隐藏猫身边的配饰"
               >
@@ -927,10 +944,10 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
                     return next;
                   });
                 }}
-                className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs border transition-all ${
+                className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs border font-semibold transition-[transform,background-color,color] duration-150 active:scale-[0.97] ${
                   paperTheme
-                    ? 'bg-[#D4AD72] text-[#0E1116] border-[#D4AD72] font-semibold'
-                    : 'bg-[#1C222D] border-white/15 text-[#CBD5E1] hover:text-white'
+                    ? '!bg-[#FDF6E9] !text-[#7A5418] !border-[#D4AD72] hover:!bg-[#FAECD2]'
+                    : '!bg-[#D4AD72] !text-[#0E1116] !border-[#D4AD72] hover:!bg-[#E0BD86]'
                 }`}
                 title="切换伴学书房弹窗面板风格（素笺浅色 / 墨砚深色）"
               >

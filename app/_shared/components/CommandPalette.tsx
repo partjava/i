@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { ALGORITHM_REGISTRY } from './visualizer/registry';
 import { navigationItems } from '../data/navigation';
+import { useLocale, UI_DICT } from '../lib/i18n';
 
 type CategoryFilter = 'all' | 'algo' | 'course' | 'action';
 
@@ -36,6 +37,8 @@ interface PaletteEntry {
 
 export default function CommandPalette() {
   const router = useRouter();
+  const locale = useLocale();
+  const pt = UI_DICT[locale].palette;
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<CategoryFilter>('all');
@@ -151,15 +154,18 @@ export default function CommandPalette() {
           const nextDark = !document.body.classList.contains('dark');
           document.body.classList.toggle('dark', nextDark);
           try {
+            localStorage.setItem('theme', nextDark ? 'dark' : 'light');
             const raw = localStorage.getItem('user_settings');
             const parsed = raw ? JSON.parse(raw) : {};
             localStorage.setItem(
               'user_settings',
-              JSON.stringify({ ...parsed, darkMode: nextDark })
+              JSON.stringify({ ...parsed, theme: nextDark ? 'dark' : 'light', darkMode: nextDark })
             );
           } catch {}
           window.dispatchEvent(
-            new CustomEvent('partjava-settings-change', { detail: { darkMode: nextDark } })
+            new CustomEvent('partjava-settings-change', {
+              detail: { theme: nextDark ? 'dark' : 'light', darkMode: nextDark },
+            })
           );
         },
       },
@@ -333,7 +339,7 @@ export default function CommandPalette() {
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="输入算法名（如 二分 / Transformer）、课程章节、游戏或指令..."
+            placeholder={pt.placeholder}
             className="flex-1 bg-transparent border-0 outline-none text-sm text-content-primary placeholder:text-content-muted"
           />
           <button
@@ -351,10 +357,10 @@ export default function CommandPalette() {
           <div className="flex items-center gap-1.5">
             {(
               [
-                { id: 'all', label: '全部推荐' },
-                { id: 'algo', label: `3D 算法 (${ALGORITHM_REGISTRY.length})` },
-                { id: 'course', label: '体系课程' },
-                { id: 'action', label: '功能与指令' },
+                { id: 'all', label: pt.tabAll },
+                { id: 'algo', label: `${pt.tabAlgo} (${ALGORITHM_REGISTRY.length})` },
+                { id: 'course', label: pt.tabCourse },
+                { id: 'action', label: pt.tabAction },
               ] as const
             ).map((tab) => (
               <button
@@ -372,7 +378,7 @@ export default function CommandPalette() {
             ))}
           </div>
           <span className="hidden sm:inline font-code text-[11px] text-content-muted">
-            ↑↓ 选择 · Enter 直达 · Esc 关闭
+            {pt.hint}
           </span>
         </div>
 

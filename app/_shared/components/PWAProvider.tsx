@@ -1,8 +1,10 @@
 'use client';
 
 import { useEffect, useState, useRef, useCallback } from 'react';
+import { usePathname } from 'next/navigation';
 
 export default function PWAProvider() {
+  const pathname = usePathname();
   const [isOnline, setIsOnline] = useState(true);
   const [isInstallable, setIsInstallable] = useState(false);
   const [showNotifyPrompt, setShowNotifyPrompt] = useState(false);
@@ -38,8 +40,11 @@ export default function PWAProvider() {
 
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
-      // 本次访问已关闭过就不再弹出
-      if (sessionStorage.getItem('pwa_install_dismissed') === '1') return;
+      // 本次访问或历史上已关闭过就不再弹出
+      if (
+        sessionStorage.getItem('pwa_install_dismissed') === '1' ||
+        localStorage.getItem('pwa_install_dismissed') === '1'
+      ) return;
       deferredRef.current = e;
       setIsInstallable(true);
     };
@@ -85,50 +90,67 @@ export default function PWAProvider() {
     return false;
   };
 
+  const isFocusedWorkspace = Boolean(
+    pathname?.startsWith('/study') ||
+    pathname?.startsWith('/code') ||
+    pathname?.startsWith('/challenges') ||
+    pathname?.startsWith('/admin')
+  );
+
   return (
     <>
       {!isOnline && (
-        <div className="fixed top-0 left-0 right-0 z-50 bg-red-500 text-white text-center py-2 text-sm">
+        <div className="fixed top-0 left-0 right-0 z-50 bg-red-600 text-white text-center py-2 text-sm">
           网络连接中断，正在离线模式运行
         </div>
       )}
 
-      {isInstallable && (
+      {isInstallable && !isFocusedWorkspace && (
         <div className="fixed bottom-6 right-6 md:w-80 z-[60]">
-          <div className="bg-white rounded-lg shadow-lg border p-4">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-sm font-medium text-gray-900">安装到桌面</h3>
-              <button onClick={() => { setIsInstallable(false); sessionStorage.setItem('pwa_install_dismissed', '1'); }} className="text-gray-400 hover:text-gray-600">
+          <div className="bg-surface-raised text-content-primary rounded-2xl shadow-xl border border-line-strong p-4">
+            <div className="flex items-center justify-between mb-1.5">
+              <h3 className="text-sm font-semibold text-content-primary">安装桌面应用</h3>
+              <button
+                onClick={() => {
+                  setIsInstallable(false);
+                  try {
+                    sessionStorage.setItem('pwa_install_dismissed', '1');
+                    localStorage.setItem('pwa_install_dismissed', '1');
+                  } catch {}
+                }}
+                className="text-content-muted hover:text-content-primary p-1 rounded-lg transition-colors"
+                aria-label="关闭安装提示"
+              >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
             </div>
-            <p className="text-sm text-gray-500 mb-3">将应用添加到主屏幕，获得更好的体验</p>
-            <button onClick={installPWA} className="w-full text-sm bg-blue-600 text-white px-3 py-2 rounded-md hover:bg-blue-700 transition-colors">
-              安装
+            <p className="text-xs text-content-secondary mb-3">将 禾硙 Unolgy 添加到主屏幕，获得沉浸学习体验</p>
+            <button onClick={installPWA} className="w-full text-xs font-semibold bg-brand-primary text-content-inverse px-3 py-2 rounded-xl hover:bg-brand-hover transition-[transform,background-color] duration-150 active:scale-[0.97]">
+              立即安装
             </button>
           </div>
         </div>
       )}
 
-      {showNotifyPrompt && (
+      {showNotifyPrompt && !isFocusedWorkspace && (
         <div className="fixed bottom-6 right-6 md:w-80 z-50">
-          <div className="bg-white rounded-lg shadow-lg border p-4">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-sm font-medium text-gray-900">开启通知</h3>
-              <button onClick={() => { setShowNotifyPrompt(false); localStorage.setItem('notify_prompt_dismissed', '1'); }} className="text-gray-400 hover:text-gray-600">
+          <div className="bg-surface-raised text-content-primary rounded-2xl shadow-xl border border-line-strong p-4">
+            <div className="flex items-center justify-between mb-1.5">
+              <h3 className="text-sm font-semibold text-content-primary">开启学习提醒</h3>
+              <button onClick={() => { setShowNotifyPrompt(false); localStorage.setItem('notify_prompt_dismissed', '1'); }} className="text-content-muted hover:text-content-primary p-1 rounded-lg transition-colors" aria-label="关闭通知提示">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
             </div>
-            <p className="text-sm text-gray-500 mb-3">接收学习提醒和重要通知</p>
+            <p className="text-xs text-content-secondary mb-3">接收打卡提醒与关卡评测通知</p>
             <div className="flex space-x-2">
-              <button onClick={requestNotificationPermission} className="flex-1 text-sm bg-yellow-600 text-white px-3 py-2 rounded-md hover:bg-yellow-700 transition-colors">
+              <button onClick={requestNotificationPermission} className="flex-1 text-xs font-semibold bg-brand-primary text-content-inverse px-3 py-2 rounded-xl hover:bg-brand-hover transition-[transform,background-color] duration-150 active:scale-[0.97]">
                 允许
               </button>
-              <button onClick={() => { setShowNotifyPrompt(false); localStorage.setItem('notify_prompt_dismissed', '1'); }} className="text-sm bg-gray-100 text-gray-700 px-3 py-2 rounded-md hover:bg-gray-200 transition-colors">
+              <button onClick={() => { setShowNotifyPrompt(false); localStorage.setItem('notify_prompt_dismissed', '1'); }} className="text-xs font-medium bg-surface-muted text-content-secondary px-3 py-2 rounded-xl hover:text-content-primary transition-colors">
                 稍后
               </button>
             </div>

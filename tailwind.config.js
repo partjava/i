@@ -106,28 +106,28 @@ module.exports = {
         'page-right':  '-2px 0 16px rgba(12, 31, 61, 0.06)',
       },
       animation: {
-        'book-exit-forward':  'bookExitForward  0.35s ease-in-out forwards',
-        'book-enter-forward': 'bookEnterForward 0.35s ease-in-out forwards',
-        'book-exit-back':     'bookExitBack     0.35s ease-in-out forwards',
-        'book-enter-back':    'bookEnterBack    0.35s ease-in-out forwards',
+        'book-exit-forward':  'bookExitForward  0.34s cubic-bezier(0.23, 1, 0.32, 1) forwards',
+        'book-enter-forward': 'bookEnterForward 0.38s cubic-bezier(0.23, 1, 0.32, 1) forwards',
+        'book-exit-back':     'bookExitBack     0.34s cubic-bezier(0.23, 1, 0.32, 1) forwards',
+        'book-enter-back':    'bookEnterBack    0.38s cubic-bezier(0.23, 1, 0.32, 1) forwards',
         'page-fade-in':       'pageFadeIn       0.3s ease-out forwards',
       },
       keyframes: {
         bookExitForward: {
-          '0%':   { transform: 'perspective(1400px) rotateY(0deg) scale(1)', opacity: '1' },
-          '100%': { transform: 'perspective(1400px) rotateY(-12deg) scale(0.95)', opacity: '0' },
+          '0%':   { transform: 'perspective(1800px) rotateY(0deg) scale(1)', opacity: '1' },
+          '100%': { transform: 'perspective(1800px) rotateY(-16deg) scale(0.96) translateX(-12px)', opacity: '0' },
         },
         bookEnterForward: {
-          '0%':   { transform: 'perspective(1400px) rotateY(12deg) scale(0.95) translateX(20px)', opacity: '0' },
-          '100%': { transform: 'perspective(1400px) rotateY(0deg) scale(1) translateX(0)', opacity: '1' },
+          '0%':   { transform: 'perspective(1800px) rotateY(16deg) scale(0.96) translateX(22px)', opacity: '0' },
+          '100%': { transform: 'perspective(1800px) rotateY(0deg) scale(1) translateX(0)', opacity: '1' },
         },
         bookExitBack: {
-          '0%':   { transform: 'perspective(1400px) rotateY(0deg) scale(1)', opacity: '1' },
-          '100%': { transform: 'perspective(1400px) rotateY(12deg) scale(0.95) translateX(-20px)', opacity: '0' },
+          '0%':   { transform: 'perspective(1800px) rotateY(0deg) scale(1)', opacity: '1' },
+          '100%': { transform: 'perspective(1800px) rotateY(16deg) scale(0.96) translateX(12px)', opacity: '0' },
         },
         bookEnterBack: {
-          '0%':   { transform: 'perspective(1400px) rotateY(-12deg) scale(0.95)', opacity: '0' },
-          '100%': { transform: 'perspective(1400px) rotateY(0deg) scale(1)', opacity: '1' },
+          '0%':   { transform: 'perspective(1800px) rotateY(-16deg) scale(0.96) translateX(-22px)', opacity: '0' },
+          '100%': { transform: 'perspective(1800px) rotateY(0deg) scale(1) translateX(0)', opacity: '1' },
         },
         pageFadeIn: {
           '0%':   { opacity: '0', transform: 'translateY(6px)' },

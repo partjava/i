@@ -39,10 +39,10 @@ export default function AiChatPanel() {
 
   return (
     <div className="flex flex-col w-full h-full min-h-0">
-      {/* 头部（随书本主题色统一 + 防止窄栏文字折行） */}
+      {/* 头部（柔和素笺靛青书院风） */}
       <div
-        className="flex items-center gap-1.5 px-2.5 py-2 flex-shrink-0"
-        style={{ background: 'var(--book-accent, #1B3B6F)', color: '#fff' }}
+        className="flex items-center gap-1.5 px-3 py-2 flex-shrink-0 border-b border-black/5"
+        style={{ background: 'linear-gradient(90deg, #1B3B6F 0%, #244780 100%)', color: '#F8FAFC' }}
       >
         <div className="w-5 h-5 flex items-center justify-center shrink-0">
           <StitchLogo size={20} />
@@ -118,16 +118,16 @@ export default function AiChatPanel() {
       </div>
 
       {/* 快捷提问 */}
-      <div className="flex flex-wrap gap-1.5 px-2.5 py-2 bg-white border-t border-gray-100 flex-shrink-0">
+      <div className="flex flex-wrap gap-1.5 px-2.5 py-2 bg-[#FFFFFF] border-t border-gray-100 flex-shrink-0">
         {QUICK_QUESTIONS.map((q) => (
           <button
             key={q}
             onClick={() => ai.sendMessage(q)}
             disabled={ai.loading}
-            className="text-xs px-2 py-1 rounded-full border transition-colors disabled:opacity-50 hover:text-white"
+            className="text-xs px-2 py-1 rounded-full border transition-colors disabled:opacity-50 hover:text-white bg-[#FFFFFF]"
             style={{ borderColor: 'var(--book-accent, #1B3B6F)', color: 'var(--book-accent, #1B3B6F)' }}
             onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--book-accent, #1B3B6F)'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = '#FFFFFF'; }}
           >
             {q}
           </button>
@@ -135,21 +135,21 @@ export default function AiChatPanel() {
       </div>
 
       {/* 输入区 */}
-      <div className="p-2.5 border-t border-gray-100 bg-white flex-shrink-0">
+      <div className="p-2.5 border-t border-gray-100 bg-[#FFFFFF] flex-shrink-0">
         <div className="flex gap-2">
           <input
             value={ai.input}
             onChange={(e) => ai.setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="输入你的问题..."
-            className="flex-1 min-w-0 px-2.5 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-blue-400"
+            className="flex-1 min-w-0 px-2.5 py-2 rounded-lg border border-gray-200 bg-[#FFFFFF] text-[#0F1D33] text-sm focus:outline-none focus:border-blue-400"
             disabled={ai.loading}
           />
           <button
             onClick={() => ai.sendMessage()}
             disabled={ai.loading || !ai.input.trim()}
-            className="px-3 py-2 rounded-lg text-white border-none cursor-pointer text-sm disabled:opacity-50"
-            style={{ background: 'var(--book-accent, #1B3B6F)' }}
+            className="px-3.5 py-2 rounded-lg text-white border-none cursor-pointer text-xs font-semibold disabled:opacity-50 transition-[transform,opacity] duration-150 active:scale-[0.96]"
+            style={{ background: '#1B3B6F' }}
           >
             发送
           </button>

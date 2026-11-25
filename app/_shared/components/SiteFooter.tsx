@@ -1,15 +1,18 @@
 'use client';
 
 import React from 'react';
+import { useLocale, UI_DICT } from '../lib/i18n';
 
 export default function SiteFooter({ className = '' }: { className?: string }) {
+  const locale = useLocale();
+  const brand = UI_DICT[locale].footer.brand;
   return (
     <footer
       className={`w-full py-6 px-4 text-center text-xs text-content-muted select-none ${className}`}
     >
       <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 flex-wrap">
         {/* 版权信息 */}
-        <span>© {new Date().getFullYear()} 禾硙 Unolgy</span>
+        <span>© {new Date().getFullYear()} {brand}</span>
         <span className="hidden sm:inline text-line-strong">|</span>
 
         {/* 工信部 ICP 备案 */}

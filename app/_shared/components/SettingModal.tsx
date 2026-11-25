@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Modal, Switch, Select, Space, Divider, Tag, Button, Alert, Form, Input, message, Tabs, Radio, ConfigProvider, theme as antdTheme } from 'antd';
 import styles from './SettingModal.module.css';
 import { useAuth } from '@shared/hooks/useAuth';
+import { setAppLocale, useLocale, UI_DICT, type Locale } from '../lib/i18n';
 import { 
   BellOutlined, 
   LockOutlined, 
@@ -30,6 +31,8 @@ interface SettingModalProps {
 
 export default function SettingModal({ open, onClose }: SettingModalProps) {
   const { data: session } = useAuth();
+  const locale = useLocale();
+  const st = UI_DICT[locale].settings;
   const [theme, setTheme] = useState('light');
   const [modal, contextHolder] = Modal.useModal();
   const [pwdForm] = Form.useForm();
@@ -111,9 +114,10 @@ export default function SettingModal({ open, onClose }: SettingModalProps) {
   };
 
   const handleLanguageChange = (value: string) => {
-    setLanguage(value);
-    localStorage.setItem('language', value);
-    window.location.reload();
+    const nextLocale: Locale = value === 'en' ? 'en' : 'zh';
+    setLanguage(nextLocale);
+    setAppLocale(nextLocale);
+    message.success(nextLocale === 'en' ? 'Switched to English UI' : '已切换为简体中文界面');
   };
 
   const handleSendVerify = async () => {
@@ -386,15 +390,15 @@ export default function SettingModal({ open, onClose }: SettingModalProps) {
               label: (
                 <span className="flex items-center gap-1.5 text-inherit font-semibold">
                   <SettingOutlined />
-                  <span>通用</span>
+                  <span>{st.generalTab}</span>
                 </span>
               ),
               children: (
                 <Space direction="vertical" size="large" style={{ width: '100%', paddingTop: '12px' }}>
                   <div className={`${styles.row} border-b border-[var(--settings-line)] pb-4`}>
                     <div>
-                      <div className="font-semibold text-[var(--settings-text)]">深色模式 Theme</div>
-                      <div className="text-xs text-[var(--settings-secondary)] mt-0.5">切换界面高对比度纸墨主题</div>
+                      <div className="font-semibold text-[var(--settings-text)]">{st.themeTitle}</div>
+                      <div className="text-xs text-[var(--settings-secondary)] mt-0.5">{st.themeDesc}</div>
                     </div>
                     <Switch
                       checked={theme === 'dark'}
@@ -406,8 +410,8 @@ export default function SettingModal({ open, onClose }: SettingModalProps) {
 
                   <div className={`${styles.row} border-b border-[var(--settings-line)] pb-4`}>
                     <div>
-                      <div className="font-semibold text-[var(--settings-text)]">语言 Language</div>
-                      <div className="text-xs text-[var(--settings-secondary)] mt-0.5">选择平台展示语系</div>
+                      <div className="font-semibold text-[var(--settings-text)]">{st.langTitle}</div>
+                      <div className="text-xs text-[var(--settings-secondary)] mt-0.5">{st.langDesc}</div>
                     </div>
                     <Select
                       value={language}
@@ -420,24 +424,24 @@ export default function SettingModal({ open, onClose }: SettingModalProps) {
 
                   <div className={`${styles.row} border-b border-[var(--settings-line)] pb-4`}>
                     <div>
-                      <div className="font-semibold text-[var(--settings-text)]">字号大小 Text Size</div>
-                      <div className="text-xs text-[var(--settings-secondary)] mt-0.5">调整全站文字比例</div>
+                      <div className="font-semibold text-[var(--settings-text)]">{st.fontTitle}</div>
+                      <div className="text-xs text-[var(--settings-secondary)] mt-0.5">{st.fontDesc}</div>
                     </div>
                     <Radio.Group
                       value={fontSize}
                       onChange={(e) => handleFontSizeChange(e.target.value)}
                       buttonStyle="solid"
                     >
-                      <Radio.Button value="small">小</Radio.Button>
-                      <Radio.Button value="medium">中</Radio.Button>
-                      <Radio.Button value="large">大</Radio.Button>
+                      <Radio.Button value="small">{st.small}</Radio.Button>
+                      <Radio.Button value="medium">{st.medium}</Radio.Button>
+                      <Radio.Button value="large">{st.large}</Radio.Button>
                     </Radio.Group>
                   </div>
 
                   <div className={`${styles.row} border-b border-[var(--settings-line)] pb-4`}>
                     <div>
-                      <div className="font-semibold text-[var(--settings-text)]">自动保存 Auto Save</div>
-                      <div className="text-xs text-[var(--settings-secondary)] mt-0.5">随堂笔记编辑时自动持久化草稿</div>
+                      <div className="font-semibold text-[var(--settings-text)]">{st.autoSaveTitle}</div>
+                      <div className="text-xs text-[var(--settings-secondary)] mt-0.5">{st.autoSaveDesc}</div>
                     </div>
                     <Switch
                       checked={autoSave}
@@ -447,8 +451,8 @@ export default function SettingModal({ open, onClose }: SettingModalProps) {
 
                   <div className={styles.row}>
                     <div>
-                      <div className="font-semibold text-[var(--settings-text)]">代码编辑器主题 IDE Theme</div>
-                      <div className="text-xs text-[var(--settings-secondary)] mt-0.5">设定在线沙箱终端的配色方案</div>
+                      <div className="font-semibold text-[var(--settings-text)]">{st.ideThemeTitle}</div>
+                      <div className="text-xs text-[var(--settings-secondary)] mt-0.5">{st.ideThemeDesc}</div>
                     </div>
                     <Select
                       value={codeTheme}

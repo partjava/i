@@ -29,6 +29,7 @@ import BackToTop from './_shared/components/BackToTop';
 import QuickSearch from './_shared/components/QuickSearch';
 import SiteFooter from './_shared/components/SiteFooter';
 import { useSidebar } from './_shared/components/Sidebar';
+import { useLocale, UI_DICT } from './_shared/lib/i18n';
 import mobileStyles from './mobile-home.module.css';
 
 const groupedSoftware = [
@@ -519,8 +520,24 @@ const brandColors: { [key: string]: string } = {  'VS Code': '#007ACC',
 export default function Home() {
   const { data: session, status } = useAuth();
   const { collapsed } = useSidebar();
+  const locale = useLocale();
+  const t = UI_DICT[locale].home;
+  const [isDark, setIsDark] = useState(false);
+  const [selectedArsenalGroup, setSelectedArsenalGroup] = useState<string>('全部');
   const [searchQuery, setSearchQuery] = useState('');
   const [arsenalExpanded, setArsenalExpanded] = useState(false);
+
+  useEffect(() => {
+    const syncDark = () => setIsDark(document.body.classList.contains('dark'));
+    syncDark();
+    const observer = new MutationObserver(syncDark);
+    observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+    window.addEventListener('partjava-settings-change', syncDark);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('partjava-settings-change', syncDark);
+    };
+  }, []);
   const [achievementProgress, setAchievementProgress] = useState<{ earned: number; total: number } | null>(null);
   const [platformStats, setPlatformStats] = useState<{
     users: number | null;
@@ -653,20 +670,27 @@ export default function Home() {
     }
   }, [status, session]);
 
-  // 过滤软件列表
+  // 过滤软件列表（支持关键词检索与分类胶囊速跳）
   const filteredSoftware = useMemo(() => {
-    if (!searchQuery) return groupedSoftware;
-    
+    const base =
+      selectedArsenalGroup === '全部'
+        ? groupedSoftware
+        : groupedSoftware.filter((g) => g.group === selectedArsenalGroup);
+    if (!searchQuery) return base;
+
     const query = searchQuery.toLowerCase();
-    return groupedSoftware.map(group => ({
-      ...group,
-      items: group.items.filter(item => 
-        item.name.toLowerCase().includes(query) ||
-        item.desc.toLowerCase().includes(query) ||
-        group.group.toLowerCase().includes(query)
-      )
-    })).filter(group => group.items.length > 0);
-  }, [searchQuery]);
+    return base
+      .map((group) => ({
+        ...group,
+        items: group.items.filter(
+          (item) =>
+            item.name.toLowerCase().includes(query) ||
+            item.desc.toLowerCase().includes(query) ||
+            group.group.toLowerCase().includes(query)
+        ),
+      }))
+      .filter((group) => group.items.length > 0);
+  }, [searchQuery, selectedArsenalGroup]);
 
   // 天际线装箱：文件夹拖拽定行列，后面的文件夹自动填补空位（带灰金文件夹舒适间距，支持展开8列/收缩10列双默认布局）
   const layout = useMemo(() => {
@@ -775,17 +799,17 @@ export default function Home() {
           <div className="lg:col-span-5 space-y-2">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-surface-raised border border-line-subtle shadow-sm text-xs font-medium text-brand-primary">
               <span className="w-1.5 h-1.5 rounded-full bg-[#D4AD72]" />
-              <span>禾硙 · 交互式编程学习平台</span>
+              <span>{t.eyebrow}</span>
             </div>
 
             <h1 className="font-display text-[28px] sm:text-[32px] xl:text-[34px] 2xl:text-[42px] font-bold text-content-primary leading-[1.28] tracking-tight">
-              如禾生息，如硙精研。
+              {t.titleLine1}
               <br />
-              <span className="text-brand-primary whitespace-nowrap">让每一行算法立体可见。</span>
+              <span className="text-brand-primary whitespace-nowrap">{t.titleLine2}</span>
             </h1>
 
             <p className="text-sm sm:text-[14.5px] text-content-secondary leading-relaxed max-w-md">
-              在线编写并运行多语言代码，观看实时 3D 算法演练，在星图闯关与体系课程中稳步提升编程能力。
+              {t.subtitle}
             </p>
 
             <div className="pt-0.5 flex flex-wrap items-center gap-3">
@@ -795,7 +819,7 @@ export default function Home() {
                 onMouseLeave={() => setHoveredFocus(null)}
                 className="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-brand-primary hover:bg-brand-hover text-content-inverse text-sm font-semibold shadow-sm transition-[transform,background-color,box-shadow] duration-150 ease-[cubic-bezier(0.23,1,0.32,1)] active:scale-[0.97]"
               >
-                <span>开始闯关练习</span>
+                <span>{t.ctaPrimary}</span>
                 <ArrowRight className="w-4 h-4" />
               </Link>
               <Link
@@ -805,7 +829,7 @@ export default function Home() {
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-surface-raised hover:bg-surface-muted text-content-primary border border-line-strong text-sm font-medium shadow-sm transition-[transform,background-color,border-color] duration-150 ease-[cubic-bezier(0.23,1,0.32,1)] active:scale-[0.97]"
               >
                 <Code2 className="w-4 h-4 text-brand-primary" />
-                <span>进入代码实验室</span>
+                <span>{t.ctaSecondary}</span>
               </Link>
             </div>
 
@@ -819,7 +843,7 @@ export default function Home() {
                   >
                     <div className="flex items-center gap-1 text-[11px] text-content-muted min-w-0">
                       <Users className="w-3 h-3 text-brand-primary shrink-0" />
-                      <span className="truncate">用户</span>
+                      <span className="truncate">{t.statUsers}</span>
                     </div>
                     <span className="font-code text-xs font-bold text-content-primary tabular-nums group-hover:text-brand-primary transition-colors shrink-0">
                       {`${platformStats.users}+`}
@@ -832,7 +856,7 @@ export default function Home() {
                   >
                     <div className="flex items-center gap-1 text-[11px] text-content-muted min-w-0">
                       <FileText className="w-3 h-3 text-emerald-600 shrink-0" />
-                      <span className="truncate">笔记</span>
+                      <span className="truncate">{t.statNotes}</span>
                     </div>
                     <span className="font-code text-xs font-bold text-content-primary tabular-nums group-hover:text-brand-primary transition-colors shrink-0">
                       {`${platformStats.notes ?? 0}+`}
@@ -845,7 +869,7 @@ export default function Home() {
                   >
                     <div className="flex items-center gap-1 text-[11px] text-content-muted min-w-0">
                       <Clock className="w-3 h-3 text-amber-600 shrink-0" />
-                      <span className="truncate">时长</span>
+                      <span className="truncate">{t.statHours}</span>
                     </div>
                     <span className="font-code text-xs font-bold text-content-primary tabular-nums group-hover:text-brand-primary transition-colors shrink-0">
                       {`${platformStats.studyHours ?? 0}h`}
@@ -862,7 +886,7 @@ export default function Home() {
                   >
                     <div className="flex items-center gap-1 text-[11px] text-content-muted min-w-0">
                       <Box className="w-3 h-3 text-brand-primary shrink-0" />
-                      <span className="truncate">算法</span>
+                      <span className="truncate">{t.statAlgos}</span>
                     </div>
                     <span className="font-code text-xs font-bold text-content-primary tabular-nums group-hover:text-brand-primary transition-colors shrink-0">
                       {ALGORITHM_REGISTRY.length}
@@ -877,7 +901,7 @@ export default function Home() {
                   >
                     <div className="flex items-center gap-1 text-[11px] text-content-muted min-w-0">
                       <BookOpen className="w-3 h-3 text-emerald-600 shrink-0" />
-                      <span className="truncate">章节</span>
+                      <span className="truncate">{t.statChapters}</span>
                     </div>
                     <span className="font-code text-xs font-bold text-content-primary tabular-nums group-hover:text-brand-primary transition-colors shrink-0">
                       {totalLessonCount}
@@ -891,7 +915,7 @@ export default function Home() {
                   >
                     <div className="flex items-center gap-1 text-[11px] text-content-muted min-w-0">
                       <Wrench className="w-3 h-3 text-[#B88A44] shrink-0" />
-                      <span className="truncate">工具</span>
+                      <span className="truncate">{t.statTools}</span>
                     </div>
                     <span className="font-code text-xs font-bold text-content-primary tabular-nums group-hover:text-brand-primary transition-colors shrink-0">
                       {totalToolCount}
@@ -908,7 +932,7 @@ export default function Home() {
               >
                 <div className="flex items-center gap-1 text-[11px] text-content-muted min-w-0">
                   <Trophy className="w-3 h-3 text-[#D4AD72] shrink-0" />
-                  <span className="truncate">挑战</span>
+                  <span className="truncate">{t.statChallenges}</span>
                 </div>
                 <span className="font-code text-xs font-bold text-content-primary tabular-nums group-hover:text-brand-primary transition-colors shrink-0">
                   {`${platformStats.challenges}+`}
@@ -971,10 +995,10 @@ export default function Home() {
                 ARSENAL
               </span>
               <span className="text-sm font-bold text-content-primary shrink-0">
-                开发者工具矩阵直达
+                {t.arsenalTitle}
               </span>
               <span className="text-xs text-content-muted hidden sm:inline truncate">
-                精选 {totalToolCount} 款研发常用大模型、IDE、论文与竞赛平台
+                {t.arsenalDesc.replace('{count}', String(totalToolCount))}
               </span>
             </div>
 
@@ -1001,7 +1025,7 @@ export default function Home() {
                 title="进入极客解压游戏中心（20 款原生编程小游戏）"
               >
                 <Gamepad2 className="w-3.5 h-3.5 text-[#D4AD72] shrink-0" />
-                <span>极客解压室</span>
+                <span>{t.arcadeLabel}</span>
               </Link>
 
               <button
@@ -1011,7 +1035,7 @@ export default function Home() {
                 aria-expanded={arsenalExpanded}
                 className="inline-flex items-center gap-1 ml-1 px-2 py-1 rounded-lg text-xs sm:text-sm font-semibold text-brand-primary hover:text-brand-hover hover:bg-brand-soft transition-[transform,color,background-color] duration-150 active:scale-[0.96] cursor-pointer"
               >
-                <span>{arsenalExpanded ? '收起工具矩阵' : '展开全部文件夹'}</span>
+                <span>{arsenalExpanded ? t.collapseFolders : t.expandFolders}</span>
                 {arsenalExpanded ? (
                   <ChevronUp className="w-4 h-4" />
                 ) : (
@@ -1043,27 +1067,43 @@ export default function Home() {
               )}
             </div>
 
-            {/* 灰金桌面文件夹舞台（完整保留可拖拽调整与悬停翻转预览特性） */}
+            {/* 双态桌面文件夹舞台（素笺磨砂 / 墨砚灰金自适应 + 分类胶囊速跳 + 完整保留可拖拽调整与悬停翻转预览特性） */}
             <div
-              className="rounded-3xl p-4 md:p-6 border shadow-2xl"
+              data-arsenal-stage
+              className="rounded-3xl p-4 md:p-6 border shadow-xl transition-colors"
               style={{
-                background: 'linear-gradient(145deg, #161920 0%, #1d222b 55%, #15181f 100%)',
-                borderColor: 'rgba(212, 173, 114, 0.28)',
+                background: isDark
+                  ? 'linear-gradient(145deg, #131720 0%, #191F2B 55%, #11151D 100%)'
+                  : 'linear-gradient(145deg, #F8F9FB 0%, #FFFFFF 55%, #F2F4F8 100%)',
+                borderColor: isDark ? 'rgba(212, 173, 114, 0.28)' : 'rgba(27, 59, 111, 0.14)',
               }}
             >
-          <div className="mb-5 md:mb-6 flex items-end justify-between gap-4 border-b pb-4" style={{ borderColor: 'rgba(242, 233, 220, 0.1)' }}>
+          <div
+            className="mb-4 flex flex-wrap items-end justify-between gap-4 border-b pb-4"
+            style={{ borderColor: isDark ? 'rgba(242, 233, 220, 0.1)' : 'rgba(15, 29, 51, 0.08)' }}
+          >
             <div>
-              <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full text-[11px] font-mono uppercase tracking-widest mb-1.5" style={{ background: 'rgba(212, 173, 114, 0.12)', color: '#D4AD72', border: '1px solid rgba(212, 173, 114, 0.3)' }}>
-                <span className="w-1.5 h-1.5 rounded-full bg-[#D4AD72]" />
-                <span>Developer Arsenal · 桌面工具矩阵</span>
+              <div
+                className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full text-[11px] font-mono uppercase tracking-widest mb-1.5"
+                style={{
+                  background: isDark ? 'rgba(212, 173, 114, 0.12)' : 'rgba(27, 59, 111, 0.08)',
+                  color: isDark ? '#D4AD72' : '#1B3B6F',
+                  border: isDark ? '1px solid rgba(212, 173, 114, 0.3)' : '1px solid rgba(27, 59, 111, 0.18)',
+                }}
+              >
+                <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: isDark ? '#D4AD72' : '#1B3B6F' }} />
+                <span>{t.expandedBadge}</span>
               </div>
-              <h2 className="text-xl md:text-2xl font-bold" style={{ color: '#F2E9DC' }}>常用软件 / 工具官网直达</h2>
-              <p className="text-xs md:text-sm mt-1" style={{ color: 'rgba(242, 233, 220, 0.6)' }}>
-                按知识点分组 · 悬停图标翻转放大预览 · 拖拽文件夹右下角自由调整行列
+              <h2 className="text-xl md:text-2xl font-bold" style={{ color: isDark ? '#F2E9DC' : '#0F1D33' }}>
+                {t.expandedTitle}
+              </h2>
+              <p className="text-xs md:text-sm mt-1" style={{ color: isDark ? 'rgba(242, 233, 220, 0.65)' : '#42526B' }}>
+                {t.expandedSub}
               </p>
             </div>
             <button
               onClick={() => {
+                setSelectedArsenalGroup('全部');
                 setFolderConfigsExpanded({});
                 setFolderConfigsCollapsed({});
                 try {
@@ -1072,16 +1112,56 @@ export default function Home() {
                   localStorage.removeItem('folder_sizes_collapsed_v2');
                 } catch {}
               }}
-              className="flex-shrink-0 text-xs px-3.5 py-1.5 rounded-full transition-all hover:scale-105"
+              className="flex-shrink-0 text-xs px-3.5 py-1.5 rounded-full font-medium transition-[transform,background-color] duration-150 active:scale-[0.96]"
               style={{
-                color: '#D4AD72',
-                background: 'rgba(212, 173, 114, 0.12)',
-                border: '1px solid rgba(212, 173, 114, 0.35)',
+                color: isDark ? '#D4AD72' : '#1B3B6F',
+                background: isDark ? 'rgba(212, 173, 114, 0.14)' : 'rgba(27, 59, 111, 0.08)',
+                border: isDark ? '1px solid rgba(212, 173, 114, 0.35)' : '1px solid rgba(27, 59, 111, 0.22)',
               }}
               title="恢复所有文件夹为默认大小"
             >
-              ↺ 重置文件夹布局
+              {t.resetLayout}
             </button>
+          </div>
+
+          {/* 分类速跳过滤胶囊栏 */}
+          <div className="flex flex-wrap items-center gap-1.5 mb-5" data-arsenal-filters>
+            <button
+              type="button"
+              onClick={() => setSelectedArsenalGroup('全部')}
+              className={`px-3 py-1 rounded-full text-xs font-medium transition-[transform,background-color,color] duration-150 active:scale-[0.96] border ${
+                selectedArsenalGroup === '全部'
+                  ? isDark
+                    ? 'bg-[#D4AD72] text-[#0E1116] border-[#D4AD72] font-semibold'
+                    : 'bg-[#1B3B6F] text-white border-[#1B3B6F] font-semibold'
+                  : isDark
+                  ? 'bg-white/[0.04] text-[#C5CBD6] border-white/10 hover:text-[#F2EDE4]'
+                  : 'bg-white text-[#42526B] border-[#E3E7F0] hover:text-[#0F1D33]'
+              }`}
+            >
+              {t.allGroups} ({totalToolCount})
+            </button>
+            {groupedSoftware.map((grp) => {
+              const active = selectedArsenalGroup === grp.group;
+              return (
+                <button
+                  key={grp.group}
+                  type="button"
+                  onClick={() => setSelectedArsenalGroup(grp.group)}
+                  className={`px-2.5 py-1 rounded-full text-xs font-medium transition-[transform,background-color,color] duration-150 active:scale-[0.96] border ${
+                    active
+                      ? isDark
+                        ? 'bg-[#D4AD72] text-[#0E1116] border-[#D4AD72] font-semibold'
+                        : 'bg-[#1B3B6F] text-white border-[#1B3B6F] font-semibold'
+                      : isDark
+                      ? 'bg-white/[0.04] text-[#C5CBD6] border-white/10 hover:text-[#F2EDE4]'
+                      : 'bg-white text-[#42526B] border-[#E3E7F0] hover:text-[#0F1D33]'
+                  }`}
+                >
+                  {grp.group} · {grp.items.length}
+                </button>
+              );
+            })}
           </div>
 
           <div ref={toolsContainerRef} className={`${mobileStyles.tools} relative`} style={{ height: layout.placed.length ? layout.height : undefined }}>
@@ -1097,15 +1177,21 @@ export default function Home() {
                     className={`${mobileStyles.folder} absolute hover:z-20`}
                     style={{ left: x, top: y, width: w }}
                   >
-                    {/* 灰金桌面文件夹容器：标题内置防裁切，右下角拖拽改变宽度和数量 */}
+                    {/* 桌面文件夹容器：双态自适应 + 右下角拖拽改变宽度和数量 */}
                     <div
                       className={`relative rounded-[24px] p-4 transition-colors duration-200 ${
                         resizing === group.group ? 'ring-2 ring-[#D4AD72] shadow-2xl' : ''
                       }`}
                       style={{
-                        background: 'linear-gradient(165deg, rgba(34, 39, 49, 0.92) 0%, rgba(22, 26, 33, 0.96) 100%)',
-                        border: '1px solid rgba(212, 173, 114, 0.25)',
-                        boxShadow: '0 14px 34px rgba(0, 0, 0, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.06)',
+                        background: isDark
+                          ? 'linear-gradient(165deg, rgba(30, 36, 48, 0.94) 0%, rgba(20, 24, 33, 0.98) 100%)'
+                          : 'linear-gradient(165deg, #FFFFFF 0%, #F7F8FB 100%)',
+                        border: isDark
+                          ? '1px solid rgba(212, 173, 114, 0.26)'
+                          : '1px solid rgba(15, 29, 51, 0.10)',
+                        boxShadow: isDark
+                          ? '0 14px 34px rgba(0, 0, 0, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.06)'
+                          : '0 10px 26px rgba(15, 29, 51, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.95)',
                       }}
                     >
                       {/* 文件夹内部标题栏 */}
@@ -1113,14 +1199,14 @@ export default function Home() {
                         className="flex items-center justify-between mb-3.5 pl-2.5 border-l-[3px] h-9"
                         style={{ borderLeftColor: barColor }}
                       >
-                        <h2 className="flex items-center gap-2 text-base md:text-lg font-bold truncate" style={{ color: '#F2E9DC' }}>
+                        <h2 className="flex items-center gap-2 text-base md:text-lg font-bold truncate" style={{ color: isDark ? '#F2E9DC' : '#0F1D33' }}>
                           <span className="truncate">{group.group}</span>
                           <span
                             className="text-xs font-semibold px-2.5 py-0.5 rounded-full flex-shrink-0"
                             style={{
-                              color: '#D4AD72',
-                              background: 'rgba(212, 173, 114, 0.15)',
-                              border: '1px solid rgba(212, 173, 114, 0.35)',
+                              color: isDark ? '#D4AD72' : '#1B3B6F',
+                              background: isDark ? 'rgba(212, 173, 114, 0.15)' : '#EEF2F8',
+                              border: isDark ? '1px solid rgba(212, 173, 114, 0.35)' : '1px solid rgba(27, 59, 111, 0.18)',
                             }}
                           >
                             {group.items.length}
@@ -1147,6 +1233,7 @@ export default function Home() {
                               url={item.url}
                               desc={item.desc}
                               color={color}
+                              isDark={isDark}
                             />
                           );
                         })}
@@ -1155,16 +1242,16 @@ export default function Home() {
                       {hiddenCount > 0 && (
                         <button
                           onClick={() => setPreviewGroup(group.group)}
-                          className="mt-3 w-full h-9 rounded-xl text-xs font-medium transition-all flex items-center justify-center gap-2 hover:brightness-110"
+                          className="mt-3 w-full h-9 rounded-xl text-xs font-medium transition-[transform,filter] duration-150 active:scale-[0.98] flex items-center justify-center gap-2 hover:brightness-110"
                           style={{
-                            border: '1px dashed rgba(212, 173, 114, 0.36)',
-                            background: 'rgba(212, 173, 114, 0.06)',
-                            color: '#D4AD72',
+                            border: isDark ? '1px dashed rgba(212, 173, 114, 0.36)' : '1px dashed rgba(27, 59, 111, 0.28)',
+                            background: isDark ? 'rgba(212, 173, 114, 0.08)' : 'rgba(27, 59, 111, 0.05)',
+                            color: isDark ? '#D4AD72' : '#1B3B6F',
                           }}
                           title="预览全部工具"
                         >
                           <span className="text-base tracking-widest leading-none font-bold">···</span>
-                          <span>全部 {group.items.length} 个</span>
+                          <span>{t.allToolsBtn.replace('{count}', String(group.items.length))}</span>
                         </button>
                       )}
 
@@ -1174,7 +1261,7 @@ export default function Home() {
                           onTouchStart={(e) => { startResize(group.group, e.touches[0].clientX, e.touches[0].clientY); }}
                           title="拖动调整文件夹大小"
                           className="absolute bottom-2 right-2 z-20 w-4 h-4 cursor-nwse-resize transition-opacity opacity-60 hover:opacity-100"
-                          style={{ color: '#D4AD72' }}
+                          style={{ color: isDark ? '#D4AD72' : '#1B3B6F' }}
                         >
                           <svg viewBox="0 0 16 16" className="w-full h-full" fill="none">
                             <path d="M15 15H7M15 15V7M15 15L5 5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
@@ -1188,14 +1275,16 @@ export default function Home() {
             ) : (
               <div className="text-center py-16">
                 <div className="text-6xl mb-4">🔍</div>
-                <h3 className="text-2xl font-bold mb-2" style={{ color: '#F2E9DC' }}>未找到匹配的工具</h3>
-                <p style={{ color: 'rgba(242, 233, 220, 0.6)' }}>试试其他关键词吧</p>
+                <h3 className="text-2xl font-bold mb-2" style={{ color: isDark ? '#F2E9DC' : '#0F1D33' }}>
+                  {t.emptySearchTitle}
+                </h3>
+                <p style={{ color: isDark ? 'rgba(242, 233, 220, 0.6)' : '#42526B' }}>{t.emptySearchSub}</p>
               </div>
             )}
           </div>
         </div>
         <div className="mt-6 md:mt-8 text-center text-content-muted text-xs md:text-sm">
-          如有更多常用软件建议，欢迎补充！
+          {t.feedbackNote}
         </div>
           </>
         )}

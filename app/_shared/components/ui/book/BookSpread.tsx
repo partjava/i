@@ -41,23 +41,36 @@ function BookPage({
   children,
   pageNumber,
   side,
+  disableSelect = false,
 }: {
   children: React.ReactNode
   pageNumber: number
   side: 'left' | 'right'
+  disableSelect?: boolean
 }) {
   return (
     <div
       className={`
-        relative flex flex-col bg-[#EDF0F5] select-none
+        relative h-full min-h-[540px] flex flex-col overflow-hidden
+        ${disableSelect ? 'select-none' : ''}
         ${side === 'left'
           ? 'rounded-l-sm shadow-page-left'
           : 'rounded-r-sm shadow-page-right'
         }
       `}
+      style={{
+        background:
+          side === 'left'
+            ? 'linear-gradient(90deg, #E5EBF3 0%, #EEF2F7 10%, #F4F7FA 74%, #E2E8F2 100%)'
+            : 'linear-gradient(270deg, #E5EBF3 0%, #EEF2F7 10%, #F4F7FA 74%, #E2E8F2 100%)',
+        boxShadow:
+          side === 'left'
+            ? 'inset -22px 0 28px -18px rgba(15, 23, 42, 0.16), inset 2px 0 3px rgba(255, 255, 255, 0.7)'
+            : 'inset 22px 0 28px -18px rgba(15, 23, 42, 0.16), inset -2px 0 3px rgba(255, 255, 255, 0.7)',
+      }}
     >
       {/* 顶部页码装饰线 */}
-      <div className="flex-shrink-0 flex items-center gap-2 px-7 pt-6 pb-2">
+      <div className="flex-shrink-0 flex items-center gap-2 px-7 pt-6 pb-2 select-none">
         <span className="h-px flex-1 bg-paper-300/40" />
         <span className="text-[10px] tracking-[0.2em] text-ink-fade font-medium">
           — {pageNumber} —
@@ -66,7 +79,7 @@ function BookPage({
       </div>
 
       {/* 内容区 */}
-      <div className="flex-1 px-6 pb-8 overflow-y-auto [&>*:first-child]:mt-0">
+      <div className={`flex-1 px-6 pb-8 overflow-y-auto [&>*:first-child]:mt-0 ${disableSelect ? 'select-none' : 'select-text'}`}>
         {children}
       </div>
     </div>
@@ -87,26 +100,31 @@ function BookTabs({
   accentColor?: string
 }) {
   return (
-    <nav className="flex items-center gap-1 px-1.5 py-1 bg-paper-200/80 rounded-full w-fit mx-auto mb-5 shadow-sm" role="tablist">
-      {tabs.map((tab, i) => (
-        <button
-          key={i}
-          role="tab"
-          aria-selected={i === activeIndex}
-          onClick={() => onChange(i)}
-          className={`
-            px-4 py-1.5 text-xs font-medium rounded-full transition-all duration-300
-            ${i === activeIndex
-              ? 'text-white shadow-sm scale-105'
-              : 'text-ink-light hover:text-ink hover:bg-paper-300/50'
-            }
-          `}
-          style={i === activeIndex ? { background: accentColor } : undefined}
-        >
-          {tab.label}
-        </button>
-      ))}
-    </nav>
+    <div className="mb-5 flex justify-center">
+      <nav
+        className="flex items-center gap-1 px-1.5 py-1 bg-paper-200/85 rounded-full max-w-full overflow-x-auto shadow-sm border border-black/[0.04]"
+        role="tablist"
+      >
+        {tabs.map((tab, i) => (
+          <button
+            key={i}
+            role="tab"
+            aria-selected={i === activeIndex}
+            onClick={() => onChange(i)}
+            className={`
+              px-3.5 py-1.5 text-xs font-medium rounded-full shrink-0 transition-[transform,background-color,color,box-shadow] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] active:scale-[0.96]
+              ${i === activeIndex
+                ? 'text-white shadow-sm'
+                : 'text-ink-light hover:text-ink hover:bg-paper-300/60'
+              }
+            `}
+            style={i === activeIndex ? { background: accentColor } : undefined}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </nav>
+    </div>
   )
 }
 
@@ -148,6 +166,21 @@ function BookProgressBar({
   )
 }
 
+// ==================== 3D 单页翻页状态与缓动 ====================
+
+interface FlipState {
+  from: number
+  to: number
+  direction: 'forward' | 'back'
+  progress: number // 0 -> 1
+  mode: 'animating' | 'dragging'
+}
+
+const easeInOutCubic = (t: number) =>
+  t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2
+
+const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3)
+
 // ==================== 主组件 ====================
 
 export default function BookSpread(props: BookSpreadProps) {
@@ -165,33 +198,45 @@ export default function BookSpread(props: BookSpreadProps) {
   } = props
   const accentColor = theme?.accent || '#6366f1'
   const [currentSpread, setCurrentSpread] = useState(0)
-  const [phase, setPhase] = useState<'idle' | 'exiting' | 'entering'>('idle')
-  const [direction, setDirection] = useState<'forward' | 'back'>('forward')
-  const [displayedSpread, setDisplayedSpread] = useState(0)  // 动画中实际显示的内容
+  const [displayedSpread, setDisplayedSpread] = useState(0) // 静止时显示的页码
+  const [flipState, setFlipState] = useState<FlipState | null>(null)
+  const flipRef = useRef<FlipState | null>(null)
+  flipRef.current = flipState
+  const rafRef = useRef<number | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
+  const spreadStageRef = useRef<HTMLDivElement>(null)
 
   const totalSpreads = spreads.length
   const currentPageStart = displayedSpread * 2 + 1
+
+  const cancelAnimation = useCallback(() => {
+    if (rafRef.current !== null) {
+      cancelAnimationFrame(rafRef.current)
+      rafRef.current = null
+    }
+  }, [])
+
+  useEffect(() => {
+    return () => cancelAnimation()
+  }, [cancelAnimation])
 
   // 精确进度计算
   const calculateProgress = () => {
     const { spreadsPerChapter } = props
     if (spreadsPerChapter && spreadsPerChapter.length >= chapterNumber) {
-      // 精确：已知每章的标签数
       const completedBefore = spreadsPerChapter
         .slice(0, chapterNumber - 1)
         .reduce((sum, n) => sum + n, 0)
       const totalAcrossAll = spreadsPerChapter.reduce((sum, n) => sum + n, 0)
-      const completedInCurrent = displayedSpread + 1
+      const completedInCurrent = currentSpread + 1
       const totalCompleted = completedBefore + completedInCurrent
       return {
         total: (totalCompleted / totalAcrossAll) * 100,
         label: `${totalCompleted}/${totalAcrossAll} 标签`,
       }
     }
-    // 启发式：用章节序号估算
     const chapterProgress = ((chapterNumber - 1) / totalChapters) * 100
-    const spreadProgress = ((displayedSpread + 1) / totalSpreads) * 100
+    const spreadProgress = ((currentSpread + 1) / totalSpreads) * 100
     const total = chapterProgress + spreadProgress / totalChapters
     return {
       total,
@@ -201,35 +246,119 @@ export default function BookSpread(props: BookSpreadProps) {
 
   const { total: courseProgressPct, label: progressLabel } = calculateProgress()
 
-  // 翻页：两阶段动画
-  const goToSpread = useCallback((target: number) => {
-    if (phase !== 'idle') return
-    const clamped = Math.max(0, Math.min(target, totalSpreads - 1))
-    if (clamped === displayedSpread) return
+  // 连续帧动画驱动单页沿中脊立体翻折
+  const animateFlip = useCallback(
+    (
+      from: number,
+      to: number,
+      direction: 'forward' | 'back',
+      startProgress: number,
+      endProgress: number,
+      durationMs: number,
+      useEaseOut: boolean,
+      onComplete: () => void
+    ) => {
+      cancelAnimation()
+      const startTime = performance.now()
+      const easeFn = useEaseOut ? easeOutCubic : easeInOutCubic
 
-    const dir = clamped > displayedSpread ? 'forward' : 'back'
-    setDirection(dir)
-    setPhase('exiting')
+      const tick = (now: number) => {
+        const elapsed = now - startTime
+        const rawT = Math.min(1, elapsed / Math.max(1, durationMs))
+        const eased = easeFn(rawT)
+        const nextProgress = startProgress + (endProgress - startProgress) * eased
 
-    // 阶段1：退出动画（200ms）
-    setTimeout(() => {
-      setDisplayedSpread(clamped)
+        const state: FlipState = {
+          from,
+          to,
+          direction,
+          progress: nextProgress,
+          mode: 'animating',
+        }
+        flipRef.current = state
+        setFlipState(state)
+
+        if (rawT < 1) {
+          rafRef.current = requestAnimationFrame(tick)
+        } else {
+          rafRef.current = null
+          onComplete()
+        }
+      }
+
+      rafRef.current = requestAnimationFrame(tick)
+    },
+    [cancelAnimation]
+  )
+
+  // 单页立体翻页（支持连续快点打断、移动端与减少动效自动降级）
+  const goToSpread = useCallback(
+    (target: number) => {
+      const clamped = Math.max(0, Math.min(target, totalSpreads - 1))
+
+      // 若正在翻页或拖拽，立即落定前一次目标后再继续下一段，永不卡死
+      let activeFrom = displayedSpread
+      if (flipRef.current) {
+        cancelAnimation()
+        activeFrom = flipRef.current.to
+        flipRef.current = null
+        setDisplayedSpread(activeFrom)
+        setCurrentSpread(activeFrom)
+        setFlipState(null)
+      }
+
+      if (clamped === activeFrom) return
+
+      const isMobile = typeof window !== 'undefined' && window.innerWidth < 768
+      const reducedMotion =
+        typeof window !== 'undefined' &&
+        window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
+      if (isMobile || reducedMotion) {
+        setDisplayedSpread(clamped)
+        setCurrentSpread(clamped)
+        setFlipState(null)
+        return
+      }
+
+      const dir: 'forward' | 'back' = clamped > activeFrom ? 'forward' : 'back'
       setCurrentSpread(clamped)
-      setPhase('entering')
+      const initial: FlipState = {
+        from: activeFrom,
+        to: clamped,
+        direction: dir,
+        progress: 0.01,
+        mode: 'animating',
+      }
+      flipRef.current = initial
+      setFlipState(initial)
 
-      // 阶段2：进入动画（200ms）
-      setTimeout(() => {
-        setPhase('idle')
-      }, 280)
-    }, 280)
-  }, [phase, displayedSpread, totalSpreads])
+      animateFlip(activeFrom, clamped, dir, 0.01, 1, 680, false, () => {
+        flipRef.current = null
+        setDisplayedSpread(clamped)
+        setCurrentSpread(clamped)
+        setFlipState(null)
+      })
+    },
+    [displayedSpread, totalSpreads, cancelAnimation, animateFlip]
+  )
 
-  const goPrev = useCallback(() => goToSpread(displayedSpread - 1), [goToSpread, displayedSpread])
-  const goNext = useCallback(() => goToSpread(displayedSpread + 1), [goToSpread, displayedSpread])
+  const goPrev = useCallback(
+    () => goToSpread((flipRef.current ? flipRef.current.to : displayedSpread) - 1),
+    [goToSpread, displayedSpread]
+  )
+  const goNext = useCallback(
+    () => goToSpread((flipRef.current ? flipRef.current.to : displayedSpread) + 1),
+    [goToSpread, displayedSpread]
+  )
 
-  // 键盘导航
+  // 键盘导航（输入框聚焦时不拦截左右方向键）
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
+        return
+      }
       if (e.key === 'ArrowLeft') goPrev()
       else if (e.key === 'ArrowRight') goNext()
     }
@@ -237,18 +366,99 @@ export default function BookSpread(props: BookSpreadProps) {
     return () => window.removeEventListener('keydown', handleKey)
   }, [goPrev, goNext])
 
-  // 动画类名
-  const getAnimationClass = () => {
-    if (phase === 'idle') return ''
-    if (phase === 'exiting') {
-      return direction === 'forward' ? 'animate-book-exit-forward' : 'animate-book-exit-back'
-    }
-    return direction === 'forward' ? 'animate-book-enter-forward' : 'animate-book-enter-back'
-  }
+  // 书角实时拖拽搓动翻页（点击 < 10px 触发整页翻动；拖拽 >= 28% 或快速甩动则完成翻页，否则弹回）
+  const handleCornerPointerDown = useCallback(
+    (dir: 'forward' | 'back', e: React.PointerEvent<HTMLDivElement>) => {
+      if (e.button !== 0 && e.pointerType === 'mouse') return
+      if (typeof window !== 'undefined' && window.innerWidth < 768) return
+
+      const fromIdx = flipRef.current ? flipRef.current.to : displayedSpread
+      const toIdx = dir === 'forward' ? fromIdx + 1 : fromIdx - 1
+      if (toIdx < 0 || toIdx >= totalSpreads) return
+
+      e.preventDefault()
+      e.stopPropagation()
+      cancelAnimation()
+
+      const stageWidth = Math.max(spreadStageRef.current?.clientWidth || 720, 400)
+      const startX = e.clientX
+      let lastX = e.clientX
+      let lastTime = performance.now()
+      let velocity = 0
+      let dragged = false
+      let latestProgress = 0.04
+
+      const onPointerMove = (moveEvent: PointerEvent) => {
+        const rawDelta =
+          dir === 'forward' ? startX - moveEvent.clientX : moveEvent.clientX - startX
+        const now = performance.now()
+        const dt = Math.max(now - lastTime, 8)
+        const instantDelta =
+          dir === 'forward' ? lastX - moveEvent.clientX : moveEvent.clientX - lastX
+        velocity = instantDelta / dt
+        lastX = moveEvent.clientX
+        lastTime = now
+
+        if (!dragged && Math.abs(moveEvent.clientX - startX) >= 8) {
+          dragged = true
+        }
+        if (!dragged) return
+
+        latestProgress = Math.max(0.02, Math.min(0.98, rawDelta / (stageWidth * 0.58)))
+        const dragState: FlipState = {
+          from: fromIdx,
+          to: toIdx,
+          direction: dir,
+          progress: latestProgress,
+          mode: 'dragging',
+        }
+        flipRef.current = dragState
+        setFlipState(dragState)
+      }
+
+      const cleanup = () => {
+        window.removeEventListener('pointermove', onPointerMove)
+        window.removeEventListener('pointerup', onPointerUp)
+        window.removeEventListener('pointercancel', onPointerUp)
+      }
+
+      const onPointerUp = () => {
+        cleanup()
+        if (!dragged) {
+          goToSpread(toIdx)
+          return
+        }
+
+        const shouldCommit = latestProgress >= 0.28 || velocity > 0.35
+        if (shouldCommit) {
+          setCurrentSpread(toIdx)
+          const duration = Math.max(180, (1 - latestProgress) * 480)
+          animateFlip(fromIdx, toIdx, dir, latestProgress, 1, duration, true, () => {
+            flipRef.current = null
+            setDisplayedSpread(toIdx)
+            setCurrentSpread(toIdx)
+            setFlipState(null)
+          })
+        } else {
+          const duration = Math.max(160, latestProgress * 360)
+          animateFlip(fromIdx, toIdx, dir, latestProgress, 0, duration, true, () => {
+            flipRef.current = null
+            setCurrentSpread(fromIdx)
+            setFlipState(null)
+          })
+        }
+      }
+
+      window.addEventListener('pointermove', onPointerMove)
+      window.addEventListener('pointerup', onPointerUp)
+      window.addEventListener('pointercancel', onPointerUp)
+    },
+    [displayedSpread, totalSpreads, cancelAnimation, goToSpread, animateFlip]
+  )
 
   // 计算底部导航按钮状态
-  const isFirst = displayedSpread === 0
-  const isLast = displayedSpread === totalSpreads - 1
+  const isFirst = currentSpread === 0
+  const isLast = currentSpread === totalSpreads - 1
 
   // ===== 右侧栏相关 =====
   const bookRootRef = useRef<HTMLDivElement>(null)
@@ -276,20 +486,50 @@ export default function BookSpread(props: BookSpreadProps) {
     return () => setIsContentPage(false)
   }, [setIsContentPage])
 
-  // 提取当前两页挂载的 h2/h3 标题作为页内大纲
+  // 提取当前稳定基础对页挂载的 h2/h3 标题作为页内大纲（翻页中不重复采集）
   useEffect(() => {
-    const root = bookRootRef.current
-    if (!root) return
-    const els = Array.from(root.querySelectorAll('h2, h3'))
+    const baseRoot = bookRootRef.current?.querySelector('[data-book-base-spread]')
+    if (!baseRoot) return
+    const els = Array.from(baseRoot.querySelectorAll('h2, h3'))
     setPageHeadings(els.map(el => ({ level: el.tagName.toLowerCase(), text: el.textContent?.trim() || '' })))
   }, [displayedSpread])
 
   const scrollToHeading = (index: number) => {
-    const root = bookRootRef.current
-    if (!root) return
-    const els = root.querySelectorAll('h2, h3')
+    const baseRoot = bookRootRef.current?.querySelector('[data-book-base-spread]')
+    if (!baseRoot) return
+    const els = baseRoot.querySelectorAll('h2, h3')
     els[index]?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
+
+  // 计算静止基础左右页、动态纸垛厚度比例与 3D 活动翻页几何参数
+  const visualPosition = flipState
+    ? flipState.from + (flipState.to - flipState.from) * flipState.progress
+    : displayedSpread
+  const stackRatio = totalSpreads > 1 ? Math.max(0, Math.min(1, visualPosition / (totalSpreads - 1))) : 0.5
+  const leftStackWidth = Math.round(5 + stackRatio * 13)
+  const rightStackWidth = Math.round(5 + (1 - stackRatio) * 13)
+
+  const baseLeftIndex = flipState
+    ? flipState.direction === 'forward'
+      ? flipState.from
+      : flipState.to
+    : displayedSpread
+  const baseRightIndex = flipState
+    ? flipState.direction === 'forward'
+      ? flipState.to
+      : flipState.from
+    : displayedSpread
+
+  const flipProgress = flipState?.progress ?? 0
+  const flipSin = Math.sin(flipProgress * Math.PI)
+  const flipDeg = flipState
+    ? flipState.direction === 'forward'
+      ? -flipProgress * 180
+      : flipProgress * 180
+    : 0
+  const showLeafFront = flipProgress < 0.5
+  const canTurnPrev = !flipState && displayedSpread > 0
+  const canTurnNext = !flipState && displayedSpread < totalSpreads - 1
 
   return (
     <div
@@ -346,70 +586,378 @@ export default function BookSpread(props: BookSpreadProps) {
             accentColor={accentColor}
           />
 
-          {/* ===== 3D 书本块（含底部厚度） ===== */}
-          <div className="relative">
-            {/* 书本阴影 */}
+          {/* ===== 实体精装厚书本容器（硬壳封皮边框 + 左右多页纸垛厚度 + 中缝弧形书脊 + 缎面丝带书签 + 底部拱形书切口） ===== */}
+          <div className="relative" data-physical-book-shell>
+            {/* 桌面落地柔和投影 */}
             <div
-              className="absolute -bottom-1 -right-1 w-full h-full rounded-sm opacity-15 transition-opacity duration-500 pointer-events-none"
+              className="pointer-events-none absolute -bottom-3 inset-x-4 h-7 rounded-full blur-xl opacity-45"
               style={{
-                background: 'linear-gradient(135deg, rgba(44,42,39,0.12), rgba(44,42,39,0.03))',
-                filter: 'blur(10px)',
-                transform: 'translate(3px, 3px)',
+                background: 'radial-gradient(60% 100% at 50% 50%, rgba(15, 23, 42, 0.45), transparent 85%)',
               }}
             />
 
-            {/* 可翻页的书本块（含动画） */}
+            {/* 精装硬壳封面外框（静止外框，内部仅翻动单张纸页） */}
             <div
-              className={`relative ${getAnimationClass()}`}
+              className="relative rounded-[12px] p-2 sm:p-2.5 pb-3 sm:pb-3.5 shadow-[0_22px_48px_-14px_rgba(15,23,42,0.34)] ring-1 ring-[#D4AD72]/35"
               style={{
-                perspective: '1400px',
-                transformStyle: 'preserve-3d',
+                background: 'linear-gradient(160deg, #273347 0%, #192231 52%, #232E40 100%)',
               }}
             >
-              {/* 两页对开 */}
-              <div
-                className="grid grid-cols-1 md:grid-cols-2 gap-0 min-h-[380px] rounded-sm overflow-hidden"
-                style={{
-                  // 书脊效果
-                  backgroundImage: `
-                    linear-gradient(
-                      to right,
-                      transparent 0%,
-                      transparent calc(50% - 12px),
-                      rgba(44,42,39,0.04) calc(50% - 12px),
-                      rgba(44,42,39,0.10) 50%,
-                      rgba(44,42,39,0.04) calc(50% + 12px),
-                      transparent calc(50% + 12px),
-                      transparent 100%
-                    )
-                  `,
-                }}
-              >
-                {/* 左页 */}
-                <div className="relative">
-                  <div className="absolute inset-y-0 -left-1 w-2 bg-gradient-to-r from-black/[0.04] to-transparent pointer-events-none z-10" />
-                  <BookPage side="left" pageNumber={currentPageStart}>
-                    {spreads[displayedSpread].left}
-                  </BookPage>
+              {/* 书本内芯容器（书脊书签 + 两侧动态纸垛厚度 + 3D 单页立体翻页舞台 + 底部拱形书切口） */}
+              <div className="relative">
+                {/* 书脊顶端露出的精致麦穗金缎面丝带书签 */}
+                <div
+                  aria-hidden="true"
+                  className="pointer-events-none hidden md:block absolute -top-2.5 left-1/2 -translate-x-1/2 z-40 w-3 h-7 shadow-sm"
+                  style={{
+                    background: 'linear-gradient(180deg, #D4AD72 0%, #B88A44 100%)',
+                    clipPath: 'polygon(0 0, 100% 0, 100% 100%, 50% 78%, 0 100%)',
+                  }}
+                />
+
+                {/* 内芯横向排布：左侧动态纸垛 + 左右对开单页翻转舞台 + 右侧动态纸垛 */}
+                <div className="relative flex items-stretch">
+                  {/* 左侧动态多页纸张堆叠厚度（随已读进度变厚） */}
+                  <div
+                    aria-hidden="true"
+                    data-book-stack="left"
+                    className="hidden md:block shrink-0 rounded-l-[3px] border-r border-black/10 transition-[width] duration-200 ease-out"
+                    style={{
+                      width: `${leftStackWidth}px`,
+                      background:
+                        'repeating-linear-gradient(to right, #cfd6e3 0px, #cfd6e3 1.5px, #eef2f7 1.5px, #eef2f7 3px)',
+                      boxShadow: 'inset -3px 0 6px rgba(15, 29, 51, 0.16)',
+                    }}
+                  />
+
+                  {/* 3D 单页立体翻页舞台（无 overflow-hidden，确保 Z 轴翻起纸页不被裁切） */}
+                  <div
+                    ref={spreadStageRef}
+                    className="relative flex-1 min-h-[540px]"
+                    style={{
+                      perspective: '2400px',
+                      transformStyle: 'preserve-3d',
+                    }}
+                  >
+                    {/* 静止基础双页层 */}
+                    <div
+                      data-book-base-spread
+                      className="relative grid grid-cols-1 md:grid-cols-2 items-stretch gap-0 min-h-[540px] rounded-[2px] overflow-hidden shadow-[inset_0_0_0_1px_rgba(15,29,51,0.06)]"
+                    >
+                      {/* 中缝实体装订凹槽与双侧弧形纸面高光阴影 */}
+                      <div
+                        aria-hidden="true"
+                        className="pointer-events-none hidden md:block absolute inset-y-0 left-1/2 -translate-x-1/2 w-12 z-20"
+                        style={{
+                          background:
+                            'linear-gradient(to right, transparent 0%, rgba(15,23,42,0.05) 26%, rgba(15,23,42,0.16) 49%, rgba(255,255,255,0.45) 50%, rgba(15,23,42,0.15) 51%, rgba(15,23,42,0.04) 74%, transparent 100%)',
+                        }}
+                      />
+
+                      {/* 基础左页 */}
+                      <div className="relative h-full">
+                        <BookPage
+                          side="left"
+                          pageNumber={baseLeftIndex * 2 + 1}
+                          disableSelect={flipState?.mode === 'dragging'}
+                        >
+                          {spreads[baseLeftIndex].left}
+                        </BookPage>
+
+                        {/* 向前翻页后半程落阴影 / 向后翻页前半程揭页脊阴影 */}
+                        {flipState && flipState.direction === 'forward' && flipProgress > 0.45 && (
+                          <div
+                            aria-hidden="true"
+                            className="pointer-events-none hidden md:block absolute inset-0 z-10"
+                            style={{
+                              opacity: Math.min(1, ((flipProgress - 0.45) / 0.55) * 0.9),
+                              background:
+                                'linear-gradient(to left, rgba(15,23,42,0.22) 0%, rgba(15,23,42,0.08) 38%, transparent 82%)',
+                            }}
+                          />
+                        )}
+                        {flipState && flipState.direction === 'back' && (
+                          <div
+                            aria-hidden="true"
+                            className="pointer-events-none hidden md:block absolute inset-0 z-10"
+                            style={{
+                              opacity: Math.max(0, 1 - flipProgress * 1.45),
+                              background:
+                                'linear-gradient(to left, rgba(15,23,42,0.34) 0%, rgba(15,23,42,0.14) 36%, transparent 78%)',
+                            }}
+                          />
+                        )}
+                      </div>
+
+                      {/* 基础右页 */}
+                      <div className="relative h-full">
+                        <BookPage
+                          side="right"
+                          pageNumber={baseRightIndex * 2 + 2}
+                          disableSelect={flipState?.mode === 'dragging'}
+                        >
+                          {spreads[baseRightIndex].right}
+                        </BookPage>
+
+                        {/* 向前翻页前半程揭页脊阴影 / 向后翻页后半程落阴影 */}
+                        {flipState && flipState.direction === 'forward' && (
+                          <div
+                            aria-hidden="true"
+                            className="pointer-events-none hidden md:block absolute inset-0 z-10"
+                            style={{
+                              opacity: Math.max(0, 1 - flipProgress * 1.45),
+                              background:
+                                'linear-gradient(to right, rgba(15,23,42,0.34) 0%, rgba(15,23,42,0.14) 36%, transparent 78%)',
+                            }}
+                          />
+                        )}
+                        {flipState && flipState.direction === 'back' && flipProgress > 0.45 && (
+                          <div
+                            aria-hidden="true"
+                            className="pointer-events-none hidden md:block absolute inset-0 z-10"
+                            style={{
+                              opacity: Math.min(1, ((flipProgress - 0.45) / 0.55) * 0.9),
+                              background:
+                                'linear-gradient(to right, rgba(15,23,42,0.22) 0%, rgba(15,23,42,0.08) 38%, transparent 82%)',
+                            }}
+                          />
+                        )}
+                      </div>
+                    </div>
+
+                    {/* 3D 双面立体单页翻动层（向前翻右页 0°→-180°；向后翻左页 0°→+180°） */}
+                    {flipState && (
+                      <div
+                        data-book-flip-leaf
+                        data-flip-direction={flipState.direction}
+                        data-flip-progress={flipProgress.toFixed(3)}
+                        className="pointer-events-none hidden md:block absolute top-0 bottom-0 z-30"
+                        style={{
+                          left: flipState.direction === 'forward' ? '50%' : '0%',
+                          width: '50%',
+                          transformOrigin:
+                            flipState.direction === 'forward' ? 'left center' : 'right center',
+                          transformStyle: 'preserve-3d',
+                          transform: `rotateY(${flipDeg}deg) translateZ(2px)`,
+                          boxShadow: `0 ${Math.round(6 + flipSin * 20)}px ${Math.round(
+                            14 + flipSin * 38
+                          )}px rgba(15, 23, 42, ${(0.14 + flipSin * 0.28).toFixed(2)})`,
+                        }}
+                      >
+                        {/* 活动纸页正面（0° ~ 90° 可见） */}
+                        <div
+                          className={`absolute inset-0 overflow-hidden ${
+                            flipState.direction === 'forward'
+                              ? 'rounded-r-sm border-r border-white/80'
+                              : 'rounded-l-sm border-l border-white/80'
+                          }`}
+                          style={{
+                            backfaceVisibility: 'hidden',
+                            WebkitBackfaceVisibility: 'hidden',
+                            transform: 'rotateY(0deg)',
+                            opacity: showLeafFront ? 1 : 0,
+                          }}
+                        >
+                          <BookPage
+                            side={flipState.direction === 'forward' ? 'right' : 'left'}
+                            pageNumber={
+                              flipState.direction === 'forward'
+                                ? flipState.from * 2 + 2
+                                : flipState.from * 2 + 1
+                            }
+                            disableSelect
+                          >
+                            {flipState.direction === 'forward'
+                              ? spreads[flipState.from].right
+                              : spreads[flipState.from].left}
+                          </BookPage>
+                          {/* 随角度变化的弧形光照与折页高光条 */}
+                          <div
+                            aria-hidden="true"
+                            className="pointer-events-none absolute inset-0"
+                            style={{
+                              background:
+                                flipState.direction === 'forward'
+                                  ? `linear-gradient(to left, rgba(255,255,255,${(
+                                      flipSin * 0.28
+                                    ).toFixed(2)}) 0%, rgba(15,23,42,${(
+                                      flipProgress * 0.14
+                                    ).toFixed(2)}) 55%, rgba(15,23,42,${(
+                                      flipProgress * 0.28
+                                    ).toFixed(2)}) 100%)`
+                                  : `linear-gradient(to right, rgba(255,255,255,${(
+                                      flipSin * 0.28
+                                    ).toFixed(2)}) 0%, rgba(15,23,42,${(
+                                      flipProgress * 0.14
+                                    ).toFixed(2)}) 55%, rgba(15,23,42,${(
+                                      flipProgress * 0.28
+                                    ).toFixed(2)}) 100%)`,
+                            }}
+                          />
+                        </div>
+
+                        {/* 活动纸页背面（90° ~ 180° 露出，对应新一页内页） */}
+                        <div
+                          className={`absolute inset-0 overflow-hidden ${
+                            flipState.direction === 'forward'
+                              ? 'rounded-l-sm border-l border-white/80'
+                              : 'rounded-r-sm border-r border-white/80'
+                          }`}
+                          style={{
+                            backfaceVisibility: 'hidden',
+                            WebkitBackfaceVisibility: 'hidden',
+                            transform: 'rotateY(180deg)',
+                            opacity: showLeafFront ? 0 : 1,
+                          }}
+                        >
+                          <BookPage
+                            side={flipState.direction === 'forward' ? 'left' : 'right'}
+                            pageNumber={
+                              flipState.direction === 'forward'
+                                ? flipState.to * 2 + 1
+                                : flipState.to * 2 + 2
+                            }
+                            disableSelect
+                          >
+                            {flipState.direction === 'forward'
+                              ? spreads[flipState.to].left
+                              : spreads[flipState.to].right}
+                          </BookPage>
+                          {/* 背面出光渐变（刚过 90° 偏暗，落定 180° 完全明亮） */}
+                          <div
+                            aria-hidden="true"
+                            className="pointer-events-none absolute inset-0"
+                            style={{
+                              background:
+                                flipState.direction === 'forward'
+                                  ? `linear-gradient(to right, rgba(255,255,255,${(
+                                      flipSin * 0.22
+                                    ).toFixed(2)}) 0%, rgba(15,23,42,${(
+                                      Math.max(0, 1 - flipProgress) * 0.28
+                                    ).toFixed(2)}) 100%)`
+                                  : `linear-gradient(to left, rgba(255,255,255,${(
+                                      flipSin * 0.22
+                                    ).toFixed(2)}) 0%, rgba(15,23,42,${(
+                                      Math.max(0, 1 - flipProgress) * 0.28
+                                    ).toFixed(2)}) 100%)`,
+                            }}
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    {/* 左下角：悬停翘角 + 拖拽/点击翻上一页热区 */}
+                    {canTurnPrev && (
+                      <div
+                        data-page-corner="prev"
+                        onPointerDown={(e) => handleCornerPointerDown('back', e)}
+                        title="点击或向右拖拽翻上一页"
+                        className="group hidden md:block absolute bottom-0 left-0 w-20 h-20 z-30 cursor-grab active:cursor-grabbing select-none"
+                      >
+                        {/* 底层露出前一页内角三角 */}
+                        <div
+                          aria-hidden="true"
+                          className="absolute bottom-0 left-0 w-[18px] h-[18px] group-hover:w-[46px] group-hover:h-[46px] transition-all duration-200 ease-[cubic-bezier(0.23,1,0.32,1)]"
+                          style={{
+                            clipPath: 'polygon(0 0, 0 100%, 100% 100%)',
+                            background:
+                              'linear-gradient(225deg, rgba(15,23,42,0.16) 0%, #D9E0EC 42%, #EEF2F7 100%)',
+                          }}
+                        />
+                        {/* 向上翻折的左上卷角纸片 */}
+                        <div
+                          aria-hidden="true"
+                          className="absolute bottom-0 left-0 w-[18px] h-[18px] group-hover:w-[46px] group-hover:h-[46px] transition-all duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] drop-shadow-[3px_-3px_6px_rgba(15,23,42,0.2)]"
+                          style={{
+                            clipPath: 'polygon(0 0, 100% 0, 100% 100%)',
+                            background:
+                              'linear-gradient(225deg, #FFFFFF 0%, #F4F6FA 48%, #D4DCE8 100%)',
+                          }}
+                        />
+                        <span className="pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-150 absolute bottom-2 left-12 px-2 py-0.5 rounded-full bg-[#192231]/85 text-[#F2EDE4] text-[10px] font-medium whitespace-nowrap shadow-sm">
+                          ‹ 上一页
+                        </span>
+                      </div>
+                    )}
+
+                    {/* 右下角：悬停翘角 + 拖拽/点击翻下一页热区 */}
+                    {canTurnNext && (
+                      <div
+                        data-page-corner="next"
+                        onPointerDown={(e) => handleCornerPointerDown('forward', e)}
+                        title="点击或向左拖拽翻下一页"
+                        className="group hidden md:block absolute bottom-0 right-0 w-20 h-20 z-30 cursor-grab active:cursor-grabbing select-none"
+                      >
+                        {/* 底层露出下一页内角三角 */}
+                        <div
+                          aria-hidden="true"
+                          className="absolute bottom-0 right-0 w-[18px] h-[18px] group-hover:w-[46px] group-hover:h-[46px] transition-all duration-200 ease-[cubic-bezier(0.23,1,0.32,1)]"
+                          style={{
+                            clipPath: 'polygon(100% 0, 100% 100%, 0 100%)',
+                            background:
+                              'linear-gradient(135deg, rgba(15,23,42,0.16) 0%, #D9E0EC 42%, #EEF2F7 100%)',
+                          }}
+                        />
+                        {/* 向上翻折的右上卷角纸片 */}
+                        <div
+                          aria-hidden="true"
+                          className="absolute bottom-0 right-0 w-[18px] h-[18px] group-hover:w-[46px] group-hover:h-[46px] transition-all duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] drop-shadow-[-3px_-3px_6px_rgba(15,23,42,0.2)]"
+                          style={{
+                            clipPath: 'polygon(0 0, 100% 0, 0 100%)',
+                            background:
+                              'linear-gradient(135deg, #FFFFFF 0%, #F4F6FA 48%, #D4DCE8 100%)',
+                          }}
+                        />
+                        <span className="pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-150 absolute bottom-2 right-12 px-2 py-0.5 rounded-full bg-[#192231]/85 text-[#F2EDE4] text-[10px] font-medium whitespace-nowrap shadow-sm">
+                          下一页 ›
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 右侧动态多页纸张堆叠厚度（随已读进度变薄） */}
+                  <div
+                    aria-hidden="true"
+                    data-book-stack="right"
+                    className="hidden md:block shrink-0 rounded-r-[3px] border-l border-black/10 transition-[width] duration-200 ease-out"
+                    style={{
+                      width: `${rightStackWidth}px`,
+                      background:
+                        'repeating-linear-gradient(to left, #cfd6e3 0px, #cfd6e3 1.5px, #eef2f7 1.5px, #eef2f7 3px)',
+                      boxShadow: 'inset 3px 0 6px rgba(15, 29, 51, 0.16)',
+                    }}
+                  />
                 </div>
 
-                {/* 右页 */}
-                <div className="relative">
-                  <div className="absolute inset-y-0 -left-[1px] w-[3px] bg-gradient-to-r from-transparent via-black/[0.03] to-transparent pointer-events-none z-10" />
-                  <BookPage side="right" pageNumber={currentPageStart + 1}>
-                    {spreads[displayedSpread].right}
-                  </BookPage>
+                {/* 底部厚纸垛切口（双页拱形明暗 + 横向多页纹理 + 中脊布头凹口，与动态左右厚度对齐） */}
+                <div
+                  className="relative h-4 sm:h-5 rounded-b-[4px] overflow-hidden border-t border-black/10 transition-[margin] duration-200 ease-out"
+                  style={{
+                    marginLeft: `${leftStackWidth}px`,
+                    marginRight: `${rightStackWidth}px`,
+                  }}
+                >
+                  <div
+                    className="absolute inset-0"
+                    style={{
+                      background:
+                        'repeating-linear-gradient(to bottom, #eef2f7 0px, #eef2f7 2px, #cfd6e3 2px, #cfd6e3 3.5px)',
+                    }}
+                  />
+                  {/* 模拟书页展开时的双峰拱起阴影与中缝书脊凹陷 */}
+                  <div
+                    className="absolute inset-0"
+                    style={{
+                      background:
+                        'linear-gradient(to right, rgba(15,23,42,0.12) 0%, rgba(255,255,255,0.22) 25%, rgba(15,23,42,0.06) 44%, rgba(15,23,42,0.26) 50%, rgba(15,23,42,0.06) 56%, rgba(255,255,255,0.22) 75%, rgba(15,23,42,0.14) 100%)',
+                    }}
+                  />
+                  {/* 中缝布头装订小标 */}
+                  <div
+                    aria-hidden="true"
+                    className="hidden md:block absolute top-0 left-1/2 -translate-x-1/2 w-5 h-full bg-[#192231]/80 border-x border-[#D4AD72]/35"
+                  />
                 </div>
-              </div>
-
-              {/* 底部纸张厚度 */}
-              <div className="h-3 sm:h-4 rounded-b-sm overflow-hidden" style={{
-                background: 'linear-gradient(180deg, #d1d6e0, #d1d6e0)',
-                boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.3), inset 0 -1px 0 rgba(0,0,0,0.04)',
-              }}>
-                <div className="h-full w-full" style={{
-                  background: 'repeating-linear-gradient(to bottom, transparent 0px, transparent 2px, rgba(160,174,192,0.12) 2px, rgba(160,174,192,0.12) 2.5px)',
-                }} />
               </div>
             </div>
           </div>
