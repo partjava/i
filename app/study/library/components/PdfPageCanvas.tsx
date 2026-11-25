@@ -1,11 +1,13 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Trash2, Check, X } from 'lucide-react';
 import { PIN_COLOR_META, type PdfAnnotationItem, type PinColor } from '../api';
+import type { PdfPageRenderCache, CachedPageBitmap } from './pdfPageCache';
 
 interface PdfPageCanvasProps {
   pdfDoc: any | null;
+  pageCache?: PdfPageRenderCache | null;
   pageNumber: number | null;
   scale?: number;
   pins: PdfAnnotationItem[];
@@ -13,6 +15,7 @@ interface PdfPageCanvasProps {
   pinMode: boolean;
   highlightedPinId?: number | null;
   interactive?: boolean;
+  onWidthMeasured?: (width: number) => void;
   onCreatePin?: (pageNumber: number, xPct: number, yPct: number, color: PinColor, content: string) => Promise<void>;
   onUpdatePin?: (annId: number, content: string, color: PinColor) => Promise<void>;
   onDeletePin?: (annId: number) => Promise<void>;
@@ -22,6 +25,7 @@ const PIN_COLORS: PinColor[] = ['amber', 'blue', 'emerald', 'rose', 'violet'];
 
 export default function PdfPageCanvas({
   pdfDoc,
+  pageCache,
   pageNumber,
   scale = 1,
   pins,
@@ -29,6 +33,7 @@ export default function PdfPageCanvas({
   pinMode,
   highlightedPinId,
   interactive = true,
+  onWidthMeasured,
   onCreatePin,
   onUpdatePin,
   onDeletePin,
@@ -36,6 +41,7 @@ export default function PdfPageCanvas({
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [rendering, setRendering] = useState(false);
+  const [cacheHit, setCacheHit] = useState(false);
   const [containerWidth, setContainerWidth] = useState(460);
 
   const [draftPin, setDraftPin] = useState<{
@@ -50,21 +56,38 @@ export default function PdfPageCanvas({
   const [editingContent, setEditingContent] = useState('');
   const [editingColor, setEditingColor] = useState<PinColor>('amber');
 
-  // 监听纸面可用宽度以实现高清自适应渲染
-  useEffect(() => {
+  // 监听纸面可用宽度以实现高清自适应渲染（首帧同步测量避免按默认宽度白费渲染）
+  useLayoutEffect(() => {
     const el = wrapperRef.current;
     if (!el) return;
     const updateWidth = () => {
       const w = Math.round(el.clientWidth);
-      if (w > 120) setContainerWidth(w);
+      if (w > 120) {
+        setContainerWidth(w);
+        onWidthMeasured?.(w);
+      }
     };
     updateWidth();
     const ro = new ResizeObserver(updateWidth);
     ro.observe(el);
     return () => ro.disconnect();
-  }, []);
+  }, [onWidthMeasured]);
 
-  // 渲染当前 PDF 页到 Canvas（支持快速翻页取消旧任务）
+  // 将预渲染好的位图贴到可视 Canvas 上（< 1ms 零闪烁）
+  const blitBitmap = (bitmap: CachedPageBitmap) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    canvas.width = bitmap.canvas.width;
+    canvas.height = bitmap.canvas.height;
+    canvas.style.width = `${bitmap.cssWidth}px`;
+    canvas.style.height = `${bitmap.cssHeight}px`;
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      ctx.drawImage(bitmap.canvas, 0, 0);
+    }
+  };
+
+  // 渲染当前 PDF 页到 Canvas（优先命中预渲染缓存，未命中则异步渲染并写入缓存）
   useEffect(() => {
     let cancelled = false;
     let renderTask: any = null;
@@ -73,19 +96,37 @@ export default function PdfPageCanvas({
       return;
     }
 
+    const cssTargetWidth = Math.max(200, Math.round(containerWidth * scale));
+    const dpr = typeof window !== 'undefined' ? Math.min(window.devicePixelRatio || 1, 2) : 1;
+
+    const syncHit = pageCache?.getSync(pageNumber, cssTargetWidth, dpr);
+    if (syncHit) {
+      blitBitmap(syncHit);
+      setCacheHit(true);
+      setRendering(false);
+      return;
+    }
+
+    setCacheHit(false);
+
     const renderPage = async () => {
       setRendering(true);
       try {
+        if (pageCache) {
+          const bitmap = await pageCache.renderPage(pageNumber, cssTargetWidth, dpr);
+          if (!cancelled) {
+            blitBitmap(bitmap);
+          }
+          return;
+        }
+
         const page = await pdfDoc.getPage(pageNumber);
         if (cancelled) return;
         const canvas = canvasRef.current;
         if (!canvas) return;
 
         const baseViewport = page.getViewport({ scale: 1 });
-        const cssTargetWidth = Math.max(200, containerWidth * scale);
         const cssScale = cssTargetWidth / Math.max(1, baseViewport.width);
-        const dpr = typeof window !== 'undefined' ? Math.min(window.devicePixelRatio || 1, 2.2) : 1;
-
         const renderViewport = page.getViewport({ scale: cssScale * dpr });
         const displayViewport = page.getViewport({ scale: cssScale });
 
@@ -117,9 +158,8 @@ export default function PdfPageCanvas({
         renderTask?.cancel();
       } catch {}
     };
-  }, [pdfDoc, pageNumber, containerWidth, scale]);
+  }, [pdfDoc, pageCache, pageNumber, containerWidth, scale]);
 
-  // 切换页码时收起临时编辑浮层
   useEffect(() => {
     setDraftPin(null);
     setEditingPinId(null);
@@ -151,15 +191,24 @@ export default function PdfPageCanvas({
   }
 
   return (
-    <div ref={wrapperRef} className="relative w-full h-full flex flex-col items-center justify-start">
+    <div
+      ref={wrapperRef}
+      className={`relative w-full h-full flex flex-col justify-start ${
+        scale > 1 ? 'items-start' : 'items-center'
+      }`}
+    >
       <div
         onClick={handleStageClick}
         data-pdf-page-surface={pageNumber}
-        className={`relative inline-block max-w-full shadow-[0_6px_20px_rgba(15,23,42,0.08)] rounded-[2px] bg-white ${
-          interactive && pinMode ? 'cursor-crosshair' : ''
-        }`}
+        data-pdf-cache-hit={cacheHit ? '1' : '0'}
+        className={`relative inline-block shadow-[0_6px_20px_rgba(15,23,42,0.08)] rounded-[2px] bg-white ${
+          scale > 1 ? 'mx-auto' : 'max-w-full'
+        } ${interactive && pinMode ? 'cursor-crosshair' : ''}`}
       >
-        <canvas ref={canvasRef} className="block max-w-full h-auto rounded-[2px]" />
+        <canvas
+          ref={canvasRef}
+          className={`block rounded-[2px] ${scale > 1 ? '' : 'max-w-full h-auto'}`}
+        />
 
         {rendering && (
           <div className="pointer-events-none absolute top-2 right-2 px-2 py-0.5 rounded-full bg-slate-900/70 text-[#F2EDE4] text-[10px]">
@@ -211,7 +260,6 @@ export default function PdfPageCanvas({
                     {idx + 1}
                   </button>
 
-                  {/* 编辑已有图钉弹窗 */}
                   {interactive && isEditing && (
                     <div
                       className={`mt-2 w-60 rounded-xl bg-[#192231] text-[#F2EDE4] p-3 shadow-2xl border border-[#D4AD72]/40 z-30 ${

@@ -8,6 +8,7 @@ import com.partjava.repository.PdfAnnotationMapper;
 import com.partjava.repository.PdfBookMapper;
 import com.partjava.repository.PdfBookmarkMapper;
 import com.partjava.service.PdfBookService;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -17,6 +18,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
@@ -26,6 +29,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.security.MessageDigest;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -41,38 +46,62 @@ public class PdfBookServiceImpl implements PdfBookService {
     @Value("${partjava.pdf.storage-dir:../partjavadata/pdfs}")
     private String storageDir;
 
+    @Value("${jwt.secret:}")
+    private String jwtSecret;
+
+    private byte[] streamHmacKey;
+
+    @PostConstruct
+    void initStreamKey() {
+        String source = (jwtSecret != null && !jwtSecret.isBlank())
+                ? jwtSecret + ":pdf-stream-v1"
+                : UUID.randomUUID() + ":pdf-stream-v1";
+        this.streamHmacKey = source.getBytes(StandardCharsets.UTF_8);
+    }
+
     private Path baseStoragePath() {
         return Paths.get(storageDir).toAbsolutePath().normalize();
     }
 
     @Override
     public List<PdfBook> listBooks(Integer userId, String category, String query) {
-        LambdaQueryWrapper<PdfBook> wrapper = new LambdaQueryWrapper<PdfBook>()
-                .eq(PdfBook::getUserId, userId);
+        LambdaQueryWrapper<PdfBook> wrapper = new LambdaQueryWrapper<>();
+        if (userId != null) {
+            wrapper.and(w -> w.eq(PdfBook::getUserId, userId).or().eq(PdfBook::getIsDemo, true));
+        } else {
+            wrapper.eq(PdfBook::getIsDemo, true);
+        }
 
         if (category != null && !category.isBlank() && !"全部".equals(category)) {
             wrapper.eq(PdfBook::getCategory, category.trim());
         }
         if (query != null && !query.isBlank()) {
             String kw = query.trim();
-            wrapper.and(w -> w.like(PdfBook::getTitle, kw).or().like(PdfBook::getOriginalFilename, kw));
+            wrapper.and(w -> w.like(PdfBook::getTitle, kw)
+                    .or().like(PdfBook::getOriginalFilename, kw)
+                    .or().like(PdfBook::getAuthor, kw));
         }
-        wrapper.last("ORDER BY COALESCE(last_read_at, updated_at) DESC, id DESC");
+        wrapper.last("ORDER BY is_demo ASC, COALESCE(last_read_at, updated_at) DESC, id ASC");
 
         List<PdfBook> books = pdfBookMapper.selectList(wrapper);
         for (PdfBook book : books) {
-            Long annCount = pdfAnnotationMapper.selectCount(
-                    new LambdaQueryWrapper<PdfAnnotation>()
-                            .eq(PdfAnnotation::getBookId, book.getId())
-                            .eq(PdfAnnotation::getUserId, userId)
-            );
-            Long bmCount = pdfBookmarkMapper.selectCount(
-                    new LambdaQueryWrapper<PdfBookmark>()
-                            .eq(PdfBookmark::getBookId, book.getId())
-                            .eq(PdfBookmark::getUserId, userId)
-            );
-            book.setAnnotationCount(annCount != null ? annCount.intValue() : 0);
-            book.setBookmarkCount(bmCount != null ? bmCount.intValue() : 0);
+            if (userId != null) {
+                Long annCount = pdfAnnotationMapper.selectCount(
+                        new LambdaQueryWrapper<PdfAnnotation>()
+                                .eq(PdfAnnotation::getBookId, book.getId())
+                                .eq(PdfAnnotation::getUserId, userId)
+                );
+                Long bmCount = pdfBookmarkMapper.selectCount(
+                        new LambdaQueryWrapper<PdfBookmark>()
+                                .eq(PdfBookmark::getBookId, book.getId())
+                                .eq(PdfBookmark::getUserId, userId)
+                );
+                book.setAnnotationCount(annCount != null ? annCount.intValue() : 0);
+                book.setBookmarkCount(bmCount != null ? bmCount.intValue() : 0);
+            } else {
+                book.setAnnotationCount(0);
+                book.setBookmarkCount(0);
+            }
         }
         return books;
     }
@@ -84,7 +113,6 @@ public class PdfBookServiceImpl implements PdfBookService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "上传的 PDF 文件不能为空");
         }
 
-        // 校验 PDF 文件魔数 %PDF-
         byte[] header = new byte[5];
         try (InputStream in = file.getInputStream()) {
             int read = in.readNBytes(header, 0, 5);
@@ -135,6 +163,9 @@ public class PdfBookServiceImpl implements PdfBookService {
                 .category(cleanCategory)
                 .coverData(coverData)
                 .readingSeconds(0)
+                .isDemo(false)
+                .author("")
+                .licenseNote("")
                 .lastReadAt(now)
                 .createdAt(now)
                 .updatedAt(now)
@@ -147,10 +178,16 @@ public class PdfBookServiceImpl implements PdfBookService {
     }
 
     @Override
-    public PdfBook getOwnedBook(Integer userId, Long bookId) {
+    public PdfBook getReadableBook(Integer userId, Long bookId) {
         PdfBook book = pdfBookMapper.selectById(bookId);
         if (book == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "未找到该书籍");
+        }
+        if (Boolean.TRUE.equals(book.getIsDemo())) {
+            return book;
+        }
+        if (userId == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "请先登录后查看个人书籍");
         }
         if (!Objects.equals(book.getUserId(), userId)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "无权访问该书籍");
@@ -159,21 +196,35 @@ public class PdfBookServiceImpl implements PdfBookService {
     }
 
     @Override
+    public PdfBook getOwnedBook(Integer userId, Long bookId) {
+        PdfBook book = pdfBookMapper.selectById(bookId);
+        if (book == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "未找到该书籍");
+        }
+        if (Boolean.TRUE.equals(book.getIsDemo()) || !Objects.equals(book.getUserId(), userId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "无权修改或删除该书籍");
+        }
+        return book;
+    }
+
+    @Override
     public Map<String, Object> getBookDetail(Integer userId, Long bookId) {
-        PdfBook book = getOwnedBook(userId, bookId);
-        List<PdfAnnotation> annotations = pdfAnnotationMapper.selectList(
-                new LambdaQueryWrapper<PdfAnnotation>()
-                        .eq(PdfAnnotation::getBookId, bookId)
-                        .eq(PdfAnnotation::getUserId, userId)
-                        .orderByAsc(PdfAnnotation::getPageNumber)
-                        .orderByAsc(PdfAnnotation::getId)
-        );
-        List<PdfBookmark> bookmarks = pdfBookmarkMapper.selectList(
-                new LambdaQueryWrapper<PdfBookmark>()
-                        .eq(PdfBookmark::getBookId, bookId)
-                        .eq(PdfBookmark::getUserId, userId)
-                        .orderByAsc(PdfBookmark::getPageNumber)
-        );
+        PdfBook book = getReadableBook(userId, bookId);
+        List<PdfAnnotation> annotations = userId != null
+                ? pdfAnnotationMapper.selectList(
+                    new LambdaQueryWrapper<PdfAnnotation>()
+                            .eq(PdfAnnotation::getBookId, bookId)
+                            .eq(PdfAnnotation::getUserId, userId)
+                            .orderByAsc(PdfAnnotation::getPageNumber)
+                            .orderByAsc(PdfAnnotation::getId))
+                : Collections.emptyList();
+        List<PdfBookmark> bookmarks = userId != null
+                ? pdfBookmarkMapper.selectList(
+                    new LambdaQueryWrapper<PdfBookmark>()
+                            .eq(PdfBookmark::getBookId, bookId)
+                            .eq(PdfBookmark::getUserId, userId)
+                            .orderByAsc(PdfBookmark::getPageNumber))
+                : Collections.emptyList();
         book.setAnnotationCount(annotations.size());
         book.setBookmarkCount(bookmarks.size());
 
@@ -187,9 +238,10 @@ public class PdfBookServiceImpl implements PdfBookService {
     @Override
     public Path resolveBookFile(PdfBook book) {
         Path base = baseStoragePath();
-        Path filePath = base.resolve(String.valueOf(book.getUserId()))
-                .resolve(book.getStoredFilename())
-                .normalize();
+        Path subDir = Boolean.TRUE.equals(book.getIsDemo())
+                ? base.resolve("demo")
+                : base.resolve(String.valueOf(book.getUserId()));
+        Path filePath = subDir.resolve(book.getStoredFilename()).normalize();
         if (!filePath.startsWith(base) || !Files.exists(filePath)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "PDF 原文件不存在");
         }
@@ -197,7 +249,60 @@ public class PdfBookServiceImpl implements PdfBookService {
     }
 
     @Override
+    public String issueStreamToken(Integer userId, Long bookId) {
+        getReadableBook(userId, bookId);
+        long exp = Instant.now().getEpochSecond() + 7200L;
+        String payload = userId + ":" + bookId + ":" + exp;
+        String payloadB64 = Base64.getUrlEncoder().withoutPadding()
+                .encodeToString(payload.getBytes(StandardCharsets.UTF_8));
+        String sigB64 = signPayload(payloadB64);
+        return payloadB64 + "." + sigB64;
+    }
+
+    @Override
+    public Integer verifyStreamToken(String token, Long bookId) {
+        if (token == null || !token.contains(".")) return null;
+        try {
+            String[] parts = token.split("\\.", 2);
+            String payloadB64 = parts[0];
+            String sigB64 = parts[1];
+            String expectedSig = signPayload(payloadB64);
+            if (!MessageDigest.isEqual(sigB64.getBytes(StandardCharsets.UTF_8), expectedSig.getBytes(StandardCharsets.UTF_8))) {
+                return null;
+            }
+            String payload = new String(Base64.getUrlDecoder().decode(payloadB64), StandardCharsets.UTF_8);
+            String[] fields = payload.split(":", 3);
+            if (fields.length != 3) return null;
+            int uid = Integer.parseInt(fields[0]);
+            long bid = Long.parseLong(fields[1]);
+            long exp = Long.parseLong(fields[2]);
+            if (!Objects.equals(bid, bookId) || exp < Instant.now().getEpochSecond()) {
+                return null;
+            }
+            return uid;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private String signPayload(String payloadB64) {
+        try {
+            Mac mac = Mac.getInstance("HmacSHA256");
+            mac.init(new SecretKeySpec(streamHmacKey, "HmacSHA256"));
+            byte[] sig = mac.doFinal(payloadB64.getBytes(StandardCharsets.UTF_8));
+            return Base64.getUrlEncoder().withoutPadding().encodeToString(sig);
+        } catch (Exception e) {
+            throw new IllegalStateException("HMAC sign error", e);
+        }
+    }
+
+    @Override
     public PdfBook updateBook(Integer userId, Long bookId, String title, String category, Integer lastPage, Integer pageCount, String coverData, Integer readingSecondsIncrement) {
+        PdfBook existing = getReadableBook(userId, bookId);
+        // 共享演示书籍不修改共享进度与标题（由用户浏览器端记录试阅页码），但允许校验真实页数
+        if (Boolean.TRUE.equals(existing.getIsDemo())) {
+            return existing;
+        }
         PdfBook book = getOwnedBook(userId, bookId);
         boolean readingTouched = false;
 
@@ -265,7 +370,7 @@ public class PdfBookServiceImpl implements PdfBookService {
 
     @Override
     public PdfAnnotation addAnnotation(Integer userId, Long bookId, PdfAnnotation req) {
-        PdfBook book = getOwnedBook(userId, bookId);
+        PdfBook book = getReadableBook(userId, bookId);
         if (req.getNoteContent() == null || req.getNoteContent().isBlank()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "批注内容不能为空");
         }
@@ -293,7 +398,7 @@ public class PdfBookServiceImpl implements PdfBookService {
 
     @Override
     public PdfAnnotation updateAnnotation(Integer userId, Long bookId, Long annId, PdfAnnotation req) {
-        getOwnedBook(userId, bookId);
+        getReadableBook(userId, bookId);
         PdfAnnotation existing = pdfAnnotationMapper.selectById(annId);
         if (existing == null || !Objects.equals(existing.getBookId(), bookId)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "未找到该批注");
@@ -321,7 +426,7 @@ public class PdfBookServiceImpl implements PdfBookService {
 
     @Override
     public void deleteAnnotation(Integer userId, Long bookId, Long annId) {
-        getOwnedBook(userId, bookId);
+        getReadableBook(userId, bookId);
         PdfAnnotation existing = pdfAnnotationMapper.selectById(annId);
         if (existing == null || !Objects.equals(existing.getBookId(), bookId)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "未找到该批注");
@@ -334,7 +439,7 @@ public class PdfBookServiceImpl implements PdfBookService {
 
     @Override
     public PdfBookmark addOrUpdateBookmark(Integer userId, Long bookId, Integer pageNumber, String label) {
-        PdfBook book = getOwnedBook(userId, bookId);
+        PdfBook book = getReadableBook(userId, bookId);
         int maxPage = Math.max(1, book.getPageCount() != null ? book.getPageCount() : Integer.MAX_VALUE);
         int page = pageNumber != null ? Math.max(1, Math.min(pageNumber, maxPage)) : 1;
         String safeLabel = (label != null && !label.isBlank()) ? label.trim() : ("第 " + page + " 页");
@@ -365,7 +470,7 @@ public class PdfBookServiceImpl implements PdfBookService {
 
     @Override
     public void deleteBookmark(Integer userId, Long bookId, Integer pageNumber) {
-        getOwnedBook(userId, bookId);
+        getReadableBook(userId, bookId);
         pdfBookmarkMapper.delete(
                 new LambdaQueryWrapper<PdfBookmark>()
                         .eq(PdfBookmark::getBookId, bookId)

@@ -47,7 +47,7 @@ export default function AchievementsSection({
               '0%': '#ffd700',
               '100%': '#ff8c00',
             }}
-            trailColor="#f0f0f0"
+            trailColor="rgba(148, 163, 184, 0.24)"
             strokeWidth={10}
             showInfo={false}
             style={{ width: '100%', display: 'block' }}

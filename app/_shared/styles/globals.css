@@ -316,6 +316,131 @@ body.dark .ant-dropdown .ant-dropdown-menu-item-divider {
   background-color: rgba(255, 255, 255, 0.10);
 }
 
+/* Ant Design 组件深色模式全局适配（避免 !important 覆盖局部渐变） */
+body.dark .ant-card {
+  background-color: #151921;
+  border-color: rgba(255, 255, 255, 0.10);
+  color: #F2EDE4;
+}
+
+body.dark .ant-card-head {
+  color: #F2EDE4;
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+body.dark .ant-card-head-title {
+  color: #F2EDE4;
+}
+
+body.dark .ant-typography {
+  color: #F2EDE4;
+}
+
+body.dark .ant-typography.ant-typography-secondary {
+  color: #9BA7B8;
+}
+
+body.dark .ant-divider {
+  border-block-start-color: rgba(255, 255, 255, 0.10);
+  color: #C5CBD6;
+}
+
+body.dark .ant-divider-inner-text {
+  color: #C5CBD6;
+}
+
+body.dark .ant-timeline .ant-timeline-item-tail {
+  border-inline-start-color: rgba(255, 255, 255, 0.12);
+}
+
+body.dark .ant-timeline .ant-timeline-item-head {
+  background-color: transparent;
+}
+
+body.dark .ant-progress-text {
+  color: #F2EDE4;
+}
+
+body.dark .ant-progress-circle-trail {
+  stroke: rgba(255, 255, 255, 0.12) !important;
+}
+
+body.dark .ant-progress-inner {
+  background-color: rgba(255, 255, 255, 0.10);
+}
+
+body.dark .ant-form-item-label > label {
+  color: #E2E8F0;
+}
+
+body.dark .ant-input,
+body.dark .ant-input-affix-wrapper,
+body.dark .ant-select-selector {
+  background-color: #1A202C;
+  border-color: rgba(255, 255, 255, 0.14);
+  color: #F2EDE4;
+}
+
+body.dark .ant-input::placeholder,
+body.dark .ant-select-selection-placeholder {
+  color: #8B95A8;
+}
+
+body.dark .ant-select-dropdown {
+  background-color: #151921;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+body.dark .ant-select-item {
+  color: #E2E8F0;
+}
+
+body.dark .ant-select-item-option-active {
+  background-color: rgba(212, 173, 114, 0.15);
+}
+
+body.dark .ant-btn-default {
+  background-color: #1E2430;
+  border-color: rgba(255, 255, 255, 0.16);
+  color: #F2EDE4;
+}
+
+/* 笔记详请页代码块深色语法高亮兼容 */
+body.dark #note-content-area pre code .hljs-comment,
+body.dark #note-content-area pre code .hljs-quote {
+  color: #8B949E;
+}
+
+body.dark #note-content-area pre code .hljs-keyword,
+body.dark #note-content-area pre code .hljs-selector-tag,
+body.dark #note-content-area pre code .hljs-type {
+  color: #FF7B72;
+}
+
+body.dark #note-content-area pre code .hljs-string,
+body.dark #note-content-area pre code .hljs-doctag,
+body.dark #note-content-area pre code .hljs-regexp {
+  color: #A5D6FF;
+}
+
+body.dark #note-content-area pre code .hljs-title,
+body.dark #note-content-area pre code .hljs-section,
+body.dark #note-content-area pre code .hljs-function {
+  color: #D2A8FF;
+}
+
+body.dark #note-content-area pre code .hljs-number,
+body.dark #note-content-area pre code .hljs-literal,
+body.dark #note-content-area pre code .hljs-variable,
+body.dark #note-content-area pre code .hljs-attr {
+  color: #79C0FF;
+}
+
+body.dark #note-content-area pre code .hljs-built_in,
+body.dark #note-content-area pre code .hljs-name {
+  color: #FFA657;
+}
+
 /* 基础样式 */
 body {
   background: var(--background);

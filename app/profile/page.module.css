@@ -58,3 +58,15 @@
  .achievements :global(.ant-card-body) > div:first-child > div { grid-template-columns: 48px minmax(0,1fr); gap: 6px 14px; }
  .achievements :global(.ant-card-body) > div:first-child > div > div:first-child { width: 48px; height: 48px; }
 }
+
+:global(body.dark) .page :global(.ant-card) {
+  border-color: rgba(255, 255, 255, 0.10);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
+}
+:global(body.dark) .heatmap :global(.ant-card-body) > div {
+  background: rgba(255, 255, 255, 0.03);
+}
+:global(body.dark) .achievements :global(.ant-card-body) > div:first-child {
+  background: linear-gradient(110deg, rgba(212, 173, 114, 0.14), rgba(30, 36, 48, 0.55));
+  border-color: rgba(212, 173, 114, 0.25);
+}

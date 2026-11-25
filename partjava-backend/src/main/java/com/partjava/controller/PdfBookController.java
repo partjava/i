@@ -6,18 +6,23 @@ import com.partjava.entity.PdfAnnotation;
 import com.partjava.entity.PdfBook;
 import com.partjava.entity.PdfBookmark;
 import com.partjava.service.PdfBookService;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
-import org.springframework.core.io.UrlResource;
-import org.springframework.core.io.support.ResourceRegion;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.math.BigDecimal;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.List;
 import java.util.Map;
 
@@ -30,7 +35,7 @@ public class PdfBookController {
 
     private Integer requireUserId(Integer userId) {
         if (userId == null) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "请先登录后使用我的书架");
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "请先登录后使用该操作");
         }
         return userId;
     }
@@ -40,7 +45,7 @@ public class PdfBookController {
             @RequestAttribute(value = "userId", required = false) Integer userId,
             @RequestParam(value = "category", required = false) String category,
             @RequestParam(value = "q", required = false) String query) {
-        return ApiResponse.success(pdfBookService.listBooks(requireUserId(userId), category, query));
+        return ApiResponse.success(pdfBookService.listBooks(userId, category, query));
     }
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -59,37 +64,84 @@ public class PdfBookController {
     public ApiResponse<Map<String, Object>> getBookDetail(
             @RequestAttribute(value = "userId", required = false) Integer userId,
             @PathVariable("id") Long bookId) {
-        return ApiResponse.success(pdfBookService.getBookDetail(requireUserId(userId), bookId));
+        return ApiResponse.success(pdfBookService.getBookDetail(userId, bookId));
     }
 
-    @GetMapping("/{id}/file")
-    public ResponseEntity<?> streamBookFile(
+    @PostMapping("/{id}/stream-token")
+    public ApiResponse<Map<String, String>> issueStreamToken(
             @RequestAttribute(value = "userId", required = false) Integer userId,
-            @PathVariable("id") Long bookId,
-            @RequestHeader HttpHeaders headers) throws IOException {
-        PdfBook book = pdfBookService.getOwnedBook(requireUserId(userId), bookId);
-        Path filePath = pdfBookService.resolveBookFile(book);
-        UrlResource resource = new UrlResource(filePath.toUri());
-        long contentLength = resource.contentLength();
+            @PathVariable("id") Long bookId) {
+        String token = pdfBookService.issueStreamToken(requireUserId(userId), bookId);
+        return ApiResponse.success(Map.of("token", token));
+    }
 
-        List<HttpRange> ranges = headers.getRange();
-        if (!ranges.isEmpty()) {
-            HttpRange range = ranges.get(0);
-            long start = range.getRangeStart(contentLength);
-            long end = range.getRangeEnd(contentLength);
-            long chunkSize = Math.min(1024L * 1024L * 4L, end - start + 1);
-            ResourceRegion region = new ResourceRegion(resource, start, chunkSize);
-            return ResponseEntity.status(HttpStatus.PARTIAL_CONTENT)
-                    .contentType(MediaType.APPLICATION_PDF)
-                    .header(HttpHeaders.ACCEPT_RANGES, "bytes")
-                    .body(region);
+    @RequestMapping(value = "/{id}/file", method = {RequestMethod.GET, RequestMethod.HEAD})
+    public void streamBookFile(
+            @RequestAttribute(value = "userId", required = false) Integer userId,
+            @RequestParam(value = "st", required = false) String streamToken,
+            @PathVariable("id") Long bookId,
+            @RequestHeader HttpHeaders headers,
+            HttpServletRequest request,
+            HttpServletResponse response) throws IOException {
+        Integer effectiveUserId = userId;
+        if (effectiveUserId == null && streamToken != null && !streamToken.isBlank()) {
+            effectiveUserId = pdfBookService.verifyStreamToken(streamToken, bookId);
         }
 
-        return ResponseEntity.ok()
-                .contentType(MediaType.APPLICATION_PDF)
-                .contentLength(contentLength)
-                .header(HttpHeaders.ACCEPT_RANGES, "bytes")
-                .body(resource);
+        PdfBook book = pdfBookService.getReadableBook(effectiveUserId, bookId);
+        Path filePath = pdfBookService.resolveBookFile(book);
+        long contentLength = Files.size(filePath);
+
+        response.setContentType(MediaType.APPLICATION_PDF_VALUE);
+        response.setHeader(HttpHeaders.ACCEPT_RANGES, "bytes");
+
+        if (HttpMethod.HEAD.matches(request.getMethod())) {
+            response.setStatus(HttpServletResponse.SC_OK);
+            response.setContentLengthLong(contentLength);
+            return;
+        }
+
+        List<HttpRange> ranges = headers.getRange();
+        long start = 0L;
+        long chunkSize = contentLength;
+
+        if (!ranges.isEmpty() && contentLength > 0) {
+            HttpRange range = ranges.get(0);
+            start = range.getRangeStart(contentLength);
+            long requestedEnd = range.getRangeEnd(contentLength);
+            long actualEnd = Math.min(requestedEnd, start + 8L * 1024L * 1024L - 1L);
+            actualEnd = Math.min(actualEnd, contentLength - 1L);
+            if (start > actualEnd || start >= contentLength) {
+                response.setStatus(HttpServletResponse.SC_REQUESTED_RANGE_NOT_SATISFIABLE);
+                response.setHeader(HttpHeaders.CONTENT_RANGE, "bytes */" + contentLength);
+                return;
+            }
+            chunkSize = actualEnd - start + 1L;
+            response.setStatus(HttpServletResponse.SC_PARTIAL_CONTENT);
+            response.setHeader(HttpHeaders.CONTENT_RANGE, "bytes " + start + "-" + actualEnd + "/" + contentLength);
+        } else {
+            response.setStatus(HttpServletResponse.SC_OK);
+        }
+
+        response.setContentLengthLong(chunkSize);
+        OutputStream outputStream = response.getOutputStream();
+        try (FileChannel channel = FileChannel.open(filePath, StandardOpenOption.READ)) {
+            channel.position(start);
+            byte[] buffer = new byte[65536];
+            ByteBuffer bb = ByteBuffer.wrap(buffer);
+            long remaining = chunkSize;
+            while (remaining > 0) {
+                bb.clear();
+                if (remaining < bb.limit()) {
+                    bb.limit((int) remaining);
+                }
+                int read = channel.read(bb);
+                if (read == -1) break;
+                outputStream.write(buffer, 0, read);
+                remaining -= read;
+            }
+            outputStream.flush();
+        }
     }
 
     @RequestMapping(value = "/{id}", method = {RequestMethod.PUT, RequestMethod.PATCH})

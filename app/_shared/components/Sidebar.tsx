@@ -172,21 +172,32 @@ export default function Sidebar() {
   const itemRefs = useRef<{ [key: string]: HTMLButtonElement | null }>({});
   const { isOpen, setIsOpen, collapsed, toggleCollapsed, side, setSide } = useSidebar();
   const { status: authStatus } = useAuth();
-  const [recentPdfBooks, setRecentPdfBooks] = useState<Array<{ id: number; title: string; lastPage: number; pageCount: number }>>([]);
+  const [recentPdfBooks, setRecentPdfBooks] = useState<Array<{ id: number; title: string; lastPage: number; pageCount: number; isDemo?: boolean }>>([]);
   const [bookshelfOpen, setBookshelfOpen] = useState(false);
 
   useEffect(() => {
-    if (authStatus !== 'authenticated') {
-      setRecentPdfBooks([]);
-      return;
-    }
+    if (authStatus === 'loading') return;
     let cancelled = false;
     const loadRecent = () => {
       fetch('/api/pdf-books', { headers: { ...getAuthHeaders() }, cache: 'no-store' })
         .then((r) => (r.ok ? r.json() : null))
         .then((json) => {
           if (cancelled || !json?.success || !Array.isArray(json.data)) return;
-          setRecentPdfBooks(json.data.slice(0, 5));
+          const items = json.data.slice(0, 12).map((b: any) => {
+            let effectiveLast = Number(b.lastPage) || 1;
+            if (b.isDemo && typeof window !== 'undefined') {
+              const saved = Number(localStorage.getItem(`pdf_demo_last_page_${b.id}`) || '0');
+              if (saved >= 1) effectiveLast = saved;
+            }
+            return {
+              id: b.id,
+              title: b.title,
+              lastPage: effectiveLast,
+              pageCount: Number(b.pageCount) || 1,
+              isDemo: !!b.isDemo,
+            };
+          });
+          setRecentPdfBooks(items);
         })
         .catch(() => {});
     };
@@ -482,7 +493,7 @@ export default function Sidebar() {
                   {/* 二级：技术列表（平滑展开动画） */}
                   <div className={`grid transition-all duration-300 ${catOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
                     <div className="overflow-hidden">
-                      <div data-sidebar-branch className="ml-5 pl-4 border-l-2 border-white/10 space-y-0.5 my-1">
+                      <div data-sidebar-branch className="ml-5 pl-4 border-l-2 border-white/10 space-y-0.5 my-1 max-h-60 overflow-y-auto pr-1">
                         {items.map((item: NavigationItem) => {
                           const itemOpen = expandedItem === item.name;
                           return (
@@ -561,16 +572,14 @@ export default function Sidebar() {
                   <div
                     className={`w-full flex items-center gap-1 rounded-lg transition-colors ${
                       shelfActive
-                        ? 'text-gray-900 bg-white/70 font-semibold'
-                        : 'text-gray-600 hover:bg-white/50 hover:text-gray-900'
+                        ? 'text-gray-900 bg-white/70 font-semibold dark:text-[#F2EDE4] dark:bg-[rgba(212,173,114,0.14)] dark:shadow-[inset_2px_0_0_#D4AD72]'
+                        : 'text-gray-600 hover:bg-white/50 hover:text-gray-900 dark:text-[#C5CBD6] dark:hover:bg-white/[0.06] dark:hover:text-[#F2EDE4]'
                     }`}
                   >
                     <Link
                       href="/study/library"
                       onClick={handleLinkClick}
-                      data-sidebar-node
-                      aria-current={shelfActive ? 'page' : undefined}
-                      className="flex-1 flex items-center gap-2.5 px-2.5 py-2 text-sm font-medium min-w-0"
+                      className="flex-1 flex items-center gap-2.5 px-2.5 py-2 text-sm font-medium min-w-0 text-inherit"
                     >
                       <span
                         className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
@@ -591,7 +600,7 @@ export default function Sidebar() {
                         onClick={() => setBookshelfOpen((prev) => !prev)}
                         aria-label="展开最近阅读书籍"
                         aria-expanded={bookshelfOpen}
-                        className="p-2 mr-1 rounded-md text-gray-400 hover:text-gray-800 transition-colors"
+                        className="p-2 mr-1 rounded-md text-gray-400 hover:text-gray-800 dark:text-[#8B95A8] dark:hover:text-[#F2EDE4] transition-colors"
                       >
                         <svg
                           className={`w-3.5 h-3.5 transition-transform duration-300 ${bookshelfOpen ? 'rotate-90' : ''}`}
@@ -608,7 +617,7 @@ export default function Sidebar() {
               {recentPdfBooks.length > 0 && (
                 <div className={`grid transition-all duration-300 ${bookshelfOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
                   <div className="overflow-hidden">
-                    <div data-sidebar-branch className="ml-5 pl-4 border-l-2 border-white/10 space-y-0.5 my-1">
+                    <div data-sidebar-branch className="ml-5 pl-4 border-l-2 border-white/10 space-y-0.5 my-1 max-h-60 overflow-y-auto pr-1">
                       {recentPdfBooks.map((book) => {
                         const href = `/study/library/${book.id}`;
                         const active = pathname === href;

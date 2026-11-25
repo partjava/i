@@ -16,9 +16,15 @@ public interface PdfBookService {
 
     Map<String, Object> getBookDetail(Integer userId, Long bookId);
 
+    PdfBook getReadableBook(Integer userId, Long bookId);
+
     PdfBook getOwnedBook(Integer userId, Long bookId);
 
     Path resolveBookFile(PdfBook book);
+
+    String issueStreamToken(Integer userId, Long bookId);
+
+    Integer verifyStreamToken(String token, Long bookId);
 
     PdfBook updateBook(Integer userId, Long bookId, String title, String category, Integer lastPage, Integer pageCount, String coverData, Integer readingSecondsIncrement);
 

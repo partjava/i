@@ -12,6 +12,9 @@ export interface PdfBookItem {
   category: string;
   coverData?: string | null;
   readingSeconds: number;
+  isDemo?: boolean;
+  author?: string | null;
+  licenseNote?: string | null;
   lastReadAt?: string | null;
   createdAt?: string | null;
   updatedAt?: string | null;
@@ -51,6 +54,15 @@ export interface PdfBookDetail {
 }
 
 export const PDF_CATEGORIES = ['计算机', '人工智能', '网络安全', '软件工程', '论文', '未分类'] as const;
+
+export const PDFJS_DOCUMENT_OPTIONS = {
+  cMapUrl: '/pdfjs/cmaps/',
+  cMapPacked: true,
+  standardFontDataUrl: '/pdfjs/standard_fonts/',
+  wasmUrl: '/pdfjs/wasm/',
+  iccUrl: '/pdfjs/iccs/',
+  useSystemFonts: true,
+} as const;
 
 export const PIN_COLOR_META: Record<PinColor, { label: string; bg: string; ring: string; dot: string }> = {
   amber: { label: '琥珀金', bg: '#D4AD72', ring: 'rgba(212,173,114,0.35)', dot: '#B45309' },
@@ -125,6 +137,22 @@ export async function fetchPdfBinary(bookId: number | string): Promise<ArrayBuff
     throw new Error(`加载 PDF 原文件失败 (${res.status})`);
   }
   return res.arrayBuffer();
+}
+
+export async function getPdfStreamUrl(
+  bookId: number | string,
+  isDemo?: boolean
+): Promise<string> {
+  if (isDemo) {
+    return `/api/pdf-books/${bookId}/file`;
+  }
+  const res = await fetch(`/api/pdf-books/${bookId}/stream-token`, {
+    method: 'POST',
+    headers: { ...getAuthHeaders() },
+    cache: 'no-store',
+  });
+  const data = await parseApiJson<{ token: string }>(res);
+  return `/api/pdf-books/${bookId}/file?st=${encodeURIComponent(data.token)}`;
 }
 
 export async function updatePdfBook(
@@ -283,7 +311,7 @@ export async function extractPdfMetaAndCover(
     const pdfjs = await import('pdfjs-dist');
     pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
     const data = new Uint8Array(await file.arrayBuffer());
-    const loadingTask = pdfjs.getDocument({ data });
+    const loadingTask = pdfjs.getDocument({ data, ...PDFJS_DOCUMENT_OPTIONS });
     const pdf = await loadingTask.promise;
     const pageCount = pdf.numPages || 1;
     let coverData: string | undefined;

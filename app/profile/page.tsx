@@ -1204,7 +1204,7 @@ export default function ProfilePage() {
             {!statsLoading && stats && (
               <div className={`${styles.metrics} grid grid-cols-2 md:grid-cols-4 gap-4`}>
                 <Card 
-                  className={`text-center shadow-lg border-0 bg-gradient-to-br from-[#EDF0F5] to-[#e2e6ed] ${!isGuest ? 'cursor-pointer hover:shadow-xl transition-all duration-300 hover:scale-105' : ''}`}
+                  className={`text-center shadow-lg border-0 bg-gradient-to-br from-[#EDF0F5] to-[#e2e6ed] dark:from-[#1B212D] dark:to-[#151921] ${!isGuest ? 'cursor-pointer hover:shadow-xl transition-all duration-300 hover:scale-105' : ''}`}
                   onClick={() => !isGuest && router.push('/notes')}
                 >
                   <div className="p-2">
@@ -1216,7 +1216,7 @@ export default function ProfilePage() {
                   </div>
                 </Card>
                 <Card 
-                  className={`text-center shadow-lg border-0 bg-gradient-to-br from-[#EDF0F5] to-[#e2e6ed] ${!isGuest ? 'cursor-pointer hover:shadow-xl transition-all duration-300 hover:scale-105' : ''}`}
+                  className={`text-center shadow-lg border-0 bg-gradient-to-br from-[#EDF0F5] to-[#e2e6ed] dark:from-[#1B212D] dark:to-[#151921] ${!isGuest ? 'cursor-pointer hover:shadow-xl transition-all duration-300 hover:scale-105' : ''}`}
                   onClick={() => !isGuest && router.push('/study')}
                 >
                   <div className="p-2">
@@ -1228,7 +1228,7 @@ export default function ProfilePage() {
                   </div>
                 </Card>
                 <Card 
-                  className={`text-center shadow-lg border-0 bg-gradient-to-br from-[#EDF0F5] to-[#e2e6ed] ${!isGuest ? 'cursor-pointer hover:shadow-xl transition-all duration-300 hover:scale-105' : ''}`}
+                  className={`text-center shadow-lg border-0 bg-gradient-to-br from-[#EDF0F5] to-[#e2e6ed] dark:from-[#1B212D] dark:to-[#151921] ${!isGuest ? 'cursor-pointer hover:shadow-xl transition-all duration-300 hover:scale-105' : ''}`}
                   onClick={() => !isGuest && router.push('/notes')}
                 >
                   <div className="p-2">
@@ -1240,7 +1240,7 @@ export default function ProfilePage() {
                   </div>
                 </Card>
                 <Card 
-                  className={`text-center shadow-lg border-0 bg-gradient-to-br from-[#EDF0F5] to-[#e2e6ed] ${!isGuest ? 'cursor-pointer hover:shadow-xl transition-all duration-300 hover:scale-105' : ''}`}
+                  className={`text-center shadow-lg border-0 bg-gradient-to-br from-[#EDF0F5] to-[#e2e6ed] dark:from-[#1B212D] dark:to-[#151921] ${!isGuest ? 'cursor-pointer hover:shadow-xl transition-all duration-300 hover:scale-105' : ''}`}
                   onClick={() => !isGuest && router.push('/study')}
                 >
                   <div className="p-2">
@@ -1267,7 +1267,7 @@ export default function ProfilePage() {
               >
                 <Row gutter={[16, 16]}>
                   <Col xs={12} sm={12}>
-                    <div className="text-center p-3 sm:p-4 bg-gradient-to-br from-[#EDF0F5] to-[#e2e6ed] rounded-xl">
+                    <div className="text-center p-3 sm:p-4 bg-gradient-to-br from-[#EDF0F5] to-[#e2e6ed] dark:from-[#1B212D] dark:to-[#161B25] dark:border dark:border-white/10 rounded-xl">
                       <Progress
                         type="circle"
                         percent={Math.min(100, ((stats?.notes?.public || 0) / Math.max(1, stats?.notes?.total || 1)) * 100)}
@@ -1282,7 +1282,7 @@ export default function ProfilePage() {
                     </div>
                   </Col>
                   <Col xs={12} sm={12}>
-                    <div className="text-center p-3 sm:p-4 bg-gradient-to-br from-[#EDF0F5] to-[#e2e6ed] rounded-xl">
+                    <div className="text-center p-3 sm:p-4 bg-gradient-to-br from-[#EDF0F5] to-[#e2e6ed] dark:from-[#1B212D] dark:to-[#161B25] dark:border dark:border-white/10 rounded-xl">
                       <Progress
                         type="circle"
                         percent={Math.min(100, (stats?.learning?.categoriesStudied || 0) * 10)}
@@ -1304,17 +1304,17 @@ export default function ProfilePage() {
                   {/* 左侧长方形卡片：总学习时间（点击切换分钟/小时，定时自动恢复） */}
                   <Col xs={24} sm={12}>
                     <div 
-                      className="group relative p-3 sm:p-3.5 bg-gradient-to-br from-[#EDF0F5] to-[#e2e6ed] rounded-xl flex items-center gap-2.5 sm:gap-3 cursor-pointer hover:shadow-md hover:border-purple-200 border border-transparent transition-all duration-200 select-none h-full"
+                      className="group relative p-3 sm:p-3.5 bg-gradient-to-br from-[#EDF0F5] to-[#e2e6ed] dark:from-[#1B212D] dark:to-[#161B25] rounded-xl flex items-center gap-2.5 sm:gap-3 cursor-pointer hover:shadow-md hover:border-purple-200 dark:hover:border-purple-400/35 border border-transparent dark:border-white/10 transition-all duration-200 select-none h-full"
                       onClick={handleToggleStudyTime}
                       title="点击切换显示格式（小时/纯分钟）"
                     >
-                      <div className="w-9 h-9 rounded-lg bg-purple-500/10 flex items-center justify-center text-purple-600 text-lg flex-shrink-0 group-hover:scale-105 transition-transform">
+                      <div className="w-9 h-9 rounded-lg bg-purple-500/10 flex items-center justify-center text-purple-600 dark:text-purple-300 text-lg flex-shrink-0 group-hover:scale-105 transition-transform">
                         <ClockCircleOutlined />
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center justify-between gap-1 mb-0.5">
                           <span className="text-xs text-content-muted whitespace-nowrap">总学习时间</span>
-                          <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-purple-100 text-purple-700 font-medium whitespace-nowrap">
+                          <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-200 font-medium whitespace-nowrap">
                             {showTotalMinutes ? '纯分钟' : '切分钟'}
                           </span>
                         </div>
@@ -1330,8 +1330,8 @@ export default function ProfilePage() {
                   {/* 右侧长方形卡片：收藏与点赞合并（点击打开收藏页面） */}
                   <Col xs={24} sm={12}>
                     <div 
-                      className={`group p-3 sm:p-3.5 bg-gradient-to-br from-[#EDF0F5] to-[#e2e6ed] rounded-xl flex items-center justify-around border border-transparent select-none h-full ${
-                        !isGuest ? 'cursor-pointer hover:shadow-md hover:border-yellow-200 transition-all duration-200' : ''
+                      className={`group p-3 sm:p-3.5 bg-gradient-to-br from-[#EDF0F5] to-[#e2e6ed] dark:from-[#1B212D] dark:to-[#161B25] rounded-xl flex items-center justify-around border border-transparent dark:border-white/10 select-none h-full ${
+                        !isGuest ? 'cursor-pointer hover:shadow-md hover:border-yellow-200 dark:hover:border-amber-400/35 transition-all duration-200' : ''
                       }`}
                       onClick={() => !isGuest && router.push('/profile/bookmarks')}
                       title="点击查看我的收藏"
@@ -1350,7 +1350,7 @@ export default function ProfilePage() {
                       </div>
 
                       {/* 分隔线 */}
-                      <div className="h-6 w-[1px] bg-slate-300 mx-1 flex-shrink-0" />
+                      <div className="h-6 w-[1px] bg-slate-300 dark:bg-white/15 mx-1 flex-shrink-0" />
 
                       {/* 获得点赞 */}
                       <div className="flex items-center gap-1.5 sm:gap-2 flex-1 justify-center min-w-0">
@@ -1381,7 +1381,7 @@ export default function ProfilePage() {
                 }
                 className={styles.heatmap}
               >
-                <div className="p-4 sm:p-6 bg-gradient-to-r from-[#EDF0F5] to-[#e2e6ed] rounded-lg">
+                <div className="p-4 sm:p-6 bg-gradient-to-r from-[#EDF0F5] to-[#e2e6ed] dark:from-[#1B212D] dark:to-[#161B25] dark:border dark:border-white/10 rounded-lg">
                   <LearningHeatmap
                     data={heatmapData}
                     year={new Date().getFullYear()}

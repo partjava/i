@@ -64,7 +64,7 @@ function NoteCodeBlock({
 
   if (lines.length === 1 && !lang && trimmed.length <= 26 && !isFormulaBanner) {
     return (
-      <span className="not-prose inline-flex items-center px-2 py-0.5 my-0.5 rounded-md bg-indigo-50/90 text-indigo-700 border border-indigo-200/80 font-mono text-[13px] font-medium">
+      <span className="not-prose inline-flex items-center px-2 py-0.5 my-0.5 rounded-md bg-indigo-50/90 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-200 border border-indigo-200/80 dark:border-indigo-400/30 font-mono text-[13px] font-medium">
         {trimmed}
       </span>
     );
@@ -73,19 +73,19 @@ function NoteCodeBlock({
   // 核心公式横幅卡片（替代原先黑底套白底的厚重双层 pre 框）
   if (isFormulaBanner) {
     return (
-      <div className="not-prose my-2.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-indigo-50/90 via-slate-50 to-sky-50/80 border border-indigo-200/80 shadow-sm flex items-center justify-between gap-3">
+      <div className="not-prose my-2.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-indigo-50/90 via-slate-50 to-sky-50/80 dark:from-[#1B2233] dark:via-[#151B28] dark:to-[#182436] border border-indigo-200/80 dark:border-indigo-400/30 shadow-sm flex items-center justify-between gap-3">
         <div className="flex items-center gap-2.5 min-w-0 overflow-x-auto">
-          <span className="shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-indigo-600/10 text-indigo-700 border border-indigo-200 text-[11px] font-bold tracking-wide">
+          <span className="shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-indigo-600/10 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-200 border border-indigo-200 dark:border-indigo-400/30 text-[11px] font-bold tracking-wide">
             ∑ 公式
           </span>
-          <code className="font-mono text-[13.5px] font-semibold text-indigo-950 whitespace-pre">
+          <code className="font-mono text-[13.5px] font-semibold text-indigo-950 dark:text-indigo-100 whitespace-pre">
             {trimmed}
           </code>
         </div>
         <button
           type="button"
           onClick={handleCopy}
-          className="shrink-0 px-2 py-1 rounded-md text-[11px] font-medium text-indigo-600 hover:bg-indigo-100/80 transition-colors"
+          className="shrink-0 px-2 py-1 rounded-md text-[11px] font-medium text-indigo-600 dark:text-indigo-300 hover:bg-indigo-100/80 dark:hover:bg-white/10 transition-colors"
         >
           {copied ? '✓ 已复制' : '复制'}
         </button>
@@ -95,15 +95,15 @@ function NoteCodeBlock({
 
   // 标准多行代码块：纤薄现代 IDE 卡片（无外层黑框，紧凑顶栏 + 一键复制）
   return (
-    <div className="not-prose my-3 rounded-xl overflow-hidden border border-slate-200/90 bg-[#f8fafc] shadow-sm">
-      <div className="h-8 px-3.5 bg-slate-100/90 border-b border-slate-200/80 flex items-center justify-between select-none">
+    <div className="not-prose my-3 rounded-xl overflow-hidden border border-slate-200/90 dark:border-white/10 bg-[#f8fafc] dark:bg-[#0D1117] shadow-sm">
+      <div className="h-8 px-3.5 bg-slate-100/90 dark:bg-[#161B22] border-b border-slate-200/80 dark:border-white/10 flex items-center justify-between select-none">
         <div className="flex items-center gap-2">
           <span className="flex items-center gap-1">
             <span className="w-2 h-2 rounded-full bg-rose-400/80" />
             <span className="w-2 h-2 rounded-full bg-amber-400/80" />
             <span className="w-2 h-2 rounded-full bg-emerald-400/80" />
           </span>
-          <span className="ml-1 px-1.5 py-0.5 rounded bg-white text-slate-600 border border-slate-200/80 font-mono text-[10px] font-semibold uppercase tracking-wider">
+          <span className="ml-1 px-1.5 py-0.5 rounded bg-white dark:bg-[#21262D] text-slate-600 dark:text-slate-200 border border-slate-200/80 dark:border-white/10 font-mono text-[10px] font-semibold uppercase tracking-wider">
             {lang || 'code'}
           </span>
           <span className="text-[11px] text-slate-400 font-mono">
@@ -113,12 +113,12 @@ function NoteCodeBlock({
         <button
           type="button"
           onClick={handleCopy}
-          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium text-slate-600 hover:text-indigo-600 hover:bg-white border border-transparent hover:border-slate-200/80 transition-all"
+          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-[#D4AD72] hover:bg-white dark:hover:bg-white/10 border border-transparent hover:border-slate-200/80 dark:hover:border-white/15 transition-all"
         >
           {copied ? '✓ 已复制' : '复制代码'}
         </button>
       </div>
-      <pre className="m-0 px-4 py-3 overflow-x-auto bg-[#f8fafc] text-[13px] leading-[1.6] font-mono text-slate-800">
+      <pre className="m-0 px-4 py-3 overflow-x-auto bg-[#f8fafc] dark:bg-[#0D1117] text-[13px] leading-[1.6] font-mono text-slate-800 dark:text-[#E6EDF3]">
         <code
           className={className}
           style={{ background: 'transparent', padding: 0, color: 'inherit', fontSize: 'inherit' }}
@@ -440,12 +440,12 @@ export default function NoteDetailPage() {
       <div
         className={`${
           sidebarCollapsed ? 'w-12' : 'w-72'
-        } bg-gray-50 border-r transition-all duration-300 flex-shrink-0 relative sticky top-0 self-start h-[calc(100vh-72px)] overflow-y-auto custom-scrollbar z-20`}
+        } bg-gray-50 border-r border-gray-200 dark:border-white/10 transition-all duration-300 flex-shrink-0 relative sticky top-0 self-start h-[calc(100vh-72px)] overflow-y-auto custom-scrollbar z-20`}
       >
         {/* 收缩/展开按钮 */}
         <button
           onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-          className="absolute -right-3 top-16 z-30 w-6 h-6 bg-white border border-gray-300 rounded-full flex items-center justify-center shadow-sm hover:bg-gray-50 transition-colors"
+          className="absolute -right-3 top-16 z-30 w-6 h-6 bg-white dark:bg-[#1E2430] border border-gray-300 dark:border-white/15 rounded-full flex items-center justify-center shadow-sm hover:bg-gray-50 dark:hover:bg-[#273142] transition-colors"
           title={sidebarCollapsed ? '展开侧边栏' : '收缩侧边栏'}
         >
           <svg className={`w-3 h-3 text-gray-600 transition-transform duration-300 ${sidebarCollapsed ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -458,7 +458,7 @@ export default function NoteDetailPage() {
             <div className="mt-8">
               <button
                 onClick={() => router.back()}
-                className="text-blue-600 hover:text-blue-800 flex items-center mb-4 text-base font-medium transition-colors"
+                className="text-blue-600 dark:text-[#8AB4F8] hover:text-blue-800 dark:hover:text-[#D4AD72] flex items-center mb-4 text-base font-medium transition-colors"
               >
                 <svg className="w-5 h-5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -470,20 +470,20 @@ export default function NoteDetailPage() {
             {/* 操作按钮 */}
             {session && (
               <div className="space-y-2.5 mt-3">
-                <button onClick={handleLike} className={`w-full flex items-center justify-center space-x-2 px-3.5 py-2.5 rounded-lg text-sm font-medium transition-colors ${liked ? 'bg-red-100 text-red-700 border border-red-200' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}`}>
+                <button onClick={handleLike} className={`w-full flex items-center justify-center space-x-2 px-3.5 py-2.5 rounded-lg text-sm font-medium transition-colors ${liked ? 'bg-red-100 text-red-700 border border-red-200 dark:bg-rose-500/15 dark:text-rose-300 dark:border-rose-500/30' : 'bg-white text-gray-700 hover:bg-gray-100 dark:hover:bg-white/10 border border-gray-200 dark:border-white/10'}`}>
                   <svg className="w-4 h-4" fill={liked ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>
                   <span>{liked ? '已点赞' : '点赞'}</span>
                   {likeCount > 0 && <span className="bg-gray-200 px-2 py-0.5 rounded-full text-xs">{likeCount}</span>}
                 </button>
 
-                <button onClick={handleBookmark} className={`w-full flex items-center justify-center space-x-2 px-3.5 py-2.5 rounded-lg text-sm font-medium transition-colors ${bookmarked ? 'bg-yellow-100 text-yellow-700 border border-yellow-200' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}`}>
+                <button onClick={handleBookmark} className={`w-full flex items-center justify-center space-x-2 px-3.5 py-2.5 rounded-lg text-sm font-medium transition-colors ${bookmarked ? 'bg-yellow-100 text-yellow-700 border border-yellow-200 dark:bg-amber-500/15 dark:text-amber-300 dark:border-amber-500/30' : 'bg-white text-gray-700 hover:bg-gray-100 dark:hover:bg-white/10 border border-gray-200 dark:border-white/10'}`}>
                   <svg className="w-4 h-4" fill={bookmarked ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" /></svg>
                   <span>{bookmarked ? '已收藏' : '收藏'}</span>
                   {bookmarkCount > 0 && <span className="bg-gray-200 px-2 py-0.5 rounded-full text-xs">{bookmarkCount}</span>}
                 </button>
 
                 {/* 分享按钮 */}
-                <button onClick={handleShare} className="w-full flex items-center justify-center space-x-2 px-3.5 py-2.5 rounded-lg text-sm font-medium bg-white text-gray-700 hover:bg-blue-50 hover:text-blue-600 border border-gray-200 transition-colors">
+                <button onClick={handleShare} className="w-full flex items-center justify-center space-x-2 px-3.5 py-2.5 rounded-lg text-sm font-medium bg-white text-gray-700 hover:bg-blue-50 dark:hover:bg-white/10 hover:text-blue-600 dark:hover:text-[#8AB4F8] border border-gray-200 dark:border-white/10 transition-colors">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" /></svg>
                   <span>分享</span>
                 </button>
@@ -496,7 +496,7 @@ export default function NoteDetailPage() {
                     className={`w-full flex items-center justify-center space-x-2 px-3.5 py-2.5 rounded-lg text-sm font-medium border transition-all duration-200
                       ${(user?.vipLevel ?? 0) >= 2
                         ? 'bg-gradient-to-r from-purple-600 to-cyan-500 text-white border-transparent hover:opacity-90 hover:scale-102 shadow-md shadow-purple-500/20'
-                        : 'bg-purple-50 text-purple-400 border-purple-200 cursor-pointer hover:bg-purple-100'
+                        : 'bg-purple-50 dark:bg-purple-500/15 text-purple-400 dark:text-purple-200 border-purple-200 dark:border-purple-400/30 cursor-pointer hover:bg-purple-100 dark:hover:bg-purple-500/25'
                       }
                     `}
                     title={(user?.vipLevel ?? 0) >= 2 ? '一键复用此笔记到我的笔记库' : '进阶 VIP 专属功能'}
@@ -509,18 +509,18 @@ export default function NoteDetailPage() {
                 )}
 
                 {/* 导出按钮组 */}
-                <div className="border border-gray-200 rounded-lg overflow-hidden bg-white shadow-xs">
-                  <div className="px-3 py-2 bg-gray-50/90 text-xs text-gray-500 font-semibold border-b border-gray-100">导出笔记</div>
-                  <button onClick={handleScreenshot} className="w-full flex items-center space-x-2 px-3.5 py-2 text-xs text-gray-700 hover:bg-gray-50 transition-colors">
+                <div className="border border-gray-200 dark:border-white/10 rounded-lg overflow-hidden bg-white shadow-xs">
+                  <div className="px-3 py-2 bg-gray-50/90 dark:bg-[#1E2430] text-xs text-gray-500 dark:text-slate-300 font-semibold border-b border-gray-100 dark:border-white/10">导出笔记</div>
+                  <button onClick={handleScreenshot} className="w-full flex items-center space-x-2 px-3.5 py-2 text-xs text-gray-700 hover:bg-gray-50 dark:hover:bg-white/[0.06] transition-colors">
                     <span>📸</span><span>截图保存</span>
                   </button>
-                  <button onClick={handleExportPdf} className="w-full flex items-center space-x-2 px-3.5 py-2 text-xs text-gray-700 hover:bg-gray-50 transition-colors border-t border-gray-100">
+                  <button onClick={handleExportPdf} className="w-full flex items-center space-x-2 px-3.5 py-2 text-xs text-gray-700 hover:bg-gray-50 dark:hover:bg-white/[0.06] transition-colors border-t border-gray-100 dark:border-white/10">
                     <span>📕</span><span>导出 PDF</span>
                   </button>
-                  <button onClick={handleExportMd} className="w-full flex items-center space-x-2 px-3.5 py-2 text-xs text-gray-700 hover:bg-gray-50 transition-colors border-t border-gray-100">
+                  <button onClick={handleExportMd} className="w-full flex items-center space-x-2 px-3.5 py-2 text-xs text-gray-700 hover:bg-gray-50 dark:hover:bg-white/[0.06] transition-colors border-t border-gray-100 dark:border-white/10">
                     <span>📄</span><span>导出 Markdown</span>
                   </button>
-                  <button onClick={handleExportTxt} className="w-full flex items-center space-x-2 px-3.5 py-2 text-xs text-gray-700 hover:bg-gray-50 transition-colors border-t border-gray-100">
+                  <button onClick={handleExportTxt} className="w-full flex items-center space-x-2 px-3.5 py-2 text-xs text-gray-700 hover:bg-gray-50 dark:hover:bg-white/[0.06] transition-colors border-t border-gray-100 dark:border-white/10">
                     <span>📝</span><span>导出纯文本</span>
                   </button>
                 </div>
@@ -558,7 +558,7 @@ export default function NoteDetailPage() {
       <div className="flex-1 p-8">
 
       {/* 笔记内容 */}
-      <article className="bg-white rounded-lg shadow-sm border p-8">
+      <article className="bg-white rounded-lg shadow-sm border border-gray-200 dark:border-white/10 p-8">
             {/* 标题和元信息 */}
         <header className="mb-6">
           <div className="flex flex-wrap justify-between items-start gap-3 mb-4">
@@ -573,7 +573,7 @@ export default function NoteDetailPage() {
                 className={`px-3.5 py-2 rounded-xl text-sm font-semibold flex items-center gap-1.5 border transition-all ${
                   showKnowledgeStudio && studioTab === 'graph'
                     ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
-                    : 'bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100'
+                    : 'bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100 dark:bg-indigo-500/15 dark:text-indigo-200 dark:border-indigo-400/30 dark:hover:bg-indigo-500/25'
                 }`}
               >
                 <span>🌌</span>
@@ -589,7 +589,7 @@ export default function NoteDetailPage() {
                 className={`px-3.5 py-2 rounded-xl text-sm font-semibold flex items-center gap-1.5 border transition-all ${
                   showKnowledgeStudio && studioTab === 'flashcards'
                     ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
-                    : 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
+                    : 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100 dark:bg-emerald-500/15 dark:text-emerald-200 dark:border-emerald-400/30 dark:hover:bg-emerald-500/25'
                 }`}
               >
                 <span>🃏</span>
@@ -631,12 +631,12 @@ export default function NoteDetailPage() {
               </span>
             )}
             {note.subcategory && (
-              <span className="bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm">
+              <span className="bg-purple-100 dark:bg-purple-500/20 text-purple-800 dark:text-purple-200 px-3 py-1 rounded-full text-sm">
                 {note.subcategory}
               </span>
             )}
             {note.isPublic && (
-              <span className="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm">
+              <span className="bg-yellow-100 dark:bg-amber-500/20 text-yellow-800 dark:text-amber-200 px-3 py-1 rounded-full text-sm">
                 公开
               </span>
             )}
@@ -645,7 +645,7 @@ export default function NoteDetailPage() {
           {note.tags && note.tags.length > 0 && (
             <div className="flex flex-wrap gap-2">
               {note.tags.map((tag, index) => (
-                <span key={index} className="bg-gray-100 text-gray-700 px-2 py-1 rounded text-sm">
+                <span key={index} className="bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-slate-200 px-2 py-1 rounded text-sm">
                   #{tag}
                 </span>
               ))}
@@ -673,7 +673,7 @@ export default function NoteDetailPage() {
         {/* 笔记内容 - 紧凑现代技术文档排版 */}
         <div
           id="note-content-area"
-          className="mt-6 pt-6 border-t border-slate-100 text-[15px] leading-7 text-slate-700"
+          className="mt-6 pt-6 border-t border-slate-100 dark:border-white/10 text-[15px] leading-7 text-slate-700 dark:text-[#D5DCE6]"
         >
           <ReactMarkdown
             remarkPlugins={[remarkGfm, remarkMath]}
@@ -695,7 +695,7 @@ export default function NoteDetailPage() {
                 // 行内代码：精致胶囊样式，绝不破坏行内排版流
                 return (
                   <code
-                    className="inline px-1.5 py-0.5 mx-0.5 rounded-md bg-indigo-50/90 text-indigo-700 border border-indigo-200/75 font-mono text-[0.86em] font-medium align-baseline before:content-none after:content-none"
+                    className="inline px-1.5 py-0.5 mx-0.5 rounded-md bg-indigo-50/90 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-200 border border-indigo-200/75 dark:border-indigo-400/30 font-mono text-[0.86em] font-medium align-baseline before:content-none after:content-none"
                     {...props}
                   >
                     {children}
@@ -704,54 +704,69 @@ export default function NoteDetailPage() {
               },
               h1({ children }) {
                 return (
-                  <h1 className="text-xl font-extrabold text-slate-900 mt-6 mb-3 pb-2 border-b border-slate-200/80 flex items-center gap-2.5">
-                    <span className="w-1.5 h-5 rounded-full bg-indigo-600 shrink-0" />
+                  <h1 className="text-xl font-extrabold text-slate-900 dark:text-[#F2EDE4] mt-6 mb-3 pb-2 border-b border-slate-200/80 dark:border-white/10 flex items-center gap-2.5">
+                    <span className="w-1.5 h-5 rounded-full bg-indigo-600 dark:bg-[#D4AD72] shrink-0" />
                     <span>{children}</span>
                   </h1>
                 );
               },
               h2({ children }) {
                 return (
-                  <h2 className="text-lg font-bold text-slate-900 mt-5 mb-2.5 pb-1.5 border-b border-slate-100 flex items-center gap-2">
-                    <span className="w-1.5 h-4 rounded-full bg-indigo-500 shrink-0" />
+                  <h2 className="text-lg font-bold text-slate-900 dark:text-[#F2EDE4] mt-5 mb-2.5 pb-1.5 border-b border-slate-100 dark:border-white/10 flex items-center gap-2">
+                    <span className="w-1.5 h-4 rounded-full bg-indigo-500 dark:bg-[#8AB4F8] shrink-0" />
                     <span>{children}</span>
                   </h2>
                 );
               },
               h3({ children }) {
                 return (
-                  <h3 className="text-[15px] font-bold text-slate-800 mt-4 mb-1.5 flex items-center gap-2">
+                  <h3 className="text-[15px] font-bold text-slate-800 dark:text-[#E6ECF5] mt-4 mb-1.5 flex items-center gap-2">
                     <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 shrink-0" />
                     <span>{children}</span>
                   </h3>
                 );
               },
               p({ children }) {
-                return <p className="my-2 leading-7 text-slate-700">{children}</p>;
+                return <p className="my-2 leading-7 text-slate-700 dark:text-[#D5DCE6]">{children}</p>;
+              },
+              strong({ children }) {
+                return <strong className="font-semibold text-slate-900 dark:text-[#F2EDE4]">{children}</strong>;
+              },
+              a({ href, children }) {
+                return (
+                  <a
+                    href={href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-indigo-600 dark:text-[#8AB4F8] underline decoration-indigo-300/60 dark:decoration-[#8AB4F8]/50 hover:text-indigo-800 dark:hover:text-[#D4AD72]"
+                  >
+                    {children}
+                  </a>
+                );
               },
               ul({ children }) {
-                return <ul className="my-2 space-y-1.5 pl-5 list-disc marker:text-indigo-500">{children}</ul>;
+                return <ul className="my-2 space-y-1.5 pl-5 list-disc marker:text-indigo-500 dark:marker:text-[#D4AD72]">{children}</ul>;
               },
               ol({ children }) {
-                return <ol className="my-2 space-y-1.5 pl-5 list-decimal marker:text-indigo-600 marker:font-semibold">{children}</ol>;
+                return <ol className="my-2 space-y-1.5 pl-5 list-decimal marker:text-indigo-600 dark:marker:text-[#D4AD72] marker:font-semibold">{children}</ol>;
               },
               li({ children }) {
-                return <li className="leading-7 text-slate-700 pl-1">{children}</li>;
+                return <li className="leading-7 text-slate-700 dark:text-[#D5DCE6] pl-1">{children}</li>;
               },
               blockquote({ children }) {
                 return (
-                  <blockquote className="my-3 pl-3.5 pr-3 py-2 rounded-r-xl border-l-4 border-indigo-500 bg-indigo-50/50 text-slate-700 text-sm">
+                  <blockquote className="my-3 pl-3.5 pr-3 py-2 rounded-r-xl border-l-4 border-indigo-500 dark:border-indigo-400 bg-indigo-50/50 dark:bg-indigo-500/10 text-slate-700 dark:text-slate-200 text-sm">
                     {children}
                   </blockquote>
                 );
               },
               hr() {
-                return <hr className="my-5 border-slate-200/80" />;
+                return <hr className="my-5 border-slate-200/80 dark:border-white/10" />;
               },
               table({ children }) {
                 return (
-                  <div className="my-3 overflow-x-auto rounded-xl border border-slate-200 shadow-sm">
-                    <table className="min-w-full divide-y divide-slate-200">
+                  <div className="my-3 overflow-x-auto rounded-xl border border-slate-200 dark:border-white/10 shadow-sm">
+                    <table className="min-w-full divide-y divide-slate-200 dark:divide-white/10">
                       {children}
                     </table>
                   </div>
@@ -759,14 +774,14 @@ export default function NoteDetailPage() {
               },
               th({ children }) {
                 return (
-                  <th className="px-3.5 py-2 bg-slate-50 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider border-b border-slate-200">
+                  <th className="px-3.5 py-2 bg-slate-50 dark:bg-[#1E2430] text-left text-xs font-semibold text-slate-600 dark:text-slate-200 uppercase tracking-wider border-b border-slate-200 dark:border-white/10">
                     {children}
                   </th>
                 );
               },
               td({ children }) {
                 return (
-                  <td className="px-3.5 py-2 text-sm text-slate-800 border-b border-slate-100">
+                  <td className="px-3.5 py-2 text-sm text-slate-800 dark:text-[#D5DCE6] border-b border-slate-100 dark:border-white/10">
                     {children}
                   </td>
                 );
@@ -788,7 +803,7 @@ export default function NoteDetailPage() {
       {/* 分享弹窗 */}
       {showShareModal && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowShareModal(false)}>
-          <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl" onClick={e => e.stopPropagation()}>
+          <div className="bg-white dark:bg-[#151921] border border-transparent dark:border-white/15 rounded-2xl p-6 w-full max-w-sm shadow-2xl" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-gray-900">分享笔记</h3>
               <button onClick={() => setShowShareModal(false)} className="text-gray-400 hover:text-gray-600">
@@ -806,9 +821,9 @@ export default function NoteDetailPage() {
             )}
 
             {/* 链接复制 */}
-            <div className="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-2 border border-gray-200">
-              <span className="flex-1 text-sm text-gray-600 truncate">{typeof window !== 'undefined' ? `${window.location.origin}/notes/${noteId}` : ''}</span>
-              <button onClick={handleCopyLink} className="shrink-0 text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors">
+            <div className="flex items-center gap-2 bg-gray-50 dark:bg-[#1A202C] rounded-lg px-3 py-2 border border-gray-200 dark:border-white/15">
+              <span className="flex-1 text-sm text-gray-600 dark:text-[#F2EDE4] truncate">{typeof window !== 'undefined' ? `${window.location.origin}/notes/${noteId}` : ''}</span>
+              <button onClick={handleCopyLink} className="shrink-0 text-sm font-medium text-blue-600 dark:text-[#D4AD72] hover:text-blue-700 dark:hover:text-[#E0BD86] transition-colors">
                 {copyTip || '复制'}
               </button>
             </div>

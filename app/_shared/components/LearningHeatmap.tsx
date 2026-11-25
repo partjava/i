@@ -96,7 +96,7 @@ export default function LearningHeatmap({ data, year, hideTitle = false }: Learn
   // 获取颜色类
   const getLevelColor = (level: number) => {
     const colors = [
-      'bg-gray-100',   // 0: 无学习
+      'bg-gray-100 dark:bg-white/[0.08]',   // 0: 无学习
       'bg-green-300',  // 1: 少量
       'bg-green-400',  // 2: 中等
       'bg-green-500',  // 3: 较多
@@ -229,28 +229,28 @@ export default function LearningHeatmap({ data, year, hideTitle = false }: Learn
 
           {/* 选中的日期详情横幅（点击任意方块实时弹出展示：学习频次 + 学习时长） */}
           {selectedDay && (
-            <div className="mt-3.5 px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-50 via-teal-50/50 to-sky-50/70 border border-emerald-200/90 shadow-xs flex items-center justify-between flex-wrap gap-2 animate-fadeIn">
+            <div className="mt-3.5 px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-50 via-teal-50/50 to-sky-50/70 dark:from-emerald-950/50 dark:via-teal-950/40 dark:to-sky-950/40 border border-emerald-200/90 dark:border-emerald-500/30 shadow-xs flex items-center justify-between flex-wrap gap-2 animate-fadeIn">
               <div className="flex items-center gap-3">
-                <span className="w-8 h-8 rounded-lg bg-emerald-500/15 text-emerald-700 flex items-center justify-center text-sm font-bold shrink-0">
+                <span className="w-8 h-8 rounded-lg bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 flex items-center justify-center text-sm font-bold shrink-0">
                   📅
                 </span>
                 <div>
-                  <div className="text-xs font-bold text-slate-800 flex items-center gap-2">
+                  <div className="text-xs font-bold text-slate-800 dark:text-[#F2EDE4] flex items-center gap-2">
                     <span>{formatDateLabel(selectedDay.date)}</span>
                     <span
                       className={`text-[10px] px-1.5 py-0.2 rounded font-mono font-bold ${
                         selectedDay.count > 0
-                          ? 'bg-emerald-100 text-emerald-700'
-                          : 'bg-slate-100 text-slate-500'
+                          ? 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300'
+                          : 'bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-300'
                       }`}
                     >
                       {selectedDay.count > 0 ? '✓ 已打卡' : '未打卡'}
                     </span>
                   </div>
-                  <div className="text-xs text-slate-600 mt-0.5 flex items-center gap-3 font-mono">
+                  <div className="text-xs text-slate-600 dark:text-slate-300 mt-0.5 flex items-center gap-3 font-mono">
                     <span>
                       学习频次:{' '}
-                      <strong className="text-emerald-700 font-bold">
+                      <strong className="text-emerald-700 dark:text-emerald-300 font-bold">
                         {selectedDay.count}
                       </strong>{' '}
                       次
@@ -258,7 +258,7 @@ export default function LearningHeatmap({ data, year, hideTitle = false }: Learn
                     <span>·</span>
                     <span>
                       学习时长:{' '}
-                      <strong className="text-sky-700 font-bold">
+                      <strong className="text-sky-700 dark:text-sky-300 font-bold">
                         {formatDurationText(selectedDay.duration)}
                       </strong>
                     </span>
@@ -269,7 +269,7 @@ export default function LearningHeatmap({ data, year, hideTitle = false }: Learn
               <button
                 type="button"
                 onClick={() => setSelectedDay(null)}
-                className="text-[11px] text-slate-400 hover:text-slate-600 transition"
+                className="text-[11px] text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition"
               >
                 ✕ 关闭
               </button>

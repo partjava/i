@@ -21,8 +21,8 @@ export default function AchievementCard({ achievement }: AchievementCardProps) {
   return (
     <div className={`relative p-4 rounded-xl border ${
       achievement.unlocked 
-        ? 'bg-white border-gray-200 shadow-sm' 
-        : 'bg-gray-50 border-gray-200 opacity-60'
+        ? 'bg-white border-gray-200 dark:border-white/10 shadow-sm' 
+        : 'bg-gray-50 dark:bg-[#1A202C] border-gray-200 dark:border-white/10 opacity-60 dark:opacity-80'
     } hover:shadow-md transition-all duration-200`}>
       {/* 成就图标 */}
       <div className={`w-16 h-16 rounded-full bg-gradient-to-br ${

@@ -30,6 +30,9 @@ public class PdfBook {
     private String category;
     private String coverData;
     private Integer readingSeconds;
+    private Boolean isDemo;
+    private String author;
+    private String licenseNote;
     private LocalDateTime lastReadAt;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

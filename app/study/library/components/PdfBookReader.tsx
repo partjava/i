@@ -31,13 +31,18 @@ import {
   Loader2,
   AlertCircle,
   Check,
+  Search,
+  ShieldCheck,
 } from 'lucide-react';
 import { getAuthHeaders } from '@shared/lib/auth-client';
+import { useAuth } from '@shared/hooks/useAuth';
 import AiChatPanel from '@shared/components/ai/AiChatPanel';
 import StudyScreenshot from '@shared/components/StudyScreenshot';
 import PdfPageCanvas from './PdfPageCanvas';
+import { PdfPageRenderCache } from './pdfPageCache';
 import {
   fetchPdfBinary,
+  getPdfStreamUrl,
   getPdfBookDetail,
   updatePdfBook,
   addPdfAnnotation,
@@ -48,6 +53,7 @@ import {
   parsePageSelection,
   notifyPdfLibraryUpdated,
   PIN_COLOR_META,
+  PDFJS_DOCUMENT_OPTIONS,
   type PdfBookItem,
   type PdfAnnotationItem,
   type PdfBookmarkItem,
@@ -61,7 +67,7 @@ interface OutlineEntry {
 }
 
 interface ActiveFlip {
-  from: number; // spread index (0-based)
+  from: number;
   to: number;
   direction: 'forward' | 'back';
   mode: 'animating' | 'dragging';
@@ -87,7 +93,7 @@ function flattenOutline(
 ) {
   for (const item of items) {
     acc.push({ title: String(item.title || '未命名目录'), dest: item.dest, level });
-    if (Array.isArray(item.items) && item.items.length > 0 && acc.length < 150) {
+    if (Array.isArray(item.items) && item.items.length > 0 && acc.length < 300) {
       flattenOutline(item.items, level + 1, acc);
     }
   }
@@ -95,17 +101,20 @@ function flattenOutline(
 }
 
 export default function PdfBookReader({ bookId }: { bookId: number }) {
+  const { status: authStatus } = useAuth();
   const [book, setBook] = useState<PdfBookItem | null>(null);
   const [annotations, setAnnotations] = useState<PdfAnnotationItem[]>([]);
   const [bookmarks, setBookmarks] = useState<PdfBookmarkItem[]>([]);
   const [pdfDoc, setPdfDoc] = useState<any | null>(null);
+  const [pageCache, setPageCache] = useState<PdfPageRenderCache | null>(null);
   const [numPages, setNumPages] = useState(1);
   const [outline, setOutline] = useState<OutlineEntry[]>([]);
+  const [outlineSearch, setOutlineSearch] = useState('');
 
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [authNotice, setAuthNotice] = useState<string | null>(null);
 
-  // 阅读视图控制
   const [layoutMode, setLayoutMode] = useState<'double' | 'single'>('double');
   const [isMobile, setIsMobile] = useState(false);
   const effectiveMode: 'double' | 'single' = isMobile ? 'single' : layoutMode;
@@ -113,32 +122,29 @@ export default function PdfBookReader({ bookId }: { bookId: number }) {
   const [currentSpread, setCurrentSpread] = useState(0);
   const [displayedSpread, setDisplayedSpread] = useState(0);
   const [zoom, setZoom] = useState(1);
+  const [measuredPageWidth, setMeasuredPageWidth] = useState(420);
   const [pinMode, setPinMode] = useState(false);
   const [showPins, setShowPins] = useState(true);
   const [highlightedPinId, setHighlightedPinId] = useState<number | null>(null);
   const [pageInput, setPageInput] = useState('1');
 
-  // 右侧栏标签与状态
-  const [sideTab, setSideTab] = useState<'outline' | 'notes' | 'export'>('notes');
+  const [sideTab, setSideTab] = useState<'outline' | 'notes' | 'export'>('outline');
   const [notesFilter, setNotesFilter] = useState<'visible' | 'all'>('visible');
   const [pageNoteDraft, setPageNoteDraft] = useState('');
   const [pageNoteTarget, setPageNoteTarget] = useState<'left' | 'right'>('left');
   const [savingPageNote, setSavingPageNote] = useState(false);
 
-  // AI 识别范围控制
   const [aiScopeMode, setAiScopeMode] = useState<'current' | 'custom'>('current');
   const [aiCustomExpr, setAiCustomExpr] = useState('1-2');
   const [pageTextCache, setPageTextCache] = useState<Record<number, string>>({});
   const textCacheRef = useRef<Map<number, string>>(new Map());
 
-  // 导出与同步状态
   const [exportScope, setExportScope] = useState<'current_spread' | 'current_page' | 'annotated' | 'custom'>('current_spread');
   const [exportCustomExpr, setExportCustomExpr] = useState('1-4');
   const [includeExcerpt, setIncludeExcerpt] = useState(true);
   const [syncingNote, setSyncingNote] = useState(false);
   const [syncSuccess, setSyncSuccess] = useState<{ noteId?: number; msg: string } | null>(null);
 
-  // 3D 翻页引用（纯 GPU 合成层，零帧间 setState）
   const [activeFlip, setActiveFlip] = useState<ActiveFlip | null>(null);
   const activeFlipRef = useRef<ActiveFlip | null>(null);
   activeFlipRef.current = activeFlip;
@@ -155,11 +161,11 @@ export default function PdfBookReader({ bookId }: { bookId: number }) {
   const underShadowRef = useRef<HTMLDivElement | null>(null);
   const landShadowRef = useRef<HTMLDivElement | null>(null);
 
-  // 进度保存防抖
   const savePageTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const latestSavedPageRef = useRef<number>(1);
   const pendingLastPageRef = useRef<number | null>(null);
   const hasInitializedSpreadRef = useRef(false);
+  const activeOutlineRef = useRef<HTMLButtonElement | null>(null);
 
   useEffect(() => {
     const mq = window.matchMedia('(max-width: 767px)');
@@ -187,10 +193,15 @@ export default function PdfBookReader({ bookId }: { bookId: number }) {
     [effectiveMode, numPages]
   );
 
-  // 初始加载书籍详情 + PDF 文档实例
+  const handleWidthMeasured = useCallback((w: number) => {
+    setMeasuredPageWidth((prev) => (Math.abs(prev - w) >= 6 ? w : prev));
+  }, []);
+
+  // 初始加载书籍详情 + HTTP 206 Range 流式打开 PDF + 构建预渲染缓存
   useEffect(() => {
     let cancelled = false;
     let loadedDoc: any = null;
+    let cacheInstance: PdfPageRenderCache | null = null;
 
     const init = async () => {
       setLoading(true);
@@ -200,23 +211,46 @@ export default function PdfBookReader({ bookId }: { bookId: number }) {
       setPageTextCache({});
 
       try {
-        const [detail, binary] = await Promise.all([
-          getPdfBookDetail(bookId),
-          fetchPdfBinary(bookId),
-        ]);
+        const detail = await getPdfBookDetail(bookId);
         if (cancelled) return;
 
         const pdfjs = await import('pdfjs-dist');
         pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
-        const doc = await pdfjs.getDocument({ data: new Uint8Array(binary) }).promise;
+
+        let doc: any = null;
+        try {
+          const streamUrl = await getPdfStreamUrl(bookId, detail.book.isDemo);
+          doc = await pdfjs.getDocument({
+            url: streamUrl,
+            rangeChunkSize: 262144,
+            disableAutoFetch: true,
+            disableStream: false,
+            ...PDFJS_DOCUMENT_OPTIONS,
+          }).promise;
+        } catch {
+          const binary = await fetchPdfBinary(bookId);
+          doc = await pdfjs.getDocument({
+            data: new Uint8Array(binary),
+            ...PDFJS_DOCUMENT_OPTIONS,
+          }).promise;
+        }
+
         loadedDoc = doc;
         if (cancelled) {
           await doc.destroy();
           return;
         }
 
+        cacheInstance = new PdfPageRenderCache(doc, 20);
         const total = Math.max(1, doc.numPages || detail.book.pageCount || 1);
-        const restoredPage = Math.max(1, Math.min(detail.book.lastPage || 1, total));
+
+        let restoredPage = Math.max(1, Math.min(detail.book.lastPage || 1, total));
+        if (detail.book.isDemo && typeof window !== 'undefined') {
+          const localSaved = Number(localStorage.getItem(`pdf_demo_last_page_${bookId}`) || '0');
+          if (localSaved >= 1 && localSaved <= total) {
+            restoredPage = localSaved;
+          }
+        }
         latestSavedPageRef.current = restoredPage;
 
         setBook(detail.book);
@@ -224,6 +258,7 @@ export default function PdfBookReader({ bookId }: { bookId: number }) {
         setBookmarks(Array.isArray(detail.bookmarks) ? detail.bookmarks : []);
         setNumPages(total);
         setPdfDoc(doc);
+        setPageCache(cacheInstance);
 
         const initialSpread =
           window.innerWidth < 768
@@ -234,12 +269,11 @@ export default function PdfBookReader({ bookId }: { bookId: number }) {
         setPageInput(String(restoredPage));
         hasInitializedSpreadRef.current = true;
 
-        // 若后端总页数与真实 PDF 不一致，顺手校准
-        if (detail.book.pageCount !== total) {
+        if (!detail.book.isDemo && detail.book.pageCount !== total) {
           updatePdfBook(bookId, { pageCount: total }).catch(() => {});
         }
 
-        // 异步解析 PDF 原生目录大纲
+        // 异步解析 PDF 原生目录大纲并解析每个条目页码
         try {
           const rawOutline = await doc.getOutline();
           if (!cancelled && Array.isArray(rawOutline) && rawOutline.length > 0) {
@@ -259,7 +293,13 @@ export default function PdfBookReader({ bookId }: { bookId: number }) {
               } catch {}
               entries.push({ title: entry.title, pageNumber, level: entry.level });
             }
-            if (!cancelled) setOutline(entries);
+            if (!cancelled) {
+              setOutline(entries);
+              setSideTab('outline');
+            }
+          } else if (!cancelled) {
+            setOutline([]);
+            setSideTab('notes');
           }
         } catch {}
       } catch (err: any) {
@@ -276,15 +316,44 @@ export default function PdfBookReader({ bookId }: { bookId: number }) {
     return () => {
       cancelled = true;
       try {
+        cacheInstance?.clear();
+      } catch {}
+      try {
         loadedDoc?.destroy();
       } catch {}
     };
   }, [bookId]);
 
+  // 当前页 + 相邻双页自动后台预渲染（让下次翻页 < 1ms 秒出，零白屏）
+  const prefetchAroundPage = useCallback(
+    (anchorPage: number) => {
+      if (!pageCache || !numPages) return;
+      const dpr = typeof window !== 'undefined' ? Math.min(window.devicePixelRatio || 1, 2) : 1;
+      const cssTargetWidth = Math.max(200, Math.round(measuredPageWidth * zoom));
+      const p = Math.max(1, Math.min(anchorPage, numPages));
+      const baseEvenOdd = effectiveMode === 'double' ? (p % 2 === 1 ? p : p - 1) : p;
+      const pagesToWarm =
+        effectiveMode === 'double'
+          ? [baseEvenOdd, baseEvenOdd + 1, baseEvenOdd + 2, baseEvenOdd + 3, baseEvenOdd - 2, baseEvenOdd - 1]
+          : [p, p + 1, p + 2, p - 1];
+      pageCache.prefetch(pagesToWarm, cssTargetWidth, dpr);
+    },
+    [pageCache, numPages, measuredPageWidth, zoom, effectiveMode]
+  );
+
+  useEffect(() => {
+    if (!pageCache || !hasInitializedSpreadRef.current) return;
+    const vis = spreadPages(displayedSpread);
+    if (vis.left) {
+      prefetchAroundPage(vis.left);
+    }
+  }, [pageCache, displayedSpread, spreadPages, prefetchAroundPage]);
+
   // 离开前冲洗待保存页码与阅读时长
   useEffect(() => {
     const startMs = Date.now();
     const flushOnUnload = () => {
+      if (!book || book.isDemo) return;
       const pendingPage = pendingLastPageRef.current;
       const elapsedSec = Math.round((Date.now() - startMs) / 1000);
       if (pendingPage != null || elapsedSec >= 5) {
@@ -310,15 +379,24 @@ export default function PdfBookReader({ bookId }: { bookId: number }) {
       if (savePageTimerRef.current) clearTimeout(savePageTimerRef.current);
       flushOnUnload();
     };
-  }, [bookId]);
+  }, [bookId, book]);
 
-  // 翻页时实时同步页码输入框并防抖持久化 lastPage 到 MySQL
+  // 翻页时同步页码输入框并持久化 lastPage
   useEffect(() => {
     if (!hasInitializedSpreadRef.current || !book) return;
     const { left } = spreadPages(currentSpread);
     if (!left) return;
 
     setPageInput(String(left));
+    if (book.isDemo) {
+      try {
+        localStorage.setItem(`pdf_demo_last_page_${bookId}`, String(left));
+        notifyPdfLibraryUpdated();
+      } catch {}
+      latestSavedPageRef.current = left;
+      return;
+    }
+
     if (left === latestSavedPageRef.current) return;
     pendingLastPageRef.current = left;
 
@@ -334,7 +412,7 @@ export default function PdfBookReader({ bookId }: { bookId: number }) {
     }, 350);
   }, [currentSpread, bookId, book, spreadPages]);
 
-  // 3D 翻页动画引擎（完全复用 BookSpread 的无重绘 GPU 物理逻辑）
+  // 3D 翻页动画引擎
   const cancelAnimation = useCallback(() => {
     if (rafRef.current !== null) {
       cancelAnimationFrame(rafRef.current);
@@ -405,7 +483,7 @@ export default function PdfBookReader({ bookId }: { bookId: number }) {
   }, [activeFlip, applyFlipFrame, runRefAnimation]);
 
   const goToSpread = useCallback(
-    (target: number) => {
+    (target: number, instantJump = false) => {
       const clamped = Math.max(0, Math.min(target, totalSpreads - 1));
       let activeFrom = displayedSpread;
       if (activeFlipRef.current) {
@@ -422,7 +500,8 @@ export default function PdfBookReader({ bookId }: { bookId: number }) {
         typeof window !== 'undefined' &&
         window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-      if (effectiveMode === 'single' || reducedMotion) {
+      // 跨多页目录/书签跳转直接秒切落页，相邻翻页展示 3D 单页立体翻动
+      if (instantJump || Math.abs(clamped - activeFrom) > 1 || effectiveMode === 'single' || reducedMotion) {
         setDisplayedSpread(clamped);
         setCurrentSpread(clamped);
         setActiveFlip(null);
@@ -436,7 +515,7 @@ export default function PdfBookReader({ bookId }: { bookId: number }) {
         direction: dir,
         startProgress: 0,
         endProgress: 1,
-        durationMs: 520,
+        durationMs: 480,
         useEaseOut: false,
         onComplete: () => {
           activeFlipRef.current = null;
@@ -465,9 +544,10 @@ export default function PdfBookReader({ bookId }: { bookId: number }) {
       const clampedPage = Math.max(1, Math.min(pageNum, numPages));
       const targetSpread =
         effectiveMode === 'single' ? clampedPage - 1 : Math.floor((clampedPage - 1) / 2);
-      goToSpread(targetSpread);
+      prefetchAroundPage(clampedPage);
+      goToSpread(targetSpread, true);
     },
-    [effectiveMode, numPages, goToSpread]
+    [effectiveMode, numPages, goToSpread, prefetchAroundPage]
   );
 
   const handleToggleLayoutMode = () => {
@@ -491,7 +571,6 @@ export default function PdfBookReader({ bookId }: { bookId: number }) {
     [goToSpread, displayedSpread]
   );
 
-  // 键盘左右键翻页
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement | null;
@@ -508,7 +587,6 @@ export default function PdfBookReader({ bookId }: { bookId: number }) {
     return () => window.removeEventListener('keydown', onKey);
   }, [goPrev, goNext]);
 
-  // 书角实时拖拽搓动翻页
   const handleCornerPointerDown = useCallback(
     (dir: 'forward' | 'back', e: React.PointerEvent<HTMLDivElement>) => {
       if (e.button !== 0 && e.pointerType === 'mouse') return;
@@ -557,7 +635,7 @@ export default function PdfBookReader({ bookId }: { bookId: number }) {
             direction: dir,
             startProgress: Math.max(0.02, progressRef.current),
             endProgress: 1,
-            durationMs: 500,
+            durationMs: 480,
             useEaseOut: false,
             onComplete: () => {
               activeFlipRef.current = null;
@@ -579,7 +657,7 @@ export default function PdfBookReader({ bookId }: { bookId: number }) {
           direction: dir,
           startProgress: p,
           endProgress: shouldComplete ? 1 : 0,
-          durationMs: Math.max(160, Math.round(340 * (shouldComplete ? 1 - p : p))),
+          durationMs: Math.max(160, Math.round(320 * (shouldComplete ? 1 - p : p))),
           useEaseOut: true,
           onComplete: () => {
             activeFlipRef.current = null;
@@ -597,7 +675,6 @@ export default function PdfBookReader({ bookId }: { bookId: number }) {
     [effectiveMode, displayedSpread, totalSpreads, cancelAnimation, applyFlipFrame, runRefAnimation]
   );
 
-  // 当前可见页 & 书签状态
   const visible = spreadPages(displayedSpread);
   const visiblePagesList = useMemo(
     () => [visible.left, visible.right].filter((p): p is number => p != null),
@@ -609,8 +686,16 @@ export default function PdfBookReader({ bookId }: { bookId: number }) {
     [bookmarks, visiblePagesList]
   );
 
+  const requireLoginNotice = () => {
+    if (authStatus !== 'authenticated') {
+      setAuthNotice('登录后即可保存你的个人图钉批注与黄金书签');
+      return false;
+    }
+    return true;
+  };
+
   const handleToggleBookmark = async () => {
-    if (!visible.left) return;
+    if (!visible.left || !requireLoginNotice()) return;
     try {
       if (activeBookmark) {
         await deletePdfBookmark(bookId, activeBookmark.pageNumber);
@@ -626,7 +711,7 @@ export default function PdfBookReader({ bookId }: { bookId: number }) {
     } catch {}
   };
 
-  // 提取指定页文本并缓存（供 AI 局部伴读与导出）
+  // 提取指定页文本并缓存
   const ensurePagesTextExtracted = useCallback(
     async (pages: number[]) => {
       if (!pdfDoc || pages.length === 0) return;
@@ -641,6 +726,7 @@ export default function PdfBookReader({ bookId }: { bookId: number }) {
           const text = (tc.items || [])
             .map((it: any) => (typeof it?.str === 'string' ? it.str : ''))
             .join(' ')
+            .replace(/[.·…•。]{4,}/g, ' ')
             .replace(/\s+/g, ' ')
             .trim();
           textCacheRef.current.set(p, text);
@@ -665,7 +751,6 @@ export default function PdfBookReader({ bookId }: { bookId: number }) {
     ensurePagesTextExtracted(aiTargetPages);
   }, [aiTargetPages, ensurePagesTextExtracted]);
 
-  // 实时暴露局部页面文本 + 对应批注给禾硙 AiChatPanel
   const aiContextStats = useMemo(() => {
     if (!book) return { text: '', charCount: 0 };
     const sections: string[] = [];
@@ -704,7 +789,6 @@ export default function PdfBookReader({ bookId }: { bookId: number }) {
     };
   }, [aiContextStats.text, book?.title]);
 
-  // Pin & Note CRUD
   const handleCreatePin = async (
     pageNumber: number,
     xPct: number,
@@ -712,6 +796,7 @@ export default function PdfBookReader({ bookId }: { bookId: number }) {
     color: PinColor,
     content: string
   ) => {
+    if (!requireLoginNotice()) return;
     const created = await addPdfAnnotation(bookId, {
       pageNumber,
       type: 'pin',
@@ -736,7 +821,7 @@ export default function PdfBookReader({ bookId }: { bookId: number }) {
   };
 
   const handleAddPageNote = async () => {
-    if (!pageNoteDraft.trim()) return;
+    if (!pageNoteDraft.trim() || !requireLoginNotice()) return;
     const targetPage =
       pageNoteTarget === 'right' && visible.right ? visible.right : visible.left || 1;
     setSavingPageNote(true);
@@ -756,7 +841,30 @@ export default function PdfBookReader({ bookId }: { bookId: number }) {
     }
   };
 
-  // 计算导出/同步的选定页码并生成 Markdown
+  // 目录过滤与当前章节高亮计算
+  const filteredOutline = useMemo(() => {
+    const kw = outlineSearch.trim().toLowerCase();
+    if (!kw) return outline;
+    return outline.filter((item) => item.title.toLowerCase().includes(kw));
+  }, [outline, outlineSearch]);
+
+  const activeOutlineIndex = useMemo(() => {
+    const currentP = visible.left || 1;
+    let bestIdx = -1;
+    for (let i = 0; i < filteredOutline.length; i++) {
+      const p = filteredOutline[i].pageNumber;
+      if (p != null && p <= currentP) bestIdx = i;
+    }
+    return bestIdx;
+  }, [filteredOutline, visible.left]);
+
+  useEffect(() => {
+    if (sideTab === 'outline' && activeOutlineRef.current) {
+      activeOutlineRef.current.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    }
+  }, [sideTab, activeOutlineIndex]);
+
+  // 导出/同步选定页码
   const selectedExportPages = useMemo(() => {
     if (exportScope === 'current_spread') return visiblePagesList;
     if (exportScope === 'current_page') return visible.left ? [visible.left] : [1];
@@ -778,7 +886,7 @@ export default function PdfBookReader({ bookId }: { bookId: number }) {
     const lines: string[] = [
       `# ${book?.title || 'PDF 读书笔记'}（${rangeLabel}）`,
       '',
-      `> 分类：${book?.category || '未分类'} · 进度：第 ${visible.left || 1} / ${numPages} 页 · 导出范围：第 ${pages.join(', ')} 页`,
+      `> 原作者：${book?.author || '个人资料'} · 分类：${book?.category || '未分类'} · 进度：第 ${visible.left || 1} / ${numPages} 页`,
       '',
     ];
 
@@ -830,6 +938,7 @@ export default function PdfBookReader({ bookId }: { bookId: number }) {
   };
 
   const handleSyncToMyNotes = async () => {
+    if (!requireLoginNotice()) return;
     setSyncingNote(true);
     setSyncSuccess(null);
     try {
@@ -863,7 +972,6 @@ export default function PdfBookReader({ bookId }: { bookId: number }) {
     }
   };
 
-  // 基础图层展示索引（静止 vs 翻页）
   const baseLeftSpreadIdx = activeFlip
     ? activeFlip.direction === 'forward'
       ? activeFlip.from
@@ -880,18 +988,16 @@ export default function PdfBookReader({ bookId }: { bookId: number }) {
   const rightStackWidth = Math.round(14 - progressRatio * 11);
 
   const displayedAnnotations = useMemo(() => {
-    const list =
-      notesFilter === 'visible'
-        ? annotations.filter((a) => visiblePagesList.includes(a.pageNumber))
-        : annotations;
-    return list;
+    return notesFilter === 'visible'
+      ? annotations.filter((a) => visiblePagesList.includes(a.pageNumber))
+      : annotations;
   }, [annotations, notesFilter, visiblePagesList]);
 
   if (loading) {
     return (
       <div className="min-h-[70vh] flex flex-col items-center justify-center gap-3 text-content-secondary">
         <Loader2 className="w-8 h-8 animate-spin text-[#D4AD72]" />
-        <p className="text-sm">正在装订书页并加载 PDF 内容...</p>
+        <p className="text-sm">正在通过分片流按需装订首屏书页...</p>
       </div>
     );
   }
@@ -901,7 +1007,7 @@ export default function PdfBookReader({ bookId }: { bookId: number }) {
       <div className="max-w-lg mx-auto my-20 p-6 rounded-2xl bg-white/80 dark:bg-slate-900/70 border border-rose-500/30 text-center space-y-3">
         <AlertCircle className="w-8 h-8 text-rose-500 mx-auto" />
         <h2 className="text-base font-semibold text-content-primary">打开书籍失败</h2>
-        <p className="text-xs text-content-secondary">{loadError || '请确认已登录且书籍存在'}</p>
+        <p className="text-xs text-content-secondary">{loadError || '请确认书籍存在或登录后查看'}</p>
         <Link
           href="/study/library"
           className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#192231] text-[#F2EDE4] text-xs font-medium"
@@ -943,9 +1049,10 @@ export default function PdfBookReader({ bookId }: { bookId: number }) {
         </span>
         <span className="h-px flex-1 bg-slate-300/60" />
       </div>
-      <div data-book-page-content className="flex-1 px-4 pb-5 overflow-y-auto">
+      <div data-book-page-content className="flex-1 px-4 pb-5 overflow-auto">
         <PdfPageCanvas
           pdfDoc={pdfDoc}
+          pageCache={pageCache}
           pageNumber={pageNumber}
           scale={zoom}
           pins={annotations.filter((a) => a.pageNumber === pageNumber)}
@@ -953,6 +1060,7 @@ export default function PdfBookReader({ bookId }: { bookId: number }) {
           pinMode={pinMode}
           highlightedPinId={highlightedPinId}
           interactive={interactive}
+          onWidthMeasured={interactive && side === 'left' ? handleWidthMeasured : undefined}
           onCreatePin={interactive ? handleCreatePin : undefined}
           onUpdatePin={interactive ? handleUpdatePin : undefined}
           onDeletePin={interactive ? handleDeleteAnnotation : undefined}
@@ -964,6 +1072,20 @@ export default function PdfBookReader({ bookId }: { bookId: number }) {
   return (
     <div className="w-full max-w-[1920px] mx-auto px-3 py-4 sm:px-6 sm:py-5 flex items-start gap-5">
       <div className="flex-1 min-w-0">
+        {authNotice && (
+          <div className="mb-3 rounded-xl bg-amber-500/10 border border-amber-500/30 px-3.5 py-2 text-xs text-amber-800 dark:text-amber-200 flex items-center justify-between gap-2">
+            <span>{authNotice}</span>
+            <div className="flex items-center gap-2">
+              <Link href={`/auth/login?callbackUrl=/study/library/${bookId}`} className="underline font-semibold">
+                去登录
+              </Link>
+              <button type="button" onClick={() => setAuthNotice(null)} className="opacity-70 hover:opacity-100">
+                关闭
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* 顶部工具栏 */}
         <div className="flex flex-wrap items-center gap-2 mb-3.5 px-1">
           <Link
@@ -979,11 +1101,16 @@ export default function PdfBookReader({ bookId }: { bookId: number }) {
           </h1>
 
           <div className="ml-auto flex flex-wrap items-center gap-1.5">
-            {/* 图钉批注模式 */}
             <button
               type="button"
               data-pin-mode-toggle
-              onClick={() => setPinMode((v) => !v)}
+              onClick={() => {
+                if (!pinMode && authStatus !== 'authenticated') {
+                  requireLoginNotice();
+                  return;
+                }
+                setPinMode((v) => !v);
+              }}
               title="开启后点击书页任意位置打图钉做笔记（也可随时按住 Alt+点击）"
               className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
                 pinMode
@@ -1004,7 +1131,6 @@ export default function PdfBookReader({ bookId }: { bookId: number }) {
               {showPins ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
             </button>
 
-            {/* 双页/单页切换 */}
             {!isMobile && (
               <button
                 type="button"
@@ -1026,7 +1152,6 @@ export default function PdfBookReader({ bookId }: { bookId: number }) {
               </button>
             )}
 
-            {/* 缩放控制 */}
             <div className="hidden sm:flex items-center rounded-lg bg-white/75 dark:bg-white/[0.06] border border-slate-200/80 dark:border-white/10 overflow-hidden">
               <button
                 type="button"
@@ -1053,7 +1178,6 @@ export default function PdfBookReader({ bookId }: { bookId: number }) {
               </button>
             </div>
 
-            {/* 页码直达 */}
             <form
               onSubmit={(e) => {
                 e.preventDefault();
@@ -1069,7 +1193,7 @@ export default function PdfBookReader({ bookId }: { bookId: number }) {
                 value={pageInput}
                 onChange={(e) => setPageInput(e.target.value)}
                 aria-label="跳转页码"
-                className="w-10 text-center text-xs bg-transparent text-content-primary outline-none tabular-nums"
+                className="w-12 text-center text-xs bg-transparent text-content-primary outline-none tabular-nums"
               />
               <span className="text-[11px] text-content-secondary tabular-nums">/ {numPages}</span>
             </form>
@@ -1078,7 +1202,7 @@ export default function PdfBookReader({ bookId }: { bookId: number }) {
           </div>
         </div>
 
-        {/* 实体精装书籍容器（复用 BookSpread 3D 单页物理翻书） */}
+        {/* 实体精装书籍容器 */}
         <div id="study-book-root" className="rounded-lg p-2 sm:p-4">
           <div className="relative" data-physical-book-shell>
             <div
@@ -1117,7 +1241,6 @@ export default function PdfBookReader({ bookId }: { bookId: number }) {
                 </button>
 
                 <div className="relative flex items-stretch">
-                  {/* 左纸垛 */}
                   <div aria-hidden="true" className="hidden md:flex w-4 shrink-0 justify-end">
                     <div
                       data-book-stack="left"
@@ -1131,7 +1254,6 @@ export default function PdfBookReader({ bookId }: { bookId: number }) {
                     />
                   </div>
 
-                  {/* 3D 舞台 */}
                   <div
                     ref={spreadStageRef}
                     className="relative flex-1 min-w-0 min-h-[580px]"
@@ -1163,7 +1285,6 @@ export default function PdfBookReader({ bookId }: { bookId: number }) {
                         />
                       )}
 
-                      {/* 基础左页（或单页模式唯一页） */}
                       <div className="relative h-full overflow-hidden">
                         {renderPageWithHeader(baseLeftPages.left, 'left', !activeFlip)}
                         {activeFlip && activeFlip.direction === 'forward' && (
@@ -1194,7 +1315,6 @@ export default function PdfBookReader({ bookId }: { bookId: number }) {
                         )}
                       </div>
 
-                      {/* 基础右页（仅双页模式） */}
                       {effectiveMode === 'double' && (
                         <div className="relative h-full overflow-hidden">
                           {renderPageWithHeader(baseRightPages.right, 'right', !activeFlip)}
@@ -1228,7 +1348,6 @@ export default function PdfBookReader({ bookId }: { bookId: number }) {
                       )}
                     </div>
 
-                    {/* 3D 双面立体活动纸页 */}
                     {activeFlip && effectiveMode === 'double' && flipFromPages && flipToPages && (
                       <div
                         ref={leafRef}
@@ -1328,7 +1447,6 @@ export default function PdfBookReader({ bookId }: { bookId: number }) {
                       </div>
                     )}
 
-                    {/* 左下角翻上一页热区 */}
                     {canTurnPrev && effectiveMode === 'double' && (
                       <div
                         data-page-corner="prev"
@@ -1355,7 +1473,6 @@ export default function PdfBookReader({ bookId }: { bookId: number }) {
                       </div>
                     )}
 
-                    {/* 右下角翻下一页热区 */}
                     {canTurnNext && effectiveMode === 'double' && (
                       <div
                         data-page-corner="next"
@@ -1383,7 +1500,6 @@ export default function PdfBookReader({ bookId }: { bookId: number }) {
                     )}
                   </div>
 
-                  {/* 右纸垛 */}
                   <div aria-hidden="true" className="hidden md:flex w-4 shrink-0 justify-start">
                     <div
                       data-book-stack="right"
@@ -1398,7 +1514,6 @@ export default function PdfBookReader({ bookId }: { bookId: number }) {
                   </div>
                 </div>
 
-                {/* 底部厚纸垛切口 */}
                 <div className="relative mx-0 md:mx-4 h-4 sm:h-5 rounded-b-[4px] overflow-hidden border-t border-black/10">
                   <div
                     className="absolute inset-0"
@@ -1423,7 +1538,7 @@ export default function PdfBookReader({ bookId }: { bookId: number }) {
             </div>
           </div>
 
-          {/* 底部翻页控制条 */}
+          {/* 底部翻页与致谢声明条 */}
           <div className="mt-4 flex items-center justify-between select-none px-2">
             <button
               type="button"
@@ -1451,17 +1566,29 @@ export default function PdfBookReader({ bookId }: { bookId: number }) {
               下一页 <ChevronRight className="w-4 h-4" />
             </button>
           </div>
+
+          <div
+            data-pdf-copyright-footer
+            className="mt-2 px-3 py-1.5 rounded-lg bg-slate-900/[0.03] dark:bg-white/[0.04] border border-slate-200/70 dark:border-white/10 flex flex-wrap items-center justify-between gap-2 text-[11px] text-content-secondary"
+          >
+            <span className="inline-flex items-center gap-1.5">
+              <ShieldCheck className="w-3.5 h-3.5 text-[#D4AD72] shrink-0" />
+              <span>
+                {book.author ? `原作者：${book.author}${book.licenseNote ? `（${book.licenseNote}）` : ''} · ` : ''}
+                声明：本网站个人学习作品，图书版权归原作者所有，仅供合法试阅参考。
+              </span>
+            </span>
+          </div>
         </div>
       </div>
 
-      {/* ===== 右侧边栏：目录/批注/局部导出 + 局部 AI 伴读 ===== */}
+      {/* 右侧边栏：目录书签 / 批注 / 导出同步 + 局部 AI 伴读 */}
       <aside className="hidden xl:flex flex-col gap-3 w-[320px] 2xl:w-[350px] shrink-0 sticky top-4 h-[calc(100vh-5.5rem)]">
-        {/* 上半卡：目录书签 / 批注 / 导出同步 */}
-        <div className="shrink-0 max-h-[46%] flex flex-col bg-white/95 dark:bg-slate-900/90 rounded-xl border border-black/5 dark:border-white/10 shadow-sm overflow-hidden">
+        <div className="shrink-0 max-h-[48%] flex flex-col bg-white/95 dark:bg-slate-900/90 rounded-xl border border-black/5 dark:border-white/10 shadow-sm overflow-hidden">
           <div className="grid grid-cols-3 border-b border-black/5 dark:border-white/10 p-1 gap-1 bg-slate-50/70 dark:bg-white/[0.03]">
             {[
+              { id: 'outline' as const, label: `目录 (${outline.length})`, Icon: ListTree },
               { id: 'notes' as const, label: `批注 (${annotations.length})`, Icon: MessageSquareText },
-              { id: 'outline' as const, label: `目录 (${bookmarks.length})`, Icon: ListTree },
               { id: 'export' as const, label: '导出/同步', Icon: Share2 },
             ].map(({ id, label, Icon }) => {
               const active = sideTab === id;
@@ -1484,8 +1611,125 @@ export default function PdfBookReader({ bookId }: { bookId: number }) {
             })}
           </div>
 
-          <div className="flex-1 overflow-y-auto p-3 space-y-2.5 text-xs">
-            {/* TAB 1: 批注管理 */}
+          <div
+            className={`flex-1 min-h-0 p-3 text-xs ${
+              sideTab === 'outline' ? 'flex flex-col gap-2.5 overflow-hidden' : 'overflow-y-auto space-y-2.5'
+            }`}
+          >
+            {/* TAB 1: 原生目录 + 书签快速跳转（顶部书签与目录搜索吸顶常驻，仅章节列表滚动） */}
+            {sideTab === 'outline' && (
+              <>
+                <div className="shrink-0 space-y-1.5">
+                  <div className="flex items-center justify-between text-[11px] font-semibold text-slate-700 dark:text-slate-200">
+                    <span>黄金丝带书签 ({bookmarks.length})</span>
+                    <button
+                      type="button"
+                      onClick={handleToggleBookmark}
+                      className="text-[11px] text-[#B8862E] dark:text-[#D4AD72] hover:underline"
+                    >
+                      {activeBookmark ? '取消当前页' : `+ 收藏 P.${visible.left || 1}`}
+                    </button>
+                  </div>
+                  {bookmarks.length === 0 ? (
+                    <p className="text-[11px] text-slate-400 py-0.5">
+                      点击书脊上方黄金丝带可标记重点页码并一键回跳
+                    </p>
+                  ) : (
+                    <div className="flex flex-wrap gap-1.5 max-h-16 overflow-y-auto">
+                      {bookmarks.map((bm) => (
+                        <div
+                          key={bm.id}
+                          onMouseEnter={() => prefetchAroundPage(bm.pageNumber)}
+                          onClick={() => jumpToPage(bm.pageNumber)}
+                          className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-amber-50/90 dark:bg-amber-500/15 border border-amber-200/80 dark:border-amber-500/25 text-[11px] text-slate-800 dark:text-amber-200 cursor-pointer hover:border-[#D4AD72]"
+                        >
+                          <Bookmark className="w-2.5 h-2.5 text-[#D4AD72]" />
+                          <span className="tabular-nums">P.{bm.pageNumber}</span>
+                          <button
+                            type="button"
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              await deletePdfBookmark(bookId, bm.pageNumber);
+                              setBookmarks((prev) =>
+                                prev.filter((item) => item.pageNumber !== bm.pageNumber)
+                              );
+                            }}
+                            className="ml-0.5 text-slate-400 hover:text-rose-500"
+                            aria-label={`移除第 ${bm.pageNumber} 页书签`}
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="shrink-0 pt-2 border-t border-slate-200/70 dark:border-white/10 flex items-center justify-between gap-2">
+                  <p className="text-[11px] font-semibold text-slate-700 dark:text-slate-200">
+                    原生章节目录
+                  </p>
+                  {outline.length > 8 && (
+                    <div className="relative w-36">
+                      <Search className="w-3 h-3 text-slate-400 absolute left-2 top-1/2 -translate-y-1/2 pointer-events-none" />
+                      <input
+                        type="text"
+                        data-outline-search
+                        value={outlineSearch}
+                        onChange={(e) => setOutlineSearch(e.target.value)}
+                        placeholder="定位章节..."
+                        className="w-full pl-6 pr-2 py-0.5 rounded-full bg-slate-100 dark:bg-white/10 text-[10px] text-slate-700 dark:text-slate-200 outline-none"
+                      />
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex-1 min-h-0 overflow-y-auto pr-0.5">
+                  {filteredOutline.length === 0 ? (
+                    <p className="text-[11px] text-slate-400 py-2">
+                      {outline.length === 0 ? '该 PDF 未嵌入电子目录，可使用上方页码直达或书签' : '未找到匹配章节'}
+                    </p>
+                  ) : (
+                    <div className="space-y-0.5">
+                      {filteredOutline.map((item, idx) => {
+                        const isActive = idx === activeOutlineIndex;
+                        return (
+                          <button
+                            key={idx}
+                            ref={isActive ? activeOutlineRef : undefined}
+                            type="button"
+                            data-pdf-outline-item
+                            data-outline-page={item.pageNumber ?? ''}
+                            disabled={!item.pageNumber}
+                            onMouseEnter={() => item.pageNumber && prefetchAroundPage(item.pageNumber)}
+                            onClick={() => item.pageNumber && jumpToPage(item.pageNumber)}
+                            style={{ paddingLeft: `${8 + Math.min(item.level, 3) * 10}px` }}
+                            className={`w-full flex items-center justify-between gap-2 py-1 pr-2 rounded-md text-left text-[11px] transition-colors ${
+                              isActive
+                                ? 'bg-[#192231] text-[#F2EDE4] font-medium shadow-sm'
+                                : 'text-slate-700 dark:text-slate-300 hover:bg-black/5 dark:hover:bg-white/5'
+                            }`}
+                          >
+                            <span className="truncate">{item.title}</span>
+                            {item.pageNumber && (
+                              <span
+                                className={`text-[10px] shrink-0 tabular-nums ${
+                                  isActive ? 'text-[#D4AD72]' : 'text-slate-400'
+                                }`}
+                              >
+                                P.{item.pageNumber}
+                              </span>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+
+            {/* TAB 2: 批注管理 */}
             {sideTab === 'notes' && (
               <>
                 <div className="flex items-center justify-between gap-2">
@@ -1516,7 +1760,6 @@ export default function PdfBookReader({ bookId }: { bookId: number }) {
                   <span className="text-[10px] text-slate-400">可开图钉直标页面</span>
                 </div>
 
-                {/* 添加整页笔记 */}
                 <div className="space-y-1.5 bg-slate-50 dark:bg-white/[0.04] rounded-lg p-2 border border-slate-200/70 dark:border-white/10">
                   <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
                     <span>添加整页心得</span>
@@ -1569,7 +1812,7 @@ export default function PdfBookReader({ bookId }: { bookId: number }) {
 
                 {displayedAnnotations.length === 0 ? (
                   <p className="text-[11px] text-slate-400 text-center py-4">
-                    当前范围暂无批注，点击上方「图钉批注」可在书页上落钉记录
+                    当前范围暂无批注，开启「图钉批注」可在书页任意处落钉
                   </p>
                 ) : (
                   <div className="space-y-1.5">
@@ -1578,6 +1821,7 @@ export default function PdfBookReader({ bookId }: { bookId: number }) {
                       return (
                         <div
                           key={ann.id}
+                          onMouseEnter={() => prefetchAroundPage(ann.pageNumber)}
                           onClick={() => {
                             jumpToPage(ann.pageNumber);
                             setHighlightedPinId(ann.id);
@@ -1612,86 +1856,6 @@ export default function PdfBookReader({ bookId }: { bookId: number }) {
                     })}
                   </div>
                 )}
-              </>
-            )}
-
-            {/* TAB 2: PDF 目录与书签 */}
-            {sideTab === 'outline' && (
-              <>
-                <div className="space-y-1">
-                  <div className="flex items-center justify-between text-[11px] font-semibold text-slate-700 dark:text-slate-200">
-                    <span>黄金丝带书签</span>
-                    <button
-                      type="button"
-                      onClick={handleToggleBookmark}
-                      className="text-[11px] text-[#B8862E] dark:text-[#D4AD72] hover:underline"
-                    >
-                      {activeBookmark ? '移除当前页' : `+ 收藏 P.${visible.left || 1}`}
-                    </button>
-                  </div>
-                  {bookmarks.length === 0 ? (
-                    <p className="text-[11px] text-slate-400 py-1.5">
-                      暂无书签，点击书脊顶部的金丝带即可标记页码
-                    </p>
-                  ) : (
-                    <div className="space-y-1">
-                      {bookmarks.map((bm) => (
-                        <div
-                          key={bm.id}
-                          onClick={() => jumpToPage(bm.pageNumber)}
-                          className="flex items-center justify-between gap-2 px-2 py-1.5 rounded-md bg-amber-50/70 dark:bg-amber-500/10 border border-amber-200/70 dark:border-amber-500/20 cursor-pointer"
-                        >
-                          <span className="inline-flex items-center gap-1.5 text-xs text-slate-800 dark:text-amber-200 truncate">
-                            <Bookmark className="w-3 h-3 text-[#D4AD72] shrink-0" />
-                            第 {bm.pageNumber} 页
-                          </span>
-                          <button
-                            type="button"
-                            onClick={async (e) => {
-                              e.stopPropagation();
-                              await deletePdfBookmark(bookId, bm.pageNumber);
-                              setBookmarks((prev) =>
-                                prev.filter((item) => item.pageNumber !== bm.pageNumber)
-                              );
-                            }}
-                            className="text-slate-400 hover:text-rose-500"
-                          >
-                            <Trash2 className="w-3 h-3" />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                <div className="pt-2 border-t border-slate-200/70 dark:border-white/10">
-                  <p className="text-[11px] font-semibold text-slate-700 dark:text-slate-200 mb-1.5">
-                    PDF 章节目录
-                  </p>
-                  {outline.length === 0 ? (
-                    <p className="text-[11px] text-slate-400">该 PDF 未嵌入电子目录</p>
-                  ) : (
-                    <div className="space-y-0.5">
-                      {outline.map((item, idx) => (
-                        <button
-                          key={idx}
-                          type="button"
-                          disabled={!item.pageNumber}
-                          onClick={() => item.pageNumber && jumpToPage(item.pageNumber)}
-                          style={{ paddingLeft: `${8 + Math.min(item.level, 3) * 10}px` }}
-                          className="w-full flex items-center justify-between gap-2 py-1 pr-2 rounded-md text-left text-[11px] text-slate-700 dark:text-slate-300 hover:bg-black/5 dark:hover:bg-white/5"
-                        >
-                          <span className="truncate">{item.title}</span>
-                          {item.pageNumber && (
-                            <span className="text-[10px] text-slate-400 shrink-0 tabular-nums">
-                              P.{item.pageNumber}
-                            </span>
-                          )}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
               </>
             )}
 

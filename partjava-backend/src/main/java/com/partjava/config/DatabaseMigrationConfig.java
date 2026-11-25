@@ -185,6 +185,19 @@ public class DatabaseMigrationConfig {
                     "  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\n" +
                     "  UNIQUE KEY uk_pdf_bm_book_user_page (book_id, user_id, page_number)\n" +
                     ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
+
+            String[] pdfExtraCols = {
+                    "ALTER TABLE pdf_books ADD COLUMN is_demo TINYINT(1) NOT NULL DEFAULT 0 COMMENT '是否为公开演示书籍';",
+                    "ALTER TABLE pdf_books ADD COLUMN author VARCHAR(255) NOT NULL DEFAULT '' COMMENT '原作者/开源社区';",
+                    "ALTER TABLE pdf_books ADD COLUMN license_note VARCHAR(255) NOT NULL DEFAULT '' COMMENT '开源协议/来源说明';"
+            };
+            for (String colSql : pdfExtraCols) {
+                try {
+                    jdbcTemplate.execute(colSql);
+                } catch (Exception e) {
+                    log.debug("pdf_books 演示扩展字段可能已存在: {}", e.getMessage());
+                }
+            }
             log.info("pdf_books / pdf_annotations / pdf_bookmarks 表迁移成功");
 
             log.info("数据库 DDL 自动迁移成功！");

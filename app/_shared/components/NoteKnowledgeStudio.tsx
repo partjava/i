@@ -30,32 +30,32 @@ const CATEGORY_META: Record<
   root: {
     label: '核心主题',
     color: '#4f46e5',
-    bg: 'bg-indigo-50 text-indigo-700',
-    border: 'border-indigo-200',
+    bg: 'bg-indigo-50 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-200',
+    border: 'border-indigo-200 dark:border-indigo-400/35',
   },
   chapter: {
     label: '章节模块',
     color: '#0284c7',
-    bg: 'bg-sky-50 text-sky-700',
-    border: 'border-sky-200',
+    bg: 'bg-sky-50 text-sky-700 dark:bg-sky-500/20 dark:text-sky-200',
+    border: 'border-sky-200 dark:border-sky-400/35',
   },
   concept: {
     label: '核心概念',
     color: '#059669',
-    bg: 'bg-emerald-50 text-emerald-700',
-    border: 'border-emerald-200',
+    bg: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-200',
+    border: 'border-emerald-200 dark:border-emerald-400/35',
   },
   code: {
     label: '代码/API',
     color: '#d97706',
-    bg: 'bg-amber-50 text-amber-700',
-    border: 'border-amber-200',
+    bg: 'bg-amber-50 text-amber-700 dark:bg-amber-500/20 dark:text-amber-200',
+    border: 'border-amber-200 dark:border-amber-400/35',
   },
   pitfall: {
     label: '考点/辨析',
     color: '#e11d48',
-    bg: 'bg-rose-50 text-rose-700',
-    border: 'border-rose-200',
+    bg: 'bg-rose-50 text-rose-700 dark:bg-rose-500/20 dark:text-rose-200',
+    border: 'border-rose-200 dark:border-rose-400/35',
   },
 };
 
@@ -73,10 +73,20 @@ export default function NoteKnowledgeStudio({
   const [graphLayout, setGraphLayout] = useState<'force' | 'tree'>('force');
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
+  const [isDark, setIsDark] = useState(false);
   const [insights, setInsights] = useState<NoteInsightsData>(() =>
     extractNoteInsightsLocally(title, content, category, technology, tags)
   );
   const [selectedNodeId, setSelectedNodeId] = useState<string>('node_root');
+
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    const sync = () => setIsDark(document.body.classList.contains('dark'));
+    sync();
+    const obs = new MutationObserver(sync);
+    obs.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+    return () => obs.disconnect();
+  }, []);
 
   // 闪卡状态
   const [cardIndex, setCardIndex] = useState(0);
@@ -211,13 +221,13 @@ export default function NoteKnowledgeStudio({
           category: cat,
           itemStyle: {
             color: meta.color,
-            borderColor: '#ffffff',
+            borderColor: isDark ? '#151921' : '#ffffff',
             borderWidth: 2,
           },
           label: {
-            color: '#1e293b',
-            backgroundColor: '#f8fafc',
-            borderColor: '#e2e8f0',
+            color: isDark ? '#F2EDE4' : '#1e293b',
+            backgroundColor: isDark ? '#1E2430' : '#f8fafc',
+            borderColor: isDark ? 'rgba(255,255,255,0.14)' : '#e2e8f0',
             borderWidth: 1,
             borderRadius: 6,
             padding: [4, 8],
@@ -263,7 +273,7 @@ export default function NoteKnowledgeStudio({
             animationDuration: 450,
             animationDurationUpdate: 600,
             lineStyle: {
-              color: '#94a3b8',
+              color: isDark ? '#64748b' : '#94a3b8',
               width: 1.6,
               curveness: 0.45,
             },
@@ -297,12 +307,12 @@ export default function NoteKnowledgeStudio({
         itemWidth: 12,
         itemHeight: 12,
         itemGap: 16,
-        backgroundColor: 'rgba(255, 255, 255, 0.88)',
-        borderColor: '#e2e8f0',
+        backgroundColor: isDark ? 'rgba(21, 25, 33, 0.90)' : 'rgba(255, 255, 255, 0.88)',
+        borderColor: isDark ? 'rgba(255, 255, 255, 0.14)' : '#e2e8f0',
         borderWidth: 1,
         borderRadius: 999,
         padding: [5, 14],
-        textStyle: { color: '#475569', fontSize: 11 },
+        textStyle: { color: isDark ? '#D5DCE6' : '#475569', fontSize: 11 },
         data: categories.map(c => CATEGORY_META[c].label),
       },
       series: [
@@ -329,7 +339,7 @@ export default function NoteKnowledgeStudio({
               symbolSize: isSelected ? n.symbolSize + 8 : n.symbolSize,
               itemStyle: {
                 color: CATEGORY_META[n.category]?.color || '#059669',
-                borderColor: isSelected ? '#1e1b4b' : '#ffffff',
+                borderColor: isSelected ? (isDark ? '#D4AD72' : '#1e1b4b') : (isDark ? '#151921' : '#ffffff'),
                 borderWidth: isSelected ? 3.5 : 2,
                 shadowBlur: isSelected ? 18 : 8,
                 shadowColor: isSelected
@@ -343,11 +353,13 @@ export default function NoteKnowledgeStudio({
                   const s = String(p?.name || '');
                   return s.length > 14 ? `${s.slice(0, 14)}…` : s;
                 },
-                color: n.category === 'root' ? '#ffffff' : '#1e293b',
+                color: n.category === 'root' ? '#ffffff' : (isDark ? '#F2EDE4' : '#1e293b'),
                 fontSize: n.category === 'root' ? 12 : 11,
                 fontWeight: n.category === 'root' || n.category === 'chapter' ? 'bold' : 'normal',
                 backgroundColor:
-                  n.category === 'root' ? 'rgba(15, 29, 51, 0.92)' : 'rgba(255,255,255,0.9)',
+                  n.category === 'root'
+                    ? 'rgba(15, 29, 51, 0.92)'
+                    : (isDark ? 'rgba(21, 25, 33, 0.92)' : 'rgba(255,255,255,0.9)'),
                 padding: n.category === 'root' ? [3, 8] : [2, 5],
                 borderRadius: n.category === 'root' ? 6 : 4,
               },
@@ -361,8 +373,8 @@ export default function NoteKnowledgeStudio({
               show: false,
               formatter: l.relation,
               fontSize: 10,
-              color: '#475569',
-              backgroundColor: 'rgba(248, 250, 252, 0.92)',
+              color: isDark ? '#D5DCE6' : '#475569',
+              backgroundColor: isDark ? 'rgba(21, 25, 33, 0.92)' : 'rgba(248, 250, 252, 0.92)',
               padding: [2, 5],
               borderRadius: 4,
             },
@@ -370,7 +382,7 @@ export default function NoteKnowledgeStudio({
               label: { show: true },
             },
             lineStyle: {
-              color: '#94a3b8',
+              color: isDark ? '#64748b' : '#94a3b8',
               width: 1.6,
               curveness: 0.16,
               opacity: 0.72,
@@ -392,7 +404,7 @@ export default function NoteKnowledgeStudio({
         },
       ],
     };
-  }, [graphLayout, insights, selectedNode?.id]);
+  }, [graphLayout, insights, selectedNode?.id, isDark]);
 
   const handleChartClick = useCallback(
     (params: any) => {
@@ -424,12 +436,12 @@ export default function NoteKnowledgeStudio({
     <div
       className={`${
         isFullscreen
-          ? 'fixed inset-4 z-50 bg-white shadow-2xl flex flex-col'
-          : 'mb-8 bg-gradient-to-br from-slate-50 via-white to-indigo-50/30 shadow-sm'
-      } rounded-2xl border border-slate-200/90 overflow-hidden transition-all duration-300`}
+          ? 'fixed inset-4 z-50 bg-white dark:bg-[#151921] shadow-2xl flex flex-col'
+          : 'mb-8 bg-gradient-to-br from-slate-50 via-white to-indigo-50/30 dark:bg-[#151921] dark:from-[#151921] dark:via-[#151921] dark:to-[#182030] shadow-sm'
+      } rounded-2xl border border-slate-200/90 dark:border-white/10 overflow-hidden transition-all duration-300`}
     >
       {/* 顶部控制栏 */}
-      <div className="px-5 py-3.5 bg-white/90 border-b border-slate-200/80 flex flex-wrap items-center justify-between gap-3">
+      <div className="px-5 py-3.5 bg-white/90 dark:bg-[#151921]/95 border-b border-slate-200/80 dark:border-white/10 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <button
             type="button"
@@ -437,7 +449,7 @@ export default function NoteKnowledgeStudio({
             className={`px-3.5 py-1.5 rounded-xl text-sm font-semibold flex items-center gap-1.5 transition-all ${
               activeTab === 'graph'
                 ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-500/20'
-                : 'bg-slate-100 text-slate-600 hover:bg-slate-200/70'
+                : 'bg-slate-100 dark:bg-white/[0.08] text-slate-600 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-white/[0.14]'
             }`}
           >
             <span>🌌</span>
@@ -446,7 +458,7 @@ export default function NoteKnowledgeStudio({
               className={`text-xs px-1.5 py-0.5 rounded-full ${
                 activeTab === 'graph'
                   ? 'bg-indigo-500 text-white'
-                  : 'bg-slate-200 text-slate-600'
+                  : 'bg-slate-200 dark:bg-white/15 text-slate-600 dark:text-slate-200'
               }`}
             >
               {insights.nodes.length} 节点
@@ -459,7 +471,7 @@ export default function NoteKnowledgeStudio({
             className={`px-3.5 py-1.5 rounded-xl text-sm font-semibold flex items-center gap-1.5 transition-all ${
               activeTab === 'flashcards'
                 ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-500/20'
-                : 'bg-slate-100 text-slate-600 hover:bg-slate-200/70'
+                : 'bg-slate-100 dark:bg-white/[0.08] text-slate-600 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-white/[0.14]'
             }`}
           >
             <span>🃏</span>
@@ -468,7 +480,7 @@ export default function NoteKnowledgeStudio({
               className={`text-xs px-1.5 py-0.5 rounded-full ${
                 activeTab === 'flashcards'
                   ? 'bg-indigo-500 text-white'
-                  : 'bg-emerald-100 text-emerald-700'
+                  : 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-200'
               }`}
             >
               {masteredCount}/{insights.flashcards.length} 已掌握
@@ -478,14 +490,14 @@ export default function NoteKnowledgeStudio({
 
         <div className="flex items-center gap-2">
           {activeTab === 'graph' && (
-            <div className="inline-flex rounded-xl bg-slate-100 p-1 text-xs font-medium">
+            <div className="inline-flex rounded-xl bg-slate-100 dark:bg-white/[0.08] p-1 text-xs font-medium">
               <button
                 type="button"
                 onClick={() => setGraphLayout('force')}
                 className={`px-2.5 py-1 rounded-lg transition-all ${
                   graphLayout === 'force'
-                    ? 'bg-white text-indigo-600 shadow-sm font-semibold'
-                    : 'text-slate-600 hover:text-slate-900'
+                    ? 'bg-white dark:bg-[#232B3A] text-indigo-600 dark:text-[#D4AD72] shadow-sm font-semibold'
+                    : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
                 力导向星系图
@@ -495,8 +507,8 @@ export default function NoteKnowledgeStudio({
                 onClick={() => setGraphLayout('tree')}
                 className={`px-2.5 py-1 rounded-lg transition-colors duration-150 ${
                   graphLayout === 'tree'
-                    ? 'bg-white text-[#1B3B6F] shadow-sm font-semibold'
-                    : 'text-slate-600 hover:text-slate-900'
+                    ? 'bg-white dark:bg-[#232B3A] text-[#1B3B6F] dark:text-[#D4AD72] shadow-sm font-semibold'
+                    : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
                 层级思维导图
@@ -527,7 +539,7 @@ export default function NoteKnowledgeStudio({
           <button
             type="button"
             onClick={() => setIsFullscreen(!isFullscreen)}
-            className="p-1.5 rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors text-xs px-2.5 font-medium"
+            className="p-1.5 rounded-xl bg-slate-100 dark:bg-white/[0.08] text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/[0.14] transition-colors text-xs px-2.5 font-medium"
             title={isFullscreen ? '退出全屏' : '全屏展开'}
           >
             {isFullscreen ? '收起全屏' : '全屏视图'}
@@ -539,9 +551,9 @@ export default function NoteKnowledgeStudio({
       {activeTab === 'graph' ? (
         <div className={`grid grid-cols-1 lg:grid-cols-12 ${isFullscreen ? 'flex-1 min-h-0' : ''}`}>
           {/* 左侧交互式图谱画布 */}
-          <div className="lg:col-span-8 relative bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] [background-size:18px_18px] border-b lg:border-b-0 lg:border-r border-slate-200/80">
+          <div className="lg:col-span-8 relative bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] dark:bg-[#0F141E] dark:bg-[radial-gradient(rgba(148,163,184,0.16)_1px,transparent_1px)] [background-size:18px_18px] border-b lg:border-b-0 lg:border-r border-slate-200/80 dark:border-white/10">
             <div className="absolute top-3 left-4 z-10 flex items-center gap-2 pointer-events-none">
-              <span className="px-2.5 py-1 rounded-full text-[11px] font-medium bg-white/90 border border-slate-200 text-slate-600 shadow-sm">
+              <span className="px-2.5 py-1 rounded-full text-[11px] font-medium bg-white/90 dark:bg-[#151921]/90 border border-slate-200 dark:border-white/15 text-slate-600 dark:text-slate-300 shadow-sm">
                 {insights.source === 'ai' ? '🤖 DeepSeek 语义知识网络' : '⚡ 实时结构化知识图谱'} · 支持滚轮缩放与拖拽节点
               </span>
             </div>
@@ -557,7 +569,7 @@ export default function NoteKnowledgeStudio({
           </div>
 
           {/* 右侧节点知识详情面板 */}
-          <div className="lg:col-span-4 p-5 bg-white flex flex-col justify-between">
+          <div className="lg:col-span-4 p-5 bg-white dark:bg-[#151921] flex flex-col justify-between">
             {selectedNode ? (
               <div>
                 <div className="flex items-center justify-between gap-2 mb-3">
@@ -575,7 +587,7 @@ export default function NoteKnowledgeStudio({
                         if (isFullscreen) setIsFullscreen(false);
                         onScrollToSection(selectedNode.sectionHeading!);
                       }}
-                      className="text-xs font-medium text-indigo-600 hover:text-indigo-800 flex items-center gap-1 bg-indigo-50 px-2.5 py-1 rounded-lg transition-colors"
+                      className="text-xs font-medium text-indigo-600 dark:text-[#8AB4F8] hover:text-indigo-800 dark:hover:text-[#D4AD72] flex items-center gap-1 bg-indigo-50 dark:bg-indigo-500/15 px-2.5 py-1 rounded-lg transition-colors"
                     >
                       <span>📍</span>
                       <span>定位原文段落</span>
@@ -583,15 +595,15 @@ export default function NoteKnowledgeStudio({
                   )}
                 </div>
 
-                <h3 className="text-lg font-bold text-slate-900 mb-2">{selectedNode.name}</h3>
+                <h3 className="text-lg font-bold text-slate-900 dark:text-[#F2EDE4] mb-2">{selectedNode.name}</h3>
 
-                <p className="text-sm text-slate-600 leading-relaxed bg-slate-50 p-3.5 rounded-xl border border-slate-100 mb-4">
+                <p className="text-sm text-slate-600 dark:text-[#D5DCE6] leading-relaxed bg-slate-50 dark:bg-white/[0.05] p-3.5 rounded-xl border border-slate-100 dark:border-white/10 mb-4">
                   {selectedNode.summary}
                 </p>
 
                 {selectedNode.snippet && (
                   <div className="mb-4">
-                    <div className="text-xs font-semibold text-slate-500 mb-1.5">关键代码 / 表达式</div>
+                    <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">关键代码 / 表达式</div>
                     <pre className="text-xs font-mono bg-slate-900 text-emerald-300 p-3 rounded-xl overflow-x-auto max-h-32">
                       <code>{selectedNode.snippet}</code>
                     </pre>
@@ -600,7 +612,7 @@ export default function NoteKnowledgeStudio({
 
                 {relatedLinks.length > 0 && (
                   <div>
-                    <div className="text-xs font-semibold text-slate-500 mb-2">
+                    <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-2">
                       知识拓扑关联 ({relatedLinks.length})
                     </div>
                     <div className="space-y-1.5 max-h-44 overflow-y-auto pr-1">
@@ -609,18 +621,18 @@ export default function NoteKnowledgeStudio({
                           key={idx}
                           type="button"
                           onClick={() => item.otherNode && setSelectedNodeId(item.otherNode.id)}
-                          className="w-full text-left px-3 py-2 rounded-xl border border-slate-100 hover:border-indigo-200 hover:bg-indigo-50/40 transition-all flex items-center justify-between text-xs group"
+                          className="w-full text-left px-3 py-2 rounded-xl border border-slate-100 dark:border-white/10 dark:bg-white/[0.03] hover:border-indigo-200 dark:hover:border-[#D4AD72]/50 hover:bg-indigo-50/40 dark:hover:bg-white/[0.07] transition-all flex items-center justify-between text-xs group"
                         >
                           <div className="flex items-center gap-1.5 truncate">
                             <span className="text-slate-400 font-mono">{item.direction}</span>
-                            <span className="px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 text-[11px]">
+                            <span className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-[#1E293B] text-slate-600 dark:text-[#D4AD72] dark:border dark:border-white/10 text-[11px]">
                               {item.relation}
                             </span>
-                            <span className="font-semibold text-slate-800 group-hover:text-indigo-600 truncate">
+                            <span className="font-semibold text-slate-800 dark:text-[#F2EDE4] group-hover:text-indigo-600 dark:group-hover:text-[#D4AD72] truncate">
                               {item.otherNode?.name}
                             </span>
                           </div>
-                          <span className="text-slate-400 group-hover:text-indigo-500 shrink-0">查看 →</span>
+                          <span className="text-slate-400 group-hover:text-indigo-500 dark:group-hover:text-[#D4AD72] shrink-0">查看 →</span>
                         </button>
                       ))}
                     </div>
@@ -633,12 +645,12 @@ export default function NoteKnowledgeStudio({
               </div>
             )}
 
-            <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+            <div className="mt-4 pt-3 border-t border-slate-100 dark:border-white/10 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
               <span>共 {insights.nodes.length} 个知识节点 · {insights.links.length} 条关系边</span>
               <button
                 type="button"
                 onClick={() => setActiveTab('flashcards')}
-                className="text-indigo-600 hover:text-indigo-700 font-semibold"
+                className="text-indigo-600 dark:text-[#8AB4F8] hover:text-indigo-700 dark:hover:text-[#D4AD72] font-semibold"
               >
                 去抽查闪卡 →
               </button>
@@ -647,15 +659,15 @@ export default function NoteKnowledgeStudio({
         </div>
       ) : (
         /* 3D 翻转记忆闪卡自测区 */
-        <div className="p-6 md:p-8 bg-gradient-to-b from-slate-50/70 to-white">
+        <div className="p-6 md:p-8 bg-gradient-to-b from-slate-50/70 to-white dark:from-[#12161E] dark:to-[#151921]">
           <div className="max-w-2xl mx-auto">
             {/* 顶部进度条 */}
-            <div className="flex items-center justify-between mb-4 text-xs text-slate-600">
+            <div className="flex items-center justify-between mb-4 text-xs text-slate-600 dark:text-slate-300">
               <div className="flex items-center gap-2">
-                <span className="font-semibold text-slate-800">
+                <span className="font-semibold text-slate-800 dark:text-[#F2EDE4]">
                   闪卡进度：{cardIndex + 1} / {insights.flashcards.length}
                 </span>
-                <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-medium">
+                <span className="px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-200 border border-emerald-200 dark:border-emerald-400/30 font-medium">
                   已掌握 {masteredCount} 张
                 </span>
               </div>
@@ -675,7 +687,7 @@ export default function NoteKnowledgeStudio({
               </div>
             </div>
 
-            <div className="w-full h-2 bg-slate-200/80 rounded-full overflow-hidden mb-6">
+            <div className="w-full h-2 bg-slate-200/80 dark:bg-white/10 rounded-full overflow-hidden mb-6">
               <div
                 className="h-full transition-[width] duration-300 ease-[cubic-bezier(0.23,1,0.32,1)]"
                 style={{
@@ -703,21 +715,21 @@ export default function NoteKnowledgeStudio({
                 >
                   {/* 正面：问题 */}
                   <div
-                    className="w-full min-h-[260px] rounded-2xl bg-white border-2 border-indigo-100 shadow-md p-6 md:p-8 flex flex-col justify-between"
+                    className="w-full min-h-[260px] rounded-2xl bg-white dark:bg-[#1A202C] border-2 border-indigo-100 dark:border-white/15 shadow-md p-6 md:p-8 flex flex-col justify-between"
                     style={{ backfaceVisibility: 'hidden' }}
                   >
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-2">
-                        <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                        <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-50 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-200 border border-indigo-200 dark:border-indigo-400/30">
                           {currentCard.tag}
                         </span>
                         <span
                           className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${
                             currentCard.difficulty === '高频考点'
-                              ? 'bg-rose-50 text-rose-700 border border-rose-200'
+                              ? 'bg-rose-50 dark:bg-rose-500/20 text-rose-700 dark:text-rose-200 border border-rose-200 dark:border-rose-400/30'
                               : currentCard.difficulty === '进阶'
-                                ? 'bg-amber-50 text-amber-700 border border-amber-200'
-                                : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                ? 'bg-amber-50 dark:bg-amber-500/20 text-amber-700 dark:text-amber-200 border border-amber-200 dark:border-amber-400/30'
+                                : 'bg-emerald-50 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-200 border border-emerald-200 dark:border-emerald-400/30'
                           }`}
                         >
                           {currentCard.difficulty}
@@ -727,32 +739,32 @@ export default function NoteKnowledgeStudio({
                     </div>
 
                     <div className="my-6">
-                      <div className="text-lg md:text-xl font-bold text-slate-900 leading-relaxed">
+                      <div className="text-lg md:text-xl font-bold text-slate-900 dark:text-[#F2EDE4] leading-relaxed">
                         Q: {currentCard.question}
                       </div>
 
                       {showHint && (
                         <div
                           onClick={e => e.stopPropagation()}
-                          className="mt-4 p-3 rounded-xl bg-amber-50/80 border border-amber-200 text-xs text-amber-800"
+                          className="mt-4 p-3 rounded-xl bg-amber-50/80 dark:bg-amber-500/15 border border-amber-200 dark:border-amber-400/30 text-xs text-amber-800 dark:text-amber-200"
                         >
                           💡 提示：{currentCard.hint}
                         </div>
                       )}
                     </div>
 
-                    <div className="flex items-center justify-between pt-3 border-t border-slate-100">
+                    <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-white/10">
                       <button
                         type="button"
                         onClick={e => {
                           e.stopPropagation();
                           setShowHint(!showHint);
                         }}
-                        className="text-xs font-medium text-amber-600 hover:text-amber-700 bg-amber-50 px-3 py-1.5 rounded-lg transition-colors"
+                        className="text-xs font-medium text-amber-600 dark:text-amber-300 hover:text-amber-700 dark:hover:text-amber-200 bg-amber-50 dark:bg-amber-500/15 px-3 py-1.5 rounded-lg transition-colors"
                       >
                         {showHint ? '隐藏提示' : '💡 查看思考提示'}
                       </button>
-                      <span className="text-xs font-semibold text-indigo-600">
+                      <span className="text-xs font-semibold text-indigo-600 dark:text-[#D4AD72]">
                         点击翻转查看答案 ↻
                       </span>
                     </div>
@@ -825,7 +837,7 @@ export default function NoteKnowledgeStudio({
                       insights.flashcards.length
                   );
                 }}
-                className="px-4 py-2 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 text-xs font-semibold transition-colors"
+                className="px-4 py-2 rounded-xl bg-white dark:bg-[#1E2430] border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/10 text-xs font-semibold transition-colors"
               >
                 ← 上一张
               </button>
@@ -849,7 +861,7 @@ export default function NoteKnowledgeStudio({
                             ? 'bg-emerald-400'
                             : status === 'review'
                               ? 'bg-amber-400'
-                              : 'bg-slate-300'
+                              : 'bg-slate-300 dark:bg-white/25'
                       }`}
                       title={`第 ${idx + 1} 张闪卡`}
                     />
@@ -864,7 +876,7 @@ export default function NoteKnowledgeStudio({
                   setShowHint(false);
                   setCardIndex(prev => (prev + 1) % insights.flashcards.length);
                 }}
-                className="px-4 py-2 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 text-xs font-semibold transition-colors"
+                className="px-4 py-2 rounded-xl bg-white dark:bg-[#1E2430] border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/10 text-xs font-semibold transition-colors"
               >
                 下一张 →
               </button>

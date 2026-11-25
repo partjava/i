@@ -46,11 +46,12 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 // 认证与找回密码流程
                 .requestMatchers("/api/auth/**", "/api/forgot-password/**").permitAll()
-                // 公开只读内容：笔记广场、评论、图片、统计、搜索、课程中心、题库与公开用户主页
+                // 公开只读内容：笔记广场、评论、图片、统计、搜索、课程中心、题库、开源演示书架与公开用户主页
                 .requestMatchers(HttpMethod.GET,
                     "/api/notes/**", "/api/comments/**", "/api/images/**", "/api/stats/**",
                     "/api/search/**", "/api/study/**", "/api/challenges/**", "/api/star-challenges/**",
-                    "/api/user/profile-by-id").permitAll()
+                    "/api/pdf-books/**", "/api/user/profile-by-id").permitAll()
+                .requestMatchers(HttpMethod.HEAD, "/api/pdf-books/**").permitAll()
                 // 极客小游戏接口允许游客体验（含开局与操作 POST）
                 .requestMatchers("/api/game/**").permitAll()
                 // AI 账号会话历史要求登录认证
@@ -93,9 +94,9 @@ public class SecurityConfig {
             "https://pyigpt.com",
             "http://pyigpt.com"
         ));
-        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-Requested-With"));
-        configuration.setExposedHeaders(List.of("Authorization"));
+        configuration.setAllowedMethods(List.of("GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-Requested-With", "Range"));
+        configuration.setExposedHeaders(List.of("Authorization", "Accept-Ranges", "Content-Range", "Content-Length"));
         configuration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

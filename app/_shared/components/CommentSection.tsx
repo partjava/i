@@ -140,7 +140,7 @@ export default function CommentSection({ noteId, isPublic = false }: CommentSect
   // 渲染单个评论
   const renderComment = (comment: Comment, level = 0) => (
     <div key={comment.id} className={`${level > 0 ? 'ml-8 mt-4' : 'mt-6'}`}>
-      <div className="bg-gray-50 rounded-lg p-4">
+      <div className="bg-gray-50 dark:bg-[#151921] border border-transparent dark:border-white/10 rounded-lg p-4">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center space-x-2">
             <span className="font-medium text-gray-900">{comment.authorName}</span>
@@ -175,7 +175,7 @@ export default function CommentSection({ noteId, isPublic = false }: CommentSect
             
             <button
               onClick={() => setReplyTo(replyTo === comment.id ? null : comment.id)}
-              className="text-sm text-blue-600 hover:text-blue-800"
+              className="text-sm text-blue-600 dark:text-[#8AB4F8] hover:text-blue-800 dark:hover:text-[#D4AD72]"
             >
               {replyTo === comment.id ? '取消回复' : '回复'}
             </button>
@@ -186,20 +186,20 @@ export default function CommentSection({ noteId, isPublic = false }: CommentSect
         {replyTo === comment.id && (
           <form 
             onSubmit={(e) => handleSubmitReply(e, comment.id)}
-            className="mt-3 p-3 bg-white rounded border"
+            className="mt-3 p-3 bg-white dark:bg-[#1A202C] rounded border border-gray-200 dark:border-white/10"
           >
             <textarea
               value={replyContent}
               onChange={(e) => setReplyContent(e.target.value)}
               placeholder={`回复 ${comment.authorName}...`}
-              className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+              className="w-full border border-gray-300 dark:border-white/15 bg-white dark:bg-[#151921] text-gray-900 dark:text-[#F2EDE4] dark:placeholder:text-slate-400 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
               rows={3}
             />
             <div className="mt-2 flex justify-end space-x-2">
               <button
                 type="button"
                 onClick={() => setReplyTo(null)}
-                className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50"
+                className="px-3 py-1 text-sm border border-gray-300 dark:border-white/15 dark:text-slate-200 rounded hover:bg-gray-50 dark:hover:bg-white/10"
               >
                 取消
               </button>
@@ -221,7 +221,7 @@ export default function CommentSection({ noteId, isPublic = false }: CommentSect
 
   if (loading) {
     return (
-      <div className="mt-8 p-4 bg-gray-50 rounded-lg">
+      <div className="mt-8 p-4 bg-gray-50 dark:bg-[#151921] rounded-lg">
         <div className="text-center text-gray-500">加载评论中...</div>
       </div>
     );
@@ -229,7 +229,7 @@ export default function CommentSection({ noteId, isPublic = false }: CommentSect
 
   return (
     <div className="mt-8">
-      <h3 className="text-lg font-medium mb-4">
+      <h3 className="text-lg font-medium text-gray-900 dark:text-[#F2EDE4] mb-4">
         评论 ({comments.length})
       </h3>
 
@@ -240,7 +240,7 @@ export default function CommentSection({ noteId, isPublic = false }: CommentSect
             value={newComment}
             onChange={(e) => setNewComment(e.target.value)}
             placeholder="写下你的评论..."
-            className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full border border-gray-300 dark:border-white/15 bg-white dark:bg-[#151921] text-gray-900 dark:text-[#F2EDE4] dark:placeholder:text-slate-400 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
             rows={4}
           />
           <div className="mt-3 flex justify-end">

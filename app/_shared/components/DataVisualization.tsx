@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import ReactECharts from 'echarts-for-react';
 import { Card, Row, Col, Button } from 'antd';
 import { FullscreenOutlined, FullscreenExitOutlined } from '@ant-design/icons';
@@ -12,6 +12,16 @@ interface DataVisualizationProps {
 
 export default function DataVisualization({ stats, isGuest }: DataVisualizationProps) {
   const [fullscreen, setFullscreen] = useState(false);
+  const [isDark, setIsDark] = useState(false);
+
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    const sync = () => setIsDark(document.body.classList.contains('dark'));
+    sync();
+    const obs = new MutationObserver(sync);
+    obs.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+    return () => obs.disconnect();
+  }, []);
 
   // 生成周数据 - 优先使用真实的每日数据
   const generateWeeklyData = () => {
@@ -111,7 +121,7 @@ export default function DataVisualization({ stats, isGuest }: DataVisualizationP
       text: '学习成长趋势（近60天）',
       left: 'center',
       top: 10,
-      textStyle: { fontSize: 16, fontWeight: 'bold' }
+      textStyle: { fontSize: 16, fontWeight: 'bold', color: isDark ? '#F2EDE4' : '#0F1D33' }
     },
     tooltip: {
       trigger: 'axis',
@@ -127,7 +137,8 @@ export default function DataVisualization({ stats, isGuest }: DataVisualizationP
     },
     legend: {
       data: ['学习时长', '笔记数量'],
-      top: 40
+      top: 40,
+      textStyle: { color: isDark ? '#C5CBD6' : '#475569' }
     },
     grid: {
       left: '3%',
@@ -139,7 +150,9 @@ export default function DataVisualization({ stats, isGuest }: DataVisualizationP
     xAxis: {
       type: 'category',
       boundaryGap: false,
-      data: weeklyData.map((d: any) => d.date)
+      data: weeklyData.map((d: any) => d.date),
+      axisLabel: { color: isDark ? '#9BA7B8' : '#64748B' },
+      axisLine: { lineStyle: { color: isDark ? 'rgba(255,255,255,0.16)' : '#cbd5e1' } }
     },
     yAxis: [
       {
@@ -147,14 +160,17 @@ export default function DataVisualization({ stats, isGuest }: DataVisualizationP
         name: '分钟',
         min: 0,
         minInterval: 10,
+        nameTextStyle: { color: isDark ? '#9BA7B8' : '#64748B' },
         splitLine: {
           show: true,
           lineStyle: {
-            type: 'dashed'
+            type: 'dashed',
+            color: isDark ? 'rgba(255,255,255,0.10)' : '#e2e8f0'
           }
         },
         axisLabel: {
-          formatter: '{value}'
+          formatter: '{value}',
+          color: isDark ? '#9BA7B8' : '#64748B'
         }
       },
       {
@@ -162,6 +178,8 @@ export default function DataVisualization({ stats, isGuest }: DataVisualizationP
         name: '篇',
         minInterval: 1,
         min: 0,
+        nameTextStyle: { color: isDark ? '#9BA7B8' : '#64748B' },
+        axisLabel: { color: isDark ? '#9BA7B8' : '#64748B' },
         splitLine: {
           show: false
         }
@@ -204,14 +222,19 @@ export default function DataVisualization({ stats, isGuest }: DataVisualizationP
     title: {
       text: '技能雷达图',
       left: 'center',
-      textStyle: { fontSize: 16 }
+      textStyle: { fontSize: 16, color: isDark ? '#F2EDE4' : '#0F1D33' }
     },
     tooltip: {},
     radar: {
       indicator: skillData.map((s: any) => ({ name: s.skill, max: 100 })),
+      axisName: { color: isDark ? '#C5CBD6' : '#475569' },
+      splitLine: { lineStyle: { color: isDark ? 'rgba(255,255,255,0.12)' : '#e2e8f0' } },
+      axisLine: { lineStyle: { color: isDark ? 'rgba(255,255,255,0.14)' : '#cbd5e1' } },
       splitArea: {
         areaStyle: {
-          color: ['rgba(114, 172, 209, 0.2)', 'rgba(114, 172, 209, 0.4)']
+          color: isDark
+            ? ['rgba(255, 255, 255, 0.02)', 'rgba(255, 255, 255, 0.05)']
+            : ['rgba(114, 172, 209, 0.2)', 'rgba(114, 172, 209, 0.4)']
         }
       }
     },
@@ -236,7 +259,7 @@ export default function DataVisualization({ stats, isGuest }: DataVisualizationP
     title: {
       text: '笔记分类分布',
       left: 'center',
-      textStyle: { fontSize: 16 }
+      textStyle: { fontSize: 16, color: isDark ? '#F2EDE4' : '#0F1D33' }
     },
     tooltip: {
       trigger: 'item',
@@ -245,7 +268,8 @@ export default function DataVisualization({ stats, isGuest }: DataVisualizationP
     legend: {
       orient: 'vertical',
       right: 10,
-      top: 'center'
+      top: 'center',
+      textStyle: { color: isDark ? '#C5CBD6' : '#475569' }
     },
     series: [
       {
@@ -255,7 +279,7 @@ export default function DataVisualization({ stats, isGuest }: DataVisualizationP
         avoidLabelOverlap: false,
         itemStyle: {
           borderRadius: 10,
-          borderColor: '#fff',
+          borderColor: isDark ? '#151921' : '#ffffff',
           borderWidth: 2
         },
         label: { show: false, position: 'center' },
