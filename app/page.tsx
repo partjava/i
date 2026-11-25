@@ -1024,42 +1024,6 @@ export default function Home() {
       {/* 第二屏：三大核心学习模块（带动态演示与点击直达） */}
       <CoreEnginesShowcase challengesCount={platformStats.challenges} onHoverEngine={setHoveredFocus} />
 
-      {/* 个人成就进度条 - 仅在已解锁成就 > 0 时显示 */}
-      {achievementProgress && achievementProgress.earned > 0 && (
-        <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 mb-2.5">
-          <div className="bg-surface-raised rounded-2xl shadow-sm border border-line-subtle p-3.5">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2.5">
-                <span className="w-8 h-8 rounded-lg bg-brand-soft text-brand-primary flex items-center justify-center">
-                  <Trophy className="w-4 h-4" />
-                </span>
-                <span className="font-bold text-base text-content-primary">已解锁学习成就</span>
-              </div>
-              <span className="text-sm font-bold font-code tabular-nums text-brand-primary bg-brand-soft px-3 py-1 rounded-full">
-                {achievementProgress.earned} / {achievementProgress.total}
-              </span>
-            </div>
-            <div className="w-full h-3.5 bg-surface-muted rounded-full overflow-hidden border border-line-subtle">
-              <div
-                className="h-full rounded-full transition-all duration-1000 ease-out"
-                style={{
-                  width: `${Math.min(100, (achievementProgress.earned / Math.max(1, achievementProgress.total)) * 100)}%`,
-                  background: 'linear-gradient(90deg, #1B3B6F, #D4AD72)',
-                }}
-              />
-            </div>
-            <div className="flex justify-between items-center mt-2">
-              <span className="text-xs font-code font-semibold text-brand-primary">
-                {Math.round((achievementProgress.earned / Math.max(1, achievementProgress.total)) * 100)}%
-              </span>
-              <span className="text-xs text-content-muted">
-                继续学习与刷题，解锁更多里程碑成就
-              </span>
-            </div>
-          </div>
-        </div>
-      )}
-
       <div id="developer-arsenal" className={`${arsenalExpanded ? 'py-3 md:py-4' : 'pt-1 pb-1.5'} px-3 md:px-6`}>
         {/* 默认折叠的单行工具矩阵直达条（点击右侧按钮完整展开全部桌面文件夹） */}
         <div className={`max-w-[1440px] mx-auto px-1 sm:px-0 lg:px-2 ${arsenalExpanded ? 'mb-4' : 'mb-0'}`}>
