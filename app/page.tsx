@@ -17,9 +17,11 @@ import {
 import { VscVscode } from 'react-icons/vsc';
 import Link from 'next/link';
 import { useState, useMemo, useEffect, useRef } from 'react';
-import { Trophy, ArrowRight, Code2, ChevronDown, ChevronUp, Users, FileText, Clock } from 'lucide-react';
+import { Trophy, ArrowRight, Code2, ChevronDown, ChevronUp, Users, FileText, Clock, Box, BookOpen, Wrench, Gamepad2 } from 'lucide-react';
 import { useAuth } from '@shared/hooks/useAuth';
-import SanctuaryHero from './_shared/components/sanctuary/SanctuaryHero';
+import SanctuaryHero, { SanctuaryFocusTarget } from './_shared/components/sanctuary/SanctuaryHero';
+import { ALGORITHM_REGISTRY } from './_shared/components/visualizer/registry';
+import { navigationItems } from './_shared/data/navigation';
 import CoreEnginesShowcase from './_shared/components/CoreEnginesShowcase';
 import ToolCard from './_shared/components/ToolCard';
 import ToolGroupPreview from './_shared/components/ToolGroupPreview';
@@ -729,6 +731,11 @@ export default function Home() {
     () => groupedSoftware.reduce((acc, g) => acc + g.items.length, 0),
     [],
   );
+  const totalLessonCount = useMemo(
+    () => Object.values(navigationItems).flat().reduce((acc, item) => acc + (item.subitems?.length || 1), 0),
+    [],
+  );
+  const [hoveredFocus, setHoveredFocus] = useState<SanctuaryFocusTarget>(null);
 
   const arsenalShortcuts = useMemo(() => {
     const targets: Array<{ name: string; dotColor: string; fallbackUrl: string }> = [
@@ -784,64 +791,120 @@ export default function Home() {
             <div className="pt-0.5 flex flex-wrap items-center gap-3">
               <Link
                 href="/challenges"
-                className="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-brand-primary hover:bg-brand-hover text-content-inverse text-sm font-semibold shadow-sm transition-all"
+                onMouseEnter={() => setHoveredFocus('lamp')}
+                onMouseLeave={() => setHoveredFocus(null)}
+                className="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-brand-primary hover:bg-brand-hover text-content-inverse text-sm font-semibold shadow-sm transition-[transform,background-color,box-shadow] duration-150 ease-[cubic-bezier(0.23,1,0.32,1)] active:scale-[0.97]"
               >
                 <span>开始闯关练习</span>
                 <ArrowRight className="w-4 h-4" />
               </Link>
               <Link
                 href="/code/editor"
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-surface-raised hover:bg-surface-muted text-content-primary border border-line-strong text-sm font-medium shadow-sm transition-all"
+                onMouseEnter={() => setHoveredFocus('monitor')}
+                onMouseLeave={() => setHoveredFocus(null)}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-surface-raised hover:bg-surface-muted text-content-primary border border-line-strong text-sm font-medium shadow-sm transition-[transform,background-color,border-color] duration-150 ease-[cubic-bezier(0.23,1,0.32,1)] active:scale-[0.97]"
               >
                 <Code2 className="w-4 h-4 text-brand-primary" />
                 <span>进入代码实验室</span>
               </Link>
             </div>
 
-            {/* 平台实时核心数据条（紧凑横排 · 可点击直达） */}
+            {/* 平台核心数据条：有实时统计时显示用户/笔记/时长/挑战，离线时平滑展示真实静态课程资产（绝不空留 ---） */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
-              <Link
-                href="/profile"
-                className="group rounded-xl bg-surface-raised border border-line-subtle px-2.5 py-1.5 hover:-translate-y-0.5 hover:border-brand-primary/40 hover:shadow-sm transition-all flex items-center justify-between gap-1.5"
-              >
-                <div className="flex items-center gap-1 text-[11px] text-content-muted min-w-0">
-                  <Users className="w-3 h-3 text-brand-primary shrink-0" />
-                  <span className="truncate">用户</span>
-                </div>
-                <span className="font-code text-xs font-bold text-content-primary tabular-nums group-hover:text-brand-primary transition-colors shrink-0">
-                  {platformStats.users !== null ? `${platformStats.users}+` : '—'}
-                </span>
-              </Link>
+              {platformStats.users !== null ? (
+                <>
+                  <Link
+                    href="/profile"
+                    className="group rounded-xl bg-surface-raised border border-line-subtle px-2.5 py-1.5 hover:-translate-y-0.5 hover:border-brand-primary/40 hover:shadow-sm transition-[transform,border-color,box-shadow] duration-150 active:scale-[0.97] flex items-center justify-between gap-1.5"
+                  >
+                    <div className="flex items-center gap-1 text-[11px] text-content-muted min-w-0">
+                      <Users className="w-3 h-3 text-brand-primary shrink-0" />
+                      <span className="truncate">用户</span>
+                    </div>
+                    <span className="font-code text-xs font-bold text-content-primary tabular-nums group-hover:text-brand-primary transition-colors shrink-0">
+                      {`${platformStats.users}+`}
+                    </span>
+                  </Link>
 
-              <Link
-                href="/notes"
-                className="group rounded-xl bg-surface-raised border border-line-subtle px-2.5 py-1.5 hover:-translate-y-0.5 hover:border-brand-primary/40 hover:shadow-sm transition-all flex items-center justify-between gap-1.5"
-              >
-                <div className="flex items-center gap-1 text-[11px] text-content-muted min-w-0">
-                  <FileText className="w-3 h-3 text-emerald-600 shrink-0" />
-                  <span className="truncate">笔记</span>
-                </div>
-                <span className="font-code text-xs font-bold text-content-primary tabular-nums group-hover:text-brand-primary transition-colors shrink-0">
-                  {platformStats.notes !== null ? `${platformStats.notes}+` : '—'}
-                </span>
-              </Link>
+                  <Link
+                    href="/notes"
+                    className="group rounded-xl bg-surface-raised border border-line-subtle px-2.5 py-1.5 hover:-translate-y-0.5 hover:border-brand-primary/40 hover:shadow-sm transition-[transform,border-color,box-shadow] duration-150 active:scale-[0.97] flex items-center justify-between gap-1.5"
+                  >
+                    <div className="flex items-center gap-1 text-[11px] text-content-muted min-w-0">
+                      <FileText className="w-3 h-3 text-emerald-600 shrink-0" />
+                      <span className="truncate">笔记</span>
+                    </div>
+                    <span className="font-code text-xs font-bold text-content-primary tabular-nums group-hover:text-brand-primary transition-colors shrink-0">
+                      {`${platformStats.notes ?? 0}+`}
+                    </span>
+                  </Link>
 
-              <Link
-                href="/profile"
-                className="group rounded-xl bg-surface-raised border border-line-subtle px-2.5 py-1.5 hover:-translate-y-0.5 hover:border-brand-primary/40 hover:shadow-sm transition-all flex items-center justify-between gap-1.5"
-              >
-                <div className="flex items-center gap-1 text-[11px] text-content-muted min-w-0">
-                  <Clock className="w-3 h-3 text-amber-600 shrink-0" />
-                  <span className="truncate">时长</span>
-                </div>
-                <span className="font-code text-xs font-bold text-content-primary tabular-nums group-hover:text-brand-primary transition-colors shrink-0">
-                  {platformStats.studyHours !== null ? `${platformStats.studyHours}h` : '—'}
-                </span>
-              </Link>
+                  <Link
+                    href="/profile"
+                    className="group rounded-xl bg-surface-raised border border-line-subtle px-2.5 py-1.5 hover:-translate-y-0.5 hover:border-brand-primary/40 hover:shadow-sm transition-[transform,border-color,box-shadow] duration-150 active:scale-[0.97] flex items-center justify-between gap-1.5"
+                  >
+                    <div className="flex items-center gap-1 text-[11px] text-content-muted min-w-0">
+                      <Clock className="w-3 h-3 text-amber-600 shrink-0" />
+                      <span className="truncate">时长</span>
+                    </div>
+                    <span className="font-code text-xs font-bold text-content-primary tabular-nums group-hover:text-brand-primary transition-colors shrink-0">
+                      {`${platformStats.studyHours ?? 0}h`}
+                    </span>
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <Link
+                    href="/code/editor?tab=visualizer"
+                    onMouseEnter={() => setHoveredFocus('monitor')}
+                    onMouseLeave={() => setHoveredFocus(null)}
+                    className="group rounded-xl bg-surface-raised border border-line-subtle px-2.5 py-1.5 hover:-translate-y-0.5 hover:border-brand-primary/40 hover:shadow-sm transition-[transform,border-color,box-shadow] duration-150 active:scale-[0.97] flex items-center justify-between gap-1.5"
+                  >
+                    <div className="flex items-center gap-1 text-[11px] text-content-muted min-w-0">
+                      <Box className="w-3 h-3 text-brand-primary shrink-0" />
+                      <span className="truncate">算法</span>
+                    </div>
+                    <span className="font-code text-xs font-bold text-content-primary tabular-nums group-hover:text-brand-primary transition-colors shrink-0">
+                      {ALGORITHM_REGISTRY.length}
+                    </span>
+                  </Link>
+
+                  <Link
+                    href="/study"
+                    onMouseEnter={() => setHoveredFocus('book')}
+                    onMouseLeave={() => setHoveredFocus(null)}
+                    className="group rounded-xl bg-surface-raised border border-line-subtle px-2.5 py-1.5 hover:-translate-y-0.5 hover:border-brand-primary/40 hover:shadow-sm transition-[transform,border-color,box-shadow] duration-150 active:scale-[0.97] flex items-center justify-between gap-1.5"
+                  >
+                    <div className="flex items-center gap-1 text-[11px] text-content-muted min-w-0">
+                      <BookOpen className="w-3 h-3 text-emerald-600 shrink-0" />
+                      <span className="truncate">章节</span>
+                    </div>
+                    <span className="font-code text-xs font-bold text-content-primary tabular-nums group-hover:text-brand-primary transition-colors shrink-0">
+                      {totalLessonCount}
+                    </span>
+                  </Link>
+
+                  <button
+                    type="button"
+                    onClick={() => setArsenalExpanded(true)}
+                    className="group rounded-xl bg-surface-raised border border-line-subtle px-2.5 py-1.5 hover:-translate-y-0.5 hover:border-brand-primary/40 hover:shadow-sm transition-[transform,border-color,box-shadow] duration-150 active:scale-[0.97] flex items-center justify-between gap-1.5 text-left"
+                  >
+                    <div className="flex items-center gap-1 text-[11px] text-content-muted min-w-0">
+                      <Wrench className="w-3 h-3 text-[#B88A44] shrink-0" />
+                      <span className="truncate">工具</span>
+                    </div>
+                    <span className="font-code text-xs font-bold text-content-primary tabular-nums group-hover:text-brand-primary transition-colors shrink-0">
+                      {totalToolCount}
+                    </span>
+                  </button>
+                </>
+              )}
 
               <Link
                 href="/challenges"
-                className="group rounded-xl bg-surface-raised border border-line-subtle px-2.5 py-1.5 hover:-translate-y-0.5 hover:border-brand-primary/40 hover:shadow-sm transition-all flex items-center justify-between gap-1.5"
+                onMouseEnter={() => setHoveredFocus('lamp')}
+                onMouseLeave={() => setHoveredFocus(null)}
+                className="group rounded-xl bg-surface-raised border border-line-subtle px-2.5 py-1.5 hover:-translate-y-0.5 hover:border-brand-primary/40 hover:shadow-sm transition-[transform,border-color,box-shadow] duration-150 active:scale-[0.97] flex items-center justify-between gap-1.5"
               >
                 <div className="flex items-center gap-1 text-[11px] text-content-muted min-w-0">
                   <Trophy className="w-3 h-3 text-[#D4AD72] shrink-0" />
@@ -855,13 +918,13 @@ export default function Home() {
           </div>
 
           <div className="lg:col-span-7">
-            <SanctuaryHero embedded />
+            <SanctuaryHero embedded focusTarget={hoveredFocus} />
           </div>
         </div>
       </section>
 
       {/* 第二屏：三大核心学习模块（带动态演示与点击直达） */}
-      <CoreEnginesShowcase challengesCount={platformStats.challenges} />
+      <CoreEnginesShowcase challengesCount={platformStats.challenges} onHoverEngine={setHoveredFocus} />
 
       {/* 个人成就进度条 - 仅在已解锁成就 > 0 时显示 */}
       {achievementProgress && achievementProgress.earned > 0 && (
@@ -922,7 +985,7 @@ export default function Home() {
                   href={shortcut.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 rounded-xl border border-line-subtle bg-surface-muted hover:bg-brand-soft px-2.5 py-1 text-xs font-medium text-content-secondary hover:text-content-primary transition-colors"
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-line-subtle bg-surface-muted hover:bg-brand-soft px-2.5 py-1 text-xs font-medium text-content-secondary hover:text-content-primary transition-[transform,background-color,color] duration-150 active:scale-[0.96]"
                 >
                   <span
                     className="w-1.5 h-1.5 rounded-full shrink-0"
@@ -932,12 +995,21 @@ export default function Home() {
                 </a>
               ))}
 
+              <Link
+                href="/tools/game"
+                className="inline-flex items-center gap-1.5 rounded-xl border border-[#D4AD72]/35 bg-[#D4AD72]/10 hover:bg-[#D4AD72]/20 px-2.5 py-1 text-xs font-medium text-content-primary transition-[transform,background-color] duration-150 active:scale-[0.96]"
+                title="进入极客解压游戏中心（20 款原生编程小游戏）"
+              >
+                <Gamepad2 className="w-3.5 h-3.5 text-[#D4AD72] shrink-0" />
+                <span>极客解压室</span>
+              </Link>
+
               <button
                 type="button"
                 data-arsenal-toggle
                 onClick={() => setArsenalExpanded((v) => !v)}
                 aria-expanded={arsenalExpanded}
-                className="inline-flex items-center gap-1 ml-1 px-2 py-1 rounded-lg text-xs sm:text-sm font-semibold text-brand-primary hover:text-brand-hover hover:bg-brand-soft transition-colors cursor-pointer"
+                className="inline-flex items-center gap-1 ml-1 px-2 py-1 rounded-lg text-xs sm:text-sm font-semibold text-brand-primary hover:text-brand-hover hover:bg-brand-soft transition-[transform,color,background-color] duration-150 active:scale-[0.96] cursor-pointer"
               >
                 <span>{arsenalExpanded ? '收起工具矩阵' : '展开全部文件夹'}</span>
                 {arsenalExpanded ? (

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import BrandLogo from '../../_shared/components/BrandLogo';
 import SiteFooter from '../../_shared/components/SiteFooter';
@@ -35,6 +35,24 @@ export default function CodeEditorPage() {
   const [injectedCode, setInjectedCode] = useState<string | undefined>(undefined);
   const [injectedLang, setInjectedLang] = useState<string>('cpp');
   const [injectedVersion, setInjectedVersion] = useState<number>(0);
+
+  // 支持通过 ?tab=visualizer&algo=... 深链接直达指定 3D 算法演示
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    const tabParam = params.get('tab');
+    const algoParam = params.get('algo');
+    if (tabParam === 'visualizer' || algoParam) {
+      setActiveTab('visualizer');
+    }
+    if (algoParam) {
+      const matched = ALGORITHM_REGISTRY.find((a) => a.id === algoParam);
+      if (matched) {
+        setSelectedAlgorithm(matched.id);
+        setActiveCategory('全部');
+      }
+    }
+  }, []);
 
   const currentAlgorithm = getAlgorithmMeta(selectedAlgorithm);
   const filteredAlgorithms =

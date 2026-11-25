@@ -444,10 +444,24 @@
 
     let isViewportVisible = true;
     let lastIdeTextureRefresh = -1e6;
+    let externalFocusTarget = null;
     function animate(nowMs) {
       requestAnimationFrame(animate);
       if (!isViewportVisible) return;
       const tSec = nowMs * 0.001;
+
+      if (externalFocusTarget && !hoveredType) {
+        if (externalFocusTarget === 'monitor') {
+          targetMouseX = 0.26;
+          targetMouseY = 0.10;
+        } else if (externalFocusTarget === 'book') {
+          targetMouseX = -0.18;
+          targetMouseY = -0.14;
+        } else if (externalFocusTarget === 'lamp') {
+          targetMouseX = -0.34;
+          targetMouseY = 0.16;
+        }
+      }
 
       // 1. 细腻平滑视差相机更新（体现三分之二侧向空间纵深）
       smoothMouseX += (targetMouseX - smoothMouseX) * 0.045;
@@ -465,7 +479,7 @@
       }
 
       // 2. 更新 Studio Display 屏幕代码与悬停微光
-      const monHoverTarget = hoveredType === 'MONITOR' ? 1.0 : 0.0;
+      const monHoverTarget = (hoveredType === 'MONITOR' || externalFocusTarget === 'monitor') ? 1.0 : 0.0;
       screenState.hoverBorder += (monHoverTarget - screenState.hoverBorder) * 0.12;
       // 高清 2K 代码纹理按约 12 FPS 更新，避免每帧重传大纹理带来 GPU 带宽压力。
       if (tSec - lastIdeTextureRefresh > 1 / 12) {
@@ -474,7 +488,7 @@
       }
 
       // 3. 书页悬停微卷反馈
-      const rHoverTarget = hoveredType === 'BOOK_RIGHT' ? 1.0 : 0.0;
+      const rHoverTarget = (hoveredType === 'BOOK_RIGHT' || externalFocusTarget === 'book') ? 1.0 : 0.0;
       const lHoverTarget = hoveredType === 'BOOK_LEFT' ? 1.0 : 0.0;
       rightCornerHover += (rHoverTarget - rightCornerHover) * 0.14;
       leftCornerHover += (lHoverTarget - leftCornerHover) * 0.14;
@@ -549,10 +563,17 @@
       renderer.render(scene, camera);
     }
 
-    // 视口可见性控制与父窗口向下滚动联动
+    // 视口可见性控制、首页悬停联动与父窗口向下滚动联动
     window.addEventListener('message', (event) => {
-      if (event.data && event.data.type === 'SANCTUARY_VISIBILITY') {
+      if (!event.data || typeof event.data !== 'object') return;
+      if (event.data.type === 'SANCTUARY_VISIBILITY') {
         isViewportVisible = Boolean(event.data.visible);
+      } else if (event.data.type === 'SANCTUARY_HOVER_FOCUS') {
+        externalFocusTarget = event.data.target || null;
+        if (!externalFocusTarget && !hoveredType) {
+          targetMouseX = 0;
+          targetMouseY = 0;
+        }
       }
     });
 

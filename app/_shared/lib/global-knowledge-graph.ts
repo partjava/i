@@ -47,11 +47,11 @@ export const DOMAIN_META: Record<
   { color: string; glow: string; badgeBg: string; icon: string; desc: string }
 > = {
   核心枢纽: {
-    color: '#6366f1',
-    glow: 'rgba(99, 102, 241, 0.55)',
-    badgeBg: 'bg-indigo-50 text-indigo-700 border-indigo-200',
+    color: '#1B3B6F',
+    glow: 'rgba(212, 173, 114, 0.55)',
+    badgeBg: 'bg-brand-soft text-brand-primary border-line-subtle',
     icon: '🌟',
-    desc: 'PartJava 全栈计算机与人工智能知识星系核心枢纽',
+    desc: '禾硙 Unolgy 全栈计算机与人工智能知识星系核心枢纽',
   },
   计算机: {
     color: '#0ea5e9',
@@ -248,10 +248,10 @@ export function buildGlobalKnowledgeGraph(options?: {
   const nodeIds = new Set<string>();
 
   // 1. 中心总枢纽节点
-  const hubId = 'hub_partjava';
+  const hubId = 'hub_unolgy';
   nodes.push({
     id: hubId,
-    name: 'PartJava 全栈知识星系',
+    name: '禾硙 Unolgy 全栈知识星系',
     level: 'hub',
     domain: '核心枢纽',
     href: '/study',
@@ -285,7 +285,7 @@ export function buildGlobalKnowledgeGraph(options?: {
       href: '/study',
       summary: dMeta.desc,
       keyPoints: subjects.map((s) => `${s.name}（${s.subitems?.length || 0} 个核心章节）`),
-      prerequisites: ['PartJava 全栈知识星系'],
+      prerequisites: ['禾硙 Unolgy 全栈知识星系'],
       nextSteps: subjects.slice(0, 5).map((s) => s.name),
       difficulty: '进阶',
       symbolSize: 40,

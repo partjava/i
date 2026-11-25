@@ -39,7 +39,7 @@ export default function DashboardTab({
     ? ['#D4AD72', '#5B8DEF', '#34D399', '#C68B59', '#94A3B8', '#E2B478']
     : ['#1B3B6F', '#2F855A', '#C68B59', '#4A6FA5', '#64748B', '#D4AD72'];
 
-  // ECharts Line Option
+  const hasTrendData = Array.isArray(stats?.weeklyTrend) && stats.weeklyTrend.length > 0;
   const lineOption = {
     backgroundColor: 'transparent',
     tooltip: {
@@ -47,20 +47,21 @@ export default function DashboardTab({
       axisPointer: { type: 'cross', label: { backgroundColor: isDark ? '#1C222D' : '#1B3B6F' } }
     },
     legend: {
+      top: 0,
       data: ['活跃学员人数', '代码提交评测次数'],
       textStyle: { color: axisColor }
     },
-    grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
+    grid: { top: 36, left: '3%', right: '4%', bottom: '4%', containLabel: true },
     xAxis: [
       {
         type: 'category',
         boundaryGap: false,
-        data: (stats?.weeklyTrend || []).length ? stats.weeklyTrend.map((t: any) => t.day) : ['周一', '周二', '周三', '周四', '周五', '周六', '今日'],
+        data: hasTrendData ? stats.weeklyTrend.map((t: any) => t.day) : ['周一', '周二', '周三', '周四', '周五', '周六', '今日'],
         axisLabel: { color: axisColor }
       }
     ],
     yAxis: [
-      { type: 'value', axisLabel: { color: axisColor }, splitLine: { lineStyle: { color: gridColor } } }
+      { type: 'value', minInterval: 1, axisLabel: { color: axisColor }, splitLine: { lineStyle: { color: gridColor } } }
     ],
     series: [
       {
@@ -75,7 +76,7 @@ export default function DashboardTab({
         },
         itemStyle: { color: primaryChart },
         lineStyle: { width: 2.5, color: primaryChart },
-        data: (stats?.weeklyTrend || []).length ? stats.weeklyTrend.map((t: any) => t.activeUsers) : [120, 132, 101, 134, 190, 230, 210]
+        data: hasTrendData ? stats.weeklyTrend.map((t: any) => Number(t.activeUsers || 0)) : [0, 0, 0, 0, 0, 0, 0]
       },
       {
         name: '代码提交评测次数',
@@ -89,7 +90,7 @@ export default function DashboardTab({
         },
         itemStyle: { color: secondaryChart },
         lineStyle: { width: 2.5, color: secondaryChart },
-        data: (stats?.weeklyTrend || []).length ? stats.weeklyTrend.map((t: any) => t.submissions) : [220, 182, 191, 234, 290, 330, 310]
+        data: hasTrendData ? stats.weeklyTrend.map((t: any) => Number(t.submissions || 0)) : [0, 0, 0, 0, 0, 0, 0]
       }
     ]
   };
@@ -172,7 +173,20 @@ export default function DashboardTab({
       {/* 数据图表展示 */}
       <Row gutter={[16, 16]}>
         <Col xs={24} lg={16}>
-          <Card title={<span className="text-content-primary font-bold flex items-center gap-2"><Activity size={16} className="text-brand-primary" /> 学员活跃度与代码评测频次趋势</span>} bordered={false} className="bg-surface-raised border border-line-subtle shadow-sm rounded-2xl">
+          <Card
+            title={
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-content-primary font-bold flex items-center gap-2"><Activity size={16} className="text-brand-primary" /> 学员活跃度与代码评测频次趋势</span>
+                {!hasTrendData && (
+                  <span className="text-[11px] font-normal px-2 py-0.5 rounded-full bg-surface-muted text-content-muted border border-line-subtle">
+                    等待实时埋点上报
+                  </span>
+                )}
+              </div>
+            }
+            bordered={false}
+            className="bg-surface-raised border border-line-subtle shadow-sm rounded-2xl"
+          >
             <ReactECharts option={lineOption} style={{ height: '270px' }} />
           </Card>
         </Col>

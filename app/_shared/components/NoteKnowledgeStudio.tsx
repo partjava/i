@@ -493,9 +493,9 @@ export default function NoteKnowledgeStudio({
               <button
                 type="button"
                 onClick={() => setGraphLayout('tree')}
-                className={`px-2.5 py-1 rounded-lg transition-all ${
+                className={`px-2.5 py-1 rounded-lg transition-colors duration-150 ${
                   graphLayout === 'tree'
-                    ? 'bg-white text-indigo-600 shadow-sm font-semibold'
+                    ? 'bg-white text-[#1B3B6F] shadow-sm font-semibold'
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
@@ -508,7 +508,7 @@ export default function NoteKnowledgeStudio({
             type="button"
             onClick={handleAiReconstruct}
             disabled={aiLoading}
-            className="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-gradient-to-r from-indigo-600 to-violet-600 text-white hover:opacity-95 disabled:opacity-60 transition-all flex items-center gap-1.5 shadow-sm"
+            className="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-brand-primary hover:bg-brand-hover text-content-inverse disabled:opacity-60 transition-[transform,background-color] duration-150 active:scale-[0.97] flex items-center gap-1.5 shadow-sm"
             title="调用 DeepSeek 大模型深度分析全文隐藏考点与跨章节关联"
           >
             {aiLoading ? (
@@ -667,7 +667,7 @@ export default function NoteKnowledgeStudio({
                       if (isFullscreen) setIsFullscreen(false);
                       onScrollToSection(currentCard.sectionHeading!);
                     }}
-                    className="text-indigo-600 hover:text-indigo-800 font-medium"
+                    className="text-brand-primary hover:text-brand-hover font-medium"
                   >
                     📍 定位原文出处
                   </button>
@@ -677,8 +677,9 @@ export default function NoteKnowledgeStudio({
 
             <div className="w-full h-2 bg-slate-200/80 rounded-full overflow-hidden mb-6">
               <div
-                className="h-full bg-gradient-to-r from-indigo-500 to-emerald-500 transition-all duration-300"
+                className="h-full transition-[width] duration-300 ease-[cubic-bezier(0.23,1,0.32,1)]"
                 style={{
+                  background: 'linear-gradient(90deg, #1B3B6F, #D4AD72)',
                   width: `${Math.round(
                     (masteredCount / Math.max(1, insights.flashcards.length)) * 100
                   )}%`,

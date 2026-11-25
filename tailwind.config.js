@@ -91,9 +91,11 @@ module.exports = {
         },
       },
       fontFamily: {
-        display: ['"Noto Serif SC"', '"Source Han Serif SC"', 'Georgia', 'serif'],
-        body:    ['"Noto Sans SC"', '"Source Han Sans SC"', 'system-ui', 'sans-serif'],
-        code:    ['"JetBrains Mono"', '"Fira Code"', '"Cascadia Code"', 'monospace'],
+        display: ['var(--font-display)', '"Noto Serif SC"', '"Source Han Serif SC"', 'Georgia', 'serif'],
+        sans:    ['var(--font-sans)', '"PingFang SC"', '"Hiragino Sans GB"', '"Microsoft YaHei"', 'system-ui', 'sans-serif'],
+        body:    ['var(--font-sans)', '"PingFang SC"', '"Hiragino Sans GB"', '"Microsoft YaHei"', 'system-ui', 'sans-serif'],
+        mono:    ['var(--font-code)', '"JetBrains Mono"', '"Cascadia Code"', 'monospace'],
+        code:    ['var(--font-code)', '"JetBrains Mono"', '"Fira Code"', '"Cascadia Code"', 'monospace'],
       },
       boxShadow: {
         'frost':       '0 4px 24px rgba(12, 31, 61, 0.08), 0 1px 4px rgba(12, 31, 61, 0.04)',

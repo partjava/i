@@ -462,10 +462,10 @@ export default function AlgorithmVisualizer({
                       key={lang}
                       type="button"
                       onClick={() => setCodeLang(lang)}
-                      className={`px-2.5 py-0.5 rounded-md text-[10.5px] font-mono font-bold uppercase transition-all ${
+                      className={`px-2.5 py-0.5 rounded-md text-[10.5px] font-mono font-bold uppercase transition-[transform,color,background-color] duration-150 active:scale-[0.96] ${
                         codeLang === lang
-                          ? 'bg-indigo-600 text-white shadow'
-                          : 'text-slate-400 hover:text-slate-200'
+                          ? 'bg-[#D4AD72] text-[#0E1116] shadow-sm'
+                          : 'text-slate-400 hover:text-[#F2EDE4]'
                       }`}
                     >
                       {lang === 'cpp' ? 'C++' : lang}
@@ -479,7 +479,7 @@ export default function AlgorithmVisualizer({
                     onClick={() =>
                       onOpenInEditor(codeTrace.runnableCode, codeLang)
                     }
-                    className="px-2.5 py-1 rounded-lg text-[10.5px] font-bold bg-gradient-to-r from-indigo-600 to-sky-500 text-white hover:brightness-110 transition-all shadow-sm"
+                    className="px-2.5 py-1 rounded-lg text-[10.5px] font-bold bg-[#D4AD72] hover:bg-[#E0BD86] text-[#0E1116] transition-[transform,background-color] duration-150 active:scale-[0.97] shadow-sm"
                     title="将当前选中语言的可运行算法代码载入极客代码工坊 IDE 编译运行"
                   >
                     🚀 载入 IDE 运行 ({codeLang === 'cpp' ? 'C++' : codeLang.toUpperCase()})
@@ -519,9 +519,9 @@ export default function AlgorithmVisualizer({
                   <div
                     key={lineNum}
                     data-code-line={lineNum}
-                    className={`relative flex items-start px-3 py-0.5 transition-all duration-300 border-l-2 ${
+                    className={`relative flex items-start px-3 py-0.5 transition-[background-color,border-color,color] duration-200 border-l-2 ${
                       isActive
-                        ? 'bg-gradient-to-r from-indigo-500/30 via-sky-500/18 to-transparent text-white font-semibold border-sky-400'
+                        ? 'bg-[#D4AD72]/15 text-[#F2EDE4] font-semibold border-[#D4AD72]'
                         : 'text-slate-300/90 hover:bg-white/[0.03] border-transparent'
                     }`}
                   >

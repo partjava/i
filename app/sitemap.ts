@@ -1,7 +1,7 @@
 import { MetadataRoute } from 'next';
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = 'https://www.partjava.com';
+  const baseUrl = 'https://www.unolgy.com';
   const routes = [
     '',
     '/challenges',

@@ -12,6 +12,7 @@ import { UserProvider } from '../providers/UserProvider';
 import PWAProvider from './PWAProvider';
 import DevTools from './DevTools';
 import AiChat from './AiChat';
+import CommandPalette from './CommandPalette';
 import FetchInterceptor from './FetchInterceptor';
 import { StudyContentPageProvider } from './StudyContentPageContext';
 
@@ -26,11 +27,11 @@ export default function RootLayoutClient({ children }: RootLayoutClientProps) {
   useEffect(() => {
     setMounted(true);
     
-    // 全局快捷键
+    // 全局快捷键：Ctrl+K / Cmd+K 零延迟唤起全栈命令面板
     const onKeyDown = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
-        window.dispatchEvent(new CustomEvent('global-search-focus'));
+        window.dispatchEvent(new CustomEvent('open-command-palette'));
       }
     };
     window.addEventListener('keydown', onKeyDown);
@@ -143,6 +144,7 @@ export default function RootLayoutClient({ children }: RootLayoutClientProps) {
                   <SidebarSpacer position="right" />
                 </div>
                 <AiChat />
+                <CommandPalette />
                 <BottomNavigation />
               </div>
             </MobileGestureHandler>

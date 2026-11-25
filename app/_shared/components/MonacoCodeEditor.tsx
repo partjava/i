@@ -98,7 +98,7 @@ const codeTemplates = {
   java: {
     'hello-world': `public class Main {
     public static void main(String[] args) {
-        System.out.println("Hello, PartJava Cloud Studio!");
+        System.out.println("Hello, Unolgy Cloud Studio!");
     }
 }`,
     'input-output': `import java.util.Scanner;
@@ -134,7 +134,7 @@ public class Main {
     }
     
     public void introduce() {
-        System.out.println("我是 " + name + "，今年 " + age + " 岁，正在 PartJava 实验室编程！");
+        System.out.println("我是 " + name + "，今年 " + age + " 岁，正在 禾硙 Unolgy 实验室编程！");
     }
 }
 
@@ -146,7 +146,7 @@ public class Main {
 }`,
   },
   python: {
-    'hello-world': `print("Hello, PartJava Cloud Studio!")`,
+    'hello-world': `print("Hello, Unolgy Cloud Studio!")`,
     'input-output': `name = input("请输入您的姓名: ")
 print(f"你好, {name}! 欢迎体验 Python 3 隔离沙箱。")`,
     'loop': `for i in range(1, 6):
@@ -189,7 +189,7 @@ print("快排后:", quicksort(data))`,
 using namespace std;
 
 int main() {
-    cout << "Hello, PartJava Cloud Studio (C++20)!" << endl;
+    cout << "Hello, Unolgy Cloud Studio (C++20)!" << endl;
     return 0;
 }`,
     'input-output': `#include <iostream>
@@ -231,7 +231,7 @@ int main() {
 }`,
   },
   javascript: {
-    'hello-world': `console.log("Hello, PartJava Cloud Studio (Node.js)!");`,
+    'hello-world': `console.log("Hello, Unolgy Cloud Studio (Node.js)!");`,
     'array': `const scores = [88, 92, 79, 95, 100];
 const total = scores.reduce((sum, s) => sum + s, 0);
 console.log("平均成绩:", (total / scores.length).toFixed(1));`,
@@ -258,7 +258,7 @@ console.log(\`欢迎 \${user.id}，权限角色: \${user.role}\`);`,
 import "fmt"
 
 func main() {
-    fmt.Println("Hello, PartJava Cloud Studio (Go 1.22)!")
+    fmt.Println("Hello, Unolgy Cloud Studio (Go 1.22)!")
 }`,
     'goroutine': `package main
 
@@ -282,20 +282,20 @@ func main() {
   },
   rust: {
     'hello-world': `fn main() {
-    println!("Hello, PartJava Cloud Studio (Rust 1.76)!");
+    println!("Hello, Unolgy Cloud Studio (Rust 1.76)!");
 }`,
   },
   c: {
     'hello-world': `#include <stdio.h>
 
 int main() {
-    printf("Hello, PartJava Cloud Studio (C11)!\\n");
+    printf("Hello, Unolgy Cloud Studio (C11)!\\n");
     return 0;
 }`,
   },
   php: {
     'hello-world': `<?php
-echo "Hello, PartJava Cloud Studio (PHP 8.3)!\\n";
+echo "Hello, Unolgy Cloud Studio (PHP 8.3)!\\n";
 ?>`,
   },
   csharp: {
@@ -303,7 +303,7 @@ echo "Hello, PartJava Cloud Studio (PHP 8.3)!\\n";
 
 class Program {
     static void Main() {
-        Console.WriteLine("Hello, PartJava Cloud Studio (.NET 8)!");
+        Console.WriteLine("Hello, Unolgy Cloud Studio (.NET 8)!");
     }
 }`,
   },
@@ -767,7 +767,7 @@ ${input ? `### 标准输入 (stdin)\n\`\`\`\n${input}\n\`\`\`\n` : ''}
 ${output ? `### 终端运行输出\n\`\`\`\n${output}\n\`\`\`\n` : ''}
 
 ---
-*归档于 PartJava 云端极客工坊 · ${new Date().toLocaleString()}*`;
+*归档于 禾硙 Unolgy 云端极客工坊 · ${new Date().toLocaleString()}*`;
 
       const response = await fetch('/api/notes', {
         method: 'POST',
@@ -777,7 +777,7 @@ ${output ? `### 终端运行输出\n\`\`\`\n${output}\n\`\`\`\n` : ''}
           title: `${language.toUpperCase()} 代码归档 - ${new Date().toLocaleDateString()}`,
           content: noteContent,
           category: 'programming',
-          tags: [language, 'code', 'partjava-studio'],
+          tags: [language, 'code', 'unolgy-studio'],
         }),
       });
 

@@ -223,7 +223,7 @@ export default function SettingModal({ open, onClose }: SettingModalProps) {
         title: 'iOS 安装指引',
         content: (
           <div>
-            <p>请按以下步骤将 PartJava 添加到主屏幕：</p>
+            <p>请按以下步骤将 禾硙 Unolgy 添加到主屏幕：</p>
             <ol className="list-decimal pl-5 space-y-2 mt-2">
               <li>点击浏览器底部的 <strong>分享</strong> 按钮（<span className="text-lg">⎋</span>）</li>
               <li>向下滑动找到 <strong>添加到主屏幕</strong></li>
@@ -573,7 +573,7 @@ export default function SettingModal({ open, onClose }: SettingModalProps) {
                   <div className="border-b border-[var(--settings-line)] pb-4">
                     <div className="font-semibold text-[var(--settings-text)] mb-1">安装渐进式应用 PWA</div>
                     <div className="text-xs text-[var(--settings-secondary)] mb-3">
-                      将 PartJava 水墨终端添加到主屏幕，获取与原生 APP 一致的离线沙箱探索体验。
+                      将 禾硙 Unolgy 交互实验室添加到主屏幕，获取与原生 APP 一致的离线沙箱探索体验。
                     </div>
                     <Button 
                       icon={<SettingOutlined />}

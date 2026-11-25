@@ -87,7 +87,8 @@ export default function GlobalSearch({
     const onGlobalKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
-        onFocusSearch();
+        setShowDropdown(false);
+        window.dispatchEvent(new CustomEvent('open-command-palette'));
       }
     };
     window.addEventListener('global-search-focus', onFocusSearch);

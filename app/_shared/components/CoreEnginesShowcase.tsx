@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import CountUp from 'react-countup';
@@ -8,12 +8,55 @@ import { useInView } from 'react-intersection-observer';
 import { Star, Box, Network, ArrowUpRight } from 'lucide-react';
 import { ALGORITHM_REGISTRY } from './visualizer/registry';
 import { navigationItems } from '../data/navigation';
+import type { SanctuaryFocusTarget } from './sanctuary/SanctuaryHero';
 
-const BINARY_STEPS = [
-  { arr: [2, 5, 9, 14, 21], left: 0, mid: 2, right: 4, label: 'target = 14 · 比较 arr[2]=9' },
-  { arr: [2, 5, 9, 14, 21], left: 3, mid: 3, right: 4, label: '收缩左界 · 命中 arr[3]=14 ✓' },
-  { arr: [2, 5, 9, 14, 21], left: 0, mid: 1, right: 2, label: 'target = 5 · 命中 arr[1]=5 ✓' },
-];
+const SAMPLE_ARRAY = [2, 5, 9, 14, 21];
+const AUTO_TARGETS = [14, 5, 21];
+
+interface BinaryStep {
+  arr: number[];
+  target: number;
+  left: number;
+  mid: number;
+  right: number;
+  found: boolean;
+  label: string;
+}
+
+function computeBinarySearchSteps(targetVal: number): BinaryStep[] {
+  const steps: BinaryStep[] = [];
+  let l = 0;
+  let r = SAMPLE_ARRAY.length - 1;
+  while (l <= r) {
+    const mid = Math.floor((l + r) / 2);
+    const val = SAMPLE_ARRAY[mid];
+    if (val === targetVal) {
+      steps.push({
+        arr: SAMPLE_ARRAY,
+        target: targetVal,
+        left: l,
+        mid,
+        right: r,
+        found: true,
+        label: `target=${targetVal} · 命中 arr[${mid}]=${val} ✓`,
+      });
+      break;
+    }
+    const hint = val < targetVal ? '右移 L=MID+1' : '左移 R=MID-1';
+    steps.push({
+      arr: SAMPLE_ARRAY,
+      target: targetVal,
+      left: l,
+      mid,
+      right: r,
+      found: false,
+      label: `target=${targetVal} · arr[${mid}]=${val} → ${hint}`,
+    });
+    if (val < targetVal) l = mid + 1;
+    else r = mid - 1;
+  }
+  return steps;
+}
 
 const CHALLENGE_STAGES = [
   { label: '01 基础', stageId: 1 },
@@ -30,21 +73,46 @@ const LESSON_COUNT = Object.values(navigationItems)
 
 export default function CoreEnginesShowcase({
   challengesCount = 215,
+  onHoverEngine,
 }: {
   challengesCount?: number;
+  onHoverEngine?: (target: SanctuaryFocusTarget) => void;
 } = {}) {
   const router = useRouter();
   const { ref, inView } = useInView({ triggerOnce: true, threshold: 0.15 });
+  const [selectedTarget, setSelectedTarget] = useState<number | null>(null);
+  const [autoIdx, setAutoIdx] = useState(0);
   const [stepIdx, setStepIdx] = useState(0);
 
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setStepIdx((prev) => (prev + 1) % BINARY_STEPS.length);
-    }, 2100);
-    return () => clearInterval(timer);
-  }, []);
+  const activeTarget = selectedTarget ?? AUTO_TARGETS[autoIdx % AUTO_TARGETS.length];
+  const steps = useMemo(() => computeBinarySearchSteps(activeTarget), [activeTarget]);
 
-  const currentBinary = BINARY_STEPS[stepIdx];
+  // 自动轮播演示（未手动点击目标值时）；一旦用户点击某数字则专注收敛到该目标
+  useEffect(() => {
+    if (selectedTarget !== null) {
+      if (stepIdx >= steps.length - 1) return;
+      const timer = setTimeout(() => {
+        setStepIdx((prev) => Math.min(prev + 1, steps.length - 1));
+      }, 720);
+      return () => clearTimeout(timer);
+    }
+
+    const timer = setInterval(() => {
+      setStepIdx((prev) => {
+        if (prev + 1 < steps.length) return prev + 1;
+        setAutoIdx((idx) => (idx + 1) % AUTO_TARGETS.length);
+        return 0;
+      });
+    }, 1500);
+    return () => clearInterval(timer);
+  }, [selectedTarget, stepIdx, steps.length]);
+
+  const currentBinary = steps[Math.min(stepIdx, steps.length - 1)] || steps[0];
+
+  const handleSelectTarget = (num: number) => {
+    setSelectedTarget(num);
+    setStepIdx(0);
+  };
 
   return (
     <section ref={ref} className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 pt-1 pb-2.5">
@@ -72,12 +140,12 @@ export default function CoreEnginesShowcase({
             三大核心学习模块
           </h2>
           <span className="hidden sm:inline text-xs text-content-muted">
-            点击卡片或下方标签，直接进入对应学习模块
+            点击卡片直达对应模块 · 卡片二可点击数组元素演示二分查找
           </span>
         </div>
         <Link
           href="/study"
-          className="text-xs font-medium text-brand-primary hover:underline inline-flex items-center gap-1"
+          className="text-xs font-medium text-brand-primary hover:underline inline-flex items-center gap-1 transition-transform active:scale-[0.97]"
         >
           <span>进入课程书院</span>
           <ArrowUpRight className="w-3.5 h-3.5" />
@@ -85,17 +153,16 @@ export default function CoreEnginesShowcase({
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 lg:gap-4">
-        {/* 卡片 1：星图闯关（带流动星轨微动画 + 可点击直达阶段） */}
-        <div
-          role="button"
-          tabIndex={0}
+        {/* 卡片 1：星图闯关 */}
+        <article
+          onMouseEnter={() => onHoverEngine?.('lamp')}
+          onMouseLeave={() => onHoverEngine?.(null)}
           onClick={() => router.push('/challenges')}
-          onKeyDown={(e) => e.key === 'Enter' && router.push('/challenges')}
-          className="group relative rounded-2xl bg-surface-raised border border-line-subtle p-3.5 sm:p-4 shadow-sm hover:shadow-lg hover:-translate-y-0.5 hover:border-[#1B3B6F]/30 transition-all duration-300 cursor-pointer flex flex-col justify-between"
+          className="group relative rounded-2xl bg-surface-raised border border-line-subtle p-3.5 sm:p-4 shadow-sm hover:shadow-lg hover:-translate-y-0.5 hover:border-[#1B3B6F]/30 active:scale-[0.99] transition-[transform,box-shadow,border-color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] cursor-pointer flex flex-col justify-between"
         >
           <div>
             <div className="flex items-start justify-between mb-2">
-              <div className="w-8 h-8 rounded-xl bg-brand-soft text-brand-primary flex items-center justify-center group-hover:scale-105 transition-transform">
+              <div className="w-8 h-8 rounded-xl bg-brand-soft text-brand-primary flex items-center justify-center group-hover:scale-105 transition-transform duration-200">
                 <Star className="w-4 h-4" />
               </div>
               <div className="text-right">
@@ -108,16 +175,17 @@ export default function CoreEnginesShowcase({
 
             <div className="flex items-center justify-between mb-1">
               <h3 className="text-[15px] font-bold text-content-primary group-hover:text-brand-primary transition-colors">
-                星图闯关训练
+                <Link href="/challenges" onClick={(e) => e.stopPropagation()} className="focus:outline-none">
+                  星图闯关训练
+                </Link>
               </h3>
-              <ArrowUpRight className="w-4 h-4 text-content-muted group-hover:text-brand-primary group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
+              <ArrowUpRight className="w-4 h-4 text-content-muted group-hover:text-brand-primary group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform duration-200" />
             </div>
             <p className="text-xs text-content-secondary leading-snug mb-2.5">
               涵盖 11 个进阶阶段，支持在线编写提交代码、自动评测样例与 AI 思考题解析。
             </p>
           </div>
 
-          {/* 动画星轨连线 + 阶段直达按钮 */}
           <div className="relative rounded-xl bg-surface-muted border border-line-subtle px-2.5 py-2 overflow-hidden">
             <svg className="w-full h-2.5 mb-1" viewBox="0 0 240 12" fill="none" aria-hidden="true">
               <line
@@ -142,26 +210,25 @@ export default function CoreEnginesShowcase({
                     e.stopPropagation();
                     router.push(`/challenges?layer=tree&stage=${st.stageId}`);
                   }}
-                  className="flex-1 px-2 py-1 rounded-md text-[11px] font-code text-content-secondary bg-surface-raised hover:bg-brand-soft hover:text-brand-primary border border-line-subtle transition-colors truncate"
+                  className="flex-1 px-2 py-1 rounded-md text-[11px] font-code text-content-secondary bg-surface-raised hover:bg-brand-soft hover:text-brand-primary border border-line-subtle transition-[transform,color,background-color] duration-150 active:scale-[0.96] truncate"
                 >
                   {st.label}
                 </button>
               ))}
             </div>
           </div>
-        </div>
+        </article>
 
-        {/* 卡片 2：代码实验室与 3D 算法（动态二分指针滑块演示 + 点击直达） */}
-        <div
-          role="button"
-          tabIndex={0}
-          onClick={() => router.push('/code/editor')}
-          onKeyDown={(e) => e.key === 'Enter' && router.push('/code/editor')}
-          className="group relative rounded-2xl bg-surface-raised border border-line-subtle p-3.5 sm:p-4 shadow-sm hover:shadow-lg hover:-translate-y-0.5 hover:border-[#1B3B6F]/30 transition-all duration-300 cursor-pointer flex flex-col justify-between"
+        {/* 卡片 2：代码与 3D 算法演示（可点击任一数组元素实时演示 L/MID/R 二分收敛） */}
+        <article
+          onMouseEnter={() => onHoverEngine?.('monitor')}
+          onMouseLeave={() => onHoverEngine?.(null)}
+          onClick={() => router.push('/code/editor?tab=visualizer&algo=binary')}
+          className="group relative rounded-2xl bg-surface-raised border border-line-subtle p-3.5 sm:p-4 shadow-sm hover:shadow-lg hover:-translate-y-0.5 hover:border-[#1B3B6F]/30 active:scale-[0.99] transition-[transform,box-shadow,border-color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] cursor-pointer flex flex-col justify-between"
         >
           <div>
             <div className="flex items-start justify-between mb-2">
-              <div className="w-8 h-8 rounded-xl bg-brand-soft text-brand-primary flex items-center justify-center group-hover:scale-105 transition-transform">
+              <div className="w-8 h-8 rounded-xl bg-brand-soft text-brand-primary flex items-center justify-center group-hover:scale-105 transition-transform duration-200">
                 <Box className="w-4 h-4" />
               </div>
               <div className="text-right">
@@ -174,56 +241,83 @@ export default function CoreEnginesShowcase({
 
             <div className="flex items-center justify-between mb-1">
               <h3 className="text-[15px] font-bold text-content-primary group-hover:text-brand-primary transition-colors">
-                代码与 3D 算法演示
+                <Link
+                  href="/code/editor?tab=visualizer&algo=binary"
+                  onClick={(e) => e.stopPropagation()}
+                  className="focus:outline-none"
+                >
+                  代码与 3D 算法演示
+                </Link>
               </h3>
-              <ArrowUpRight className="w-4 h-4 text-content-muted group-hover:text-brand-primary group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
+              <ArrowUpRight className="w-4 h-4 text-content-muted group-hover:text-brand-primary group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform duration-200" />
             </div>
             <p className="text-xs text-content-secondary leading-snug mb-2.5">
               在线编写运行 C++、Java 与 Python，同步观察排序、搜索和机器学习三维过程演示。
             </p>
           </div>
 
-          {/* 实时轮播的二分查找数组指针动画 */}
+          {/* 真可交互二分查找微实验室 */}
           <div className="rounded-xl bg-surface-muted border border-line-subtle px-2.5 py-2">
-            <div className="grid grid-cols-5 gap-1.5 mb-1.5">
+            <div className="grid grid-cols-5 gap-1.5 mb-1.5" role="group" aria-label="点击选择二分查找目标值">
               {currentBinary.arr.map((num, idx) => {
                 const isMid = idx === currentBinary.mid;
                 const inRange = idx >= currentBinary.left && idx <= currentBinary.right;
+                const isChosenTarget = selectedTarget === num;
                 return (
-                  <div
-                    key={idx}
-                    className={`relative rounded-md py-0.5 text-center font-code text-xs font-semibold transition-all duration-500 border ${
+                  <button
+                    key={num}
+                    type="button"
+                    data-binary-cell={num}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleSelectTarget(num);
+                    }}
+                    title={`点击以 ${num} 作为二分查找 target`}
+                    className={`relative rounded-md py-0.5 text-center font-code text-xs font-semibold transition-[transform,background-color,color,border-color,opacity] duration-300 ease-[cubic-bezier(0.23,1,0.32,1)] active:scale-95 border cursor-pointer ${
                       isMid
-                        ? 'bg-[#0F1D33] text-[#D4AD72] border-[#D4AD72] scale-105 shadow-sm'
+                        ? currentBinary.found
+                          ? 'bg-[#0F1D33] text-[#D4AD72] border-[#D4AD72] scale-105 shadow-sm'
+                          : 'bg-[#1B3B6F] text-white border-[#1B3B6F] scale-105 shadow-sm'
                         : inRange
-                        ? 'bg-surface-raised text-content-primary border-line-strong'
-                        : 'bg-surface-page text-content-muted border-transparent opacity-50'
-                    }`}
+                        ? 'bg-surface-raised text-content-primary border-line-strong hover:border-brand-primary/50'
+                        : 'bg-surface-page text-content-muted border-transparent opacity-45 hover:opacity-85'
+                    } ${isChosenTarget && !isMid ? 'ring-1 ring-[#D4AD72]/70' : ''}`}
                   >
                     {num}
-                    {isMid && (
-                      <span className="block text-[9px] leading-none mt-0.5 text-[#D4AD72]">
-                        MID
-                      </span>
-                    )}
-                  </div>
+                    <span
+                      className={`block text-[9px] leading-none mt-0.5 ${
+                        isMid ? 'text-[#D4AD72]' : 'text-content-muted'
+                      }`}
+                    >
+                      {isMid
+                        ? currentBinary.found
+                          ? 'HIT'
+                          : 'MID'
+                        : idx === currentBinary.left
+                        ? 'L'
+                        : idx === currentBinary.right
+                        ? 'R'
+                        : '·'}
+                    </span>
+                  </button>
                 );
               })}
             </div>
             <div className="flex items-center justify-between text-[11px] font-code text-content-muted">
-              <span className="truncate">{currentBinary.label}</span>
-              <span className="text-brand-primary shrink-0 ml-2">点击运行 →</span>
+              <span data-binary-status className="truncate">
+                {currentBinary.label}
+              </span>
+              <span className="text-brand-primary shrink-0 ml-2 font-medium">3D 推演 →</span>
             </div>
           </div>
-        </div>
+        </article>
 
-        {/* 卡片 3：全栈知识图谱与书院（深色墨砚强调卡 + 星光闪烁动效 + 学科直达） */}
-        <div
-          role="button"
-          tabIndex={0}
+        {/* 卡片 3：全栈知识图谱与书院（保留墨砚暗卡高对比视觉节奏） */}
+        <article
+          onMouseEnter={() => onHoverEngine?.('book')}
+          onMouseLeave={() => onHoverEngine?.(null)}
           onClick={() => router.push('/knowledge-graph')}
-          onKeyDown={(e) => e.key === 'Enter' && router.push('/knowledge-graph')}
-          className="group relative rounded-2xl p-3.5 sm:p-4 shadow-md hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 cursor-pointer flex flex-col justify-between overflow-hidden border border-[#D4AD72]/30"
+          className="group relative rounded-2xl p-3.5 sm:p-4 shadow-md hover:shadow-xl hover:-translate-y-0.5 active:scale-[0.99] transition-[transform,box-shadow] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] cursor-pointer flex flex-col justify-between overflow-hidden border border-[#D4AD72]/30"
           style={{ background: 'linear-gradient(155deg, #111927 0%, #0E1116 100%)', color: '#F2EDE4' }}
         >
           {/* 右上角微光星座动效 */}
@@ -239,7 +333,7 @@ export default function CoreEnginesShowcase({
 
           <div className="relative z-10">
             <div className="flex items-start justify-between mb-2">
-              <div className="w-8 h-8 rounded-xl bg-[#D4AD72]/15 text-[#D4AD72] border border-[#D4AD72]/30 flex items-center justify-center group-hover:scale-105 transition-transform">
+              <div className="w-8 h-8 rounded-xl bg-[#D4AD72]/15 text-[#D4AD72] border border-[#D4AD72]/30 flex items-center justify-center group-hover:scale-105 transition-transform duration-200">
                 <Network className="w-4 h-4" />
               </div>
               <div className="text-right">
@@ -252,9 +346,11 @@ export default function CoreEnginesShowcase({
 
             <div className="flex items-center justify-between mb-1">
               <h3 className="text-[15px] font-bold text-[#F2EDE4] group-hover:text-[#D4AD72] transition-colors">
-                知识图谱与翻页课程
+                <Link href="/knowledge-graph" onClick={(e) => e.stopPropagation()} className="focus:outline-none">
+                  知识图谱与翻页课程
+                </Link>
               </h3>
-              <ArrowUpRight className="w-4 h-4 text-[#D4AD72]/70 group-hover:text-[#D4AD72] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
+              <ArrowUpRight className="w-4 h-4 text-[#D4AD72]/70 group-hover:text-[#D4AD72] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform duration-200" />
             </div>
             <p className="text-xs text-[#F2EDE4]/70 leading-snug mb-2.5">
               按学科梳理前后置学习路线，点击图谱任意节点直达翻书课程与配套笔记。
@@ -270,13 +366,13 @@ export default function CoreEnginesShowcase({
                   e.stopPropagation();
                   router.push(`/knowledge-graph?domain=${encodeURIComponent(domain)}`);
                 }}
-                className="px-1.5 py-1 rounded-md text-[11px] font-medium text-[#D4AD72] hover:bg-[#D4AD72]/20 hover:text-[#F2EDE4] transition-colors truncate"
+                className="px-1.5 py-1 rounded-md text-[11px] font-medium text-[#D4AD72] hover:bg-[#D4AD72]/20 hover:text-[#F2EDE4] transition-[transform,background-color,color] duration-150 active:scale-[0.96] truncate"
               >
                 {domain}
               </button>
             ))}
           </div>
-        </div>
+        </article>
       </div>
     </section>
   );

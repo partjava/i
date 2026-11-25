@@ -17,6 +17,7 @@ import {
   FileText,
   User,
   LayoutGrid,
+  Gamepad2,
   type LucideIcon,
 } from 'lucide-react';
 import { navigationItems, NavigationItems, NavigationItem } from '../data/navigation';
@@ -153,6 +154,7 @@ const QUICK_LINKS: { label: string; desc: string; Icon: LucideIcon; href: string
   { label: '学习路线图', desc: '规划你的学习路径', Icon: Compass, href: '/study' },
   { label: '编程挑战', desc: '星图关卡闯关', Icon: Trophy, href: '/challenges' },
   { label: '我的笔记', desc: '记录与分享知识', Icon: FileText, href: '/notes' },
+  { label: '极客解压室', desc: '20 款原生编程小游戏', Icon: Gamepad2, href: '/tools/game' },
   { label: '个人中心', desc: '成就与收藏', Icon: User, href: '/profile' },
 ];
 

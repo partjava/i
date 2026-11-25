@@ -51,7 +51,7 @@ export default function VisualExecutionTracePlayer({
   useEffect(() => {
     if (didInitRef.current) return;
     didInitRef.current = true;
-    if (currentCode.includes('Hello, PartJava Cloud Studio') && onLoadScenarioCode) {
+    if ((currentCode.includes('Hello, Unolgy Cloud Studio') || currentCode.includes('Hello, PartJava Cloud Studio')) && onLoadScenarioCode) {
       const scenario = getScenarioForLanguage('binary-search', language);
       setActiveScenario(scenario);
       onLoadScenarioCode(scenario.code, scenario.language);

@@ -11,12 +11,20 @@ import {
   UserOutlined,
   LogoutOutlined,
   SettingOutlined,
-  HomeOutlined,
   EditOutlined,
   BellOutlined,
-  CodeOutlined,
   CrownOutlined,
 } from '@ant-design/icons';
+import {
+  Home,
+  PenLine,
+  Network,
+  User,
+  Code2,
+  Compass,
+  Bot,
+  Gamepad2,
+} from 'lucide-react';
 import { useSidebar } from './Sidebar';
 import SettingModal from './SettingModal';
 // three.js + VRM 体积大（~1MB+），必须懒加载，避免拖累全站首屏（与 BottomNavigation 保持一致）
@@ -123,7 +131,7 @@ export default function Navbar() {
   };
 
   const navItemClass = (href: string) =>
-    `relative flex flex-col items-center justify-center px-2.5 py-1 rounded-2xl transition-all duration-200 ${
+    `relative flex flex-col items-center justify-center px-2.5 py-1 rounded-2xl transition-[transform,color,background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.23,1,0.32,1)] active:scale-[0.96] ${
       isActive(href)
         ? 'text-brand-primary font-semibold bg-white/45 dark:bg-white/15 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_4px_12px_rgba(15,23,42,0.06)] border border-white/75 dark:border-white/20'
         : 'text-content-primary/85 hover:text-brand-primary hover:bg-white/30 dark:hover:bg-white/10 border border-transparent'
@@ -191,11 +199,17 @@ export default function Navbar() {
       label: '会员中心',
       onClick: () => setShowVip(true),
     },
+    {
+      key: 'game',
+      icon: <Gamepad2 className="w-3.5 h-3.5 text-[#D4AD72]" />,
+      label: '极客解压室',
+      onClick: () => router.push('/tools/game'),
+    },
     // 如果具备管理员权限，动态增加”后台管理”入口链接
     ...(user?.role === 'ADMIN' || user?.role === 'OWNER' ? [
       {
         key: 'admin',
-        icon: <SettingOutlined style={{ color: '#6366f1' }} />,
+        icon: <SettingOutlined style={{ color: '#D4AD72' }} />,
         label: '后台管理',
         onClick: () => router.push('/admin'),
       }
@@ -256,15 +270,15 @@ export default function Navbar() {
           {/* 分隔竖线 */}
           <span data-nav-divider className="hidden md:block w-px h-6 mx-3 bg-white/50 dark:bg-white/15" />
 
-          {/* 桌面端导航链接 */}
+          {/* 桌面端导航链接（统一 Lucide 1.75px 线性图标） */}
           <div className="hidden md:flex items-center space-x-1 lg:space-x-1.5">
             <Link href={homeHref} data-nav-item aria-current={isActive(homeHref) ? 'page' : undefined} className={navItemClass(homeHref)}>
-              <HomeOutlined className="text-base mb-0.5" />
+              <Home className="w-4 h-4 mb-0.5" strokeWidth={1.75} />
               <span className="text-[11px] leading-tight">首页</span>
             </Link>
 
             <Link href="/notes" data-nav-item aria-current={isActive('/notes') ? 'page' : undefined} className={navItemClass('/notes')}>
-              <EditOutlined className="text-base mb-0.5" />
+              <PenLine className="w-4 h-4 mb-0.5" strokeWidth={1.75} />
               <span className="text-[11px] leading-tight">笔记</span>
             </Link>
 
@@ -280,45 +294,32 @@ export default function Navbar() {
               onClick={() => setStudyMenuOpen(false)}
               className={navItemClass('/knowledge-graph')}
             >
-              <svg className="w-4 h-4 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-              </svg>
+              <Network className="w-4 h-4 mb-0.5" strokeWidth={1.75} />
               <span className="text-[11px] leading-tight">图谱</span>
             </Link>
 
             <Link href="/profile" data-nav-item aria-current={isActive('/profile') ? 'page' : undefined} className={navItemClass('/profile')}>
-              <UserOutlined className="text-base mb-0.5" />
+              <User className="w-4 h-4 mb-0.5" strokeWidth={1.75} />
               <span className="text-[11px] leading-tight">{session ? '资料' : '数据'}</span>
             </Link>
 
             <Link href="/code/editor" data-nav-item aria-current={isActive('/code') ? 'page' : undefined} className={navItemClass('/code')}>
-              <CodeOutlined className="text-base mb-0.5" />
+              <Code2 className="w-4 h-4 mb-0.5" strokeWidth={1.75} />
               <span className="text-[11px] leading-tight">代码</span>
             </Link>
 
             <Link href="/challenges" data-nav-item aria-current={isActive('/challenges') ? 'page' : undefined} className={navItemClass('/challenges')}>
-              <svg className="w-4 h-4 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
+              <Compass className="w-4 h-4 mb-0.5" strokeWidth={1.75} />
               <span className="text-[11px] leading-tight">挑战</span>
-            </Link>
-
-            <Link href="/tools/game" data-nav-item aria-current={isActive('/tools/game') ? 'page' : undefined} className={navItemClass('/tools/game')}>
-              <svg className="w-4 h-4 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 6h.01M6 12h.01M6 18h.01M12 6h.01M12 12h.01M12 18h.01M18 6h.01M18 12h.01M18 18h.01" />
-              </svg>
-              <span className="text-[11px] leading-tight">游戏</span>
             </Link>
 
             <button
               onClick={() => setShowRobot(true)}
               data-nav-item
-              className="relative flex flex-col items-center justify-center px-2.5 py-1 rounded-2xl transition-all duration-200 text-content-primary/85 hover:text-brand-primary hover:bg-white/30 dark:hover:bg-white/10"
-              title={robotPreloaded ? '机器人已就绪' : '正在加载机器人...'}
+              className="relative flex flex-col items-center justify-center px-2.5 py-1 rounded-2xl transition-[transform,color,background-color] duration-150 ease-[cubic-bezier(0.23,1,0.32,1)] active:scale-[0.96] text-content-primary/85 hover:text-brand-primary hover:bg-white/30 dark:hover:bg-white/10"
+              title={robotPreloaded ? '3D 伴学机器人已就绪' : '正在加载机器人...'}
             >
-              <svg className="w-4 h-4 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-              </svg>
+              <Bot className="w-4 h-4 mb-0.5" strokeWidth={1.75} />
               <span className="text-[11px] leading-tight">机器人</span>
             </button>
           </div>
@@ -384,19 +385,19 @@ export default function Navbar() {
                 </button>
               </Tooltip>
 
-              {/* 🐾 顶栏「禾桔」主动伴学弹出胶囊（报错诊断提醒 / 通关庆贺 / 卡壳点拨） */}
+              {/* 🐾 顶栏「禾桔」主动伴学弹出胶囊（墨砚金玻璃质感，锚点缩放） */}
               {companionBubble && (
                 <div
-                  className="absolute right-0 top-14 w-80 rounded-2xl p-3.5 shadow-2xl border backdrop-blur-xl z-50 transition-all"
+                  className="absolute right-0 top-14 w-80 rounded-2xl p-3.5 shadow-2xl border backdrop-blur-xl z-50 origin-top-right animate-fadeIn transition-[transform,opacity] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)]"
                   style={{
                     background:
                       companionBubble.type === 'celebrate'
-                        ? 'linear-gradient(145deg, rgba(6, 78, 59, 0.95), rgba(15, 23, 42, 0.96))'
-                        : 'linear-gradient(145deg, rgba(30, 27, 75, 0.96), rgba(15, 23, 42, 0.96))',
+                        ? 'linear-gradient(145deg, rgba(16, 42, 34, 0.96), rgba(14, 17, 22, 0.98))'
+                        : 'linear-gradient(145deg, rgba(21, 25, 33, 0.97), rgba(14, 17, 22, 0.98))',
                     borderColor:
                       companionBubble.type === 'celebrate'
-                        ? 'rgba(52, 211, 153, 0.45)'
-                        : 'rgba(129, 140, 248, 0.45)',
+                        ? 'rgba(52, 211, 153, 0.42)'
+                        : 'rgba(212, 173, 114, 0.42)',
                   }}
                 >
                   <div className="flex items-start justify-between gap-2 mb-1.5">
@@ -404,7 +405,7 @@ export default function Navbar() {
                       <span className="text-base">
                         {companionBubble.type === 'celebrate' ? '🎉' : '🐾'}
                       </span>
-                      <span className="text-xs font-bold text-white">
+                      <span className="text-xs font-bold text-[#F2EDE4]">
                         {companionBubble.title}
                       </span>
                     </div>
@@ -417,7 +418,7 @@ export default function Navbar() {
                     </button>
                   </div>
 
-                  <p className="text-xs text-slate-200 leading-relaxed mb-3">
+                  <p className="text-xs text-[#C5CBD6] leading-relaxed mb-3">
                     {companionBubble.message}
                   </p>
 
@@ -435,7 +436,7 @@ export default function Navbar() {
                               })
                             );
                           }}
-                          className="px-2.5 py-1 rounded-lg bg-indigo-500 hover:bg-indigo-400 text-white text-[11px] font-semibold transition-colors"
+                          className="px-2.5 py-1 rounded-lg bg-[#D4AD72] hover:bg-[#E0BD86] text-[#0E1116] text-[11px] font-semibold transition-colors active:scale-[0.97]"
                         >
                           💬 一键请教助教
                         </button>
@@ -446,7 +447,7 @@ export default function Navbar() {
                           setCompanionBubble(null);
                           setShowRobot(true);
                         }}
-                        className="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-slate-200 text-[11px] font-medium transition-colors"
+                        className="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-[#F2EDE4] text-[11px] font-medium transition-colors active:scale-[0.97]"
                       >
                         🐱 召唤 3D 禾桔
                       </button>
@@ -461,7 +462,7 @@ export default function Navbar() {
                           speakWithHeju(companionBubble.message);
                         }
                       }}
-                      className="px-2 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-emerald-300 text-[11px] font-medium transition-colors"
+                      className="px-2 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-[#D4AD72] text-[11px] font-medium transition-colors active:scale-[0.97]"
                       title="语音播报"
                     >
                       {isHejuSpeaking ? '⏹ 停止' : '🔊 朗读'}
@@ -547,13 +548,13 @@ export default function Navbar() {
             <div className="flex items-center space-x-1.5">
               <button
                 onClick={() => router.push('/auth/login')}
-                className="px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-semibold text-content-primary hover:text-brand-primary hover:bg-white/35 transition-all"
+                className="px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-semibold text-content-primary hover:text-brand-primary hover:bg-white/35 transition-[transform,color,background-color] duration-150 active:scale-[0.96]"
               >
                 登录
               </button>
               <button
                 onClick={() => router.push('/auth/register')}
-                className="px-4 py-1.5 rounded-full text-xs sm:text-sm font-semibold text-content-inverse bg-brand-primary hover:bg-brand-hover shadow-sm transition-all"
+                className="px-4 py-1.5 rounded-full text-xs sm:text-sm font-semibold text-content-inverse bg-brand-primary hover:bg-brand-hover shadow-sm transition-[transform,background-color] duration-150 active:scale-[0.96]"
               >
                 注册
               </button>
@@ -568,10 +569,10 @@ export default function Navbar() {
         data-study-mega-menu
         onMouseEnter={openStudyMenu}
         onMouseLeave={scheduleCloseStudyMenu}
-        className={`hidden md:block absolute left-4 lg:left-6 top-[calc(100%-6px)] pt-2.5 z-50 w-[min(1080px,calc(100vw-2rem))] transition-all duration-200 ${
+        className={`hidden md:block absolute left-4 lg:left-6 top-[calc(100%-6px)] pt-2.5 z-50 w-[min(1080px,calc(100vw-2rem))] origin-top-left transition-[opacity,transform,visibility] ease-[cubic-bezier(0.23,1,0.32,1)] ${
           studyMenuOpen
-            ? 'opacity-100 visible translate-y-0 pointer-events-auto'
-            : 'opacity-0 invisible -translate-y-1 pointer-events-none'
+            ? 'duration-200 opacity-100 visible translate-y-0 scale-100 pointer-events-auto'
+            : 'duration-150 opacity-0 invisible -translate-y-1 scale-[0.985] pointer-events-none'
         }`}
       >
         <div className="rounded-2xl border border-line-strong bg-surface-raised shadow-[0_24px_60px_rgba(15,29,51,0.18)] p-5">

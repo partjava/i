@@ -204,7 +204,7 @@ export default function SimpleLearningTracker({
           <button
             type="button"
             onClick={toggleMinimized}
-            className="relative h-10 w-10 rounded-full bg-surface-raised border border-line-subtle text-content-primary hover:border-brand-primary/40 shadow-sm flex items-center justify-center transition-all"
+            className="relative h-10 w-10 rounded-full bg-surface-raised border border-line-subtle text-content-primary hover:border-brand-primary/40 shadow-sm flex items-center justify-center transition-[transform,border-color] duration-150 active:scale-[0.96]"
             title="展开学习计时"
             aria-label="展开学习计时"
           >
@@ -233,7 +233,7 @@ export default function SimpleLearningTracker({
               setIsExpanded(prev => !prev);
             }
           }}
-          className="h-10 px-3 rounded-full bg-surface-raised border border-line-subtle text-content-primary hover:border-brand-primary/40 shadow-sm cursor-pointer flex items-center gap-2 text-xs font-mono transition-all select-none"
+          className="h-10 px-3 rounded-full bg-surface-raised border border-line-subtle text-content-primary hover:border-brand-primary/40 shadow-sm cursor-pointer flex items-center gap-2 text-xs font-mono transition-[transform,border-color] duration-150 active:scale-[0.97] select-none"
           title="查看本次与今日学习时长"
         >
           <span
@@ -259,7 +259,7 @@ export default function SimpleLearningTracker({
         </div>
 
         {isExpanded && (
-          <div className="absolute right-0 top-full mt-2 w-56 rounded-2xl bg-surface-raised border border-line-subtle shadow-xl p-3 z-50 text-content-primary space-y-2">
+          <div className="absolute right-0 top-full mt-2 w-56 rounded-2xl bg-surface-raised border border-line-subtle shadow-xl p-3 z-50 text-content-primary space-y-2 origin-top-right animate-fadeIn">
             <div className="flex items-center justify-between border-b border-line-subtle pb-2">
               <div className="flex items-center gap-1.5 text-xs font-semibold">
                 <span

@@ -193,151 +193,38 @@ body.dark .prose blockquote { border-left-color: #4b5563; color: #9ca3af; }
 }
 
 
-body.dark .card {
-  background: rgba(12, 31, 61, 0.65);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  color: #f9fafb;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-body.dark .card:hover {
-  background: rgba(12, 31, 61, 0.78);
-}
-
+/* 深色浮层基础兼容（交由 ConfigProvider 主导，避免 !important 与局部主题冲突） */
 body.dark .dark-mode-card {
-  background-color: #1f2937;
-  color: #f9fafb;
+  background-color: #151921;
+  color: #F2EDE4;
 }
 
 body.dark .dark-mode-border {
-  border-color: #374151;
+  border-color: rgba(255, 255, 255, 0.10);
 }
 
 body.dark .custom-scrollbar::-webkit-scrollbar-track {
-  background: #1f2937;
+  background: #151921;
 }
 
 body.dark .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #4b5563;
+  background: rgba(212, 173, 114, 0.28);
 }
 
 body.dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #6b7280;
+  background: rgba(212, 173, 114, 0.45);
 }
 
-/* Ant Design 深色模式覆盖 */
-body.dark .ant-card {
-  background-color: #1f2937 !important;
-  color: #f9fafb !important;
-  border-color: #374151 !important;
-}
-
-body.dark .ant-card-head {
-  background-color: #1f2937 !important;
-  color: #f9fafb !important;
-  border-color: #374151 !important;
-}
-
-body.dark .ant-card-body {
-  background-color: #1f2937 !important;
-  color: #f9fafb !important;
-}
-
-body.dark .ant-statistic-title {
-  color: #9ca3af !important;
-}
-
-body.dark .ant-statistic-content {
-  color: #f9fafb !important;
-}
-
-body.dark .ant-timeline-item-content {
-  color: #f9fafb !important;
-}
-
-body.dark .ant-progress-text {
-  color: #f9fafb !important;
-}
-
-body.dark .ant-tag {
-  background-color: #374151 !important;
-  color: #f9fafb !important;
-  border-color: #4b5563 !important;
-}
-
-body.dark .ant-divider {
-  border-color: #374151 !important;
-}
-
-body.dark .ant-typography {
-  color: #f9fafb !important;
-}
-
-body.dark .ant-form-item-label > label {
-  color: #f9fafb !important;
-}
-
-body.dark .ant-input,
-body.dark .ant-input-textarea {
-  background-color: #374151 !important;
-  color: #f9fafb !important;
-  border-color: #4b5563 !important;
-}
-
-body.dark .ant-input:hover,
-body.dark .ant-input-textarea:hover {
-  border-color: #6b7280 !important;
-}
-
-body.dark .ant-input:focus,
-body.dark .ant-input-textarea:focus {
-  border-color: #818cf8 !important;
-  box-shadow: 0 0 0 2px rgba(129, 140, 248, 0.2) !important;
-}
-
-body.dark .ant-select-selector {
-  background-color: #374151 !important;
-  color: #f9fafb !important;
-  border-color: #4b5563 !important;
-}
-
-body.dark .ant-modal-content {
-  background-color: #1f2937 !important;
-  color: #f9fafb !important;
-}
-
-body.dark .ant-modal-header {
-  background-color: #111827 !important;
-  color: #f9fafb !important;
-  border-color: #374151 !important;
-}
-
-body.dark .ant-modal-title {
-  color: #f9fafb !important;
-}
-
-body.dark .ant-modal-footer {
-  background-color: #1f2937 !important;
-  border-color: #374151 !important;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #111827;
-    --foreground: #f9fafb;
-    --color-primary: #818cf8;
-    --color-secondary: #a78bfa;
-    --color-accent: #fbbf24;
-    --color-success: #34d399;
-  }
+body.dark .ant-modal-content,
+body.dark .ant-dropdown-menu {
+  background-color: #151921;
+  color: #F2EDE4;
 }
 
 /* 基础样式 */
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
   /* 防止移动端缩放 */
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
@@ -909,34 +796,7 @@ body {
   }
 }
 
-/* 深色模式支持 */
-@media (prefers-color-scheme: dark) {
-  .global-search .ant-input-affix-wrapper {
-    background-color: #1f2937;
-    border-color: #4b5563;
-    color: white;
-  }
-
-  .global-search .ant-input {
-    background-color: #1f2937;
-    color: white;
-  }
-
-  .global-search-dropdown {
-    background-color: #1f2937;
-    border-color: #4b5563;
-  }
-
-  .search-result-item:hover {
-    background-color: #374151;
-  }
-
-  .search-history-item:hover {
-    background-color: #374151;
-  }
-}
-
-/* iOS 27 灵动岛液态玻璃搜索框透明化适配 */
+/* iOS 27 灵动岛液态玻璃搜索框透明化适配（主题严格受 body.dark 控制） */
 .liquid-glass-search .ant-input-group-wrapper,
 .liquid-glass-search .ant-input-wrapper,
 .liquid-glass-search .ant-input-affix-wrapper,
@@ -1023,15 +883,17 @@ body.dark .liquid-glass-search .ant-input-search-button {
   margin-right: 0.25rem;
 }
 
-/* 使用系统字体栈，无需加载外部字体 */
+/* 全局真实字体栈 + 统一物理动效缓动曲线 */
 body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB",
-    "Microsoft YaHei", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-family: var(--font-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+    "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
 
 
 /* Semantic color migration tokens - 禾硙「素笺 × 墨砚」双态色板 */
 :root {
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
   --surface-page: #F4F5F7;
   --surface-raised: #FFFFFF;
   --surface-muted: #EBEEF3;
@@ -1094,7 +956,7 @@ body.dark {
 }
 @layer components {
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-md border border-transparent px-4 py-2 text-sm font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-control-ring disabled:pointer-events-none disabled:opacity-50;
+    @apply inline-flex items-center justify-center gap-2 rounded-md border border-transparent px-4 py-2 text-sm font-medium transition-[transform,color,background-color,border-color,box-shadow] duration-150 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-control-ring disabled:pointer-events-none disabled:opacity-50;
   }
 
   .btn-sm {
@@ -1157,69 +1019,69 @@ body.dark {
   background-color: transparent;
 }
 
-/* PartJava Code Studio 暗曜主题选择器适配 */
+/* 禾硙 Unolgy Code Studio 墨砚金选择器适配 */
 .custom-dark-select .ant-select-selector {
-  background-color: rgba(255, 255, 255, 0.08) !important;
-  border-color: rgba(99, 102, 241, 0.4) !important;
-  color: #f1f5f9 !important;
+  background-color: rgba(21, 25, 33, 0.85) !important;
+  border-color: rgba(212, 173, 114, 0.32) !important;
+  color: #F2EDE4 !important;
   border-radius: 0.75rem !important;
   font-size: 0.8125rem !important;
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2) !important;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.24) !important;
 }
 .custom-dark-select .ant-select-selection-item {
-  color: #f8fafc !important;
+  color: #F2EDE4 !important;
   font-weight: 500 !important;
 }
 .custom-dark-select .ant-select-selection-placeholder {
-  color: #cbd5e1 !important;
+  color: #C5CBD6 !important;
   opacity: 1 !important;
   font-weight: 500 !important;
 }
 .custom-dark-select:hover .ant-select-selector {
-  border-color: #818cf8 !important;
-  background-color: rgba(255, 255, 255, 0.12) !important;
+  border-color: #D4AD72 !important;
+  background-color: rgba(30, 36, 48, 0.92) !important;
 }
 .custom-dark-select:hover .ant-select-selection-placeholder {
-  color: #ffffff !important;
+  color: #F2EDE4 !important;
 }
 .custom-dark-select .ant-select-arrow {
-  color: #94a3b8 !important;
+  color: #D4AD72 !important;
 }
 .custom-dark-select:hover .ant-select-arrow {
-  color: #cbd5e1 !important;
+  color: #E0BD86 !important;
 }
 .custom-dark-select.ant-select-focused .ant-select-selector {
-  border-color: #38bdf8 !important;
-  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.25) !important;
+  border-color: #D4AD72 !important;
+  box-shadow: 0 0 0 2px rgba(212, 173, 114, 0.25) !important;
 }
 .custom-dark-select .ant-select-clear {
   background-color: transparent !important;
   color: #94a3b8 !important;
 }
 .custom-dark-select .ant-select-clear:hover {
-  color: #f1f5f9 !important;
+  color: #F2EDE4 !important;
 }
 .custom-dark-select-dropdown {
-  background-color: #0f172a !important;
-  border: 1px solid rgba(99, 102, 241, 0.35) !important;
+  background-color: #151921 !important;
+  border: 1px solid rgba(212, 173, 114, 0.32) !important;
   border-radius: 0.75rem !important;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.6) !important;
+  box-shadow: 0 20px 28px -5px rgba(0, 0, 0, 0.65) !important;
   padding: 4px !important;
 }
 .custom-dark-select-dropdown .ant-select-item {
-  color: #cbd5e1 !important;
+  color: #C5CBD6 !important;
   border-radius: 0.5rem !important;
   font-size: 0.8125rem !important;
   padding: 6px 10px !important;
 }
 .custom-dark-select-dropdown .ant-select-item-option-selected {
-  background-color: rgba(99, 102, 241, 0.35) !important;
-  color: #ffffff !important;
+  background-color: rgba(212, 173, 114, 0.20) !important;
+  color: #F2EDE4 !important;
   font-weight: 600 !important;
 }
 .custom-dark-select-dropdown .ant-select-item-option-active {
   background-color: rgba(255, 255, 255, 0.08) !important;
-  color: #ffffff !important;
+  color: #F2EDE4 !important;
 }
 
 /* ============================================================
