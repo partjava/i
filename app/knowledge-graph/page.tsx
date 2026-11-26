@@ -38,14 +38,22 @@ import {
 } from 'lucide-react';
 
 const ReactECharts = dynamic(() => import('echarts-for-react'), { ssr: false });
+const KnowledgeGalaxy3D = dynamic(() => import('./components/KnowledgeGalaxy3D'), { ssr: false });
 
 const STORAGE_KEY = 'partjava_global_kg_mastery_v1';
 
 export default function GlobalKnowledgeGraphPage() {
   const [viewMode, setViewMode] = useState<'force' | 'radial' | 'roadmap'>('radial');
+  const [radial3D, setRadial3D] = useState<boolean>(true);
+  const [autoRotate3D, setAutoRotate3D] = useState<boolean>(true);
+  const [zoom3DSignal, setZoom3DSignal] = useState<{ dir: 'in' | 'out' | 'reset'; seq: number }>({
+    dir: 'reset',
+    seq: 0,
+  });
   const [domainFilter, setDomainFilter] = useState<string>('全部');
   const [showTopics, setShowTopics] = useState<boolean>(true);
   const [radialExpandAll, setRadialExpandAll] = useState<boolean>(false);
+  const [expandedRadialSubject, setExpandedRadialSubject] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedNodeId, setSelectedNodeId] = useState<string>('subj_数据结构与算法');
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
@@ -59,13 +67,39 @@ export default function GlobalKnowledgeGraphPage() {
     subj_机器学习: 'learning',
   });
 
-  // Load persisted mastery progress & optional domain URL filter
+  // Load persisted mastery progress & optional domain/subject URL filters
   useEffect(() => {
     if (typeof window === 'undefined') return;
     try {
-      const domParam = new URLSearchParams(window.location.search).get('domain');
-      if (domParam && ['全部', '计算机', '人工智能', '软件工程', '网络安全'].includes(domParam)) {
-        setDomainFilter(domParam);
+      const sp = new URLSearchParams(window.location.search);
+      const domParam = sp.get('domain');
+      const subjParam = sp.get('subject');
+      const validDom =
+        domParam && ['全部', '计算机', '人工智能', '软件工程', '网络安全'].includes(domParam)
+          ? domParam
+          : '全部';
+      if (validDom !== '全部') {
+        setDomainFilter(validDom);
+      }
+      if (subjParam && subjParam.trim()) {
+        const q = subjParam.trim().toLowerCase();
+        const domainGraph = buildGlobalKnowledgeGraph({
+          domainFilter: validDom,
+          includeTopics: false,
+        });
+        const subjNodes = domainGraph.nodes.filter((n) => n.level === 'subject');
+        const matched =
+          subjNodes.find((n) => n.name.toLowerCase() === q || n.id.toLowerCase() === `subj_${q}`) ||
+          [...subjNodes]
+            .sort((a, b) => b.name.length - a.name.length)
+            .find((n) => q.includes(n.name.toLowerCase())) ||
+          [...subjNodes]
+            .sort((a, b) => a.name.length - b.name.length)
+            .find((n) => n.name.toLowerCase().includes(q));
+        if (matched) {
+          setSelectedNodeId(matched.id);
+          setExpandedRadialSubject(matched.name);
+        }
       }
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
@@ -97,6 +131,10 @@ export default function GlobalKnowledgeGraphPage() {
   };
 
   const handleZoom = (direction: 'in' | 'out') => {
+    if (viewMode === 'radial' && radial3D) {
+      setZoom3DSignal((prev) => ({ dir: direction, seq: prev.seq + 1 }));
+      return;
+    }
     const inst = echartsInstanceRef.current;
     if (!inst) return;
     const opt = inst.getOption();
@@ -109,6 +147,10 @@ export default function GlobalKnowledgeGraphPage() {
   };
 
   const handleResetZoom = () => {
+    if (viewMode === 'radial' && radial3D) {
+      setZoom3DSignal((prev) => ({ dir: 'reset', seq: prev.seq + 1 }));
+      return;
+    }
     const inst = echartsInstanceRef.current;
     if (!inst) return;
     inst.setOption({
@@ -211,61 +253,94 @@ export default function GlobalKnowledgeGraphPage() {
   // ECharts Option for Force-Directed Galaxy & Radial Tree
   const chartOption = useMemo(() => {
     if (viewMode === 'radial') {
-      // Build hierarchical tree structure from navigationItems
-      const treeRoot = {
-        name: '禾硙全栈星系',
-        id: 'hub_partjava',
-        depth: 0,
-        itemStyle: {
-          color: '#6366f1',
-          borderColor: '#e0e7ff',
-          borderWidth: 3,
-          shadowBlur: 20,
-          shadowColor: 'rgba(99, 102, 241, 0.8)',
-        },
-        children: Object.entries(navigationItems)
-          .filter(([dName]) => domainFilter === '全部' || dName === domainFilter)
-          .map(([dName, subjs]) => {
-            const dColor = DOMAIN_META[dName]?.color || '#38bdf8';
-            return {
-              name: dName,
-              id: `domain_${dName}`,
-              depth: 1,
+      const buildSubjectNode = (s: (typeof navigationItems)[string][number], dColor: string, depth: number) => {
+        const subjId = `subj_${s.name}`;
+        const isSelected = selectedNodeId === subjId;
+        const isExpanded = radialExpandAll || expandedRadialSubject === s.name;
+        const mastery = masteryMap[subjId];
+        const borderColor =
+          mastery === 'mastered'
+            ? '#10b981'
+            : mastery === 'learning'
+            ? '#fbbf24'
+            : isSelected
+            ? '#ffffff'
+            : 'rgba(255,255,255,0.45)';
+        const topics = isExpanded
+          ? (s.subitems || []).slice(0, 8).map((t, idx) => ({
+              name: t.name,
+              id: `topic_${s.name}_${idx}`,
+              depth: depth + 1,
               itemStyle: {
-                color: dColor,
-                borderColor: '#ffffff',
-                borderWidth: 2,
-                shadowBlur: 14,
-                shadowColor: dColor,
+                color: mastery === 'mastered' ? '#10b981' : '#38bdf8',
+                borderColor: 'rgba(255,255,255,0.55)',
+                borderWidth: 1,
               },
-              children: subjs.map((s) => {
-                const isSelected = selectedNodeId === `subj_${s.name}`;
+            }))
+          : [];
+
+        return {
+          name: s.name,
+          id: subjId,
+          depth,
+          collapsed: !isExpanded,
+          itemStyle: {
+            color: mastery === 'mastered' ? '#10b981' : mastery === 'learning' ? '#f59e0b' : dColor,
+            borderColor,
+            borderWidth: isSelected ? 3 : mastery ? 2.5 : 1.5,
+            shadowBlur: isSelected || isExpanded ? 18 : 6,
+            shadowColor: isSelected ? '#38bdf8' : dColor,
+          },
+          children: topics,
+        };
+      };
+
+      // 单领域筛选时直接以该领域为中心 360° 扇形平铺，避免被挤进角落 90°
+      const treeRoot =
+        domainFilter !== '全部' && navigationItems[domainFilter]
+          ? {
+              name: domainFilter,
+              id: `domain_${domainFilter}`,
+              depth: 0,
+              itemStyle: {
+                color: DOMAIN_META[domainFilter]?.color || '#38bdf8',
+                borderColor: '#ffffff',
+                borderWidth: 3,
+                shadowBlur: 22,
+                shadowColor: DOMAIN_META[domainFilter]?.color || '#38bdf8',
+              },
+              children: navigationItems[domainFilter].map((s) =>
+                buildSubjectNode(s, DOMAIN_META[domainFilter]?.color || '#38bdf8', 1)
+              ),
+            }
+          : {
+              name: '禾硙全栈星系',
+              id: 'hub_partjava',
+              depth: 0,
+              itemStyle: {
+                color: '#6366f1',
+                borderColor: '#e0e7ff',
+                borderWidth: 3,
+                shadowBlur: 20,
+                shadowColor: 'rgba(99, 102, 241, 0.8)',
+              },
+              children: Object.entries(navigationItems).map(([dName, subjs]) => {
+                const dColor = DOMAIN_META[dName]?.color || '#38bdf8';
                 return {
-                  name: s.name,
-                  id: `subj_${s.name}`,
-                  depth: 2,
+                  name: dName,
+                  id: `domain_${dName}`,
+                  depth: 1,
                   itemStyle: {
                     color: dColor,
-                    borderColor: isSelected ? '#ffffff' : 'rgba(255,255,255,0.4)',
-                    borderWidth: isSelected ? 3 : 1.5,
-                    shadowBlur: isSelected ? 18 : 6,
-                    shadowColor: isSelected ? '#38bdf8' : dColor,
+                    borderColor: '#ffffff',
+                    borderWidth: 2,
+                    shadowBlur: 14,
+                    shadowColor: dColor,
                   },
-                  children: (s.subitems || []).slice(0, 6).map((t, idx) => ({
-                    name: t.name,
-                    id: `topic_${s.name}_${idx}`,
-                    depth: 3,
-                    itemStyle: {
-                      color: '#38bdf8',
-                      borderColor: 'rgba(255,255,255,0.5)',
-                      borderWidth: 1,
-                    },
-                  })),
+                  children: subjs.map((s) => buildSubjectNode(s, dColor, 2)),
                 };
               }),
             };
-          }),
-      };
 
       return {
         backgroundColor: 'transparent',
@@ -279,18 +354,19 @@ export default function GlobalKnowledgeGraphPage() {
             const data = params.data;
             if (!data) return params.name;
             const depth = data.depth ?? 2;
+            const isSubj = String(data.id || '').startsWith('subj_');
             const depthLabel =
               depth === 0
-                ? '全栈核心枢纽'
+                ? '核心知识枢纽'
+                : isSubj
+                ? '主干学科体系（点击聚焦展开该分支章节）'
                 : depth === 1
-                ? '核心技术领域'
-                : depth === 2
-                ? '主干学科体系 (点击展开/折叠章节)'
+                ? '核心技术领域（点击可单域 360° 聚焦）'
                 : '章节核心考点';
             return `<div style="max-width:240px;white-space:normal;line-height:1.6;">
               <div style="font-weight:800;color:#38bdf8;font-size:13px;margin-bottom:2px;">${data.name}</div>
               <div style="font-size:11px;color:#94a3b8;margin-bottom:4px;">${depthLabel}</div>
-              <div style="font-size:10px;color:#cbd5e1;">💡 点击节点即可展开分支并联动右侧知识详情</div>
+              <div style="font-size:10px;color:#cbd5e1;">💡 点击学科节点可手风琴式展开章节并联动右侧透视舱</div>
             </div>`;
           },
         },
@@ -299,22 +375,21 @@ export default function GlobalKnowledgeGraphPage() {
             type: 'tree',
             data: [treeRoot],
             layout: 'radial',
-            top: '8%',
-            bottom: '8%',
-            left: '8%',
-            right: '8%',
+            top: '11%',
+            bottom: '11%',
+            left: '11%',
+            right: '11%',
             symbol: 'emptyCircle',
-            symbolSize: (rawVal: any, params: any) => {
+            symbolSize: (_rawVal: any, params: any) => {
               const depth = params?.data?.depth ?? 2;
               if (depth === 0) return 22;
               if (depth === 1) return 15;
               if (depth === 2) return 11;
-              return 6;
+              return 7;
             },
-            // 默认展开到第 2 层（主干学科），彻底避免最外层章节文字重叠糊成一团！
-            // 用户点击学科节点可随时展开单个学科的花瓣，或通过右上角按钮一键展开全部
-            initialTreeDepth: radialExpandAll ? 3 : 2,
-            animationDurationUpdate: 650,
+            initialTreeDepth: radialExpandAll ? 3 : expandedRadialSubject ? 3 : 2,
+            expandAndCollapse: false,
+            animationDurationUpdate: 550,
             roam: true,
             labelLayout: { hideOverlap: true },
             label: {
@@ -322,10 +397,12 @@ export default function GlobalKnowledgeGraphPage() {
               align: 'left',
               verticalAlign: 'middle',
               rotate: 'radial',
-              distance: 6,
-              color: '#e2e8f0',
-              fontSize: 11,
+              distance: 7,
+              color: '#f1f5f9',
+              fontSize: 11.5,
               fontWeight: 600,
+              textBorderColor: '#070e20',
+              textBorderWidth: 2.5,
             },
             leaves: {
               label: {
@@ -334,9 +411,11 @@ export default function GlobalKnowledgeGraphPage() {
                 verticalAlign: 'middle',
                 rotate: 'radial',
                 distance: 6,
-                color: '#94a3b8',
-                fontSize: 10,
+                color: '#cbd5e1',
+                fontSize: 10.5,
                 fontWeight: 500,
+                textBorderColor: '#070e20',
+                textBorderWidth: 2,
               },
             },
             emphasis: {
@@ -352,7 +431,7 @@ export default function GlobalKnowledgeGraphPage() {
               },
             },
             lineStyle: {
-              color: 'rgba(129, 140, 248, 0.42)',
+              color: 'rgba(129, 140, 248, 0.45)',
               width: 1.5,
               curveness: 0.5,
             },
@@ -361,7 +440,7 @@ export default function GlobalKnowledgeGraphPage() {
       };
     }
 
-    // Default: Force-Directed Knowledge Galaxy
+    // Default: Force-Directed Knowledge Galaxy (四象限星系星座布局 + 防碰撞胶囊标签)
     const categories = ['核心枢纽', '计算机', '人工智能', '软件工程', '网络安全'].map(
       (name) => ({
         name,
@@ -369,7 +448,15 @@ export default function GlobalKnowledgeGraphPage() {
       })
     );
 
-    const echartsNodes = graphData.nodes.map((n) => {
+    const QUADRANT_CENTERS: Record<string, [number, number]> = {
+      核心枢纽: [0, 0],
+      计算机: [-190, -135],
+      人工智能: [190, -135],
+      软件工程: [-190, 135],
+      网络安全: [190, 135],
+    };
+
+    const echartsNodes = graphData.nodes.map((n, index) => {
       const dMeta = DOMAIN_META[n.domain] || DOMAIN_META['计算机'];
       const isSelected = n.id === selectedNode?.id;
       const mastery = masteryMap[n.id];
@@ -380,11 +467,20 @@ export default function GlobalKnowledgeGraphPage() {
           ? '#fbbf24'
           : isSelected
           ? '#ffffff'
-          : 'rgba(255,255,255,0.35)';
+          : 'rgba(255,255,255,0.42)';
+
+      const qBase = QUADRANT_CENTERS[n.domain] || [0, 0];
+      const angle = ((index * 137.5) % 360) * (Math.PI / 180);
+      const radius =
+        n.level === 'hub' ? 0 : n.level === 'domain' ? 22 : n.level === 'subject' ? 92 + (index % 4) * 20 : 145 + (index % 4) * 18;
+      const seedX = n.level === 'hub' ? 0 : qBase[0] + Math.cos(angle) * radius;
+      const seedY = n.level === 'hub' ? 0 : qBase[1] + Math.sin(angle) * radius;
 
       return {
         id: n.id,
         name: n.name,
+        x: seedX,
+        y: seedY,
         category: categories.findIndex((c) => c.name === n.domain),
         symbolSize: isSelected ? n.symbolSize * 1.25 : n.symbolSize,
         draggable: true,
@@ -392,16 +488,29 @@ export default function GlobalKnowledgeGraphPage() {
           color: dMeta.color,
           borderColor,
           borderWidth: isSelected ? 4 : mastery ? 3 : 1.5,
-          shadowBlur: isSelected ? 24 : n.level !== 'topic' ? 14 : 6,
-          shadowColor: isSelected ? '#38bdf8' : dMeta.glow,
+          shadowBlur: isSelected ? 26 : mastery ? 18 : n.level !== 'topic' ? 14 : 6,
+          shadowColor:
+            mastery === 'mastered'
+              ? 'rgba(16, 185, 129, 0.7)'
+              : mastery === 'learning'
+              ? 'rgba(251, 191, 36, 0.65)'
+              : isSelected
+              ? '#38bdf8'
+              : dMeta.glow,
         },
         label: {
           show: n.level !== 'topic' || domainFilter !== '全部' || isSelected,
           position: 'right',
+          distance: 7,
           formatter: '{b}',
           color: isSelected ? '#ffffff' : n.level === 'topic' ? '#cbd5e1' : '#f8fafc',
-          fontSize: n.level === 'hub' ? 14 : n.level === 'domain' ? 13 : n.level === 'subject' ? 12 : 10,
+          fontSize: n.level === 'hub' ? 14 : n.level === 'domain' ? 13 : n.level === 'subject' ? 11.5 : 10,
           fontWeight: n.level === 'topic' ? 500 : 700,
+          backgroundColor: n.level !== 'topic' ? 'rgba(8, 16, 36, 0.80)' : 'transparent',
+          borderColor: n.level !== 'topic' ? `${dMeta.color}55` : 'transparent',
+          borderWidth: n.level !== 'topic' ? 1 : 0,
+          borderRadius: 6,
+          padding: n.level !== 'topic' ? [3, 7] : 0,
         },
       };
     });
@@ -420,11 +529,11 @@ export default function GlobalKnowledgeGraphPage() {
               ? '#f59e0b'
               : l.relation === 'prerequisite'
               ? '#38bdf8'
-              : 'rgba(148, 163, 184, 0.28)',
-          width: isPrereq ? 2 : 1.2,
+              : 'rgba(148, 163, 184, 0.24)',
+          width: isPrereq ? 2 : 1.1,
           type: l.relation === 'cross-domain' ? 'dashed' : 'solid',
           curveness: isPrereq ? 0.24 : 0.08,
-          opacity: isPrereq ? 0.85 : 0.45,
+          opacity: isPrereq ? 0.88 : 0.4,
         },
       };
     });
@@ -469,12 +578,14 @@ export default function GlobalKnowledgeGraphPage() {
           categories,
           roam: true,
           draggable: true,
-          labelLayout: { hideOverlap: true },
-          zoom: domainFilter === '全部' ? 0.92 : 1.05,
+          labelLayout: { hideOverlap: true, moveOverlap: 'shiftY' },
+          zoom: domainFilter === '全部' ? 0.56 : 0.85,
           force: {
-            repulsion: domainFilter === '全部' ? 460 : 520,
-            edgeLength: [60, 150],
-            gravity: 0.08,
+            repulsion: domainFilter === '全部' ? 560 : 520,
+            edgeLength: domainFilter === '全部' ? [52, 125] : [55, 125],
+            gravity: 0.11,
+            friction: 0.28,
+            layoutAnimation: true,
           },
           emphasis: {
             focus: 'adjacency',
@@ -483,7 +594,7 @@ export default function GlobalKnowledgeGraphPage() {
         },
       ],
     };
-  }, [viewMode, graphData, domainFilter, selectedNode, masteryMap, radialExpandAll, selectedNodeId]);
+  }, [viewMode, graphData, domainFilter, selectedNode, masteryMap, radialExpandAll, expandedRadialSubject, selectedNodeId]);
 
   const handleChartNodeClick = (params: any) => {
     const id = params?.data?.id;
@@ -495,6 +606,10 @@ export default function GlobalKnowledgeGraphPage() {
       } else if (id.startsWith('domain_')) {
         const dName = id.replace('domain_', '');
         setDomainFilter(dName);
+      }
+      if (viewMode === 'radial' && id.startsWith('subj_')) {
+        const subjName = id.replace('subj_', '');
+        setExpandedRadialSubject((prev) => (prev === subjName ? null : subjName));
       }
     }
   };
@@ -561,14 +676,14 @@ export default function GlobalKnowledgeGraphPage() {
           </div>
         </div>
 
-        {/* 视图模式切换 + 领域筛选 + 节点快速检索条 */}
-        <div className="p-3 sm:p-4 rounded-2xl bg-surface-raised border border-line-subtle shadow-sm flex flex-wrap items-center justify-between gap-3">
+        {/* 视图模式切换 + 领域筛选 + 节点快速检索条（桌面单行紧凑布局） */}
+        <div className="p-2 sm:p-2.5 rounded-2xl bg-surface-raised border border-line-subtle shadow-sm flex flex-wrap xl:flex-nowrap items-center justify-between gap-2">
           {/* 3种图谱模式切换 */}
-          <div className="inline-flex p-1 rounded-xl bg-surface-muted border border-line-subtle">
+          <div className="inline-flex p-0.5 rounded-xl bg-surface-muted border border-line-subtle shrink-0">
             <button
               type="button"
               onClick={() => setViewMode('force')}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+              className={`px-2.5 py-1.5 rounded-lg text-[11px] font-bold transition-all flex items-center gap-1 whitespace-nowrap ${
                 viewMode === 'force'
                   ? 'bg-brand-primary text-content-inverse shadow'
                   : 'text-content-secondary hover:text-content-primary'
@@ -580,19 +695,19 @@ export default function GlobalKnowledgeGraphPage() {
             <button
               type="button"
               onClick={() => setViewMode('radial')}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+              className={`px-2.5 py-1.5 rounded-lg text-[11px] font-bold transition-all flex items-center gap-1 whitespace-nowrap ${
                 viewMode === 'radial'
                   ? 'bg-brand-primary text-content-inverse shadow'
                   : 'text-content-secondary hover:text-content-primary'
               }`}
             >
               <Compass className="w-3.5 h-3.5" />
-              <span>360° 径向知识树</span>
+              <span>{radial3D ? '3D 星环知识宇宙' : '360° 径向知识树'}</span>
             </button>
             <button
               type="button"
               onClick={() => setViewMode('roadmap')}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+              className={`px-2.5 py-1.5 rounded-lg text-[11px] font-bold transition-all flex items-center gap-1 whitespace-nowrap ${
                 viewMode === 'roadmap'
                   ? 'bg-[#1F7A5C] text-white shadow'
                   : 'text-content-secondary hover:text-content-primary'
@@ -604,20 +719,20 @@ export default function GlobalKnowledgeGraphPage() {
           </div>
 
           {/* 四大技术领域筛选胶囊 */}
-          <div className="flex flex-wrap items-center gap-1.5">
+          <div className="flex flex-wrap xl:flex-nowrap items-center gap-1">
             {['全部', '计算机', '人工智能', '软件工程', '网络安全'].map((dom) => (
               <button
                 key={dom}
                 type="button"
                 onClick={() => setDomainFilter(dom)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all ${
+                className={`px-2 py-1 rounded-xl text-[11px] font-semibold border transition-all whitespace-nowrap ${
                   domainFilter === dom
                     ? 'bg-brand-primary text-content-inverse border-transparent shadow-sm'
                     : 'bg-surface-muted text-content-secondary border-line-subtle hover:bg-brand-soft hover:text-content-primary'
                 }`}
               >
                 {dom !== '全部' && (
-                  <span className="mr-1">{DOMAIN_META[dom]?.icon}</span>
+                  <span className="mr-0.5">{DOMAIN_META[dom]?.icon}</span>
                 )}
                 {dom}
               </button>
@@ -626,8 +741,11 @@ export default function GlobalKnowledgeGraphPage() {
             {viewMode === 'radial' && (
               <button
                 type="button"
-                onClick={() => setRadialExpandAll((v) => !v)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-medium border transition-all flex items-center gap-1 ${
+                onClick={() => {
+                  setRadialExpandAll((v) => !v);
+                  if (radialExpandAll) setExpandedRadialSubject(null);
+                }}
+                className={`px-2 py-1 rounded-xl text-[11px] font-medium border transition-all flex items-center gap-1 whitespace-nowrap ${
                   radialExpandAll
                     ? 'bg-brand-soft text-brand-primary border-line-strong'
                     : 'bg-surface-muted text-content-secondary border-line-subtle hover:bg-brand-soft hover:text-content-primary'
@@ -635,13 +753,13 @@ export default function GlobalKnowledgeGraphPage() {
               >
                 {radialExpandAll ? (
                   <>
-                    <EyeOff className="w-3.5 h-3.5" />
-                    <span>折叠到学科主干</span>
+                    <EyeOff className="w-3 h-3" />
+                    <span>折叠</span>
                   </>
                 ) : (
                   <>
-                    <Eye className="w-3.5 h-3.5" />
-                    <span>展开全部章节</span>
+                    <Eye className="w-3 h-3" />
+                    <span>全展</span>
                   </>
                 )}
               </button>
@@ -651,19 +769,19 @@ export default function GlobalKnowledgeGraphPage() {
               <button
                 type="button"
                 onClick={() => setShowTopics((v) => !v)}
-                className={`px-2.5 py-1.5 rounded-xl text-xs font-mono border transition-all ${
+                className={`px-2 py-1 rounded-xl text-[11px] font-mono border transition-all whitespace-nowrap ${
                   showTopics
                     ? 'bg-brand-soft text-brand-primary border-line-strong'
                     : 'bg-surface-muted text-content-secondary border-line-subtle'
                 }`}
               >
-                {showTopics ? '🔹 显示章节细节点' : '🔸 仅显示学科主干'}
+                {showTopics ? '含细节' : '仅主干'}
               </button>
             )}
           </div>
 
           {/* 知识点即时搜索框 */}
-          <div className="relative w-full sm:w-60">
+          <div className="relative w-full sm:w-44 shrink-0">
             <div className="flex items-center px-3 py-1.5 rounded-xl bg-surface-muted border border-line-subtle focus-within:border-[#D4AD72]">
               <Search className="w-3.5 h-3.5 text-content-muted mr-2 shrink-0" />
               <input
@@ -828,6 +946,8 @@ export default function GlobalKnowledgeGraphPage() {
                       <span className="truncate">
                         {viewMode === 'force'
                           ? '力导向知识星系 · 支持滚轮缩放与拖拽'
+                          : radial3D
+                          ? '3D 星环知识宇宙 · 拖拽旋转与点击飞向聚焦'
                           : radialExpandAll
                           ? '360° 径向知识树 · 全景展开'
                           : '360° 径向知识树 · 点击节点展开'}
@@ -839,6 +959,33 @@ export default function GlobalKnowledgeGraphPage() {
                   </div>
 
                   <div className="pointer-events-auto flex items-center gap-1 bg-slate-950/85 backdrop-blur-md p-1 rounded-2xl border border-indigo-400/30 shadow-xl shrink-0">
+                    {viewMode === 'radial' && (
+                      <div className="inline-flex p-0.5 rounded-xl bg-white/10 border border-white/10 mr-1">
+                        <button
+                          type="button"
+                          onClick={() => setRadial3D(true)}
+                          className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all ${
+                            radial3D
+                              ? 'bg-indigo-500 text-white shadow-sm'
+                              : 'text-slate-300 hover:text-white'
+                          }`}
+                        >
+                          3D 宇宙
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setRadial3D(false)}
+                          className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all ${
+                            !radial3D
+                              ? 'bg-indigo-500 text-white shadow-sm'
+                              : 'text-slate-300 hover:text-white'
+                          }`}
+                        >
+                          2D 径向
+                        </button>
+                      </div>
+                    )}
+
                     <button
                       type="button"
                       onClick={() => handleZoom('in')}
@@ -863,6 +1010,21 @@ export default function GlobalKnowledgeGraphPage() {
                     >
                       <RotateCcw className="w-4 h-4" />
                     </button>
+
+                    {viewMode === 'radial' && radial3D && (
+                      <button
+                        type="button"
+                        onClick={() => setAutoRotate3D((v) => !v)}
+                        title={autoRotate3D ? '暂停星系公转' : '开启星系公转'}
+                        className={`px-2 py-1 rounded-xl text-[11px] font-semibold border transition-all whitespace-nowrap ${
+                          autoRotate3D
+                            ? 'text-amber-200 bg-amber-500/15 border-amber-400/35'
+                            : 'text-slate-300 bg-white/5 border-white/15'
+                        }`}
+                      >
+                        {autoRotate3D ? '公转中' : '已暂停'}
+                      </button>
+                    )}
 
                     {viewMode === 'radial' && (
                       <button
@@ -892,24 +1054,64 @@ export default function GlobalKnowledgeGraphPage() {
                   </div>
                 </div>
 
-                {/* 画布底端交互小提示 */}
-                <div className="absolute bottom-3 left-4 z-10 pointer-events-none">
-                  <span className="text-[11px] text-slate-400/80 bg-slate-950/60 px-2.5 py-1 rounded-lg backdrop-blur-sm border border-white/5">
-                    💡 鼠标滚轮缩放 · 左键平移拖拽 · 点击学科展开花瓣并同步右侧透视
+                {/* 画布底端交互与掌握状态图例 */}
+                <div className="absolute bottom-3 left-4 right-4 z-10 pointer-events-none flex flex-wrap items-center justify-between gap-2">
+                  <span className="text-[11px] text-slate-300/90 bg-slate-950/75 px-2.5 py-1 rounded-lg backdrop-blur-sm border border-white/10">
+                    {viewMode === 'radial'
+                      ? radial3D
+                        ? '💡 左键 360° 拖拽旋转星系 · 滚轮缩放 · 点击学科星球飞向聚焦并展开章节卫星'
+                        : '💡 点击任意学科节点仅展开该分支章节（手风琴聚焦），点击领域可 360° 单域展开'
+                      : '💡 四象限星系集群 · 滚轮缩放与拖拽 · 悬停高亮相邻前置/进阶依赖'}
                   </span>
+                  <div className="hidden sm:flex items-center gap-3 text-[11px] text-slate-300 bg-slate-950/75 px-3 py-1 rounded-lg backdrop-blur-sm border border-white/10">
+                    <span className="inline-flex items-center gap-1.5">
+                      <span className="w-2.5 h-2.5 rounded-full border-2 border-emerald-400 bg-emerald-500/40" />
+                      已掌握
+                    </span>
+                    <span className="inline-flex items-center gap-1.5">
+                      <span className="w-2.5 h-2.5 rounded-full border-2 border-amber-400 bg-amber-500/40" />
+                      攻克中
+                    </span>
+                    {(viewMode === 'force' || (viewMode === 'radial' && radial3D)) && (
+                      <span className="inline-flex items-center gap-1.5">
+                        <span className="w-4 border-t-2 border-dashed border-amber-400" />
+                        跨领域依赖
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 <div className="h-[580px] sm:h-[680px] lg:h-[720px] w-full">
-                  <ReactECharts
-                    option={chartOption}
-                    style={{ height: '100%', width: '100%' }}
-                    onChartReady={(instance: any) => {
-                      echartsInstanceRef.current = instance;
-                    }}
-                    onEvents={{
-                      click: handleChartNodeClick,
-                    }}
-                  />
+                  {viewMode === 'radial' && radial3D ? (
+                    <KnowledgeGalaxy3D
+                      domainFilter={domainFilter}
+                      selectedNodeId={selectedNodeId}
+                      masteryMap={masteryMap}
+                      expandAll={radialExpandAll}
+                      autoRotate={autoRotate3D}
+                      links={graphData.links}
+                      zoomSignal={zoom3DSignal}
+                      height={700}
+                      onSelectNode={(nid) => {
+                        if (nid.startsWith('domain_')) {
+                          setSelectedNodeId(nid);
+                        } else {
+                          setSelectedNodeId(nid);
+                        }
+                      }}
+                    />
+                  ) : (
+                    <ReactECharts
+                      option={chartOption}
+                      style={{ height: '100%', width: '100%' }}
+                      onChartReady={(instance: any) => {
+                        echartsInstanceRef.current = instance;
+                      }}
+                      onEvents={{
+                        click: handleChartNodeClick,
+                      }}
+                    />
+                  )}
                 </div>
               </div>
             )}

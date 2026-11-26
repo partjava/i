@@ -64,11 +64,11 @@ export interface CatStageProps {
 
 /** 灯光情绪预设：环境光随对话状态变化（B8） */
 const MOOD_PRESETS: Record<StageMood, { c1: number; c2: number; i1: number; i2: number; exp: number }> = {
-  idle:      { c1: 0xeef6ff, c2: 0xfff2e2, i1: 18, i2: 16, exp: 1.18 },
-  thinking:  { c1: 0xdfe8ff, c2: 0xffe9c4, i1: 21, i2: 15, exp: 1.12 },
-  searching: { c1: 0x9fd8ff, c2: 0x7fe0e8, i1: 24, i2: 22, exp: 1.15 },
-  speaking:  { c1: 0xfff0d8, c2: 0xffd9a8, i1: 20, i2: 18, exp: 1.2 },
-  celebrate: { c1: 0xffe9b8, c2: 0xffc98a, i1: 26, i2: 24, exp: 1.32 },
+  idle:      { c1: 0xeef6ff, c2: 0xfff2e2, i1: 9,  i2: 8,  exp: 1.08 },
+  thinking:  { c1: 0xdfe8ff, c2: 0xffe9c4, i1: 11, i2: 8,  exp: 1.05 },
+  searching: { c1: 0x9fd8ff, c2: 0x7fe0e8, i1: 13, i2: 11, exp: 1.08 },
+  speaking:  { c1: 0xfff0d8, c2: 0xffd9a8, i1: 10, i2: 9,  exp: 1.10 },
+  celebrate: { c1: 0xffe9b8, c2: 0xffc98a, i1: 14, i2: 12, exp: 1.16 },
 };
 
 /**
@@ -139,7 +139,7 @@ export default function CatStage(props: CatStageProps) {
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.18;
+    renderer.toneMappingExposure = 1.08;
     renderer.outputColorSpace = THREE.SRGBColorSpace;
 
     // 注入温暖书房实时 IBL 环境反射贴图（PMREM），赋予黑猫丝绒、琥珀/琉璃瞳孔清漆层与木器铜饰真实光影反射
@@ -191,12 +191,12 @@ export default function CatStage(props: CatStageProps) {
     (window as any).robotAnchor = warmStudyRoom.robotAnchor;
 
     // 双侧背光轮廓聚光灯（灯光情绪的执行器）
-    const rimSpotL = new THREE.SpotLight(0xeef6ff, 18, 8.5, Math.PI / 3, 0.65, 1.6);
+    const rimSpotL = new THREE.SpotLight(0xeef6ff, 9, 8.5, Math.PI / 3, 0.65, 1.6);
     rimSpotL.position.set(-1.6, 3.4, -3.2);
     rimSpotL.target.position.set(0, 1.1, -1.55);
     scene.add(rimSpotL, rimSpotL.target);
 
-    const rimSpotR = new THREE.SpotLight(0xfff2e2, 16, 8.5, Math.PI / 3, 0.65, 1.6);
+    const rimSpotR = new THREE.SpotLight(0xfff2e2, 8, 8.5, Math.PI / 3, 0.65, 1.6);
     rimSpotR.position.set(1.6, 3.4, -3.2);
     rimSpotR.target.position.set(0, 1.1, -1.55);
     scene.add(rimSpotR, rimSpotR.target);
@@ -205,9 +205,9 @@ export default function CatStage(props: CatStageProps) {
     const lightState = {
       c1: new THREE.Color(0xeef6ff),
       c2: new THREE.Color(0xfff2e2),
-      i1: 18,
-      i2: 16,
-      exp: 1.18,
+      i1: 9,
+      i2: 8,
+      exp: 1.08,
     };
 
     // ============ 2. 指针交互（眼神跟随 / 点击雀跃 / 悬停摸猫） ============
@@ -414,28 +414,20 @@ export default function CatStage(props: CatStageProps) {
       if (idleOk && !dozingRef.current && now2 > nextIdleActionRef.current) {
         const affection = live.affection || 50;
         const roll = Math.random();
-        if (roll < 0.38) {
+        if (roll < 0.45) {
           // 张望别处再回头
           attentionTargetRef.current = {
             x: (Math.random() - 0.5) * 1.5,
             y: (Math.random() - 0.4) * 0.8,
           };
           glanceUntilRef.current = now2 + 1600;
-        } else if (roll < 0.62) {
+        } else if (roll < 0.72) {
           cat?.triggerHappyJump(); // 原地轻跳
-        } else if (roll < 0.84) {
+        } else {
           cat?.setMood('curious'); // 好奇歪头
           setTimeout(() => {
             if (!dozingRef.current) props.activeCatRef.current?.setMood('normal');
           }, 1900);
-        } else {
-          // 偶尔起身/坐下换个姿势
-          const cats = props.riggedCatsRef.current;
-          if (cats.standing && cats.crouching) {
-            props.activatePostureModel(
-              props.activeCatRef.current === cats.standing ? 'crouching' : 'standing'
-            );
-          }
         }
         // 亲密度越高，小动作越频繁（间隔越短）
         const scale = 1.35 - (affection / 100) * 0.65;

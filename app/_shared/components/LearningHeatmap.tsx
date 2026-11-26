@@ -7,9 +7,10 @@ interface LearningHeatmapProps {
   data: HeatmapData[];
   year?: number;
   hideTitle?: boolean;
+  seamless?: boolean;
 }
 
-export default function LearningHeatmap({ data, year, hideTitle = false }: LearningHeatmapProps) {
+export default function LearningHeatmap({ data, year, hideTitle = false, seamless = false }: LearningHeatmapProps) {
   // 自动检测数据中的年份，如果没有数据则使用当前年份
   const detectedYear = year || (data.length > 0 ? new Date(data[0].date).getFullYear() : new Date().getFullYear());
   const months = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
@@ -96,11 +97,11 @@ export default function LearningHeatmap({ data, year, hideTitle = false }: Learn
   // 获取颜色类
   const getLevelColor = (level: number) => {
     const colors = [
-      'bg-gray-100 dark:bg-white/[0.08]',   // 0: 无学习
-      'bg-green-300',  // 1: 少量
-      'bg-green-400',  // 2: 中等
-      'bg-green-500',  // 3: 较多
-      'bg-green-700',  // 4: 大量
+      'bg-slate-200/75 dark:bg-white/[0.08]',   // 0: 无学习
+      'bg-emerald-200 dark:bg-emerald-900/65',  // 1: 少量
+      'bg-emerald-400 dark:bg-emerald-700/80',  // 2: 中等
+      'bg-emerald-500 dark:bg-emerald-500/90',  // 3: 较多
+      'bg-emerald-700 dark:bg-emerald-400',     // 4: 大量
     ];
     return colors[level] || colors[0];
   };
@@ -119,8 +120,8 @@ export default function LearningHeatmap({ data, year, hideTitle = false }: Learn
       const daysSinceYearStart = Math.floor((monthStart.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
       const totalDays = daysSinceYearStart + startDay;
       const weekIndex = Math.floor(totalDays / 7);
-      // 每周宽度 = 16px (格子3px + 间隔1px = 4px per day, 4px * 4 = 16px per week)
-      const left = weekIndex * 16 + 8; // 往右偏移8px
+      // 紧致格子宽 9px + 间距 2.5px = 11.5px/周，桌面端可完整展示 1~12 月
+      const left = weekIndex * 11.5 + 8;
       positions.push({ month: months[month], left });
     }
     
@@ -128,16 +129,16 @@ export default function LearningHeatmap({ data, year, hideTitle = false }: Learn
   }, [detectedYear, months]);
   
   return (
-    <div className="bg-white rounded-xl p-4 sm:p-5 shadow-sm">
+    <div className={seamless ? '' : 'bg-white dark:bg-[#151921] rounded-xl p-4 sm:p-5 shadow-sm border border-slate-200/70 dark:border-white/10'}>
       {!hideTitle ? (
         <div className="mb-4">
-          <h3 className="text-lg font-semibold text-gray-900">学习热力图</h3>
-          <p className="text-xs text-gray-500 mt-0.5">{detectedYear}年学习记录（点击方块可查看当日学习频次与时长）</p>
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-[#F2EDE4]">学习热力图</h3>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{detectedYear}年学习记录（点击方块可查看当日学习频次与时长）</p>
         </div>
       ) : (
-        <div className="mb-3 flex items-center justify-between text-xs text-gray-500 font-medium">
+        <div className="mb-3 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 font-medium">
           <span>{detectedYear} 年全年度打卡热力</span>
-          <span>共记录 {yearData.filter(d => d && d.count > 0).length} 天有效打卡</span>
+          <span className="tabular-nums">共记录 {yearData.filter(d => d && d.count > 0).length} 天有效打卡</span>
         </div>
       )}
       
@@ -145,10 +146,10 @@ export default function LearningHeatmap({ data, year, hideTitle = false }: Learn
         <div className="inline-block min-w-full">
           {/* 月份标签 */}
           <div className="flex mb-2 relative" style={{ height: '20px', paddingLeft: '28px' }}>
-            {monthPositions.map((pos, index) => (
+            {monthPositions.map((pos) => (
               <div
                 key={pos.month}
-                className="text-xs text-gray-600 absolute whitespace-nowrap"
+                className="text-xs text-slate-500 dark:text-slate-400 absolute whitespace-nowrap"
                 style={{ left: `${pos.left}px` }}
               >
                 {pos.month}
@@ -162,9 +163,9 @@ export default function LearningHeatmap({ data, year, hideTitle = false }: Learn
               {weekDays.map((day, index) => (
                 <div
                   key={day}
-                  className="text-xs text-gray-600 flex items-center justify-end pr-1"
+                  className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center justify-end pr-1"
                   style={{ 
-                    height: '12px',
+                    height: '11.5px',
                     visibility: index % 2 === 0 ? 'visible' : 'hidden' 
                   }}
                 >
@@ -174,7 +175,7 @@ export default function LearningHeatmap({ data, year, hideTitle = false }: Learn
             </div>
             
             {/* 热力图格子 */}
-            <div className="grid grid-flow-col gap-1" style={{ gridTemplateRows: 'repeat(7, 1fr)' }}>
+            <div className="grid grid-flow-col gap-[2.5px]" style={{ gridTemplateRows: 'repeat(7, 1fr)' }}>
               {yearData.map((day, index) => {
                 const isSelected = selectedDay && day && selectedDay.date === day.date;
                 return (
@@ -185,7 +186,7 @@ export default function LearningHeatmap({ data, year, hideTitle = false }: Learn
                         setSelectedDay(day);
                       }
                     }}
-                    className={`w-3 h-3 rounded-sm transition-all duration-150 ${
+                    className={`w-[9px] h-[9px] rounded-[2px] transition-all duration-150 ${
                       day ? getLevelColor(day.level) : ''
                     } ${
                       day
@@ -208,7 +209,7 @@ export default function LearningHeatmap({ data, year, hideTitle = false }: Learn
           </div>
           
           {/* 图例与引导说明 */}
-          <div className="flex items-center justify-between flex-wrap gap-2 mt-4 text-xs text-gray-600">
+          <div className="flex items-center justify-between flex-wrap gap-2 mt-4 text-xs text-slate-500 dark:text-slate-400">
             <div className="flex items-center gap-2">
               <span>少</span>
               <div className="flex gap-1">
@@ -222,7 +223,7 @@ export default function LearningHeatmap({ data, year, hideTitle = false }: Learn
               <span>多</span>
             </div>
 
-            <span className="text-[11px] text-gray-400">
+            <span className="text-[11px] text-slate-400 dark:text-slate-500">
               💡 提示：点击任意方块可固定查看该日打卡次数与累计时长
             </span>
           </div>

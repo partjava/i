@@ -1,6 +1,7 @@
 package com.partjava.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.partjava.entity.Note;
 import com.partjava.entity.NoteBookmark;
 import com.partjava.entity.NoteLike;
@@ -14,12 +15,22 @@ import com.partjava.event.UserActionEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -30,18 +41,21 @@ public class NoteServiceImpl implements NoteService {
     private final NoteBookmarkMapper noteBookmarkMapper;
     private final UserMapper userMapper;
     private final ApplicationEventPublisher eventPublisher;
+    private final JdbcTemplate jdbcTemplate;
 
     @Autowired
     public NoteServiceImpl(NoteMapper noteMapper,
                            NoteLikeMapper noteLikeMapper,
                            NoteBookmarkMapper noteBookmarkMapper,
                            UserMapper userMapper,
-                           ApplicationEventPublisher eventPublisher) {
+                           ApplicationEventPublisher eventPublisher,
+                           JdbcTemplate jdbcTemplate) {
         this.noteMapper = noteMapper;
         this.noteLikeMapper = noteLikeMapper;
         this.noteBookmarkMapper = noteBookmarkMapper;
         this.userMapper = userMapper;
         this.eventPublisher = eventPublisher;
+        this.jdbcTemplate = jdbcTemplate;
     }
 
     @Override
@@ -71,10 +85,145 @@ public class NoteServiceImpl implements NoteService {
             query.eq(Note::getTechnology, technology.trim());
         }
         
-        query.orderByDesc(Note::getCreatedAt);
+        query.orderByDesc(Note::getIsPinned)
+             .orderByAsc(Note::getSortOrder)
+             .orderByDesc(Note::getUpdatedAt)
+             .orderByDesc(Note::getCreatedAt);
         List<Note> list = noteMapper.selectList(query);
-        populateAuthorNames(list);
+        enrichNotes(list, userId);
         return list;
+    }
+
+    @Override
+    public void enrichNotes(List<Note> notes, Long viewerUserId) {
+        if (notes == null || notes.isEmpty()) return;
+        populateAuthorNames(notes);
+
+        List<Long> noteIds = notes.stream()
+                .map(Note::getId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+        if (noteIds.isEmpty()) return;
+
+        String placeholders = noteIds.stream().map(id -> "?").collect(Collectors.joining(","));
+        Object[] idArgs = noteIds.toArray();
+
+        Map<Long, Integer> likeCounts = queryCountMap("SELECT note_id, COUNT(*) AS cnt FROM note_likes WHERE note_id IN (" + placeholders + ") GROUP BY note_id", idArgs);
+        Map<Long, Integer> bookmarkCounts = queryCountMap("SELECT note_id, COUNT(*) AS cnt FROM note_bookmarks WHERE note_id IN (" + placeholders + ") GROUP BY note_id", idArgs);
+        Map<Long, Integer> commentCounts = queryCountMap("SELECT note_id, COUNT(*) AS cnt FROM comments WHERE note_id IN (" + placeholders + ") GROUP BY note_id", idArgs);
+
+        Set<Long> likedSet = new HashSet<>();
+        Set<Long> bookmarkedSet = new HashSet<>();
+        if (viewerUserId != null) {
+            try {
+                List<Object> params = new ArrayList<>();
+                params.add(viewerUserId);
+                params.addAll(noteIds);
+                List<Long> likedIds = jdbcTemplate.queryForList(
+                        "SELECT note_id FROM note_likes WHERE user_id = ? AND note_id IN (" + placeholders + ")",
+                        Long.class,
+                        params.toArray()
+                );
+                likedSet.addAll(likedIds);
+                List<Long> bmIds = jdbcTemplate.queryForList(
+                        "SELECT note_id FROM note_bookmarks WHERE user_id = ? AND note_id IN (" + placeholders + ")",
+                        Long.class,
+                        params.toArray()
+                );
+                bookmarkedSet.addAll(bmIds);
+            } catch (Exception e) {
+                log.debug("查询用户点赞收藏状态跳过: {}", e.getMessage());
+            }
+        }
+
+        // 批量加载子章节摘要（支持合集卡片直接展示章节列表）
+        Map<Long, List<Map<String, Object>>> childrenMap = new HashMap<>();
+        try {
+            List<Map<String, Object>> childRows = jdbcTemplate.queryForList(
+                    "SELECT id, parent_id, title, sort_order, category, is_public, author_id, updated_at " +
+                    "FROM notes WHERE parent_id IN (" + placeholders + ") ORDER BY sort_order ASC, id ASC",
+                    idArgs
+            );
+            for (Map<String, Object> row : childRows) {
+                Object pObj = row.get("parent_id");
+                if (pObj == null) continue;
+                Long pId = ((Number) pObj).longValue();
+                boolean childPublic = row.get("is_public") != null && (((row.get("is_public") instanceof Boolean b) && b)
+                        || (row.get("is_public") instanceof Number num && num.intValue() != 0));
+                Long childAuthor = row.get("author_id") != null ? ((Number) row.get("author_id")).longValue() : null;
+                if (!childPublic && (viewerUserId == null || !viewerUserId.equals(childAuthor))) {
+                    continue;
+                }
+                Map<String, Object> summary = new LinkedHashMap<>();
+                summary.put("id", row.get("id"));
+                summary.put("title", row.get("title"));
+                summary.put("sortOrder", row.get("sort_order"));
+                summary.put("category", row.get("category"));
+                summary.put("isPublic", childPublic);
+                summary.put("updatedAt", row.get("updated_at"));
+                childrenMap.computeIfAbsent(pId, k -> new ArrayList<>()).add(summary);
+            }
+        } catch (Exception e) {
+            log.debug("批量加载子章节摘要跳过: {}", e.getMessage());
+        }
+
+        // 批量加载父笔记标题（用于子笔记展示所属合集）
+        Map<Long, String> parentTitleMap = new HashMap<>();
+        List<Long> parentIds = notes.stream()
+                .map(Note::getParentId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+        if (!parentIds.isEmpty()) {
+            try {
+                List<Note> parents = noteMapper.selectBatchIds(parentIds);
+                for (Note p : parents) {
+                    if (p != null && p.getId() != null) {
+                        parentTitleMap.put(p.getId(), p.getTitle());
+                    }
+                }
+            } catch (Exception ignored) {
+            }
+        }
+
+        for (Note n : notes) {
+            if (n == null || n.getId() == null) continue;
+            n.setLikeCount(likeCounts.getOrDefault(n.getId(), 0));
+            n.setBookmarkCount(bookmarkCounts.getOrDefault(n.getId(), 0));
+            n.setCommentCount(commentCounts.getOrDefault(n.getId(), 0));
+            n.setLiked(likedSet.contains(n.getId()));
+            n.setBookmarked(bookmarkedSet.contains(n.getId()));
+            List<Map<String, Object>> childList = childrenMap.getOrDefault(n.getId(), Collections.emptyList());
+            n.setChildren(childList);
+            n.setChildCount(childList.size());
+            if (n.getParentId() != null) {
+                n.setParentTitle(parentTitleMap.get(n.getParentId()));
+            }
+            if (n.getIsPinned() == null) {
+                n.setIsPinned(false);
+            }
+            if (n.getSortOrder() == null) {
+                n.setSortOrder(0);
+            }
+        }
+    }
+
+    private Map<Long, Integer> queryCountMap(String sql, Object[] args) {
+        Map<Long, Integer> map = new HashMap<>();
+        try {
+            List<Map<String, Object>> rows = jdbcTemplate.queryForList(sql, args);
+            for (Map<String, Object> row : rows) {
+                Object idObj = row.get("note_id");
+                Object cntObj = row.get("cnt");
+                if (idObj instanceof Number idNum && cntObj instanceof Number cntNum) {
+                    map.put(idNum.longValue(), cntNum.intValue());
+                }
+            }
+        } catch (Exception e) {
+            log.debug("统计查询跳过: {}", e.getMessage());
+        }
+        return map;
     }
 
     private void populateAuthorNames(List<Note> notes) {
@@ -82,13 +231,13 @@ public class NoteServiceImpl implements NoteService {
         try {
             List<Long> authorIds = notes.stream()
                     .map(Note::getAuthorId)
-                    .filter(java.util.Objects::nonNull)
+                    .filter(Objects::nonNull)
                     .distinct()
                     .toList();
             if (authorIds.isEmpty()) return;
             List<User> authors = userMapper.selectBatchIds(authorIds);
             if (authors == null) return;
-            java.util.Map<Long, String> nameMap = new java.util.HashMap<>();
+            Map<Long, String> nameMap = new HashMap<>();
             for (User u : authors) {
                 if (u != null && u.getId() != null) {
                     String display = (u.getNickname() != null && !u.getNickname().isBlank())
@@ -121,8 +270,9 @@ public class NoteServiceImpl implements NoteService {
         boolean isPublic = Boolean.TRUE.equals(note.getIsPublic());
         boolean isOwner = userId != null && userId.equals(note.getAuthorId());
         if (!isPublic && !isOwner) {
-            throw new org.springframework.security.access.AccessDeniedException("无权查看该笔记");
+            throw new AccessDeniedException("无权查看该笔记");
         }
+        enrichNotes(List.of(note), userId);
         return note;
     }
 
@@ -130,6 +280,25 @@ public class NoteServiceImpl implements NoteService {
     @Transactional
     public Note createNote(Long userId, Note note) {
         note.setAuthorId(userId);
+        if (note.getIsPinned() == null) {
+            note.setIsPinned(false);
+        }
+        if (note.getParentId() != null) {
+            Note parent = getNoteById(note.getParentId());
+            if (!userId.equals(parent.getAuthorId())) {
+                throw new AccessDeniedException("无权向他人的笔记合集中添加子章节");
+            }
+            if (note.getSortOrder() == null) {
+                Integer maxSort = jdbcTemplate.queryForObject(
+                        "SELECT COALESCE(MAX(sort_order), -1) FROM notes WHERE parent_id = ?",
+                        Integer.class,
+                        note.getParentId()
+                );
+                note.setSortOrder((maxSort != null ? maxSort : -1) + 1);
+            }
+        } else if (note.getSortOrder() == null) {
+            note.setSortOrder(0);
+        }
         note.setCreatedAt(LocalDateTime.now());
         note.setUpdatedAt(LocalDateTime.now());
         noteMapper.insert(note);
@@ -142,6 +311,7 @@ public class NoteServiceImpl implements NoteService {
             eventPublisher.publishEvent(new UserActionEvent(this, userId.intValue(), "SHARE_NOTE", 1));
         }
         
+        enrichNotes(List.of(note), userId);
         return note;
     }
 
@@ -164,6 +334,15 @@ public class NoteServiceImpl implements NoteService {
         existing.setSubcategory(note.getSubcategory());
         existing.setTags(note.getTags());
         existing.setIsPublic(note.getIsPublic());
+        if (note.getParentId() != null) {
+            existing.setParentId(note.getParentId());
+        }
+        if (note.getSortOrder() != null) {
+            existing.setSortOrder(note.getSortOrder());
+        }
+        if (note.getIsPinned() != null) {
+            existing.setIsPinned(note.getIsPinned());
+        }
         existing.setUpdatedAt(LocalDateTime.now());
         
         noteMapper.updateById(existing);
@@ -173,6 +352,7 @@ public class NoteServiceImpl implements NoteService {
             eventPublisher.publishEvent(new UserActionEvent(this, userId.intValue(), "SHARE_NOTE", 1));
         }
         
+        enrichNotes(List.of(existing), userId);
         return existing;
     }
 
@@ -183,7 +363,205 @@ public class NoteServiceImpl implements NoteService {
         if (!existing.getAuthorId().equals(userId)) {
             throw new AccessDeniedException("您没有权限删除该随堂笔记");
         }
+        // 安全提升：如果被删除笔记下面还有子章节，将其提升为独立顶层笔记，避免连带误删内容
+        jdbcTemplate.update("UPDATE notes SET parent_id = NULL WHERE parent_id = ?", noteId);
         noteMapper.deleteById(noteId);
+    }
+
+    @Override
+    @Transactional
+    public Note moveNote(Long userId, Long noteId, Long targetParentId, boolean clearParent, String newCategory, Integer sortOrder) {
+        Note existing = getNoteById(noteId);
+        if (!userId.equals(existing.getAuthorId())) {
+            throw new AccessDeniedException("无权移动该笔记");
+        }
+
+        LambdaUpdateWrapper<Note> uw = new LambdaUpdateWrapper<Note>()
+                .eq(Note::getId, noteId)
+                .set(Note::getUpdatedAt, LocalDateTime.now());
+
+        if (clearParent) {
+            uw.set(Note::getParentId, null);
+            if (sortOrder != null) {
+                uw.set(Note::getSortOrder, sortOrder);
+            }
+        } else if (targetParentId != null) {
+            if (noteId.equals(targetParentId)) {
+                throw new IllegalArgumentException("不能将笔记移入自身");
+            }
+            Note targetParent = getNoteById(targetParentId);
+            if (!userId.equals(targetParent.getAuthorId())) {
+                throw new AccessDeniedException("只能将笔记归并到自己的笔记合集中");
+            }
+            // 循环引用防护：向上追溯 targetParent 的祖先链，禁止把祖先拖入后代
+            Long cursor = targetParent.getParentId();
+            int guard = 0;
+            while (cursor != null && guard < 20) {
+                if (noteId.equals(cursor)) {
+                    throw new IllegalArgumentException("检测到循环嵌套，无法将该合集移入其子章节下");
+                }
+                Note ancestor = noteMapper.selectById(cursor);
+                cursor = ancestor != null ? ancestor.getParentId() : null;
+                guard++;
+            }
+            uw.set(Note::getParentId, targetParentId);
+            Integer nextOrder = sortOrder;
+            if (nextOrder == null) {
+                Integer maxSort = jdbcTemplate.queryForObject(
+                        "SELECT COALESCE(MAX(sort_order), -1) FROM notes WHERE parent_id = ?",
+                        Integer.class,
+                        targetParentId
+                );
+                nextOrder = (maxSort != null ? maxSort : -1) + 1;
+            }
+            uw.set(Note::getSortOrder, nextOrder);
+        }
+
+        if (newCategory != null) {
+            uw.set(Note::getCategory, newCategory.trim());
+        }
+
+        noteMapper.update(null, uw);
+        return getNoteById(noteId, userId);
+    }
+
+    @Override
+    @Transactional
+    public void reorderChapters(Long userId, Long parentId, List<Long> orderedIds) {
+        if (orderedIds == null || orderedIds.isEmpty()) return;
+        for (int i = 0; i < orderedIds.size(); i++) {
+            Long id = orderedIds.get(i);
+            Note item = noteMapper.selectById(id);
+            if (item == null || !userId.equals(item.getAuthorId())) {
+                continue;
+            }
+            LambdaUpdateWrapper<Note> uw = new LambdaUpdateWrapper<Note>()
+                    .eq(Note::getId, id)
+                    .set(Note::getSortOrder, i)
+                    .set(Note::getUpdatedAt, LocalDateTime.now());
+            if (parentId != null && !parentId.equals(id)) {
+                uw.set(Note::getParentId, parentId);
+            }
+            noteMapper.update(null, uw);
+        }
+    }
+
+    @Override
+    @Transactional
+    public Note togglePin(Long userId, Long noteId) {
+        Note existing = getNoteById(noteId);
+        if (!userId.equals(existing.getAuthorId())) {
+            throw new AccessDeniedException("无权置顶该笔记");
+        }
+        boolean nextPinned = !Boolean.TRUE.equals(existing.getIsPinned());
+        noteMapper.update(null, new LambdaUpdateWrapper<Note>()
+                .eq(Note::getId, noteId)
+                .set(Note::getIsPinned, nextPinned));
+        return getNoteById(noteId, userId);
+    }
+
+    @Override
+    public Map<String, Object> getNoteTree(Long noteId, Long viewerUserId) {
+        Note current = getNoteById(noteId, viewerUserId);
+        // 向上寻找整本合集的根节点
+        Note root = current;
+        Set<Long> visited = new HashSet<>();
+        visited.add(root.getId());
+        int guard = 0;
+        while (root.getParentId() != null && guard < 10) {
+            if (visited.contains(root.getParentId())) break;
+            Note candidate = noteMapper.selectById(root.getParentId());
+            if (candidate == null) break;
+            boolean canSee = Boolean.TRUE.equals(candidate.getIsPublic())
+                    || (viewerUserId != null && viewerUserId.equals(candidate.getAuthorId()));
+            if (!canSee) break;
+            visited.add(candidate.getId());
+            root = candidate;
+            guard++;
+        }
+
+        // 广度遍历构建有序章节列表
+        List<Map<String, Object>> chapters = new ArrayList<>();
+        collectSubChapters(root.getId(), 1, viewerUserId, new HashSet<>(List.of(root.getId())), chapters);
+
+        Map<String, Object> rootSummary = new LinkedHashMap<>();
+        rootSummary.put("id", root.getId());
+        rootSummary.put("title", root.getTitle());
+        rootSummary.put("category", root.getCategory());
+        rootSummary.put("technology", root.getTechnology());
+        rootSummary.put("isPublic", Boolean.TRUE.equals(root.getIsPublic()));
+        rootSummary.put("authorId", root.getAuthorId());
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("root", rootSummary);
+        result.put("chapters", chapters);
+        result.put("currentId", noteId);
+        return result;
+    }
+
+    private void collectSubChapters(Long parentId, int depth, Long viewerUserId, Set<Long> seen, List<Map<String, Object>> out) {
+        if (depth > 4) return;
+        LambdaQueryWrapper<Note> q = new LambdaQueryWrapper<Note>()
+                .eq(Note::getParentId, parentId)
+                .orderByAsc(Note::getSortOrder)
+                .orderByAsc(Note::getId);
+        List<Note> kids = noteMapper.selectList(q);
+        for (Note k : kids) {
+            if (k == null || seen.contains(k.getId())) continue;
+            boolean canSee = Boolean.TRUE.equals(k.getIsPublic())
+                    || (viewerUserId != null && viewerUserId.equals(k.getAuthorId()));
+            if (!canSee) continue;
+            seen.add(k.getId());
+            Map<String, Object> row = new LinkedHashMap<>();
+            row.put("id", k.getId());
+            row.put("title", k.getTitle());
+            row.put("parentId", k.getParentId());
+            row.put("sortOrder", k.getSortOrder() != null ? k.getSortOrder() : 0);
+            row.put("depth", depth);
+            row.put("category", k.getCategory());
+            row.put("isPublic", Boolean.TRUE.equals(k.getIsPublic()));
+            row.put("updatedAt", k.getUpdatedAt());
+            out.add(row);
+            collectSubChapters(k.getId(), depth + 1, viewerUserId, seen, out);
+        }
+    }
+
+    @Override
+    public List<Map<String, Object>> getBacklinks(Long noteId, Long viewerUserId) {
+        Note target = getNoteById(noteId, viewerUserId);
+        if (target.getTitle() == null || target.getTitle().isBlank()) {
+            return List.of();
+        }
+        String linkPattern = "[[" + target.getTitle().trim() + "]]";
+        LambdaQueryWrapper<Note> q = new LambdaQueryWrapper<Note>()
+                .ne(Note::getId, noteId)
+                .like(Note::getContent, linkPattern);
+        if (viewerUserId != null) {
+            q.and(w -> w.eq(Note::getIsPublic, true).or().eq(Note::getAuthorId, viewerUserId));
+        } else {
+            q.eq(Note::getIsPublic, true);
+        }
+        q.orderByDesc(Note::getUpdatedAt);
+        List<Note> refs = noteMapper.selectList(q);
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (Note r : refs) {
+            Map<String, Object> item = new LinkedHashMap<>();
+            item.put("id", r.getId());
+            item.put("title", r.getTitle());
+            item.put("category", r.getCategory());
+            item.put("updatedAt", r.getUpdatedAt());
+            String content = r.getContent() != null ? r.getContent() : "";
+            int idx = content.indexOf(linkPattern);
+            if (idx >= 0) {
+                int start = Math.max(0, idx - 32);
+                int end = Math.min(content.length(), idx + linkPattern.length() + 48);
+                item.put("excerpt", content.substring(start, end).replaceAll("[\\r\\n]+", " ").trim());
+            } else {
+                item.put("excerpt", "");
+            }
+            result.add(item);
+        }
+        return result;
     }
 
     @Override

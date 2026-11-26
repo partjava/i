@@ -8,9 +8,10 @@ import { FullscreenOutlined, FullscreenExitOutlined } from '@ant-design/icons';
 interface DataVisualizationProps {
   stats: any;
   isGuest: boolean;
+  hideFullscreenButton?: boolean;
 }
 
-export default function DataVisualization({ stats, isGuest }: DataVisualizationProps) {
+export default function DataVisualization({ stats, isGuest, hideFullscreenButton = false }: DataVisualizationProps) {
   const [fullscreen, setFullscreen] = useState(false);
   const [isDark, setIsDark] = useState(false);
 
@@ -126,6 +127,9 @@ export default function DataVisualization({ stats, isGuest }: DataVisualizationP
     tooltip: {
       trigger: 'axis',
       axisPointer: { type: 'cross' },
+      backgroundColor: isDark ? 'rgba(21, 25, 33, 0.95)' : 'rgba(255, 255, 255, 0.96)',
+      borderColor: isDark ? 'rgba(212, 173, 114, 0.30)' : 'rgba(27, 59, 111, 0.14)',
+      textStyle: { color: isDark ? '#F2EDE4' : '#0F1D33' },
       formatter: (params: any) => {
         let result = `${params[0].axisValue}<br/>`;
         params.forEach((param: any) => {
@@ -190,28 +194,30 @@ export default function DataVisualization({ stats, isGuest }: DataVisualizationP
         name: '学习时长',
         type: 'line',
         smooth: true,
+        symbolSize: 6,
         data: weeklyData.map((d: any) => d.studyTime),
+        lineStyle: { width: 2.5, color: isDark ? '#60A5FA' : '#1B3B6F' },
         areaStyle: {
           color: {
             type: 'linear',
             x: 0, y: 0, x2: 0, y2: 1,
             colorStops: [
-              { offset: 0, color: 'rgba(59, 130, 246, 0.5)' },
-              { offset: 1, color: 'rgba(59, 130, 246, 0.1)' }
+              { offset: 0, color: isDark ? 'rgba(96, 165, 250, 0.34)' : 'rgba(27, 59, 111, 0.26)' },
+              { offset: 1, color: isDark ? 'rgba(96, 165, 250, 0.02)' : 'rgba(27, 59, 111, 0.02)' }
             ]
           }
         },
-        itemStyle: { color: '#3b82f6' }
+        itemStyle: { color: isDark ? '#60A5FA' : '#1B3B6F' }
       },
       {
         name: '笔记数量',
         type: 'bar',
         yAxisIndex: 1,
-        barMaxWidth: 20,
+        barMaxWidth: 16,
         data: weeklyData.map((d: any) => d.notes),
         itemStyle: { 
-          color: '#10b981',
-          borderRadius: [4, 4, 0, 0]
+          color: '#D4AD72',
+          borderRadius: [5, 5, 0, 0]
         }
       }
     ]
@@ -222,19 +228,23 @@ export default function DataVisualization({ stats, isGuest }: DataVisualizationP
     title: {
       text: '技能雷达图',
       left: 'center',
-      textStyle: { fontSize: 16, color: isDark ? '#F2EDE4' : '#0F1D33' }
+      textStyle: { fontSize: 16, fontWeight: 'bold', color: isDark ? '#F2EDE4' : '#0F1D33' }
     },
-    tooltip: {},
+    tooltip: {
+      backgroundColor: isDark ? 'rgba(21, 25, 33, 0.95)' : 'rgba(255, 255, 255, 0.96)',
+      borderColor: isDark ? 'rgba(212, 173, 114, 0.30)' : 'rgba(27, 59, 111, 0.14)',
+      textStyle: { color: isDark ? '#F2EDE4' : '#0F1D33' }
+    },
     radar: {
       indicator: skillData.map((s: any) => ({ name: s.skill, max: 100 })),
-      axisName: { color: isDark ? '#C5CBD6' : '#475569' },
-      splitLine: { lineStyle: { color: isDark ? 'rgba(255,255,255,0.12)' : '#e2e8f0' } },
-      axisLine: { lineStyle: { color: isDark ? 'rgba(255,255,255,0.14)' : '#cbd5e1' } },
+      axisName: { color: isDark ? '#C5CBD6' : '#475569', fontSize: 12 },
+      splitLine: { lineStyle: { color: isDark ? 'rgba(255,255,255,0.10)' : '#e2e8f0' } },
+      axisLine: { lineStyle: { color: isDark ? 'rgba(255,255,255,0.12)' : '#cbd5e1' } },
       splitArea: {
         areaStyle: {
           color: isDark
-            ? ['rgba(255, 255, 255, 0.02)', 'rgba(255, 255, 255, 0.05)']
-            : ['rgba(114, 172, 209, 0.2)', 'rgba(114, 172, 209, 0.4)']
+            ? ['rgba(255, 255, 255, 0.01)', 'rgba(212, 173, 114, 0.04)']
+            : ['rgba(27, 59, 111, 0.03)', 'rgba(27, 59, 111, 0.07)']
         }
       }
     },
@@ -245,9 +255,9 @@ export default function DataVisualization({ stats, isGuest }: DataVisualizationP
           {
             value: skillData.map((s: any) => s.level),
             name: '技能水平',
-            areaStyle: { color: 'rgba(139, 92, 246, 0.3)' },
-            itemStyle: { color: '#8b5cf6' },
-            lineStyle: { color: '#8b5cf6', width: 2 }
+            areaStyle: { color: isDark ? 'rgba(212, 173, 114, 0.28)' : 'rgba(27, 59, 111, 0.22)' },
+            itemStyle: { color: isDark ? '#D4AD72' : '#1B3B6F' },
+            lineStyle: { color: isDark ? '#D4AD72' : '#1B3B6F', width: 2.2 }
           }
         ]
       }
@@ -259,10 +269,13 @@ export default function DataVisualization({ stats, isGuest }: DataVisualizationP
     title: {
       text: '笔记分类分布',
       left: 'center',
-      textStyle: { fontSize: 16, color: isDark ? '#F2EDE4' : '#0F1D33' }
+      textStyle: { fontSize: 16, fontWeight: 'bold', color: isDark ? '#F2EDE4' : '#0F1D33' }
     },
     tooltip: {
       trigger: 'item',
+      backgroundColor: isDark ? 'rgba(21, 25, 33, 0.95)' : 'rgba(255, 255, 255, 0.96)',
+      borderColor: isDark ? 'rgba(212, 173, 114, 0.30)' : 'rgba(27, 59, 111, 0.14)',
+      textStyle: { color: isDark ? '#F2EDE4' : '#0F1D33' },
       formatter: '{a} <br/>{b}: {c} ({d}%)'
     },
     legend: {
@@ -275,10 +288,10 @@ export default function DataVisualization({ stats, isGuest }: DataVisualizationP
       {
         name: '笔记分类',
         type: 'pie',
-        radius: ['40%', '70%'],
+        radius: ['44%', '72%'],
         avoidLabelOverlap: false,
         itemStyle: {
-          borderRadius: 10,
+          borderRadius: 8,
           borderColor: isDark ? '#151921' : '#ffffff',
           borderWidth: 2
         },
@@ -287,12 +300,13 @@ export default function DataVisualization({ stats, isGuest }: DataVisualizationP
           label: {
             show: true,
             fontSize: 16,
-            fontWeight: 'bold'
+            fontWeight: 'bold',
+            color: isDark ? '#F2EDE4' : '#0F1D33'
           }
         },
         labelLine: { show: false },
         data: categoryData,
-        color: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6']
+        color: ['#1B3B6F', '#D4AD72', '#10B981', '#6366F1', '#E07A5F']
       }
     ]
   });
@@ -307,16 +321,19 @@ export default function DataVisualization({ stats, isGuest }: DataVisualizationP
   };
 
   return (
-    <div className="mt-8">
-      <div className="flex justify-end mb-4">
-        <Button
-          type="primary"
-          icon={fullscreen ? <FullscreenExitOutlined /> : <FullscreenOutlined />}
-          onClick={toggleFullscreen}
-        >
-          {fullscreen ? '退出全屏' : '全屏展示'}
-        </Button>
-      </div>
+    <div>
+      {!hideFullscreenButton && (
+        <div className="flex justify-end mb-4">
+          <Button
+            type="default"
+            icon={fullscreen ? <FullscreenExitOutlined /> : <FullscreenOutlined />}
+            onClick={toggleFullscreen}
+            className="rounded-xl border-slate-200 dark:border-white/15 bg-white dark:bg-[#1E2430] text-slate-700 dark:text-[#F2EDE4] hover:border-[#D4AD72]"
+          >
+            {fullscreen ? '退出全屏' : '全屏展示'}
+          </Button>
+        </div>
+      )}
 
       <Row gutter={[16, 16]}>
         {/* 学习时长趋势图 */}

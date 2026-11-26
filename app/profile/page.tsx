@@ -36,14 +36,16 @@ import {
   CommentOutlined,
   FireOutlined,
   ClockCircleOutlined,
-  BarChartOutlined
+  BarChartOutlined,
+  FullscreenOutlined,
+  FullscreenExitOutlined
 } from '@ant-design/icons';
 import LearningHeatmap from '@shared/components/LearningHeatmap';
 import DataVisualization from '@shared/components/DataVisualization';
 import SiteFooter from '@shared/components/SiteFooter';
 import AchievementCard from '@shared/components/AchievementCard';
 import EyePet from '@shared/components/EyePet';
-import { ShieldCheck } from 'lucide-react';
+import { ShieldCheck, ArrowUpRight, Layers } from 'lucide-react';
 import AchievementsSection from './components/AchievementsSection';
 import RecentActivityTimeline from './components/RecentActivityTimeline';
 import type { Achievement as AchievementType } from '@shared/types/achievement';
@@ -124,7 +126,31 @@ export default function ProfilePage() {
   const [isGuest, setIsGuest] = useState(false);
   const [showAllAch, setShowAllAch] = useState(false);
   const [showTotalMinutes, setShowTotalMinutes] = useState(false);
+  const [activeTab, setActiveTab] = useState<'analytics' | 'achievements' | 'activity' | 'all'>('analytics');
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const timeToggleTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    const onFullscreenChange = () => {
+      if (typeof document !== 'undefined') {
+        setIsFullscreen(Boolean(document.fullscreenElement));
+      }
+    };
+    document.addEventListener('fullscreenchange', onFullscreenChange);
+    return () => {
+      document.removeEventListener('fullscreenchange', onFullscreenChange);
+    };
+  }, []);
+
+  const toggleFullscreen = async () => {
+    try {
+      if (!document.fullscreenElement) {
+        await document.documentElement.requestFullscreen();
+      } else {
+        await document.exitFullscreen();
+      }
+    } catch {}
+  };
 
   useEffect(() => {
     return () => {
@@ -740,18 +766,23 @@ export default function ProfilePage() {
 
   const achievementSummary = getAchievementSummary(achievements, stats?.achievements);
 
-  if (status === 'loading') {
+  if (status === 'loading' || (statsLoading && !isGuest)) {
     return (
-      <div className="flex justify-center items-center h-screen">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-500"></div>
-      </div>
-    );
-  }
-
-  if (statsLoading && !isGuest) {
-    return (
-      <div className="flex justify-center items-center h-screen">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-500"></div>
+      <div className={`${styles.page} min-h-[calc(100vh-70px)] bg-surface-page pt-3`}>
+        <div className={styles.shell}>
+          <div className="space-y-5 animate-pulse">
+            <div className="h-64 rounded-[20px] bg-slate-200/80 dark:bg-[#151921] border border-slate-200/60 dark:border-white/10" />
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {[0, 1, 2, 3].map((i) => (
+                <div key={i} className="h-32 rounded-[18px] bg-slate-200/75 dark:bg-[#151921] border border-slate-200/60 dark:border-white/10" />
+              ))}
+            </div>
+            <div className="grid grid-cols-1 xl:grid-cols-12 gap-5">
+              <div className="xl:col-span-5 h-80 rounded-[20px] bg-slate-200/75 dark:bg-[#151921] border border-slate-200/60 dark:border-white/10" />
+              <div className="xl:col-span-7 h-80 rounded-[20px] bg-slate-200/75 dark:bg-[#151921] border border-slate-200/60 dark:border-white/10" />
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -760,63 +791,53 @@ export default function ProfilePage() {
   return (
     <div className={`${styles.page} min-h-[calc(100vh-70px)] bg-surface-page pt-3 flex flex-col`}>
       <div className="flex-1 w-full">
-      {/* 未登录提示横幅 */}
+      <div className={styles.shell}>
+      {/* 未登录提示胶囊（轻盈融入主容器，避免双层深蓝砖块堆叠） */}
       {isGuest && (
-        <div className="bg-gradient-to-r from-[#0F1D33] to-[#1B3B6F] text-white py-4 px-6 shadow-md">
-          <div className="max-w-4xl mx-auto flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-white/15 border border-white/20 rounded-full flex items-center justify-center">
-                <BarChartOutlined className="text-xl" />
-              </div>
-              <div>
-                <p className="font-semibold text-lg">
-                  {(stats?.notes?.total || 0) > 0 ? '平台数据总览' : '功能演示'}
-                </p>
-                <p className="text-sm opacity-90">
-                  {(stats?.notes?.total || 0) > 0 
-                    ? '展示所有用户的学习数据汇总 · 登录后查看您的个人学习统计'
-                    : '这是示例数据，展示平台的学习追踪功能 · 注册登录开始记录您的学习历程'
-                  }
-                </p>
-              </div>
+        <div className={`${styles.revealItem} mb-4 rounded-2xl border border-[#1B3B6F]/15 dark:border-[#D4AD72]/25 bg-[#1B3B6F]/[0.05] dark:bg-[#D4AD72]/[0.08] px-4 sm:px-5 py-3 flex flex-wrap items-center justify-between gap-3`}>
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-9 h-9 rounded-xl bg-[#1B3B6F]/10 dark:bg-[#D4AD72]/15 text-[#1B3B6F] dark:text-[#D4AD72] flex items-center justify-center shrink-0">
+              <BarChartOutlined className="text-base" />
             </div>
-            <Button 
-              type="default"
-              size="large"
-              onClick={() => router.push('/auth/login')}
-              className="bg-surface-raised text-content-secondary border-0 hover:bg-surface-page font-semibold px-6"
-            >
-              立即登录
-            </Button>
+            <div className="min-w-0">
+              <p className="font-semibold text-sm text-[#0F1D33] dark:text-[#F2EDE4] mb-0">
+                {(stats?.notes?.total || 0) > 0 ? '平台数据总览' : '功能演示'}
+              </p>
+              <p className="text-xs text-slate-600 dark:text-slate-300 mb-0">
+                {(stats?.notes?.total || 0) > 0 
+                  ? '展示所有用户的学习数据汇总 · 登录后即可查看您的个人学习统计'
+                  : '当前为示例数据，展示平台的学习追踪与分析功能 · 注册登录后记录个人学习历程'
+                }
+              </p>
+            </div>
           </div>
+          <Button 
+            type="primary"
+            size="middle"
+            onClick={() => router.push('/auth/login')}
+            style={{ backgroundColor: '#1B3B6F', borderColor: 'rgba(212, 173, 114, 0.45)' }}
+            className="rounded-xl font-semibold px-5 text-white hover:opacity-95 shrink-0"
+          >
+            立即登录
+          </Button>
         </div>
       )}
-      
-      <div className={styles.shell}>
-        {/* 主要个人信息卡片 - 作为页面头部 */}
+
+        {/* 主要个人信息卡片 - 深墨青质感名片（1A） */}
         <Card 
-          className={`${styles.hero} mb-6 border-0 overflow-visible`}
+          className={`${styles.hero} ${styles.revealItem} mb-6 border-0 overflow-hidden`}
           style={{
-            background: 'linear-gradient(135deg, #0F1D33 0%, #1B3B6F 100%)',
+            background: 'linear-gradient(135deg, #0D1B30 0%, #16315D 58%, #1B3B6F 100%)',
             color: 'white'
           }}
         >
           <div className="relative">
-            {/* 装饰性背景图案 */}
-            <div className="absolute top-0 right-0 w-40 h-40 opacity-10">
-              <svg viewBox="0 0 100 100" className="w-full h-full">
-                <circle cx="50" cy="50" r="40" fill="currentColor" />
-                <circle cx="30" cy="30" r="20" fill="currentColor" />
-                <circle cx="70" cy="70" r="15" fill="currentColor" />
-              </svg>
-            </div>
-            
             <div className="relative z-10 flex flex-col lg:flex-row items-center lg:items-center justify-between gap-8">
               <div className={`${styles.identity} flex-1 min-w-0 w-full`}>
               {/* 头像区域 */}
               <div className={styles.avatar}>
                 <div className="relative inline-block">
-                  <div className="w-32 h-32 mx-auto mb-4 rounded-full border-4 border-white shadow-2xl overflow-hidden bg-transparent">
+                  <div className="w-30 h-30 sm:w-32 sm:h-32 mx-auto mb-4 rounded-full border-[3px] border-[#D4AD72]/75 ring-4 ring-white/10 shadow-2xl overflow-hidden bg-[#0F1D33]/60">
                     <Avatar
                       size={120}
                       style={{ backgroundColor: 'transparent' }}
@@ -826,7 +847,7 @@ export default function ProfilePage() {
                     />
                   </div>
                   {editMode && !isGuest && (
-                    <div className="absolute bottom-2 right-2">
+                    <div className="absolute bottom-1 right-1">
                       <input
                         ref={fileInputRef}
                         type="file"
@@ -841,7 +862,7 @@ export default function ProfilePage() {
                         icon={<EditOutlined />}
                         loading={uploading}
                         disabled={saving}
-                        className="shadow-lg bg-surface-raised text-content-secondary border-0 hover:bg-surface-page"
+                        className="shadow-lg bg-[#D4AD72] text-[#0F1D33] border-2 border-[#0F1D33] hover:opacity-90"
                         onClick={() => fileInputRef.current?.click()}
                       />
                     </div>
@@ -851,17 +872,17 @@ export default function ProfilePage() {
               
               {/* 用户信息 */}
               <div className={styles.details}>
-                <div className="flex items-center justify-center gap-3 mb-1">
-                  <Title level={1} className="mb-0" style={{ color: 'white', margin: 0, fontSize: '2.5rem' }}>
+                <div className="flex items-center justify-center gap-3 mb-1.5">
+                  <Title level={1} className="mb-0" style={{ color: '#F7F4EE', margin: 0, fontSize: '2.25rem' }}>
                     {profileForm.name || session?.user?.name || '未设置用户名'}
                   </Title>
                   {isGuest && (stats?.notes?.total || 0) > 0 && (
-                    <span className="px-3 py-1 bg-white/15 border border-white/25 text-white rounded-full text-sm font-semibold">
+                    <span className="px-2.5 py-0.5 bg-white/12 border border-white/20 text-[#F2EDE4] rounded-full text-xs font-semibold backdrop-blur-xs">
                       平台数据
                     </span>
                   )}
                   {isGuest && (stats?.notes?.total || 0) === 0 && (
-                    <span className="px-3 py-1 bg-yellow-400 bg-opacity-30 rounded-full text-sm font-semibold">
+                    <span className="px-2.5 py-0.5 bg-[#D4AD72]/20 border border-[#D4AD72]/45 text-[#F6DFAF] rounded-full text-xs font-semibold">
                       演示数据
                     </span>
                   )}
@@ -869,7 +890,7 @@ export default function ProfilePage() {
 
                 {/* 登录账户展示 */}
                 {profileForm.username && (
-                  <div className="text-[#D4AD72] font-mono text-base opacity-95 mb-3 flex items-center justify-center gap-1 font-semibold">
+                  <div className="text-[#D4AD72] font-mono text-sm opacity-95 mb-2.5 flex items-center justify-center gap-0.5 font-semibold">
                     <span>@</span>
                     <span>{profileForm.username}</span>
                   </div>
@@ -879,9 +900,9 @@ export default function ProfilePage() {
                 {profileForm.vip && profileForm.vipLevel && profileForm.vipLevel > 0 && (() => {
                   const badges = [
                     null,
-                    { emoji: '👑', label: '体验会员', color: 'from-yellow-600 to-yellow-400', glow: 'shadow-yellow-500/40' },
-                    { emoji: '🌟', label: '进阶会员', color: 'from-purple-600 to-cyan-400', glow: 'shadow-purple-500/40' },
-                    { emoji: '🔥', label: '永久共创者', color: 'from-red-500 to-orange-400', glow: 'shadow-orange-500/40' },
+                    { emoji: '👑', label: '体验会员', color: 'from-[#B88E52] to-[#D4AD72]', glow: 'shadow-amber-500/30' },
+                    { emoji: '🌟', label: '进阶会员', color: 'from-[#6366F1] to-[#38BDF8]', glow: 'shadow-indigo-500/30' },
+                    { emoji: '🔥', label: '永久共创者', color: 'from-[#D4AD72] via-[#F59E0B] to-[#E07A5F]', glow: 'shadow-amber-500/35' },
                   ];
                   const badge = badges[profileForm.vipLevel];
                   const expireText = profileForm.vipLevel === 3
@@ -890,13 +911,13 @@ export default function ProfilePage() {
                       ? `有效至 ${new Date(profileForm.vipExpireTime).toLocaleDateString('zh-CN')}`
                       : '';
                   return badge ? (
-                    <div className="flex flex-col items-center gap-1 mb-3">
-                      <div className={`inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-gradient-to-r ${badge.color} shadow-lg ${badge.glow} text-white text-sm font-bold`}>
+                    <div className="flex flex-wrap items-center gap-2 mb-2.5">
+                      <div className={`inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-gradient-to-r ${badge.color} shadow-md ${badge.glow} text-white text-xs font-bold`}>
                         <span>{badge.emoji}</span>
                         <span>{badge.label}</span>
                       </div>
                       {expireText && (
-                        <span className="text-xs text-slate-400">{expireText}</span>
+                        <span className="text-xs text-slate-300/80">{expireText}</span>
                       )}
                     </div>
                   ) : null;
@@ -904,7 +925,7 @@ export default function ProfilePage() {
                 
                 {/* 职位和公司 */}
                 {(profileForm.jobTitle || profileForm.company) && (
-                  <Text className="block mb-2 text-lg opacity-90" style={{ color: 'white' }}>
+                  <Text className="block mb-1.5 text-base opacity-90" style={{ color: '#E8EDF5' }}>
                     {profileForm.jobTitle && <span>{profileForm.jobTitle}</span>}
                     {profileForm.jobTitle && profileForm.company && <span> @ </span>}
                     {profileForm.company && <span>{profileForm.company}</span>}
@@ -912,24 +933,24 @@ export default function ProfilePage() {
                 )}
                 
                 {!isGuest && session?.user?.email && (
-                  <Text className="block mb-4 text-base opacity-80" style={{ color: 'white' }}>
+                  <Text className="block mb-3 text-sm opacity-75 font-mono" style={{ color: '#CBD5E1' }}>
                     {session.user.email}
                   </Text>
                 )}
                 
                 {profileForm.bio && (
-                  <Paragraph className="mb-6 text-lg opacity-90 max-w-2xl mx-auto" style={{ color: 'white' }}>
+                  <Paragraph className="mb-6 text-sm sm:text-[15px] max-w-2xl mx-auto leading-relaxed" style={{ color: 'rgba(236, 241, 248, 0.86)' }}>
                     {profileForm.bio}
                   </Paragraph>
                 )}
 
                 {/* 个人信息标签 */}
-                <div className="flex flex-wrap justify-center gap-3 mb-8">
+                <div className="flex flex-wrap justify-center gap-2.5 mb-5">
                   {profileForm.location && (
                     <Tag 
                       icon={<EnvironmentOutlined />} 
-                      style={{ backgroundColor: 'rgba(255, 255, 255, 0.15)', color: '#ffffff', borderColor: 'rgba(255, 255, 255, 0.25)', padding: '6px 16px', height: 'auto', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
-                      className="text-base"
+                      style={{ backgroundColor: 'rgba(255, 255, 255, 0.11)', color: '#F2EDE4', borderColor: 'rgba(255, 255, 255, 0.22)', padding: '4px 12px', height: 'auto', display: 'inline-flex', alignItems: 'center', gap: '5px' }}
+                      className="text-xs sm:text-sm m-0"
                     >
                       {profileForm.location}
                     </Tag>
@@ -937,8 +958,8 @@ export default function ProfilePage() {
                   {profileForm.github && (
                     <Tag 
                       icon={<GithubOutlined />} 
-                      style={{ backgroundColor: 'rgba(255, 255, 255, 0.15)', color: '#ffffff', borderColor: 'rgba(255, 255, 255, 0.25)', padding: '6px 16px', height: 'auto', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
-                      className="text-base cursor-pointer hover:bg-white/25 transition-colors"
+                      style={{ backgroundColor: 'rgba(255, 255, 255, 0.11)', color: '#F2EDE4', borderColor: 'rgba(255, 255, 255, 0.22)', padding: '4px 12px', height: 'auto', display: 'inline-flex', alignItems: 'center', gap: '5px' }}
+                      className="text-xs sm:text-sm cursor-pointer hover:bg-white/20 transition-colors m-0"
                       onClick={() => window.open(`https://github.com/${profileForm.github}`, '_blank')}
                     >
                       {profileForm.github}
@@ -947,8 +968,8 @@ export default function ProfilePage() {
                   {profileForm.website && (
                     <Tag 
                       icon={<GlobalOutlined />} 
-                      style={{ backgroundColor: 'rgba(255, 255, 255, 0.15)', color: '#ffffff', borderColor: 'rgba(255, 255, 255, 0.25)', padding: '6px 16px', height: 'auto', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
-                      className="text-base cursor-pointer hover:bg-white/25 transition-colors"
+                      style={{ backgroundColor: 'rgba(255, 255, 255, 0.11)', color: '#F2EDE4', borderColor: 'rgba(255, 255, 255, 0.22)', padding: '4px 12px', height: 'auto', display: 'inline-flex', alignItems: 'center', gap: '5px' }}
+                      className="text-xs sm:text-sm cursor-pointer hover:bg-white/20 transition-colors m-0"
                       onClick={() => window.open(profileForm.website, '_blank')}
                     >
                       个人网站
@@ -956,89 +977,74 @@ export default function ProfilePage() {
                   )}
                 </div>
                 
-                {/* 技能标签 */}
+                {/* 技能标签（统一磨砂质感胶囊，收束彩虹杂色） */}
                 {profileForm.skills && profileForm.skills.length > 0 && (
-                  <div className="flex flex-wrap justify-center gap-2 mb-6">
-                    {profileForm.skills.map((skill: string, index: number) => {
-                      const colors = ['#f5222d','#fa541c','#fa8c16','#faad14','#52c41a','#13c2c2','#1677ff','#722ed1','#eb2f96','#2f54eb','#08979c'];
-                      return (
-                        <Tag 
-                          key={index}
-                          style={{ backgroundColor: colors[index % colors.length], color: '#fff', border: 'none' }}
-                          className="text-sm px-3 py-1"
-                        >
-                          {skill}
-                        </Tag>
-                      );
-                    })}
+                  <div className="flex flex-wrap justify-center gap-1.5 mb-5">
+                    {profileForm.skills.map((skill: string, index: number) => (
+                      <span
+                        key={index}
+                        className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-white/10 border border-[#D4AD72]/30 text-[#F7F4EE] backdrop-blur-xs hover:bg-white/18 transition-colors"
+                      >
+                        {skill}
+                      </span>
+                    ))}
                   </div>
                 )}
 
                 {/* 操作按钮 */}
-                <Space size="middle" wrap>
-                  {!isGuest ? (
-                    <>
-                      <Button 
-                        type="default"
-                        size="large"
-                        icon={<EditOutlined />}
-                        disabled={saving || uploading || refreshing}
-                        onClick={() => {
-                          if (editMode) form.setFieldsValue(profileForm);
-                          setEditMode(!editMode);
-                        }}
-                        style={{ backgroundColor: 'rgba(255, 255, 255, 0.15)', color: '#ffffff', borderColor: 'rgba(255, 255, 255, 0.25)' }}
-                        className="hover:bg-white/25 hover:text-white hover:border-white/40 px-6 py-2 h-auto"
-                      >
-                        {editMode ? '取消编辑' : '编辑资料'}
-                      </Button>
-                      <Button 
-                        type="default"
-                        size="large"
-                        icon={<svg viewBox="0 0 24 24" className="w-5 h-5 inline-block" fill="none" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                        </svg>}
-                        onClick={() => refreshData(true)}
-                        loading={refreshing}
-                        disabled={editMode || saving || uploading}
-                        style={{ backgroundColor: 'rgba(99, 102, 241, 0.25)', color: '#ffffff', borderColor: 'rgba(99, 102, 241, 0.35)' }}
-                        className="hover:bg-indigo-600/30 hover:text-white hover:border-indigo-400/40 px-6 py-2 h-auto"
-                      >
-                        刷新数据
-                      </Button>
-                      <Button 
-                        danger 
-                        size="large"
-                        onClick={handleSignOut}
-                        style={{ backgroundColor: 'rgba(239, 68, 68, 0.2)', color: '#ef4444', borderColor: 'rgba(239, 68, 68, 0.35)' }}
-                        className="hover:bg-red-600/30 hover:text-red-400 hover:border-red-400/40 px-6 py-2 h-auto"
-                      >
-                        退出登录
-                      </Button>
-                    </>
-                  ) : (
+                {!isGuest && (
+                  <Space size="middle" wrap>
                     <Button 
                       type="default"
                       size="large"
-                      onClick={() => router.push('/auth/login')}
-                      className="bg-surface-raised text-brand-primary border-0 hover:bg-surface-page px-8 py-2 h-auto font-semibold"
+                      icon={<EditOutlined />}
+                      disabled={saving || uploading || refreshing}
+                      onClick={() => {
+                        if (editMode) form.setFieldsValue(profileForm);
+                        setEditMode(!editMode);
+                      }}
+                      style={{ backgroundColor: editMode ? '#D4AD72' : 'rgba(255, 255, 255, 0.14)', color: editMode ? '#0F1D33' : '#ffffff', borderColor: editMode ? '#D4AD72' : 'rgba(255, 255, 255, 0.24)' }}
+                      className="hover:opacity-95 px-5 py-2 h-auto font-medium"
                     >
-                      登录查看真实数据
+                      {editMode ? '收起编辑' : '编辑资料'}
                     </Button>
-                  )}
-                </Space>
+                    <Button 
+                      type="default"
+                      size="large"
+                      icon={<svg viewBox="0 0 24 24" className="w-4 h-4 inline-block" fill="none" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                      </svg>}
+                      onClick={() => refreshData(true)}
+                      loading={refreshing}
+                      disabled={editMode || saving || uploading}
+                      style={{ backgroundColor: 'rgba(212, 173, 114, 0.18)', color: '#F6DFAF', borderColor: 'rgba(212, 173, 114, 0.35)' }}
+                      className="hover:bg-[#D4AD72]/30 px-5 py-2 h-auto font-medium"
+                    >
+                      刷新数据
+                    </Button>
+                    <Button 
+                      danger 
+                      size="large"
+                      onClick={handleSignOut}
+                      style={{ backgroundColor: 'rgba(239, 68, 68, 0.16)', color: '#FCA5A5', borderColor: 'rgba(239, 68, 68, 0.32)' }}
+                      className="hover:bg-red-500/25 hover:text-red-200 px-5 py-2 h-auto font-medium"
+                    >
+                      退出登录
+                    </Button>
+                  </Space>
+                )}
               </div>
             </div>
 
-            {/* 右侧：禾硙灵宠伴学互动舞台 */}
+            {/* 右侧：禾硙灵宠伴学互动舞台（通透磨砂玻璃舱，自然融入名片，不再惨白贴纸） */}
             <div className="hidden lg:flex flex-col items-center justify-center flex-shrink-0 self-center my-auto">
-              <div className="relative flex flex-col items-center justify-center bg-white/95 backdrop-blur-md pt-9 pb-4 px-6 rounded-3xl border border-white/60 shadow-[0_12px_36px_rgba(15,23,42,0.22)] hover:shadow-[0_16px_40px_rgba(15,23,42,0.3)] transition-all select-none">
-                <div className="absolute top-3 left-4 flex items-center gap-1.5 text-[11px] font-mono text-slate-500">
-                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
-                  <span>禾硙安全守卫中</span>
+              <div className="relative flex flex-col items-center justify-center bg-white/[0.08] backdrop-blur-md pt-9 pb-3 px-5 rounded-3xl border border-white/[0.18] shadow-[0_14px_38px_rgba(6,13,26,0.34)] hover:border-[#D4AD72]/45 transition-all select-none">
+                <div className="absolute top-3 left-4 flex items-center gap-1.5 text-[11px] font-mono text-[#F2EDE4]/85">
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>禾硙伴学守卫中</span>
                 </div>
-                <div className="absolute top-3 right-4 text-[11px] text-[#1B3B6F] font-medium">
-                  眼神实时跟随
+                <div className="absolute top-3 right-4 text-[11px] text-[#D4AD72] font-medium">
+                  眼神跟随
                 </div>
                 <div className="mt-2">
                   <EyePet 
@@ -1051,26 +1057,31 @@ export default function ProfilePage() {
           </div>
         </Card>
 
-        {editMode && !isGuest ? (
-          /* 编辑模式 - 仅登录用户可用 */
+        {/* 编辑资料嵌入式面板（展开时保留下方全部学习统计，不再割裂隐藏） */}
+        {editMode && !isGuest && (
           <Card 
             title={
-              <div className="flex items-center text-xl">
-                <EditOutlined className="mr-3 text-blue-500" />
-                <span>编辑个人资料</span>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center text-lg font-semibold">
+                  <EditOutlined className="mr-2.5 text-[#1B3B6F] dark:text-[#D4AD72]" />
+                  <span>编辑个人资料</span>
+                </div>
+                <span className="text-xs font-normal text-slate-500 dark:text-slate-400">
+                  修改后即时同步全站个人名片
+                </span>
               </div>
             }
-            className="shadow-lg border-0"
+            className={`${styles.revealItem} mb-6 border-0`}
           >
             <Form
               form={form}
               layout="vertical"
               onFinish={handleFormSubmit}
               initialValues={profileForm}
-              className="max-w-2xl mx-auto"
+              className="max-w-3xl mx-auto"
             >
               <Form.Item
-                label={<span className="text-base font-semibold">登录账号 (5~16位字母、数字或下划线)</span>}
+                label={<span className="text-sm font-semibold">登录账号 (5~16位字母、数字或下划线)</span>}
                 name="username"
                 rules={[
                   { required: true, message: '请输入登录账号' },
@@ -1081,174 +1092,203 @@ export default function ProfilePage() {
                   placeholder="请输入 5~16 位登录账号" 
                   maxLength={16}
                   size="large"
-                  className="rounded-lg font-sans"
+                  className="rounded-xl font-sans"
                 />
               </Form.Item>
 
               <Form.Item
-                label={<span className="text-base font-semibold">显示名称</span>}
+                label={<span className="text-sm font-semibold">显示名称</span>}
                 name="name"
                 rules={[{ required: true, message: '请输入显示名称' }]}
               >
                 <Input 
                   placeholder="请输入您的显示名称" 
                   size="large"
-                  className="rounded-lg"
+                  className="rounded-xl"
                 />
               </Form.Item>
 
               <Row gutter={16}>
-                <Col span={12}>
-                  <Form.Item label={<span className="text-base font-semibold">职位</span>} name="jobTitle">
+                <Col xs={24} sm={12}>
+                  <Form.Item label={<span className="text-sm font-semibold">职位</span>} name="jobTitle">
                     <Input 
                       placeholder="如：全栈工程师" 
                       size="large"
-                      className="rounded-lg"
+                      className="rounded-xl"
                     />
                   </Form.Item>
                 </Col>
-                <Col span={12}>
-                  <Form.Item label={<span className="text-base font-semibold">公司/学校</span>} name="company">
+                <Col xs={24} sm={12}>
+                  <Form.Item label={<span className="text-sm font-semibold">公司/学校</span>} name="company">
                     <Input 
                       placeholder="如：某某科技公司" 
                       size="large"
-                      className="rounded-lg"
+                      className="rounded-xl"
                     />
                   </Form.Item>
                 </Col>
               </Row>
 
-              <Form.Item label={<span className="text-base font-semibold">个人简介</span>} name="bio">
+              <Form.Item label={<span className="text-sm font-semibold">个人简介</span>} name="bio">
                 <Input.TextArea 
                   rows={4} 
                   placeholder="介绍一下自己..." 
                   maxLength={500}
                   showCount
-                  className="rounded-lg"
+                  className="rounded-xl"
                 />
               </Form.Item>
 
               <Row gutter={16}>
-                <Col span={12}>
-                  <Form.Item label={<span className="text-base font-semibold">所在地</span>} name="location">
+                <Col xs={24} sm={12}>
+                  <Form.Item label={<span className="text-sm font-semibold">所在地</span>} name="location">
                     <Input 
                       prefix={<EnvironmentOutlined className="text-gray-400" />}
                       placeholder="如：中国 安徽省 合肥市" 
                       size="large"
-                      className="rounded-lg"
+                      className="rounded-xl"
                     />
                   </Form.Item>
                 </Col>
-                <Col span={12}>
-                  <Form.Item label={<span className="text-base font-semibold">GitHub</span>} name="github">
+                <Col xs={24} sm={12}>
+                  <Form.Item label={<span className="text-sm font-semibold">GitHub</span>} name="github">
                     <Input 
                       prefix={<GithubOutlined className="text-gray-400" />}
                       placeholder="GitHub用户名" 
                       size="large"
-                      className="rounded-lg"
+                      className="rounded-xl"
                     />
                   </Form.Item>
                 </Col>
               </Row>
 
-              <Form.Item label={<span className="text-base font-semibold">个人网站</span>} name="website">
+              <Form.Item label={<span className="text-sm font-semibold">个人网站</span>} name="website">
                 <Input 
                   prefix={<GlobalOutlined className="text-gray-400" />}
                   placeholder="https://yourwebsite.com" 
                   size="large"
-                  className="rounded-lg"
+                  className="rounded-xl"
                 />
               </Form.Item>
 
               <Form.Item 
-                label={<span className="text-base font-semibold">技能标签</span>} 
+                label={<span className="text-sm font-semibold">技能标签</span>} 
                 name="skills"
               >
                 <Select
                   mode="tags"
                   size="large"
                   placeholder="输入技能后按回车添加，如：Python、React、Node.js"
-                  className="rounded-lg"
+                  className="rounded-xl"
                   tokenSeparators={[',']}
                 />
               </Form.Item>
 
-              <Form.Item className="mb-0 text-center">
-                <Space size="large">
+              <Form.Item className="mb-0 text-right">
+                <Space size="middle">
+                  <Button 
+                    disabled={saving || uploading}
+                    onClick={() => { form.setFieldsValue(profileForm); setEditMode(false); }}
+                    size="large"
+                    className="rounded-xl px-6 py-2 h-auto"
+                  >
+                    取消
+                  </Button>
                   <Button 
                     type="primary" 
                     htmlType="submit" 
                     loading={saving}
                     disabled={uploading}
                     size="large"
-                    className="bg-gradient-to-r from-[#0C1F3D] to-[#6b7d99] border-0 rounded-lg px-8 py-2 h-auto"
+                    style={{ backgroundColor: '#1B3B6F' }}
+                    className="border-0 rounded-xl px-7 py-2 h-auto font-semibold"
                   >
                     保存更改
-                  </Button>
-                  <Button 
-                    disabled={saving || uploading}
-                    onClick={() => { form.setFieldsValue(profileForm); setEditMode(false); }}
-                    size="large"
-                    className="rounded-lg px-8 py-2 h-auto"
-                  >
-                    取消
                   </Button>
                 </Space>
               </Form.Item>
             </Form>
           </Card>
-        ) : (
-          /* 显示模式 */
-          <div className={styles.panels}>
-            {/* 统计数据网格 - 可点击 */}
+        )}
+
+        {/* 主体 Bento 数据与洞察工作台 */}
+        <div className={styles.panels}>
+            {/* 4 张高信息密度 KPI 指标卡 */}
             {!statsLoading && stats && (
-              <div className={`${styles.metrics} grid grid-cols-2 md:grid-cols-4 gap-4`}>
+              <div className={`${styles.metrics} ${styles.revealItem} grid grid-cols-2 lg:grid-cols-4 gap-4`} style={{ animationDelay: '40ms' }}>
                 <Card 
-                  className={`text-center shadow-lg border-0 bg-gradient-to-br from-[#EDF0F5] to-[#e2e6ed] dark:from-[#1B212D] dark:to-[#151921] ${!isGuest ? 'cursor-pointer hover:shadow-xl transition-all duration-300 hover:scale-105' : ''}`}
+                  className={`border-0 ${!isGuest ? 'cursor-pointer' : ''}`}
                   onClick={() => !isGuest && router.push('/notes')}
                 >
-                  <div className="p-2">
-                    <BookOutlined className="text-2xl text-blue-500 mb-2" />
-                    <div className="text-3xl font-bold text-content-muted mb-2">
-                      {stats?.notes?.total || 0}
-                    </div>
-                    <div className="text-sm text-content-secondary">笔记总数</div>
+                  <div className="flex items-start justify-between gap-2 mb-3">
+                    <span className="text-xs font-medium text-slate-500 dark:text-slate-400">笔记总数</span>
+                    <span className="w-8 h-8 rounded-xl bg-[#1B3B6F]/10 dark:bg-sky-500/15 text-[#1B3B6F] dark:text-sky-300 flex items-center justify-center">
+                      <BookOutlined />
+                    </span>
+                  </div>
+                  <div className="text-3xl font-bold text-slate-900 dark:text-[#F2EDE4] tabular-nums mb-2">
+                    {stats?.notes?.total || 0}
+                  </div>
+                  <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 tabular-nums">
+                    <span>公开 {stats?.notes?.public || 0} · 私密 {stats?.notes?.private || 0}</span>
+                    {!isGuest && <ArrowUpRight className="w-3.5 h-3.5 opacity-60" />}
                   </div>
                 </Card>
+
                 <Card 
-                  className={`text-center shadow-lg border-0 bg-gradient-to-br from-[#EDF0F5] to-[#e2e6ed] dark:from-[#1B212D] dark:to-[#151921] ${!isGuest ? 'cursor-pointer hover:shadow-xl transition-all duration-300 hover:scale-105' : ''}`}
+                  className={`border-0 ${!isGuest ? 'cursor-pointer' : ''}`}
                   onClick={() => !isGuest && router.push('/study')}
                 >
-                  <div className="p-2">
-                    <CalendarOutlined className="text-2xl text-green-500 mb-2" />
-                    <div className="text-3xl font-bold text-state-success mb-2">
-                      {stats?.learning?.studyDaysTotal || 0}
-                    </div>
-                    <div className="text-sm text-content-secondary">学习天数</div>
+                  <div className="flex items-start justify-between gap-2 mb-3">
+                    <span className="text-xs font-medium text-slate-500 dark:text-slate-400">学习天数</span>
+                    <span className="w-8 h-8 rounded-xl bg-emerald-500/10 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-300 flex items-center justify-center">
+                      <CalendarOutlined />
+                    </span>
+                  </div>
+                  <div className="text-3xl font-bold text-emerald-600 dark:text-emerald-300 tabular-nums mb-2">
+                    {stats?.learning?.studyDaysTotal || 0}
+                  </div>
+                  <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 tabular-nums">
+                    <span>累计学习 {formatStudyTime(stats?.learning?.totalStudyTime || 0)}</span>
+                    {!isGuest && <ArrowUpRight className="w-3.5 h-3.5 opacity-60" />}
                   </div>
                 </Card>
+
                 <Card 
-                  className={`text-center shadow-lg border-0 bg-gradient-to-br from-[#EDF0F5] to-[#e2e6ed] dark:from-[#1B212D] dark:to-[#151921] ${!isGuest ? 'cursor-pointer hover:shadow-xl transition-all duration-300 hover:scale-105' : ''}`}
-                  onClick={() => !isGuest && router.push('/notes')}
+                  className={`border-0 ${!isGuest ? 'cursor-pointer' : ''}`}
+                  onClick={() => !isGuest && router.push('/profile/bookmarks?tab=received')}
                 >
-                  <div className="p-2">
-                    <HeartOutlined className="text-2xl text-pink-500 mb-2" />
-                    <div className="text-3xl font-bold text-pink-600 mb-2">
-                      {stats?.engagement?.likesReceived || 0}
-                    </div>
-                    <div className="text-sm text-content-secondary">获得点赞</div>
+                  <div className="flex items-start justify-between gap-2 mb-3">
+                    <span className="text-xs font-medium text-slate-500 dark:text-slate-400">获得点赞</span>
+                    <span className="w-8 h-8 rounded-xl bg-rose-500/10 dark:bg-rose-500/15 text-rose-500 dark:text-rose-300 flex items-center justify-center">
+                      <HeartOutlined />
+                    </span>
+                  </div>
+                  <div className="text-3xl font-bold text-rose-600 dark:text-rose-300 tabular-nums mb-2">
+                    {stats?.engagement?.likesReceived || 0}
+                  </div>
+                  <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 tabular-nums">
+                    <span>收到评论 {stats?.engagement?.commentsReceived || 0} 条</span>
+                    {!isGuest && <ArrowUpRight className="w-3.5 h-3.5 opacity-60" />}
                   </div>
                 </Card>
+
                 <Card 
-                  className={`text-center shadow-lg border-0 bg-gradient-to-br from-[#EDF0F5] to-[#e2e6ed] dark:from-[#1B212D] dark:to-[#151921] ${!isGuest ? 'cursor-pointer hover:shadow-xl transition-all duration-300 hover:scale-105' : ''}`}
+                  className={`border-0 ${!isGuest ? 'cursor-pointer' : ''}`}
                   onClick={() => !isGuest && router.push('/study')}
                 >
-                  <div className="p-2">
-                    <FireOutlined className="text-2xl text-orange-500 mb-2" />
-                    <div className="text-3xl font-bold text-orange-600 mb-2">
-                      {stats?.learning?.technologiesStudied || 0}
-                    </div>
-                    <div className="text-sm text-content-secondary">技术栈</div>
+                  <div className="flex items-start justify-between gap-2 mb-3">
+                    <span className="text-xs font-medium text-slate-500 dark:text-slate-400">技术栈</span>
+                    <span className="w-8 h-8 rounded-xl bg-[#D4AD72]/15 text-[#9A7234] dark:text-[#E8CA96] flex items-center justify-center">
+                      <FireOutlined />
+                    </span>
+                  </div>
+                  <div className="text-3xl font-bold text-[#9A7234] dark:text-[#E8CA96] tabular-nums mb-2">
+                    {stats?.learning?.technologiesStudied || 0}
+                  </div>
+                  <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 tabular-nums">
+                    <span>覆盖 {stats?.learning?.categoriesStudied || 0} 大知识领域</span>
+                    {!isGuest && <ArrowUpRight className="w-3.5 h-3.5 opacity-60" />}
                   </div>
                 </Card>
               </div>
@@ -1258,67 +1298,70 @@ export default function ProfilePage() {
             {!statsLoading && stats && (
               <Card 
                 title={
-                  <div className="flex items-center text-xl">
-                    <BarChartOutlined className="mr-3 text-blue-500" />
+                  <div className="flex items-center text-lg font-semibold">
+                    <BarChartOutlined className="mr-2.5 text-[#1B3B6F] dark:text-[#D4AD72]" />
                     <span>学习进度</span>
                   </div>
                 }
-                className={styles.learning}
+                className={`${styles.learning} ${styles.revealItem}`}
+                style={{ animationDelay: '80ms' }}
               >
-                <Row gutter={[16, 16]}>
+                <Row gutter={[14, 14]}>
                   <Col xs={12} sm={12}>
-                    <div className="text-center p-3 sm:p-4 bg-gradient-to-br from-[#EDF0F5] to-[#e2e6ed] dark:from-[#1B212D] dark:to-[#161B25] dark:border dark:border-white/10 rounded-xl">
+                    <div className="text-center p-3.5 bg-slate-50/90 dark:bg-white/[0.03] border border-slate-200/75 dark:border-white/10 rounded-2xl">
                       <Progress
                         type="circle"
                         percent={Math.min(100, ((stats?.notes?.public || 0) / Math.max(1, stats?.notes?.total || 1)) * 100)}
                         format={() => `${stats?.notes?.public || 0}/${stats?.notes?.total || 0}`}
                         strokeColor={{
-                          '0%': '#52c41a',
-                          '100%': '#73d13d',
+                          '0%': '#059669',
+                          '100%': '#10B981',
                         }}
-                        size={105}
+                        strokeWidth={7}
+                        size={96}
                       />
-                      <p className="mt-2 text-sm sm:text-base font-semibold text-content-primary mb-0">公开笔记</p>
+                      <p className="mt-2.5 text-sm font-semibold text-slate-800 dark:text-[#F2EDE4] mb-0">公开笔记</p>
                     </div>
                   </Col>
                   <Col xs={12} sm={12}>
-                    <div className="text-center p-3 sm:p-4 bg-gradient-to-br from-[#EDF0F5] to-[#e2e6ed] dark:from-[#1B212D] dark:to-[#161B25] dark:border dark:border-white/10 rounded-xl">
+                    <div className="text-center p-3.5 bg-slate-50/90 dark:bg-white/[0.03] border border-slate-200/75 dark:border-white/10 rounded-2xl">
                       <Progress
                         type="circle"
                         percent={Math.min(100, (stats?.learning?.categoriesStudied || 0) * 10)}
                         format={() => `${stats?.learning?.categoriesStudied || 0}`}
                         strokeColor={{
-                          '0%': '#1890ff',
-                          '100%': '#40a9ff',
+                          '0%': '#1B3B6F',
+                          '100%': '#D4AD72',
                         }}
-                        size={105}
+                        strokeWidth={7}
+                        size={96}
                       />
-                      <p className="mt-2 text-sm sm:text-base font-semibold text-content-primary mb-0">学习领域</p>
+                      <p className="mt-2.5 text-sm font-semibold text-slate-800 dark:text-[#F2EDE4] mb-0">学习领域</p>
                     </div>
                   </Col>
                 </Row>
 
-                <Divider style={{ margin: '12px 0' }} />
+                <Divider style={{ margin: '14px 0' }} />
 
                 <Row gutter={[12, 12]}>
                   {/* 左侧长方形卡片：总学习时间（点击切换分钟/小时，定时自动恢复） */}
                   <Col xs={24} sm={12}>
                     <div 
-                      className="group relative p-3 sm:p-3.5 bg-gradient-to-br from-[#EDF0F5] to-[#e2e6ed] dark:from-[#1B212D] dark:to-[#161B25] rounded-xl flex items-center gap-2.5 sm:gap-3 cursor-pointer hover:shadow-md hover:border-purple-200 dark:hover:border-purple-400/35 border border-transparent dark:border-white/10 transition-all duration-200 select-none h-full"
+                      className="group relative p-3.5 bg-slate-50/90 dark:bg-white/[0.03] rounded-2xl flex items-center gap-3 cursor-pointer border border-slate-200/75 dark:border-white/10 hover:border-[#D4AD72]/50 transition-all duration-200 select-none h-full"
                       onClick={handleToggleStudyTime}
                       title="点击切换显示格式（小时/纯分钟）"
                     >
-                      <div className="w-9 h-9 rounded-lg bg-purple-500/10 flex items-center justify-center text-purple-600 dark:text-purple-300 text-lg flex-shrink-0 group-hover:scale-105 transition-transform">
+                      <div className="w-9 h-9 rounded-xl bg-[#1B3B6F]/10 dark:bg-[#D4AD72]/15 flex items-center justify-center text-[#1B3B6F] dark:text-[#D4AD72] text-base flex-shrink-0 group-hover:scale-105 transition-transform">
                         <ClockCircleOutlined />
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center justify-between gap-1 mb-0.5">
-                          <span className="text-xs text-content-muted whitespace-nowrap">总学习时间</span>
-                          <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-200 font-medium whitespace-nowrap">
+                          <span className="text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">总学习时间</span>
+                          <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-[#1B3B6F]/10 dark:bg-[#D4AD72]/20 text-[#1B3B6F] dark:text-[#E8CA96] font-medium whitespace-nowrap">
                             {showTotalMinutes ? '纯分钟' : '切分钟'}
                           </span>
                         </div>
-                        <div className="text-base sm:text-lg font-bold text-content-primary whitespace-nowrap tracking-tight">
+                        <div className="text-base sm:text-lg font-bold text-slate-900 dark:text-[#F2EDE4] whitespace-nowrap tracking-tight tabular-nums">
                           {showTotalMinutes 
                             ? `${getSafeStudyMinutes(stats?.learning?.totalStudyTime).toLocaleString()} 分钟`
                             : formatStudyTime(stats?.learning?.totalStudyTime || 0)}
@@ -1327,41 +1370,47 @@ export default function ProfilePage() {
                     </div>
                   </Col>
 
-                  {/* 右侧长方形卡片：收藏与点赞合并（点击打开收藏页面） */}
+                  {/* 右侧长方形卡片：收藏与点赞合并（点击直达对应标签页） */}
                   <Col xs={24} sm={12}>
-                    <div 
-                      className={`group p-3 sm:p-3.5 bg-gradient-to-br from-[#EDF0F5] to-[#e2e6ed] dark:from-[#1B212D] dark:to-[#161B25] rounded-xl flex items-center justify-around border border-transparent dark:border-white/10 select-none h-full ${
-                        !isGuest ? 'cursor-pointer hover:shadow-md hover:border-yellow-200 dark:hover:border-amber-400/35 transition-all duration-200' : ''
-                      }`}
-                      onClick={() => !isGuest && router.push('/profile/bookmarks')}
-                      title="点击查看我的收藏"
-                    >
+                    <div className="p-2 bg-slate-50/90 dark:bg-white/[0.03] rounded-2xl flex items-center justify-around border border-slate-200/75 dark:border-white/10 select-none h-full gap-1">
                       {/* 我的收藏 */}
-                      <div className="flex items-center gap-1.5 sm:gap-2 flex-1 justify-center min-w-0">
-                        <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-500 text-base flex-shrink-0 group-hover:scale-105 transition-transform">
+                      <div
+                        className={`group flex items-center gap-2 flex-1 justify-center min-w-0 py-1.5 px-2 rounded-xl transition-all ${
+                          !isGuest ? 'cursor-pointer hover:bg-white dark:hover:bg-white/[0.06]' : ''
+                        }`}
+                        onClick={() => !isGuest && router.push('/profile/bookmarks?tab=bookmarks')}
+                        title="点击查看我的收藏"
+                      >
+                        <div className="w-8 h-8 rounded-xl bg-[#D4AD72]/15 flex items-center justify-center text-[#9A7234] dark:text-[#D4AD72] text-base flex-shrink-0 group-hover:scale-105 transition-transform">
                           <BookOutlined />
                         </div>
                         <div className="min-w-0">
-                          <div className="text-base sm:text-lg font-bold text-content-primary leading-tight">
+                          <div className="text-base sm:text-lg font-bold text-slate-900 dark:text-[#F2EDE4] leading-tight tabular-nums">
                             {stats?.engagement?.bookmarksReceived || 0}
                           </div>
-                          <div className="text-[11px] text-content-muted whitespace-nowrap">我的收藏</div>
+                          <div className="text-[11px] text-slate-500 dark:text-slate-400 whitespace-nowrap">我的收藏</div>
                         </div>
                       </div>
 
                       {/* 分隔线 */}
-                      <div className="h-6 w-[1px] bg-slate-300 dark:bg-white/15 mx-1 flex-shrink-0" />
+                      <div className="h-6 w-[1px] bg-slate-200 dark:bg-white/15 flex-shrink-0" />
 
                       {/* 获得点赞 */}
-                      <div className="flex items-center gap-1.5 sm:gap-2 flex-1 justify-center min-w-0">
-                        <div className="w-8 h-8 rounded-lg bg-rose-500/10 flex items-center justify-center text-rose-500 text-base flex-shrink-0 group-hover:scale-105 transition-transform">
+                      <div
+                        className={`group flex items-center gap-2 flex-1 justify-center min-w-0 py-1.5 px-2 rounded-xl transition-all ${
+                          !isGuest ? 'cursor-pointer hover:bg-white dark:hover:bg-white/[0.06]' : ''
+                        }`}
+                        onClick={() => !isGuest && router.push('/profile/bookmarks?tab=received')}
+                        title="点击查看点赞中心"
+                      >
+                        <div className="w-8 h-8 rounded-xl bg-rose-500/10 flex items-center justify-center text-rose-500 dark:text-rose-300 text-base flex-shrink-0 group-hover:scale-105 transition-transform">
                           <HeartOutlined />
                         </div>
                         <div className="min-w-0">
-                          <div className="text-base sm:text-lg font-bold text-content-primary leading-tight">
+                          <div className="text-base sm:text-lg font-bold text-slate-900 dark:text-[#F2EDE4] leading-tight tabular-nums">
                             {stats?.engagement?.likesReceived || 0}
                           </div>
-                          <div className="text-[11px] text-content-muted whitespace-nowrap">获得点赞</div>
+                          <div className="text-[11px] text-slate-500 dark:text-slate-400 whitespace-nowrap">获得点赞</div>
                         </div>
                       </div>
                     </div>
@@ -1374,49 +1423,123 @@ export default function ProfilePage() {
             {!heatmapLoading && (
               <Card
                 title={
-                  <div className="flex items-center text-xl">
-                    <FireOutlined className="mr-3 text-orange-500" />
+                  <div className="flex items-center text-lg font-semibold">
+                    <FireOutlined className="mr-2.5 text-emerald-500" />
                     <span>学习热力图</span>
                   </div>
                 }
-                className={styles.heatmap}
+                className={`${styles.heatmap} ${styles.revealItem}`}
+                style={{ animationDelay: '120ms' }}
               >
-                <div className="p-4 sm:p-6 bg-gradient-to-r from-[#EDF0F5] to-[#e2e6ed] dark:from-[#1B212D] dark:to-[#161B25] dark:border dark:border-white/10 rounded-lg">
-                  <LearningHeatmap
-                    data={heatmapData}
-                    year={new Date().getFullYear()}
-                    hideTitle={true}
-                  />
-                </div>
+                <LearningHeatmap
+                  data={heatmapData}
+                  year={new Date().getFullYear()}
+                  hideTitle={true}
+                  seamless={true}
+                />
               </Card>
             )}
-            {/* 成就展示 */}
+
+            {/* 下半屏分段导航工作台（2A 推荐 + 一键展开全部视图，保留全部三大板块） */}
             {!statsLoading && stats && (
-              <AchievementsSection
-                achievements={achievements}
-                summary={achievementSummary}
-                showAll={showAllAch}
-                onToggleShowAll={() => setShowAllAch(!showAllAch)}
-              />
-            )}
+              <div className="col-span-full space-y-5 mt-1">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div className={styles.tabBar} role="tablist" aria-label="学习档案详情视图">
+                    <button
+                      type="button"
+                      role="tab"
+                      aria-selected={activeTab === 'analytics'}
+                      onClick={() => setActiveTab('analytics')}
+                      className={`${styles.tabBtn} ${activeTab === 'analytics' ? styles.tabBtnActive : ''}`}
+                    >
+                      <BarChartOutlined />
+                      <span>数据洞察</span>
+                      <span className="text-[11px] px-1.5 py-0.2 rounded-full bg-slate-200/75 dark:bg-white/10 text-slate-600 dark:text-slate-300 tabular-nums">
+                        3
+                      </span>
+                    </button>
+                    <button
+                      type="button"
+                      role="tab"
+                      aria-selected={activeTab === 'achievements'}
+                      onClick={() => setActiveTab('achievements')}
+                      className={`${styles.tabBtn} ${activeTab === 'achievements' ? styles.tabBtnActive : ''}`}
+                    >
+                      <TrophyOutlined />
+                      <span>成就勋章</span>
+                      <span className="text-[11px] px-1.5 py-0.2 rounded-full bg-[#D4AD72]/18 text-[#8A662E] dark:text-[#E8CA96] tabular-nums">
+                        {achievementSummary.earned}/{achievementSummary.total}
+                      </span>
+                    </button>
+                    <button
+                      type="button"
+                      role="tab"
+                      aria-selected={activeTab === 'activity'}
+                      onClick={() => setActiveTab('activity')}
+                      className={`${styles.tabBtn} ${activeTab === 'activity' ? styles.tabBtnActive : ''}`}
+                    >
+                      <CalendarOutlined />
+                      <span>最近足迹</span>
+                      <span className="text-[11px] px-1.5 py-0.2 rounded-full bg-slate-200/75 dark:bg-white/10 text-slate-600 dark:text-slate-300 tabular-nums">
+                        {stats?.recentActivity?.length || 0}
+                      </span>
+                    </button>
+                  </div>
 
-            {/* 最近活动 */}
-            <RecentActivityTimeline activities={stats?.recentActivity} />
+                  <div className="inline-flex items-center p-1 rounded-xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#151921] shadow-sm">
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab(activeTab === 'all' ? 'analytics' : 'all')}
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                        activeTab === 'all'
+                          ? 'bg-[#1B3B6F] text-white dark:bg-[#D4AD72] dark:text-[#0F1D33] shadow-sm'
+                          : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06]'
+                      }`}
+                    >
+                      <Layers className="w-3.5 h-3.5" />
+                      <span>{activeTab === 'all' ? '已展开全部' : '全部展开'}</span>
+                    </button>
+                    {(activeTab === 'analytics' || activeTab === 'all') && (
+                      <>
+                        <span className="h-4 w-[1px] bg-slate-200 dark:bg-white/15 mx-1" />
+                        <button
+                          type="button"
+                          onClick={toggleFullscreen}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06] hover:text-[#1B3B6F] dark:hover:text-[#D4AD72] transition-all"
+                        >
+                          {isFullscreen ? <FullscreenExitOutlined /> : <FullscreenOutlined />}
+                          <span>{isFullscreen ? '退出全屏' : '全屏展示'}</span>
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
 
+                {(activeTab === 'analytics' || activeTab === 'all') && (
+                  <div className={styles.revealItem}>
+                    <DataVisualization stats={stats} isGuest={isGuest} hideFullscreenButton={true} />
+                  </div>
+                )}
 
-            {/* 数据可视化图表区域 */}
-            {!statsLoading && stats && (
-              <>
-                <Divider className="my-8">
-                  <BarChartOutlined className="mr-2" />
-                  数据可视化分析
-                </Divider>
-                
-                <DataVisualization stats={stats} isGuest={isGuest} />
-              </>
+                {(activeTab === 'achievements' || activeTab === 'all') && (
+                  <div className={styles.revealItem}>
+                    <AchievementsSection
+                      achievements={achievements}
+                      summary={achievementSummary}
+                      showAll={showAllAch}
+                      onToggleShowAll={() => setShowAllAch(!showAllAch)}
+                    />
+                  </div>
+                )}
+
+                {(activeTab === 'activity' || activeTab === 'all') && (
+                  <div className={styles.revealItem}>
+                    <RecentActivityTimeline activities={stats?.recentActivity} />
+                  </div>
+                )}
+              </div>
             )}
           </div>
-        )}
       </div>
       </div>
 

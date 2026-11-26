@@ -18,55 +18,55 @@ export interface SubjectTheme {
 
 export const THEMES: Record<string, SubjectTheme> = {
   /**
-   * 💻 计算机 — 宣纸白 + 鸾尾蓝
-   *
-   * 配色说明：
-   * - accent 主色：用于 Button、BookCover 标题装饰、TagGrid 标签背景
-   * - accentLight 浅色：用于 hover 状态、渐变过渡
-   * - accentDark 深色：用于文字、边框、强调
-   * - paperBg 纸色：LessonLayout 页面背景（仿古纸质感）
-   * - paperCard 卡片色：spread 翻页内容的背景色
-   *
-   * 修改后直接生效，无需改动任何页面文件。
+   * 💻 计算机 — 深墨鸾尾蓝 + 清透云雾纸
    */
   computer: {
     id: 'computer',
     name: '计算机',
-    accent: '#1660AB',      // 主色 鸾尾蓝
-    accentLight: '#4a87c4', // 浅蓝 hover
-    accentDark: '#0e4a8a',  // 深蓝 文字/边框
-    paperBg: '#BDE0FE',     // 纸色 冰川白
-    paperCard: '#d8d8db',   // 卡片色
+    accent: '#1B3B6F',
+    accentLight: '#3B82F6',
+    accentDark: '#0F2547',
+    paperBg: '#F3F7FC',
+    paperCard: '#FFFFFF',
   },
 
+  /**
+   * 🧠 人工智能 — 星曜靛紫 + 柔雅淡紫宣纸
+   */
   ai: {
     id: 'ai',
     name: '人工智能',
-    accent: '#2B313F',      // 主色 幽谷灰
-    accentLight: '#5a6070', // 浅灰 hover
-    accentDark: '#1a202f',  // 深灰 文字/边框
-    paperBg: '#E2E7BF',     // 纸色 嫩菊绿
-    paperCard: '#d8d8db',   // 卡片色
+    accent: '#4F46E5',
+    accentLight: '#7C3AED',
+    accentDark: '#3730A3',
+    paperBg: '#F5F4FB',
+    paperCard: '#FFFFFF',
   },
 
+  /**
+   * 🏗️ 软件工程 — 松石青绿 + 清润玉青纸
+   */
   software: {
     id: 'software',
     name: '软件工程',
-    accent: '#373834',      // 主色 蒽油绿
-    accentLight: '#5a5b56', // 浅绿灰 hover
-    accentDark: '#272823',  // 深绿灰 文字/边框
-    paperBg: '#C6E6E8',     // 纸色 海天蓝
-    paperCard: '#d8d8db',   // 卡片色
+    accent: '#0F766E',
+    accentLight: '#14B8A6',
+    accentDark: '#115E59',
+    paperBg: '#F2FAF7',
+    paperCard: '#FFFFFF',
   },
 
+  /**
+   * 🛡️ 网络安全 — 鎏金琥珀 + 暖羊皮纸
+   */
   security: {
     id: 'security',
     name: '网络安全',
-    accent: '#707899',      // 主色 紫幽兰
-    accentLight: '#9299b5', // 浅紫 hover
-    accentDark: '#5a6180',  // 深紫 文字/边框
-    paperBg: '#E3E3E5',     // 纸色 烟雨白
-    paperCard: '#d8d8db',   // 卡片色
+    accent: '#B45309',
+    accentLight: '#D97706',
+    accentDark: '#92400E',
+    paperBg: '#FBF7F0',
+    paperCard: '#FFFFFF',
   },
 }
 

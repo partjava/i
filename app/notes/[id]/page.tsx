@@ -18,6 +18,24 @@ import QRCode from 'qrcode';
 import { useUser } from '@shared/providers/UserProvider';
 import SiteFooter from '@shared/components/SiteFooter';
 import { message } from 'antd';
+import {
+  extractHeadings,
+  preprocessWikilinks,
+  calcReadingStats,
+  downloadMarkdownFile,
+} from '../utils';
+import {
+  BookOpen,
+  ChevronLeft,
+  ChevronRight,
+  Plus,
+  GripVertical,
+  FolderOutput,
+  Download,
+  ListTree,
+  Link2,
+  X,
+} from 'lucide-react';
 
 const PreBlockContext = createContext(false);
 
@@ -148,6 +166,40 @@ interface Note {
   bookmarked?: boolean;
   likeCount?: number;
   bookmarkCount?: number;
+  parentId?: number | null;
+  sortOrder?: number;
+  isPinned?: boolean;
+}
+
+interface TreeChapter {
+  id: number;
+  title: string;
+  parentId?: number | null;
+  sortOrder: number;
+  depth: number;
+  category?: string;
+  isPublic?: boolean;
+}
+
+interface NoteTreeData {
+  root: {
+    id: number;
+    title: string;
+    category?: string;
+    technology?: string;
+    isPublic?: boolean;
+    authorId?: number;
+  };
+  chapters: TreeChapter[];
+  currentId: number;
+}
+
+interface BacklinkItem {
+  id: number;
+  title: string;
+  category?: string;
+  updatedAt?: string;
+  excerpt?: string;
 }
 
 export default function NoteDetailPage() {
@@ -170,6 +222,14 @@ export default function NoteDetailPage() {
   const [cloning, setCloning] = useState(false);
   const [showKnowledgeStudio, setShowKnowledgeStudio] = useState(true);
   const [studioTab, setStudioTab] = useState<'graph' | 'flashcards'>('graph');
+  const [readProgress, setReadProgress] = useState(0);
+  const [noteTree, setNoteTree] = useState<NoteTreeData | null>(null);
+  const [backlinks, setBacklinks] = useState<BacklinkItem[]>([]);
+  const [showAddChapter, setShowAddChapter] = useState(false);
+  const [newChapterTitle, setNewChapterTitle] = useState('');
+  const [creatingChapter, setCreatingChapter] = useState(false);
+  const [draggingChapterId, setDraggingChapterId] = useState<number | null>(null);
+  const [exportingBook, setExportingBook] = useState(false);
 
   // 从知识图谱节点或闪卡一键定位并高亮笔记原文对应章节
   const handleScrollToSection = (sectionHeading: string) => {
@@ -365,8 +425,177 @@ export default function NoteDetailPage() {
   useEffect(() => {
     if (noteId) {
       fetchNote();
+      fetchTreeAndBacklinks();
     }
   }, [noteId]);
+
+  const fetchTreeAndBacklinks = async () => {
+    try {
+      const [treeRes, blRes] = await Promise.allSettled([
+        fetch(`/api/notes/${noteId}/tree`, { credentials: 'include' }).then((r) => r.json()),
+        fetch(`/api/notes/${noteId}/backlinks`, { credentials: 'include' }).then((r) => r.json()),
+      ]);
+      if (treeRes.status === 'fulfilled' && treeRes.value?.data) {
+        setNoteTree(treeRes.value.data);
+      }
+      if (blRes.status === 'fulfilled' && Array.isArray(blRes.value?.data)) {
+        setBacklinks(blRes.value.data);
+      }
+    } catch {}
+  };
+
+  // 顶部阅读进度条监听
+  useEffect(() => {
+    const mainEl = document.querySelector('main') as HTMLElement | null;
+    const calcProgress = () => {
+      const scrollTop = mainEl ? mainEl.scrollTop : window.scrollY;
+      const scrollHeight = mainEl ? mainEl.scrollHeight : document.documentElement.scrollHeight;
+      const clientHeight = mainEl ? mainEl.clientHeight : window.innerHeight;
+      const total = Math.max(1, scrollHeight - clientHeight);
+      setReadProgress(Math.min(100, Math.max(0, (scrollTop / total) * 100)));
+    };
+    calcProgress();
+    const target = mainEl || window;
+    target.addEventListener('scroll', calcProgress, { passive: true });
+    window.addEventListener('resize', calcProgress, { passive: true });
+    return () => {
+      target.removeEventListener('scroll', calcProgress);
+      window.removeEventListener('resize', calcProgress);
+    };
+  }, [noteId, loading]);
+
+  const handleQuickCreateChapter = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newChapterTitle.trim() || !note) return;
+    const rootId = noteTree?.root?.id || Number(noteId);
+    setCreatingChapter(true);
+    try {
+      const res = await fetch('/api/notes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          title: newChapterTitle.trim(),
+          content: `## ${newChapterTitle.trim()}\n\n在此编写本章节核心内容...\n`,
+          category: note.category || '',
+          technology: note.technology || '',
+          subcategory: note.subcategory || '',
+          tags: note.tags || [],
+          isPublic: Boolean(note.isPublic),
+          parentId: rootId,
+        }),
+      });
+      const json = await res.json();
+      if (res.ok && json?.data?.id) {
+        message.success('子章节创建成功');
+        setNewChapterTitle('');
+        setShowAddChapter(false);
+        await fetchTreeAndBacklinks();
+        router.push(`/notes/${json.data.id}`);
+      } else {
+        message.error(json?.message || '创建子章节失败');
+      }
+    } catch {
+      message.error('网络错误，创建失败');
+    } finally {
+      setCreatingChapter(false);
+    }
+  };
+
+  const handleReorderDrop = async (targetChapterId: number) => {
+    if (!noteTree || draggingChapterId == null || draggingChapterId === targetChapterId) return;
+    const list = [...noteTree.chapters];
+    const fromIdx = list.findIndex((c) => c.id === draggingChapterId);
+    const toIdx = list.findIndex((c) => c.id === targetChapterId);
+    if (fromIdx < 0 || toIdx < 0) return;
+    const [moved] = list.splice(fromIdx, 1);
+    list.splice(toIdx, 0, moved);
+    setNoteTree({ ...noteTree, chapters: list });
+    setDraggingChapterId(null);
+
+    try {
+      await fetch('/api/notes/reorder', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          parentId: noteTree.root.id,
+          orderedIds: list.map((c) => c.id),
+        }),
+      });
+      message.success('章节顺序已更新');
+    } catch {
+      message.error('调整排序失败');
+    }
+  };
+
+  const handleRemoveFromCollection = async (targetId: number) => {
+    try {
+      const res = await fetch(`/api/notes/${targetId}/move`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ clearParent: true }),
+      });
+      if (res.ok) {
+        message.success('已移出合集');
+        await fetchTreeAndBacklinks();
+      }
+    } catch {
+      message.error('操作失败');
+    }
+  };
+
+  const handleExportWholeCollection = async () => {
+    if (!noteTree) return;
+    setExportingBook(true);
+    try {
+      const ids = [noteTree.root.id, ...noteTree.chapters.map((c) => c.id)];
+      const fetched = await Promise.all(
+        ids.map((id) =>
+          fetch(`/api/notes/${id}`, { credentials: 'include' })
+            .then((r) => r.json())
+            .then((j) => j?.data)
+            .catch(() => null)
+        )
+      );
+      const md = fetched
+        .filter(Boolean)
+        .map((item, idx) =>
+          idx === 0
+            ? `# ${item.title}\n\n${item.content || ''}\n`
+            : `\n---\n\n# 第 ${idx} 章：${item.title}\n\n${item.content || ''}\n`
+        )
+        .join('\n');
+      downloadMarkdownFile(`${noteTree.root.title}_全书合集.md`, md);
+      message.success('整本合集已导出为 Markdown');
+    } catch {
+      message.error('导出合集失败');
+    } finally {
+      setExportingBook(false);
+    }
+  };
+
+  const handleWikilinkClick = async (rawTitle: string) => {
+    const clean = decodeURIComponent(rawTitle).trim();
+    try {
+      const res = await fetch(`/api/notes/search?q=${encodeURIComponent(clean)}`, {
+        credentials: 'include',
+      });
+      const json = await res.json();
+      const list = Array.isArray(json?.data) ? json.data : [];
+      const exact =
+        list.find((n: any) => (n.title || '').trim().toLowerCase() === clean.toLowerCase()) ||
+        list[0];
+      if (exact?.id) {
+        router.push(`/notes/${exact.id}`);
+        return;
+      }
+      message.info(`未找到名为「${clean}」的笔记，可在笔记库中新建`);
+    } catch {
+      message.error('双链跳转查询失败');
+    }
+  };
 
   // 检查登录状态 - 只有访问非公开笔记时才需要登录
   useEffect(() => {
@@ -412,6 +641,22 @@ export default function NoteDetailPage() {
     }
   };
 
+  const headings = useMemo(() => extractHeadings(note?.content || ''), [note?.content]);
+  const readingStats = useMemo(() => calcReadingStats(note?.content || ''), [note?.content]);
+  const renderedMarkdown = useMemo(
+    () => preprocessWikilinks(normalizeNoteMarkdown(note?.content || '')),
+    [note?.content]
+  );
+
+  // 合集前后章导航计算
+  const orderedBookNodes = useMemo(() => {
+    if (!noteTree) return [];
+    return [
+      { id: noteTree.root.id, title: noteTree.root.title, isRoot: true },
+      ...noteTree.chapters.map((c) => ({ id: c.id, title: c.title, isRoot: false })),
+    ];
+  }, [noteTree]);
+
   if (status === 'loading' || loading) {
     return (
       <div className="p-8 flex justify-center">
@@ -432,9 +677,22 @@ export default function NoteDetailPage() {
   }
 
   const isOwner = session?.user?.id === String(note.authorId ?? '');
+  const currentBookIdx = orderedBookNodes.findIndex((x) => x.id === Number(noteId));
+  const prevChapter = currentBookIdx > 0 ? orderedBookNodes[currentBookIdx - 1] : null;
+  const nextChapter =
+    currentBookIdx >= 0 && currentBookIdx < orderedBookNodes.length - 1
+      ? orderedBookNodes[currentBookIdx + 1]
+      : null;
 
   return (
-    <div className="min-h-[calc(100vh-70px)] bg-surface-page flex flex-col">
+    <div className="min-h-[calc(100vh-70px)] bg-surface-page flex flex-col relative">
+      {/* 顶部极简鎏金阅读进度条 */}
+      <div className="fixed top-0 left-0 right-0 h-[3px] z-50 bg-transparent pointer-events-none">
+        <div
+          className="h-full bg-gradient-to-r from-[#1B3B6F] via-[#D4AD72] to-emerald-500 transition-[width] duration-150"
+          style={{ width: `${readProgress}%` }}
+        />
+      </div>
       <div className="flex flex-1">
       {/* 左侧导航栏（固定吸顶 sticky，向上滑动长笔记时始终保持在屏幕左侧完整显示） */}
       <div
@@ -466,6 +724,170 @@ export default function NoteDetailPage() {
                 返回笔记列表
               </button>
             </div>
+
+            {/* 多章节合集书册目录树 */}
+            {noteTree && (noteTree.chapters.length > 0 || noteTree.root.id !== Number(noteId)) ? (
+              <div className="mb-4 rounded-xl border border-line-subtle bg-surface-raised p-3 shadow-xs">
+                <div className="flex items-center justify-between gap-2 pb-2 mb-2 border-b border-line-subtle">
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-content-primary min-w-0">
+                    <BookOpen className="w-3.5 h-3.5 text-[#D4AD72] shrink-0" />
+                    <span className="truncate">合集书册目录</span>
+                  </div>
+                  {isOwner && (
+                    <button
+                      type="button"
+                      onClick={() => setShowAddChapter((v) => !v)}
+                      title="添加子章节"
+                      className="p-1 rounded-md text-[#1B3B6F] dark:text-[#D4AD72] hover:bg-surface-muted transition-colors"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+
+                {/* 合集封面根节点 */}
+                <Link
+                  href={`/notes/${noteTree.root.id}`}
+                  className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-semibold mb-1 transition-colors ${
+                    Number(noteId) === noteTree.root.id
+                      ? 'bg-[#0F1D33] text-white dark:bg-[#D4AD72] dark:text-[#0F1D33]'
+                      : 'text-content-primary hover:bg-surface-muted'
+                  }`}
+                >
+                  <span className="text-[10px] font-mono opacity-80">导言</span>
+                  <span className="truncate">{noteTree.root.title}</span>
+                </Link>
+
+                {/* 有序子章节列表（支持拖拽重排） */}
+                <div className="space-y-1 max-h-60 overflow-y-auto custom-scrollbar">
+                  {noteTree.chapters.map((ch, idx) => {
+                    const active = Number(noteId) === ch.id;
+                    return (
+                      <div
+                        key={ch.id}
+                        draggable={isOwner}
+                        onDragStart={() => setDraggingChapterId(ch.id)}
+                        onDragOver={(e) => isOwner && e.preventDefault()}
+                        onDrop={() => isOwner && handleReorderDrop(ch.id)}
+                        className={`group flex items-center justify-between gap-1 px-2 py-1.5 rounded-lg text-xs transition-colors ${
+                          active
+                            ? 'bg-brand-soft text-brand-primary dark:text-[#D4AD72] font-semibold'
+                            : 'text-content-secondary hover:bg-surface-muted hover:text-content-primary'
+                        }`}
+                      >
+                        <Link href={`/notes/${ch.id}`} className="flex items-center gap-1.5 min-w-0 flex-1">
+                          {isOwner && <GripVertical className="w-3 h-3 text-content-muted/50 shrink-0 cursor-grab" />}
+                          <span className="font-mono text-[10px] text-[#9A7234] dark:text-[#D4AD72] shrink-0">
+                            {String(idx + 1).padStart(2, '0')}
+                          </span>
+                          <span className="truncate">{ch.title}</span>
+                        </Link>
+                        {isOwner && (
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveFromCollection(ch.id)}
+                            title="移出合集（恢复为独立笔记）"
+                            className="opacity-0 group-hover:opacity-100 p-0.5 text-content-muted hover:text-amber-600 transition-opacity"
+                          >
+                            <FolderOutput className="w-3 h-3" />
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {isOwner && showAddChapter && (
+                  <form onSubmit={handleQuickCreateChapter} className="mt-2 pt-2 border-t border-line-subtle flex items-center gap-1.5">
+                    <input
+                      type="text"
+                      value={newChapterTitle}
+                      onChange={(e) => setNewChapterTitle(e.target.value)}
+                      placeholder="新章节标题..."
+                      className="flex-1 min-w-0 px-2 py-1 rounded-md border border-line-strong bg-surface-page text-xs text-content-primary focus:outline-none focus:border-[#D4AD72]"
+                    />
+                    <button
+                      type="submit"
+                      disabled={creatingChapter}
+                      className="px-2 py-1 rounded-md bg-[#0F1D33] dark:bg-[#D4AD72] text-white dark:text-[#0F1D33] text-xs font-semibold shrink-0"
+                    >
+                      {creatingChapter ? '...' : '添加'}
+                    </button>
+                  </form>
+                )}
+
+                <button
+                  type="button"
+                  disabled={exportingBook}
+                  onClick={handleExportWholeCollection}
+                  className="mt-2.5 w-full flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-line-subtle bg-surface-page hover:bg-surface-muted text-[11px] font-medium text-content-secondary hover:text-content-primary transition-colors"
+                >
+                  <Download className="w-3 h-3" />
+                  <span>{exportingBook ? '打包中...' : '导出整本合集 (.md)'}</span>
+                </button>
+              </div>
+            ) : (
+              isOwner && (
+                <div className="mb-4">
+                  {!showAddChapter ? (
+                    <button
+                      type="button"
+                      onClick={() => setShowAddChapter(true)}
+                      className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl border border-dashed border-line-strong text-xs font-medium text-content-secondary hover:border-[#D4AD72] hover:text-content-primary transition-colors"
+                    >
+                      <Plus className="w-3.5 h-3.5 text-[#D4AD72]" />
+                      <span>添加子章节（升级为合集）</span>
+                    </button>
+                  ) : (
+                    <form onSubmit={handleQuickCreateChapter} className="rounded-xl border border-line-subtle bg-surface-raised p-2.5 space-y-2">
+                      <div className="flex items-center justify-between text-xs font-semibold text-content-primary">
+                        <span>新增第 1 章</span>
+                        <button type="button" onClick={() => setShowAddChapter(false)} className="text-content-muted">
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                      <input
+                        type="text"
+                        value={newChapterTitle}
+                        onChange={(e) => setNewChapterTitle(e.target.value)}
+                        placeholder="输入子章节标题..."
+                        className="w-full px-2.5 py-1.5 rounded-lg border border-line-strong bg-surface-page text-xs text-content-primary"
+                      />
+                      <button
+                        type="submit"
+                        disabled={creatingChapter}
+                        className="w-full py-1.5 rounded-lg bg-[#0F1D33] dark:bg-[#D4AD72] text-white dark:text-[#0F1D33] text-xs font-semibold"
+                      >
+                        {creatingChapter ? '创建中...' : '确认创建并进入'}
+                      </button>
+                    </form>
+                  )}
+                </div>
+              )
+            )}
+
+            {/* 自动提取文档段落 TOC 大纲 */}
+            {headings.length > 0 && (
+              <div className="mb-4 rounded-xl border border-line-subtle bg-surface-raised p-3 shadow-xs">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-content-primary pb-2 mb-2 border-b border-line-subtle">
+                  <ListTree className="w-3.5 h-3.5 text-sky-500" />
+                  <span>本页段落大纲</span>
+                </div>
+                <div className="space-y-1 max-h-48 overflow-y-auto custom-scrollbar">
+                  {headings.map((h) => (
+                    <button
+                      key={`${h.index}-${h.text}`}
+                      type="button"
+                      onClick={() => handleScrollToSection(h.text)}
+                      style={{ paddingLeft: `${(h.level - 1) * 10 + 8}px` }}
+                      className="w-full text-left py-1 pr-2 rounded-md text-xs text-content-secondary hover:text-content-primary hover:bg-surface-muted truncate transition-colors"
+                    >
+                      {h.text}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
             
             {/* 操作按钮 */}
             {session && (
@@ -608,7 +1030,7 @@ export default function NoteDetailPage() {
           </div>
 
           {/* 元信息 */}
-          <div className="flex flex-wrap gap-4 text-sm text-gray-600 mb-4">
+          <div className="flex flex-wrap gap-4 text-sm text-gray-600 dark:text-slate-400 mb-4">
             {(note.author_name || note.authorId) && (
               <span>作者: {note.author_name || `用户 #${note.authorId}`}</span>
             )}
@@ -616,6 +1038,9 @@ export default function NoteDetailPage() {
             {note.updatedAt !== note.createdAt && (
               <span>更新: {new Date(note.updatedAt).toLocaleString()}</span>
             )}
+            <span className="font-mono text-xs px-2 py-0.5 rounded-md bg-slate-100 dark:bg-white/10">
+              {readingStats.words} 字 · 预计 {readingStats.minutes} 分钟读完
+            </span>
           </div>
 
           {/* 标签和分类 */}
@@ -733,6 +1158,20 @@ export default function NoteDetailPage() {
                 return <strong className="font-semibold text-slate-900 dark:text-[#F2EDE4]">{children}</strong>;
               },
               a({ href, children }) {
+                if (href && href.startsWith('#wikilink:')) {
+                  const rawTarget = href.slice('#wikilink:'.length);
+                  return (
+                    <button
+                      type="button"
+                      onClick={() => handleWikilinkClick(rawTarget)}
+                      className="inline-flex items-center gap-1 px-1.5 py-0.2 mx-0.5 rounded-md bg-[#D4AD72]/15 text-[#9A7234] dark:text-[#E8CA96] border border-[#D4AD72]/35 hover:bg-[#D4AD72]/25 font-medium text-[0.94em] transition-colors"
+                      title={`双链跳转到笔记：${decodeURIComponent(rawTarget)}`}
+                    >
+                      <Link2 className="w-3 h-3 shrink-0" />
+                      <span>{children}</span>
+                    </button>
+                  );
+                }
                 return (
                   <a
                     href={href}
@@ -788,9 +1227,68 @@ export default function NoteDetailPage() {
               },
             }}
           >
-            {normalizeNoteMarkdown(note.content)}
+            {renderedMarkdown}
           </ReactMarkdown>
         </div>
+
+        {/* 上一章 / 下一章 书册导航 */}
+        {(prevChapter || nextChapter) && (
+          <div className="mt-8 pt-6 border-t border-slate-200/80 dark:border-white/10 grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {prevChapter ? (
+              <Link
+                href={`/notes/${prevChapter.id}`}
+                className="group p-3.5 rounded-xl border border-slate-200 dark:border-white/10 hover:border-[#D4AD72] bg-slate-50/70 dark:bg-white/[0.03] flex items-center gap-3 transition-all"
+              >
+                <ChevronLeft className="w-5 h-5 text-slate-400 group-hover:text-[#D4AD72] shrink-0" />
+                <div className="min-w-0">
+                  <div className="text-[11px] text-slate-400 font-mono">上一章</div>
+                  <div className="text-sm font-semibold text-slate-800 dark:text-[#F2EDE4] truncate">{prevChapter.title}</div>
+                </div>
+              </Link>
+            ) : <div />}
+
+            {nextChapter ? (
+              <Link
+                href={`/notes/${nextChapter.id}`}
+                className="group p-3.5 rounded-xl border border-slate-200 dark:border-white/10 hover:border-[#D4AD72] bg-slate-50/70 dark:bg-white/[0.03] flex items-center justify-end gap-3 text-right transition-all"
+              >
+                <div className="min-w-0">
+                  <div className="text-[11px] text-slate-400 font-mono">下一章</div>
+                  <div className="text-sm font-semibold text-slate-800 dark:text-[#F2EDE4] truncate">{nextChapter.title}</div>
+                </div>
+                <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-[#D4AD72] shrink-0" />
+              </Link>
+            ) : <div />}
+          </div>
+        )}
+
+        {/* 双向链接 · 反向引用 */}
+        {backlinks.length > 0 && (
+          <div className="mt-6 pt-5 border-t border-slate-200/80 dark:border-white/10">
+            <h3 className="text-sm font-bold text-slate-800 dark:text-[#F2EDE4] mb-3 flex items-center gap-2">
+              <Link2 className="w-4 h-4 text-[#D4AD72]" />
+              <span>双向链接 · 被 {backlinks.length} 篇笔记引用</span>
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {backlinks.map((bl) => (
+                <Link
+                  key={bl.id}
+                  href={`/notes/${bl.id}`}
+                  className="p-3 rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-50/80 dark:bg-white/[0.03] hover:border-[#D4AD72]/60 transition-all"
+                >
+                  <div className="text-sm font-semibold text-indigo-700 dark:text-[#8AB4F8] truncate">
+                    {bl.title}
+                  </div>
+                  {bl.excerpt && (
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">
+                      ...{bl.excerpt}...
+                    </p>
+                  )}
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
       </article>
 
         {/* 评论区域 - 公开笔记或作者本人都可以看到 */}

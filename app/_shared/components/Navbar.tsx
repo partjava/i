@@ -648,34 +648,80 @@ export default function Navbar() {
           </div>
 
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-5 max-h-[68vh] overflow-y-auto pr-1">
-            {Object.entries(navigationItems).map(([category, items]) => (
-              <div key={category} className="min-w-0">
-                <h3 className="text-sm font-semibold text-content-primary mb-2.5 pb-1.5 border-b border-line-subtle">
-                  {category}
-                </h3>
-                <div className="grid grid-cols-1 gap-1">
-                  {items.map((item) => {
-                    const homepage =
-                      item.subitems && item.subitems.length > 0
-                        ? item.subitems[0].href.split('/').slice(0, -1).join('/')
-                        : `/study/${item.name.toLowerCase()}`;
-                    return (
-                      <Link
-                        key={item.code + item.name}
-                        href={homepage}
-                        onClick={() => setStudyMenuOpen(false)}
-                        className="flex items-center gap-2 text-content-secondary hover:text-content-primary text-[13px] transition-colors py-1 px-2 rounded-lg hover:bg-brand-soft"
-                      >
-                        <span className="flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-md bg-brand-soft text-xs font-medium text-brand-primary">
-                          {item.code}
-                        </span>
-                        <span className="truncate">{item.name}</span>
-                      </Link>
-                    );
-                  })}
+            {Object.entries(navigationItems).map(([category, items]) => {
+              const catTheme =
+                category === '计算机'
+                  ? {
+                      dot: 'bg-[#1B3B6F] dark:bg-[#38BDF8]',
+                      badge: 'bg-[#1B3B6F]/10 text-[#1B3B6F] border-[#1B3B6F]/20 dark:bg-sky-500/15 dark:text-sky-300 dark:border-sky-400/25',
+                      count: 'bg-[#1B3B6F]/10 text-[#1B3B6F] dark:bg-sky-500/15 dark:text-sky-300',
+                    }
+                  : category === '人工智能'
+                  ? {
+                      dot: 'bg-violet-600 dark:bg-violet-400',
+                      badge: 'bg-violet-500/10 text-violet-700 border-violet-500/20 dark:bg-violet-500/15 dark:text-violet-300 dark:border-violet-400/25',
+                      count: 'bg-violet-500/10 text-violet-700 dark:bg-violet-500/15 dark:text-violet-300',
+                    }
+                  : category === '网络安全'
+                  ? {
+                      dot: 'bg-amber-600 dark:bg-[#D4AD72]',
+                      badge: 'bg-[#D4AD72]/15 text-[#9A7234] border-[#D4AD72]/35 dark:bg-[#D4AD72]/15 dark:text-[#E8CA96] dark:border-[#D4AD72]/30',
+                      count: 'bg-[#D4AD72]/15 text-[#9A7234] dark:bg-[#D4AD72]/15 dark:text-[#E8CA96]',
+                    }
+                  : {
+                      dot: 'bg-emerald-600 dark:bg-emerald-400',
+                      badge: 'bg-emerald-500/10 text-emerald-700 border-emerald-500/20 dark:bg-emerald-500/15 dark:text-emerald-300 dark:border-emerald-400/25',
+                      count: 'bg-emerald-500/10 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300',
+                    };
+              return (
+                <div key={category} className="min-w-0">
+                  <div className="flex items-center justify-between gap-2 pb-2 mb-2.5 border-b border-line-subtle">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className={`w-2 h-2 rounded-full shrink-0 ${catTheme.dot}`} />
+                      <h3 className="text-sm font-bold text-content-primary truncate">
+                        {category}
+                      </h3>
+                    </div>
+                    <span className={`text-[11px] font-mono font-semibold px-2 py-0.5 rounded-full shrink-0 ${catTheme.count}`}>
+                      {items.length} 门
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-1 gap-1">
+                    {items.map((item) => {
+                      const homepage =
+                        item.subitems && item.subitems.length > 0
+                          ? item.subitems[0].href.split('/').slice(0, -1).join('/')
+                          : `/study/${item.name.toLowerCase()}`;
+                      const lectureCount = item.subitems?.length || 0;
+                      return (
+                        <Link
+                          key={item.code + item.name}
+                          href={homepage}
+                          onClick={() => setStudyMenuOpen(false)}
+                          className="group flex items-center justify-between gap-2 text-content-secondary hover:text-content-primary text-[13.5px] transition-all py-1.5 px-2 rounded-xl border border-transparent hover:border-[#D4AD72]/40 hover:bg-surface-muted/80 dark:hover:bg-white/[0.06]"
+                        >
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <span
+                              className={`flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-lg border text-xs font-bold transition-transform group-hover:scale-105 ${catTheme.badge}`}
+                            >
+                              {item.code}
+                            </span>
+                            <span className="font-medium truncate group-hover:text-brand-primary dark:group-hover:text-[#D4AD72] transition-colors">
+                              {item.name}
+                            </span>
+                          </div>
+                          {lectureCount > 0 && (
+                            <span className="text-[11px] font-mono text-content-muted shrink-0 tabular-nums">
+                              {lectureCount} 讲
+                            </span>
+                          )}
+                        </Link>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>

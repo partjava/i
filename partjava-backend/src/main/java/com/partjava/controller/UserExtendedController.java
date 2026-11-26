@@ -14,6 +14,7 @@ import com.partjava.repository.NoteLikeMapper;
 import com.partjava.repository.NoteMapper;
 import com.partjava.repository.UserAchievementMapper;
 import com.partjava.repository.UserMapper;
+import com.partjava.service.NoteService;
 import lombok.Data;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -29,9 +30,12 @@ import org.springframework.web.bind.annotation.RestController;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
@@ -46,6 +50,7 @@ public class UserExtendedController {
     private final AchievementMapper achievementMapper;
     private final UserAchievementMapper userAchievementMapper;
     private final JdbcTemplate jdbcTemplate;
+    private final NoteService noteService;
 
     public UserExtendedController(UserMapper userMapper,
                                   NoteMapper noteMapper,
@@ -53,7 +58,8 @@ public class UserExtendedController {
                                   NoteLikeMapper noteLikeMapper,
                                   AchievementMapper achievementMapper,
                                   UserAchievementMapper userAchievementMapper,
-                                  JdbcTemplate jdbcTemplate) {
+                                  JdbcTemplate jdbcTemplate,
+                                  NoteService noteService) {
         this.userMapper = userMapper;
         this.noteMapper = noteMapper;
         this.noteBookmarkMapper = noteBookmarkMapper;
@@ -61,6 +67,7 @@ public class UserExtendedController {
         this.achievementMapper = achievementMapper;
         this.userAchievementMapper = userAchievementMapper;
         this.jdbcTemplate = jdbcTemplate;
+        this.noteService = noteService;
     }
 
     private Integer getUserIdOrFallback(Integer userId) {
@@ -75,13 +82,137 @@ public class UserExtendedController {
     public ApiResponse<List<Note>> getUserBookmarks(@RequestAttribute(value = "userId", required = false) Integer userId) {
         Long activeUserId = getLongUserIdOrFallback(userId);
         List<NoteBookmark> bookmarks = noteBookmarkMapper.selectList(
-                new LambdaQueryWrapper<NoteBookmark>().eq(NoteBookmark::getUserId, activeUserId)
+                new LambdaQueryWrapper<NoteBookmark>()
+                        .eq(NoteBookmark::getUserId, activeUserId)
+                        .orderByDesc(NoteBookmark::getCreatedAt)
         );
         List<Note> notes = bookmarks.stream()
                 .map(bookmark -> noteMapper.selectById(bookmark.getNoteId()))
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
+        noteService.enrichNotes(notes, activeUserId);
         return ApiResponse.success(notes);
+    }
+
+    @GetMapping("/likes")
+    public ApiResponse<List<Note>> getUserLikes(@RequestAttribute(value = "userId", required = false) Integer userId) {
+        Long activeUserId = getLongUserIdOrFallback(userId);
+        List<NoteLike> likes = noteLikeMapper.selectList(
+                new LambdaQueryWrapper<NoteLike>()
+                        .eq(NoteLike::getUserId, activeUserId)
+                        .orderByDesc(NoteLike::getCreatedAt)
+        );
+        List<Note> notes = likes.stream()
+                .map(like -> noteMapper.selectById(like.getNoteId()))
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+        noteService.enrichNotes(notes, activeUserId);
+        return ApiResponse.success(notes);
+    }
+
+    @GetMapping("/likes-received")
+    public ApiResponse<Map<String, Object>> getUserLikesReceived(@RequestAttribute(value = "userId", required = false) Integer userId) {
+        Long activeUserId = getLongUserIdOrFallback(userId);
+        List<Note> myNotes = noteMapper.selectList(
+                new LambdaQueryWrapper<Note>().eq(Note::getAuthorId, activeUserId)
+        );
+        if (myNotes == null || myNotes.isEmpty()) {
+            Map<String, Object> empty = new LinkedHashMap<>();
+            empty.put("totalReceived", 0);
+            empty.put("notesWithLikesCount", 0);
+            empty.put("summary", List.of());
+            empty.put("records", List.of());
+            return ApiResponse.success(empty);
+        }
+
+        Map<Long, Note> noteMap = myNotes.stream()
+                .filter(Objects::nonNull)
+                .collect(Collectors.toMap(Note::getId, n -> n, (a, b) -> a));
+
+        List<Long> myNoteIds = new ArrayList<>(noteMap.keySet());
+        List<NoteLike> likes = noteLikeMapper.selectList(
+                new LambdaQueryWrapper<NoteLike>()
+                        .in(NoteLike::getNoteId, myNoteIds)
+                        .orderByDesc(NoteLike::getCreatedAt)
+        );
+
+        Set<Long> likerIds = likes.stream()
+                .map(NoteLike::getUserId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+
+        Map<Long, User> userMap = new HashMap<>();
+        if (!likerIds.isEmpty()) {
+            List<User> likers = userMapper.selectBatchIds(likerIds);
+            if (likers != null) {
+                for (User u : likers) {
+                    if (u != null && u.getId() != null) {
+                        userMap.put(u.getId(), u);
+                    }
+                }
+            }
+        }
+
+        List<Map<String, Object>> records = new ArrayList<>();
+        Map<Long, List<NoteLike>> byNote = new LinkedHashMap<>();
+        for (NoteLike like : likes) {
+            byNote.computeIfAbsent(like.getNoteId(), k -> new ArrayList<>()).add(like);
+            Note targetNote = noteMap.get(like.getNoteId());
+            User liker = userMap.get(like.getUserId());
+            String likerName = liker != null
+                    ? (liker.getNickname() != null && !liker.getNickname().isBlank() ? liker.getNickname() : liker.getUsername())
+                    : ("学习者 #" + like.getUserId());
+
+            Map<String, Object> rec = new LinkedHashMap<>();
+            rec.put("id", like.getId());
+            rec.put("noteId", like.getNoteId());
+            rec.put("noteTitle", targetNote != null ? targetNote.getTitle() : "未命名笔记");
+            rec.put("category", targetNote != null ? targetNote.getCategory() : "");
+            rec.put("likerId", like.getUserId());
+            rec.put("likerName", likerName);
+            rec.put("likerAvatar", liker != null ? liker.getAvatar() : null);
+            rec.put("likedAt", like.getCreatedAt());
+            records.add(rec);
+        }
+
+        List<Map<String, Object>> summary = new ArrayList<>();
+        for (Map.Entry<Long, List<NoteLike>> entry : byNote.entrySet()) {
+            Note targetNote = noteMap.get(entry.getKey());
+            if (targetNote == null) continue;
+            List<NoteLike> noteLikes = entry.getValue();
+            List<Map<String, Object>> recentLikers = new ArrayList<>();
+            Set<Long> seenLiker = new HashSet<>();
+            for (NoteLike nl : noteLikes) {
+                if (seenLiker.contains(nl.getUserId())) continue;
+                seenLiker.add(nl.getUserId());
+                User u = userMap.get(nl.getUserId());
+                String uName = u != null
+                        ? (u.getNickname() != null && !u.getNickname().isBlank() ? u.getNickname() : u.getUsername())
+                        : ("学习者 #" + nl.getUserId());
+                Map<String, Object> lu = new LinkedHashMap<>();
+                lu.put("id", nl.getUserId());
+                lu.put("name", uName);
+                lu.put("avatar", u != null ? u.getAvatar() : null);
+                recentLikers.add(lu);
+                if (recentLikers.size() >= 5) break;
+            }
+            Map<String, Object> item = new LinkedHashMap<>();
+            item.put("noteId", targetNote.getId());
+            item.put("title", targetNote.getTitle());
+            item.put("category", targetNote.getCategory());
+            item.put("likeCount", noteLikes.size());
+            item.put("latestLikedAt", noteLikes.isEmpty() ? null : noteLikes.get(0).getCreatedAt());
+            item.put("recentLikers", recentLikers);
+            summary.add(item);
+        }
+        summary.sort((a, b) -> Integer.compare((Integer) b.get("likeCount"), (Integer) a.get("likeCount")));
+
+        Map<String, Object> res = new LinkedHashMap<>();
+        res.put("totalReceived", likes.size());
+        res.put("notesWithLikesCount", summary.size());
+        res.put("summary", summary);
+        res.put("records", records);
+        return ApiResponse.success(res);
     }
 
     @PostMapping("/avatar")

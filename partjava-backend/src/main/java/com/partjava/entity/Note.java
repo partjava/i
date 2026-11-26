@@ -12,6 +12,7 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 @Data
 @Builder
@@ -34,6 +35,10 @@ public class Note {
     private Boolean isPublic;
     private Long authorId;
 
+    private Long parentId;
+    private Integer sortOrder;
+    private Boolean isPinned;
+
     @TableField(exist = false)
     private String authorName;
 
@@ -41,6 +46,30 @@ public class Note {
     public String getAuthor_name() {
         return authorName;
     }
+
+    @TableField(exist = false)
+    private Integer likeCount;
+
+    @TableField(exist = false)
+    private Integer bookmarkCount;
+
+    @TableField(exist = false)
+    private Integer commentCount;
+
+    @TableField(exist = false)
+    private Boolean liked;
+
+    @TableField(exist = false)
+    private Boolean bookmarked;
+
+    @TableField(exist = false)
+    private Integer childCount;
+
+    @TableField(exist = false)
+    private List<Map<String, Object>> children;
+
+    @TableField(exist = false)
+    private String parentTitle;
     
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

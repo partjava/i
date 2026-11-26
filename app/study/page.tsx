@@ -11,8 +11,8 @@ export default function StudyPage() {
 
   return (
     <div className="min-h-[calc(100vh-70px)] bg-surface-page flex flex-col justify-between">
-      <div className="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-3 pb-2 space-y-3">
-        <div className="bg-surface-raised shadow-sm rounded-2xl px-5 py-3.5 sm:px-6 border border-line-subtle">
+      <div className="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-5 pb-6 space-y-5">
+        <div className="bg-surface-raised shadow-sm rounded-2xl px-6 py-4 sm:px-7 border border-line-subtle">
           {category && topic ? (
             <>
               <h1 className="text-2xl font-bold font-display text-content-primary mb-2">

@@ -13,6 +13,9 @@ interface Note {
   subcategory: string;
   tags: string[];
   isPublic: boolean;
+  parentId?: number | null;
+  sortOrder?: number;
+  isPinned?: boolean;
 }
 
 export default function EditNotePage() {
@@ -26,7 +29,25 @@ export default function EditNotePage() {
   const [autoSaveEnabled, setAutoSaveEnabled] = useState(true);
   const [draftSavedAt, setDraftSavedAt] = useState<string | null>(null);
   const [pendingDraft, setPendingDraft] = useState<(Partial<Note> & { savedAt?: string }) | null>(null);
+  const [linkCandidates, setLinkCandidates] = useState<Array<{ id: number; title: string }>>([]);
+  const [selectedLinkTitle, setSelectedLinkTitle] = useState('');
   const dirtyRef = useRef(false);
+
+  useEffect(() => {
+    if (!session) return;
+    fetch('/api/notes', { credentials: 'include' })
+      .then((r) => r.json())
+      .then((j) => {
+        const list = Array.isArray(j?.data) ? j.data : [];
+        setLinkCandidates(
+          list
+            .filter((item: any) => String(item.id) !== String(params.id) && item.title)
+            .slice(0, 50)
+            .map((item: any) => ({ id: item.id, title: item.title }))
+        );
+      })
+      .catch(() => {});
+  }, [session, params.id]);
 
   const draftStorageKey = params.id ? `note_draft_edit_${params.id}` : '';
 
@@ -342,9 +363,32 @@ export default function EditNotePage() {
 
             {/* 内容 */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                内容 *
-              </label>
+              <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  内容 * <span className="text-xs font-normal text-gray-400">（支持 [[笔记标题]] 双向链接）</span>
+                </label>
+                {linkCandidates.length > 0 && (
+                  <div className="flex items-center gap-1.5">
+                    <select
+                      value={selectedLinkTitle}
+                      onChange={(e) => {
+                        const title = e.target.value;
+                        if (!title) return;
+                        updateNote('content', `${note.content || ''}\n[[${title}]] `);
+                        setSelectedLinkTitle('');
+                      }}
+                      className="text-xs border border-gray-300 rounded-md px-2 py-1 bg-white text-gray-700"
+                    >
+                      <option value="">+ 插入 [[双链]] 到正文...</option>
+                      {linkCandidates.map((c) => (
+                        <option key={c.id} value={c.title}>
+                          {c.title}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+              </div>
               <MarkdownEditor 
                 value={note.content} 
                 onChange={(value) => updateNote('content', value)}

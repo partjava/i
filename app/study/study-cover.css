@@ -1,0 +1,82 @@
+/* ================================================================
+   全局统一美化所有 45 门学科封面页（[data-book-cover] 及其后续推荐卡片区块）
+   注意：不修改 #study-book-root 内部翻书阅读器的孤立浅纸面样式
+   ================================================================ */
+
+[data-book-cover='true'] ~ div {
+  background: var(--book-paper-bg, #F8F7F4) !important;
+  transition: background-color 0.25s ease;
+}
+
+/* 后续卡片容器美化（覆盖原有的 bg-white rounded-xl shadow-md） */
+[data-book-cover='true'] ~ div :is(.bg-white.rounded-xl, .bg-white.rounded-lg, div[style*='paperCard']) {
+  border-radius: 20px !important;
+  border: 1px solid rgba(15, 29, 51, 0.08) !important;
+  box-shadow: 0 8px 28px rgba(15, 29, 51, 0.05), 0 1px 4px rgba(15, 29, 51, 0.03) !important;
+  transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+}
+
+/* 嵌套特性小卡片悬停浮起 */
+[data-book-cover='true'] ~ div .border-gray-200 {
+  border-radius: 16px !important;
+  border-color: rgba(15, 29, 51, 0.09) !important;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+[data-book-cover='true'] ~ div .border-gray-200:hover {
+  transform: translateY(-2px);
+  border-color: rgba(212, 173, 114, 0.65) !important;
+  box-shadow: 0 10px 24px rgba(15, 29, 51, 0.07) !important;
+}
+
+/* 章节标签（学习路径里面的小标签） */
+[data-book-cover='true'] ~ div .bg-gray-100 {
+  background: rgba(15, 29, 51, 0.05) !important;
+  border: 1px solid rgba(15, 29, 51, 0.08);
+  border-radius: 8px !important;
+  font-weight: 500;
+}
+
+/* 暗夜模式统一和谐适配（保留书脊/目录对比度，外底转沉稳暗夜曜石） */
+body.dark [data-book-cover='true'] {
+  background: radial-gradient(circle at 25% 0%, rgba(212, 173, 114, 0.08) 0%, transparent 45%), #0D1117 !important;
+}
+
+body.dark [data-book-cover='true'] ~ div {
+  background: #0D1117 !important;
+  color: #E2E8F0 !important;
+}
+
+body.dark [data-book-cover='true'] ~ div :is(.bg-white, div[style*='paperCard']) {
+  background: #151921 !important;
+  border-color: rgba(255, 255, 255, 0.09) !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35) !important;
+}
+
+body.dark [data-book-cover='true'] ~ div :is(h1, h2, h3, h4) {
+  color: #F2EDE4 !important;
+}
+
+body.dark [data-book-cover='true'] ~ div :is(p, li, span.text-gray-600, span.text-gray-700) {
+  color: #CBD5E1 !important;
+}
+
+body.dark [data-book-cover='true'] ~ div .text-gray-600,
+body.dark [data-book-cover='true'] ~ div .text-gray-700 {
+  color: #B8C2D1 !important;
+}
+
+body.dark [data-book-cover='true'] ~ div .border-gray-200 {
+  border-color: rgba(255, 255, 255, 0.10) !important;
+  background: rgba(255, 255, 255, 0.025) !important;
+}
+
+body.dark [data-book-cover='true'] ~ div .bg-gray-100 {
+  background: rgba(255, 255, 255, 0.07) !important;
+  border-color: rgba(255, 255, 255, 0.10) !important;
+  color: #E2E8F0 !important;
+}
+
+body.dark [data-book-cover='true'] ~ div .hover\:bg-gray-50:hover {
+  background: rgba(255, 255, 255, 0.05) !important;
+}

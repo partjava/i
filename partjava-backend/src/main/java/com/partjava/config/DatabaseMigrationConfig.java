@@ -200,6 +200,21 @@ public class DatabaseMigrationConfig {
             }
             log.info("pdf_books / pdf_annotations / pdf_bookmarks 表迁移成功");
 
+            // 11. 笔记多章节合集与置顶扩展字段（parent_id / sort_order / is_pinned）
+            String[] noteExtraCols = {
+                    "ALTER TABLE notes ADD COLUMN parent_id BIGINT NULL DEFAULT NULL COMMENT '父笔记ID（多章节合集）';",
+                    "ALTER TABLE notes ADD COLUMN sort_order INT NOT NULL DEFAULT 0 COMMENT '章节排序序号';",
+                    "ALTER TABLE notes ADD COLUMN is_pinned TINYINT(1) NOT NULL DEFAULT 0 COMMENT '是否置顶';",
+                    "CREATE INDEX idx_notes_parent ON notes (parent_id);"
+            };
+            for (String colSql : noteExtraCols) {
+                try {
+                    jdbcTemplate.execute(colSql);
+                } catch (Exception e) {
+                    log.debug("notes 扩展字段/索引可能已存在: {}", e.getMessage());
+                }
+            }
+
             log.info("数据库 DDL 自动迁移成功！");
         } catch (Exception e) {
             log.error("数据库 DDL 迁移失败", e);

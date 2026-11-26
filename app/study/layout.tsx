@@ -1,5 +1,6 @@
 import { StudyProgressBar } from '../_shared/components/StudyProgressBar';
 import StudyScreenshot from '../_shared/components/StudyScreenshot';
+import './study-cover.css';
 
 export default function StudyLayout({ children }: { children: React.ReactNode }) {
   return (

@@ -90,9 +90,10 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
   const [showVirtualProps, setShowVirtualProps] = useState(true);
   const [showTuningPanel, setShowTuningPanel] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
-  const [rimStrength, setRimStrength] = useState(1.45);
-  const [whiteTipStrength, setWhiteTipStrength] = useState(1.0);
+  const [rimStrength, setRimStrength] = useState(0.48);
+  const [whiteTipStrength, setWhiteTipStrength] = useState(0.25);
   const [showFurTufts, setShowFurTufts] = useState(true);
+  const shaderOptsRef = useRef({ rimStrength: 0.48, whiteTipStrength: 0.25, showFurTufts: true });
   const [faceTuning, setFaceTuning] = useState<CatFaceTuning>(SITTING_CAT_PROFILE.face);
   const [isDraggingOver, setIsDraggingOver] = useState(false);
   const [errorBanner, setErrorBanner] = useState<string | null>(null);
@@ -391,7 +392,8 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
     }
     anchor.add(catCtrl.root);
     activeCatRef.current = catCtrl;
-    catCtrl.triggerHappyJump();
+    catCtrl.updateRimAndFur(shaderOptsRef.current);
+    catCtrl.triggerHappyJump(false);
     setPosture(targetPosture);
     setFaceTuning({ ...catCtrl.profile.face });
   }, []);
@@ -416,9 +418,18 @@ export default function AI3DRobot({ onClose }: { onClose: () => void }) {
   };
 
   const handleShaderChange = (opts: { rim?: number; whiteTip?: number; tufts?: boolean }) => {
-    if (opts.rim !== undefined) setRimStrength(opts.rim);
-    if (opts.whiteTip !== undefined) setWhiteTipStrength(opts.whiteTip);
-    if (opts.tufts !== undefined) setShowFurTufts(opts.tufts);
+    if (opts.rim !== undefined) {
+      setRimStrength(opts.rim);
+      shaderOptsRef.current.rimStrength = opts.rim;
+    }
+    if (opts.whiteTip !== undefined) {
+      setWhiteTipStrength(opts.whiteTip);
+      shaderOptsRef.current.whiteTipStrength = opts.whiteTip;
+    }
+    if (opts.tufts !== undefined) {
+      setShowFurTufts(opts.tufts);
+      shaderOptsRef.current.showFurTufts = opts.tufts;
+    }
     activeCatRef.current?.updateRimAndFur({
       rimStrength: opts.rim,
       whiteTipStrength: opts.whiteTip,

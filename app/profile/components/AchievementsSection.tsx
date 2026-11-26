@@ -26,41 +26,57 @@ export default function AchievementsSection({
   return (
     <Card
       title={
-        <div className="flex items-center text-xl">
-          <TrophyOutlined className="mr-3 text-yellow-500" />
+        <div className="flex items-center text-lg font-semibold">
+          <TrophyOutlined className="mr-2.5 text-[#D4AD72]" />
           <span>成就系统</span>
         </div>
       }
       className={styles.achievements}
     >
-      <div className="mb-8">
-        <div className="text-center py-6">
-          <div className="w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-[#a5b4fc] to-[#6b7d99] rounded-full flex items-center justify-center">
-            <TrophyOutlined style={{ fontSize: 40, color: 'white' }} />
+      {/* 紧凑横向成就进度舱 */}
+      <div className="mb-6">
+        <div className="rounded-2xl border border-[#D4AD72]/25 dark:border-[#D4AD72]/25 bg-gradient-to-r from-[#D4AD72]/10 via-amber-50/40 to-transparent dark:from-[#D4AD72]/14 dark:via-[#1E2430]/60 dark:to-transparent p-4 sm:p-5">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#B88E52] to-[#D4AD72] shadow-[0_8px_20px_rgba(212,173,114,0.28)] flex items-center justify-center shrink-0">
+              <TrophyOutlined style={{ fontSize: 26, color: '#0F1D33' }} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-baseline justify-between gap-2 mb-2">
+                <div className="flex items-baseline gap-2">
+                  <span className="text-2xl font-bold text-slate-900 dark:text-[#F2EDE4] tabular-nums">
+                    {summary.earned} / {summary.total}
+                  </span>
+                  <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                    已解锁成就
+                  </span>
+                </div>
+                <span className="text-xs font-mono font-semibold px-2.5 py-0.5 rounded-full bg-[#D4AD72]/15 text-[#8A662E] dark:text-[#E8CA96] tabular-nums">
+                  {summary.percent}%
+                </span>
+              </div>
+              <Progress
+                percent={summary.percent}
+                strokeColor={{
+                  '0%': '#B88E52',
+                  '100%': '#D4AD72',
+                }}
+                trailColor="rgba(148, 163, 184, 0.24)"
+                strokeWidth={8}
+                showInfo={false}
+                style={{ width: '100%', display: 'block' }}
+              />
+            </div>
           </div>
-          <div className="text-2xl font-semibold text-content-primary mb-4">
-            {summary.earned} / {summary.total}
-          </div>
-          <Progress
-            percent={summary.percent}
-            strokeColor={{
-              '0%': '#ffd700',
-              '100%': '#ff8c00',
-            }}
-            trailColor="rgba(148, 163, 184, 0.24)"
-            strokeWidth={10}
-            showInfo={false}
-            style={{ width: '100%', display: 'block' }}
-            className="mb-3"
-          />
-          <Text type="secondary">已解锁成就 · {summary.percent}%</Text>
         </div>
       </div>
 
-      <Divider />
+      <Divider className="my-5" />
 
       <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-content-primary mb-4">可获得的成就</h3>
+        <div className="flex items-center justify-between">
+          <h3 className="text-base font-semibold text-slate-900 dark:text-[#F2EDE4] mb-0">可获得的成就</h3>
+          <span className="text-xs text-slate-500 dark:text-slate-400 tabular-nums">共 {achievements.length} 项</span>
+        </div>
 
         {achievements.length > 0 ? (
           <>
@@ -72,18 +88,19 @@ export default function AchievementsSection({
               ))}
             </Row>
             {achievements.length > 6 && (
-              <div className="text-center mt-4">
+              <div className="text-center mt-5">
                 <button
+                  type="button"
                   onClick={onToggleShowAll}
-                  className="px-6 py-2 text-sm font-medium text-content-secondary bg-surface-raised border border-line-strong rounded-lg hover:bg-surface-muted transition-colors"
+                  className="px-5 py-2 text-xs font-medium text-slate-700 dark:text-[#F2EDE4] bg-white dark:bg-[#1E2430] border border-slate-200 dark:border-white/15 rounded-xl hover:border-[#D4AD72]/60 hover:text-[#1B3B6F] dark:hover:text-[#D4AD72] transition-all"
                 >
-                  {showAll ? '收起' : `展开全部 (${achievements.length}个)`}
+                  {showAll ? '收起成就墙' : `展开全部 (${achievements.length} 个)`}
                 </button>
               </div>
             )}
           </>
         ) : (
-          <div className="text-center py-8 text-content-muted">
+          <div className="text-center py-8 text-slate-400 dark:text-slate-500">
             暂无成就数据
           </div>
         )}

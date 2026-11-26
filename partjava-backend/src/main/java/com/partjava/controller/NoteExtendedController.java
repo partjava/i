@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestAttribute;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -79,8 +80,56 @@ public class NoteExtendedController {
             String clean = keyword.trim();
             wrapper.and(search -> search.like(Note::getTitle, clean).or().like(Note::getContent, clean));
         }
-        wrapper.orderByDesc(Note::getCreatedAt);
-        return ApiResponse.success(noteMapper.selectList(wrapper));
+        wrapper.orderByDesc(Note::getIsPinned).orderByDesc(Note::getUpdatedAt).orderByDesc(Note::getCreatedAt);
+        List<Note> list = noteMapper.selectList(wrapper);
+        noteService.enrichNotes(list, userId != null ? Long.valueOf(userId) : null);
+        return ApiResponse.success(list);
+    }
+
+    @PutMapping("/api/notes/{id}/move")
+    public ApiResponse<Note> moveNote(@RequestAttribute(value = "userId", required = false) Integer userId,
+                                      @PathVariable("id") Long noteId,
+                                      @RequestBody(required = false) MoveNoteReq req) {
+        Long activeUserId = getUserIdOrFallback(userId);
+        MoveNoteReq body = req != null ? req : new MoveNoteReq();
+        Note moved = noteService.moveNote(
+                activeUserId,
+                noteId,
+                body.getParentId(),
+                Boolean.TRUE.equals(body.getClearParent()),
+                body.getCategory(),
+                body.getSortOrder()
+        );
+        return ApiResponse.success(moved);
+    }
+
+    @PutMapping("/api/notes/reorder")
+    public ApiResponse<Void> reorderChapters(@RequestAttribute(value = "userId", required = false) Integer userId,
+                                             @RequestBody ReorderReq req) {
+        Long activeUserId = getUserIdOrFallback(userId);
+        noteService.reorderChapters(activeUserId, req.getParentId(), req.getOrderedIds());
+        return ApiResponse.success(null);
+    }
+
+    @PostMapping("/api/notes/{id}/pin")
+    public ApiResponse<Note> togglePin(@RequestAttribute(value = "userId", required = false) Integer userId,
+                                       @PathVariable("id") Long noteId) {
+        Long activeUserId = getUserIdOrFallback(userId);
+        return ApiResponse.success(noteService.togglePin(activeUserId, noteId));
+    }
+
+    @GetMapping("/api/notes/{id}/tree")
+    public ApiResponse<Map<String, Object>> getNoteTree(@RequestAttribute(value = "userId", required = false) Integer userId,
+                                                        @PathVariable("id") Long noteId) {
+        Long viewerId = userId != null ? Long.valueOf(userId) : null;
+        return ApiResponse.success(noteService.getNoteTree(noteId, viewerId));
+    }
+
+    @GetMapping("/api/notes/{id}/backlinks")
+    public ApiResponse<List<Map<String, Object>>> getNoteBacklinks(@RequestAttribute(value = "userId", required = false) Integer userId,
+                                                                   @PathVariable("id") Long noteId) {
+        Long viewerId = userId != null ? Long.valueOf(userId) : null;
+        return ApiResponse.success(noteService.getBacklinks(noteId, viewerId));
     }
 
     @PostMapping("/api/notes/batch-delete")
@@ -151,5 +200,19 @@ public class NoteExtendedController {
     @Data
     public static class BatchDeleteReq {
         private List<Long> ids = new ArrayList<>();
+    }
+
+    @Data
+    public static class MoveNoteReq {
+        private Long parentId;
+        private Boolean clearParent;
+        private String category;
+        private Integer sortOrder;
+    }
+
+    @Data
+    public static class ReorderReq {
+        private Long parentId;
+        private List<Long> orderedIds = new ArrayList<>();
     }
 }
