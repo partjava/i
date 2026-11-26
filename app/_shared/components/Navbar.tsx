@@ -26,6 +26,7 @@ import {
   Gamepad2,
   Sun,
   Moon,
+  Play,
 } from 'lucide-react';
 import { useLocale, UI_DICT } from '../lib/i18n';
 import { useSidebar } from './Sidebar';
@@ -305,8 +306,21 @@ export default function Navbar() {
             </span>
           </Link>
 
+          {/* 重播 3D 品牌开场大片入口（位于徽标与首页之间的空白处） */}
+          <Tooltip title="重播 3D 品牌开场大片" placement="bottom">
+            <button
+              type="button"
+              data-nav-replay-intro
+              aria-label="重播 3D 品牌开场大片"
+              onClick={() => window.dispatchEvent(new CustomEvent('hewei-replay-intro'))}
+              className="relative inline-flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 ml-1 rounded-full border border-amber-500/35 dark:border-amber-300/30 bg-white/55 dark:bg-white/10 text-amber-700 dark:text-[#fbe296] shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_2px_8px_rgba(212,173,114,0.18)] hover:scale-105 hover:border-amber-500/70 hover:bg-amber-400/20 hover:text-amber-900 dark:hover:text-white active:scale-95 transition-all duration-150 shrink-0"
+            >
+              <Play className="w-3.5 h-3.5 translate-x-[0.5px] fill-current" strokeWidth={2} />
+            </button>
+          </Tooltip>
+
           {/* 分隔竖线 */}
-          <span data-nav-divider className="hidden md:block w-px h-6 mx-3 bg-white/50 dark:bg-white/15" />
+          <span data-nav-divider className="hidden md:block w-px h-6 mx-2 bg-white/50 dark:bg-white/15" />
 
           {/* 桌面端导航链接（统一 Lucide 1.75px 线性图标） */}
           <div className="hidden md:flex items-center space-x-1 lg:space-x-1.5">

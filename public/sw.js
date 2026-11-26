@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v4.0.0';
+const CACHE_VERSION = 'v4.0.1';
 const CACHE_NAME = `partjava-${CACHE_VERSION}`;
 
 // 只缓存真正的静态资源

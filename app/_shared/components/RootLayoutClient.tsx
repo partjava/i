@@ -14,6 +14,7 @@ import DevTools from './DevTools';
 import AiChat from './AiChat';
 import CommandPalette from './CommandPalette';
 import FetchInterceptor from './FetchInterceptor';
+import HomeIntroSplashHost from './HomeIntroSplashHost';
 import { StudyContentPageProvider } from './StudyContentPageContext';
 
 interface RootLayoutClientProps {
@@ -146,6 +147,7 @@ export default function RootLayoutClient({ children }: RootLayoutClientProps) {
                 <AiChat />
                 <CommandPalette />
                 <BottomNavigation />
+                <HomeIntroSplashHost />
               </div>
             </MobileGestureHandler>
           </SidebarProvider>

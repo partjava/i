@@ -59,8 +59,59 @@ export default function RootLayout({
 
         {/* Splash Screens */}
         <link rel="apple-touch-startup-image" href="/icons/icon-512x512.png" />
+
+        {/* 首页同步揭幕幕布样式与首帧脚本（仅在首页首屏挂载期间生效，杜绝 3D WebGL 编译前闪出裸首页） */}
+        <style
+          dangerouslySetInnerHTML={{
+            __html: `
+              #hewei-boot-curtain {
+                position: fixed;
+                inset: 0;
+                z-index: 9999;
+                display: none;
+                align-items: center;
+                justify-content: center;
+                background: radial-gradient(circle at 50% 45%, #ffffff 0%, #f1f5f9 72%);
+                pointer-events: none;
+              }
+              html[data-hewei-theme="dark"] #hewei-boot-curtain {
+                background: radial-gradient(circle at 50% 45%, #0f1c38 0%, #070d1b 72%);
+              }
+              html[data-hewei-intro-boot="1"] #hewei-boot-curtain {
+                display: flex;
+                opacity: 1;
+                pointer-events: auto;
+              }
+              html[data-hewei-intro-boot="fade"] #hewei-boot-curtain {
+                display: flex;
+                opacity: 0;
+                pointer-events: none;
+                transition: opacity 240ms cubic-bezier(0.22, 1, 0.36, 1);
+              }
+              @keyframes hewei-curtain-pulse {
+                0%, 100% { opacity: 0.72; transform: scale(0.97); }
+                50% { opacity: 1; transform: scale(1.03); }
+              }
+              #hewei-boot-curtain img {
+                width: 64px;
+                height: 64px;
+                object-fit: contain;
+                filter: drop-shadow(0 0 18px rgba(216, 172, 75, 0.48));
+                animation: hewei-curtain-pulse 1.6s ease-in-out infinite;
+              }
+            `,
+          }}
+        />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var p=location.pathname,s=location.search||'';if(p==='/'||p==='/home'||s.indexOf('intro=1')!==-1){var r=document.documentElement;var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches)){r.setAttribute('data-hewei-theme','dark');}r.setAttribute('data-hewei-intro-boot','1');setTimeout(function(){if(r.getAttribute('data-hewei-intro-boot')==='1'){r.setAttribute('data-hewei-intro-boot','fade');setTimeout(function(){if(r.getAttribute('data-hewei-intro-boot')==='fade'){r.removeAttribute('data-hewei-intro-boot');}},260);}},1800);}}catch(e){}})();`,
+          }}
+        />
       </head>
       <body className="font-sans antialiased">
+        <div id="hewei-boot-curtain" aria-hidden="true" suppressHydrationWarning>
+          <img src="/images/heauio/logo-grain.png" alt="" draggable={false} />
+        </div>
         <RootLayoutClient>
           {children}
         </RootLayoutClient>
