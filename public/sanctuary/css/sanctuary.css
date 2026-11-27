@@ -118,16 +118,26 @@
       transform-origin: left;
     }
 
+    .custom-scroll {
+      overscroll-behavior: contain;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(212, 173, 114, 0.42) rgba(17, 20, 24, 0.35);
+    }
     .custom-scroll::-webkit-scrollbar {
-      width: 5px;
-      height: 5px;
+      width: 6px;
+      height: 6px;
     }
     .custom-scroll::-webkit-scrollbar-track {
       background: rgba(17, 20, 24, 0.4);
+      border-radius: 9999px;
     }
     .custom-scroll::-webkit-scrollbar-thumb {
-      background: rgba(212, 173, 114, 0.3);
+      background: rgba(212, 173, 114, 0.38);
       border-radius: 9999px;
+    }
+    .custom-scroll::-webkit-scrollbar-thumb:hover {
+      background: rgba(212, 173, 114, 0.65);
     }
     /* 第二轮精修：宽屏字体节奏、窄屏布局和触控可读性 */
     .hero-heading { text-wrap: balance; text-shadow: 0 3px 26px rgba(0,0,0,.27); }
@@ -178,9 +188,26 @@
     }
 
     /* C++ 数据结构学习控制台：保留原书房深色玻璃与暖金/青绿视觉体系 */
-    #projects-dialog { max-width: 760px; max-height: calc(100vh - 110px); width: min(760px, calc(100vw - 24px)); }
-    .ds-shell { display:block; min-height:0; flex:1; overflow:hidden; }
-    .ds-body { min-width:0; min-height:0; overflow-y:auto; padding:24px 22px 26px; }
+    #projects-dialog { max-width: 760px; max-height: calc(100vh - 110px); width: min(760px, calc(100vw - 24px)); min-height: 0; }
+    .ds-shell { display: flex; flex-direction: column; min-height: 0; flex: 1; overflow: hidden; }
+    .ds-body { flex: 1; height: 100%; min-width: 0; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 24px 22px 26px; }
+    #about-dialog { max-height: calc(100vh - 48px); overflow-y: auto; overscroll-behavior: contain; }
+    html.is-embedded #projects-modal {
+      padding: 46px 18px 18px !important;
+      align-items: stretch !important;
+      justify-content: center !important;
+    }
+    html.is-embedded #projects-dialog {
+      width: min(760px, 100%) !important;
+      max-height: 100% !important;
+      height: 100%;
+    }
+    html.is-embedded #projects-dialog > div:first-child {
+      padding: 10px 16px !important;
+    }
+    html.is-embedded .ds-body {
+      padding: 16px 18px 22px;
+    }
     .ds-kicker {font:11px 'JetBrains Mono',monospace;letter-spacing:.16em;color:#d3b06e;text-transform:uppercase;}
     .ds-title {font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;font-size:clamp(20px,2vw,24px);font-weight:700;line-height:1.45;color:#f4eadc;letter-spacing:-.02em;}
     .ds-summary{font-size:12px;color:#a9b4bf;line-height:1.8;max-width:92%;}
@@ -203,7 +230,7 @@
     .ds-editor-file{font:11px 'JetBrains Mono',monospace;color:#8edbd8;}
     .ds-copy {font:11px 'JetBrains Mono',monospace;color:#d4ad72;border:1px solid rgba(212,173,114,.27);border-radius:8px;padding:5px 12px;transition:background .2s;}
     .ds-copy:hover{background:rgba(212,173,114,.12)}
-    .ds-editor-code {margin:0;padding:18px 20px 20px;overflow:auto;line-height:1.82;font:13px/1.82 'JetBrains Mono',Consolas,monospace;color:#e0f1f2;white-space:pre;tab-size:2;user-select:text!important;}
+    .ds-editor-code {margin:0;padding:18px 20px 20px;overflow-x:auto;overflow-y:visible;line-height:1.82;font:13px/1.82 'JetBrains Mono',Consolas,monospace;color:#e0f1f2;white-space:pre;tab-size:2;user-select:text!important;}
     .ds-editor-code * {user-select:text!important;}
     .ds-notes{display:grid;grid-template-columns:1fr;gap:10px;margin-top:12px;}
     .ds-note{padding:12px 14px;border-radius:12px;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.06);font-size:12px;line-height:1.72;color:#d0d7dd;}

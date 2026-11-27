@@ -587,9 +587,13 @@
       });
     }
 
-    // 鼠标滚轮无缝传递到父级页面（在弹窗/抽屉内部滚动代码时不触发父页面滚动）
+    // 鼠标滚轮无缝传递到父级页面（在弹窗/抽屉内部滚动内容时不触发父页面滚动）
     window.addEventListener('wheel', (e) => {
-      if (e.target && e.target.closest && e.target.closest('.custom-scroll')) {
+      if (
+        e.target &&
+        e.target.closest &&
+        e.target.closest('.custom-scroll, #projects-dialog, #about-dialog, #manuscript-drawer')
+      ) {
         return;
       }
       if (currentRoute === 'PROJECTS' || currentRoute === 'ABOUT') {
