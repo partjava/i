@@ -255,8 +255,8 @@ export default function Memory({
     const gap = size === 8 ? 5 : size === 6 ? 7 : 10;
     const cell = (canvasSize - gap * (size + 1)) / size;
 
-    const clickX = e.clientX - rect.left;
-    const clickY = e.clientY - rect.top;
+    const clickX = (e.clientX - rect.left) * (canvas.width / rect.width);
+    const clickY = (e.clientY - rect.top) * (canvas.height / rect.height);
 
     const col = Math.floor((clickX - gap) / (cell + gap));
     const row = Math.floor((clickY - gap) / (cell + gap));
@@ -269,9 +269,9 @@ export default function Memory({
   const totalPairs = (boardSize * boardSize) / 2;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', userSelect: 'none' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', userSelect: 'none', width: 'min(100%, 560px, 66vh)' }}>
       {/* 难度选择与技能栏 */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: 440, marginBottom: 10 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
         <div style={{ display: 'flex', gap: 6 }}>
           {[
             { s: 4, name: '4×4 初级 (16张)' },
@@ -321,14 +321,14 @@ export default function Memory({
       </div>
 
       {/* 实时状态信息条 */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', width: 440, marginBottom: 10, padding: '6px 14px', background: '#1c2230', borderRadius: 8, fontSize: 13, color: '#bbb' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', marginBottom: 10, padding: '6px 14px', background: '#1c2230', borderRadius: 8, fontSize: 13, color: '#bbb' }}>
         <div>翻牌次数: <b style={{ color: '#fff' }}>{turns}</b></div>
         <div>连对 Combo: <b style={{ color: combo > 1 ? '#ff5722' : '#4f8cff' }}>{combo > 1 ? `🔥 x${combo}` : combo}</b></div>
         <div>已配对: <b style={{ color: '#4caf50' }}>{matchedPairs} / {totalPairs}</b></div>
       </div>
 
       {/* 画布 */}
-      <div style={{ position: 'relative', width: 440, height: 440 }}>
+      <div style={{ position: 'relative', width: '100%' }}>
         <canvas
           ref={canvasRef}
           width={440}
@@ -338,7 +338,9 @@ export default function Memory({
             borderRadius: 12,
             boxShadow: '0 8px 30px rgba(0,0,0,0.3)',
             cursor: 'pointer',
-            display: 'block'
+            display: 'block',
+            width: '100%',
+            height: 'auto'
           }}
         />
 

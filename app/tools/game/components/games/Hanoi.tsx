@@ -239,7 +239,7 @@ export default function Hanoi({
     const canvas = canvasRef.current;
     if (!canvas) return;
     const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
+    const x = (e.clientX - rect.left) * (canvas.width / rect.width);
     const peg = x < 150 ? 0 : x < 300 ? 1 : 2;
     handlePegClick(peg);
   };
@@ -247,9 +247,9 @@ export default function Hanoi({
   const optimalSteps = Math.pow(2, numDisks) - 1;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', userSelect: 'none' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', userSelect: 'none', width: 'min(100%, 660px)' }}>
       {/* 难度层数选择 */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: 450, marginBottom: 10 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
         <div style={{ display: 'flex', gap: 5 }}>
           {[3, 4, 5, 6, 7, 8].map(n => (
             <button
@@ -306,14 +306,14 @@ export default function Hanoi({
       </div>
 
       {/* 状态统计条 */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', width: 450, marginBottom: 8, padding: '6px 14px', background: '#1c2230', borderRadius: 8, fontSize: 13, color: '#bbb' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', marginBottom: 8, padding: '6px 14px', background: '#1c2230', borderRadius: 8, fontSize: 13, color: '#bbb' }}>
         <div>已移动: <b style={{ color: '#4f8cff' }}>{steps} 步</b></div>
         <div>理论最少: <b style={{ color: '#10b981' }}>{optimalSteps} 步</b></div>
         <div>达成率: <b style={{ color: '#ffd700' }}>{steps === 0 ? '100%' : `${Math.max(10, Math.round((optimalSteps / steps) * 100))}%`}</b></div>
       </div>
 
       {/* 画布 */}
-      <div style={{ position: 'relative', width: 450, height: 320 }}>
+      <div style={{ position: 'relative', width: '100%' }}>
         <canvas
           ref={canvasRef}
           width={450}
@@ -321,6 +321,8 @@ export default function Hanoi({
           onClick={handleCanvasClick}
           style={{
             display: 'block',
+            width: '100%',
+            height: 'auto',
             cursor: 'pointer',
             borderRadius: 12,
             boxShadow: '0 8px 30px rgba(0,0,0,0.3)',

@@ -52,7 +52,7 @@ export default function CodeEditorPage() {
   ];
 
   return (
-    <div className="min-h-[calc(100vh-70px)] bg-surface-page text-content-primary flex flex-col">
+    <div className="min-h-[calc(100vh-70px)] text-content-primary flex flex-col">
       <div className="flex-1 w-full container mx-auto px-4 py-8">
         {/* 页面标题 */}
         <div className="text-center mb-8">

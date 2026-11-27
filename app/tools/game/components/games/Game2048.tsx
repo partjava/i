@@ -334,9 +334,9 @@ export default function Game2048({
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', userSelect: 'none' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', userSelect: 'none', width: 'min(100%, 540px, 66vh)' }}>
       {/* 顶部控制栏：难度/尺寸选择与撤销 */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: 440, marginBottom: 12 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', flexWrap: 'wrap', gap: 6, marginBottom: 12 }}>
         <div style={{ display: 'flex', gap: 6 }}>
           {[
             { s: 4, name: '4×4 经典' },
@@ -404,7 +404,7 @@ export default function Game2048({
       </div>
 
       {/* 游戏主画布 */}
-      <div style={{ position: 'relative', width: 440, height: 440 }}>
+      <div style={{ position: 'relative', width: '100%' }}>
         <canvas
           ref={canvasRef}
           width={440}
@@ -415,7 +415,9 @@ export default function Game2048({
             borderRadius: 12,
             boxShadow: '0 8px 30px rgba(0,0,0,0.3)',
             cursor: 'grab',
-            display: 'block'
+            display: 'block',
+            width: '100%',
+            height: 'auto',
           }}
           tabIndex={0}
         />
@@ -426,8 +428,8 @@ export default function Game2048({
             key={f.id}
             style={{
               position: 'absolute',
-              left: f.x,
-              top: f.y,
+              left: `${(f.x / 440) * 100}%`,
+              top: `${(f.y / 440) * 100}%`,
               transform: 'translate(-50%, -50%)',
               color: '#ffd700',
               fontWeight: 'bold',

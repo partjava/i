@@ -293,17 +293,17 @@ export default function TicTacToe({
     if (!canvas) return;
     const rect = canvas.getBoundingClientRect();
     const cell = 390 / 3;
-    const col = Math.floor((e.clientX - rect.left) / cell);
-    const row = Math.floor((e.clientY - rect.top) / cell);
+    const col = Math.floor(((e.clientX - rect.left) * (canvas.width / rect.width)) / cell);
+    const row = Math.floor(((e.clientY - rect.top) * (canvas.height / rect.height)) / cell);
     if (row >= 0 && row < 3 && col >= 0 && col < 3) {
       makeMove(row, col);
     }
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', userSelect: 'none' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', userSelect: 'none', width: 'min(100%, 480px, 62vh)' }}>
       {/* 模式选择 */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: 390, marginBottom: 10 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
         <div style={{ display: 'flex', gap: 6 }}>
           <button
             onClick={() => { setMode('endless'); initGame(); }}
@@ -355,13 +355,13 @@ export default function TicTacToe({
       </div>
 
       {/* 状态统计条 */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', width: 390, marginBottom: 8, padding: '6px 14px', background: '#1c2230', borderRadius: 8, fontSize: 13, color: '#bbb' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', marginBottom: 8, padding: '6px 14px', background: '#1c2230', borderRadius: 8, fontSize: 13, color: '#bbb' }}>
         <div>当前回合: <b style={{ color: currentTurn === 'X' ? '#00f2fe' : '#f5576c' }}>{currentTurn === 'X' ? '🔵 玩家 (X)' : '🔴 AI (O)'}</b></div>
         <div>对战模式: <b style={{ color: '#fff' }}>{mode === 'endless' ? '最多留 3 子' : '传统填满'}</b></div>
       </div>
 
       {/* 画布 */}
-      <div style={{ position: 'relative', width: 390, height: 390 }}>
+      <div style={{ position: 'relative', width: '100%' }}>
         <canvas
           ref={canvasRef}
           width={390}
@@ -369,6 +369,8 @@ export default function TicTacToe({
           onClick={handleCanvasClick}
           style={{
             display: 'block',
+            width: '100%',
+            height: 'auto',
             cursor: 'pointer',
             borderRadius: 16,
             boxShadow: '0 8px 30px rgba(0, 242, 254, 0.15)',

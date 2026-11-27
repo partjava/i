@@ -357,8 +357,8 @@ export default function Gomoku({
     const cell = 450 / 16;
     const offset = cell;
 
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    const x = (e.clientX - rect.left) * (canvas.width / rect.width);
+    const y = (e.clientY - rect.top) * (canvas.height / rect.height);
 
     const col = Math.round((x - offset) / cell);
     const row = Math.round((y - offset) / cell);
@@ -377,8 +377,11 @@ export default function Gomoku({
     const cell = 450 / 16;
     const offset = cell;
 
-    const col = Math.round((e.clientX - rect.left - offset) / cell);
-    const row = Math.round((e.clientY - rect.top - offset) / cell);
+    const x = (e.clientX - rect.left) * (canvas.width / rect.width);
+    const y = (e.clientY - rect.top) * (canvas.height / rect.height);
+
+    const col = Math.round((x - offset) / cell);
+    const row = Math.round((y - offset) / cell);
 
     if (row >= 0 && row < 15 && col >= 0 && col < 15) {
       placePiece(row, col);
@@ -386,9 +389,9 @@ export default function Gomoku({
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', userSelect: 'none' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', userSelect: 'none', width: 'min(100%, 560px, 66vh)' }}>
       {/* 顶部模式与难度栏 */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: 450, marginBottom: 10 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
         <div style={{ display: 'flex', gap: 6 }}>
           <button
             onClick={() => { setMode('pve'); initGame(); }}
@@ -486,14 +489,14 @@ export default function Gomoku({
       </div>
 
       {/* 状态信息条 */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', width: 450, marginBottom: 8, padding: '6px 14px', background: '#1c2230', borderRadius: 8, fontSize: 13, color: '#bbb' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', marginBottom: 8, padding: '6px 14px', background: '#1c2230', borderRadius: 8, fontSize: 13, color: '#bbb' }}>
         <div>当前回合: <b style={{ color: currentTurn === 1 ? '#fff' : '#ffd700' }}>{currentTurn === 1 ? '⚫ 黑方 (执先)' : '⚪ 白方 (AI)'}</b></div>
         <div>总手数: <b style={{ color: '#4f8cff' }}>{history.length}</b></div>
         <div>对局状态: <b style={{ color: winner ? '#4caf50' : '#aaa' }}>{winner === 1 ? '🎉 黑方胜出!' : winner === 2 ? '🏆 白方胜出!' : '对弈进行中'}</b></div>
       </div>
 
       {/* 棋盘画布 */}
-      <div style={{ position: 'relative', width: 450, height: 450 }}>
+      <div style={{ position: 'relative', width: '100%' }}>
         <canvas
           ref={canvasRef}
           width={450}
@@ -503,6 +506,8 @@ export default function Gomoku({
           onMouseLeave={() => setHoverPos(null)}
           style={{
             display: 'block',
+            width: '100%',
+            height: 'auto',
             cursor: 'pointer',
             borderRadius: 10,
             boxShadow: '0 8px 30px rgba(0,0,0,0.4)',

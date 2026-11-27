@@ -55,6 +55,7 @@ export default function SettingModal({ open, onClose }: SettingModalProps) {
   const [emailNotification, setEmailNotification] = useState(true);
   const [publicProfile, setPublicProfile] = useState(true);
   const [autoSave, setAutoSave] = useState(true);
+  const [ambientFlow, setAmbientFlow] = useState(true);
   const [fontSize, setFontSize] = useState('medium');
   const [codeTheme, setCodeTheme] = useState('vs-dark');
 
@@ -69,6 +70,7 @@ export default function SettingModal({ open, onClose }: SettingModalProps) {
     setEmailNotification(localStorage.getItem('emailNotification') !== 'false');
     setPublicProfile(localStorage.getItem('publicProfile') !== 'false');
     setAutoSave(localStorage.getItem('autoSave') !== 'false');
+    setAmbientFlow(localStorage.getItem('ambientFlow') !== 'false');
     setFontSize(localStorage.getItem('fontSize') || 'medium');
     setCodeTheme(localStorage.getItem('codeTheme') || 'vs-dark');
     
@@ -111,6 +113,13 @@ export default function SettingModal({ open, onClose }: SettingModalProps) {
     
     // 给用户反馈
     message.success(`已切换到${nextTheme === 'dark' ? '深色' : '浅色'}模式`);
+  };
+
+  const handleAmbientFlowChange = (checked: boolean) => {
+    setAmbientFlow(checked);
+    localStorage.setItem('ambientFlow', String(checked));
+    emitSettingsChange({ ambientFlow: checked });
+    message.success(checked ? '已开启流动光影背景' : '已切换为极简纯色背景');
   };
 
   const handleLanguageChange = (value: string) => {
@@ -194,6 +203,7 @@ export default function SettingModal({ open, onClose }: SettingModalProps) {
           'jwt_token',
           'jwt_user',
           'theme',
+          'ambientFlow',
           'fontSize',
           'codeTheme',
           'language',
@@ -405,6 +415,19 @@ export default function SettingModal({ open, onClose }: SettingModalProps) {
                       onChange={handleThemeChange}
                       checkedChildren="深色"
                       unCheckedChildren="浅色"
+                    />
+                  </div>
+
+                  <div className={`${styles.row} border-b border-[var(--settings-line)] pb-4`} data-ambient-flow-switch>
+                    <div>
+                      <div className="font-semibold text-[var(--settings-text)]">{st.ambientTitle}</div>
+                      <div className="text-xs text-[var(--settings-secondary)] mt-0.5">{st.ambientDesc}</div>
+                    </div>
+                    <Switch
+                      checked={ambientFlow}
+                      onChange={handleAmbientFlowChange}
+                      checkedChildren="流动"
+                      unCheckedChildren="极简"
                     />
                   </div>
 

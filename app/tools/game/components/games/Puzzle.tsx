@@ -282,8 +282,8 @@ export default function Puzzle({
     const gap = size === 8 ? 4 : size === 5 ? 6 : 8;
     const cell = (canvasSize - gap * (size + 1)) / size;
 
-    const clickX = e.clientX - rect.left;
-    const clickY = e.clientY - rect.top;
+    const clickX = (e.clientX - rect.left) * (canvas.width / rect.width);
+    const clickY = (e.clientY - rect.top) * (canvas.height / rect.height);
 
     const col = Math.floor((clickX - gap) / (cell + gap));
     const row = Math.floor((clickY - gap) / (cell + gap));
@@ -300,9 +300,9 @@ export default function Puzzle({
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', userSelect: 'none' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', userSelect: 'none', width: 'min(100%, 540px, 66vh)' }}>
       {/* 顶部控制栏 */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: 440, marginBottom: 12 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', flexWrap: 'wrap', gap: 6, marginBottom: 12 }}>
         <div style={{ display: 'flex', gap: 6 }}>
           {[
             { s: 3, name: '3×3 新手' },
@@ -351,14 +351,14 @@ export default function Puzzle({
       </div>
 
       {/* 状态统计指示牌 */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', width: 440, marginBottom: 10, padding: '6px 14px', background: '#1c2230', borderRadius: 8, fontSize: 13, color: '#bbb' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', marginBottom: 10, padding: '6px 14px', background: '#1c2230', borderRadius: 8, fontSize: 13, color: '#bbb' }}>
         <div>⏱️ 用时: <b style={{ color: '#fff' }}>{formatTime(seconds)}</b></div>
         <div>👣 步数: <b style={{ color: '#4f8cff' }}>{steps}</b></div>
         <div>🏆 最优记录: <b style={{ color: '#ffd700' }}>{bestSteps ? `${bestSteps} 步` : '--'}</b></div>
       </div>
 
       {/* 棋盘画布 */}
-      <div style={{ position: 'relative', width: 440, height: 440 }}>
+      <div style={{ position: 'relative', width: '100%' }}>
         <canvas
           ref={canvasRef}
           width={440}
@@ -368,7 +368,9 @@ export default function Puzzle({
             borderRadius: 12,
             boxShadow: '0 8px 30px rgba(0,0,0,0.3)',
             cursor: 'pointer',
-            display: 'block'
+            display: 'block',
+            width: '100%',
+            height: 'auto'
           }}
         />
 

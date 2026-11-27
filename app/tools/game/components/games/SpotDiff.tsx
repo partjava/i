@@ -289,13 +289,13 @@ export default function SpotDiff({
     const canvas = canvasRef.current;
     if (!canvas) return;
     const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    const x = (e.clientX - rect.left) * (canvas.width / rect.width);
+    const y = (e.clientY - rect.top) * (canvas.height / rect.height);
     handleCheck(x, y);
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', userSelect: 'none', width: 450 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', userSelect: 'none', width: 'min(100%, 780px)' }}>
       {/* 场景切换与提示栏 */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', marginBottom: 8 }}>
         <div style={{ display: 'flex', gap: 6 }}>
@@ -345,7 +345,7 @@ export default function SpotDiff({
       </div>
 
       {/* 画布 */}
-      <div style={{ position: 'relative', width: 450, height: 210 }}>
+      <div style={{ position: 'relative', width: '100%' }}>
         <canvas
           ref={canvasRef}
           width={450}
@@ -353,6 +353,8 @@ export default function SpotDiff({
           onClick={handleCanvasClick}
           style={{
             display: 'block',
+            width: '100%',
+            height: 'auto',
             cursor: 'pointer',
             borderRadius: 12,
             boxShadow: '0 8px 30px rgba(0,0,0,0.5)',

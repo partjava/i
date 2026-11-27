@@ -248,8 +248,8 @@ export default function WordSearch({
     if (!canvas) return;
     const rect = canvas.getBoundingClientRect();
     const cell = 440 / boardSize;
-    const c = Math.floor((e.clientX - rect.left) / cell);
-    const r = Math.floor((e.clientY - rect.top) / cell);
+    const c = Math.floor(((e.clientX - rect.left) * (canvas.width / rect.width)) / cell);
+    const r = Math.floor(((e.clientY - rect.top) * (canvas.height / rect.height)) / cell);
     if (r >= 0 && r < boardSize && c >= 0 && c < boardSize) {
       setDragStart([r, c]);
       setDragCurrent([r, c]);
@@ -262,8 +262,8 @@ export default function WordSearch({
     if (!canvas) return;
     const rect = canvas.getBoundingClientRect();
     const cell = 440 / boardSize;
-    const c = Math.floor((e.clientX - rect.left) / cell);
-    const r = Math.floor((e.clientY - rect.top) / cell);
+    const c = Math.floor(((e.clientX - rect.left) * (canvas.width / rect.width)) / cell);
+    const r = Math.floor(((e.clientY - rect.top) * (canvas.height / rect.height)) / cell);
     if (r >= 0 && r < boardSize && c >= 0 && c < boardSize) {
       setDragCurrent([r, c]);
     }
@@ -278,7 +278,7 @@ export default function WordSearch({
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', userSelect: 'none', width: 440 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', userSelect: 'none', width: 'min(100%, 560px, 64vh)' }}>
       {/* 规模难度选择 */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', marginBottom: 8 }}>
         <div style={{ display: 'flex', gap: 6 }}>
@@ -330,7 +330,7 @@ export default function WordSearch({
       </div>
 
       {/* 画布 */}
-      <div style={{ position: 'relative', width: 440, height: 440 }}>
+      <div style={{ position: 'relative', width: '100%' }}>
         <canvas
           ref={canvasRef}
           width={440}
@@ -340,6 +340,8 @@ export default function WordSearch({
           onMouseUp={handleMouseUp}
           style={{
             display: 'block',
+            width: '100%',
+            height: 'auto',
             cursor: 'crosshair',
             borderRadius: 12,
             boxShadow: '0 8px 30px rgba(0,0,0,0.5)',

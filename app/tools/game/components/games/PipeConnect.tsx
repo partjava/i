@@ -284,9 +284,11 @@ export default function PipeConnect({
     if (!canvas) return;
     const rect = canvas.getBoundingClientRect();
     const cell = 440 / boardSize;
+    const x = (e.clientX - rect.left) * (canvas.width / rect.width);
+    const y = (e.clientY - rect.top) * (canvas.height / rect.height);
 
-    const col = Math.floor((e.clientX - rect.left) / cell);
-    const row = Math.floor((e.clientY - rect.top) / cell);
+    const col = Math.floor(x / cell);
+    const row = Math.floor(y / cell);
 
     if (row >= 0 && row < boardSize && col >= 0 && col < boardSize) {
       rotatePipe(row, col);
@@ -294,9 +296,9 @@ export default function PipeConnect({
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', userSelect: 'none' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', userSelect: 'none', width: 'min(100%, 560px, 66vh)' }}>
       {/* 难度选择 */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: 440, marginBottom: 8 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
         <div style={{ display: 'flex', gap: 6 }}>
           {[
             { s: 6, name: '6×6 经典' },
@@ -340,14 +342,14 @@ export default function PipeConnect({
       </div>
 
       {/* 状态统计条 */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', width: 440, marginBottom: 8, padding: '6px 14px', background: '#1c2230', borderRadius: 8, fontSize: 13, color: '#bbb' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', marginBottom: 8, padding: '6px 14px', background: '#1c2230', borderRadius: 8, fontSize: 13, color: '#bbb' }}>
         <div>起点: <b>🚰 水龙头</b></div>
         <div>旋转步数: <b style={{ color: '#38bdf8' }}>{steps} 步</b></div>
         <div>目标: <b>☕ Java 咖啡机 ({won ? '已注满' : '等待通水'})</b></div>
       </div>
 
       {/* 画布 */}
-      <div style={{ position: 'relative', width: 440, height: 440 }}>
+      <div style={{ position: 'relative', width: '100%' }}>
         <canvas
           ref={canvasRef}
           width={440}
@@ -355,6 +357,8 @@ export default function PipeConnect({
           onClick={handleCanvasClick}
           style={{
             display: 'block',
+            width: '100%',
+            height: 'auto',
             cursor: 'pointer',
             borderRadius: 12,
             boxShadow: '0 8px 30px rgba(0,0,0,0.5)',

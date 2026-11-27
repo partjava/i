@@ -860,7 +860,7 @@ export default function Home() {
   }, []);
 
   return (
-    <div className={`${mobileStyles.page} min-h-[calc(100vh-70px)] bg-surface-page flex flex-col justify-between`}>
+    <div className={`${mobileStyles.page} min-h-[calc(100vh-70px)] flex flex-col justify-between`}>
       <div>
       {/* 第一屏：左清爽教程引导 + 右缩放嵌入 3D 数字书房 */}
       <section className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 pt-1.5 pb-1.5">

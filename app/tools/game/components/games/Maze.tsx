@@ -343,20 +343,22 @@ export default function Maze({
       </div>
 
       {/* 状态统计条 */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', width: 440, marginBottom: 8, padding: '6px 14px', background: '#1c2230', borderRadius: 8, fontSize: 13, color: '#bbb' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', width: 'min(100%, 560px)', marginBottom: 8, padding: '6px 14px', background: '#1c2230', borderRadius: 8, fontSize: 13, color: '#bbb' }}>
         <div>⏱️ 探索用时: <b style={{ color: '#fff' }}>{formatTime(seconds)}</b></div>
         <div>👣 探索步数: <b style={{ color: '#38bdf8' }}>{steps} 步</b></div>
         <div>🔑 钥匙状态: <b style={{ color: hasKey ? '#10b981' : '#eab308' }}>{hasKey ? '✅ 已拿到钥匙' : '❌ 尚未取得'}</b></div>
       </div>
 
       {/* 画布 */}
-      <div style={{ position: 'relative', width: 440, height: 440 }}>
+      <div style={{ position: 'relative', width: 'min(100%, 560px, 64vh)' }}>
         <canvas
           ref={canvasRef}
           width={440}
           height={440}
           style={{
             display: 'block',
+            width: '100%',
+            height: 'auto',
             borderRadius: 12,
             boxShadow: '0 8px 30px rgba(0,0,0,0.5)',
           }}

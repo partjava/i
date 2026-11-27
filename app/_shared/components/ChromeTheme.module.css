@@ -16,15 +16,124 @@
 .shell [data-sidebar-nav]::-webkit-scrollbar-thumb:hover { background: rgba(15, 29, 51, 0.30); }
 .shell [data-sidebar-nav]::-webkit-scrollbar-button { display: none; }
 
+/* 方案 A + C：禾硙低饱和流光背景层（纯 GPU transform 合成、路由专注降噪、深浅双态及减动效兼容） */
+.ambientLayer {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  opacity: 1;
+  transition: opacity 600ms ease;
+}
+
+.ambientLayer[data-ambient-scene='focus'] {
+  opacity: 0.42;
+}
+
+.ambientLayer[data-ambient-enabled='false'] {
+  opacity: 0;
+}
+
+.ambientLayer[data-ambient-enabled='false'] .ambientOrb {
+  animation-play-state: paused;
+}
+
+.ambientOrb {
+  position: absolute;
+  border-radius: 9999px;
+  will-change: transform;
+  transform: translate3d(0, 0, 0);
+}
+
+.orbGold {
+  left: -8%;
+  top: -12%;
+  width: min(52vw, 720px);
+  height: min(52vw, 720px);
+  background: radial-gradient(circle at 46% 48%, rgba(212, 173, 114, 0.28) 0%, rgba(226, 194, 140, 0.14) 38%, rgba(212, 173, 114, 0) 72%);
+  animation: heweiFlowA 28s ease-in-out infinite alternate;
+}
+
+.orbIndigo {
+  right: -10%;
+  top: -8%;
+  width: min(54vw, 760px);
+  height: min(54vw, 760px);
+  background: radial-gradient(circle at 52% 48%, rgba(96, 138, 196, 0.24) 0%, rgba(126, 164, 214, 0.12) 40%, rgba(96, 138, 196, 0) 72%);
+  animation: heweiFlowB 34s ease-in-out -6s infinite alternate;
+}
+
+.orbTeal {
+  left: -4%;
+  top: 28%;
+  width: min(46vw, 640px);
+  height: min(46vw, 640px);
+  background: radial-gradient(circle at 45% 52%, rgba(94, 184, 154, 0.22) 0%, rgba(124, 198, 176, 0.10) 40%, rgba(94, 184, 154, 0) 72%);
+  animation: heweiFlowC 31s ease-in-out -11s infinite alternate;
+}
+
+.orbMist {
+  right: 8%;
+  bottom: -16%;
+  width: min(48vw, 680px);
+  height: min(48vw, 680px);
+  background: radial-gradient(circle at 50% 50%, rgba(212, 173, 114, 0.18) 0%, rgba(108, 152, 204, 0.11) 42%, rgba(108, 152, 204, 0) 72%);
+  animation: heweiFlowD 38s ease-in-out -17s infinite alternate;
+}
+
+@keyframes heweiFlowA {
+  0% { transform: translate3d(0%, 0%, 0) scale(1); }
+  50% { transform: translate3d(12%, 10%, 0) scale(1.08); }
+  100% { transform: translate3d(6%, 22%, 0) scale(0.95); }
+}
+
+@keyframes heweiFlowB {
+  0% { transform: translate3d(0%, 0%, 0) scale(1); }
+  50% { transform: translate3d(-14%, 8%, 0) scale(1.06); }
+  100% { transform: translate3d(-8%, 20%, 0) scale(0.96); }
+}
+
+@keyframes heweiFlowC {
+  0% { transform: translate3d(0%, 0%, 0) scale(0.96); }
+  50% { transform: translate3d(10%, -10%, 0) scale(1.07); }
+  100% { transform: translate3d(-4%, 12%, 0) scale(1.02); }
+}
+
+@keyframes heweiFlowD {
+  0% { transform: translate3d(0%, 0%, 0) scale(1.03); }
+  50% { transform: translate3d(-10%, -14%, 0) scale(0.95); }
+  100% { transform: translate3d(8%, -6%, 0) scale(1.06); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ambientOrb {
+    animation: none;
+  }
+}
+
 :global(body.dark) .shell {
   --chrome-theme: dark;
-  --chrome-sidebar-background: linear-gradient(165deg, rgba(21,25,33,.96), rgba(14,17,22,.96));
-  --chrome-island-background: linear-gradient(165deg, rgba(24,29,38,.95), rgba(16,20,27,.94));
+  --chrome-sidebar-background: linear-gradient(165deg, rgba(21,25,33,.78), rgba(14,17,22,.82));
+  --chrome-island-background: linear-gradient(165deg, rgba(24,29,38,.78), rgba(16,20,27,.82));
   --chrome-island-shadow: 0 10px 28px rgba(0,0,0,.32), inset 0 1px 0 rgba(212,173,114,.12);
   background-color: #0E1116;
 }
 
-:global(body.dark) .shell [data-ambient-light] { display: none; }
+:global(body.dark) .shell .orbGold {
+  background: radial-gradient(circle at 46% 48%, rgba(212, 173, 114, 0.15) 0%, rgba(212, 173, 114, 0.06) 42%, rgba(212, 173, 114, 0) 72%);
+}
+
+:global(body.dark) .shell .orbIndigo {
+  background: radial-gradient(circle at 52% 48%, rgba(44, 96, 168, 0.26) 0%, rgba(44, 96, 168, 0.10) 42%, rgba(44, 96, 168, 0) 72%);
+}
+
+:global(body.dark) .shell .orbTeal {
+  background: radial-gradient(circle at 45% 52%, rgba(38, 128, 108, 0.17) 0%, rgba(38, 128, 108, 0.06) 42%, rgba(38, 128, 108, 0) 72%);
+}
+
+:global(body.dark) .shell .orbMist {
+  background: radial-gradient(circle at 50% 50%, rgba(212, 173, 114, 0.11) 0%, rgba(44, 96, 168, 0.10) 44%, rgba(44, 96, 168, 0) 72%);
+}
 
 :global(body.dark) .shell [data-sidebar-panel],
 :global(body.dark) .shell [data-nav-island] {

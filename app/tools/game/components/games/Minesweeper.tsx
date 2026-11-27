@@ -244,8 +244,8 @@ export default function Minesweeper({
     if (!ctx) return;
 
     const { rows, cols } = diff;
-    const maxWidth = 480;
-    const cell = Math.min(36, Math.floor(maxWidth / cols));
+    const maxWidth = 640;
+    const cell = Math.min(40, Math.floor(maxWidth / cols));
     const totalW = cols * cell;
     const totalH = rows * cell;
 
@@ -313,10 +313,10 @@ export default function Minesweeper({
     const canvas = canvasRef.current;
     if (!canvas) return;
     const rect = canvas.getBoundingClientRect();
-    const cell = Math.min(36, Math.floor(480 / diff.cols));
+    const cell = Math.min(40, Math.floor(640 / diff.cols));
 
-    const clickX = e.clientX - rect.left;
-    const clickY = e.clientY - rect.top;
+    const clickX = (e.clientX - rect.left) * (canvas.width / rect.width);
+    const clickY = (e.clientY - rect.top) * (canvas.height / rect.height);
 
     const col = Math.floor(clickX / cell);
     const row = Math.floor(clickY / cell);
@@ -335,7 +335,7 @@ export default function Minesweeper({
   };
 
   const remainingMines = Math.max(0, diff.mines - flagsCount);
-  const cell = Math.min(36, Math.floor(480 / diff.cols));
+  const cell = Math.min(40, Math.floor(640 / diff.cols));
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', userSelect: 'none' }}>
@@ -368,8 +368,7 @@ export default function Minesweeper({
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          width: diff.cols * cell,
-          maxWidth: 480,
+          width: `min(100%, ${diff.cols * cell}px)`,
           background: '#1a2234',
           padding: '8px 16px',
           borderRadius: '8px 8px 0 0',
@@ -408,7 +407,7 @@ export default function Minesweeper({
       </div>
 
       {/* 扫雷画布容器 */}
-      <div style={{ position: 'relative', width: diff.cols * cell, height: diff.rows * cell }}>
+      <div style={{ position: 'relative', width: `min(100%, ${diff.cols * cell}px)` }}>
         <canvas
           ref={canvasRef}
           width={diff.cols * cell}
@@ -417,6 +416,8 @@ export default function Minesweeper({
           onContextMenu={handleContextMenu}
           style={{
             display: 'block',
+            width: '100%',
+            height: 'auto',
             cursor: 'pointer',
             borderRadius: '0 0 8px 8px',
             boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
@@ -460,7 +461,7 @@ export default function Minesweeper({
       </div>
 
       {/* 底部移动端与操作模式控制条 */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: diff.cols * cell, maxWidth: 480, marginTop: 10 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: `min(100%, ${diff.cols * cell}px)`, marginTop: 10, gap: 8, flexWrap: 'wrap' }}>
         {/* 触屏专属：挖掘模式 vs 插旗模式切换开关 */}
         <button
           onClick={() => setFlagModeMobile(m => !m)}

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { usePathname } from 'next/navigation';
 import Navbar from './Navbar';
 import mobileStyles from './MobileLayout.module.css';
 import chromeTheme from './ChromeTheme.module.css';
@@ -23,6 +24,12 @@ interface RootLayoutClientProps {
 
 export default function RootLayoutClient({ children }: RootLayoutClientProps) {
   const [mounted, setMounted] = useState(false);
+  const [ambientFlow, setAmbientFlow] = useState(true);
+  const pathname = usePathname() || '/';
+  const ambientScene =
+    pathname.startsWith('/study') || pathname.startsWith('/notes') || pathname.startsWith('/code')
+      ? 'focus'
+      : 'showcase';
 
   // 初始化主题 - 只在客户端执行
   useEffect(() => {
@@ -49,6 +56,7 @@ export default function RootLayoutClient({ children }: RootLayoutClientProps) {
       }
     };
     applyFontSizeSetting(localStorage.getItem('fontSize'));
+    setAmbientFlow(localStorage.getItem('ambientFlow') !== 'false');
 
     // 从 localStorage 读取主题设置
     const savedTheme = localStorage.getItem('theme');
@@ -79,6 +87,9 @@ export default function RootLayoutClient({ children }: RootLayoutClientProps) {
       if (typeof detail.fontSize === 'string') {
         applyFontSizeSetting(detail.fontSize);
       }
+      if (typeof detail.ambientFlow === 'boolean') {
+        setAmbientFlow(detail.ambientFlow);
+      }
     };
 
     const handleStorageChange = (event: StorageEvent) => {
@@ -87,6 +98,8 @@ export default function RootLayoutClient({ children }: RootLayoutClientProps) {
         else document.body.classList.remove('dark');
       } else if (event.key === 'fontSize') {
         applyFontSizeSetting(event.newValue);
+      } else if (event.key === 'ambientFlow') {
+        setAmbientFlow(event.newValue !== 'false');
       }
     };
 
@@ -126,12 +139,18 @@ export default function RootLayoutClient({ children }: RootLayoutClientProps) {
           <SidebarProvider>
             <MobileGestureHandler>
               <div data-theme-shell className={`${chromeTheme.shell} ${mobileStyles.layout} relative flex flex-col h-screen bg-surface-page overflow-hidden`}>
-                {/* 环境光斑（清透雾银 × 淡雅禾穗微金，透过液态玻璃呈现通透水晶质感） */}
-                <div data-ambient-light className="absolute inset-0 pointer-events-none" aria-hidden="true">
-                  <div className="absolute -left-24 -top-10 w-[28rem] h-[28rem] rounded-full bg-slate-300/30 blur-3xl" />
-                  <div className="absolute left-8 top-1/3 w-96 h-96 rounded-full bg-[#D4AD72]/14 blur-3xl" />
-                  <div className="absolute -left-16 bottom-0 w-[26rem] h-[26rem] rounded-full bg-slate-200/40 blur-3xl" />
-                  <div className="absolute right-0 top-0 w-72 h-72 rounded-full bg-indigo-200/18 blur-3xl" />
+                {/* 禾硙流光背景层（低饱和慢流动光晕，透过液态玻璃呈现通透质感，阅读页自动减弱） */}
+                <div
+                  data-ambient-light
+                  data-ambient-scene={ambientScene}
+                  data-ambient-enabled={ambientFlow ? 'true' : 'false'}
+                  className={chromeTheme.ambientLayer}
+                  aria-hidden="true"
+                >
+                  <div className={`${chromeTheme.ambientOrb} ${chromeTheme.orbGold}`} />
+                  <div className={`${chromeTheme.ambientOrb} ${chromeTheme.orbIndigo}`} />
+                  <div className={`${chromeTheme.ambientOrb} ${chromeTheme.orbTeal}`} />
+                  <div className={`${chromeTheme.ambientOrb} ${chromeTheme.orbMist}`} />
                 </div>
                 <Navbar />
                 <div className="relative flex flex-1 overflow-hidden">

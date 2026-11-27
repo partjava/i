@@ -786,7 +786,7 @@ export default function NotesPage() {
 
   if (status === 'loading' || (loading && notes.length === 0)) {
     return (
-      <div className="min-h-[calc(100vh-70px)] bg-surface-page flex items-center justify-center">
+      <div className="min-h-[calc(100vh-70px)] flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
           <div className="w-8 h-8 border-2 border-[#1B3B6F] dark:border-[#D4AD72] border-t-transparent rounded-full animate-spin" />
           <span className="text-sm text-content-muted">正在加载知识库工作台...</span>
@@ -796,7 +796,7 @@ export default function NotesPage() {
   }
 
   return (
-    <div className={`${mobileStyles.page} min-h-[calc(100vh-70px)] bg-surface-page flex flex-col`}>
+    <div className={`${mobileStyles.page} min-h-[calc(100vh-70px)] flex flex-col`}>
       {/* 隐藏的本地 Markdown 导入控件 */}
       <input
         ref={importInputRef}

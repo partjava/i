@@ -303,8 +303,10 @@ export default function Sudoku({
     if (!canvas) return;
     const rect = canvas.getBoundingClientRect();
     const cell = 441 / 9;
-    const col = Math.floor((e.clientX - rect.left) / cell);
-    const row = Math.floor((e.clientY - rect.top) / cell);
+    const x = (e.clientX - rect.left) * (canvas.width / rect.width);
+    const y = (e.clientY - rect.top) * (canvas.height / rect.height);
+    const col = Math.floor(x / cell);
+    const row = Math.floor(y / cell);
     if (row >= 0 && row < 9 && col >= 0 && col < 9) {
       setSelected([row, col]);
     }
@@ -317,9 +319,9 @@ export default function Sudoku({
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', userSelect: 'none' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', userSelect: 'none', width: 'min(100%, 540px, 64vh)' }}>
       {/* 难度选择 */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: 441, marginBottom: 10 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
         <div style={{ display: 'flex', gap: 6 }}>
           {[
             { h: 36, name: '入门 (36空)' },
@@ -365,14 +367,14 @@ export default function Sudoku({
       </div>
 
       {/* 状态统计条 */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', width: 441, marginBottom: 8, padding: '6px 14px', background: '#1c2230', borderRadius: 8, fontSize: 13, color: '#bbb' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', marginBottom: 8, padding: '6px 14px', background: '#1c2230', borderRadius: 8, fontSize: 13, color: '#bbb' }}>
         <div>⏱️ 计时: <b style={{ color: '#fff' }}>{formatTime(seconds)}</b></div>
         <div>模式: <b style={{ color: isNoteMode ? '#ff9800' : '#4f8cff' }}>{isNoteMode ? '✏️ 候选数笔记' : '✍️ 正式填数'}</b></div>
         <div>错误冲突: <b style={{ color: errors.size > 0 ? '#ff5252' : '#4caf50' }}>{errors.size > 0 ? `${errors.size / 2} 处` : '无冲突'}</b></div>
       </div>
 
       {/* 数独画布 */}
-      <div style={{ position: 'relative', width: 441, height: 441 }}>
+      <div style={{ position: 'relative', width: '100%' }}>
         <canvas
           ref={canvasRef}
           width={441}
@@ -380,6 +382,8 @@ export default function Sudoku({
           onClick={handleCanvasClick}
           style={{
             display: 'block',
+            width: '100%',
+            height: 'auto',
             cursor: 'pointer',
             borderRadius: 8,
             boxShadow: '0 8px 30px rgba(0,0,0,0.3)',
