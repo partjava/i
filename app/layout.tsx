@@ -104,7 +104,7 @@ export default function RootLayout({
         />
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var p=location.pathname,s=location.search||'';if(p==='/'||p==='/home'||s.indexOf('intro=1')!==-1){var r=document.documentElement;var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches)){r.setAttribute('data-hewei-theme','dark');}r.setAttribute('data-hewei-intro-boot','1');setTimeout(function(){if(r.getAttribute('data-hewei-intro-boot')==='1'){r.setAttribute('data-hewei-intro-boot','fade');setTimeout(function(){if(r.getAttribute('data-hewei-intro-boot')==='fade'){r.removeAttribute('data-hewei-intro-boot');}},260);}},1800);}}catch(e){}})();`,
+            __html: `(function(){try{var p=location.pathname,s=location.search||'';var replay=s.indexOf('intro=1')!==-1;var played=false;try{played=sessionStorage.getItem('hewei_intro_played')==='1';}catch(e){}if(replay||((p==='/'||p==='/home')&&!played)){var r=document.documentElement;var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches)){r.setAttribute('data-hewei-theme','dark');}r.setAttribute('data-hewei-intro-boot','1');setTimeout(function(){if(r.getAttribute('data-hewei-intro-boot')==='1'){r.setAttribute('data-hewei-intro-boot','fade');setTimeout(function(){if(r.getAttribute('data-hewei-intro-boot')==='fade'){r.removeAttribute('data-hewei-intro-boot');}},260);}},1800);}}catch(e){}})();`,
           }}
         />
       </head>
