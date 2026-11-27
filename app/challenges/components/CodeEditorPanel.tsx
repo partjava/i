@@ -1,7 +1,10 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import Editor from '@monaco-editor/react';
+import Editor, { loader } from '@monaco-editor/react';
+import { configureMonacoLoader } from '@shared/lib/monaco-loader';
+
+configureMonacoLoader(loader);
 import { Play, Terminal, Code, HelpCircle, Sparkles, Loader2, Wrench, History, RotateCcw, Clock, CheckCircle2, XCircle, AlertCircle, X } from 'lucide-react';
 import { message } from 'antd';
 import { ChallengeExecutionMode, challengeResultLabel, shouldRecordChallengePass } from '@shared/components/challenge-execution-state';

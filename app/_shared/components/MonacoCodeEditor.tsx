@@ -28,18 +28,27 @@ import {
   ChevronUp,
 } from 'lucide-react';
 
-// 动态导入 Monaco 编辑器，SSR 关闭
-const Editor = dynamic(() => import('@monaco-editor/react'), {
-  ssr: false,
-  loading: () => (
-    <div className="flex flex-col items-center justify-center h-full min-h-[400px] bg-slate-950/80 text-slate-300">
-      <Spin size="large" />
-      <span className="mt-4 font-mono text-xs tracking-wider text-indigo-300">
-        正在挂载 Monaco 智能核心引擎...
-      </span>
-    </div>
-  ),
-});
+import { configureMonacoLoader } from '@shared/lib/monaco-loader';
+
+// 动态导入 Monaco 编辑器，SSR 关闭并切换至同源本地静态资源
+const Editor = dynamic(
+  () =>
+    import('@monaco-editor/react').then((mod) => {
+      configureMonacoLoader(mod.loader);
+      return mod;
+    }),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex flex-col items-center justify-center h-full min-h-[400px] bg-slate-950/80 text-slate-300">
+        <Spin size="large" />
+        <span className="mt-4 font-mono text-xs tracking-wider text-indigo-300">
+          正在挂载 Monaco 智能核心引擎...
+        </span>
+      </div>
+    ),
+  }
+);
 
 import { useStandaloneExecution } from './useStandaloneExecution';
 import InlineCodePatchModal, { CodePatchData } from './InlineCodePatchModal';

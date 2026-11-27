@@ -72,6 +72,8 @@ partjava-backend/target/
 
 # 用户上传的图片（仅同步服务器，不占 Git 仓库空间）
 public/uploads/
+# 由 scripts/sync-monaco.mjs 从 node_modules 自动同步的本地 Monaco 静态资源
+/public/monaco/
 
 # 比赛提交文档（本地保留，不上传GitHub）
 作品原创声明.md

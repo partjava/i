@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "postinstall": "node scripts/sync-monaco.mjs",
+    "predev": "node scripts/sync-monaco.mjs",
+    "prebuild": "node scripts/sync-monaco.mjs",
     "build": "NODE_OPTIONS='--max-old-space-size=4096' next build && cp -r .next/static/. .next/standalone/.next/static/ && cp -r public/. .next/standalone/public/",
     "dev": "next dev -H 0.0.0.0",
     "lint": "eslint .",
