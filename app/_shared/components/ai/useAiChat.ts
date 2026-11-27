@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useCallback, useRef, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 import { useAuth } from '../../hooks/useAuth';
-import { conversationText, conversationHistory } from './conversation';
+import { conversationText, conversationHistory, buildPageStorageKey, sanitizeLegacyAssistantText } from './conversation';
 import { collectCurrentPageContext } from '../ai-robot/types';
 
 export interface Message {
@@ -12,10 +13,10 @@ export interface Message {
   failed?: boolean;
 }
 
-const STORAGE_KEY = 'ai_chat_messages_v1';
+const STORAGE_KEY = 'ai_chat_messages_v2';
 
 const WELCOME_MESSAGE: Message[] = [
-  { id: 'welcome', role: 'assistant', content: '你好！我是禾硙 AI 助手，有什么我可以帮你的？' },
+  { id: 'welcome', role: 'assistant', content: '你好！我是禾硙 AI 助手，基于当前页面内容为你解答，有什么我可以帮你的？' },
 ];
 
 function loadInitialMessages(key: string): Message[] {
@@ -25,7 +26,10 @@ function loadInitialMessages(key: string): Message[] {
     if (saved) {
       const parsed = JSON.parse(saved);
       if (Array.isArray(parsed) && parsed.length > 0 && parsed.every((m: any) => m && typeof m.content === 'string')) {
-        return parsed;
+        return parsed.map((m: Message) => ({
+          ...m,
+          content: m.role === 'assistant' ? sanitizeLegacyAssistantText(m.content) : m.content,
+        }));
       }
     }
   } catch {}
@@ -34,7 +38,9 @@ function loadInitialMessages(key: string): Message[] {
 
 export function useAiChat() {
   const { data: session, status } = useAuth();
-  const storageKey = `${STORAGE_KEY}:${status === 'authenticated' ? session?.user.id : status}`;
+  const pathname = usePathname();
+  const userScope = status === 'authenticated' ? session?.user.id : status;
+  const storageKey = buildPageStorageKey(STORAGE_KEY, userScope, pathname);
   const ownerRef = useRef(storageKey);
   ownerRef.current = storageKey;
   const requestRef = useRef<AbortController | null>(null);
@@ -88,7 +94,10 @@ export function useAiChat() {
     if (textOverride === undefined) setInput('');
     setLoading(true);
     try {
-      const pageCtx = collectPageContent();
+      const rawCtx = collectPageContent();
+      const pageCtx = rawCtx
+        ? `【作用域约束：仅围绕当前打开页面的知识内容作答，忽略与本页无关的其他页面记忆】\n${rawCtx}`
+        : '';
       const body = { message: text, history: conversationHistory(messages), pageContext: pageCtx };
       const res = await fetch('/api/ai/chat', {
         method: 'POST',

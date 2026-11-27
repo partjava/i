@@ -156,6 +156,28 @@
 .retryBtn { border-color: rgba(27, 59, 111, 0.45); color: #1B3B6F; }
 .retryBtn:hover { background: rgba(27, 59, 111, 0.08); }
 
+/* 执行轨迹面板：默认（素笺浅色）使用高对比度深墨蓝与深琥珀色，彻底解决浅色下浅字看不清问题 */
+.tracePanel {
+  background: #F8FAFC;
+  border-color: rgba(27, 59, 111, 0.22);
+}
+.traceHeader {
+  background: rgba(27, 59, 111, 0.08);
+  color: #1B3B6F;
+  border-bottom: 1px solid rgba(27, 59, 111, 0.12);
+}
+.traceSub { color: #334155; }
+.traceOfflineBadge {
+  background: #FEF3C7;
+  color: #92400E;
+  border-color: rgba(180, 83, 9, 0.35);
+}
+.traceLabel { color: #0F1D33; }
+.traceDetail { color: #334155; }
+.traceIconPlan { color: #6D28D9; font-weight: 700; }
+.traceIconAct { color: #B45309; font-weight: 700; }
+.traceIconObserve { color: #047857; font-weight: 700; }
+
 /* 素笺浅色面板 */
 .paperTheme .dialog,
 .dialog.paperTheme {
@@ -211,7 +233,31 @@
 }
 .paperTheme .bubbleBody,
 .paperTheme .bubbleProse,
-.paperTheme .bubble :global(.prose) { color: #0F1D33; }
+.paperTheme .bubble :global(.prose) {
+  color: #0F1D33;
+  --tw-prose-body: #0F1D33;
+  --tw-prose-headings: #0F1D33;
+  --tw-prose-bold: #0F1D33;
+  --tw-prose-counters: #334155;
+  --tw-prose-bullets: #334155;
+  --tw-prose-links: #1B3B6F;
+  --tw-prose-code: #1B3B6F;
+  --tw-prose-quotes: #334155;
+}
+.paperTheme .bubble :global(.prose p),
+.paperTheme .bubble :global(.prose li),
+.paperTheme .bubble :global(.prose strong),
+.paperTheme .bubble :global(.prose h1),
+.paperTheme .bubble :global(.prose h2),
+.paperTheme .bubble :global(.prose h3),
+.paperTheme .bubble :global(.prose h4),
+.paperTheme .bubble :global(.prose blockquote) {
+  color: #0F1D33 !important;
+}
+.paperTheme .bubble :global(.prose code) {
+  color: #1B3B6F !important;
+  background: #EDF0F5 !important;
+}
 
 /* 墨砚深色面板 */
 .dialog:not(.paperTheme) .bubbleTitle { color: #F2EDE4; }
@@ -294,6 +340,26 @@
 .dialog:not(.paperTheme) .codeBox { border-color: rgba(255, 255, 255, 0.14); }
 .dialog:not(.paperTheme) .retryBtn { border-color: #D4AD72; color: #D4AD72; }
 .dialog:not(.paperTheme) .retryBtn:hover { background: rgba(212, 173, 114, 0.12); }
+.dialog:not(.paperTheme) .tracePanel {
+  background: rgba(21, 25, 33, 0.94);
+  border-color: rgba(212, 173, 114, 0.35);
+}
+.dialog:not(.paperTheme) .traceHeader {
+  background: rgba(212, 173, 114, 0.14);
+  color: #D4AD72;
+  border-bottom-color: rgba(212, 173, 114, 0.2);
+}
+.dialog:not(.paperTheme) .traceSub { color: #CBD5E1; }
+.dialog:not(.paperTheme) .traceOfflineBadge {
+  background: rgba(245, 158, 11, 0.2);
+  color: #FCD34D;
+  border-color: rgba(251, 191, 36, 0.4);
+}
+.dialog:not(.paperTheme) .traceLabel { color: #F2EDE4; }
+.dialog:not(.paperTheme) .traceDetail { color: #CBD5E1; }
+.dialog:not(.paperTheme) .traceIconPlan { color: #C4B5FD; }
+.dialog:not(.paperTheme) .traceIconAct { color: #D4AD72; }
+.dialog:not(.paperTheme) .traceIconObserve { color: #34D399; }
 
 .connector { transition: opacity 0.35s; }
 .composer {
@@ -481,8 +547,9 @@
   box-shadow: 0 12px 32px rgba(15, 29, 51, 0.14);
 }
 .paperTheme .shortcuts > button {
-  color: #334155;
-  border-color: rgba(15, 29, 51, 0.12);
+  color: #0F1D33;
+  font-weight: 500;
+  border-color: rgba(15, 29, 51, 0.16);
   background: #F4F5F7;
 }
 .paperTheme .shortcuts > button:hover {
@@ -491,8 +558,9 @@
 }
 .paperTheme .dockToggle {
   background: #F4F5F7;
-  border-color: rgba(15, 29, 51, 0.14);
-  color: #334155;
+  border-color: rgba(15, 29, 51, 0.16);
+  color: #0F1D33;
+  font-weight: 600;
 }
 .paperTheme .dockToggle:hover {
   background: #E8EDF5;
@@ -501,32 +569,32 @@
 .paperTheme .dockToggleSearchActive {
   background: #EDF2FA;
   border-color: #1B3B6F;
-  color: #1B3B6F;
+  color: #0F1D33;
   box-shadow: 0 0 10px rgba(27, 59, 111, 0.14);
 }
 .paperTheme .dockToggleTtsActive {
   background: #FEF7EA;
   border-color: #B47A2A;
-  color: #8A5B14;
+  color: #78350F;
   box-shadow: 0 0 10px rgba(180, 122, 42, 0.14);
 }
 .paperTheme .dockToggleEdgeActive {
   background: #ECFDF5;
-  border-color: #10B981;
-  color: #065F46;
+  border-color: #059669;
+  color: #064E3B;
   box-shadow: 0 0 10px rgba(16, 185, 129, 0.14);
 }
 .paperTheme .dockToggleMicActive {
   background: #FEF2F2;
   border-color: #EF4444;
-  color: #B91C1C;
+  color: #991B1B;
 }
 .paperTheme .dockInput {
   background: #F4F5F7;
   color: #0F1D33;
-  border-color: rgba(15, 29, 51, 0.16);
+  border-color: rgba(15, 29, 51, 0.18);
 }
-.paperTheme .dockInput::placeholder { color: #64748B; }
+.paperTheme .dockInput::placeholder { color: #475569; }
 .paperTheme .dockInput:focus { border-color: #1B3B6F; }
 .paperTheme .dockSend {
   background: linear-gradient(135deg, #1B3B6F, #275091);

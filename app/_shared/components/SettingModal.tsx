@@ -27,12 +27,17 @@ const CODE_THEME_OPTIONS = [
 interface SettingModalProps {
   open: boolean;
   onClose: () => void;
+  initialTab?: string;
 }
 
-export default function SettingModal({ open, onClose }: SettingModalProps) {
+export default function SettingModal({ open, onClose, initialTab = 'general' }: SettingModalProps) {
   const { data: session } = useAuth();
   const locale = useLocale();
   const st = UI_DICT[locale].settings;
+  const [activeTab, setActiveTab] = useState(initialTab);
+  useEffect(() => {
+    if (open) setActiveTab(initialTab || 'general');
+  }, [open, initialTab]);
   const [theme, setTheme] = useState('light');
   const [modal, contextHolder] = Modal.useModal();
   const [pwdForm] = Form.useForm();
@@ -392,7 +397,8 @@ export default function SettingModal({ open, onClose }: SettingModalProps) {
         closeIcon={<span className="text-[var(--settings-secondary)] hover:text-[var(--settings-text)] transition-colors text-base">✕</span>}
       >
         <Tabs
-          defaultActiveKey="general"
+          activeKey={activeTab}
+          onChange={setActiveTab}
           className={styles.tabs}
           items={[
             {

@@ -53,6 +53,7 @@ export default function Navbar() {
   const pathname = usePathname();
   const { setIsOpen } = useSidebar();
   const [settingOpen, setSettingOpen] = useState(false);
+  const [settingInitialTab, setSettingInitialTab] = useState<string>('general');
   const [showRobot, setShowRobot] = useState(false);
   const [robotPreloaded, setRobotPreloaded] = useState(false);
   const [showVip, setShowVip] = useState(false);
@@ -64,6 +65,65 @@ export default function Navbar() {
   const t = UI_DICT[locale].nav;
   const [studyMenuOpen, setStudyMenuOpen] = useState(false);
   const studyMenuTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [readNotifIds, setReadNotifIds] = useState<string[]>([]);
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('hewei_read_notifications_v1');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) setReadNotifIds(parsed);
+      }
+    } catch {}
+  }, []);
+
+  const notifications = [
+    {
+      id: 'notif-page-memory',
+      badge: 'AI 伴学升级',
+      title: '页面专属记忆与 3D 禾硙书房已就绪',
+      desc: '右下角 AI 助手现已按当前页面独立隔离上下文，3D 伴学书房支持素笺/墨砚双态切换。',
+      time: '刚刚',
+      actionLabel: '打开 3D 书房',
+      onAction: () => setShowRobot(true),
+    },
+    {
+      id: 'notif-challenges',
+      badge: '星图闯关',
+      title: '编程挑战星图与 AI 诊断热修复开放中',
+      desc: '在挑战关卡中遇到报错，可一键唤起禾硙 AI 诊断生成双栏对比补丁。',
+      time: '今日',
+      actionLabel: '前往闯关',
+      onAction: () => router.push('/challenges'),
+    },
+    {
+      id: 'notif-library',
+      badge: '教材与笔记',
+      title: 'PDF 精装书架与一键提炼笔记草稿',
+      desc: '阅读课程或 PDF 教材时，可随时将当前页代码与要点整理保存到笔记中心。',
+      time: '常驻',
+      actionLabel: '查看笔记',
+      onAction: () => router.push('/notes'),
+    },
+  ];
+
+  const unreadCount = notifications.filter(item => !readNotifIds.includes(item.id)).length;
+
+  const markNotifRead = useCallback((id: string) => {
+    setReadNotifIds(prev => {
+      if (prev.includes(id)) return prev;
+      const next = [...prev, id];
+      try { localStorage.setItem('hewei_read_notifications_v1', JSON.stringify(next)); } catch {}
+      return next;
+    });
+  }, []);
+
+  const markAllNotifsRead = useCallback(() => {
+    const allIds = notifications.map(n => n.id);
+    setReadNotifIds(allIds);
+    try { localStorage.setItem('hewei_read_notifications_v1', JSON.stringify(allIds)); } catch {}
+  }, []);
 
   useEffect(() => {
     const syncDark = () => setIsDark(document.body.classList.contains('dark'));
@@ -229,7 +289,10 @@ export default function Navbar() {
       key: 'settings',
       icon: <SettingOutlined />,
       label: t.menuSettings,
-      onClick: () => setSettingOpen(true),
+      onClick: () => {
+        setSettingInitialTab('general');
+        setSettingOpen(true);
+      },
     },
     {
       key: 'vip',
@@ -574,16 +637,102 @@ export default function Navbar() {
             </div>
           ) : session && session.user ? (
             <>
-              {/* 通知铃铛 */}
-              <Tooltip title="通知">
-                <Badge count={0} size="small">
-                  <Button
-                    type="text"
-                    icon={<BellOutlined />}
-                    className="!rounded-full text-content-primary hover:text-brand-primary hover:!bg-white/35"
-                  />
-                </Badge>
-              </Tooltip>
+              {/* 通知铃铛与交互式通知中心 */}
+              <Dropdown
+                open={notifOpen}
+                onOpenChange={setNotifOpen}
+                trigger={['click']}
+                placement="bottomRight"
+                dropdownRender={() => (
+                  <div
+                    data-notification-panel
+                    className="w-80 sm:w-96 rounded-2xl border border-line-strong bg-surface-raised text-content-primary shadow-[0_20px_50px_rgba(15,29,51,0.22)] overflow-hidden"
+                  >
+                    <div className="flex items-center justify-between px-4 py-3 border-b border-line-subtle bg-surface-muted/60">
+                      <div className="flex items-center gap-2">
+                        <BellOutlined className="text-brand-primary" />
+                        <span className="text-xs sm:text-sm font-bold text-content-primary">消息通知</span>
+                        {unreadCount > 0 && (
+                          <span className="px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-brand-primary text-content-inverse">
+                            {unreadCount} 条未读
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {unreadCount > 0 && (
+                          <button
+                            type="button"
+                            onClick={markAllNotifsRead}
+                            className="text-[11px] font-medium text-brand-primary hover:underline cursor-pointer"
+                          >
+                            全部已读
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setNotifOpen(false);
+                            setSettingInitialTab('notification');
+                            setSettingOpen(true);
+                          }}
+                          className="text-[11px] text-content-secondary hover:text-content-primary cursor-pointer"
+                          title="通知偏好设置"
+                        >
+                          通知设置
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="max-h-80 overflow-y-auto divide-y divide-line-subtle">
+                      {notifications.map(item => {
+                        const isUnread = !readNotifIds.includes(item.id);
+                        return (
+                          <div
+                            key={item.id}
+                            onClick={() => {
+                              markNotifRead(item.id);
+                              setNotifOpen(false);
+                              item.onAction();
+                            }}
+                            className={`p-3.5 transition-colors cursor-pointer hover:bg-surface-muted/70 ${
+                              isUnread ? 'bg-brand-soft/45' : ''
+                            }`}
+                          >
+                            <div className="flex items-center justify-between gap-2 mb-1">
+                              <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-brand-primary">
+                                {isUnread && <span className="w-2 h-2 rounded-full bg-brand-primary inline-block" />}
+                                {item.badge}
+                              </span>
+                              <span className="text-[11px] text-content-muted">{item.time}</span>
+                            </div>
+                            <div className="text-xs sm:text-[13px] font-semibold text-content-primary mb-1">
+                              {item.title}
+                            </div>
+                            <p className="text-xs text-content-secondary leading-relaxed mb-2">
+                              {item.desc}
+                            </p>
+                            <span className="inline-flex items-center text-[11px] font-semibold text-brand-primary hover:underline">
+                              {item.actionLabel} →
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              >
+                <Tooltip title="通知">
+                  <Badge count={unreadCount} size="small" offset={[-4, 4]}>
+                    <Button
+                      type="text"
+                      aria-label="打开消息通知"
+                      onClick={() => setNotifOpen(prev => !prev)}
+                      icon={<BellOutlined />}
+                      className="!rounded-full text-content-primary hover:text-brand-primary hover:!bg-white/35"
+                    />
+                  </Badge>
+                </Tooltip>
+              </Dropdown>
 
               {/* 用户头像和菜单 */}
               <Dropdown
@@ -734,7 +883,11 @@ export default function Navbar() {
         </div>
       </div>
 
-      <SettingModal open={settingOpen} onClose={() => setSettingOpen(false)} />
+      <SettingModal
+        open={settingOpen}
+        onClose={() => setSettingOpen(false)}
+        initialTab={settingInitialTab}
+      />
 
       {/* AI 3D机器人 */}
       {showRobot && (

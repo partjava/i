@@ -48,6 +48,9 @@ export default function AiChatPanel() {
           <StitchLogo size={20} />
         </div>
         <span className="font-semibold text-xs whitespace-nowrap shrink-0">AI助手</span>
+        <span className="px-1.5 py-0.5 rounded bg-white/15 text-[10px] text-white/90 font-normal whitespace-nowrap shrink-0" title="对话记忆仅绑定当前页面，跨页互不串扰">
+          仅限本页
+        </span>
         <div className="flex-1 min-w-0" />
         <button
           onClick={() => { if (window.confirm('确定清空当前对话？')) ai.clearConversation(); }}
